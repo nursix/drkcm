@@ -170,6 +170,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Create", m="create", t="pr_person", p="create"),
                         M("All Cases", vars = {}),
                         ),
+                    M("Measures", f="response_action"),
                     M("Activities", f="case_activity")(
                         M("Emergencies",
                           vars = {"~.emergency": "True"},
@@ -217,18 +218,21 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Hierarchy", m="hierarchy"),
                         M("Create", m="create"),
                         #M("Import", m="import")
-                    ),
+                        ),
                     M("Facilities", f="facility")(
                         M("Create", m="create"),
-                    ),
+                        ),
                     M("Facility Types", f="facility_type",
                       restrict=[ADMIN])(
                         M("Create", m="create"),
-                    ),
+                        ),
                     M("Organization Types", f="organisation_type",
                       restrict=[ADMIN])(
                         M("Create", m="create"),
-                    ),
+                        ),
+                    M("Sectors", f="sector", restrict=[ADMIN])(
+                        M("Create", m="create"),
+                        )
                  )
 
     # -------------------------------------------------------------------------

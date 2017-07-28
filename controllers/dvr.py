@@ -266,6 +266,15 @@ def person():
                                    filter_widgets = filter_widgets,
                                    )
 
+            elif r.component.tablename == "dvr_case_activity":
+
+                # Set default statuses for components
+                if settings.get_dvr_case_activity_use_status():
+                    s3db.dvr_case_activity_default_status()
+
+                if settings.get_dvr_manage_response_actions():
+                    s3db.dvr_response_default_status()
+
             elif r.component_name == "allowance" and \
                  r.method in (None, "update"):
 
@@ -540,6 +549,14 @@ def case_activity():
 
         resource = r.resource
 
+        # Set default statuses
+        if settings.get_dvr_case_activity_use_status():
+            s3db.dvr_case_activity_default_status()
+
+        if settings.get_dvr_manage_response_actions():
+            s3db.dvr_response_default_status()
+
+        # Filter out case activities of archived cases
         query = (FS("person_id$dvr_case.archived") == False)
         resource.add_filter(query)
 
@@ -617,7 +634,9 @@ def referral_type():
 
     return s3_rest_controller()
 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Responses
+#
 def response_type():
     """ Response Types: RESTful CRUD Controller """
 
@@ -626,6 +645,28 @@ def response_type():
         field.requires = IS_EMPTY_OR(IS_ONE_OF(db, "%s.id" % r.tablename,
                                                field.represent,
                                                ))
+        return True
+    s3.prep = prep
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def response_status():
+    """ Response Statuses: RESTful CRUD Controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def response_action():
+    """ Response Actions: RESTful CRUD controller """
+
+    def prep(r):
+
+        # Must not create or delete response actions from here
+        r.resource.configure(insertable = False,
+                             deletable = False,
+                             )
+
         return True
     s3.prep = prep
 
@@ -665,6 +706,18 @@ def vulnerability_type():
                                                ))
         return True
     s3.prep = prep
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def case_activity_update_type():
+    """ Case Activity Update Types: RESTful CRUD Controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def case_activity_status():
+    """ Case Activity Statuses: RESTful CRUD Controller """
 
     return s3_rest_controller()
 

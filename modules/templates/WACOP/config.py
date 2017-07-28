@@ -113,7 +113,7 @@ def config(settings):
     # Restrict the Location Selector to just certain countries
     settings.gis.countries = ("US",)
     # Levels for the LocationSelector
-    levels = ("L1", "L2", "L3")
+    #levels = ("L1", "L2", "L3")
 
     # Uncomment to pass Addresses imported from CSV to a Geocoder to try and automate Lat/Lon
     #settings.gis.geocode_imported_addresses = "google"
@@ -330,10 +330,10 @@ def config(settings):
                     query = (itable.event_id == r.id) & \
                             (itable.closed == False) & \
                             (itable.deleted == False)
-                    set = db(query)
+                    the_set = db(query)
                     f = s3db.event_post.incident_id
                     f.requires = IS_EMPTY_OR(
-                                    IS_ONE_OF(set, "event_incident.id",
+                                    IS_ONE_OF(the_set, "event_incident.id",
                                               f.represent,
                                               orderby="event_incident.name",
                                               sort=True))
@@ -869,6 +869,15 @@ def config(settings):
             if r.method == "assign":
                 current.menu.main = ""
 
+            elif r.component_name == "group":
+                if r.component_id:
+                    f = s3db.event_team.group_id
+                    f.writable = False
+                    f.comment = None
+                s3db.configure("event_team",
+                               update_next = r.url(),
+                               )
+
             elif r.component_name == "task":
                 from s3 import S3SQLCustomForm
                 crud_form = S3SQLCustomForm("name",
@@ -924,6 +933,10 @@ def config(settings):
                                                  "modules", "templates",
                                                  "WACOP", "views",
                                                  "assign.html")
+
+                elif r.component_name == "group":
+                    output["title"] = T("Resource Details")
+
                 #elif r.component_name == "post":
                 #    # Add Tags - no, do client-side
                 #    output["form"].append()
@@ -944,11 +957,6 @@ def config(settings):
                     #                          read_url=custom_url,
                     #                          update_url=custom_url)
 
-               #     # System-wide Alert
-               #     from templates.WACOP.controllers import custom_WACOP
-               #     custom = custom_WACOP()
-               #     output["system_wide"] = custom._system_wide_html()
-
             return output
         s3.postp = custom_postp
 
@@ -959,15 +967,27 @@ def config(settings):
         # No sidebar menu
         current.menu.options = None
 
-        request_args = current.request.args
-        if len(request_args) > 1 and request_args[1] == "group":
-            from gluon import A, URL
-            attr["custom_crud_buttons"] = {"list_btn": A(T("Browse Resources"),
-                                                         _class="action-btn",
-                                                         _href=URL(c="pr", f="group", args="browse"),
-                                                         _id="list-btn",
-                                                         )
+        refresh = current.request.get_vars.get("refresh")
+        if refresh:
+            # Popup from Resource Browse
+            current.menu.main = ""
+
+            attr["rheader"] = wacop_rheader
+
+            #from gluon import A, URL
+            #attr["custom_crud_buttons"] = {"list_btn": A(T("Browse Resources"),
+            #                                             _class="action-btn",
+            #                                             _href=URL(c="pr", f="group", args="browse"),
+            #                                             _id="list-btn",
+            #                                             )
+            #                               }
+            attr["custom_crud_buttons"] = {"list_btn": "",
                                            }
+
+            response = current.response
+            if response.confirmation:
+                script = '''self.parent.$('#%s').dataTable().fnReloadAjax()''' % refresh
+                response.s3.jquery_ready.append(script)
 
         return attr
 
@@ -1094,13 +1114,15 @@ def config(settings):
                 f = r.function
                 record_id = r.id
         group_represent = ertable.group_id.represent
-        if f == "group":
-            # Resource Browse
+        if f in ("group", "team"):
+            # Resource Browse (inc aadata)
             def team_name(row):
                 group_id = row["event_team.group_id"]
                 return A(group_represent(group_id),
                          _href = URL(c="event", f="incident",
-                                     args=[row["event_team.incident_id"], "group", group_id, "read"],
+                                     args = [row["event_team.incident_id"], "group", group_id, "read"],
+                                     vars = {"refresh": "custom-list-event_team",
+                                             },
                                      extension = "", # ensure no .aadata
                                      ),
                          _class = "s3_modal",
@@ -1111,7 +1133,9 @@ def config(settings):
                 group_id = row["event_team.group_id"]
                 return A(group_represent(group_id),
                          _href = URL(c="event", f=f,
-                                     args=[record_id, "group", group_id, "read"],
+                                     args = [record_id, "group", group_id, "read"],
+                                     vars = {"refresh": "custom-list-event_team",
+                                             },
                                      extension = "", # ensure no .aadata
                                      ),
                          _class = "s3_modal",
@@ -1124,8 +1148,8 @@ def config(settings):
                                             search_field = "group_id",
                                             )
 
-        if f == "group":
-            # Resource Browse
+        if f in ("group", "team"):
+            # Resource Browse (inc aadata)
             list_fields = [(T("Group"), "name_click"),
                            "incident_id",
                            "status_id",
@@ -1185,7 +1209,10 @@ def config(settings):
         def team_name(row):
             return A(row["pr_group.name"],
                      _href = URL(c="pr", f="group",
-                                 args=[row["pr_group.id"], "read"],
+                                 args = [row["pr_group.id"], "read"],
+                                 vars = {"refresh": "custom-list-pr_group",
+                                         },
+                                 extension = "", # ensure no .aadata
                                  ),
                      _class = "s3_modal",
                      )
@@ -1248,17 +1275,30 @@ def config(settings):
                                 method = "browse",
                                 action = resource_Browse)
 
-        # For the read view
-        attr["rheader"] = wacop_rheader
         # No sidebar menu
         current.menu.options = None
-        from gluon import A, URL
-        attr["custom_crud_buttons"] = {"list_btn": A(T("Browse Resources"),
-                                                     _class="action-btn",
-                                                     _href=URL(args="browse"),
-                                                     _id="list-btn",
-                                                     )
-                                       }
+
+        refresh = current.request.get_vars.get("refresh")
+        if refresh:
+            # Popup from Browse
+            current.menu.main = ""
+
+            attr["rheader"] = wacop_rheader
+
+            #from gluon import A, URL
+            #attr["custom_crud_buttons"] = {"list_btn": A(T("Browse Resources"),
+            #                                             _class="action-btn",
+            #                                             _href=URL(args="browse"),
+            #                                             _id="list-btn",
+            #                                             )
+            #                               }
+            attr["custom_crud_buttons"] = {"list_btn": "",
+                                           }
+
+            response = current.response
+            if response.confirmation:
+                script = '''self.parent.$('#%s').dataTable().fnReloadAjax()''' % refresh
+                response.s3.jquery_ready.append(script)
 
         return attr
 
@@ -1339,6 +1379,8 @@ def event_team_rheader(incident_id, group_id, updates=False):
     rheader_tabs = DIV(SPAN(A(T("Resource Details"),
                               _href=URL(c="event", f="incident",
                                         args = [incident_id, "group", group_id],
+                                        vars = {"refresh": "custom-list-event_team",
+                                                },
                                         ),
                               _id="rheader_tab_group",
                               ),
@@ -1348,6 +1390,7 @@ def event_team_rheader(incident_id, group_id, updates=False):
                               _href=URL(c="pr", f="group",
                                         args = [group_id, "post", "datalist"],
                                         vars = {"incident_id": incident_id,
+                                                "refresh": "custom-list-event_team",
                                                 }
                                         ),
                               _id="rheader_tab_post",
@@ -1359,6 +1402,9 @@ def event_team_rheader(incident_id, group_id, updates=False):
     rheader = DIV(TABLE(TR(TH("%s: " % table.group_id.label),
                            table.group_id.represent(group_id),
                            ),
+                        TR(TH("%s: " % table.incident_id.label),
+                           table.incident_id.represent(incident_id),
+                           ),
                         TR(TH("%s: " % table.status_id.label),
                            table.status_id.represent(record.status_id),
                            ),
@@ -1366,6 +1412,71 @@ def event_team_rheader(incident_id, group_id, updates=False):
                   rheader_tabs)
     return rheader
     
+# =============================================================================
+def pr_group_rheader(r):
+    """
+        RHeader for pr_group
+    """
+
+    from gluon import A, DIV, SPAN, TABLE, TR, TH, URL
+
+    T = current.T
+    s3db = current.s3db
+    group_id = r.id
+    record = r.record
+    table = s3db.pr_group
+
+    updates = r.component
+
+    ltable = s3db.org_organisation_team
+    query = (ltable.group_id == group_id) & \
+            (ltable.deleted == False)
+    org = current.db(query).select(ltable.organisation_id,
+                                   limitby=(0, 1)
+                                   ).first()
+    if org:
+        org = TR(TH("%s: " % ltable.organisation_id.label),
+                 ltable.organisation_id.represent(org.organisation_id),
+                 )
+    else:
+        org = ""
+
+    rheader_tabs = DIV(SPAN(A(T("Resource Details"),
+                              _href=URL(c="pr", f="group",
+                                        args = [group_id],
+                                        vars = {"refresh": "custom-list-pr_group",
+                                                },
+                                        ),
+                              _id="rheader_tab_group",
+                              ),
+                            _class="tab_here" if not updates else "tab_other",
+                            ),
+                       SPAN(A(T("Updates"),
+                              _href=URL(c="pr", f="group",
+                                        args = [group_id, "post", "datalist"],
+                                        vars = {"refresh": "custom-list-pr_group",
+                                                },
+                                        ),
+                              _id="rheader_tab_post",
+                              ),
+                            _class="tab_here" if updates else "tab_last",
+                            ),
+                       _class="tabs",
+                       )
+    rheader = DIV(TABLE(TR(TH("%s: " % table.name.label),
+                           record.name,
+                           ),
+                        TR(TH("%s: " % table.status_id.label),
+                           table.status_id.represent(record.status_id),
+                           ),
+                        org,
+                        TR(TH("%s: " % table.comments.label),
+                           record.comments or current.messages["NONE"],
+                           ),
+                        ),
+                  rheader_tabs)
+    return rheader
+
 # =============================================================================
 def wacop_rheader(r, tabs=[]):
     """ WACOP custom resource headers """
@@ -1398,16 +1509,8 @@ def wacop_rheader(r, tabs=[]):
                 return rheader
             else:
                 # Normal
-                if not tabs:
-                    tabs = [(T("Resource Details"), None),
-                            (T("Updates"), "post"),
-                            ]
-
-                rheader_fields = [["name"],
-                                  ["status_id"],
-                                  #["organisation_team.organisation_id"],
-                                  ["comments"],
-                                  ]
+                rheader = pr_group_rheader(r)
+                return rheader
 
         elif tablename == "event_incident":
             if r.component_name == "group":

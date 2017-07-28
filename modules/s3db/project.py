@@ -7040,10 +7040,10 @@ class project_SummaryReport(S3Method):
             if indicator_ids:
                 if len(indicator_ids) == 1:
                     limitby = (0, 1)
-                    query = (table.indicator_id == indicator_ids[0]) & \
+                    query = (table.id == indicator_ids[0]) & \
                             (table.deleted == False)
                 else:
-                    query = (table.indicator_id.belongs(indicator_ids)) & \
+                    query = (table.id.belongs(indicator_ids)) & \
                             (table.deleted == False)
             elif goal_ids:
                 if len(goal_ids) == 1:
@@ -7221,10 +7221,10 @@ class project_SummaryReport(S3Method):
             if goal_ids:
                 if len(goal_ids) == 1:
                     limitby = (0, 1)
-                    query = (table.goal_id == goal_ids[0]) & \
+                    query = (table.id == goal_ids[0]) & \
                             (table.deleted == False)
                 else:
-                    query = (table.goal_id.belongs(goal_ids)) & \
+                    query = (table.id.belongs(goal_ids)) & \
                             (table.deleted == False)
             else:
                 query = (table.project_id == project_id) & \
@@ -8078,7 +8078,7 @@ class project_SummaryReport(S3Method):
 
         start_date = project["start_date"]
         if start_date:
-            start_date = H3("%s: %s" % (T("From Date"), date_represent(s3_decode_iso_datetime(start_date))))
+            start_date = H3("%s: %s" % (T("From Date"), date_represent(start_date)))
 
         body = DIV(H1(T("Narrative Report")),
                    start_date,

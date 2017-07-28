@@ -48,7 +48,9 @@ __all__ = ("DVRCaseModel",
            "dvr_ActivityRepresent",
            "dvr_AssignMethod",
            "dvr_case_default_status",
+           "dvr_case_activity_default_status",
            "dvr_case_status_filter_opts",
+           "dvr_response_default_status",
            "dvr_case_household_size",
            "dvr_due_followups",
            "dvr_get_flag_instructions",
@@ -1374,7 +1376,9 @@ class DVRReferralModel(S3Model):
 class DVRResponseModel(S3Model):
     """ Model representing responses to case needs """
 
-    names = ("dvr_response_type",
+    names = ("dvr_response_action",
+             "dvr_response_status",
+             "dvr_response_type",
              "dvr_response_type_case_activity",
              )
 
@@ -1386,8 +1390,10 @@ class DVRResponseModel(S3Model):
         s3 = current.response.s3
         settings = current.deployment_settings
 
-        define_table = self.define_table
         crud_strings = s3.crud_strings
+
+        define_table = self.define_table
+        configure = self.configure
 
         hierarchical_response_types = settings.get_dvr_response_types_hierarchical()
 
@@ -1424,12 +1430,12 @@ class DVRResponseModel(S3Model):
             widget = None
 
         # Table configuration
-        self.configure(tablename,
-                       deduplicate = S3Duplicate(primary = ("name",),
-                                                 secondary = ("parent",),
-                                                 ),
-                       hierarchy = hierarchy,
-                       )
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary = ("name",),
+                                            secondary = ("parent",),
+                                            ),
+                  hierarchy = hierarchy,
+                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1460,7 +1466,90 @@ class DVRResponseModel(S3Model):
                                            )
 
         # ---------------------------------------------------------------------
+        # Response status
+        #
+        tablename = "dvr_response_status"
+        define_table(tablename,
+                     Field("name",
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     Field("workflow_position", "integer",
+                           label = T("Workflow Position"),
+                           requires = IS_INT_IN_RANGE(0, None),
+                           ),
+                     Field("is_default", "boolean",
+                           default = False,
+                           label = T("Default Status"),
+                           ),
+                     Field("is_closed", "boolean",
+                           default = False,
+                           label = T("Closes Response"),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Table Configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  onaccept = self.response_status_onaccept,
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Response Status"),
+            title_display = T("Response Status Details"),
+            title_list = T("Response Statuses"),
+            title_update = T("Edit Response Status"),
+            label_list_button = T("List Response Statuses"),
+            label_delete_button = T("Delete Response Status"),
+            msg_record_created = T("Response Status created"),
+            msg_record_modified = T("Response Status updated"),
+            msg_record_deleted = T("Response Status deleted"),
+            msg_list_empty = T("No Response Statuses currently registered"),
+        )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        response_status_id = S3ReusableField("status_id",
+                                             "reference %s" % tablename,
+                                             label = T("Status"),
+                                             represent = represent,
+                                             requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  orderby = "workflow_position",
+                                                                  sort = False,
+                                                                  zero = None,
+                                                                  ),
+                                             sortby = "workflow_position",
+                                             )
+
+        # ---------------------------------------------------------------------
+        # Responses
+        #
+        tablename = "dvr_response_action"
+        define_table(tablename,
+                     self.dvr_case_activity_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         ),
+                     response_type_id(
+                         empty = False,
+                         ondelete = "RESTRICT",
+                         ),
+                     s3_date("date_due",
+                             label = T("Date Due"),
+                             ),
+                     s3_date(), # Date actioned
+                     self.hrm_human_resource_id(),
+                     response_status_id(),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # @todo: CRUD strings
+
+        # ---------------------------------------------------------------------
         # Response Types <=> Case Activities link table
+        # @todo: drop/replace by dvr_response_action? (currently still used in STL)
         #
         tablename = "dvr_response_type_case_activity"
         define_table(tablename,
@@ -1478,6 +1567,31 @@ class DVRResponseModel(S3Model):
         # Pass names back to global scope (s3.*)
         #
         return {}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def response_status_onaccept(form):
+        """
+            Onaccept routine for response statuses:
+            - only one status can be the default
+
+            @param form: the FORM
+        """
+
+        form_vars = form.vars
+        try:
+            record_id = form_vars.id
+        except AttributeError:
+            record_id = None
+        if not record_id:
+            return
+
+        # If this status is the default, then set is_default-flag
+        # for all other statuses to False:
+        if "is_default" in form_vars and form_vars.is_default:
+            table = current.s3db.dvr_response_status
+            db = current.db
+            db(table.id != record_id).update(is_default = False)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1503,6 +1617,9 @@ class DVRCaseActivityModel(S3Model):
              "dvr_case_activity",
              "dvr_case_activity_id",
              "dvr_case_activity_need",
+             "dvr_case_activity_status",
+             "dvr_case_activity_update",
+             "dvr_case_activity_update_type",
              "dvr_case_service_contact",
              "dvr_provider_type",
              "dvr_termination_type",
@@ -1520,6 +1637,8 @@ class DVRCaseActivityModel(S3Model):
         define_table = self.define_table
 
         service_type = settings.get_dvr_activity_use_service_type()
+        activity_sectors = settings.get_dvr_activity_sectors()
+
         service_id = self.org_service_id
         project_id = self.project_project_id
 
@@ -1928,10 +2047,69 @@ class DVRCaseActivityModel(S3Model):
                                               )
 
         # ---------------------------------------------------------------------
+        # Case Activity Status
+        #
+        tablename = "dvr_case_activity_status"
+        define_table(tablename,
+                     Field("name",
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     Field("workflow_position", "integer",
+                           label = T("Workflow Position"),
+                           requires = IS_INT_IN_RANGE(0, None),
+                           ),
+                     Field("is_default", "boolean",
+                           default = False,
+                           label = T("Default Status"),
+                           ),
+                     Field("is_closed", "boolean",
+                           default = False,
+                           label = T("Closes Activity"),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Table Configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  onaccept = self.case_activity_status_onaccept,
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Activity Status"),
+            title_display = T("Activity Status Details"),
+            title_list = T("Activity Statuses"),
+            title_update = T("Edit Activity Status"),
+            label_list_button = T("List Activity Statuses"),
+            label_delete_button = T("Delete Activity Status"),
+            msg_record_created = T("Activity Status created"),
+            msg_record_modified = T("Activity Status updated"),
+            msg_record_deleted = T("Activity Status deleted"),
+            msg_list_empty = T("No Activity Statuses currently defined"),
+        )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        activity_status_id = S3ReusableField("status_id",
+                                             "reference %s" % tablename,
+                                             label = T("Status"),
+                                             represent = represent,
+                                             requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  orderby = "workflow_position",
+                                                                  sort = False,
+                                                                  zero = None,
+                                                                  ),
+                                             sortby = "workflow_position",
+                                             )
+
+        # ---------------------------------------------------------------------
         # Case Activity (case-specific)
         #
         twoweeks = current.request.utcnow + datetime.timedelta(days=14)
         multiple_needs = settings.get_dvr_case_activity_needs_multiple()
+        use_status = settings.get_dvr_case_activity_use_status()
 
         # Priority options
         priority_opts = [#(0, T("Urgent")),
@@ -2030,6 +2208,9 @@ class DVRCaseActivityModel(S3Model):
                                 readable = service_type,
                                 writable = service_type,
                                 ),
+                     self.org_sector_id(readable = activity_sectors,
+                                        writable = activity_sectors,
+                                        ),
                      # Alternatives to document the actions performed
                      # under this activity:
                      activity_id(readable=False,
@@ -2081,7 +2262,12 @@ class DVRCaseActivityModel(S3Model):
                            default = False,
                            label = T("Completed"),
                            represent = s3_yes_no_represent,
+                           readable = not use_status,
+                           writable = not use_status,
                            ),
+                     activity_status_id(readable = use_status,
+                                        writable = use_status,
+                                        ),
                      termination_type_id(ondelete = "RESTRICT",
                                          readable = False,
                                          writable = False,
@@ -2096,16 +2282,19 @@ class DVRCaseActivityModel(S3Model):
                                 "multiple": False,
                                 },
                             dvr_case_effort = "case_activity_id",
+                            dvr_case_activity_need = "case_activity_id",
                             dvr_need = {
                                 "link": "dvr_case_activity_need",
                                 "joinby": "case_activity_id",
                                 "key": "need_id",
                                 },
+                            dvr_response_action = "case_activity_id",
                             dvr_response_type = {
                                 "link": "dvr_response_type_case_activity",
                                 "joinby": "case_activity_id",
                                 "key": "response_type_id",
                                 },
+                            dvr_case_activity_update = "case_activity_id",
                             dvr_vulnerability_type = {
                                 "link": "dvr_vulnerability_type_case_activity",
                                 "joinby": "case_activity_id",
@@ -2239,10 +2428,10 @@ class DVRCaseActivityModel(S3Model):
                                            )
 
         # ---------------------------------------------------------------------
-        # Case Activity <> Needs
+        # Case Activity <=> Needs
         #
-        # - use this when there is a need to libnk Case Activities to
-        #   multiple Needs (e.g. STL)
+        # - use this when there is a need to link Case Activities to
+        #   multiple Needs (e.g. STL, DRKCM)
         #
 
         tablename = "dvr_case_activity_need"
@@ -2251,8 +2440,15 @@ class DVRCaseActivityModel(S3Model):
                                       # default
                                       #ondelete = "CASCADE",
                                       ),
+                     s3_date(label = T("Established on"),
+                             default = "now",
+                             ),
+                     self.hrm_human_resource_id(
+                         label=T("Established by"),
+                         ),
                      self.dvr_need_id(empty = False,
                                       ),
+                     s3_comments(),
                      *s3_meta_fields())
 
         # ---------------------------------------------------------------------
@@ -2291,6 +2487,62 @@ class DVRCaseActivityModel(S3Model):
             )
 
         # ---------------------------------------------------------------------
+        # Case Activity Update Types
+        #
+        tablename = "dvr_case_activity_update_type"
+        define_table(tablename,
+                     Field("name",
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Table Configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Update Type"),
+            title_display = T("Update Type Details"),
+            title_list = T("Update Types"),
+            title_update = T("Edit Update Type"),
+            label_list_button = T("List Update Types"),
+            label_delete_button = T("Delete Update Type"),
+            msg_record_created = T("Update Type added"),
+            msg_record_modified = T("Update Type updated"),
+            msg_record_deleted = T("Update Type deleted"),
+            msg_list_empty = T("No Update Types currently defined"),
+            )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        update_type_id = S3ReusableField("update_type_id",
+                                         "reference %s" % tablename,
+                                         label = T("Update Type"),
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  )),
+                                         sortby = "name",
+                                         )
+
+        # ---------------------------------------------------------------------
+        # Case Activity Updates
+        #
+        tablename = "dvr_case_activity_update"
+        define_table(tablename,
+                     case_activity_id(),
+                     s3_date(),
+                     update_type_id(),
+                     self.hrm_human_resource_id(),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
         return {"dvr_activity_id": activity_id,
@@ -2312,6 +2564,31 @@ class DVRCaseActivityModel(S3Model):
                 "dvr_case_activity_id": lambda name="case_activity_id", **attr: \
                                                dummy(name, **attr),
                 }
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def case_activity_status_onaccept(form):
+        """
+            Onaccept routine for case activity statuses:
+            - only one status can be the default
+
+            @param form: the FORM
+        """
+
+        form_vars = form.vars
+        try:
+            record_id = form_vars.id
+        except AttributeError:
+            record_id = None
+        if not record_id:
+            return
+
+        # If this status is the default, then set is_default-flag
+        # for all other statuses to False:
+        if "is_default" in form_vars and form_vars.is_default:
+            table = current.s3db.dvr_case_activity_status
+            db = current.db
+            db(table.id != record_id).update(is_default = False)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4616,6 +4893,62 @@ def dvr_case_status_filter_opts(closed=None):
 
     T = current.T
     return OrderedDict((row.id, T(row.name)) for row in rows)
+
+# =============================================================================
+def dvr_case_activity_default_status():
+    """
+        Helper to get/set the default status for case activities
+
+        @return: the default status_id
+    """
+
+    s3db = current.s3db
+
+    rtable = s3db.dvr_case_activity
+    field = rtable.status_id
+
+    default = field.default
+    if not default:
+
+        # Look up the default status
+        stable = s3db.dvr_case_activity_status
+        query = (stable.is_default == True) & \
+                (stable.deleted != True)
+        row = current.db(query).select(stable.id, limitby=(0, 1)).first()
+
+        if row:
+            # Set as field default in case activity table
+            default = field.default = row.id
+
+    return default
+
+# =============================================================================
+def dvr_response_default_status():
+    """
+        Helper to get/set the default status for response records
+
+        @return: the default status_id
+    """
+
+    s3db = current.s3db
+
+    rtable = s3db.dvr_response_action
+    field = rtable.status_id
+
+    default = field.default
+    if not default:
+
+        # Look up the default status
+        stable = s3db.dvr_response_status
+        query = (stable.is_default == True) & \
+                (stable.deleted != True)
+        row = current.db(query).select(stable.id, limitby=(0, 1)).first()
+
+        if row:
+            # Set as field default in responses table
+            default = field.default = row.id
+
+    return default
 
 # =============================================================================
 def dvr_case_household_size(group_id):

@@ -4,7 +4,7 @@ import datetime
 
 from collections import OrderedDict
 
-from gluon import current, SPAN
+from gluon import current, IS_IN_SET, SPAN
 from gluon.storage import Storage
 
 from s3 import FS, IS_ONE_OF, S3DateTime, S3Method, s3_str, s3_unicode
@@ -92,6 +92,9 @@ def config(settings):
     }
     settings.fin.currency_default = "EUR"
 
+    # Do not require international phone number format
+    settings.msg.require_international_phone_numbers = False
+
     # Security Policy
     # http://eden.sahanafoundation.org/wiki/S3AAA#System-widePolicy
     # 1: Simple (default): Global as Reader, Authenticated as Editor
@@ -157,31 +160,42 @@ def config(settings):
     # -------------------------------------------------------------------------
     # DVR Module Settings and Customizations
     #
-    # Uncomment this to enable household size in cases, set to "auto" for automatic counting
-    settings.dvr.household_size = "auto"
-    # Uncomment this to enable features to manage case flags
-    #settings.dvr.case_flags = True
-    # Case activities use single Needs
-    #settings.dvr.case_activity_needs_multiple = True
-    # Uncomment this to expose flags to mark appointment types as mandatory
-    settings.dvr.mandatory_appointments = True
-    # Uncomment this to have appointments with personal presence update last_seen_on
-    settings.dvr.appointments_update_last_seen_on = True
-    # Uncomment this to have allowance payments update last_seen_on
-    settings.dvr.payments_update_last_seen_on = True
-    # Uncomment this to automatically update the case status when appointments are completed
-    settings.dvr.appointments_update_case_status = True
-    # Uncomment this to automatically close appointments when registering certain case events
-    settings.dvr.case_events_close_appointments = True
-    # Uncomment this to allow cases to belong to multiple case groups ("households")
+    # Enable features to manage case flags
+    settings.dvr.case_flags = True
+    # Allow cases to belong to multiple case groups ("households")
     #settings.dvr.multiple_case_groups = True
-    # Configure a regular expression pattern for ID Codes (QR Codes)
-    settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<family>[^,]*),(?P<last_name>[^,]*),(?P<first_name>[^,]*),(?P<date_of_birth>[^,]*),.*"
-    # Issue a "not checked-in" warning in case event registration
-    settings.dvr.event_registration_checkin_warning = True
 
-    # Response types hierarchical ("Interventions")
-    #settings.dvr.response_types_hierarchical = True
+    # Enable household size in cases, "auto" for automatic counting
+    settings.dvr.household_size = "auto"
+
+    # Group/Case activities per sector
+    settings.dvr.activity_sectors = True
+    # Case activities use status field
+    settings.dvr.case_activity_use_status = True
+    # Case activities cover multiple needs
+    settings.dvr.case_activity_needs_multiple = True
+
+    # Manage individual response actions in case activities
+    settings.dvr.manage_response_actions = True
+    # Response types hierarchical
+    settings.dvr.response_types_hierarchical = True
+
+    # Expose flags to mark appointment types as mandatory
+    settings.dvr.mandatory_appointments = True
+    # Appointments with personal presence update last_seen_on
+    settings.dvr.appointments_update_last_seen_on = True
+    # Automatically update the case status when appointments are completed
+    settings.dvr.appointments_update_case_status = True
+    # Automatically close appointments when registering certain case events
+    settings.dvr.case_events_close_appointments = True
+
+    # Allowance payments update last_seen_on
+    #settings.dvr.payments_update_last_seen_on = True
+
+    # Configure a regular expression pattern for ID Codes (QR Codes)
+    #settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<family>[^,]*),(?P<last_name>[^,]*),(?P<first_name>[^,]*),(?P<date_of_birth>[^,]*),.*"
+    # Issue a "not checked-in" warning in case event registration
+    #settings.dvr.event_registration_checkin_warning = True
 
     # -------------------------------------------------------------------------
     def customise_dvr_home():
@@ -193,6 +207,35 @@ def config(settings):
         s3_redirect_default(URL(f="person", vars={"closed": "0"}))
 
     settings.customise_dvr_home = customise_dvr_home
+
+    # -------------------------------------------------------------------------
+    def customise_pr_contact_resource(r, tablename):
+
+        table = current.s3db.pr_contact
+
+        #field = table.contact_description
+        #field.readable = field.writable = False
+
+        field = table.value
+        field.label = T("Number or Address")
+
+        field = table.contact_method
+        all_opts = current.msg.CONTACT_OPTS
+        subset = ("SMS",
+                  "EMAIL",
+                  "HOME_PHONE",
+                  "WORK_PHONE",
+                  "FACEBOOK",
+                  "TWITTER",
+                  "SKYPE",
+                  "WHATSAPP",
+                  "OTHER",
+                  )
+        contact_methods = [(k, all_opts[k]) for k in subset if k in all_opts]
+        field.requires = IS_IN_SET(contact_methods, zero=None)
+        field.default = "SMS"
+
+    settings.customise_pr_contact_resource = customise_pr_contact_resource
 
     # -------------------------------------------------------------------------
     def customise_pr_person_resource(r, tablename):
@@ -278,6 +321,11 @@ def config(settings):
                 resource = r.resource
                 configure = resource.configure
 
+                s3db.set_method("pr", "person",
+                                method = "contacts",
+                                action = s3db.pr_Contacts,
+                                )
+
                 table = r.table
                 ctable = s3db.dvr_case
 
@@ -300,6 +348,7 @@ def config(settings):
                                        S3TextFilter, \
                                        S3DateFilter, \
                                        S3OptionsFilter, \
+                                       s3_get_filter_opts, \
                                        IS_PERSON_GENDER
 
                         # Default organisation
@@ -313,6 +362,11 @@ def config(settings):
                         requires = field.requires
                         if isinstance(requires, IS_EMPTY_OR):
                             field.requires = requires.other
+
+                        # Expose human_resource_id
+                        field = ctable.human_resource_id
+                        field.readable = field.writable = True
+                        field.widget = None
 
                         # Make marital status mandatory, remove "other"
                         dtable = s3db.pr_person_details
@@ -341,13 +395,14 @@ def config(settings):
 
                             # Case Details ----------------------------
                             "dvr_case.organisation_id",
+                            "dvr_case.human_resource_id",
                             (T("Case Status"), "dvr_case.status_id"),
-                            #S3SQLInlineLink("case_flag",
-                            #                label = T("Flags"),
-                            #                field = "flag_id",
-                            #                help_field = "comments",
-                            #                cols = 4,
-                            #                ),
+                            S3SQLInlineLink("case_flag",
+                                           label = T("Flags"),
+                                           field = "flag_id",
+                                           help_field = "comments",
+                                           cols = 4,
+                                           ),
 
                             # Person Details --------------------------
                             (T("ID"), "pe_label"),
@@ -440,6 +495,14 @@ def config(settings):
                             S3DateFilter("date_of_birth",
                                          hidden = True,
                                          ),
+                            S3OptionsFilter("case_flag_case.flag_id",
+                                            label = T("Flags"),
+                                            options = s3_get_filter_opts("dvr_case_flag",
+                                                                         translate = True,
+                                                                         ),
+                                            cols = 3,
+                                            hidden = True,
+                                            ),
                             S3OptionsFilter("dvr_case.status_id",
                                             cols = 3,
                                             #default = None,
@@ -785,22 +848,44 @@ def config(settings):
             field.label = T("Completed on")
             field.readable = True
 
+            # Responses
+            rtable = s3db.dvr_response_action
+
+            # Assigned-to field: simple drop-down, no Add-link
+            field = rtable.human_resource_id
+            field.label = T("Assigned to")
+            field.widget = None
+            field.comment = None
+
             crud_form = S3SQLCustomForm(
                             "person_id",
 
-                            (T("Need established on"), "start_date"),
+                            "sector_id",
 
-                            "need_id",
+                            "start_date",
                             "need_details",
 
-                            S3SQLInlineLink("response_type",
-                                            label = T("Interventions"),
-                                            field = "response_type_id",
-                                            #widget = "hierarchy",
-                                            multiple = True,
-                                            #leafonly = True,
-                                            ),
-                            (T("Intervention Details"), "activity_details"),
+                            S3SQLInlineComponent("case_activity_need",
+                                                 label = T("Needs"),
+                                                 fields = [
+                                                     "need_id",
+                                                     "date",
+                                                     "human_resource_id",
+                                                     "comments",
+                                                     ],
+                                                 ),
+
+                            S3SQLInlineComponent("response_action",
+                                                 label = T("Measures"),
+                                                 fields = [
+                                                     "response_type_id",
+                                                     (T("Details"), "comments"),
+                                                     "date_due",
+                                                     "human_resource_id",
+                                                     "status_id",
+                                                     #"date",
+                                                     ],
+                                                 ),
 
                             #"priority",
                             "emergency",
@@ -808,7 +893,17 @@ def config(settings):
                             "followup",
                             "followup_date",
 
-                            "completed",
+                            S3SQLInlineComponent("case_activity_update",
+                                                 label = T("Updates"),
+                                                 fields = [
+                                                     "date",
+                                                     "update_type_id",
+                                                     "human_resource_id",
+                                                     "comments",
+                                                     ],
+                                                 ),
+
+                            "status_id",
                             "end_date",
 
                             "outcome",
@@ -881,12 +976,13 @@ def config(settings):
         # Custom list fields for case activity component tab
         if r.tablename != "dvr_case_activity":
             list_fields = ["start_date",
-                           "need_id",
+                           "sector_id",
+                           #"need_id",
                            #"need_details",
                            "emergency",
-                           (T("Interventions"),
-                            "response_type__link.response_type_id",
-                            ),
+                           #(T("Interventions"),
+                            #"response_type__link.response_type_id",
+                            #),
                            #"activity_details",
                            "followup",
                            "followup_date",
@@ -1431,6 +1527,7 @@ def drk_dvr_rheader(r, tabs=[]):
 
                 if not tabs:
                     tabs = [(T("Basic Details"), None),
+                            (T("Contact Info"), "contacts"),
                             (T("Family Members"), "group_membership/"),
                             (T("Activities"), "case_activity"),
                             (T("Appointments"), "case_appointment"),
@@ -1445,6 +1542,7 @@ def drk_dvr_rheader(r, tabs=[]):
                                         "dvr_case.household_size",
                                         "dvr_case.organisation_id",
                                         "dvr_case.site_id",
+                                        "dvr_case_flag_case.flag_id",
                                         ],
                                         represent = True,
                                         raw_data = True,
@@ -1459,6 +1557,7 @@ def drk_dvr_rheader(r, tabs=[]):
                     household_size = lambda row: case["dvr_case.household_size"]
                     organisation = lambda row: case["dvr_case.organisation_id"]
                     facility = lambda row: case["dvr_case.site_id"]
+                    flags = lambda row: case["dvr_case_flag_case.flag_id"]
                 else:
                     # Target record exists, but doesn't match filters
                     return None
@@ -1472,6 +1571,8 @@ def drk_dvr_rheader(r, tabs=[]):
                                    (T("Facility"), facility),
                                    ],
                                   ["date_of_birth",
+                                   ],
+                                  [(T("Flags"), flags),
                                    ],
                                   ]
 
