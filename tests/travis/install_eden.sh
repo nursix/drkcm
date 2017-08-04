@@ -33,6 +33,7 @@ pip install -q -r tests/travis/generated_requirements.txt
 echo "Packages installed:"
 cat tests/travis/generated_requirements.txt
 
+python -c $'import sys\nprint sys.path'
 
 echo "configuring eden"
 echo "=========================="
