@@ -4,7 +4,7 @@ import datetime
 
 from collections import OrderedDict
 
-from gluon import current, IS_IN_SET, SPAN
+from gluon import current, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, SPAN
 from gluon.storage import Storage
 
 from s3 import FS, IS_ONE_OF, S3DateTime, S3Method, s3_str, s3_unicode
@@ -110,6 +110,11 @@ def config(settings):
 
     # Version details on About-page require login
     settings.security.version_info_requires_login = True
+
+    # -------------------------------------------------------------------------
+    # General UI settings
+    #
+    settings.ui.calendar_clear_icon = True
 
     # -------------------------------------------------------------------------
     # CMS Module Settings
@@ -316,11 +321,12 @@ def config(settings):
 
             if r.controller == "dvr":
 
-                from gluon import Field, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
+                from gluon import Field
 
                 resource = r.resource
                 configure = resource.configure
 
+                # Set contacts-method for tab
                 s3db.set_method("pr", "person",
                                 method = "contacts",
                                 action = s3db.pr_Contacts,
@@ -586,10 +592,15 @@ def config(settings):
             resource = r.resource
             if r.controller == "dvr":
 
+                # Set contacts-method to retain the tab
+                s3db.set_method("pr", "person",
+                                method = "contacts",
+                                action = s3db.pr_Contacts,
+                                )
+
                 if r.interactive:
                     table = resource.table
 
-                    from gluon import IS_EMPTY_OR
                     from s3 import IS_ADD_PERSON_WIDGET2, S3AddPersonWidget2
 
                     field = table.person_id
@@ -796,6 +807,8 @@ def config(settings):
         auth = current.auth
         s3db = current.s3db
 
+        human_resource_id = auth.s3_logged_in_human_resource()
+
         if r.interactive or r.representation == "aadata":
 
             # Can the user see cases from more than one org?
@@ -805,7 +818,6 @@ def config(settings):
             else:
                 multiple_orgs = False
 
-            from gluon import IS_IN_SET
             from gluon.sqlhtml import OptionsWidget
             from s3 import S3SQLCustomForm, \
                            S3SQLInlineLink, \
@@ -821,10 +833,32 @@ def config(settings):
             field = table.person_id
             field.represent = s3db.pr_PersonRepresent(show_link=True)
 
+            # Customise sector
+            field = table.sector_id
+            field.comment = None
+
+            # Show subject field
+            field = table.subject
+            field.readable = field.writable = True
+            field.requires = IS_NOT_EMPTY()
+
             # Customise Priority
             field = table.priority
-            field.label = T("Priority")
+            priority_opts = [(0, T("Emergency")),
+                             (1, T("High")),
+                             (2, T("Normal")),
+                             (3, T("Low")),
+                             ]
             field.readable = field.writable = True
+            field.label = T("Priority")
+            field.default = 2
+            field.requires = IS_IN_SET(priority_opts, sort=False, zero=None)
+            field.represent = PriorityRepresent(priority_opts,
+                                                {0: "red",
+                                                 1: "blue",
+                                                 2: "lightblue",
+                                                 3: "grey",
+                                                 }).represent
 
             # Customise "completed" flag
             # => label as "Status" and use drop-down for open/closed
@@ -848,59 +882,91 @@ def config(settings):
             field.label = T("Completed on")
             field.readable = True
 
-            # Responses
-            rtable = s3db.dvr_response_action
-
-            # Assigned-to field: simple drop-down, no Add-link
-            field = rtable.human_resource_id
-            field.label = T("Assigned to")
+            # Show human_resource_id
+            field = table.human_resource_id
+            field.readable = field.writable = True
+            field.label = T("Consultant in charge")
+            field.default = human_resource_id
             field.widget = None
             field.comment = None
 
+            # Inline-needs
+            ntable = current.s3db.dvr_case_activity_need
+
+            field = ntable.human_resource_id
+            field.default = human_resource_id
+            field.widget = field.comment = None
+
+            field = ntable.need_id
+            field.comment = None
+
+            # Inline-responses
+            rtable = s3db.dvr_response_action
+
+            field = rtable.human_resource_id
+            field.label = T("Assigned to")
+            field.default = human_resource_id
+            field.widget = field.comment = None
+
+            # Inline-updates
+            utable = current.s3db.dvr_case_activity_update
+
+            field = utable.human_resource_id
+            field.default = human_resource_id
+            field.widget = field.comment = None
+
+            from s3 import S3SQLVerticalSubFormLayout
             crud_form = S3SQLCustomForm(
                             "person_id",
 
                             "sector_id",
 
+                            "subject",
+                            (T("Initial Situation Details"), ("need_details")),
+
                             "start_date",
-                            "need_details",
+                            "priority",
+                            "human_resource_id",
 
                             S3SQLInlineComponent("case_activity_need",
-                                                 label = T("Needs"),
+                                                 label = T("Needs Assessment"),
                                                  fields = [
-                                                     "need_id",
                                                      "date",
+                                                     "need_id",
+                                                     (T("Details"), "comments"),
                                                      "human_resource_id",
-                                                     "comments",
                                                      ],
+                                                 layout = S3SQLVerticalSubFormLayout,
+                                                 explicit_add = T("Add Need"),
                                                  ),
 
                             S3SQLInlineComponent("response_action",
-                                                 label = T("Measures"),
+                                                 label = T("Actions"),
                                                  fields = [
                                                      "response_type_id",
-                                                     (T("Details"), "comments"),
                                                      "date_due",
+                                                     "comments",
                                                      "human_resource_id",
-                                                     "status_id",
                                                      #"date",
+                                                     "status_id",
                                                      ],
+                                                 layout = S3SQLVerticalSubFormLayout,
+                                                 explicit_add = T("Add Action"),
                                                  ),
-
-                            #"priority",
-                            "emergency",
 
                             "followup",
                             "followup_date",
 
                             S3SQLInlineComponent("case_activity_update",
-                                                 label = T("Updates"),
+                                                 label = T("Progress"),
                                                  fields = [
                                                      "date",
-                                                     "update_type_id",
+                                                     (T("Occasion"), "update_type_id"),
                                                      "human_resource_id",
                                                      "comments",
                                                      ],
+                                                 layout = S3SQLVerticalSubFormLayout,
+                                                 explicit_add = T("Add Entry"),
                                                  ),
 
                             "status_id",
@@ -932,23 +998,23 @@ def config(settings):
                               ],
                               label = T("Search"),
                               ),
-                S3OptionsFilter("emergency",
-                                options = {True: T("Yes"),
-                                           False: T("No"),
-                                           },
-                                cols = 2,
-                                ),
+                # @todo: replace by priority filter
+                #S3OptionsFilter("emergency",
+                #                options = {True: T("Yes"),
+                #                           False: T("No"),
+                #                           },
+                #                cols = 2,
+                #                ),
                 S3OptionsFilter("need_id",
                                 options = lambda: s3_get_filter_opts("dvr_need",
                                                                      translate = True,
                                                                      ),
                                 ),
-                S3OptionsFilter("completed",
-                                default = False,
-                                options = {True: COMPLETED,
-                                           False: CURRENT,
-                                           },
-                                cols = 2,
+                S3OptionsFilter("status_id",
+                                options = lambda: s3_get_filter_opts("dvr_case_activity_status",
+                                                                     translate = True,
+                                                                     ),
+                                cols = 3,
                                 ),
                 S3OptionsFilter("followup",
                                 label = T("Follow-up required"),
@@ -975,18 +1041,14 @@ def config(settings):
 
         # Custom list fields for case activity component tab
         if r.tablename != "dvr_case_activity":
-            list_fields = ["start_date",
+            list_fields = ["priority",
                            "sector_id",
-                           #"need_id",
-                           #"need_details",
-                           "emergency",
-                           #(T("Interventions"),
-                            #"response_type__link.response_type_id",
-                            #),
-                           #"activity_details",
-                           "followup",
-                           "followup_date",
-                           "completed",
+                           "subject",
+                           #"followup",
+                           #"followup_date",
+                           "start_date",
+                           "human_resource_id",
+                           "status_id",
                            ]
 
             # Custom list fields
@@ -1014,6 +1076,10 @@ def config(settings):
 
             resource = r.resource
 
+            # Adapt list title when filtering for priority 0 (Emergency)
+            if r.get_vars.get("~.priority") == "0":
+                s3.crud_strings["dvr_case_activity"]["title_list"] = T("Emergencies")
+
             # Filter to active cases
             if not r.record:
                 query = (FS("person_id$dvr_case.archived") == False) | \
@@ -1027,19 +1093,15 @@ def config(settings):
                     configure_person_tags()
 
                 # Custom list fields
-                list_fields = [(T("ID"), "person_id$pe_label"),
+                list_fields = ["priority",
+                               (T("ID"), "person_id$pe_label"),
                                (T("Person"), "person_id"),
+                               "sector_id",
+                               "subject",
                                "start_date",
-                               "need_id",
-                               #"need_details",
-                               "emergency",
-                               (T("Interventions"),
-                                "response_type__link.response_type_id",
-                                ),
-                               #"activity_details",
-                               "followup",
-                               "followup_date",
-                               "completed",
+                               #"followup",
+                               #"followup_date",
+                               "status_id",
                                ]
 
             # Custom list fields
@@ -1166,6 +1228,21 @@ def config(settings):
     settings.customise_dvr_case_appointment_controller = customise_dvr_case_appointment_controller
 
     # -------------------------------------------------------------------------
+    def customise_dvr_response_action_resource(r, tablename):
+
+        s3db = current.s3db
+
+        table = s3db.dvr_response_action
+
+        # Custom format for case activity representation
+        field = table.case_activity_id
+        fmt = "%(pe_label)s %(last_name)s, %(first_name)s"
+        field.represent = s3db.dvr_CaseActivityRepresent(fmt = fmt,
+                                                         show_link = True,
+                                                         )
+
+    settings.customise_dvr_response_action_resource = customise_dvr_response_action_resource
+    # -------------------------------------------------------------------------
     def customise_org_facility_resource(r, tablename):
 
         s3db = current.s3db
@@ -1250,6 +1327,16 @@ def config(settings):
     settings.customise_org_facility_controller = customise_org_facility_controller
 
     # -------------------------------------------------------------------------
+    def customise_org_sector_resource(r, tablename):
+
+        table = current.s3db.org_sector
+
+        field = table.location_id
+        field.readable = field.writable = False
+
+    settings.customise_org_sector_resource = customise_org_sector_resource
+
+    # -------------------------------------------------------------------------
     def customise_project_task_resource(r, tablename):
         """
             Restrict list of assignees to just Staff/Volunteers
@@ -1293,7 +1380,6 @@ def config(settings):
         rows = db(query).select(gtable.pe_id)
         pe_ids |= set(row.pe_id for row in rows)
 
-        from gluon import IS_EMPTY_OR
         s3db.project_task.pe_id.requires = IS_EMPTY_OR(
             IS_ONE_OF(db, "pr_pentity.pe_id",
                       s3db.pr_PersonEntityRepresent(show_label = False,
@@ -1659,5 +1745,44 @@ def drk_org_rheader(r, tabs=[]):
                                                          record=record,
                                                          )
     return rheader
+
+# =============================================================================
+class PriorityRepresent(object):
+    """
+        Color-coded representation of priorities
+
+        @todo: generalize/move to s3utils?
+    """
+
+    def __init__(self, options, classes=None):
+        """
+            Constructor
+
+            @param options: the options (as dict or anything that can be
+                            converted into a dict)
+            @param classes: a dict mapping keys to CSS class suffixes
+        """
+
+        self.options = dict(options)
+        self.classes = classes
+
+    def represent(self, value, row=None):
+        """
+            Representation function
+
+            @param value: the value to represent
+        """
+
+        css_class = base_class = "prio"
+
+        classes = self.classes
+        if classes:
+            suffix = classes.get(value)
+            if suffix:
+                css_class = "%s %s-%s" % (css_class, base_class, suffix)
+
+        label = self.options.get(value)
+
+        return DIV(label, _class=css_class)
 
 # END =========================================================================
