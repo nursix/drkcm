@@ -96,11 +96,22 @@ form {
             }
         }
         tr.inline-form {
-            &.single td {
+            input,
+            .btn.date-clear-btn,
+            .postfix.calendar-clear-btn {
+                margin-top: 0;
+            }
+            &.single td:only-child {
                 padding: 0;
             }
             select {
                 max-width: 18rem;
+            }
+        }
+        tr.inline-form,
+        tr.read-row {
+            .zoom img {
+                max-height: 8rem;
             }
         }
     }

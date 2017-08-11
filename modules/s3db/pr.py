@@ -4712,6 +4712,7 @@ class PRIdentityModel(S3Model):
                            2:  T("National ID Card"),
                            3:  T("Driving License"),
                            #4: T("Credit Card"),
+                           5:  T("Residence Permit"),
                            99: T("other")
                            }
 
@@ -5933,7 +5934,7 @@ class pr_PersonRepresent(S3Represent):
                     controller = "dvr"
                 else:
                     controller = "pr"
-            linkto = URL(c=controller, f="person", args=["[id]"])
+            linkto = URL(c=controller, f="person", args=["[id]"], extension="")
 
         if not fields:
             fields = ["first_name", "middle_name", "last_name"]

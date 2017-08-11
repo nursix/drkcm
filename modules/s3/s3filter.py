@@ -63,8 +63,6 @@ from s3utils import s3_get_foreign_key, s3_str, s3_unicode, S3TypeConverter
 from s3validators import *
 from s3widgets import ICON, \
                       S3CalendarWidget, \
-                      S3DateWidget, \
-                      S3DateTimeWidget, \
                       S3GroupedOptionsWidget, \
                       S3MultiSelectWidget, \
                       S3HierarchyWidget
@@ -1307,6 +1305,7 @@ class S3LocationFilter(S3FilterWidget):
                                           requires=IS_IN_SET(options,
                                                              multiple=True))
                     widget = w(dummy_field, _values, **attr)
+                    first = False
                 else:
                     # Hidden, empty dropdown added to the page, whose options and multiselect will be activated when the higher level is selected
                     if hide:
@@ -1330,7 +1329,6 @@ class S3LocationFilter(S3FilterWidget):
                     script = '''S3.%s=function(){%s}''' % (name.replace("-", "_"), script)
                     s3.js_global.append(script)
                 w_append(widget)
-                first = False
 
         # Restore id and name for the data_element
         attr["_id"] = base_id
@@ -1481,6 +1479,8 @@ class S3LocationFilter(S3FilterWidget):
         else:
             selector = self.field
 
+        filters_added = False
+
         options = opts.get("options")
         if options:
             # Fixed options (=list of location IDs)
@@ -1512,6 +1512,8 @@ class S3LocationFilter(S3FilterWidget):
             # @ToDo: Allow override
             resource.add_filter(FS("%s$end_date" % selector) == None)
 
+            filters_added = True
+
         else:
             # Neither fixed options nor resource to look them up
             return default
@@ -1538,11 +1540,18 @@ class S3LocationFilter(S3FilterWidget):
         # Restore referee name
         db._referee_name = rname
 
+        if filters_added:
+            # Remove them
+            rfilter = resource.rfilter
+            rfilter.filters.pop()
+            rfilter.filters.pop()
+            rfilter.query = None
+
         rows2 = []
         if not rows:
             if values:
                 # Make sure the selected options are in the available options
-                resource = s3db.resource("gis_location")
+                resource2 = s3db.resource("gis_location")
                 fields = ["id"] + [l for l in levels]
                 if translate:
                     fields.append("path")
@@ -1553,17 +1562,17 @@ class S3LocationFilter(S3FilterWidget):
                     if not v:
                         continue
                     level = "L%s" % f.split("L", 1)[1][0]
-                    resource.clear_query()
+                    resource2.clear_query()
                     query = (gtable.level == level) & \
                             (gtable.name.belongs(v))
-                    resource.add_filter(query)
+                    resource2.add_filter(query)
                     # Filter out old Locations
                     # @ToDo: Allow override
-                    resource.add_filter(gtable.end_date == None)
-                    _rows = resource.select(fields=fields,
-                                            limit=None,
-                                            virtual=False,
-                                            as_rows=True)
+                    resource2.add_filter(gtable.end_date == None)
+                    _rows = resource2.select(fields=fields,
+                                             limit=None,
+                                             virtual=False,
+                                             as_rows=True)
                     if rows:
                         rows &= _rows
                     else:
@@ -2186,9 +2195,9 @@ class S3OptionsFilter(S3FilterWidget):
 
                         rows = current.db(query).select(key_field,
                                                         resource._id.min(),
-                                                        groupby=key_field,
-                                                        join=join,
-                                                        left=left,
+                                                        groupby = key_field,
+                                                        join = join,
+                                                        left = left,
                                                         )
 
                 # If we can not perform a reverse lookup, then we need

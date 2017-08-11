@@ -1480,11 +1480,15 @@ class DVRResponseModel(S3Model):
                            ),
                      Field("is_default", "boolean",
                            default = False,
-                           label = T("Default Status"),
+                           label = T("Default Initial Status"),
                            ),
                      Field("is_closed", "boolean",
                            default = False,
-                           label = T("Closes Response"),
+                           label = T("Closes Response Action"),
+                           ),
+                     Field("is_default_closure", "boolean",
+                           default = False,
+                           label = T("Default Closure Status"),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -1670,12 +1674,19 @@ class DVRResponseModel(S3Model):
         if not record_id:
             return
 
+        table = current.s3db.dvr_response_status
+        db = current.db
+
         # If this status is the default, then set is_default-flag
         # for all other statuses to False:
-        if "is_default" in form_vars and form_vars.is_default:
-            table = current.s3db.dvr_response_status
-            db = current.db
+        if form_vars.get("is_default"):
             db(table.id != record_id).update(is_default = False)
+
+        # If this status is the default closure, then enforce is_closed,
+        # and set is_default_closure for all other statuses to False
+        if form_vars.get("is_default_closure"):
+            db(table.id == record_id).update(is_closed = True)
+            db(table.id != record_id).update(is_default_closure = False)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2737,14 +2748,58 @@ class DVRCaseActivityModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def case_activity_onaccept(form):
+    def case_activity_close_responses(case_activity_id):
         """
-            Onaccept-callback for case activites:
-                - automatically set end date when marked as completed
+            Close all open response actions in a case activity
+
+            @param case_activity_id: the case activity record ID
         """
 
         db = current.db
         s3db = current.s3db
+
+        rtable = s3db.dvr_response_action
+        stable = s3db.dvr_response_status
+
+        # Get all response actions for this case activity
+        # that have an open-status (or no status at all):
+        left = stable.on((stable.id == rtable.status_id) & \
+                         (stable.deleted == False))
+        query = (rtable.case_activity_id == case_activity_id) & \
+                (rtable.deleted == False) & \
+                ((stable.is_closed == False) | (stable.id == None))
+        rows = db(query).select(rtable.id)
+
+        if rows:
+
+            # Get the default closure status,
+            # (usually something like "obsolete")
+            query = (stable.is_default_closure == True) & \
+                    (stable.deleted == False)
+            closure_status = db(query).select(stable.id,
+                                              limitby = (0, 1),
+                                              ).first()
+
+            # Update all open response actions for this
+            # case activity to the default closure status:
+            if closure_status:
+                response_ids = set(row.id for row in rows)
+                query = rtable.id.belongs(response_ids)
+                db(query).update(status_id = closure_status.id)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def case_activity_onaccept(cls, form):
+        """
+            Onaccept-callback for case activites:
+                - set end date when marked as completed
+                - close any open response actions when marked as completed
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        settings = current.deployment_settings
 
         # Read form data
         form_vars = form.vars
@@ -2762,7 +2817,7 @@ class DVRCaseActivityModel(S3Model):
         activity = None
         is_closed = False
 
-        if current.deployment_settings.get_dvr_case_activity_use_status():
+        if settings.get_dvr_case_activity_use_status():
             # Use status_id
             stable = s3db.dvr_case_activity_status
             left = stable.on(atable.status_id == stable.id)
@@ -2791,13 +2846,25 @@ class DVRCaseActivityModel(S3Model):
             return
 
         if is_closed:
-            if not activity.end_date:
-                activity.update_record(end_date=current.request.utcnow.date())
 
-            # @todo: also reset followup-flag and -date
-            # @todo: also close all actions linked to this activity
+            # Cancel follow-ups for closed activities
+            data = {"followup": False,
+                    "followup_date": None,
+                    }
+
+            # Set end-date if not already set
+            if not activity.end_date:
+                data["end_date"] = current.request.utcnow.date()
+
+            activity.update_record(**data)
+
+            # Close any open response actions in this activity:
+            if settings.get_dvr_manage_response_actions:
+                cls.case_activity_close_responses(activity.id)
 
         elif activity.end_date:
+
+            # Remove end-date if present
             activity.update_record(end_date = None)
 
 # =============================================================================
