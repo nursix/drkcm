@@ -1460,6 +1460,12 @@ class S3Config(Storage):
         """
         return self.gis.get("popup_location_link", False)
 
+    def get_gis_xml_wkt(self):
+        """
+            Whether XML exports should include the bulky WKT
+        """
+        return self.gis.get("xml_wkt", False)
+
     # -------------------------------------------------------------------------
     # L10N Settings
     def get_L10n_default_language(self):
@@ -3459,9 +3465,12 @@ class S3Config(Storage):
             Whether Human Resources should show address tab
         """
         use_address = self.hrm.get("use_address", None)
+
         # Fall back to PR setting if not specified
         if use_address is None:
-            return self.get_pr_use_address()
+            use_address = self.get_pr_use_address()
+
+        return use_address
 
     def get_hrm_use_code(self):
         """
@@ -4256,11 +4265,32 @@ class S3Config(Storage):
     def get_pr_contacts_tabs(self):
         """
             Which tabs to show for contacts: all, public &/or private
+                - a tuple or list with all|private|public, or
+                - a dict with labels per contacts group
+                  (defaults see get_pr_contacts_tab_label)
         """
         contacts_tabs = self.pr.get("contacts_tabs", ("all",))
         if not contacts_tabs:
             return () # iterable expected
         return contacts_tabs
+
+    def get_pr_contacts_tab_label(self, group="all"):
+        """
+            Labels for contacts tabs
+        """
+        defaults = {"all": "Contacts",
+                    "private": "Private Contacts",
+                    "public": "Public Contacts",
+                    }
+
+        tabs = self.get_pr_contacts_tabs()
+        label = tabs.get(group) if type(tabs) is dict else None
+
+        if label is None:
+            # Use default label
+            label = defaults.get(group)
+
+        return current.T(label) if label else label
 
     # -------------------------------------------------------------------------
     # Proc
