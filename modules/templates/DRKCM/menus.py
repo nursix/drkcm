@@ -196,6 +196,10 @@ class S3OptionsMenu(default.S3OptionsMenu):
             my_cases = M("My Cases", c=("dvr", "pr"), f="person",
                          vars = {"closed": "0", "mine": "1"})(
                             M("Create Case", m="create", t="pr_person", p="create"),
+                            # FIXME crashing (incorrect join order in S3GIS):
+                            #M("Map", f="person", m="map",
+                            #  vars = {"closed": "0", "mine": "1"},
+                            #  ),
                             M("Activities", f="case_activity",
                               vars = {"mine": "1"},
                               ),
@@ -233,6 +237,8 @@ class S3OptionsMenu(default.S3OptionsMenu):
             all_cases = M("Current Cases", c=("dvr", "pr"), f="person",
                           vars = {"closed": "0"})(
                             M("Create Case", m="create", t="pr_person", p="create"),
+                            # FIXME crashing (incorrect join order in S3GIS):
+                            #M("Map", f="person", m="map", vars = {"closed": "0"}),
                             M("All Cases", vars = {}),
                             M("Actions", f="response_action"),
                             )
@@ -252,7 +258,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Appointments", f="case_appointment")(
                         M("Overview"),
                         ),
-                    #M("Map", f="person", m="map"),
                     M("Archive", link=False)(
                         M("Closed Cases", f="person",
                           vars={"closed": "1"},

@@ -151,6 +151,11 @@ def config(settings):
     settings.req.req_type = ("Stock",)
 
     # -------------------------------------------------------------------------
+    # Shelter Module
+    #
+    settings.cr.people_registration = False
+
+    # -------------------------------------------------------------------------
     def customise_project_location_resource(r, tablename):
 
         s3db = current.s3db
@@ -266,7 +271,7 @@ def config(settings):
                                             },
                             )
 
-        s3db.org_organisation_location.location_id.widget = S3LocationSelector(levels=("L3", "L4"),
+        s3db.org_organisation_location.location_id.widget = S3LocationSelector(levels=("L2", "L3"),
                                                                                show_map=False,
                                                                                labels=False,
                                                                                )
@@ -695,12 +700,12 @@ def config(settings):
             restricted = True,
             module_type = 2
         )),
-        #("cr", Storage(
-        #    name_nice = T("Shelters"),
-        #    #description = "Tracks the location, capacity and breakdown of victims in Shelters",
-        #    restricted = True,
-        #    module_type = 10
-        #)),
+        ("cr", Storage(
+            name_nice = T("Shelters"),
+            #description = "Tracks the location, capacity and breakdown of victims in Shelters",
+            restricted = True,
+            module_type = 10
+        )),
         #("hms", Storage(
         #    name_nice = T("Hospitals"),
         #    #description = "Helps to monitor status of hospitals",
