@@ -874,8 +874,10 @@ class custom_WACOP(S3CRUD):
                           vars={"refresh": list_id},
                           )
             else:
-                # Update doesn't make sense here
-                raise NotImplementedError
+                url = URL(c="cms", f="post",
+                          args = ["create.popup"],
+                          vars={"refresh": list_id},
+                          )
             output["create_post_button"] = DIV(A(ICON("add"),
                                                  T("Add Update"),
                                                  _href=url,
@@ -1348,13 +1350,8 @@ class event_Profile(custom_WACOP):
 
         etable = s3db.event_event
         itable = s3db.event_incident
-        ptable = s3db.cms_post
-        gtable = s3db.gis_location
-        #rtable = s3db.pr_group
         ertable = s3db.event_team
         eptable = s3db.event_post
-        ttable = s3db.cms_tag
-        ittable = s3db.event_tag
 
         date_represent = lambda dt: S3DateTime.date_represent(dt,
                                                               format = "%b %d %Y %H:%M",
@@ -1363,7 +1360,7 @@ class event_Profile(custom_WACOP):
                                                               )
 
         # Map of Incidents
-        _map = self._map("Incidents", filter="~.event_id=%s" % event_id)
+        _map, button = self._map("Incidents", filter="~.event_id=%s" % event_id)
 
         # Output
         output = {"map": _map,
@@ -1872,10 +1869,38 @@ class person_Dashboard(custom_WACOP):
         """
 
         # Map of Incidents
-        _map = self._map("Incidents")
+        _map, button = self._map("Incidents")
 
         output = {"map": _map,
                   }
+
+        # Greeting
+        user = current.auth.user
+        organisation_id = user.organisation_id
+        if organisation_id:
+            s3db = current.s3db
+            ptable = s3db.pr_person
+            ltable = s3db.pr_person_user
+            hrtable = s3db.hrm_human_resource
+            organisation = hrtable.organisation_id.represent(organisation_id)
+            query = (ltable.user_id == user.id) & \
+                    (ltable.pe_id == ptable.pe_id) & \
+                    (hrtable.person_id == ptable.id)
+            hr = current.db(query).select(hrtable.job_title_id,
+                                          limitby = (0, 1),
+                                          ).first()
+            if hr:
+                job_title = hrtable.organisation_id.represent(hr.job_title_id)
+                staff_role = XML("%s, %s" % (job_title, organisation))
+                
+            else:
+                staff_role = organisation
+        else:
+            staff_role = ""
+        output["greeting"] = Storage(first_name = user.first_name,
+                                     last_name = user.last_name,
+                                     staff_role = staff_role,
+                                     )
 
         # DataTables
         datatable = self._datatable
@@ -1921,9 +1946,9 @@ class person_Dashboard(custom_WACOP):
                   dt_init = dt_init,
                   )
 
-        # Updates DataList (without Create...at least until we can select an Incident to link it to)
+        # Updates DataList
         event_id = incident_id = None
-        self._updates_html(r, output, event_id, incident_id, False, **attr)
+        self._updates_html(r, output, event_id, incident_id, True, **attr)
 
         self._view(output, "dashboard.html")
 
