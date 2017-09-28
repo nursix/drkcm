@@ -34,11 +34,13 @@ __all__ = ("S3HRModel",
            #"S3HRJobModel",
            "S3HRContractModel",
            "S3HRSkillModel",
+           "S3HREventStrategyModel",
            "S3HRAppraisalModel",
            "S3HRExperienceModel",
            "S3HRAwardModel",
            "S3HRDisciplinaryActionModel",
            "S3HRProgrammeModel",
+           "S3HRProgrammeEventModel",
            "hrm_AssignMethod",
            "hrm_HumanResourceRepresent",
            "hrm_TrainingEventRepresent",
@@ -1966,7 +1968,9 @@ class S3HRSkillModel(S3Model):
              "hrm_credential",
              "hrm_training",
              "hrm_trainings",
+             "hrm_event_type",
              "hrm_training_event",
+             "hrm_training_event_id",
              "hrm_certificate",
              "hrm_certification",
              "hrm_certification_onaccept",
@@ -2440,9 +2444,10 @@ class S3HRSkillModel(S3Model):
                                       label = label_create,
                                       )
         else:
-            course_help = DIV(_class="tooltip",
-                              _title="%s|%s" % (T("Course"),
-                                                AUTOCOMPLETE_HELP))
+            course_help = None
+            #course_help = DIV(_class="tooltip",
+            #                  _title="%s|%s" % (T("Course"),
+            #                                    AUTOCOMPLETE_HELP))
 
         course_represent = S3Represent(lookup=tablename, translate=True)
         course_id = S3ReusableField("course_id", "reference %s" % tablename,
@@ -2493,6 +2498,56 @@ class S3HRSkillModel(S3Model):
                        hrm_training = "course_id",
                        )
 
+        # ---------------------------------------------------------------------
+        # Event Types
+        # - Trainings, Workshops, Meetings
+        #
+        tablename = "hrm_event_type"
+        define_table(tablename,
+                     Field("name", notnull=True,
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Event Type"),
+            title_display = T("Event Type Details"),
+            title_list = T("Event Types"),
+            title_update = T("Edit Event Type"),
+            label_list_button = T("List Event Types"),
+            label_delete_button = T("Delete Event Type"),
+            msg_record_created = T("Event Type added"),
+            msg_record_modified = T("Event Type updated"),
+            msg_record_deleted = T("Event Type deleted"),
+            msg_list_empty = T("Currently no entries in the catalog"))
+
+        event_types = settings.get_hrm_event_types()
+        label_create = crud_strings[tablename].label_create
+        represent = S3Represent(lookup=tablename)
+        event_type_id = S3ReusableField("event_type_id", "reference %s" % tablename,
+            label = T("Event Type"),
+            ondelete = "RESTRICT",
+            readable = event_types,
+            writable = event_types,
+            represent = represent,
+            requires = IS_EMPTY_OR(
+                        IS_ONE_OF(db, "hrm_event_type.id",
+                                  represent
+                                  )),
+            sortby = "name",
+            comment=S3PopupLink(f = "event_type",
+                                label = label_create,
+                                title = label_create,
+                                tooltip = T("Add a new event type to the catalog."),
+                                ),
+            )
+
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  )
+
         # =========================================================================
         # (Training) Events
         # - can include Meetings, Workshops, etc
@@ -2533,6 +2588,12 @@ class S3HRSkillModel(S3Model):
         define_table(tablename,
                      # Instance
                      self.super_link("pe_id", "pr_pentity"),
+                     event_type_id(),
+                     Field("name",
+                           label = T("Name"),
+                           readable = event_types,
+                           writable = event_types,
+                           ),
                      course_id(empty = not course_mandatory),
                      organisation_id(label = T("Organized By")),
                      self.gis_location_id(widget = S3LocationSelector(), # show_address = False
@@ -2678,10 +2739,22 @@ class S3HRSkillModel(S3Model):
                                     ],
                        # Format for list_fields
                        hrm_training_event_instructor = "training_event_id",
+
+                       hrm_programme = {"link": "hrm_programme_event",
+                                        "joinby": "training_event_id",
+                                        "key": "programme_id",
+                                        "actuate": "hide",
+                                        },
+                       project_strategy = {"link": "hrm_event_strategy",
+                                           "joinby": "training_event_id",
+                                           "key": "strategy_id",
+                                           "actuate": "hide",
+                                           },
                        )
 
         # =====================================================================
         # Training Intructors
+        # - used if there can be multiple per-event
         #
 
         tablename = "hrm_training_event_instructor"
@@ -2700,7 +2773,7 @@ class S3HRSkillModel(S3Model):
                      *s3_meta_fields())
 
         # =====================================================================
-        # Training Participations (Trainees)
+        # (Training) Participations (Trainees)
         #
         # These are an element of credentials:
         # - a minimum number of hours of training need to be done each year
@@ -2723,7 +2796,7 @@ class S3HRSkillModel(S3Model):
                      training_event_id(readable = False,
                                        writable = False,
                                        ),
-                     course_id(empty = False,
+                     course_id(empty = not course_mandatory,
                                ),
                      s3_datetime(),
                      s3_datetime("end_date",
@@ -3261,6 +3334,7 @@ class S3HRSkillModel(S3Model):
                     hrm_skill_id = skill_id,
                     hrm_multi_skill_id = multi_skill_id,
                     hrm_multi_skill_represent = multi_skill_represent,
+                    hrm_training_event_id = training_event_id,
                     hrm_certification_onaccept = self.hrm_certification_onaccept,
                     )
 
@@ -3611,19 +3685,20 @@ def hrm_training_onaccept(form):
     course_table = db.hrm_course
     settings = current.deployment_settings
 
-    course_pass_marks = settings.get_hrm_course_pass_marks()
-    if course_pass_marks and not record.grade and record.grade_details:
-        # Provide a Pass/Fail rating based on the Course's Pass Mark
-        course = db(course_table.id == course_id).select(course_table.pass_mark,
-                                                         limitby=(0, 1)
-                                                         ).first()
-        if course:
-            if record.grade_details >= course.pass_mark:
-                # Pass
-                record.update_record(grade=8)
-            else:
-                # Fail
-                record.update_record(grade=9)
+    if course_id:
+        course_pass_marks = settings.get_hrm_course_pass_marks()
+        if course_pass_marks and not record.grade and record.grade_details:
+            # Provide a Pass/Fail rating based on the Course's Pass Mark
+            course = db(course_table.id == course_id).select(course_table.pass_mark,
+                                                             limitby=(0, 1)
+                                                             ).first()
+            if course:
+                if record.grade_details >= course.pass_mark:
+                    # Pass
+                    record.update_record(grade=8)
+                else:
+                    # Fail
+                    record.update_record(grade=9)
 
     vol_experience = settings.get_hrm_vol_experience()
     if vol_experience in ("programme", "both"):
@@ -3680,7 +3755,7 @@ def hrm_training_onaccept(form):
     courses = db(query).select(table.course_id,
                                distinct = True,
                                )
-    courses = [c.course_id for c in courses]
+    courses = [c.course_id for c in courses if c.course_id is not None]
     exists = db(ltable.person_id == person_id).select(ltable.id,
                                                       limitby=(0, 1)).first()
     if exists:
@@ -3725,38 +3800,64 @@ def hrm_training_onaccept(form):
                 # Automatically propagates to Skills
                 resource.delete()
     else:
-        # Which certificates does this course give?
-        query = (ltable.course_id == course_id) & \
-                (ltable.deleted == False)
-        certificates = db(query).select(ltable.certificate_id)
-        # Lookup user_id to allow the user to see their certifications
-        ptable = db.pr_person
-        putable = s3db.pr_person_user
-        query = (ptable.id == person_id) & \
-                (putable.pe_id == ptable.pe_id)
-        user = db(query).select(putable.user_id,
-                                limitby = (0, 1)
-                                ).first()
-        if user:
-            user_id = user.user_id
-        else:
-            # Record has no special ownership
-            user_id = None
-        # Add any missing certifications
-        hrm_certification_onaccept = s3db.hrm_certification_onaccept
-        for certificate in certificates:
-            certification_id = ctable.update_or_insert(
-                    person_id = person_id,
-                    certificate_id = certificate.certificate_id,
-                    training_id = training_id,
-                    comments = "Added by training",
-                    owned_by_user = user_id,
-                    )
-            # Propagate to Skills
-            form = Storage()
-            form.vars = Storage()
-            form.vars.id = certification_id
-            hrm_certification_onaccept(form)
+        if course_id:
+            # Which certificates does this course give?
+            query = (ltable.course_id == course_id) & \
+                    (ltable.deleted == False)
+            certificates = db(query).select(ltable.certificate_id)
+            # Lookup user_id to allow the user to see their certifications
+            ptable = db.pr_person
+            putable = s3db.pr_person_user
+            query = (ptable.id == person_id) & \
+                    (putable.pe_id == ptable.pe_id)
+            user = db(query).select(putable.user_id,
+                                    limitby = (0, 1)
+                                    ).first()
+            if user:
+                user_id = user.user_id
+            else:
+                # Record has no special ownership
+                user_id = None
+            # Add any missing certifications
+            hrm_certification_onaccept = s3db.hrm_certification_onaccept
+            for certificate in certificates:
+                certification_id = ctable.update_or_insert(
+                        person_id = person_id,
+                        certificate_id = certificate.certificate_id,
+                        training_id = training_id,
+                        comments = "Added by training",
+                        owned_by_user = user_id,
+                        )
+                # Propagate to Skills
+                form = Storage()
+                form.vars = Storage()
+                form.vars.id = certification_id
+                hrm_certification_onaccept(form)
+
+# =============================================================================
+class S3HREventStrategyModel(S3Model):
+    """
+        (Training) Events <> Strategies Link Table
+    """
+
+    names = ("hrm_event_strategy",
+             )
+
+    def model(self):
+
+        # =====================================================================
+        # (Training) Events <> Strategies Link Table
+        #
+        tablename = "hrm_event_strategy"
+        self.define_table(tablename,
+                          self.hrm_training_event_id(),
+                          self.project_strategy_id(),
+                          *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
 
 # =============================================================================
 class S3HRAppraisalModel(S3Model):
@@ -4269,10 +4370,11 @@ class S3HRDisciplinaryActionModel(S3Model):
 # =============================================================================
 class S3HRProgrammeModel(S3Model):
     """
-        Record Volunteer Hours on Programmes
-        - initially at least this doesn't link to the Project module
-
-        @ToDo: Move to modules/eden/vol.py
+        Programmes
+            - record Volunteer Hours
+            - categorise (Training) Events
+        These are separate to the Project module's Programmes
+        - @ToDo: setting to make them the same?
     """
 
     names = ("hrm_programme",
@@ -4297,7 +4399,6 @@ class S3HRProgrammeModel(S3Model):
 
         # =====================================================================
         # Progammes
-        # - not sure yet whether this will map to 'Programme', 'Project' or 'Activity' in future
         #
 
         tablename = "hrm_programme"
@@ -4372,6 +4473,12 @@ class S3HRProgrammeModel(S3Model):
                             hrm_programme_hours = {"name": "person",
                                                    "joinby": "programme_id",
                                                    },
+                            # Uncomment if-required for reporting
+                            #hrm_training_event = {"link": "hrm_programme_event",
+                            #                      "joinby": "programme_id",
+                            #                      "key": "training_event_id",
+                            #                      "actuate": "hide",
+                            #                      },
                             )
 
         # =====================================================================
@@ -4494,6 +4601,31 @@ class S3HRProgrammeModel(S3Model):
         #
         return dict(hrm_programme_id = programme_id,
                     )
+
+# =============================================================================
+class S3HRProgrammeEventModel(S3Model):
+    """
+        Programmes <> (Training) Events Link Table
+    """
+
+    names = ("hrm_programme_event",
+             )
+
+    def model(self):
+
+        # =====================================================================
+        # Programmes <> (Training) Events Link Table
+        #
+        tablename = "hrm_programme_event"
+        self.define_table(tablename,
+                          self.hrm_programme_id(),
+                          self.hrm_training_event_id(),
+                          *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
 
 # =============================================================================
 def hrm_programme_hours_month(row):
@@ -5087,6 +5219,7 @@ class hrm_TrainingEventRepresent(S3Represent):
             query = key.belongs(values)
 
         fields = [etable.id,
+                  etable.name,
                   etable.start_date,
                   etable.instructor,
                   etable.person_id,
@@ -5119,6 +5252,11 @@ class hrm_TrainingEventRepresent(S3Represent):
 
             @param row: the Row
         """
+
+        # Do we have a Name?
+        name = row.get("hrm_training_event.name")
+        if name:
+            return name
 
         # Course Details
         course = row.get("hrm_course")
@@ -6251,6 +6389,16 @@ def hrm_rheader(r, tabs=[], profile=False):
                        )
         else:
             action = None
+
+        if settings.get_hrm_event_types():
+            event_type = TR(TH("%s: " % table.event_type_id.label),
+                            table.event_type_id.represent(record.event_type_id))
+            event_name = TR(TH("%s: " % table.name.label),
+                            record.name)
+        else:
+            event_type = ""
+            event_name = ""
+
         instructors = settings.get_hrm_training_instructors()
         if instructors == "internal":
             instructors = TR(TH("%s: " % table.person_id.label),
@@ -6273,7 +6421,10 @@ def hrm_rheader(r, tabs=[], profile=False):
                              instructors)
         else:
             instructors = ""
-        rheader = DIV(TABLE(TR(TH("%s: " % table.organisation_id.label),
+
+        rheader = DIV(TABLE(event_type,
+                            event_name,
+                            TR(TH("%s: " % table.organisation_id.label),
                                table.organisation_id.represent(record.organisation_id)),
                             TR(TH("%s: " % table.course_id.label),
                                table.course_id.represent(record.course_id)),

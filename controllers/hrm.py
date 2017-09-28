@@ -476,6 +476,12 @@ def certificate_skill():
     return s3_rest_controller()
 
 # -----------------------------------------------------------------------------
+def event_type():
+    """ Event Types Controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
 def facility():
     """
         Filtered version of the facility() REST controller
@@ -657,6 +663,20 @@ def staff_for_site():
 
     response.headers["Content-Type"] = "application/json"
     return result
+
+# =============================================================================
+# Programmes
+# =============================================================================
+def programme():
+    """ Programmes Controller """
+
+    return s3_rest_controller()
+
+# =============================================================================
+def strategy():
+    """ Strategies Controller """
+
+    return s3_rest_controller("project")
 
 # =============================================================================
 # Salaries

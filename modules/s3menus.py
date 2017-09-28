@@ -879,6 +879,7 @@ class S3OptionsMenu(object):
         return M()(
                     M("Schools", c="edu", f="school")(
                         M("Create", m="create"),
+                        M("Import", m="import", p="create"),
                     ),
                     M("School Types", c="edu", f="school_type")(
                         M("Create", m="create"),
@@ -1552,6 +1553,10 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                     ),
                     M(SECTORS, f="sector", restrict=[ADMIN])(
+                        M("Create", m="create"),
+                    ),
+                    M("Resource Types", f="resource_type",
+                      restrict=[ADMIN])(
                         M("Create", m="create"),
                     ),
                 )

@@ -25,7 +25,7 @@ class index(S3CustomController):
         events = custom._events_html()
 
         # Map of Incidents
-        _map = custom._map("Incidents")
+        _map, button = custom._map("Incidents")
 
         # Output
         output = {"alerts": alerts,
@@ -99,7 +99,9 @@ class custom_WACOP(S3CRUD):
                    event_id = None,
                    incident_id = None,
                    ajax_vars = None, # Used to be able to differentiate contexts in customise()
+                                     # & for filter_defaults
                    dt_init = None,
+                   resource = None,
                    ):
         """
             Update output with a dataTable and a create_popup
@@ -113,7 +115,8 @@ class custom_WACOP(S3CRUD):
 
         if ajax_vars is None:
             ajax_vars = {}
-        resource = s3db.resource(tablename)
+        if resource is None:
+            resource = s3db.resource(tablename)
         if event_id:
             ltablename = "event_%s" % f
             if tablename == ltablename:
@@ -758,6 +761,86 @@ class custom_WACOP(S3CRUD):
         return system_wide
 
     # -------------------------------------------------------------------------
+    def _tasks_html(self,
+                    r,
+                    output,
+                    updateable = True,
+                    event_id = None,
+                    incident_id = None,
+                    dt_init = None,
+                    ):
+        """
+            Create the HTML for the Tasks section
+
+            @param r: the S3Request
+        """
+
+        tablename = "project_task"
+        dataTable_id = "custom-list-%s" % tablename
+        ajax_vars = {#"list_id": dataTable_id,
+                     #"refresh": dataTable_id,
+                     }
+
+        s3db = current.s3db
+        resource = s3db.resource(tablename)
+        if event_id:
+            # Done by _datatable
+            #resource.add_filter(FS("event_task.event_id") == event_id)
+            ajax_vars["event_task.event_id"] = event_id
+        elif incident_id:
+            # Done by _datatable
+            #resource.add_filter(FS("event_task.incident_id") == incident_id)
+            ajax_vars["event_task.incident_id"] = incident_id
+        ajaxurl = URL(c="project", f="task", args="datatable",
+                      vars=ajax_vars, extension="aadata")
+
+        customise = current.deployment_settings.customise_resource(tablename)
+        if customise:
+            customise(r, tablename)
+
+        default_filters = S3FilterForm.apply_filter_defaults(r, resource)
+
+        self._datatable(output = output,
+                        tablename = tablename,
+                        search = False,
+                        updateable = updateable,
+                        event_id = event_id,
+                        incident_id = incident_id,
+                        ajax_vars = default_filters,
+                        dt_init = dt_init,
+                        resource = resource,
+                        )
+
+        # Filter Form
+        # Widgets defined in customise() to be visible to filter.options
+        filter_widgets = s3db.get_config(tablename, "filter_widgets")
+
+        #ajax_vars.pop("list_id")
+        #ajax_vars.pop("refresh")
+        filter_form = S3FilterForm(filter_widgets,
+                                   formstyle = filter_formstyle_profile,
+                                   submit = True,
+                                   ajax = True,
+                                   url = ajaxurl,
+                                   # Ensure that Filter options update when
+                                   # entries are added/modified
+                                   # => done through target-parameter in html() now,
+                                   #    but /a/ form ID is still required for other
+                                   #    scripts and styles
+                                   _id = "%s-filter-form" % dataTable_id,
+                                   ajaxurl = URL(c = "project",
+                                                 f = "task",
+                                                 args = ["filter.options"],
+                                                 vars = ajax_vars, # manually applied to s3.filter in customise()
+                                                 ),
+                                   )
+
+        output["project_task_filter_form"] = filter_form.html(resource, r.get_vars,
+                                                              target = dataTable_id,
+                                                              alias = None,
+                                                              )
+
+    # -------------------------------------------------------------------------
     def _updates_html(self, r, output, event_id, incident_id, updateable, **attr):
         """
             Create the HTML for the Updates section
@@ -1357,6 +1440,7 @@ class event_Profile(custom_WACOP):
         auth = current.auth
         db = current.db
         s3db = current.s3db
+        settings = current.deployment_settings
 
         etable = s3db.event_event
         itable = s3db.event_incident
@@ -1480,13 +1564,13 @@ class event_Profile(custom_WACOP):
 
         # DataTables
         datatable = self._datatable
-        #current.deployment_settings.ui.datatables_pagingType = "bootstrap"
+        #settings.ui.datatables_pagingType = "bootstrap"
         dt_init = ['''$('.dataTables_filter label,.dataTables_length,.dataTables_info').hide();''']
 
         # Incidents dataTable
         tablename = "event_incident"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1500,7 +1584,7 @@ class event_Profile(custom_WACOP):
         # Resources dataTable
         tablename = "event_team"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1512,23 +1596,16 @@ class event_Profile(custom_WACOP):
                   )
 
         # Tasks dataTable
-        tablename = "project_task"
-
-        customise = current.deployment_settings.customise_resource(tablename)
-        if customise:
-            customise(r, tablename)
-
-        datatable(output = output,
-                  tablename = tablename,
-                  updateable = updateable,
-                  event_id = event_id,
-                  dt_init = dt_init,
-                  )
+        self._tasks_html(r, output,
+                         updateable = updateable,
+                         event_id = event_id,
+                         dt_init = dt_init,
+                         )
 
         # Staff dataTable
         tablename = "event_human_resource"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1542,7 +1619,7 @@ class event_Profile(custom_WACOP):
         # Organisations dataTable
         tablename = "event_organisation"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1581,6 +1658,7 @@ class incident_Profile(custom_WACOP):
         auth = current.auth
         db = current.db
         s3db = current.s3db
+        settings = current.deployment_settings
 
         ptable = s3db.cms_post
         gtable = s3db.gis_location
@@ -1796,13 +1874,13 @@ class incident_Profile(custom_WACOP):
 
         # DataTables
         datatable = self._datatable
-        #current.deployment_settings.ui.datatables_pagingType = "bootstrap"
+        #settings.ui.datatables_pagingType = "bootstrap"
         dt_init = ['''$('.dataTables_filter label,.dataTables_length,.dataTables_info').hide();''']
 
         # Resources dataTable
         tablename = "event_team"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1814,23 +1892,16 @@ class incident_Profile(custom_WACOP):
                   )
 
         # Tasks dataTable
-        tablename = "project_task"
-
-        customise = current.deployment_settings.customise_resource(tablename)
-        if customise:
-            customise(r, tablename)
-
-        datatable(output = output,
-                  tablename = tablename,
-                  updateable = updateable,
-                  incident_id = incident_id,
-                  dt_init = dt_init,
-                  )
+        self._tasks_html(r, output,
+                         updateable = updateable,
+                         incident_id = incident_id,
+                         dt_init = dt_init,
+                         )
 
         # Staff dataTable
         tablename = "event_human_resource"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1844,7 +1915,7 @@ class incident_Profile(custom_WACOP):
         # Organisations dataTable
         tablename = "event_organisation"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1877,6 +1948,8 @@ class person_Dashboard(custom_WACOP):
             @param r: the S3Request
             @param attr: controller arguments
         """
+
+        settings = current.deployment_settings
 
         # Map of Incidents
         _map, button = self._map("Incidents")
@@ -1914,26 +1987,19 @@ class person_Dashboard(custom_WACOP):
 
         # DataTables
         datatable = self._datatable
-        #current.deployment_settings.ui.datatables_pagingType = "bootstrap"
+        #settings.ui.datatables_pagingType = "bootstrap"
         dt_init = ['''$('.dataTables_filter label,.dataTables_length,.dataTables_info').hide();''']
 
         # Tasks dataTable
-        tablename = "project_task"
-
-        customise = current.deployment_settings.customise_resource(tablename)
-        if customise:
-            customise(r, tablename)
-
-        datatable(output = output,
-                  tablename = tablename,
-                  updateable = True,
-                  dt_init = dt_init,
-                  )
+        self._tasks_html(r, output,
+                         updateable = True,
+                         dt_init = dt_init,
+                         )
 
         # Staff dataTable
         tablename = "hrm_human_resource"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
@@ -1946,7 +2012,7 @@ class person_Dashboard(custom_WACOP):
         # Organisations dataTable
         tablename = "org_organisation"
 
-        customise = current.deployment_settings.customise_resource(tablename)
+        customise = settings.customise_resource(tablename)
         if customise:
             customise(r, tablename)
 
