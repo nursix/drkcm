@@ -37,6 +37,7 @@ def config(settings):
                                                "volunteer": T("Volunteer"),
                                                }
     #settings.auth.registration_link_user_to_default = "staff"
+    settings.auth.password_retrieval = False
 
     # Approval emails get sent to all admins
     settings.mail.approver = "ADMIN"
@@ -65,7 +66,7 @@ def config(settings):
     # Languages used in the deployment (used for Language Toolbar & GIS Locations)
     # http://www.loc.gov/standards/iso639-2/php/code_list.php
     settings.L10n.languages = OrderedDict([
-       ("de", "Deutsch"),
+       ("de", "German"),
        ("en", "English"),
     ])
     # Default language for Language Toolbar (& GIS Locations in future)

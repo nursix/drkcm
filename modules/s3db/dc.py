@@ -32,9 +32,11 @@
 __all__ = ("DataCollectionTemplateModel",
            "DataCollectionModel",
            "dc_rheader",
+           "dc_target_check",
            )
 
 from gluon import *
+from gluon.languages import read_dict, write_dict
 
 from ..s3 import *
 from s3layouts import S3PopupLink
@@ -59,7 +61,9 @@ class DataCollectionTemplateModel(S3Model):
         db = current.db
 
         crud_strings = current.response.s3.crud_strings
+        settings = current.deployment_settings
 
+        add_components = self.add_components
         configure = self.configure
         define_table = self.define_table
 
@@ -87,6 +91,7 @@ class DataCollectionTemplateModel(S3Model):
 
         configure(tablename,
                   create_onaccept = self.dc_template_create_onaccept,
+                  deduplicate = S3Duplicate(),
                   )
 
         # Reusable field
@@ -117,10 +122,10 @@ class DataCollectionTemplateModel(S3Model):
             msg_list_empty = T("No Templates currently registered"))
 
         # Components
-        self.add_components(tablename,
-                            dc_question = "template_id",
-                            dc_section = "template_id",
-                            )
+        add_components(tablename,
+                       dc_question = "template_id",
+                       dc_section = "template_id",
+                       )
 
         # =====================================================================
         # Template Sections
@@ -306,8 +311,17 @@ class DataCollectionTemplateModel(S3Model):
                                  ),
                      *s3_meta_fields())
 
+        unique_question_names_per_template = settings.get_dc_unique_question_names_per_template()
+        if unique_question_names_per_template:
+            # Deduplicate Questions by Name/Template
+            # - needed for importing multiple translations
+            deduplicate = S3Duplicate(primary=("name", "template_id"))
+        else:
+            deduplicate = None
+
         configure(tablename,
                   onaccept = self.dc_question_onaccept,
+                  deduplicate = deduplicate,
                   )
 
         # Reusable field
@@ -338,23 +352,27 @@ class DataCollectionTemplateModel(S3Model):
             msg_record_deleted = T("Question deleted"),
             msg_list_empty = T("No Questions currently registered"))
 
+        # Components
+        add_components(tablename,
+                       dc_question_l10n = "question_id",
+                       )
+
         # =====================================================================
         # Question Translations
         #
-        l10n_languages = current.deployment_settings.get_L10n_languages()
-
         tablename = "dc_question_l10n"
         define_table(tablename,
                      question_id(),
-                     Field("language",
-                           label = T("Language"),
-                           represent = lambda opt: \
-                                        l10n_languages.get(opt, UNKNOWN_OPT),
-                           requires = IS_ISO639_2_LANGUAGE_CODE(),
-                           ),
+                     s3_language(empty = False),
                      Field("name_l10n",
-                           label = T("Translated Field Name"),
+                           label = T("Translated Question"),
                            ),
+                     Field("options_l10n", "json",
+                           label = T("Translated Options"),
+                           represent = lambda opts: ", ".join(json.loads(opts)),
+                           requires = IS_EMPTY_OR(IS_JSONS3()),
+                           ),
+                     # @ToDo: Implement this when-required
                      Field("tooltip_l10n",
                            label = T("Translated Tooltip"),
                            ),
@@ -373,6 +391,10 @@ class DataCollectionTemplateModel(S3Model):
             msg_record_modified = T("Translation updated"),
             msg_record_deleted = T("Translation deleted"),
             msg_list_empty = T("No Translations currently registered"))
+
+        configure(tablename,
+                  onaccept = self.dc_question_l10n_onaccept,
+                  )
 
         # =====================================================================
         # Pass names back to global scope (s3.*)
@@ -524,6 +546,64 @@ class DataCollectionTemplateModel(S3Model):
             # Link the Field to the Question
             question.update_record(field_id=field_id)
 
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def dc_question_l10n_onaccept(form):
+        """
+            On-accept routine for dc_question_l10n:
+                - Update the Translations file with translated Options
+        """
+
+        try:
+            question_l10n_id = form.vars.id
+        except AttributeError:
+            return
+
+        db = current.db
+
+        # Read the Question
+        qtable = db.dc_question
+        ltable = db.dc_question_l10n
+        query = (qtable.id == ltable.question_id) & \
+                (ltable.id == question_l10n_id)
+        question = db(query).select(qtable.field_type,
+                                    qtable.options,
+                                    ltable.options_l10n,
+                                    ltable.language,
+                                    limitby=(0, 1)
+                                    ).first()
+
+        if question["dc_question.field_type"] != 6:
+            # Nothing we need to do
+            return
+
+        options = question["dc_question.options"]
+        options_l10n = question["dc_question_l10n.options_l10n"]
+
+        len_options = len(options)
+        if len_options != len(options_l10n):
+            current.session.error(T("Number of Translated Options don't match original!"))
+            return
+
+        # Read existing translations (if any)
+        w2pfilename = os.path.join(current.request.folder, "languages",
+                                   "%s.py" % question["dc_question_l10n.language"])
+
+        if os.path.exists(w2pfilename):
+            translations = read_dict(w2pfilename)
+        else:
+            translations = {}
+
+        # Add ours
+        for i in range(len_options):
+            original = s3_str(options[i])
+            translated = s3_str(options_l10n[i])
+            if original != translated:
+                translations[original] = translated
+
+        # Write out new file
+        write_dict(w2pfilename, translations)
+
 # =============================================================================
 class DataCollectionModel(S3Model):
     """
@@ -559,7 +639,13 @@ class DataCollectionModel(S3Model):
         define_table(tablename,
                      template_id(),
                      s3_date(default = "now"),
-                     location_id(widget = S3LocationSelector(show_map=False)),
+                     # Enable in-templates as-required
+                     s3_language(readable = False,
+                                 writable = False,
+                                 ),
+                     location_id(widget = S3LocationSelector(show_map = False,
+                                                             show_postcode = False,
+                                                             )),
                      #self.org_organisation_id(),
                      #self.pr_person_id(),
                      s3_comments(),
@@ -567,12 +653,25 @@ class DataCollectionModel(S3Model):
 
         # Components
         add_components(tablename,
+
                        dc_response = "target_id",
+
                        event_event = {"link": "event_target",
                                       "joinby": "target_id",
                                       "key": "event_id",
                                       "actuate": "replace",
                                       },
+
+                       hrm_training_event = {"link": "hrm_event_target",
+                                             "joinby": "target_id",
+                                             "key": "training_event_id",
+                                             "multiple": False,
+                                             "actuate": "replace",
+                                             },
+                       # Format for S3InlineComponent
+                       hrm_event_target = {"joinby": "target_id",
+                                           "multiple": False,
+                                           }
                        )
 
         # CRUD strings
@@ -608,6 +707,10 @@ class DataCollectionModel(S3Model):
                      target_id(),
                      template_id(),
                      s3_datetime(default = "now"),
+                     # Enable in-templates as-required
+                     s3_language(readable = False,
+                                 writable = False,
+                                 ),
                      location_id(),
                      self.org_organisation_id(),
                      self.pr_person_id(
@@ -747,6 +850,23 @@ def dc_rheader(r, tabs=None):
             rheader_fields = (["name"],
                               )
 
+        elif tablename == "dc_question":
+
+            tabs = ((T("Basic Details"), None),
+                    (T("Translations"), "question_l10n"),
+                    )
+
+            def options(record):
+                if record.options:
+                    return ", ".join(record.options)
+                else:
+                    return current.messages["NONE"]
+
+            rheader_fields = ([(T("Question"), "name")],
+                              [(T("Options"), options)],
+                              ["comments"],
+                              )
+
         elif tablename == "dc_response":
 
             tabs = ((T("Basic Details"), None, {"native": 1}),
@@ -878,5 +998,107 @@ def dc_rheader(r, tabs=None):
                                                          )
 
     return rheader
+
+# =============================================================================
+def dc_target_check(target_id):
+    """
+        Check whether a Survey has been Approved/Rejected & notify OM if not
+
+        @param target_id: Target record_id
+
+        @ToDo: Currently configured for IFRC Bangkok CCST...make this more
+               generic if-required (e.g. Move this all to a deployment_setting)
+    """
+
+    T = current.T
+    db = current.db
+    s3db = current.s3db
+
+    # Read Survey Record
+    ttable = s3db.dc_target
+    ltable = s3db.hrm_event_target
+    etable = s3db.hrm_training_event
+    query = (ttable.id == target_id)
+    left = etable.on((ttable.id == ltable.target_id) & \
+                     (etable.id == ltable.training_event_id))
+    survey = db(query).select(ttable.approved_by,
+                              ttable.deleted,
+                              etable.name,
+                              etable.location_id,
+                              etable.start_date,
+                              left = left,
+                              limitby = (0, 1)
+                              ).first()
+
+    if not survey:
+        return
+
+    if survey["dc_target"].deleted:
+        # Presumably it was Rejected
+        return
+
+    if survey["dc_target"].approved_by:
+        # Survey was Approved
+        return
+
+    # List of recipients, grouped by language
+    # Recipients: OM
+    languages = {}
+
+    utable = db.auth_user
+    gtable = db.auth_group
+    mtable = db.auth_membership
+    ltable = s3db.pr_person_user
+    query = (utable.id == mtable.user_id) & \
+            (mtable.group_id == gtable.id) & \
+            (gtable.uuid == "EVENT_OFFICE_MANAGER") & \
+            (ltable.user_id == utable.id)
+    users = db(query).select(ltable.pe_id,
+                             utable.language,
+                             )
+    for user in users:
+        language = user["auth_user.language"]
+        if language in languages:
+            languages[language].append(user["pr_person_user.pe_id"])
+        else:
+            languages[language] = [user["pr_person_user.pe_id"]]
+
+    # Build Message
+    event = survey["hrm_training_event"]
+    event_date = event.start_date
+    location_id = event.location_id
+    url = "%s%s" % (current.deployment_settings.get_base_public_url(),
+                    URL(c="dc", f="target", args=[target_id, "review"]),
+                    )
+    subject = T("Post-Event Survey hasn't been Approved/Rejected")
+    message = T("The post-Event Survey for %(event_name)s on %(date)s in %(location)s has not been Approved or Rejected") % \
+            dict(date = "%(date)s", # Localise per-language
+                 event_name = event.name,
+                 location = "%(location)s", # Localise per-language
+                 #url = url,
+                 )
+
+    # Send Localised Mail(s)
+    send_email = current.msg.send_by_pe_id
+    session_s3 = current.session.s3
+    date_represent = S3DateTime.date_represent # We want Dates not datetime which etable.start_date uses
+    location_represent = s3db.gis_LocationRepresent()
+    for language in languages:
+        T.force(language)
+        subject = s3_str(subject)
+        session_s3.language = language # for date_represent
+        message = s3_str(message % dict(date = date_represent(event_date),
+                                        location = location_represent(location_id),
+                                        ),
+                         )
+        users = languages[language]
+        for pe_id in users:
+            send_email(pe_id,
+                       subject = subject,
+                       message = message,
+                       )
+
+    # NB No need to restore UI language as this is run as an async task w/o UI
+    return
 
 # END =========================================================================

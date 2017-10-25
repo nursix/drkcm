@@ -452,6 +452,12 @@ class S3Config(Storage):
         """
         return self.auth.get("password_changes", True)
 
+    def get_auth_password_retrieval(self):
+        """
+            Allow password retrieval?
+        """
+        return self.auth.get("password_retrieval", True)
+
     def get_auth_password_min_length(self):
         """
             To set the Minimum Password Length
@@ -2559,12 +2565,12 @@ class S3Config(Storage):
                 http://www.i18nguy.com/unicode/language-identifiers.html
         """
 
-        return self.cap.get("languages", OrderedDict([("ar", "العربية"),
+        return self.cap.get("languages", OrderedDict([("ar", "Arabic"),
                                                       ("en-US", "English"),
-                                                      ("es", "Español"),
-                                                      ("fr", "Français"),
-                                                      ("pt", "Português"),
-                                                      ("ru", "русский"),
+                                                      ("es", "Spanish"),
+                                                      ("fr", "French"),
+                                                      ("pt", "Portuguese"),
+                                                      ("ru", "Russian"),
                                                       ]))
 
     def get_cap_authorisation(self):
@@ -2820,6 +2826,13 @@ class S3Config(Storage):
             - 'Survey'
         """
         return self.dc.get("response_label", "Assessment")
+
+    def get_dc_unique_question_names_per_template(self):
+        """
+            Deduplicate Questions by Name/Template
+             - needed for importing multiple translations
+        """
+        return self.dc.get("unique_question_names_per_template", False)
 
     def get_dc_mobile_data(self):
         """

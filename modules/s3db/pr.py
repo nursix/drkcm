@@ -31,6 +31,7 @@ __all__ = (# PR Base Entities
            "PRPersonEntityModel",
            "PRPersonModel",
            "PRGroupModel",
+           "PRForumModel",
 
             # Person Entity Components
            "PRAddressModel",
@@ -187,6 +188,7 @@ class PRPersonEntityModel(S3Model):
                            po_household = T("Household"),
                            police_station = T("Police Station"),
                            pr_person = T("Person"),
+                           pr_forum = T("Forum"),
                            pr_group = T("Group"),
                            )
 
@@ -2247,8 +2249,7 @@ class PRGroupModel(S3Model):
         define_table = self.define_table
         super_link = self.super_link
 
-        messages = current.messages
-        NONE = messages["NONE"]
+        NONE = current.messages["NONE"]
 
         # ---------------------------------------------------------------------
         # Group Statuses
@@ -2332,8 +2333,7 @@ class PRGroupModel(S3Model):
                      Field("group_type", "integer",
                            default = 4,
                            label = T("Group Type"),
-                           represent = lambda opt: \
-                                       pr_group_types.get(opt, messages.UNKNOWN_OPT),
+                           represent = S3Represent(options = pr_group_types),
                            requires = IS_IN_SET(pr_group_types, zero=None),
                            ),
                      Field("system", "boolean",
@@ -2957,6 +2957,156 @@ class PRGroupModel(S3Model):
         except:
             # => Set to default of None
             return None
+
+# =============================================================================
+class PRForumModel(S3Model):
+    """
+        Forums - similar to Groups, they are collections of People, however
+                 these are restricted to those with User Accounts
+        - used to share Information within Realms
+        - currently used just by WACOP
+    """
+
+    names = ("pr_forum",
+             "pr_forum_id",
+             "pr_forum_membership",
+             )
+
+    def model(self):
+
+        T = current.T
+        db = current.db
+
+        configure = self.configure
+        crud_strings = current.response.s3.crud_strings
+        define_table = self.define_table
+
+        # ---------------------------------------------------------------------
+        # Hard Coded Forum types. Add/Comment entries, but don't remove!
+        #
+        pr_forum_types = {1 : T("Public"),  # Any user can join and post
+                          2 : T("Private"), # Anyone in the forum can post & see membership.
+                                            # Anyone else can see that the forum exists but not its members or posts.
+                          3 : T("Secret"),  # As 'private' but forum's presence is not visible to non-members
+                          }
+
+        tablename = "pr_forum"
+        define_table(tablename,
+                     # Instances
+                     self.super_link("pe_id", "pr_pentity"),
+                     Field("forum_type", "integer",
+                           default = 1,
+                           label = T("Type"),
+                           represent = S3Represent(options = pr_forum_types),
+                           requires = IS_IN_SET(pr_forum_types, zero=None),
+                           ),
+                     Field("name",
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Forum"),
+            title_display = T("Forum Details"),
+            title_list = T("Forums"),
+            title_update = T("Edit Forum"),
+            label_list_button = T("List Forums"),
+            label_delete_button = T("Delete Forum"),
+            msg_record_created = T("Forum added"),
+            msg_record_modified = T("Forum updated"),
+            msg_record_deleted = T("Forum deleted"),
+            msg_list_empty = T("No Forums currently registered"))
+
+        # Resource configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(ignore_deleted=True),
+                  super_entity = ("pr_pentity"),
+                  )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename)
+        forum_id = S3ReusableField("forum_id", "reference %s" % tablename,
+                                   sortby = "name",
+                                   comment = S3PopupLink(c = "pr",
+                                                         f = "forum",
+                                                         label = T("Create Forum"),
+                                                         title = T("Create Forum"),
+                                                         tooltip = T("Create a new Forum"),
+                                                         ),
+                                   label = T("Forum"),
+                                   ondelete = "RESTRICT",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "pr_forum.id",
+                                                          represent,
+                                                          )),
+                                   #widget = S3AutocompleteWidget("pr", "forum")
+                                   )
+
+        # Components
+        self.add_components(tablename,
+                            pr_forum_membership = "forum_id",
+                            )
+
+        # ---------------------------------------------------------------------
+        # Forum membership
+        #
+        tablename = "pr_forum_membership"
+        define_table(tablename,
+                     forum_id(empty = False,
+                              ondelete = "CASCADE",
+                              ),
+                     # @ToDo: Filter to just those with User Accounts
+                     self.pr_person_id(empty = False,
+                                       label = T("Person"),
+                                       ondelete = "CASCADE",
+                                       ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD strings
+        function = current.request.function
+        if function == "person":
+            crud_strings[tablename] = Storage(
+                label_create = T("Add Membership"),
+                title_display = T("Membership Details"),
+                title_list = T("Memberships"),
+                title_update = T("Edit Membership"),
+                label_list_button = T("List Memberships"),
+                label_delete_button = T("Delete Membership"),
+                msg_record_created = T("Added to Forum"),
+                msg_record_modified = T("Membership updated"),
+                msg_record_deleted = T("Removed from Forum"),
+                msg_list_empty = T("Not yet a Member of any Forum"))
+
+        elif function in ("forum", "forum_membership"):
+            crud_strings[tablename] = Storage(
+                label_create = T("Add Member"),
+                title_display = T("Membership Details"),
+                title_list = T("Forum Members"),
+                title_update = T("Edit Membership"),
+                label_list_button = T("List Members"),
+                label_delete_button = T("Remove Person from Forum"),
+                msg_record_created = T("Person added to Forum"),
+                msg_record_modified = T("Membership updated"),
+                msg_record_deleted = T("Person removed from Forum"),
+                msg_list_empty = T("This Forum has no Members yet"))
+
+        # Table configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary=("person_id",
+                                                     "forum_id",
+                                                     ),
+                                            ),
+                  )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
 
 # =============================================================================
 class PRAddressModel(S3Model):
@@ -5026,9 +5176,6 @@ class PRPersonDetailsModel(S3Model):
             3: T("literate"),
         }
 
-        # Language Options
-        languages = settings.get_L10n_languages()
-
         # Nationality Options
         STATELESS = T("Stateless")
         def nationality_opts():
@@ -5047,11 +5194,7 @@ class PRPersonDetailsModel(S3Model):
                           self.pr_person_id(label = T("Person"),
                                             ondelete = "CASCADE",
                                             ),
-                          Field("language", length=16,
-                                represent = lambda opt: \
-                                    languages.get(opt, UNKNOWN_OPT),
-                                requires = IS_EMPTY_OR(IS_IN_SET(languages)),
-                                ),
+                          s3_language(default = None),
                           Field("nationality",
                                 label = T("Nationality"),
                                 represent = nationality_repr,
@@ -6369,6 +6512,26 @@ def pr_rheader(r, tabs=[]):
                                    ),
                                 TR(TH("%s: " % T("Description")),
                                    record.description or "",
+                                   TH(""),
+                                   "",
+                                   )
+                                ), rheader_tabs)
+
+                return rheader
+
+            elif tablename == "pr_forum":
+                if not tabs:
+                    title_display = current.response.s3.crud_strings["pr_forum"].title_display
+                    tabs = [(title_display, None),
+                            (T("Members"), "forum_membership")
+                            ]
+                    rheader_tabs = s3_rheader_tabs(r, tabs)
+                rheader = DIV(TABLE(
+                                TR(TH("%s: " % T("Name")),
+                                   record.name,
+                                   ),
+                                TR(TH("%s: " % T("Comments")),
+                                   record.comments or "",
                                    TH(""),
                                    "",
                                    )

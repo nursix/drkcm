@@ -827,14 +827,9 @@ $.filterOptionsS3({
                      Field("template_settings", "text",
                            readable = False,
                            ),
-                     Field("language",
-                           default = "en-US",
-                           label = T("Language"),
-                           represent = IS_ISO639_2_LANGUAGE_CODE.represent_local,
-                           requires = IS_ISO639_2_LANGUAGE_CODE(translate = True,
-                                                                zero = None,
-                                                                ),
-                           ),
+                     s3_language(default = "en-US",
+                                 empty = False,
+                                 ),
                      Field("category", "list:string", # 1 or more allowed
                            label = T("Category"),
                            required = IS_NOT_EMPTY(),
@@ -1830,30 +1825,6 @@ current.T("This combination of the 'Event Type', 'Urgency', 'Certainty' and 'Sev
                                                limitby=(0, 1)).first()
         if info:
             alert_id = info.alert_id
-
-            irows = db(itable.alert_id == alert_id).select(itable.language)
-            # An alert can contain two info segments, one in English and one in
-            # local language
-            if len(irows) > 2:
-                # Check if there are more than two alerts
-                db(itable.id == info_id).delete()
-                current.session.error = current.T("An alert can contain maximum of two info segments! Please edit already created info segments!")
-                redirect(URL(c="cap", f="alert", args=[alert_id, "info"]))
-            else:
-                if len(irows) == 2:
-                    # Check if both info segments are for same language
-                    if irows[0]["language"] == irows[1]["language"]:
-                        db(itable.id == info_id).delete()
-                        current.session.error = current.T("Please edit already created info segment with same language!")
-                        redirect(URL(c="cap", f="alert", args=[alert_id, "info"]))
-                if not all(language in [key for key in current.deployment_settings.get_L10n_languages()] for language in [irow.language for irow in irows]):
-                    # Check if created info segment contain other than allowed
-                    # language for the deployment
-                    db(itable.id == info_id).delete()
-                    current.session.error = current.T("An alert cannot contain other than English and Local Language! Check your selection!")
-                    redirect(URL(c="cap", f="alert", args=[alert_id, "info"]))
-                
-
             set_ = db(itable.id == info_id)
             if alert_id and cap_alert_is_template(alert_id):
                 set_.update(is_template = True)
@@ -1920,6 +1891,17 @@ current.T("This combination of the 'Event Type', 'Urgency', 'Certainty' and 'Sev
                 used for import from CSV
         """
 
+        T = current.T
+        itable = current.db.cap_info
+        irow = current.db((itable.alert_id == form.request_vars.alert_id) & \
+                          (itable.id != form.request_vars.id)).\
+                                                select(itable.language,
+                                                       limitby=(0, 1)).first()
+        # Check if both info segments are for same language
+        if irow and irow.language == form.vars.language:
+            form.errors["language"] = \
+               T("Please edit already created info segment with same language!")
+
         form_record = form.record
         if form_record and form_record.is_template == False:
             form_vars = form.vars
@@ -1932,18 +1914,14 @@ current.T("This combination of the 'Event Type', 'Urgency', 'Certainty' and 'Sev
             #                current.T("Name-Value Pair is incomplete.")
 
             if not form_vars.get("urgency"):
-                form.errors["urgency"] = \
-                    current.T("'Urgency' field is mandatory")
+                form.errors["urgency"] = T("'Urgency' field is mandatory")
             if not form_vars.get("severity"):
-                form.errors["severity"] = \
-                    current.T("'Severity' field is mandatory")
+                form.errors["severity"] = T("'Severity' field is mandatory")
             if not form_vars.get("certainty"):
-                form.errors["certainty"] = \
-                    current.T("'Certainty' field is mandatory")
+                form.errors["certainty"] = T("'Certainty' field is mandatory")
 
             if not form_vars.get("category"):
-                form.errors["category"] = \
-                    current.T("At least one category is required.")
+                form.errors["category"] = T("At least one category is required.")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2582,16 +2560,11 @@ class S3CAPHistoryModel(S3Model):
                      alert_history_id(readable = False,
                                       writable = False,
                                       ),
-                     Field("language",
-                           label = T("Language"),
-                           represent = IS_ISO639_2_LANGUAGE_CODE.represent_local,
-                           requires = IS_ISO639_2_LANGUAGE_CODE(translate = True,
-                                                                zero = None,
-                                                                ),
-                           comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Denotes the language of the information"),
-                                                           T("Code Values: Natural language identifier per [RFC 3066]. If not present, an implicit default value of 'en-US' will be assumed. Edit settings.cap.languages in 000_config.py to add more languages. See <a href=\"%s\">here</a> for a full list.") % "http://www.i18nguy.com/unicode/language-identifiers.html")),
-                           ),
+                     s3_language(empty = False,
+                                 comment = DIV(_class="tooltip",
+                                               _title="%s|%s" % (T("Denotes the language of the information"),
+                                                                 T("Code Values: Natural language identifier per [RFC 3066]. If not present, an implicit default value of 'en-US' will be assumed. Edit settings.cap.languages in 000_config.py to add more languages. See <a href=\"%s\">here</a> for a full list.") % "http://www.i18nguy.com/unicode/language-identifiers.html")),
+                                 ),
                      Field("category", "list:string",
                            label = T("Category"),
                            represent = S3Represent(options = cap_options["cap_info_category_opts"],
@@ -3266,13 +3239,9 @@ class S3CAPAreaNameModel(S3Model):
                           self.cap_area_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          Field("language",
-                                label = T("Language"),
-                                represent = IS_ISO639_2_LANGUAGE_CODE.represent_local,
-                                requires = IS_ISO639_2_LANGUAGE_CODE(select = current.deployment_settings.get_cap_languages(),
-                                                                     translate = True,
-                                                                     ),
-                                ),
+                          s3_language(empty = False,
+                                      select = current.deployment_settings.get_cap_languages(),
+                                      ),
                           Field("name_l10n",
                                 label = T("Local Name"),
                                 ),

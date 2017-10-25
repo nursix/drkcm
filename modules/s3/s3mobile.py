@@ -56,6 +56,11 @@ from s3validators import JSONERRORS, SEPARATORS
 
 DEFAULT = lambda: None
 
+# JSON-serializable table settings (SERIALIZABLE_OPTS)
+# which require preprocessing before they can be passed
+# to the mobile client (e.g. i18n)
+PREPROCESS_OPTS = ("subheadings", )
+
 # =============================================================================
 class S3MobileFormList(object):
     """
@@ -141,6 +146,9 @@ class S3MobileFormList(object):
                 # Provides (master-)data for download?
                 data = True if options.get("data") else False
 
+                # Exposed for data entry (or just for reference)?
+                main = False if options.get("data_only", False) else True
+
                 # Append to form list
                 url = {"c": c, "f": f}
                 if url_vars:
@@ -150,6 +158,7 @@ class S3MobileFormList(object):
                          "t": tablename,
                          "r": url,
                          "d": data,
+                         "m": main,
                          }
                 formlist.append(mform)
                 formdict[name] = mform
@@ -244,6 +253,9 @@ class S3MobileSchema(object):
         # Initialize subheadings
         self._subheadings = DEFAULT
 
+        # Initialize settings
+        self._settings = None
+
     # -------------------------------------------------------------------------
     def serialize(self):
         """
@@ -316,6 +328,29 @@ class S3MobileSchema(object):
         return subheadings
 
     # -------------------------------------------------------------------------
+    @property
+    def settings(self):
+        """
+            Directly-serializable settings from s3db.configure (lazy property)
+        """
+
+        settings = self._settings
+
+        if settings is None:
+
+            settings = self._settings = {}
+            resource = self.resource
+
+            from s3model import SERIALIZABLE_OPTS
+            for key in SERIALIZABLE_OPTS:
+                if key not in PREPROCESS_OPTS:
+                    setting = resource.get_config(key, DEFAULT)
+                    if setting is not DEFAULT:
+                        settings[key] = setting
+
+        return settings
+
+    # -------------------------------------------------------------------------
     # Introspection methods
     # -------------------------------------------------------------------------
     def describe(self, field):
@@ -331,6 +366,7 @@ class S3MobileSchema(object):
         SUPPORTED_FIELD_TYPES = set(self.SUPPORTED_FIELD_TYPES)
 
         # Check if foreign key
+        superkey = False
         reftype = None
         if fieldtype[:9] == "reference":
 
@@ -357,13 +393,14 @@ class S3MobileSchema(object):
                     supertables = [supertables]
 
                 if ktablename in supertables and key == ktable._id.name:
-                    # This is the super-id of the instance table
+                    # This is the super-id of the instance table => skip
                     return None
                 else:
                     # This is a super-entity reference
                     fieldtype = "objectkey"
 
                     # @todo: add instance types if limited in validator
+                    superkey = True
                     reftype = {ktablename: []}
             else:
                 # Regular foreign key
@@ -394,7 +431,6 @@ class S3MobileSchema(object):
             description["reftype"] = reftype
 
         # Add field options to description
-        # @todo: indicate SE reference
         options = self.get_options(field, lookup=ktablename)
         if options:
             # @todo: if reference, store the returned options
@@ -403,7 +439,7 @@ class S3MobileSchema(object):
             description["options"] = options
 
         # Add default value to description
-        default = self.get_default(field, lookup=ktablename)
+        default = self.get_default(field, lookup=ktablename, superkey=superkey)
         if default:
             description["default"] = default
 
@@ -452,7 +488,7 @@ class S3MobileSchema(object):
             Get the options for a field with IS_IN_SET
 
             @param field: the Field
-            @param lookup: the look-up table name (if field is a foreign key)
+            @param lookup: the name of the lookup table
 
             @return: a list of tuples (key, label) with the field options
         """
@@ -468,34 +504,13 @@ class S3MobileSchema(object):
         fieldtype = str(field.type)
         if fieldtype[:9] == "reference":
 
-            if lookup not in self._references:
-                # Lookup table schema not exported => skip
-                return None
+            # Foreign keys have no fixed options
+            # => must expose the lookup table with data=True in order
+            #    to share current field options with the mobile client;
+            #    this is better done explicitly in order to run the
+            #    data download through the lookup table's controller
+            #    for proper authorization, customise_* and filtering
 
-            # @todo: if super-entity reference (@todo: caller to indicate):
-            #        => look up the instance record IDs
-            #        => add to self._references under the
-            #           instance types rather than SE (must add the
-            #           instance tables too if not present yet)
-
-            # For writable foreign keys, if the referenced table
-            # does not expose a mobile form itself, look up all
-            # valid options and report them as schema references:
-            if field.writable and not self.has_mobile_form(lookup):
-                add = self._references[lookup].add
-
-                # @note: introspection only works with regular validators
-                #        like IS_ONE_OF, but not with special widget
-                #        validators e.g. IS_ADD_PERSON_WIDGET2 =>
-                # @todo: migrate to S3AddPersonWidget to have regular
-                #        IS_ONE_OFs in the models
-                if hasattr(requires, "options"):
-                    for value, label in requires.options():
-                        if value:
-                            add(long(value))
-
-
-            # Foreign keys have no fixed options, however
             # @todo: deliver store uuid<=>label map instead, so that the
             #        mobile client has labels for fk options - unless the
             #        field has a base-class S3Represent with a field list
@@ -519,28 +534,54 @@ class S3MobileSchema(object):
             return None
 
     # -------------------------------------------------------------------------
-    def get_default(self, field, lookup=None):
+    def get_default(self, field, lookup=None, superkey=False):
         """
             Get the default value for a field
 
             @param field: the Field
+            @param lookup: the name of the lookup table
+            @param superkey: lookup table is a super-entity
 
             @returns: the default value for the field
         """
 
         default = field.default
+
         if default is not None:
 
             fieldtype = str(field.type)
 
             if fieldtype[:9] == "reference":
 
-                # Convert the default value into a UUID
+                # Look up the UUID for the default
                 uuid = self.get_uuid(lookup, default)
                 if uuid:
-                    # Store record reference for later resolution
-                    self._references[lookup].add(default)
-                    default = uuid
+
+                    if super_key:
+                        # Get the instance record ID
+                        prefix, name, record_id = current.s3db.get_instance(lookup, default)
+                        if record_id:
+                            tablename = "%s_%s" % (prefix, name)
+                    else:
+                        record_id = default
+                        tablename = lookup
+
+                    if record_id:
+
+                        # Export the default lookup record as dependency
+                        # (make sure the corresponding table schema is exported)
+                        if tablename not in self._references:
+                            references = self.references[tablename] = set()
+                        else:
+                            references = self.references[tablename]
+                        references.add(record_id)
+
+                        # Resolve as UUID
+                        default = uuid
+
+                    else:
+                        default = None
+
                 else:
                     default = None
 
@@ -805,12 +846,16 @@ class S3MobileForm(object):
 
         s3db = current.s3db
         resource = self.resource
+        tablename = resource.tablename
+
+        super_entities = self.super_entities
 
         ms = S3MobileSchema(resource)
         schema = ms.serialize()
 
-        main = {"tablename": resource.tablename,
+        main = {"tablename": tablename,
                 "schema": schema,
+                "types": super_entities(tablename),
                 "form": ms.form,
                 }
 
@@ -824,6 +869,11 @@ class S3MobileForm(object):
         if subheadings:
             main["subheadings"] = subheadings
 
+        # Add directly-serializable settings
+        settings = ms.settings
+        if settings:
+            main["settings"] = settings
+
         # Required and provided schemas
         required = set(ms.references.keys())
         provided = set([resource.tablename])
@@ -836,14 +886,23 @@ class S3MobileForm(object):
             cresource = resource.components.get(alias)
             if not cresource:
                 continue
+            ctablename = cresource.tablename
 
             # Get the schema for the component
             cschema = S3MobileSchema(cresource)
             hook = components[alias]
             hook["schema"] = cschema.serialize()
 
+            # Add super entity declarations
+            hook["types"] = super_entities(cresource)
+
+            # Add directly-serializable settings
+            settings = cschema.settings
+            if settings:
+                hook["settings"] = settings
+
             # Mark as provided
-            provided.add(cresource.tablename)
+            provided.add(tablename)
 
             for tname in cschema.references:
                 required.add(tname)
@@ -853,21 +912,28 @@ class S3MobileForm(object):
         required = list(required)
         while required:
 
-            tablename = required.pop()
-            if tablename in provided:
+            ktablename = required.pop()
+            if ktablename in provided:
                 continue
 
             # Check if we need to include any records
-            record_ids = ms.references[tablename]
+            record_ids = ms.references[ktablename]
             if record_ids:
-                rresource = s3db.resource(tablename, id=list(record_ids))
+                rresource = s3db.resource(ktablename, id=list(record_ids))
             else:
-                rresource = s3db.resource(tablename)
+                rresource = s3db.resource(ktablename)
 
             # Serialize the table schema
             rs = S3MobileSchema(rresource)
             schema = rs.serialize()
-            spec = {"schema": schema}
+            spec = {"schema": schema,
+                    "types": super_entities(ktablename),
+                    }
+
+            # Add directly-serializable settings
+            settings = rs.settings
+            if settings:
+                spec["settings"] = settings
 
             # Include records as required
             if record_ids:
@@ -880,14 +946,14 @@ class S3MobileForm(object):
                     data = current.xml.tree2json(tree, as_dict=True)
                     spec["data"] = data
 
-            references[tablename] = spec
+            references[ktablename] = spec
 
             # Check for dependencies
             for reference in rs.references:
                 if reference not in provided:
                     required.append(reference)
 
-            provided.add(tablename)
+            provided.add(ktablename)
 
         form = {"main": main,
                 }
@@ -986,6 +1052,33 @@ class S3MobileForm(object):
                                      }
 
         return components
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def super_entities(tablename):
+        """
+            Helper method to determine the super entities of a table
+
+            @param tablename: the table name
+
+            @return: a dict {super-table: super-key}
+        """
+
+        s3db = current.s3db
+
+        supertables = s3db.get_config(tablename, "super_entity")
+        if not supertables:
+            supertables = set()
+        elif not isinstance(supertables, (tuple, list)):
+            supertables = [supertables]
+
+        super_entities = {}
+        for tablename in supertables:
+            table = s3db.table(tablename)
+            if table:
+                super_entities[tablename] = table._id.name
+
+        return super_entities
 
 # =============================================================================
 class S3MobileCRUD(S3Method):
