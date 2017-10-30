@@ -557,7 +557,7 @@ class S3MobileSchema(object):
                 uuid = self.get_uuid(lookup, default)
                 if uuid:
 
-                    if super_key:
+                    if superkey:
                         # Get the instance record ID
                         prefix, name, record_id = current.s3db.get_instance(lookup, default)
                         if record_id:
@@ -917,7 +917,7 @@ class S3MobileForm(object):
                 continue
 
             # Check if we need to include any records
-            record_ids = ms.references[ktablename]
+            record_ids = ms.references.get(ktablename)
             if record_ids:
                 rresource = s3db.resource(ktablename, id=list(record_ids))
             else:

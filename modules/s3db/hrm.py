@@ -2689,29 +2689,48 @@ class S3HRSkillModel(S3Model):
         # Which levels of Hierarchy are we using?
         levels = current.gis.get_relevant_hierarchy_levels()
 
-        filter_widgets = [
-            S3TextFilter(["name",
-                          "course_id$name",
-                          "site_id$name",
-                          "comments",
-                          ],
-                         label = T("Search"),
-                         comment = T("You can search by course name, venue name or event comments. You may use % as wildcard. Press 'Search' without input to list all events."),
-                         ),
-            S3LocationFilter("site_id$location_id",
-                             levels = levels,
-                             hidden = True,
-                             ),
-            S3OptionsFilter("site_id",
-                            label = site_label,
-                            hidden = True,
-                            ),
-            S3DateFilter("start_date",
-                         label = T("Date"),
-                         hide_time = True,
-                         hidden = True,
-                         )
-            ]
+        if event_site:
+            filter_widgets = [S3TextFilter(["name",
+                                            "course_id$name",
+                                            "site_id$name",
+                                            "comments",
+                                            ],
+                                           label = T("Search"),
+                                           comment = T("You can search by course name, venue name or event comments. You may use % as wildcard. Press 'Search' without input to list all events."),
+                                           ),
+                              S3LocationFilter("site_id$location_id",
+                                               levels = levels,
+                                               hidden = True,
+                                               ),
+                              S3OptionsFilter("site_id",
+                                              label = site_label,
+                                              hidden = True,
+                                              ),
+                              S3DateFilter("start_date",
+                                           label = T("Date"),
+                                           hide_time = True,
+                                           hidden = True,
+                                           )
+                              ]
+        else:
+            filter_widgets = [S3TextFilter(["name",
+                                            "course_id$name",
+                                            "location_id$name",
+                                            "comments",
+                                            ],
+                                           label = T("Search"),
+                                           comment = T("You can search by course name, venue name or event comments. You may use % as wildcard. Press 'Search' without input to list all events."),
+                                           ),
+                              S3LocationFilter("location_id",
+                                               levels = levels,
+                                               hidden = True,
+                                               ),
+                              S3DateFilter("start_date",
+                                           label = T("Date"),
+                                           hide_time = True,
+                                           hidden = True,
+                                           )
+                              ]
 
         # Resource Configuration
         configure(tablename,
@@ -6142,7 +6161,9 @@ def hrm_rheader(r, tabs=[], profile=False):
 
     if resourcename == "person":
         record_id = r.id
+        db = current.db
         s3db = current.s3db
+        htable = s3db.hrm_human_resource
         settings = current.deployment_settings
         get_vars = r.get_vars
         hr = get_vars.get("human_resource.id", None)
@@ -6175,7 +6196,6 @@ def hrm_rheader(r, tabs=[], profile=False):
                 # - last month & last year
                 now = r.utcnow
                 last_year = now - datetime.timedelta(days=365)
-                db = current.db
                 if vol_experience == "activity":
                     ahtable = db.vol_activity_hours
                     attable = db.vol_activity_hours_activity_type
@@ -6267,7 +6287,6 @@ def hrm_rheader(r, tabs=[], profile=False):
                 if vol_active:
                     if not hr:
                         # @ToDo: Handle multiple active HR records
-                        htable = s3db.hrm_human_resource
                         query = (htable.person_id == record_id) & \
                                 (htable.deleted == False)
                         hr = db(query).select(htable.id, limitby=(0, 1)).first()
@@ -6422,10 +6441,17 @@ def hrm_rheader(r, tabs=[], profile=False):
             trainings_tab = (T("CV"), "cv")
 
         hr_tab = None
+        duplicates_tab = None
         if not record_tab:
             record_method = None
         elif record_tab == "record":
             record_method = "record"
+            if not profile and current.auth.s3_has_role("ADMIN"):
+                query = (htable.person_id == record_id) & \
+                        (htable.deleted == False)
+                hr_records = db(query).count()
+                if hr_records > 1:
+                    duplicates_tab = (T("Duplicates"), "human_resource", {"hr":"all"}) # Ensure no &human_resource.id=XXXX
         else:
             # Default
             record_method = "human_resource"
@@ -6511,10 +6537,13 @@ def hrm_rheader(r, tabs=[], profile=False):
                     awards_tab = (T("Awards"), "award")
                 else:
                     awards_tab = None
+            duplicates = None
             if record_method:
                 hr_tab = (T(hr_record), record_method)
+                    
             tabs = [(T("Person Details"), None),
                     hr_tab,
+                    duplicates_tab,
                     id_tab,
                     description_tab,
                     address_tab,
@@ -7346,7 +7375,7 @@ def hrm_human_resource_controller(extra_filter=None):
                 rappend("site_id")
 
             list_fields.extend(((T("Email"), "email.value"),
-                                (settings.get_ui_label_mobile_phone(), "phone.value")
+                                (settings.get_ui_label_mobile_phone(), "phone.value"),
                                 ))
 
             # Which levels of Hierarchy are we using?
@@ -7483,7 +7512,8 @@ def hrm_human_resource_controller(extra_filter=None):
                         "url": URL(f="compose",
                                    vars = {"human_resource.id": "[id]"}),
                         "_class": "action-btn send",
-                        "label": str(T("Send Message"))})
+                        "label": str(T("Send Message"))
+                        })
 
         elif r.representation == "plain":
             # Map Popups
@@ -8093,7 +8123,7 @@ def hrm_xls_list_fields(r, staff=True, vol=True):
                                                                      parent=False)
     table.site_id.represent = s3db.org_SiteRepresent(show_type=False)
 
-    current.messages["NONE"] = ""
+    current.messages["NONE"] = "" # Don't want to see "-"
     ptable = s3db.pr_person
     ptable.middle_name.represent = lambda v: v or ""
     ptable.last_name.represent = lambda v: v or ""
@@ -8158,6 +8188,24 @@ def hrm_xls_list_fields(r, staff=True, vol=True):
         # @ToDo: Make Importable
         s3db.hrm_certification.certificate_id.represent = S3Represent("hrm_certificate") # Need to reinitialise to get the new value for NONE
         list_fields.append(("Certificates", "person_id$certification.certificate_id"))
+    if settings.get_hrm_use_skills():
+        s3db.hrm_competency.skill_id.represent = S3Represent("hrm_skill") # Need to reinitialise to get the new value for NONE
+        list_fields.append(("Skills", "person_id$competency.skill_id"))
+    if settings.get_hrm_use_education():
+        etable = s3db.pr_education
+        etable.level_id.represent = S3Represent("pr_education_level") # Need to reinitialise to get the new value for NONE
+        etable.award.represent = lambda v: v or ""
+        etable.major.represent = lambda v: v or ""
+        etable.grade.represent = lambda v: v or ""
+        etable.year.represent = lambda v: v or ""
+        etable.institute.represent = lambda v: v or ""
+        list_fields.extend((("Education Level", "person_id$education.level_id"),
+                            ("Degree Name", "person_id$education.award"),
+                            ("Major", "person_id$education.major"),
+                            ("Grade", "person_id$education.grade"),
+                            ("Year", "person_id$education.year"),
+                            ("Institute", "person_id$education.institute"),
+                           ))
 
     if vol:
         if settings.get_hrm_vol_active():
