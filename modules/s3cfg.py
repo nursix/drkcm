@@ -2841,6 +2841,12 @@ class S3Config(Storage):
         """
         return self.dc.get("mobile_data", False)
 
+    def get_dc_mobile_inserts(self):
+        """
+            Whether Mobile Clients should create Assessments locally
+        """
+        return self.dc.get("mobile_inserts", True)
+
     # -------------------------------------------------------------------------
     # Deployments
     #
@@ -3114,7 +3120,7 @@ class S3Config(Storage):
         """
             Whether deleting an Event cascades to deleting all Incidents or whether it sets NULL
             - 'normal' workflow is where an Event is created and within that various Incidents,
-              aso cascading the delete makes sense here ("delete everything associated with this event")
+              so cascading the delete makes sense here ("delete everything associated with this event")
             - WA COP uses Events to group existing Incidents, so here we don't wish to delete the Incidents if the Event is deleted
 
             NB Changing this setting requires a DB migration
@@ -3126,6 +3132,18 @@ class S3Config(Storage):
             Whether Events can be Exercises
         """
         return self.event.get("exercise", False)
+
+    def get_event_sitrep_dynamic(self):
+        """
+            Whether the SitRep resource should include a Dynamic Table section
+        """
+        return self.event.get("sitrep_dynamic", False)
+
+    def get_event_sitrep_edxl(self):
+        """
+            Whether the SitRep resource should be configured for EDXL-Sitrep mode
+        """
+        return self.event.get("sitrep_edxl", False)
 
     def get_event_types_hierarchical(self):
         """
@@ -3398,6 +3416,15 @@ class S3Config(Storage):
         """
         return self.__lazy("hrm", "event_types", default=False)
 
+    def get_hrm_job_title_deploy(self):
+        """
+            Whether the 'deploy' Job Title type should be used
+        """
+        job_title_deploy = self.hrm.get("job_title_deploy", None)
+        if job_title_deploy is None:
+            job_title_deploy = self.has_module("deploy")
+        return job_title_deploy
+
     def get_hrm_multiple_job_titles(self):
         """
             If set to True then HRs can have multiple Job Titles
@@ -3535,7 +3562,9 @@ class S3Config(Storage):
 
     def get_hrm_create_certificates_from_courses(self):
         """
-            If set to True then Certificates are created automatically for each Course
+            If set Truthy then Certificates are created automatically for each Course
+                True: Create Certificates without an organisation_id
+                "organisation_id": Create Certificates with the organisation_id of the Course
         """
         return self.hrm.get("create_certificates_from_courses", False)
 

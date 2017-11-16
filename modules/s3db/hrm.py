@@ -227,7 +227,7 @@ class S3HRModel(S3Model):
             hrm_type_opts = {1: STAFF}
             hrm_type_default = 1
 
-        if settings.has_module("deploy"):
+        if settings.get_hrm_job_title_deploy():
             hrm_types = True
             hrm_type_opts[4] = T("Deployment")
 
@@ -2813,7 +2813,7 @@ class S3HRSkillModel(S3Model):
                                            ),
                      organisation_id(),
                      Field("purpose",
-                           label = T("Mission Purpose"),
+                           label = T("Training Purpose"),
                            ),
                      Field("code",
                            label = T("Code"),
@@ -2821,6 +2821,10 @@ class S3HRSkillModel(S3Model):
                      s3_date(label = T("Report Date")),
                      Field("objectives",
                            label = T("Objectives"),
+                           widget = s3_comments_widget,
+                           ),
+                     Field("methodology",
+                           label = T("Methodology"),
                            widget = s3_comments_widget,
                            ),
                      Field("actions",
@@ -3549,7 +3553,7 @@ class S3HRSkillModel(S3Model):
     def hrm_course_onaccept(form):
         """
             Ensure that there is a Certificate created for each Course
-            - only called when create_certificates_from_courses == True
+            - only called when create_certificates_from_courses in (True, "organisation_id")
         """
 
         form_vars = form.vars
@@ -3563,11 +3567,15 @@ class S3HRSkillModel(S3Model):
                                                           )
         if not exists:
             name = form_vars.get("name")
-            if not name:
+            organisation_id = form_vars.get("organisation_id")
+            if not name or not organisation_id:
                 table = s3db.hrm_course
-                name = db(table.id == course_id).select(table.name,
-                                                        limitby = (0, 1)
-                                                        ).first().name
+                course = db(table.id == course_id).select(table.name,
+                                                          table.organisation_id,
+                                                          limitby = (0, 1)
+                                                          ).first()
+                name = course.name
+                organisation_id = course.organisation_id
             ctable = s3db.hrm_certificate
             certificate = db(ctable.name == name).select(ctable.id,
                                                          limitby = (0, 1)
@@ -3575,8 +3583,12 @@ class S3HRSkillModel(S3Model):
             if certificate:
                 certificate_id = certificate.id
             else:
-                # @ToDo: Setting to decide whether certificate should be restricted to Org
-                certificate_id = ctable.insert(name = name)
+                if current.deployment_settings.get_hrm_create_certificates_from_courses() is True:
+                    # Don't limit to Org
+                    organisation_id = None
+                certificate_id = ctable.insert(name = name,
+                                               organisation_id = organisation_id,
+                                               )
 
             ltable.insert(course_id = course_id,
                           certificate_id = certificate_id,
@@ -4969,18 +4981,9 @@ class hrm_AssignMethod(S3Method):
             @param attr: controller options for this request
         """
 
-        component = self.component
-        components = r.resource.components
-        for c in components:
-            if c == component:
-                component = components[c]
-                break
-        try:
-            if component.link:
-                component = component.link
-        except:
-            current.log.error("Invalid Component!")
-            raise
+        component = r.resource.components[self.component]
+        if component.link:
+            component = component.link
 
         tablename = component.tablename
 
@@ -5121,17 +5124,17 @@ class hrm_AssignMethod(S3Method):
                 limit = 4 * display_length
             else:
                 limit = None
-            filter, orderby, left = resource.datatable_filter(list_fields,
-                                                              get_vars)
-            resource.add_filter(filter)
+            filter_, orderby, left = resource.datatable_filter(list_fields,
+                                                               get_vars)
+            resource.add_filter(filter_)
 
             # Hide people already in the link table
             query = (table[fkey] == record_id) & \
                     (table.deleted != True)
             rows = db(query).select(table.human_resource_id)
             already = [row.human_resource_id for row in rows]
-            filter = (~db.hrm_human_resource.id.belongs(already))
-            resource.add_filter(filter)
+            filter_ = (~db.hrm_human_resource.id.belongs(already))
+            resource.add_filter(filter_)
 
             dt_id = "datatable"
 
@@ -5155,8 +5158,8 @@ class hrm_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
-                    filter_submit_url = r.url(vars=_vars)
+                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)
                     resource.configure(filter_widgets=filter_widgets)
@@ -5212,12 +5215,13 @@ class hrm_AssignMethod(S3Method):
                                 )
 
                 STAFF = settings.get_hrm_staff_label()
-                output = dict(items = items,
-                              title = T("Assign %(staff)s") % dict(staff=STAFF),
-                              list_filter_form = ff)
+                output = dict()
 
                 response.view = "list_filter.html"
-                return output
+                return {"items": items,
+                        "title": T("Assign %(staff)s") % dict(staff=STAFF),
+                        "list_filter_form": ff,
+                        }
 
             elif r.representation == "aadata":
                 # Ajax refresh
@@ -5828,44 +5832,43 @@ def hrm_human_resource_onaccept(form):
 # =============================================================================
 def hrm_compose():
     """
-        Send message to people/teams
+        Send message to people/teams/participants
     """
 
-    T = current.T
     s3db = current.s3db
-    req_vars = current.request.get_vars
+    get_vars = current.request.get_vars
     pe_id = None
 
-    if "human_resource.id" in req_vars:
+    if "human_resource.id" in get_vars:
         fieldname = "human_resource.id"
-        record_id = req_vars.get(fieldname)
+        record_id = get_vars.get(fieldname)
         table = s3db.pr_person
         htable = s3db.hrm_human_resource
         query = (htable.id == record_id) & \
                 (htable.person_id == table.id)
-        title = T("Send a message to this person")
+        title = current.T("Send a message to this person")
         # URL to redirect to after message sent
         url = URL(f="compose",
                   vars={fieldname: record_id})
-    elif "group_id" in req_vars:
+    elif "group_id" in get_vars:
         fieldname = "group_id"
-        record_id = req_vars.group_id
+        record_id = get_vars.group_id
         table = s3db.pr_group
         query = (table.id == record_id)
-        title = T("Send a message to this team")
+        title = current.T("Send a message to this team")
         # URL to redirect to after message sent
         url = URL(f="compose",
                   vars={fieldname: record_id})
-    elif "training_event.id" in req_vars:
+    elif "training_event.id" in get_vars:
         fieldname = "training_event.id"
-        record_id = req_vars.get(fieldname)
-        pe_id = req_vars.pe_id
-        title = T("Message Participants")
+        record_id = get_vars.get(fieldname)
+        pe_id = get_vars.pe_id
+        title = current.T("Message Participants")
         # URL to redirect to after message sent
         url = URL(f="training_event", args=record_id)
 
     else:
-        current.session.error = T("Record not found")
+        current.session.error = current.T("Record not found")
         redirect(URL(f="index"))
 
     if not pe_id:
@@ -5873,12 +5876,12 @@ def hrm_compose():
         pe = db(query).select(table.pe_id,
                               limitby=(0, 1)).first()
         if not pe:
-            current.session.error = T("Record not found")
+            current.session.error = current.T("Record not found")
             redirect(URL(f="index"))
 
         pe_id = pe.pe_id
 
-    if "hrm_id" in req_vars:
+    if "hrm_id" in get_vars:
         # Get the individual's communications options & preference
         ctable = s3db.pr_contact
         contact = db(ctable.pe_id == pe_id).select(ctable.contact_method,
@@ -5887,7 +5890,7 @@ def hrm_compose():
         if contact:
             s3db.msg_outbox.contact_method.default = contact.contact_method
         else:
-            current.session.error = T("No contact method found")
+            current.session.error = current.T("No contact method found")
             redirect(URL(f="index"))
 
     # Create the form
@@ -6541,7 +6544,7 @@ def hrm_rheader(r, tabs=[], profile=False):
             if record_method:
                 hr_tab = (T(hr_record), record_method)
                     
-            tabs = [(T("Person Details"), None),
+            tabs = [(T("Person Details"), None, {"native": True}),
                     hr_tab,
                     duplicates_tab,
                     id_tab,
@@ -7476,7 +7479,11 @@ def hrm_human_resource_controller(extra_filter=None):
                 vars = {"human_resource.id" : r.id,
                         "group" : "staff"
                         }
-                redirect(URL(f="person",
+                if r.function == "trainee":
+                    fn = "trainee_person"
+                else:
+                    fn = "person"
+                redirect(URL(f=fn,
                              vars=vars))
 
         elif r.representation == "xls" and not r.component:

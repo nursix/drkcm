@@ -425,9 +425,15 @@ def config(settings):
                            )
 
             get_vars = r.get_vars
-            if method == "datalist" and get_vars.get("dashboard"):
-                from templates.WACOP.controllers import dashboard_filter
-                s3.filter = dashboard_filter()
+            if method == "datalist":
+                if get_vars.get("dashboard"):
+                    from templates.WACOP.controllers import dashboard_filter
+                    s3.filter = dashboard_filter()
+                else:
+                    forum_id = get_vars.get("forum")
+                    if forum_id:
+                        from templates.WACOP.controllers import group_filter
+                        s3.filter = group_filter(forum_id)
 
             elif method in ("custom", "dashboard", "filter"):
                 # Filter Widgets
@@ -443,6 +449,9 @@ def config(settings):
                         if k == "dashboard":
                             from templates.WACOP.controllers import dashboard_filter
                             s3.filter = dashboard_filter()
+                        elif k == "forum":
+                            from templates.WACOP.controllers import group_filter
+                            s3.filter = group_filter(v)
                         else:
                             from s3 import FS
                             s3.filter = (FS(k) == v)
@@ -665,49 +674,6 @@ def config(settings):
                 f = s3db.event_event.event_type_id
                 f.readable = f.writable = False
 
-            elif cname == "task":
-                from gluon import IS_EMPTY_OR
-                from s3 import IS_ONE_OF, S3SQLCustomForm, S3SQLInlineComponent
-                itable = s3db.event_incident
-                query = (itable.event_id == r.id) & \
-                        (itable.closed == False) & \
-                        (itable.deleted == False)
-                set = current.db(query)
-                f = s3db.event_task.incident_id
-                f.requires = IS_EMPTY_OR(
-                                IS_ONE_OF(set, "event_incident.id",
-                                          f.represent,
-                                          orderby="event_incident.name",
-                                          sort=True))
-                crud_form = S3SQLCustomForm(
-                    S3SQLInlineComponent("incident",
-                                         fields = [("", "incident_id")],
-                                         label = T("Incident"),
-                                         multiple = False,
-                                         filterby = dict(field = "event_id",
-                                                         options = r.id,
-                                                         )
-                                         ),
-                    "name",
-                    "description",
-                    "source",
-                    "priority",
-                    "pe_id",
-                    "date_due",
-                    "status",
-                    "comments",
-                    S3SQLInlineComponent("document",
-                                         name = "file",
-                                         label = T("Files"),
-                                         fields = [("", "file"),
-                                                   #"comments",
-                                                   ],
-                                         ),
-                                    
-                    )
-                r.component.configure(crud_form = crud_form,
-                                      )
-                
             elif r.representation == "popup" and r.get_vars.get("view"):
                 # Popups for lists in Parent Event of Incident Screen or Event Profile header
                 # No Title since this is on the Popup
@@ -1188,6 +1154,10 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_pr_forum_resource(r, tablename):
 
+        f = current.s3db.pr_forum.comments
+        f.label = T("Description")
+        f.comment = None
+
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Create Group"),
             title_display = T("Group Details"),
@@ -1205,9 +1175,14 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_pr_forum_controller(**attr):
 
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+        s3 = current.response.s3
+
         # Custom Browse
-        from templates.WACOP.controllers import group_Browse, group_Profile
-        set_method = current.s3db.set_method
+        from templates.WACOP.controllers import group_Browse, group_Profile, text_filter_formstyle
+        set_method = s3db.set_method
         set_method("pr", "forum",
                    method = "browse",
                    action = group_Browse)
@@ -1217,9 +1192,175 @@ def config(settings):
                    method = "custom",
                    action = group_Profile)
 
+        from s3 import S3OptionsFilter, S3SQLCustomForm, S3SQLInlineComponent, S3TextFilter
+
+        crud_form = S3SQLCustomForm("name",
+                                    "forum_type",
+                                    "comments",
+                                    S3SQLInlineComponent("forum_membership",
+                                         fields = [("", "person_id")],
+                                         label = T("Admin"),
+                                         #multiple = False,
+                                         filterby = dict(field = "admin",
+                                                         options = True,
+                                                         )
+                                         ),
+                                    )
+
+        filter_widgets = [S3TextFilter(["name",
+                                        "description",
+                                        ],
+                                       formstyle = text_filter_formstyle,
+                                       label = T("Search"),
+                                       _placeholder = T("Enter search term…"),
+                                       _class = "filter-search",
+                                       ),
+                          S3OptionsFilter("forum_membership.person_id$pe_id",
+                                          label = "",
+                                          options = {"*": T("All Groups"),
+                                                     current.auth.user.pe_id: T("My Groups"),
+                                                     },
+                                          cols = 2,
+                                          multiple = False,
+                                          table = False,
+                                          ),
+                          ]
+
+        # Virtual Fields
+        from gluon import A, URL
+        from s3 import s3_fieldmethod
+        table = s3db.pr_forum
+
+        def forum_name(row):
+            return A(row["pr_forum.name"],
+                     _href = URL(c="pr", f="forum",
+                                 args = [row["pr_forum.id"], "custom"],
+                                 #vars = {"refresh": "custom-list-pr_forum",
+                                 #        },
+                                 extension = "", # ensure no .aadata
+                                 ),
+                     #_class = "s3_modal",
+                     )
+        table.name_click = s3_fieldmethod("name_click",
+                                          forum_name,
+                                          # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                          # @ToDo: Bulk lookups
+                                          represent = lambda v: v,
+                                          search_field = "name",
+                                          )
+
+        mtable = s3db.pr_forum_membership
+        ffield = mtable.forum_id
+        query = (mtable.deleted == False)
+        def forum_members(row):
+            forum_id = row["pr_forum.id"]
+            count = db(query & (ffield == forum_id)).count()
+            return count
+        table.members = s3_fieldmethod("members",
+                                       forum_members,
+                                       )
+
+        pfield = mtable.person_id
+        aquery = query & (mtable.admin == True)
+        NONE = current.messages["NONE"]
+        personRepresent = pfield.represent
+        def admin(row):
+            forum_id = row["pr_forum.id"]
+            admins = db(aquery & (ffield == forum_id)).select(pfield)
+            if admins:
+                return ", ".join([personRepresent(a.person_id) for a in admins])
+            else:
+                return NONE
+        table.admin = s3_fieldmethod("admin",
+                                     admin,
+                                     )
+
+        list_fields = [(T("Name"), "name_click"),
+                       "comments",
+                       (T("Members"), "members"),
+                       (T("Updated"), "modified_on"),
+                       (T("Admin"), "admin"),
+                       ]
+
+        s3db.configure("pr_forum",
+                       crud_form = crud_form,
+                       extra_fields = ("name",
+                                       ),
+                       list_fields = list_fields,
+                       filter_widgets = filter_widgets,
+                       )
+
+        # Custom prep
+        standard_prep = s3.prep
+        def custom_prep(r):
+            # Call standard postp
+            if callable(standard_prep):
+                result = standard_prep(r)
+
+            if r.method is None:
+                # Override defalt redirects from custom methods
+                if r.component:
+                    from gluon.tools import redirect
+                    current.session.confirmation = current.response.confirmation
+                    redirect(URL(args=[r.id, "custom"]))
+                elif r.representation != "aadata":
+                    r.method = "browse"
+
+            return True
+        s3.prep = custom_prep
+
         return attr
 
     settings.customise_pr_forum_controller = customise_pr_forum_controller
+
+    # -------------------------------------------------------------------------
+    def customise_pr_forum_membership_resource(r, tablename):
+
+        s3db = current.s3db
+        f = s3db.pr_forum_membership.admin
+        f.readable = f.writable = True
+
+        # CRUD strings
+        function = r.function
+        if function == "person":
+            current.response.s3.crud_strings[tablename] = Storage(
+                label_create = T("Add Membership"),
+                title_display = T("Membership Details"),
+                title_list = T("Memberships"),
+                title_update = T("Edit Membership"),
+                label_list_button = T("List Memberships"),
+                label_delete_button = T("Delete Membership"),
+                msg_record_created = T("Added to Group"),
+                msg_record_modified = T("Membership updated"),
+                msg_record_deleted = T("Removed from Group"),
+                msg_list_empty = T("Not yet a Member of any Group"))
+
+        elif function in ("forum", "forum_membership"):
+            current.response.s3.crud_strings[tablename] = Storage(
+                label_create = T("Add Member"),
+                title_display = T("Membership Details"),
+                title_list = T("Group Members"),
+                title_update = T("Edit Membership"),
+                label_list_button = T("List Members"),
+                label_delete_button = T("Remove Person from Group"),
+                msg_record_created = T("Person added to Group"),
+                msg_record_modified = T("Membership updated"),
+                msg_record_deleted = T("Person removed from Group"),
+                msg_list_empty = T("This Group has no Members yet"))
+
+        list_fields = [#(T("Name"), "name_click"),
+                       "person_id",
+                       "admin",
+                       "comments",
+                       ]
+
+        s3db.configure(tablename,
+                       extra_fields = ("name",
+                                       ),
+                       list_fields = list_fields,
+                       )
+
+    settings.customise_pr_forum_membership_resource = customise_pr_forum_membership_resource
 
     # -------------------------------------------------------------------------
     def customise_pr_group_resource(r, tablename):
@@ -1405,16 +1546,21 @@ def config(settings):
                 from s3 import FS
                 current.response.s3.filter = (FS(k) == v)
 
+        db = current.db
         s3db = current.s3db
         table = s3db.project_task
 
         # Virtual Fields
-        # Always used from either the Event or Incident context
-        f = r.function
+        fn = r.function
+        if fn == "forum":
+            c = "pr"
+        else:
+            # Used from either the Event or Incident context
+            c = "event"
         record_id = r.id
         def task_name(row):
             return A(row["project_task.name"],
-                     _href = URL(c="event", f=f,
+                     _href = URL(c=c, f=fn,
                                  args=[record_id, "task", row["project_task.id"], "profile"],
                                  ),
                      )
@@ -1428,39 +1574,100 @@ def config(settings):
         # Assignee must be a System User
         etable = s3db.pr_pentity
         ltable = s3db.pr_person_user
-        query = (ltable.pe_id == etable.pe_id)
-        set = current.db(query)
+        the_set = db(ltable.pe_id == etable.pe_id)
         f = table.pe_id
         f.requires = IS_EMPTY_OR(
-                        IS_ONE_OF(set, "pr_pentity.pe_id",
+                        IS_ONE_OF(the_set, "pr_pentity.pe_id",
                                   f.represent))
 
         # Custom Form
-        crud_form = S3SQLCustomForm("name",
-                                    "description",
-                                    "source",
-                                    "priority",
-                                    "pe_id",
-                                    "date_due",
-                                    "status",
-                                    "comments",
-                                    S3SQLInlineComponent("document",
-                                                         name = "file",
-                                                         label = T("Files"),
-                                                         fields = [("", "file"),
-                                                                   #"comments",
-                                                                   ],
-                                                         ),
-                                    )
+        crud_fields = ["name",
+                       "description",
+                       "source",
+                       "priority",
+                       "pe_id",
+                       "date_due",
+                       "status",
+                       "comments",
+                       S3SQLInlineComponent("document",
+                                            name = "file",
+                                            label = T("Files"),
+                                            fields = [("", "file"),
+                                                      #"comments",
+                                                      ],
+                                            ),
+                       ]
+
+        filterby = None
+        if r.tablename != "pr_forum":
+            auth = current.auth
+            ADMIN = auth.s3_has_role("ADMIN")
+            if not ADMIN:
+                # Can only Share to Groups that the User is a Member of
+                ptable = s3db.pr_person
+                mtable = s3db.pr_forum_membership
+                ftable = s3db.pr_forum
+                query = (ptable.pe_id == auth.user.pe_id) & \
+                        (ptable.id == mtable.person_id) & \
+                        (mtable.forum_id == ftable.id)
+                forums = db(query).select(ftable.id,
+                                          ftable.name)
+                forum_ids = [f.id for f in forums]
+                filterby = dict(field = "forum_id",
+                                options = forum_ids,
+                                )
+                
+            crud_fields.insert(-1,
+                               S3SQLInlineComponent("task_forum",
+                                                    name = "forum",
+                                                    label = T("Share to Group"),
+                                                    fields = [("", "forum_id"),
+                                                              ],
+                                                    filterby = filterby,
+                                                    ))
+
+            if r.tablename == "event_event":
+                # Can only link to Incidents within this Event
+                itable = s3db.event_incident
+                query = (itable.event_id == r.id) & \
+                        (itable.closed == False) & \
+                        (itable.deleted == False)
+                the_set = db(query)
+                f = s3db.event_task.incident_id
+                f.requires = IS_EMPTY_OR(
+                                IS_ONE_OF(the_set, "event_incident.id",
+                                          f.represent,
+                                          orderby="event_incident.name",
+                                          sort=True))
+                filterby = dict(field = "event_id",
+                                options = r.id,
+                                )
+            else:
+                filterby = None
+
+        if r.tablename != "event_incident":
+            crud_fields.insert(0,
+                               S3SQLInlineComponent("incident",
+                                                    fields = [("", "incident_id")],
+                                                    label = T("Incident"),
+                                                    multiple = False,
+                                                    filterby = filterby,
+                                                    ))
+            
+        crud_form = S3SQLCustomForm(*crud_fields)
                                     
         # Filters
         project_task_priority_opts = settings.get_project_task_priority_opts()
         project_task_status_opts = settings.get_project_task_status_opts()
 
+        from templates.WACOP.controllers import text_filter_formstyle
+
         filter_widgets = [S3TextFilter(["name",
                                         "description",
                                         ],
+                                       formstyle = text_filter_formstyle,
                                        label = T("Search"),
+                                       _placeholder = T("Enter search term…"),
                                        _class = "filter-search",
                                        ),
                           S3OptionsFilter("priority",
@@ -1498,8 +1705,9 @@ def config(settings):
                        extra_fields = ("name",
                                        ),
                        filter_widgets = filter_widgets,
-                       list_fields = ["status",
-                                      (T("Description"), "name_click"),
+                       list_fields = [(T("Description"), "name_click"),
+                                      "status",
+                                      "incident.incident_id",
                                       (T("Created"), "created_on"),
                                       (T("Due"), "date_due"),
                                       ],
@@ -1507,6 +1715,116 @@ def config(settings):
                        )
 
     settings.customise_project_task_resource = customise_project_task_resource
+
+    # -------------------------------------------------------------------------
+    def customise_project_task_controller(**attr):
+
+        # No sidebar menu
+        current.menu.options = None
+
+        s3 = current.response.s3
+
+        # Custom prep
+        standard_prep = s3.prep
+        def custom_prep(r):
+            # Call standard postp
+            if callable(standard_prep):
+                result = standard_prep(r)
+
+            task_id = r.id
+            if task_id:
+                # Share Button
+                auth = current.auth
+                user = auth.user
+                if user:
+                    db = current.db
+                    s3db = current.s3db
+                    ptable = s3db.pr_person
+                    mtable = s3db.pr_forum_membership
+                    ftable = s3db.pr_forum
+                    query = (ptable.pe_id == user.pe_id) & \
+                            (ptable.id == mtable.person_id) & \
+                            (mtable.forum_id == ftable.id)
+                    forums = db(query).select(ftable.id,
+                                              ftable.name,
+                                              cache = s3db.cache)
+                    if len(forums):
+                        from gluon import A, INPUT, LABEL, LI, TAG, UL
+                        from s3 import ICON
+                        ADMIN = auth.s3_has_role("ADMIN")
+                        forum_ids = [f.id for f in forums]
+                        ltable = s3db.project_task_forum
+                        query = (ltable.task_id == task_id) & \
+                                (ltable.forum_id.belongs(forum_ids))
+                        shares = db(query).select(ltable.forum_id,
+                                                  ltable.created_by,
+                                                  ).as_dict(key="forum_id")
+                        share_btn = A(ICON("share"),
+                                       _href = "#",
+                                       _class = "button radius small",
+                                       _title = current.T("Share"),
+                                       )
+                        share_btn["_data-dropdown"] = "share_event_dropdown"
+                        share_btn["_aria-controls"] = "share_event_dropdown"
+                        share_btn["_aria-expanded"] = "false"
+
+                        dropdown = UL(_id = "share_event_dropdown",
+                                      _class = "f-dropdown share",
+                                      tabindex = "-1",
+                                      )
+                        dropdown["_data-dropdown-content"] = ""
+                        dropdown["_aria-hidden"] = "true"
+                        dropdown["_data-c"] = "project"
+                        dropdown["_data-f"] = "task"
+                        dropdown["_data-i"] = task_id
+
+                        dappend = dropdown.append
+                        for f in forums:
+                            forum_id = f.id
+                            checkbox_id = "event_forum_%s" % forum_id
+                            if forum_id in shares:
+                                if ADMIN or shares[forum_id]["created_by"] == user_id:
+                                    # Shared by us (or we're ADMIN), so render Checked checkbox which we can deselect
+                                    checkbox = INPUT(_checked = "checked",
+                                                     _id = checkbox_id,
+                                                     _type = "checkbox",
+                                                     _value = forum_id,
+                                                     )
+                                else:
+                                    # Shared by someone else, so render Checked checkbox which is disabled
+                                    checkbox = INPUT(_checked = "checked",
+                                                     _disabled = "disabled",
+                                                     _id = checkbox_id,
+                                                     _type = "checkbox",
+                                                     _value = forum_id,
+                                                     )
+                            else:
+                                # Not Shared so render empty checkbox
+                                checkbox = INPUT(_id = checkbox_id,
+                                                 _type = "checkbox",
+                                                 _value = forum_id,
+                                                 )
+                            dappend(LI(checkbox,
+                                       LABEL(f.name,
+                                             _for = checkbox_id,
+                                             ),
+                                       ))
+
+                        share_btn = TAG[""](share_btn,
+                                            dropdown,
+                                            )
+
+                        s3.scripts.append("/%s/static/themes/WACOP/js/shares.js" % current.request.application)
+                        script = '''S3.wacop_shares()'''
+                        s3.jquery_ready.append(script)
+                        s3.rfooter = share_btn
+
+            return True
+        s3.prep = custom_prep
+
+        return attr
+
+    settings.customise_project_task_controller = customise_project_task_controller
 
 # =============================================================================
 def event_team_rheader(incident_id, group_id, updates=False):
