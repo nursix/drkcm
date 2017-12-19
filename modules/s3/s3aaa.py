@@ -6314,6 +6314,10 @@ class S3Permission(object):
             #_debug("*** GRANTED ***")
             return True
 
+        # Fall back to current request
+        c = c or self.controller
+        f = f or self.function
+
         if not self.use_cacls:
             #_debug("==> simple authorization")
             # Fall back to simple authorization
@@ -6341,10 +6345,6 @@ class S3Permission(object):
             owners = []
             is_owner = True
             entity = None
-
-        # Fall back to current request
-        c = c or self.controller
-        f = f or self.function
 
         permission_cache = self.permission_cache
         if permission_cache is None:
@@ -6970,13 +6970,19 @@ class S3Permission(object):
         if "t" in acl:
             default_table_acl = acl["t"]
         elif table_restricted:
-            default_table_acl = default_page_acl
+            default_table_acl = default_page_acl if page_restricted else NONE
         else:
-            default_table_acl = ALL
+            default_table_acl = default_page_acl if page_restricted else ALL
 
-        # Fall back to default page acl
-        if not acls and not (t and self.use_tacls):
-            acls[ANY] = {"c": default_page_acl}
+        # No ACLs inevitably causes a "no applicable ACLs" permission failure,
+        # so for unrestricted pages or tables, we must create a default ACL
+        # here in order to have the default apply:
+        if not acls:
+            if t and self.use_tacls:
+                if not table_restricted:
+                    acls[ANY] = {"t": default_table_acl}
+            elif not page_restricted:
+                acls[ANY] = {"c": default_page_acl}
 
         # Order by precedence
         s3db = current.s3db
@@ -7046,15 +7052,17 @@ class S3Permission(object):
             @param f: function name
         """
 
-        modules = current.deployment_settings.modules
 
         page = "%s/%s" % (c, f)
         if page in self.unrestricted_pages:
-            return False
-        elif c not in modules or \
-             c in modules and not modules[c].restricted:
-            return False
-        return True
+            restricted = False
+        elif c != "default" or f not in ("tables", "table"):
+            modules = current.deployment_settings.modules
+            restricted = c in modules and modules[c].restricted
+        else:
+            restricted = True
+
+        return restricted
 
     # -------------------------------------------------------------------------
     def table_restricted(self, t=None):

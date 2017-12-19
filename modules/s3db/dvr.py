@@ -308,6 +308,7 @@ class DVRCaseModel(S3Model):
 
         tablename = "dvr_case"
         define_table(tablename,
+                     self.super_link("doc_id", "doc_entity"),
 
                      # The primary case beneficiary
                      person_id(represent = self.pr_PersonRepresent(show_link=True),
@@ -549,6 +550,7 @@ class DVRCaseModel(S3Model):
                   onvalidation = self.case_onvalidation,
                   create_onaccept = self.case_create_onaccept,
                   update_onaccept = self.case_onaccept,
+                  super_entity = ("doc_entity",),
                   )
 
         # Reusable field
@@ -968,6 +970,16 @@ class DVRCaseFlagModel(S3Model):
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("External"),
                                                              T("This flag indicates that the person is currently accommodated/being held externally (e.g. in Hospital or with Police)"),
+                                                             ),
+                                         ),
+                           ),
+                     Field("nostats", "boolean",
+                           default = False,
+                           label = T("Exclude from Reports"),
+                           represent = s3_yes_no_represent,
+                           comment = DIV(_class = "tooltip",
+                                         _title = "%s|%s" % (T("Exclude from Reports"),
+                                                             T("Exclude cases with this flag from certain reports"),
                                                              ),
                                          ),
                            ),

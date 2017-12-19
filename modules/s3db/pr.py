@@ -921,6 +921,10 @@ class PRPersonModel(S3Model):
 
         # Resource configuration
         self.configure(tablename,
+                       context = {"incident": "incident.id",
+                                  "location": "location_id",
+                                  "organisation": "human_resource.organisation_id",
+                                  },
                        crud_form = crud_form,
                        deduplicate = self.person_duplicate,
                        filter_widgets = filter_widgets,
@@ -1067,6 +1071,13 @@ class PRPersonModel(S3Model):
                                         "joinby": "person_id",
                                         },
                             dvr_residence_status = "person_id",
+
+                            event_incident = {"link": "event_human_resource",
+                                              "joinby": "person_id",
+                                              "key": "incident_id",
+                                              "actuate": "hide",
+                                              },
+
                             # Evacuee Registry
                             evr_case = {"joinby": "person_id",
                                         "multiple": False,
@@ -3368,6 +3379,15 @@ class PRAddressModel(S3Model):
                                 widget = RadioWidget.widget,
                                 ),
                           self.gis_location_id(),
+                          # Whether this field has been the source of
+                          # the base location of the entity before, and
+                          # hence address updates should propagate to
+                          # the base location:
+                          Field("is_base_location", "boolean",
+                                default = False,
+                                readable = False,
+                                writable = False,
+                                ),
                           s3_comments(),
                           *s3_meta_fields())
 
@@ -3442,9 +3462,11 @@ class PRAddressModel(S3Model):
         s3db = current.s3db
         atable = db.pr_address
 
-        row = db(atable.id == record_id).select(atable.location_id,
+        row = db(atable.id == record_id).select(atable.id,
+                                                atable.location_id,
                                                 atable.pe_id,
-                                                limitby=(0, 1)
+                                                atable.is_base_location,
+                                                limitby = (0, 1),
                                                 ).first()
         try:
             location_id = row.location_id
@@ -3453,93 +3475,126 @@ class PRAddressModel(S3Model):
             return
         pe_id = row.pe_id
 
-        req_vars = current.request.form_vars
-        settings = current.deployment_settings
-        person = None
         ptable = s3db.pr_person
+        person = None
+        new_base_location = False
+        req_vars = current.request.vars
         if req_vars and "base_location" in req_vars and \
            req_vars.base_location == "on":
             # Specifically requested
-            S3Tracker()(db.pr_pentity, pe_id).set_base_location(location_id)
+            new_base_location = True
             person = db(ptable.pe_id == pe_id).select(ptable.id,
-                                                      limitby=(0, 1)).first()
+                                                      limitby = (0, 1),
+                                                      ).first()
         else:
             # Check if a base location already exists
             person = db(ptable.pe_id == pe_id).select(ptable.id,
                                                       ptable.location_id,
-                                                      limitby=(0, 1)
+                                                      limitby = (0, 1),
                                                       ).first()
-            if person and not person.location_id:
-                # Hasn't yet been set so use this
-                S3Tracker()(db.pr_pentity, pe_id).set_base_location(location_id)
 
-        if person and str(form_vars.get("type")) == "1": # Home Address
-            if settings.has_module("hrm"):
-                # Also check for relevant HRM record(s)
-                staff_settings = settings.get_hrm_location_staff()
-                staff_person = "person_id" in staff_settings
-                vol_settings = settings.get_hrm_location_vol()
-                vol_person = "person_id" in vol_settings
-                if staff_person or vol_person:
-                    htable = s3db.hrm_human_resource
-                    query = (htable.person_id == person.id) & \
-                            (htable.deleted != True)
-                    fields = [htable.id]
+            if person and (row.is_base_location or not person.location_id):
+                # This address was the source of the base location
+                # (=> update it), or no base location has been set
+                # yet (=> set it now)
+                new_base_location = True
+
+        if new_base_location:
+            # Set new base location
+            S3Tracker()(db.pr_pentity, pe_id).set_base_location(location_id)
+            row.update_record(is_base_location=True)
+
+            # Reset is_base_location flag in all other addresses
+            query = (atable.pe_id == pe_id) & (atable.id != row.id)
+            db(query).update(is_base_location=False)
+
+        if not person:
+            # Nothing more we can do
+            return
+
+        address_type = str(form_vars.get("type"))
+        if address_type == "2": # Permanent Home Address
+            # Use this for Locating the person *if* they have no Current Address
+            query = (atable.pe_id == pe_id) & \
+                    (atable.type == 1) & \
+                    (atable.deleted != True)
+            exists = db(query).select(atable.id,
+                                      limitby=(0, 1)
+                                      ).first()
+            if exists:
+                # Do nothing: prefer existing current address
+                return
+        elif address_type != "1": # Current Home Address
+            # Do nothing
+            return
+
+        settings = current.deployment_settings
+        if settings.has_module("hrm"):
+            # Also check for relevant HRM record(s)
+            staff_settings = settings.get_hrm_location_staff()
+            staff_person = "person_id" in staff_settings
+            vol_settings = settings.get_hrm_location_vol()
+            vol_person = "person_id" in vol_settings
+            if staff_person or vol_person:
+                htable = s3db.hrm_human_resource
+                query = (htable.person_id == person.id) & \
+                        (htable.deleted != True)
+                fields = [htable.id]
+                if staff_person and vol_person:
+                    # Unfiltered in query, need to separate afterwards
+                    fields.append(htable.type)
+                    vol_site = "site_id" == vol_settings[0]
+                    staff_site = "site_id" == staff_settings[0]
+                    if staff_site or vol_site:
+                        fields.append(htable.site_id)
+                elif vol_person:
+                    vol_site = "site_id" == vol_settings[0]
+                    if vol_site:
+                        fields.append(htable.site_id)
+                    query &= (htable.type == 2)
+                elif staff_person:
+                    staff_site = "site_id" == staff_settings[0]
+                    if staff_site:
+                        fields.append(htable.site_id)
+                    query &= (htable.type == 1)
+                hrs = db(query).select(*fields)
+                for hr in hrs:
+                    # @ToDo: Only update if not site_id 1st in list & a site_id exists!
                     if staff_person and vol_person:
-                        # Unfiltered in query, need to separate afterwards
-                        fields.append(htable.type)
-                        vol_site = "site_id" == vol_settings[0]
-                        staff_site = "site_id" == staff_settings[0]
-                        if staff_site or vol_site:
-                            fields.append(htable.site_id)
-                    elif vol_person:
-                        vol_site = "site_id" == vol_settings[0]
-                        if vol_site:
-                            fields.append(htable.site_id)
-                        query &= (htable.type == 2)
-                    elif staff_person:
-                        staff_site = "site_id" == staff_settings[0]
-                        if staff_site:
-                            fields.append(htable.site_id)
-                        query &= (htable.type == 1)
-                    hrs = db(query).select(*fields)
-                    for hr in hrs:
-                        # @ToDo: Only update if not site_id 1st in list & a site_id exists!
-                        if staff_person and vol_person:
-                            vol = hr.type == 2
-                            if vol and vol_site and hr.site_id:
-                                # Volunteer who prioritises getting their location from their site
-                                pass
-                            elif not vol and staff_site and hr.site_id:
-                                # Staff who prioritises getting their location from their site
-                                pass
-                            else:
-                                # Update this HR's location from the Home Address
-                                db(htable.id == hr.id).update(location_id=location_id)
-                        elif vol_person:
-                            if vol_site and hr.site_id:
-                                # Volunteer who prioritises getting their location from their site
-                                pass
-                            else:
-                                # Update this HR's location from the Home Address
-                                db(htable.id == hr.id).update(location_id=location_id)
+                        vol = hr.type == 2
+                        if vol and vol_site and hr.site_id:
+                            # Volunteer who prioritises getting their location from their site
+                            pass
+                        elif not vol and staff_site and hr.site_id:
+                            # Staff who prioritises getting their location from their site
+                            pass
                         else:
-                            # Staff-only
-                            if staff_site and hr.site_id:
-                                # Staff who prioritises getting their location from their site
-                                pass
-                            else:
-                                # Update this HR's location from the Home Address
-                                db(htable.id == hr.id).update(location_id=location_id)
+                            # Update this HR's location from the Home Address
+                            db(htable.id == hr.id).update(location_id=location_id)
+                    elif vol_person:
+                        if vol_site and hr.site_id:
+                            # Volunteer who prioritises getting their location from their site
+                            pass
+                        else:
+                            # Update this HR's location from the Home Address
+                            db(htable.id == hr.id).update(location_id=location_id)
+                    else:
+                        # Staff-only
+                        if staff_site and hr.site_id:
+                            # Staff who prioritises getting their location from their site
+                            pass
+                        else:
+                            # Update this HR's location from the Home Address
+                            db(htable.id == hr.id).update(location_id=location_id)
 
-            if settings.has_module("member"):
-                # Also check for any Member record(s)
-                mtable = s3db.member_membership
-                query = (mtable.person_id == person.id) & \
-                        (mtable.deleted != True)
-                members = db(query).select(mtable.id)
-                for member in members:
-                    db(mtable.id == member.id).update(location_id=location_id)
+        if settings.has_module("member"):
+            # Also check for any Member record(s)
+            mtable = s3db.member_membership
+            query = (mtable.person_id == person.id) & \
+                    (mtable.deleted != True)
+            members = db(query).select(mtable.id)
+            for member in members:
+                db(mtable.id == member.id).update(location_id=location_id)
 
 # =============================================================================
 class PRContactModel(S3Model):
@@ -5734,11 +5789,14 @@ class S3SavedFilterModel(S3Model):
         self.define_table(tablename,
                           self.super_link("pe_id", "pr_pentity"),
                           Field("title"),
+                          # Controller/Function/Resource/URL are used just for Saved Filters
                           Field("controller"),
                           Field("function"),
-                          Field("resource"),
+                          Field("resource"), # tablename
                           Field("url"),
                           Field("description", "text"),
+                          # Query is used for both Saved Filters and Subscriptions
+                          # Can use a Context to have this work across multiple resources if a simple selector is insufficient
                           Field("query", "text"),
                           s3_comments(),
                           *s3_meta_fields())
@@ -5792,7 +5850,10 @@ class S3SavedFilterModel(S3Model):
 
 # =============================================================================
 class S3SubscriptionModel(S3Model):
-    """ Model for subscriptions """
+    """
+        Model for Subscriptions & hence Notifications
+        http://eden.sahanafoundation.org/wiki/S3/Notifications
+    """
 
     names = ("pr_subscription",
              "pr_subscription_resource",
@@ -5834,6 +5895,8 @@ class S3SubscriptionModel(S3Model):
         FREQUENCY_OPTS = dict(frequency_opts)
 
         # ---------------------------------------------------------------------
+        # Subscription (Settings)
+        #
         tablename = "pr_subscription"
         self.define_table(tablename,
                           # Component not Instance
@@ -5913,13 +5976,17 @@ class S3SubscriptionModel(S3Model):
                             )
 
         # ---------------------------------------------------------------------
+        # Subscription Resources (Subscriptions)
+        # - a single Subscription Setting covers 1+ Resources
+        # - these all share a common Filter, which can be a Context if-required
+        #
         tablename = "pr_subscription_resource"
         self.define_table(tablename,
                           Field("subscription_id", "reference pr_subscription",
                                 ondelete = "CASCADE",
                                 ),
-                          Field("resource"),
-                          Field("url"),
+                          Field("resource"), # tablename
+                          Field("url"), # "%s/%s" % (controller, function)
                           Field("auth_token", length=40,
                                 readable = False,
                                 writable = False,
@@ -6907,16 +6974,23 @@ class pr_AssignMethod(S3Method):
                             form = Storage(vars=link)
                             onaccept(form)
                         added += 1
-            current.session.confirmation = T("%(number)s assigned") % \
-                                           dict(number=added)
-            if added > 0:
-                redirect(URL(args=[r.id, self.next_tab], vars={}))
+
+            if r.representation == "popup":
+                # Don't redirect, so we retain popup extension & so close popup
+                response.confirmation = T("%(number)s assigned") % \
+                                            dict(number=added)
+                return {}
             else:
-                redirect(URL(args=r.args, vars={}))
+                current.session.confirmation = T("%(number)s assigned") % \
+                                                    dict(number=added)
+                if added > 0:
+                    redirect(URL(args=[r.id, self.next_tab], vars={}))
+                else:
+                    redirect(URL(args=r.args, vars={}))
 
         elif r.http == "GET":
 
-            # Filter widgets
+            # @ToDo: be able to configure Filter widgets
             #if controller == "vol":
             #    resource_type = "volunteer"
             #elif len(types) == 1:
@@ -6937,20 +7011,22 @@ class pr_AssignMethod(S3Method):
                            "first_name",
                            "middle_name",
                            "last_name",
-                           #"organisation_id",
                            ]
-            #if len(types) == 2:
-            #    list_fields.append((T("Type"), "type"))
-            #list_fields.append("job_title_id")
-            #if settings.get_hrm_use_certificates():
-            #    list_fields.append((T("Certificates"), "person_id$certification.certificate_id"))
-            #if settings.get_hrm_use_skills():
-            #    list_fields.append((T("Skills"), "person_id$competency.skill_id"))
-            #if settings.get_hrm_use_trainings():
-            #    list_fields.append((T("Trainings"), "person_id$training.course_id"))
             if USERS:
                 db.auth_user.organisation_id.represent = s3db.org_OrganisationRepresent()
                 list_fields.append((current.messages.ORGANISATION, "user.organisation_id"))
+            elif tablename == "event_human_resource":
+                list_fields.append((current.messages.ORGANISATION, "human_resource.organisation_id"))
+            # @ToDo: be able to configure additional fields here, like:
+            #if len(types) == 2:
+            #    list_fields.append((T("Type"), "human_resource.type"))
+            #list_fields.append("human_resource.job_title_id")
+            #if settings.get_hrm_use_certificates():
+            #    list_fields.append((T("Certificates"), "certification.certificate_id"))
+            #if settings.get_hrm_use_skills():
+            #    list_fields.append((T("Skills"), "competency.skill_id"))
+            #if settings.get_hrm_use_trainings():
+            #    list_fields.append((T("Trainings"), "training.course_id"))
 
             # Data table
             resource = s3db.resource("pr_person",
@@ -6997,7 +7073,7 @@ class pr_AssignMethod(S3Method):
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
 
-            if r.representation == "html":
+            if r.representation in ("html", "popup"):
                 # Page load
                 resource.configure(deletable = False)
 
@@ -7070,8 +7146,6 @@ class pr_AssignMethod(S3Method):
                                 dt_searching="false",
                                 )
 
-                STAFF = settings.get_hrm_staff_label()
-
                 response.view = "list_filter.html"
 
                 return {"items": items,
@@ -7108,8 +7182,6 @@ class pr_AssignMethod(S3Method):
                 r.error(415, current.ERROR.BAD_FORMAT)
         else:
             r.error(405, current.ERROR.BAD_METHOD)
-
-
 
 # =============================================================================
 def pr_compose():

@@ -475,7 +475,9 @@ def config(settings):
                         try:
                             # @ToDo: Handle the multi-message nicely?
                             # @ToDo: Send resource url with tweet
-                            current.msg.send_tweet(text=s3_str(twitter_text))
+                            current.msg.send_tweet(text=s3_str(twitter_text),
+                                                   alert_id=alert_id,
+                                                   )
                         except tweepy.error.TweepError, e:
                             current.log.debug("Sending tweets failed: %s" % e)
 
@@ -484,7 +486,9 @@ def config(settings):
                     # @ToDo: post resources too?
                     content = get_facebook_content(arow)
                     try:
-                        current.msg.post_to_facebook(text=content)
+                        current.msg.post_to_facebook(text=content,
+                                                     alert_id=alert_id,
+                                                     )
                     except Exception, e:
                         current.log.debug("Posting Alert to Facebook failed: %s" % e)
 
@@ -520,9 +524,16 @@ def config(settings):
                         send_by_pe_id(row.pe_id,
                                       subject,
                                       email_content,
-                                      document_ids=cap_document_id)
+                                      document_ids=cap_document_id,
+                                      alert_id=alert_id,
+                                      )
                         try:
-                            send_by_pe_id(row.pe_id, subject, sms_content, contact_method="SMS")
+                            send_by_pe_id(row.pe_id,
+                                          subject,
+                                          sms_content,
+                                          contact_method="SMS",
+                                          alert_id=alert_id,
+                                          )
                         except ValueError:
                             current.log.error("No SMS Handler defined!")
                 else:
@@ -535,9 +546,16 @@ def config(settings):
                         send_by_pe_id(row.pe_id,
                                       subject,
                                       email_content,
-                                      document_ids=cap_document_id)
+                                      document_ids=cap_document_id,
+                                      alert_id=alert_id,
+                                      )
                         try:
-                            send_by_pe_id(row.pe_id, subject, sms_content, contact_method="SMS")
+                            send_by_pe_id(row.pe_id,
+                                          subject,
+                                          sms_content,
+                                          contact_method="SMS",
+                                          alert_id=alert_id,
+                                          )
                         except ValueError:
                             current.log.error("No SMS Handler defined!")
 
@@ -806,18 +824,17 @@ def config(settings):
         """
 
         rows = data["rows"]
-        subject = "%s %s" % (current.deployment_settings.get_system_name_short(),
+        subject = "%s %s" % (settings.get_system_name_short(),
                              T("Alert Notification"))
         if len(rows) == 1:
             # Since if there are more than one row, the single email has content
             # for all rows
-            last_check_time = meta_data["last_check_time"]
-            db = current.db
             atable = current.s3db.cap_alert
-            row_ = db(atable.id == rows[0]["cap_alert.id"]).select(atable.approved_on,
-                                                                   limitby=(0, 1)).first()
+            row_ = current.db(atable.id == rows[0]["cap_alert.id"]).select(atable.approved_on,
+                                                                           limitby=(0, 1)
+                                                                           ).first()
             if row_ and row_.approved_on is not None:
-                if s3_utc(row_.approved_on) >= last_check_time:
+                if s3_utc(row_.approved_on) >= meta_data["last_check_time"]:
                     subject = get_email_subject(rows[0])
 
         return subject
@@ -844,6 +861,44 @@ def config(settings):
         return document_ids
 
     settings.msg.notify_attachment = custom_msg_notify_attachment
+
+    # -----------------------------------------------------------------------------
+    def custom_msg_notify_send_data(resource, data, meta_data):
+        """
+            Custom Method to send data containing alert_id to the s3msg.send_by_pe_id
+            @param resource: the S3Resource
+            @param data: the data returned from S3Resource.select
+            @param meta_data: the meta data for the notification
+        """
+
+        rows = data.rows
+        data = {}
+        if len(rows) == 1:
+            row = rows[0]
+            if "cap_alert.id" in row:
+                try:
+                    alert_id = int(row["cap_alert.id"])
+                    data["alert_id"] = alert_id
+                except ValueError:
+                    pass
+
+        return data
+
+    settings.msg.notify_send_data = custom_msg_notify_send_data
+
+    # -----------------------------------------------------------------------------
+    def msg_send_postprocess(message_id, **data):
+        """
+            Custom function that links alert_id in cap module to message_id in
+            message module
+        """
+
+        alert_id = data.get("alert_id", None)
+        if alert_id and message_id:
+            current.s3db.cap_alert_message.insert(alert_id = alert_id,
+                                                  message_id = message_id)
+
+    settings.msg.send_postprocess = msg_send_postprocess
 
     # -------------------------------------------------------------------------
     # Comment/uncomment modules here to disable/enable them
@@ -1190,7 +1245,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def get_email_subject(row, system=True):
         """
-            prepare the subject for Email
+            Prepare the subject for Email
         """
 
         itable = current.s3db.cap_info
@@ -1216,7 +1271,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def get_sms_content(row, ack_id=None, system=True):
         """
-            prepare the content for SMS
+            Prepare the content for SMS
 
             @param row: the row from which the sms will be constructed
             @param ack_id: cap_alert_ack.id for including the acknowledgement link

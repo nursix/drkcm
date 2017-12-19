@@ -45,17 +45,20 @@ from s3dal import Table, Field
 from s3navigation import S3ScriptItem
 from s3resource import S3Resource
 from s3validators import IS_ONE_OF
+from s3widgets import s3_comments_widget, s3_richtext_widget
 
 DYNAMIC_PREFIX = "s3dt"
 DEFAULT = lambda: None
 
 # Table options that are always JSON-serializable objects,
 # and can thus be passed as-is from dynamic model "settings"
-# to s3db.configure
+# to s3db.configure (& thence to mobile table.settings)
 SERIALIZABLE_OPTS = ("autosync",
                      "autototals",
+                     "card",
                      "grids",
                      "insertable",
+                     "show_hidden",
                      "subheadings",
                      )
 
@@ -1460,6 +1463,10 @@ class S3Model(object):
 
         # Update the super_keys in the record
         if super_keys:
+            # System update => don't update modified_by/on
+            if "modified_on" in table.fields:
+                super_keys["modified_by"] = table.modified_by
+                super_keys["modified_on"] = table.modified_on
             db(table.id == record_id).update(**super_keys)
 
         record.update(super_keys)
@@ -1777,6 +1784,11 @@ class S3DynamicModel(object):
             if comments:
                 field.comment = T(comments)
 
+            # Field settings
+            settings = row.settings
+            if settings:
+                field.s3_settings = settings
+
         return field
 
     # -------------------------------------------------------------------------
@@ -1805,12 +1817,22 @@ class S3DynamicModel(object):
 
         if fieldtype in ("string", "text"):
             default = row.default_value
+            settings = row.settings or {}
+            widget = settings.get("widget")
+            if widget == "richtext":
+                widget = s3_richtext_widget
+            elif widget == "comments":
+                widget = s3_comments_widget
+            else:
+                widget = None
         else:
             default = None
+            widget = None
 
         field = Field(fieldname, fieldtype,
                       default = default,
                       requires = requires,
+                      widget = widget,
                       )
         return field
 

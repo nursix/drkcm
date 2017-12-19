@@ -99,7 +99,7 @@ def config(settings):
                          "hrm_job_title",
                          "hrm_course",
                          "hrm_programme",
-                         #"member_membership_type",
+                         "member_membership_type",
                          "vol_award",
                          ):
             return None
@@ -744,12 +744,12 @@ def config(settings):
                 restricted = True,
                 #module_type = 10
             )),
-        #("member", Storage(
-        #       name_nice = T("Members"),
-        #       #description = "Membership Management System",
-        #       restricted = True,
-        #       #module_type = 10,
-        #   )),
+        ("member", Storage(
+               name_nice = T("Partners"),
+               #description = "Membership Management System",
+               restricted = True,
+               #module_type = 10,
+           )),
         ("deploy", Storage(
                name_nice = T("Regional Intervention Teams"),
                #description = "Alerting and Deployment of Disaster Response Teams",
@@ -1539,6 +1539,8 @@ Thank you"""
         #                          tablename = "hrm_human_resource")
 
         s3 = current.response.s3
+        # Enable scalability-optimized strategies
+        settings.base.bigtable = True
 
         if current.request.function == "trainee":
             EXTERNAL = True
@@ -2314,7 +2316,7 @@ Thank you"""
                                                  limitby=(0, 1),
                                                  ).first()
             #if settings.get_L10n_translate_org_organisation():
-            org_name = org_represent(org_id)
+            #org_name = org_represent(org_id)
             #else:
             #    org_name = org.name
 
@@ -2497,6 +2499,80 @@ Thank you"""
                        )
 
     settings.customise_hrm_training_event_report_resource = customise_hrm_training_event_report_resource
+
+    # -------------------------------------------------------------------------
+    def customise_member_membership_resource(r, tablename):
+
+        from s3layouts import S3PopupLink
+
+        ADD_MEMBERSHIP_TYPE = T("Create Partner Type")
+
+        table = current.s3db.member_membership
+        table.code.label = T("Partner ID")
+        table.membership_type_id.comment = S3PopupLink(f = "membership_type",
+                                                       label = ADD_MEMBERSHIP_TYPE,
+                                                       title = ADD_MEMBERSHIP_TYPE,
+                                                       tooltip = T("Add a new partner type to the catalog."),
+                                                       )
+
+        current.response.s3.crud_strings[tablename] = Storage(
+            label_create = T("Create Partner"),
+            title_display = T("Partner Details"),
+            title_list = T("Partners"),
+            title_update = T("Edit Partner Details"),
+            title_upload = T("Import Partners"),
+            label_list_button = T("List Partners"),
+            label_delete_button = T("Delete Partner"),
+            msg_record_created = T("Partner added"),
+            msg_record_modified = T("Partner updated"),
+            msg_record_deleted = T("Partner deleted"),
+            msg_list_empty = T("No Partners currently defined"))
+
+    settings.customise_member_membership_resource = customise_member_membership_resource
+
+    # -------------------------------------------------------------------------
+    def customise_member_membership_controller(**attr):
+
+        ns_only("member_membership",
+                required = True,
+                branches = True,
+                updateable = True,
+                )
+
+        return attr
+
+    settings.customise_member_membership_controller = customise_member_membership_controller
+
+    # -------------------------------------------------------------------------
+    def customise_member_membership_type_resource(r, tablename):
+
+        current.response.s3.crud_strings[tablename] = Storage(
+            label_create = T("Create Partner Type"),
+            title_display = T("Partner Type Details"),
+            title_list = T("Partner Types"),
+            title_update = T("Edit Partner Type Details"),
+            title_upload = T("Import Partner Types"),
+            label_list_button = T("List Partner Types"),
+            label_delete_button = T("Delete Partner Type"),
+            msg_record_created = T("Partner Type added"),
+            msg_record_modified = T("Partner Type updated"),
+            msg_record_deleted = T("Partner Type deleted"),
+            msg_list_empty = T("No Partner Types currently defined"))
+
+    settings.customise_member_membership_type_resource = customise_member_membership_type_resource
+
+    # -------------------------------------------------------------------------
+    def customise_member_membership_type_controller(**attr):
+
+        ns_only("member_membership_type",
+                required = False,
+                branches = False,
+                updateable = True,
+                )
+
+        return attr
+
+    settings.customise_member_membership_type_controller = customise_member_membership_type_controller
 
     # -------------------------------------------------------------------------
     def customise_inv_home():
@@ -3102,6 +3178,8 @@ Thank you"""
 
         s3db = current.s3db
         s3 = current.response.s3
+        # Enable scalability-optimized strategies
+        settings.base.bigtable = True
 
         # Custom prep
         standard_prep = s3.prep
@@ -3487,7 +3565,7 @@ Thank you"""
                                )
 
         # @ToDo: S3SQLInlineComponent for Project orgs
-        # Get IDs for PartnerNS/Partner-Donor
+        # Get IDs for Partner NS/Partner Donor
         # db = current.db
         # ttable = db.org_organisation_type
         # rows = db(ttable.deleted != True).select(ttable.id,

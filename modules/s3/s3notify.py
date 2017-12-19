@@ -30,21 +30,19 @@
 import datetime
 import json
 import os
+import string
 import sys
 import urlparse
 import urllib2
 from urllib import urlencode
 from uuid import uuid4
-import string
 
 try:
     from cStringIO import StringIO # Faster, where available
 except:
     from StringIO import StringIO
 
-from gluon import *
-from gluon.storage import Storage
-from gluon.tools import fetch
+from gluon import current, TABLE, THEAD, TBODY, TR, TD, TH, XML
 
 from s3datetime import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc
 from s3utils import s3_str, s3_truncate, s3_unicode
@@ -136,8 +134,7 @@ class S3Notifications(object):
         db.commit()
 
         # Construct the send-URL
-        settings = current.deployment_settings
-        public_url = settings.get_base_public_url()
+        public_url = current.deployment_settings.get_base_public_url()
         lookup_url = "%s/%s/%s" % (public_url,
                                    current.request.application,
                                    r.url.lstrip("/"))
@@ -361,6 +358,12 @@ class S3Notifications(object):
             if attachment_fnc:
                 document_ids = attachment_fnc(resource, data, meta_data)
 
+        # **data for send_by_pe_id function in s3msg
+        send_data = {}
+        send_data_fnc = settings.get_msg_notify_send_data()
+        if callable(send_data_fnc):
+            send_data = send_data_fnc(resource, data, meta_data)
+
         # Helper function to find templates from a priority list
         join = lambda *f: os.path.join(current.request.folder, *f)
         def get_template(path, filenames):
@@ -429,11 +432,13 @@ class S3Notifications(object):
             #_debug(message)
             try:
                 sent = send(pe_id,
+                            # RFC 2822
                             subject=s3_truncate(subject, 78),
                             message=message,
                             contact_method=method,
                             system_generated=True,
-                            document_ids=document_ids)
+                            document_ids=document_ids,
+                            **send_data)
             except:
                 exc_info = sys.exc_info()[:2]
                 error = ("%s: %s" % (exc_info[0].__name__, exc_info[1]))

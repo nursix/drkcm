@@ -1911,6 +1911,7 @@ class S3Resource(object):
                    mcomponents=[],
                    rcomponents=None,
                    references=None,
+                   mdata=False,
                    stylesheet=None,
                    as_tree=False,
                    as_json=False,
@@ -1942,6 +1943,8 @@ class S3Resource(object):
                                 include (list of "tablename:alias")
 
             @param references: foreign keys to include (default: all)
+            @param mdata: mobile data export
+                          (=>reduced field set, lookup-only option)
             @param stylesheet: path to the XSLT stylesheet (if required)
             @param as_tree: return the ElementTree (do not convert into string)
             @param as_json: represent the XML tree as JSON
@@ -1975,6 +1978,7 @@ class S3Resource(object):
                                 rcomponents = rcomponents,
                                 references = references,
                                 filters = filters,
+                                mdata = mdata,
                                 maxbounds = maxbounds,
                                 xmlformat = xmlformat,
                                 location_data = location_data,
@@ -2018,6 +2022,7 @@ class S3Resource(object):
                     mcomponents=None,
                     rcomponents=None,
                     filters=None,
+                    mdata=False,
                     maxbounds=False,
                     xmlformat=None,
                     location_data=None,
@@ -2042,6 +2047,9 @@ class S3Resource(object):
                                 for all
             @param filters: additional URL filters (Sync), as dict
                             {tablename: {url_var: string}}
+            @param mdata: export is intended for mobile offline client
+                          (=>reduced field set, lookup-only option),
+                          overrides fields/references
             @param maxbounds: include lat/lon boundaries in the top
                               level element (off by default)
             @param xmlformat:
@@ -2088,11 +2096,6 @@ class S3Resource(object):
         else:
             orderby = None
 
-        # Determine which components to export for this table
-        components = self.components_to_export(self.tablename,
-                                               mcomponents,
-                                               )
-
         # Construct the record base URL
         prefix = self.prefix
         name = self.name
@@ -2100,6 +2103,26 @@ class S3Resource(object):
             url = "%s/%s/%s" % (base_url, prefix, name)
         else:
             url = "/%s/%s" % (prefix, name)
+
+        # Mobile data settings
+        llrepr = None
+        if mdata:
+            from s3mobile import S3MobileSchema
+            ms = S3MobileSchema(self)
+            if ms.lookup_only:
+                # Override fields/references (only meta fields)
+                llrepr = ms.llrepr
+                fields, references = [], []
+            else:
+                # Determine fields/references from mobile schema
+                fields = references = [f.name for f in ms.fields()]
+
+        # Determine which components to export for this table
+        components_to_export = self.components_to_export
+        if llrepr is None:
+            components = components_to_export(self.tablename, mcomponents)
+        else:
+            components = None
 
         # Separate references and data fields
         (rfields, dfields) = self.split_fields(data = fields,
@@ -2168,6 +2191,7 @@ class S3Resource(object):
                                       master = master,
                                       target = target,
                                       msince = msince,
+                                      llrepr = llrepr,
                                       location_data = location_data,
                                       xmlformat = xmlformat,
                                       )
@@ -2235,7 +2259,7 @@ class S3Resource(object):
                     filter_vars = None
 
                 # Determine which components to export for this table
-                components = self.components_to_export(
+                components = components_to_export(
                                 tablename,
                                 ref_components.get(tablename),
                                 )
@@ -2248,6 +2272,24 @@ class S3Resource(object):
                                             vars = filter_vars,
                                             )
 
+                # Fields and references to export
+                # @todo: applying the same fields/references as for master
+                #        means no differentiation by table => not the best
+                #        solution, but what else is without adding complexity?
+                fields_, references_ = fields, references
+
+                # Mobile data settings
+                if mdata:
+                    ms = S3MobileSchema(rresource)
+                    if ms.lookup_only:
+                        # Override fields/references (only meta fields)
+                        fields_, references_ = [], []
+                        components = None
+                        llrepr = ms.llrepr
+                    else:
+                        # Determine fields/references from mobile schema
+                        fields_ = references_ = [f.name for f in ms.fields()]
+
                 # Construct the URL for the resource
                 # @todo: don't do this for link tables
                 table = rresource.table
@@ -2257,9 +2299,10 @@ class S3Resource(object):
                     url = "/%s/%s" % (prefix, name)
 
                 # Separate references and data fields
-                rfields, dfields = rresource.split_fields(data = fields,
-                                                          references = references,
-                                                          )
+                rfields, dfields = rresource.split_fields(
+                                        data = fields_,
+                                        references = references_,
+                                        )
 
                 # Fields to load
                 if xmlformat:
@@ -2290,6 +2333,7 @@ class S3Resource(object):
                                               filters = filters,
                                               master = False,
                                               target = target,
+                                              llrepr = llrepr,
                                               location_data = location_data,
                                               xmlformat = xmlformat,
                                               )
@@ -2343,6 +2387,7 @@ class S3Resource(object):
                           msince=None,
                           master=True,
                           target=None,
+                          llrepr=None,
                           location_data=None,
                           xmlformat=None,
                           ):
@@ -2364,6 +2409,8 @@ class S3Resource(object):
             @param msince: the minimum update datetime for exported records
             @param master: True of this is the master resource
             @param target: alias of component targetted (or None to target master resource)
+            @param llrepr: lookup list representation method
+                           (suppresses component export if set)
             @param location_data: the location_data for GIS encoding
             @param xmlformat:
         """
@@ -2390,6 +2437,7 @@ class S3Resource(object):
                                             lazy = lazy,
                                             url = record_url,
                                             master = master,
+                                            llrepr = llrepr,
                                             location_data = location_data
                                             )
 
@@ -2405,7 +2453,7 @@ class S3Resource(object):
                 add = False
 
         # Export components
-        if components:
+        if components and llrepr is None:
 
             get_hierarchy_link = current.s3db.hierarchy_link
 
@@ -2574,6 +2622,7 @@ class S3Resource(object):
                        lazy=None,
                        url=None,
                        master=True,
+                       llrepr=None,
                        location_data=None):
         """
             Exports a single record to the element tree.
@@ -2585,6 +2634,7 @@ class S3Resource(object):
             @param export_map: the export map of the current request
             @param url: URL of the record
             @param master: True if this is a record in the master resource
+            @param llrepr: lookup list representation method
             @param location_data: the location_data for GIS encoding
         """
 
@@ -2637,6 +2687,7 @@ class S3Resource(object):
                                alias = alias,
                                lazy = lazy,
                                url = url,
+                               llrepr = llrepr,
                                postprocess = postprocess,
                                )
 
@@ -3585,7 +3636,7 @@ class S3Resource(object):
         return S3ResourceField(self, selector)
 
     # -------------------------------------------------------------------------
-    def split_fields(self, skip=[], data=None, references=None):
+    def split_fields(self, skip=DEFAULT, data=None, references=None):
         """
             Split the readable fields in the resource table into
             reference and non-reference fields.
@@ -3594,6 +3645,9 @@ class S3Resource(object):
             @param data: data fields to include (None for all)
             @param references: foreign key fields to include (None for all)
         """
+
+        if skip is DEFAULT:
+            skip = []
 
         rfields = self.rfields
         dfields = self.dfields
@@ -3626,19 +3680,24 @@ class S3Resource(object):
             table = self.table
             pkey = table._id.name
             for f in table.fields:
-                if f == UID or \
-                   f in skip or \
-                   f in IGNORE_FIELDS:
+
+                if f == UID or f in skip or f in IGNORE_FIELDS:
+                    # Skip (show_ids=True overrides this for pkey)
                     if f != pkey or not show_ids:
                         continue
-                if s3_has_foreign_key(table[f]) and \
-                    f not in FIELDS_TO_ATTRIBUTES and \
-                    (references is None or f in references):
-                    rfields.append(f)
-                elif data is None or \
-                     f in data or \
-                     f in FIELDS_TO_ATTRIBUTES:
+
+                # Meta-field? => always include (in dfields)
+                meta = f in FIELDS_TO_ATTRIBUTES
+
+                if s3_has_foreign_key(table[f]) and not meta:
+                    # Foreign key => add to rfields unless excluded
+                    if references is None or f in references:
+                        rfields.append(f)
+
+                elif data is None or f in data or meta:
+                    # Data field => add to dfields
                     dfields.append(f)
+
             self.rfields = rfields
             self.dfields = dfields
 
@@ -5471,9 +5530,12 @@ class S3ResourceData(object):
                 count_only = True
             if subselect or \
                getids and pagination or \
-               extra_tables != filter_tables:
+               extra_tables and extra_tables != filter_tables:
                 fq = True
                 count_only = False
+
+        # Shall we use scalability-optimized strategies?
+        bigtable = current.deployment_settings.get_base_bigtable()
 
         # Filter Query:
         # If we need to determine the number and/or ids of all matching
@@ -5482,11 +5544,16 @@ class S3ResourceData(object):
         ids = page = totalrows = None
         if fq:
             # Execute the filter query
+            if bigtable:
+                limitby = resource.limitby(start=start, limit=limit)
+            else:
+                limitby = None
             totalrows, ids = self.filter_query(query,
                                                join = filter_ijoins,
                                                left = filter_ljoins,
                                                getids = not count_only,
                                                orderby = orderby_aggr,
+                                               limitby = limitby,
                                                )
 
         # Simplify the master query if possible
@@ -5507,13 +5574,15 @@ class S3ResourceData(object):
                 if pagination and (efilter or vfilter):
                     master_ids = ids
                 else:
-                    totalrows = len(ids)
-                    limitby = resource.limitby(start=start, limit=limit)
-                    if limitby:
-                        page = ids[limitby[0]:limitby[1]]
+                    if bigtable:
+                        master_ids = page = ids
                     else:
-                        page = ids
-                    master_ids = page
+                        limitby = resource.limitby(start=start, limit=limit)
+                        if limitby:
+                            page = ids[limitby[0]:limitby[1]]
+                        else:
+                            page = ids
+                        master_ids = page
 
                 # Simplify master query
                 if page is not None and not page:
@@ -5581,35 +5650,49 @@ class S3ResourceData(object):
                     qfields[pkey] = resource._id
                 has_id = True
 
-            # Joins for master query
-            master_ijoins = ijoins.as_list(tablenames = master_tables,
-                                           aqueries = aqueries,
-                                           prefer = ljoins,
-                                           )
-            master_ljoins = ljoins.as_list(tablenames = master_tables,
-                                           aqueries = aqueries,
-                                           )
-
-            # Suspend (mandatory) virtual fields if so requested
-            if not virtual:
-                vf = table.virtualfields
-                osetattr(table, "virtualfields", [])
-
             # Execute master query
             db = current.db
-            rows = db(master_query).select(join = master_ijoins,
-                                           left = master_ljoins,
-                                           distinct = distinct,
-                                           groupby = groupby,
-                                           orderby = orderby,
-                                           limitby = limitby,
-                                           orderby_on_limitby = orderby_on_limitby,
-                                           cacheable = not as_rows,
-                                           *qfields.values())
 
-            # Restore virtual fields
-            if not virtual:
-                osetattr(table, "virtualfields", vf)
+            master_fields = qfields.keys()
+            if not groupby and not pagination and \
+               has_id and ids and len(master_fields) == 1:
+                # We already have the ids, and master query doesn't select
+                # anything else => skip the master query, construct Rows from
+                # ids instead
+                master_id = table._id.name
+                rows = Rows(db,
+                            [Row({master_id: record_id}) for record_id in ids],
+                            colnames = [pkey],
+                            compact = False,
+                            )
+            else:
+                # Joins for master query
+                master_ijoins = ijoins.as_list(tablenames = master_tables,
+                                               aqueries = aqueries,
+                                               prefer = ljoins,
+                                               )
+                master_ljoins = ljoins.as_list(tablenames = master_tables,
+                                               aqueries = aqueries,
+                                               )
+
+                # Suspend (mandatory) virtual fields if so requested
+                if not virtual:
+                    vf = table.virtualfields
+                    osetattr(table, "virtualfields", [])
+
+                rows = db(master_query).select(join = master_ijoins,
+                                               left = master_ljoins,
+                                               distinct = distinct,
+                                               groupby = groupby,
+                                               orderby = orderby,
+                                               limitby = limitby,
+                                               orderby_on_limitby = orderby_on_limitby,
+                                               cacheable = not as_rows,
+                                               *qfields.values())
+
+                # Restore virtual fields
+                if not virtual:
+                    osetattr(table, "virtualfields", vf)
 
         else:
             rows = Rows(current.db)
@@ -5926,20 +6009,25 @@ class S3ResourceData(object):
         return expr, aggr, fields, tables
 
     # -------------------------------------------------------------------------
-    def filter_query(self, query,
+    def filter_query(self,
+                     query,
                      join=None,
                      left=None,
                      getids=False,
-                     orderby=None):
+                     limitby=None,
+                     orderby=None,
+                     ):
         """
             Execute a query to determine the number/record IDs of all
             matching rows
 
-            @param query: the query to execute
-            @param join: the inner joins for this query
-            @param left: the left joins for this query
-            @param getids: also extract the IDs if all matching records
-            @param orderby: ORDERBY expression for this query
+            @param query: the filter query
+            @param join: the inner joins for the query
+            @param left: the left joins for the query
+            @param getids: extract the IDs of matching records
+            @param limitby: tuple of indices (start, end) to extract only
+                            a limited set of IDs
+            @param orderby: ORDERBY expression for the query
 
             @return: tuple of (TotalNumberOfRecords, RecordIDs)
         """
@@ -5948,39 +6036,82 @@ class S3ResourceData(object):
 
         table = self.table
 
-        if getids:
-            field = table._id
-            #distinct = False
-            groupby = field
-        else:
-            field = table._id.count()
-            #distinct = True # has no effect
-            groupby = None
-            orderby = None # don't need order if just counting
-
         # Temporarily deactivate virtual fields
         vf = table.virtualfields
         osetattr(table, "virtualfields", [])
 
-        # Extract the data
-        rows = db(query).select(field,
-                                join=join,
-                                left=left,
-                                #distinct=distinct,
-                                orderby=orderby,
-                                groupby=groupby,
-                                cacheable=True)
+        if getids and limitby:
+            # Large result sets expected on average (settings.base.bigtable)
+            # => effort almost independent of result size, much faster
+            #    for large and very large filter results
+            start = limitby[0]
+            limit = limitby[1] - start
+
+            # Don't penalize the smallest filter results (=effective filtering)
+            if limit:
+                maxids = max(limit, 200)
+                limitby_ = (start, maxids)
+            else:
+                limitby_ = None
+
+
+            # Extract record IDs
+            field = table._id
+            rows = db(query).select(field,
+                                    join = join,
+                                    left = left,
+                                    limitby = limitby_,
+                                    orderby = orderby,
+                                    groupby = field,
+                                    cacheable = True,
+                                    )
+            pkey = str(field)
+            results = rows[:limit] if limit else rows
+            ids = [row[pkey] for row in results]
+
+            totalids = len(rows)
+            if limit and totalids >= maxids or start != 0 and not totalids:
+                # Count all matching records
+                cnt = table._id.count()
+                row = db(query).select(cnt,
+                                       join = join,
+                                       left = left,
+                                       cacheable = True,
+                                       ).first()
+                totalrows = row[cnt]
+            else:
+                # We already know how many there are
+                totalrows = start + totalids
+
+        elif getids:
+            # Extract all matching IDs, then count them in Python
+            # => effort proportional to result size, slightly faster
+            #    than counting separately for small filter results
+            field = table._id
+            rows = db(query).select(field,
+                                    join=join,
+                                    left=left,
+                                    orderby = orderby,
+                                    groupby = field,
+                                    cacheable = True,
+                                    )
+            pkey = str(field)
+            ids = [row[pkey] for row in rows]
+            totalrows = len(ids)
+
+        else:
+            # Only count, do not extract any IDs (constant effort)
+            field = table._id.count()
+            rows = db(query).select(field,
+                                    join = join,
+                                    left = left,
+                                    cacheable = True,
+                                    )
+            ids = None
+            totalrows = rows.first()[field]
 
         # Restore the virtual fields
         osetattr(table, "virtualfields", vf)
-
-        if getids:
-            pkey = str(table._id)
-            ids = [row[pkey] for row in rows]
-            totalrows = len(ids)
-        else:
-            ids = None
-            totalrows = rows.first()[field]
 
         return totalrows, ids
 

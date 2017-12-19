@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
+import json
 
 from gluon import current
 from gluon.storage import Storage
@@ -161,19 +162,19 @@ def config(settings):
             restricted = True,
             module_type = None  # No Menu
         )),
-    #    ("errors", Storage(
-    #        name_nice = "Ticket Viewer",
-    #        #description = "Needed for Breadcrumbs",
-    #        restricted = False,
-    #        module_type = None  # No Menu
-    #    )),
-       ("sync", Storage(
+        #("errors", Storage(
+        #    name_nice = "Ticket Viewer",
+        #    #description = "Needed for Breadcrumbs",
+        #    restricted = False,
+        #    module_type = None  # No Menu
+        #)),
+        ("sync", Storage(
            name_nice = "Synchronization",
            #description = "Synchronization",
            restricted = True,
            access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
            module_type = None  # This item is handled separately for the menu
-       )),
+        )),
         #("translate", Storage(
         #    name_nice = "Translation Functionality",
         #    #description = "Selective translation of strings based on module.",
@@ -199,6 +200,13 @@ def config(settings):
             module_type = 10
         )),
         # All modules below here should be possible to disable safely
+        ("msg", Storage(
+            name_nice = "Messaging",
+            #description = "Sends & Receives Alerts via Email & SMS",
+            restricted = True,
+            # The user-visible functionality of this module isn't normally required. Rather it's main purpose is to be accessed from other modules.
+            module_type = None,
+        )),
         ("hrm", Storage(
             name_nice = "Contacts",
             #description = "Human Resources Management",
@@ -381,25 +389,97 @@ def config(settings):
                 tags = ",".join(tags)
                 s3.jquery_ready.append('''wacop_update_tags("%s")''' % tags)
 
-            # Processing Tags/auto-Bookmarks
+            def create_onaccept(form):
+                """
+                    Update the modified_on of any forums to which the Incident/Event this Post links to is Shared
+                """
+                post_id = form.vars.id
+                pltable = s3db.event_post
+                events = db(pltable.post_id == post_id).select(pltable.event_id,
+                                                               pltable.incident_id,
+                                                               )
+                if len(events):
+                    event_ids = []
+                    eappend = event_ids.append
+                    incident_ids = []
+                    iappend = incident_ids.append
+                    for e in events:
+                        incident_id = e.incident_id
+                        if incident_id:
+                            iappend(incident_id)
+                        else:
+                            eappend(e.event_id)
+
+                    fltable = s3db.event_forum
+                    if len(event_ids):
+                        query = (fltable.event_id.belongs(event_ids))
+                        if len(incident_ids):
+                            query |= (fltable.incident_id.belongs(incident_ids))
+                    else:
+                        query = (fltable.incident_id.belongs(incident_ids))
+                    forums = db(query).select(fltable.forum_id)
+                    len_forums = len(forums)
+                    if len_forums:
+                        ftable = s3db.pr_forum
+                        if len_forums == 1:
+                            query = (ftable.id == forums.first().forum_id)
+                        else:
+                            query = (ftable.id.belongs([f.forum_id for f in forums]))
+                        db(query).update(modified_on = r.utcnow)
+
             default = s3db.get_config(tablename, "onaccept")
             if isinstance(default, list):
                 onaccept = default
+                # Processing Tags/auto-Bookmarks
                 onaccept.append(cms_post_onaccept)
+                create_onaccept = list(onaccept) + [create_onaccept]
             else:
+                # Processing Tags/auto-Bookmarks
                 onaccept = [default, cms_post_onaccept]
+                create_onaccept = [create_onaccept, default, cms_post_onaccept]
 
             s3db.configure(tablename,
                            crud_form = crud_form,
                            onaccept = onaccept,
+                           create_onaccept = create_onaccept,
                            )
 
         elif method in ("custom", "dashboard", "datalist", "filter"):
             # dataList configuration
+            from s3 import s3_fieldmethod
             from templates.WACOP.controllers import cms_post_list_layout
 
             s3 = current.response.s3
             s3.dl_no_header = True
+
+            # Virtual Field for Comments
+            # - otherwise need to do per-record DB calls inside cms_post_list_layout
+            #   as direct list_fields come in unsorted, so can't match up to records
+            ctable = s3db.cms_comment
+
+            def comment_as_json(row):
+                body = row["cms_comment.body"]
+                if not body:
+                    return None
+                return json.dumps({"body": body,
+                                   "created_by": row["cms_comment.created_by"],
+                                   "created_on": row["cms_comment.created_on"].isoformat(),
+                                   })
+
+            ctable.json_dump = s3_fieldmethod("json_dump",
+                                              comment_as_json,
+                                              # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                              #represent = lambda v: v,
+                                              )
+
+            s3db.configure("cms_comment",
+                           extra_fields = ["body",
+                                           "created_by",
+                                           "created_on",
+                                           ],
+                           # Doesn't seem to have any impact
+                           #orderby = "cms_comment.created_on asc",
+                           )
 
             s3db.configure(tablename,
                            # No create form in the datalist popups on Resource Browse page
@@ -413,27 +493,30 @@ def config(settings):
                                           "created_by",
                                           "tag.name",
                                           "document.file",
-                                          "comment.id",
-                                          # Extra fields come in unsorted, so can't match up to records
-                                          #"comment.body",
-                                          #"comment.created_by",
-                                          #"comment.created_on",
+                                          #"comment.id",
+                                          "comment.json_dump",
                                           ],
                            list_layout = cms_post_list_layout,
-                           # Default
-                           #orderby = "cms_post.date desc",
+                           # First is Default, 2nd has no impact
+                           #orderby = ("cms_post.date desc",
+                           #           "cms_comment.created_on asc",
+                           #           )
                            )
 
             get_vars = r.get_vars
             if method == "datalist":
                 if get_vars.get("dashboard"):
                     from templates.WACOP.controllers import dashboard_filter
-                    s3.filter = dashboard_filter()
+                    # Too late for s3.filter to take effect
+                    #s3.filter = dashboard_filter()
+                    r.resource.add_filter(dashboard_filter())
                 else:
                     forum_id = get_vars.get("forum")
                     if forum_id:
                         from templates.WACOP.controllers import group_filter
-                        s3.filter = group_filter(forum_id)
+                        # Too late for s3.filter to take effect
+                        #s3.filter = group_filter(forum_id)
+                        r.resource.add_filter(group_filter(forum_id))
 
             elif method in ("custom", "dashboard", "filter"):
                 # Filter Widgets
@@ -448,13 +531,19 @@ def config(settings):
                         # We only expect a maximum of 1 of these, no need to append
                         if k == "dashboard":
                             from templates.WACOP.controllers import dashboard_filter
-                            s3.filter = dashboard_filter()
+                            # Too late for s3.filter to take effect
+                            #s3.filter = dashboard_filter()
+                            r.resource.add_filter(dashboard_filter())
                         elif k == "forum":
                             from templates.WACOP.controllers import group_filter
-                            s3.filter = group_filter(v)
+                            # Too late for s3.filter to take effect
+                            #s3.filter = group_filter(v)
+                            r.resource.add_filter(group_filter(v))
                         else:
                             from s3 import FS
-                            s3.filter = (FS(k) == v)
+                            # Too late for s3.filter to take effect
+                            #s3.filter = (FS(k) == v)
+                            r.resource.add_filter((FS(k) == v))
 
                 date_filter = S3DateFilter("date",
                                            # If we introduce an end_date on Posts:
@@ -510,6 +599,57 @@ def config(settings):
                                                              noneSelectedText = "Incident", # T() added in widget
                                                              no_opts = "",
                                                              ))
+
+                elif r.tablename == "pr_forum" or \
+                   (method == "filter" and get_vars.get("forum")):
+                    # Group Profile
+                    if r.tablename == "pr_forum":
+                        forum_id = r.id
+                    else:
+                        forum_id = get_vars.get("forum")
+                    appname = r.application
+                    eftable = s3db.event_forum
+                    base_query = (eftable.forum_id == forum_id)
+                    etable = s3db.event_event
+                    query = base_query & (eftable.event_id == etable.id)
+                    events_shared = db(query).select(etable.id,
+                                                     etable.name,
+                                                     )
+                    shared_events = {}
+                    for e in events_shared:
+                        shared_events[e.id] = e.name
+                    event_comment = "<a class='drop' data-options='ignore_repositioning:true;align:right' data-dropdown='event_drop{v}' aria-controls='event_drop{v}' aria-expanded='false'>…</a><ul id='event_drop{v}' class='f-dropdown' data-dropdown-content='' aria-hidden='true' tabindex='-1'><li><a href='/%(app)s/event/event/{v}/custom'>Go to Event</a></li><li><a href='/%(app)s/event/event/{v}/unshare/%(forum_id)s' class='ajax_link'>Stop sharing</a></li><li><a href='#'>Stop notifications</a></li></ul>" % \
+                        dict(app = appname,
+                             forum_id = forum_id,
+                             )
+                    filter_widgets.append(S3OptionsFilter("event_post.event_id",
+                                                          label = T("Shared Events"),
+                                                          cols = 1,
+                                                          options = shared_events,
+                                                          no_opts = "",
+                                                          table = False,
+                                                          option_comment = event_comment,
+                                                          ))
+                    itable = s3db.event_incident
+                    query = base_query & (eftable.incident_id == itable.id)
+                    incidents_shared = db(query).select(itable.id,
+                                                        itable.name,
+                                                        )
+                    shared_incidents = {}
+                    for i in incidents_shared:
+                        shared_incidents[i.id] = i.name
+                    incident_comment = "<a class='drop' data-options='ignore_repositioning:true;align:right' data-dropdown='incident_drop{v}' aria-controls='incident_drop{v}' aria-expanded='false'>…</a><ul id='incident_drop{v}' class='f-dropdown' data-dropdown-content='' aria-hidden='true' tabindex='-1'><li><a href='/%(app)s/event/incident/{v}/custom'>Go to Incident</a></li><li><a href='/%(app)s/event/incident/{v}/unshare/%(forum_id)s' class='ajax_link'>Stop sharing</a></li><li><a href='#'>Stop notifications</a></li></ul>" % \
+                        dict(app = appname,
+                             forum_id = forum_id,
+                             )
+                    filter_widgets.append(S3OptionsFilter("incident_post.incident_id",
+                                                          label = T("Shared Incidents"),
+                                                          cols = 1,
+                                                          options = shared_incidents,
+                                                          no_opts = "",
+                                                          table = False,
+                                                          option_comment = incident_comment,
+                                                          ))
 
                 if method != "dashboard":
                     user = current.auth.user
@@ -689,6 +829,16 @@ def config(settings):
                                    "group_id",
                                    "status_id",
                                    ]
+
+                    if r.component_id:
+                        f = s3db.event_team.group_id
+                        f.writable = False
+                        f.comment = None
+
+                    s3db.configure("event_team",
+                                   update_next = r.url(),
+                                   )
+
                 elif cname == "post":
                     list_fields = ["date",
                                    "series_id",
@@ -706,9 +856,78 @@ def config(settings):
             return True
         s3.prep = custom_prep
 
+        # Custom postp
+        standard_postp = s3.postp
+        def custom_postp(r, output):
+            # Call standard postp
+            if callable(standard_postp):
+                output = standard_postp(r, output)
+
+            if r.interactive and isinstance(output, dict):
+                if r.method == "assign":
+                    # No Top Menu
+                    current.menu.main = ""
+                    # Ensure we don't hide the Bulk Actions column in CSS
+                    s3.jquery_ready.append('''$('body').addClass('assign')''')
+                    # Custom View to waste less space inside popup
+                    import os
+                    response.view = os.path.join(r.folder,
+                                                 "modules", "templates",
+                                                 "WACOP", "views",
+                                                 "assign.html")
+
+                elif r.component_name == "group":
+                    output["title"] = T("Resource Details")
+
+                #elif r.component_name == "post":
+                #    # Add Tags - no, do client-side
+                #    output["form"].append()
+
+                #else:
+                #    # Summary or Profile pages
+                #    # Additional styles
+                #    s3.external_stylesheets += ["https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css",
+                #                                "https://fonts.googleapis.com/css?family=Merriweather:400,700|Source+Sans+Pro:400,700",
+                #                                ]
+
+                    #if r.method == "summary":
+                    #    # Open the Custom profile page instead of the normal one
+                    #    from gluon import URL
+                    #    from s3 import S3CRUD
+                    #    custom_url = URL(args = ["[id]", "custom"])
+                    #    S3CRUD.action_buttons(r,
+                    #                          read_url=custom_url,
+                    #                          update_url=custom_url)
+
+            return output
+        s3.postp = custom_postp
+
         # Custom rheader tabs
         attr = dict(attr)
         attr["rheader"] = wacop_rheader
+
+        # No sidebar menu
+        current.menu.options = None
+
+        refresh = current.request.get_vars.get("refresh")
+        if refresh:
+            # Popup from Resource Browse
+            current.menu.main = ""
+
+            #from gluon import A, URL
+            #attr["custom_crud_buttons"] = {"list_btn": A(T("Browse Resources"),
+            #                                             _class="action-btn",
+            #                                             _href=URL(c="pr", f="group", args="browse"),
+            #                                             _id="list-btn",
+            #                                             )
+            #                               }
+            attr["custom_crud_buttons"] = {"list_btn": "",
+                                           }
+
+            response = current.response
+            if response.confirmation:
+                script = '''self.parent.$('#%s').dataTable().fnReloadAjax()''' % refresh
+                response.s3.jquery_ready.append(script)
 
         return attr
 
@@ -860,10 +1079,7 @@ def config(settings):
             if callable(standard_prep):
                 result = standard_prep(r)
 
-            if r.method == "assign":
-                current.menu.main = ""
-
-            elif r.component_name == "group":
+            if r.component_name == "group":
                 if r.component_id:
                     f = s3db.event_team.group_id
                     f.writable = False
@@ -907,6 +1123,8 @@ def config(settings):
                 if r.method == "assign":
                     # No Top Menu
                     current.menu.main = ""
+                    # Ensure we don't hide the Bulk Actions column in CSS
+                    s3.jquery_ready.append('''$('body').addClass('assign')''')
                     # Custom View to waste less space inside popup
                     import os
                     response.view = os.path.join(r.folder,
@@ -952,8 +1170,6 @@ def config(settings):
             # Popup from Resource Browse
             current.menu.main = ""
 
-            attr["rheader"] = wacop_rheader
-
             #from gluon import A, URL
             #attr["custom_crud_buttons"] = {"list_btn": A(T("Browse Resources"),
             #                                             _class="action-btn",
@@ -977,7 +1193,7 @@ def config(settings):
     def customise_event_human_resource_resource(r, tablename):
 
         from gluon import A, URL
-        from s3 import s3_fieldmethod
+        from s3 import s3_fieldmethod, s3_fullname
 
         s3db = current.s3db
 
@@ -986,35 +1202,34 @@ def config(settings):
         f = r.function
         record_id = r.id
         ehrtable = s3db.event_human_resource
-        hr_represent = ehrtable.human_resource_id.represent
-        def hr_name(row):
-            hr_id = row["event_human_resource.human_resource_id"]
-            return A(hr_represent(hr_id),
+        def person_name(row):
+            person_id = row["event_human_resource.person_id"]
+            return A(s3_fullname(person_id),
                      _href = URL(c="event", f=f,
-                                 args=[record_id, "human_resource", hr_id, "profile"],
+                                 args=[record_id, "person", person_id, "profile"],
                                  ),
                      )
         ehrtable.name_click = s3_fieldmethod("name_click",
-                                             hr_name,
+                                             person_name,
                                              # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
                                              # @ToDo: Bulk lookups
                                              represent = lambda v: v,
-                                             search_field = "human_resource_id",
+                                             search_field = "person_id",
                                              )
 
         s3db.configure(tablename,
                        #crud_form = crud_form,
-                       extra_fields = ("human_resource_id",
+                       extra_fields = ("person_id",
                                        ),
                        list_fields = [(T("Name"), "name_click"),
-                                      (T("Title"), "human_resource_id$job_title_id"),
-                                      "human_resource_id$organisation_id",
-                                      (T("Email"), "human_resource_id$person_id$email.value"),
-                                      (T("Phone"), "human_resource_id$person_id$phone.value"),
-                                      "status",
+                                      (T("Title"), "person_id$human_resource_id.job_title_id"),
+                                      "person_id$human_resource.organisation_id",
+                                      (T("Email"), "person_id$email.value"),
+                                      (T("Phone"), "person_id$phone.value"),
+                                      #"status",
                                       (T("Notes"), "comments"),
                                       ],
-                       orderby = "event_human_resource.human_resource_id",
+                       orderby = "event_human_resource.person_id",
                        )
 
     settings.customise_event_human_resource_resource = customise_event_human_resource_resource
@@ -1151,6 +1366,62 @@ def config(settings):
 
     settings.customise_event_team_resource = customise_event_team_resource
 
+    # -----------------------------------------------------------------------------
+    def pr_forum_notify_subject(resource, data, meta_data):
+        """
+            Custom Method to subject for the email
+            @param resource: the S3Resource
+            @param data: the data returned from S3Resource.select
+            @param meta_data: the meta data for the notification
+        """
+
+        subject = "[%s] %s %s" % (settings.get_system_name_short(),
+                                  data["rows"][0]["pr_forum.name"],
+                                  T("Notification"),
+                                  )
+        # RFC 2822
+        #return s3_str(s3_truncate(subject, length=78))
+        # Truncate happens in s3notify.py
+        return subject
+
+    # -----------------------------------------------------------------------------
+    def pr_forum_notify_renderer(resource, data, meta_data, format=None):
+        """
+            Custom Method to pre-render the contents for the message template
+
+            @param resource: the S3Resource
+            @param data: the data returned from S3Resource.select
+            @param meta_data: the meta data for the notification
+            @param format: the contents format ("text" or "html")
+        """
+
+        from gluon import DIV, H1, P
+
+        # We should always have just a single row
+        row = data["rows"][0]
+        notification = DIV(H1(T(row["pr_forum.name"])))
+        append = notification.append
+        # Updates
+        updates = row["cms_post.json_dump"]
+        if updates:
+            if not isinstance(updates, list):
+                updates = [updates]
+            #updates = [json.loads(update) for update in updates]
+            #updates.sort(key=lambda c: c["created_on"])
+            for update in updates:
+                update = json.loads(update)
+                #"update.date"
+                #"update.series_id"
+                #"update.priority"
+                #"update.status_id"
+                append(P("update.body"))
+        # Events
+        # Incidents
+        # Tasks
+
+        return {"notification": notification,
+                }
+
     # -------------------------------------------------------------------------
     def customise_pr_forum_resource(r, tablename):
 
@@ -1175,13 +1446,12 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_pr_forum_controller(**attr):
 
-        T = current.T
         db = current.db
         s3db = current.s3db
         s3 = current.response.s3
 
         # Custom Browse
-        from templates.WACOP.controllers import group_Browse, group_Profile, text_filter_formstyle
+        from templates.WACOP.controllers import group_Browse, group_Notify, group_Profile, text_filter_formstyle
         set_method = s3db.set_method
         set_method("pr", "forum",
                    method = "browse",
@@ -1191,6 +1461,11 @@ def config(settings):
         set_method("pr", "forum",
                    method = "custom",
                    action = group_Profile)
+
+        # Custom Notifications
+        set_method("pr", "forum",
+                   method = "notify_settings",
+                   action = group_Notify)
 
         from s3 import S3OptionsFilter, S3SQLCustomForm, S3SQLInlineComponent, S3TextFilter
 
@@ -1297,7 +1572,51 @@ def config(settings):
             if callable(standard_prep):
                 result = standard_prep(r)
 
-            if r.method is None:
+            if r.representation == "msg":
+                # Notifications
+
+                # Add a Virtual Field for Posts
+                # - to keep their data together
+                table = s3db.cms_post
+                    
+                def cms_post_as_json(row):
+                    body = row["cms_post.body"]
+                    if not body:
+                        return None
+                    return json.dumps({"body": body,
+                                       "date": row["cms_post.date"].isoformat(),
+                                       "series_id": row["cms_post.series_id"],
+                                       "priority": row["cms_post.priority"],
+                                       "status_id": row["cms_post.status_id"],
+                                       })
+
+                table.json_dump = s3_fieldmethod("json_dump",
+                                                  cms_post_as_json,
+                                                  )
+                s3db.configure("cms_post",
+                               extra_fields = ("date",
+                                               "series_id",
+                                               "priority",
+                                               "status_id",
+                                               "body",
+                                               ),
+                               )
+
+                notify_fields = ["name",
+                                 "post.json_dump",
+                                 #"event.json_dump",
+                                 #"incident.json_dump",
+                                 #"task.json_dump",
+                                 ]
+                s3db.configure("pr_forum",
+                               notify_fields = notify_fields,
+                               notify_renderer = pr_forum_notify_renderer,
+                               notify_subject = pr_forum_notify_subject,
+                               # Keep default name, but it will use the one in the Template folder
+                               #notify_template = notify_template,
+                               )
+
+            elif r.method is None:
                 # Override defalt redirects from custom methods
                 if r.component:
                     from gluon.tools import redirect
@@ -1601,30 +1920,31 @@ def config(settings):
         filterby = None
         if r.tablename != "pr_forum":
             auth = current.auth
-            ADMIN = auth.s3_has_role("ADMIN")
-            if not ADMIN:
-                # Can only Share to Groups that the User is a Member of
-                ptable = s3db.pr_person
-                mtable = s3db.pr_forum_membership
-                ftable = s3db.pr_forum
-                query = (ptable.pe_id == auth.user.pe_id) & \
-                        (ptable.id == mtable.person_id) & \
-                        (mtable.forum_id == ftable.id)
-                forums = db(query).select(ftable.id,
-                                          ftable.name)
-                forum_ids = [f.id for f in forums]
-                filterby = dict(field = "forum_id",
-                                options = forum_ids,
-                                )
-                
-            crud_fields.insert(-1,
-                               S3SQLInlineComponent("task_forum",
-                                                    name = "forum",
-                                                    label = T("Share to Group"),
-                                                    fields = [("", "forum_id"),
-                                                              ],
-                                                    filterby = filterby,
-                                                    ))
+            if auth.user:
+                ADMIN = auth.s3_has_role("ADMIN")
+                if not ADMIN:
+                    # Can only Share to Groups that the User is a Member of
+                    ptable = s3db.pr_person
+                    mtable = s3db.pr_forum_membership
+                    ftable = s3db.pr_forum
+                    query = (ptable.pe_id == auth.user.pe_id) & \
+                            (ptable.id == mtable.person_id) & \
+                            (mtable.forum_id == ftable.id)
+                    forums = db(query).select(ftable.id,
+                                              ftable.name)
+                    forum_ids = [f.id for f in forums]
+                    filterby = dict(field = "forum_id",
+                                    options = forum_ids,
+                                    )
+                    
+                crud_fields.insert(-1,
+                                   S3SQLInlineComponent("task_forum",
+                                                        name = "forum",
+                                                        label = T("Share to Group"),
+                                                        fields = [("", "forum_id"),
+                                                                  ],
+                                                        filterby = filterby,
+                                                        ))
 
             if r.tablename == "event_event":
                 # Can only link to Incidents within this Event
@@ -1700,6 +2020,28 @@ def config(settings):
                                        ),
                           ]
 
+        def onaccept(form):
+            """
+                Update the modified_on of any forums to which the Task is Shared
+            """
+            task_id = form.vars.id
+            ltable = s3db.project_task_forum
+            forums = db(ltable.task_id == task_id).select(ltable.forum_id)
+            len_forums = len(forums)
+            if len_forums:
+                ftable = s3db.pr_forum
+                if len_forums == 1:
+                    query = (ftable.id == forums.first().forum_id)
+                else:
+                    query = (ftable.id.belongs([f.forum_id for f in forums]))
+                db(query).update(modified_on = r.utcnow)
+
+        update_onaccept = s3db.get_config(tablename, "update_onaccept")
+        if update_onaccept:
+            update_onaccept = [update_onaccept, onaccept]
+        else:
+            update_onaccept = onaccept
+
         s3db.configure(tablename,
                        crud_form = crud_form,
                        extra_fields = ("name",
@@ -1712,6 +2054,7 @@ def config(settings):
                                       (T("Due"), "date_due"),
                                       ],
                        orderby = "project_task.date_due",
+                       update_onaccept = update_onaccept,
                        )
 
     settings.customise_project_task_resource = customise_project_task_resource
@@ -1827,7 +2170,11 @@ def config(settings):
     settings.customise_project_task_controller = customise_project_task_controller
 
 # =============================================================================
-def event_team_rheader(incident_id, group_id, updates=False):
+def event_team_rheader(group_id,
+                       event_id = None,
+                       incident_id = None,
+                       updates = False,
+                       ):
     """
         RHeader for event_team
     """
@@ -1837,46 +2184,88 @@ def event_team_rheader(incident_id, group_id, updates=False):
     T = current.T
 
     table = current.s3db.event_team
-    query = (table.incident_id == incident_id) & \
-            (table.group_id == group_id)
-    record = current.db(query).select(table.status_id,
-                                      limitby=(0, 1),
-                                      ).first()
+    if event_id:
+        query = (table.event_id == event_id) & \
+                (table.group_id == group_id)
+        record = current.db(query).select(table.status_id,
+                                          limitby=(0, 1),
+                                          ).first()
 
-    rheader_tabs = DIV(SPAN(A(T("Resource Details"),
-                              _href=URL(c="event", f="incident",
-                                        args = [incident_id, "group", group_id],
-                                        vars = {"refresh": "custom-list-event_team",
-                                                },
-                                        ),
-                              _id="rheader_tab_group",
-                              ),
-                            _class="tab_here" if not updates else "tab_other",
+        rheader_tabs = DIV(SPAN(A(T("Resource Details"),
+                                  _href=URL(c="event", f="event",
+                                            args = [event_id, "group", group_id],
+                                            vars = {"refresh": "custom-list-event_team",
+                                                    },
+                                            ),
+                                  _id="rheader_tab_group",
+                                  ),
+                                _class="tab_here" if not updates else "tab_other",
+                                ),
+                           SPAN(A(T("Updates"),
+                                  _href=URL(c="pr", f="group",
+                                            args = [group_id, "post", "datalist"],
+                                            vars = {"event_id": event_id,
+                                                    "refresh": "custom-list-event_team",
+                                                    }
+                                            ),
+                                  _id="rheader_tab_post",
+                                  ),
+                                _class="tab_here" if updates else "tab_last",
+                                ),
+                           _class="tabs",
+                           )
+        rheader = DIV(TABLE(TR(TH("%s: " % table.group_id.label),
+                               table.group_id.represent(group_id),
+                               ),
+                            TR(TH("%s: " % table.event_id.label),
+                               table.event_id.represent(event_id),
+                               ),
+                            TR(TH("%s: " % table.status_id.label),
+                               table.status_id.represent(record.status_id),
+                               ),
                             ),
-                       SPAN(A(T("Updates"),
-                              _href=URL(c="pr", f="group",
-                                        args = [group_id, "post", "datalist"],
-                                        vars = {"incident_id": incident_id,
-                                                "refresh": "custom-list-event_team",
-                                                }
-                                        ),
-                              _id="rheader_tab_post",
-                              ),
-                            _class="tab_here" if updates else "tab_last",
+                      rheader_tabs)
+    elif incident_id:
+        query = (table.incident_id == incident_id) & \
+                (table.group_id == group_id)
+        record = current.db(query).select(table.status_id,
+                                          limitby=(0, 1),
+                                          ).first()
+
+        rheader_tabs = DIV(SPAN(A(T("Resource Details"),
+                                  _href=URL(c="event", f="incident",
+                                            args = [incident_id, "group", group_id],
+                                            vars = {"refresh": "custom-list-event_team",
+                                                    },
+                                            ),
+                                  _id="rheader_tab_group",
+                                  ),
+                                _class="tab_here" if not updates else "tab_other",
+                                ),
+                           SPAN(A(T("Updates"),
+                                  _href=URL(c="pr", f="group",
+                                            args = [group_id, "post", "datalist"],
+                                            vars = {"incident_id": incident_id,
+                                                    "refresh": "custom-list-event_team",
+                                                    }
+                                            ),
+                                  _id="rheader_tab_post",
+                                  ),
+                                _class="tab_here" if updates else "tab_last",
+                                ),
+                           _class="tabs",
+                           )
+        rheader = DIV(TABLE(TR(TH("%s: " % table.group_id.label),
+                               table.group_id.represent(group_id),
+                               ),
+                            TR(TH("%s: " % table.incident_id.label),
+                               table.incident_id.represent(incident_id),
+                               ),
+                            TR(TH("%s: " % table.status_id.label),
+                               table.status_id.represent(record.status_id),
+                               ),
                             ),
-                       _class="tabs",
-                       )
-    rheader = DIV(TABLE(TR(TH("%s: " % table.group_id.label),
-                           table.group_id.represent(group_id),
-                           ),
-                        TR(TH("%s: " % table.incident_id.label),
-                           table.incident_id.represent(incident_id),
-                           ),
-                        TR(TH("%s: " % table.status_id.label),
-                           table.status_id.represent(record.status_id),
-                           ),
-                        ),
-                  rheader_tabs)
+                      rheader_tabs)
     return rheader
     
 # =============================================================================
@@ -1968,22 +2357,29 @@ def wacop_rheader(r, tabs=[]):
 
         if tablename == "pr_group":
 
-            incident_id = r.get_vars.get("incident_id")
-            if incident_id and r.component_name == "post":
-                # Look like event_team details
-                group_id = r.id
-                rheader = event_team_rheader(incident_id, group_id, updates=True)
-                return rheader
-            else:
-                # Normal
-                rheader = pr_group_rheader(r)
-                return rheader
+            if r.component_name == "post":
+                incident_id = r.get_vars.get("incident_id")
+                if incident_id:
+                    # Look like event_team details
+                    group_id = r.id
+                    rheader = event_team_rheader(group_id, None, incident_id, updates=True)
+                    return rheader
+                else:
+                    event_id = r.get_vars.get("event_id")
+                    if event_id:
+                        # Look like event_team details
+                        group_id = r.id
+                        rheader = event_team_rheader(group_id, event_id, None, updates=True)
+                        return rheader
+            # Normal
+            rheader = pr_group_rheader(r)
+            return rheader
 
         elif tablename == "event_incident":
             if r.component_name == "group":
                 incident_id = r.id
                 group_id = r.component_id
-                rheader = event_team_rheader(incident_id, group_id, updates=False)
+                rheader = event_team_rheader(group_id, None, incident_id, updates=False)
                 return rheader
             else:
                 # Unused
@@ -2002,20 +2398,27 @@ def wacop_rheader(r, tabs=[]):
                                   ]
 
         elif tablename == "event_event":
-            # No normal workflows use this
+            if r.component_name == "group":
+                event_id = r.id
+                group_id = r.component_id
+                rheader = event_team_rheader(group_id, event_id, None, updates=False)
+                return rheader
+            else:
+                # Unused
+                return None
 
-            if not tabs:
-                tabs = [(T("Event Details"), None),
-                        (T("Incidents"), "incident"),
-                        (T("Units"), "group"),
-                        (T("Tasks"), "task"),
-                        (T("Updates"), "post"),
-                        ]
+                if not tabs:
+                    tabs = [(T("Event Details"), None),
+                            (T("Incidents"), "incident"),
+                            (T("Units"), "group"),
+                            (T("Tasks"), "task"),
+                            (T("Updates"), "post"),
+                            ]
 
-            rheader_fields = [["name"],
-                              ["start_date"],
-                              ["comments"],
-                              ]
+                rheader_fields = [["name"],
+                                  ["start_date"],
+                                  ["comments"],
+                                  ]
 
         rheader = S3ResourceHeader(rheader_fields, tabs)(r,
                                                          table=resource.table,

@@ -2607,14 +2607,14 @@ def config(settings):
                        (T("Deploying NS"), "human_resource_id$organisation_id"),
                       ]
         report_options = Storage(
-            rows=report_axis,
-            cols=report_axis,
-            fact=report_fact,
-            defaults=Storage(rows="mission_id$location_id",
-                             cols="mission_id$event_type_id",
-                             fact="count(human_resource_id)",
-                             totals=True
-                             )
+            rows = report_axis,
+            cols = report_axis,
+            fact = report_fact,
+            defaults = Storage(rows="mission_id$location_id",
+                               cols="mission_id$event_type_id",
+                               fact="count(human_resource_id)",
+                               totals=True
+                               )
             )
 
         s3db.configure("deploy_assignment",
@@ -3457,12 +3457,15 @@ def config(settings):
 
         from s3 import FS
 
+        T = current.T
         db = current.db
         s3db = current.s3db
         auth = current.auth
         s3 = current.response.s3
         request = current.request
         controller = request.controller
+        # Enable scalability-optimized strategies
+        settings.base.bigtable = True
 
         tablename = "hrm_human_resource"
 
@@ -3572,8 +3575,6 @@ def config(settings):
 
             if EO:
                 from s3 import s3_fieldmethod
-                T = current.T
-                db = current.db
                 ptable = s3db.pr_person
                 ltable = s3db.pr_person_user
                 gtable = db.auth_group
@@ -4002,8 +4003,6 @@ def config(settings):
 
             elif controller == "deploy":
                 # Custom settings for RDRT
-
-                db = current.db
 
                 if not is_admin:
                     organisation_id = auth.user.organisation_id
@@ -6074,6 +6073,8 @@ def config(settings):
         s3db = current.s3db
         s3 = current.response.s3
         request = current.request
+        # Enable scalability-optimized strategies
+        settings.base.bigtable = True
 
         # Special cases for different NS / Roles
         arcs = crmada = ircs = vnrc = False
@@ -7224,7 +7225,7 @@ def config(settings):
         from s3 import s3_set_default_filter
         s3_set_default_filter("~.organisation_id",
                               user_org_root_default_filter,
-                              tablename = "project_project")
+                              tablename = tablename)
 
         # Load standard model
         s3db = current.s3db

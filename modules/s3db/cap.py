@@ -32,6 +32,7 @@ __all__ = ("get_cap_options",
            "S3CAPHistoryModel",
            "S3CAPAlertingAuthorityModel",
            "S3CAPAreaNameModel",
+           "S3CAPMessageModel",
            "cap_alert_is_template",
            "cap_rheader",
            "cap_history_rheader",
@@ -308,6 +309,7 @@ class S3CAPModel(S3Model):
     """
 
     names = ("cap_alert",
+             "cap_alert_id",
              "cap_alert_represent",
              "cap_alert_approve",
              "cap_warning_priority",
@@ -1607,6 +1609,19 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def defaults():
+        """
+            Return safe defaults in case the model has been deactivated.
+        """
+
+        alert_id = S3ReusableField("alert_id", "integer",
+                                   readable = False,
+                                   writable = False)
+
+        return dict(cap_alert_id = alert_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def generate_identifier():
         """
             Generate an identifier for a new form
@@ -1956,7 +1971,11 @@ current.T("This combination of the 'Event Type', 'Urgency', 'Certainty' and 'Sev
                 url = "%s%s" % (settings.get_base_public_url(),
                                 URL(c="cap", f="alert", args=[alert_id]))
                 message = current.T("This alert that you requested to review has been approved:\n\n%s") % url
-                current.msg.send_by_pe_id(pe_id, subject, message)
+                current.msg.send_by_pe_id(pe_id,
+                                          subject,
+                                          message,
+                                          alert_id=alert_id,
+                                          )
 
             # Record the approved alert in history table without external references
             clone(current.request, record)
@@ -3256,6 +3275,35 @@ class S3CAPAreaNameModel(S3Model):
         return {}
 
 # =============================================================================
+class S3CAPMessageModel(S3Model):
+    """
+        Link Alert to Message
+    """
+
+    names = ("cap_alert_message",
+             )
+
+    def model(self):
+
+        # ---------------------------------------------------------------------
+        # Alert <> Messages link table
+        #
+        tablename = "cap_alert_message"
+        self.define_table(tablename,
+                          self.cap_alert_id(empty = False,
+                                            ondelete = "CASCADE",
+                                            ),
+                          self.msg_message_id(empty = False,
+                                              ondelete = "CASCADE",
+                                              ),
+                          *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
+
+# =============================================================================
 def json_formatter(fstring):
     """
         Properly format the Key-Value import string to json
@@ -3325,18 +3373,21 @@ def cap_rheader(r):
                     else:
                         error = ""
 
-                    if r.component_name == "info" and r.component_id:
+                    # Copy button is not working as create?from_record only works
+                    # with default form and not implemented for custom forms.
+                    # cap_info uses a custom form
+                    #if r.component_name == "info" and r.component_id:
                         # Display "Copy" Button to copy record from the opened info
-                        copy_btn = A(T("Copy Info Segment"),
-                                     _href = URL(f = "template",
-                                                 args = [r.id, "info", "create",],
-                                                 vars = {"from_record": r.component_id,
-                                                         },
-                                                 ),
-                                     _class = "action-btn"
-                                     )
-                    else:
-                        copy_btn = None
+                    #    copy_btn = A(T("Copy Info Segment"),
+                    #                 _href = URL(f = "template",
+                    #                             args = [r.id, "info", "create",],
+                    #                             vars = {"from_record": r.component_id,
+                    #                                     },
+                    #                             ),
+                    #                 _class = "action-btn"
+                    #                 )
+                    #else:
+                    #    copy_btn = None
 
                     tabs = [(T("Alert Details"), None),
                             (T("Information"), "info"),
@@ -3358,8 +3409,8 @@ def cap_rheader(r):
                                   rheader_tabs,
                                   error
                                   )
-                    if copy_btn is not None:
-                        rheader.insert(1, TR(TD(copy_btn)))
+                    #if copy_btn is not None:
+                    #    rheader.insert(1, TR(TD(copy_btn)))
                 else:
                     action_btn = None
                     msg_type_buttons = None
@@ -4159,7 +4210,7 @@ class CAPImportFeed(S3Method):
                 request = urllib2.Request(url)
                 if username and password:
                     import base64
-                    base64string = base64.encodestring("%s:%s" % (username, password))
+                    base64string = base64.b64encode("%s:%s" % (username, password))
                     request.add_header("Authorization", "Basic %s" % base64string)
                 try:
                     file = urllib2.urlopen(request).read()

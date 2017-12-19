@@ -261,7 +261,7 @@ def config(settings):
         #onaccept = s3db.get_config("dc_target", "onaccept")
         #ondelete = s3db.get_config("dc_target", "ondelete")
         onaccept = dc_target_onaccept
-        
+
         s3db.configure("dc_target",
                        onaccept = onaccept,
                        ondelete = onaccept,
@@ -340,7 +340,7 @@ def config(settings):
                                 label = T("Create Person"),
                                 vars = {"child": "person_id"},
                                 )
-                                      
+
         # Always at L4
         from s3 import S3LocationSelector
         table.location_id.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
@@ -360,7 +360,7 @@ def config(settings):
         else:
             f = table.organisation_id
             f.default = SCI
-            f.readable = f.writable = False 
+            f.readable = f.writable = False
 
         has_role = current.auth.s3_has_role
         ttable = s3db.dc_template
@@ -498,16 +498,50 @@ def config(settings):
                 if not standard_prep(r):
                     return False
 
-            if r.method == "mform":
-                # Mobile client downloading Assessment Schema
-                # @ToDo: Customise Form
-                pass
+            method = r.method
+            if method == "mform" or r.get_vars.get("mdata") == "1":
 
-            elif r.representation == "s3json":
-                # Mobile client downloading Assessment Data
-                # @ToDo: Filter Data to the relevant subset for this User
-                # tablename = "s3dt_%s" % r.name
-                pass
+                # Mobile client downloading Assessment Schema/Data
+                # (mobile form customisations must be done for both cases)
+
+                s3db = current.s3db
+
+                # Configure Answer form
+                s3db.dc_answer_form(r, r.tablename)
+
+                # Represent the record as the representation of the response_id
+                # NB If we expected multiple records then we should make this an S3Represent, but in this case we wouldn't expect more then 3-4
+                def response_represent(id, show_link=False):
+                    db = current.db
+                    table = db.dc_response
+                    respnse = db(table).select(table.location_id,
+                                               limitby = (0, 1)
+                                               ).first()
+                    try:
+                        location_id = respnse.location_id
+                    except:
+                        return id
+                    else:
+                        represent = table.location_id.represent(location_id,
+                                                                show_link = show_link,
+                                                                )
+                        return represent
+
+                #r.table.response_id.represent = response_represent
+
+                # Configure dc_response as mere lookup-list
+                s3db.configure("dc_response",
+                               mobile_form = lambda record_id: \
+                                             response_represent(record_id,
+                                                                show_link = False,
+                                                                ),
+                               )
+
+                if method != "mform":
+                    # Mobile client downloading Assessment Data
+                    # @ToDo: Filter Data to the relevant subset for this User
+                    # tablename = "s3dt_%s" % r.name
+                    pass
 
             return True
         s3.prep = custom_prep
@@ -1013,10 +1047,21 @@ def config(settings):
             elif name == "sitrep":
                 # SitRep Controller
                 tabs = [(T("Header"), None),
-                        (T("Details"), "answer"),
                         ]
+                if current.auth.s3_logged_in():
+                    tabs.append((T("Details"), "answer"))
 
                 rheader_tabs = s3_rheader_tabs(r, tabs)
+
+                from gluon.html import A, DIV, URL
+                from s3 import ICON
+                pdf_button = DIV(A(ICON("print"),
+                                 " ",
+                                 T("PDF Report"),
+                                   _href=URL(args=[r.id, "pdf_export"]),#, extension="pdf"),
+                                   _class="action-btn",
+                                   ),
+                                 )
 
                 table = r.table
                 rheader = DIV(TABLE(TR(TH("%s: " % table.event_id.label),
@@ -1028,6 +1073,7 @@ def config(settings):
                                     TR(TH("%s: " % table.date.label),
                                        table.date.represent(record.date),
                                        ),
+                                    pdf_button,
                                     ), rheader_tabs)
 
         return rheader
@@ -1241,7 +1287,7 @@ def config(settings):
                     table.person_id.label = T("Name")
                     s3db.hrm_human_resource.organisation_id.label = T("Source/Member")
                     table.start_date.label = T("Arrival Date")
-                    table.end_date.label = T("Departure Date") 
+                    table.end_date.label = T("Departure Date")
 
                     r.component.add_filter(FS("job_title_id$type") != 4)
 
@@ -1316,7 +1362,7 @@ def config(settings):
         onaccept = lambda form: response_locations()
         update_onaccept = s3db.get_config(tablename, "update_onaccept")
         update_onaccept = [update_onaccept, onaccept]
-        
+
         s3db.configure(tablename,
                        crud_form = crud_form,
                        list_fields = list_fields,
@@ -1326,6 +1372,224 @@ def config(settings):
                        )
 
     settings.customise_event_event_resource = customise_event_event_resource
+
+    # -------------------------------------------------------------------------
+    def event_sitrep_pdf_export(r, **attr):
+        """
+            Generate a PDF Export of a SitRep
+        """
+
+        from s3 import s3_fullname, s3_str
+
+        record = r.record
+
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+
+        NONE = current.messages["NONE"]
+
+        title = s3_str(T("HUMANITARIAN RESPONSE SITUATION REPORT"))
+
+        report_date = record.date
+        number = record.number
+
+        # Read the Event Details
+        event_id = record.event_id
+        etable = s3db.event_event
+        event = db(etable.id == event_id).select(etable.name,
+                                                 limitby = (0, 1),
+                                                 ).first()
+        event_name = event.name
+
+        ttable = s3db.event_event_tag
+        query = (ttable.event_id == event_id) & \
+                (ttable.tag == "category")
+        category = db(query).select(ttable.value,
+                                    limitby = (0, 1),
+                                    ).first()
+        if category:
+            category = category.value
+        else:
+            category = NONE
+
+        def callback(r):
+
+            from gluon.html import DIV, TABLE, TD, TH, TR
+        
+            date_represent = r.table.date.represent
+            org_represent = s3db.org_OrganisationRepresent(parent = False,
+                                                           acronym = False)
+
+            # Logo
+            otable = db.org_organisation
+            org_id = record.organisation_id
+            org = db(otable.id == org_id).select(otable.name,
+                                                 otable.acronym, # Present for consistent cache key
+                                                 otable.logo,
+                                                 limitby=(0, 1),
+                                                 ).first()
+            #if settings.get_L10n_translate_org_organisation():
+            #org_name = org_represent(org_id)
+            #else:
+            #    org_name = org.name
+
+            logo = org.logo
+            if logo:
+                logo = s3db.org_organisation_logo(org)
+            elif current.deployment_settings.get_org_branches():
+                root_org = current.cache.ram(
+                    # Common key with auth.root_org
+                    "root_org_%s" % org_id,
+                    lambda: s3db.org_root_organisation(org_id),
+                    time_expire=120
+                    )
+                logo = s3db.org_organisation_logo(root_org)
+
+            # Header
+            header = TABLE(TR(TH("%s:" % T("Response Name")),
+                              TD(event_name,
+                                 _colspan = 3,
+                                 ),
+                              ),
+                           TR(TH("%s:" % T("Response Code")),
+                              TD(NONE),
+                              TH("%s:" % T("Category")),
+                              TD(category),
+                              ),
+                           TR(TH("%s:" % T("SitRep No")),
+                              TD(str(number)),
+                              TH("%s:" % T("Date")),
+                              TD(date_represent(report_date)),
+                              ),
+                           )
+
+            # Read the Dynamic Table Questions
+            template_id = record.template_id
+            qtable = s3db.dc_question
+            ftable = s3db.s3_field
+            query = (qtable.template_id == template_id) & \
+                    (qtable.deleted == False) & \
+                    (ftable.id == qtable.field_id)
+            questions = db(query).select(ftable.name,
+                                         ftable.label,
+                                         )
+
+            # Read the Dynamic Table Answers
+            ttable = s3db.dc_template
+            dtable = s3db.s3_table
+            query = (ttable.id == template_id) & \
+                    (ttable.table_id == dtable.id)
+            dtable = db(query).select(dtable.name,
+                                      limitby = (0, 1),
+                                      ).first()
+            dtable = s3db.table(dtable.name)
+            answers = db(dtable.sitrep_id == r.id).select(limitby = (0, 1),
+                                                          ).first()
+
+            dynamic = {}
+            for question in questions:
+                dynamic[question.label] = answers[question.name]
+
+            # Read the previous report
+            if number == 1:
+                header_2 = "2. %s" % T("Overview of the response")
+            else:
+                last_report_number = number - 1
+                stable = s3db.event_sitrep
+                query = (stable.event_id == event_id) & \
+                        (stable.number == last_report_number)
+                last_report = db(query).select(stable.date,
+                                               limitby = (0, 1)
+                                               ).first()
+                try:
+                    last_report_date = last_report.date
+                except:
+                    last_report_date = None
+                header_2 = "2. %s %s" % (T("Overview of the response since"),
+                                         date_represent(last_report_date)
+                                         )
+
+            # External
+            external = TABLE(TR(TD("1. %s" % T("General overview (for EXTERNAL use)"))),
+                             TR(TH("General context, situation for children including numbers of children affected and the number of schools, homes, villages affected. Include the source of these figures.")),
+                             TR(TD(dynamic["General context, situation for children including numbers of children affected and the number of schools, homes, villages affected. Include the source of these figures."])),
+                             TR(TH("Recent context developments")),
+                             TR(TD(dynamic["Recent context developments"])),
+                             TR(TD(header_2)),
+                             TR(TD(dynamic["Please include key achievements of the response (note that achievements by sector are outlined in section 5ii below)"])),
+                             TR(TD("Key beneficiary statistics")),
+                             TR(TD(TABLE(TR(TD(""),TH("Children"),TH("All beneficiaries")),
+                                         TR(TD("Number of people affected"),TD(dynamic["Number of children affected"]),TD(dynamic["Number of people affected"])),
+                                         # @ToDo: % of target vs. affected
+                                         TR(TD("Number of target beneficiaries"),TD(dynamic["Number of target child beneficiaries"]),TD(dynamic["Number of target beneficiaries"])),
+                                         # @ToDo: % of reached vs. target
+                                         TR(TD("Number of beneficiaries reached so far"),TD(dynamic["Number of child beneficiaries reached so far"]),TD(dynamic["Number of beneficiaries reached so far"])),
+                                         # @ToDo: Remove this for SitRep # 1
+                                         TR(TD("Number of beneficiaries reached since last SitRep"),TD(dynamic["Number of child beneficiaries reached since last SitRep"]),TD(dynamic["Number of beneficiaries reached since last SitRep"])),
+                                         ))),
+                             )
+
+            if not current.auth.s3_logged_in():
+                internal = ""
+                internal_note = ""
+            else:
+                # Internal
+                internal_note = TABLE(TR(TD("BELOW SECTIONS FOR INTERNAL USE ONLY")))
+
+                # Read the Human Resources (TA/Key Contacts, Deployment Tracker)
+                ltable = s3db.event_human_resource
+                query = (ltable.event_id == event_id) & \
+                        (ltable.deleted == False) & \
+                        ((ltable.start_date <= report_date) |
+                         ((ltable.start_date == None))) & \
+                        ((ltable.end_date > report_date) | \
+                         (ltable.end_date == None))
+                people = db(query).select()
+
+                internal = TABLE(TR(TD("3. %s" % T("Strategy"))),
+                                 TR(TD("4. %s" % T("Operations & Programme Management"))),
+                                 TR(TD("5. %s" % T("Program Outputs"))),
+                                 TR(TD("6. %s" % T("HR"))),
+                                 TR(TD("7. %s" % T("Finance & Awards"))),
+                                 TR(TD("8. %s" % T("Security"))),
+                                 TR(TD("9. %s" % T("Logistics"))),
+                                 TR(TD("10. %s" % T("Advocacy"))),
+                                 TR(TD("11. %s" % T("Media/Communications"))),
+                                 TR(TD("12. %s" % T("AOB/Questions"))),
+                                 )
+
+            output = DIV(TABLE(TR(# @ToDo: align-right
+                                  TD(logo),
+                                  #TD(org_name), # This isn't rtl-proof, check vol_service_record for how to handle that if-required
+                                  )),
+                         TABLE(TR(TD(title))),
+                         header,
+                         external,
+                         internal_note,
+                         internal,
+                         )
+
+            return output
+
+        attr["rheader"] = None
+
+        from s3.s3export import S3Exporter
+
+        exporter = S3Exporter().pdf
+        pdf_title = "%s %s %s" % (event_name,
+                                  T("SitRep"),
+                                  number,
+                                  )
+
+        return exporter(r.resource,
+                        request = r,
+                        method = "list",
+                        pdf_title = pdf_title,
+                        pdf_table_autogrow = "B",
+                        pdf_callback = callback,
+                        **attr
+                        )
 
     # -------------------------------------------------------------------------
     def customise_event_sitrep_resource(r, tablename):
@@ -1414,8 +1678,10 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_event_sitrep_controller(**attr):
 
+        s3db = current.s3db
+
         # Default Filter: Only open Events
-        etable = current.s3db.event_event
+        etable = s3db.event_event
         query = (etable.closed == False) & \
                 (etable.deleted == False)
         open = current.db(query).select(etable.id,
@@ -1433,6 +1699,27 @@ def config(settings):
             s3_set_default_filter("event_id",
                                   open,
                                   tablename = "event_sitrep")
+
+        s3db.set_method("event", "sitrep",
+                        method = "pdf_export",
+                        action = event_sitrep_pdf_export,
+                        )
+
+        s3 = current.response.s3
+
+        standard_prep = s3.prep
+        def custom_prep(r):
+            # Call standard prep
+            if callable(standard_prep):
+                if not standard_prep(r):
+                    return False
+
+            if r.component_name == "answer" and \
+               not current.auth.s3_logged_in():
+                r.unauthorised()
+
+            return True
+        s3.prep = custom_prep
 
         attr["rheader"] = event_rheader
         return attr
@@ -1569,7 +1856,7 @@ def config(settings):
         #onaccept = s3db.get_config("project_activity", "onaccept")
         #ondelete = s3db.get_config("project_activity", "ondelete")
         onaccept = project_activity_onaccept
-        
+
         s3db.configure("project_activity",
                        crud_form = crud_form,
                        list_fields = list_fields,
@@ -1645,8 +1932,8 @@ def config(settings):
             return output
         s3.postp = custom_postp
 
-        #if 
-        #    attr["rheader"] = 
+        #if
+        #    attr["rheader"] =
         return attr
 
     settings.customise_project_activity_controller = customise_project_activity_controller
@@ -1673,7 +1960,7 @@ def config(settings):
                                                          ),
                                     "comments",
                                     )
-        
+
         current.s3db.configure(tablename,
                                crud_form = crud_form,
                                )
@@ -1748,7 +2035,7 @@ def config(settings):
                                                          fields = ["file"],
                                                          multiple = False,
                                                          ),
-                                    # @ToDo: Be able to retrieve the correct document 
+                                    # @ToDo: Be able to retrieve the correct document
                                     #S3SQLInlineComponent("document",
                                     #                     name = "log_frame",
                                     #                     label = T("Log Frame"),
