@@ -1056,7 +1056,6 @@ class PRPersonModel(S3Model):
                                              "autodelete": False,
                                              },
                             dvr_case_language = "person_id",
-                            dvr_case_service_contact = "person_id",
                             dvr_economy = {"joinby": "person_id",
                                            "multiple": False,
                                            },
@@ -1071,6 +1070,7 @@ class PRPersonModel(S3Model):
                                         "joinby": "person_id",
                                         },
                             dvr_residence_status = "person_id",
+                            dvr_service_contact = "person_id",
 
                             event_incident = {"link": "event_human_resource",
                                               "joinby": "person_id",
@@ -4569,7 +4569,7 @@ class PRAvailabilityModel(S3Model):
 # =============================================================================
 class PRDescriptionModel(S3Model):
     """
-        Additional tables for DVI/MPR
+        Additional tables used mostly for DVI/MPR
     """
 
     names = ("pr_age_group",
@@ -4917,6 +4917,14 @@ class PRDescriptionModel(S3Model):
                      # Medical Details: scars, amputations, implants
                      Field("medical_conditions", "text",
                            label = T("Medical Conditions"),
+                           ),
+
+                     Field("allergic", "boolean",
+                           label = T("Allergic"),
+                           represent = s3_yes_no_represent,
+                           ),
+                     Field("allergies", "text",
+                           label = T("Allergies"),
                            ),
 
                      # Other details
