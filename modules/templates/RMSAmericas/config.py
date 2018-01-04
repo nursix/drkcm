@@ -453,6 +453,7 @@ def config(settings):
     settings.hrm.root_organisation_label = "National Society"
     # Uncomment to consolidate tabs into a single CV
     settings.hrm.cv_tab = True
+    settings.hrm.vol_experience = "programme"
     # Uncomment to consolidate tabs into Staff Record (set to False to hide the tab)
     settings.hrm.record_tab = "record"
     # Use Locations for Training Events, not Facilities
@@ -1805,6 +1806,52 @@ Thank you"""
     #    return attr
 
     #settings.customise_hrm_programme_hours_controller = customise_hrm_programme_hours_controller
+
+    # -------------------------------------------------------------------------
+    def customise_hrm_programme_hours_resource(r, tablename):
+
+        from s3 import S3SQLCustomForm
+
+        s3db = current.s3db
+        phtable = s3db.hrm_programme_hours
+
+        current.response.s3.crud_strings[tablename] = Storage(
+            label_create = T("Add Hours of Service"),
+            title_display = T("Hours Details"),
+            title_list = T("Hours of Service"),
+            title_update = T("Edit Hours"),
+            label_list_button = T("List Hours"),
+            label_delete_button = T("Delete Hours"),
+            msg_record_created = T("Hours added"),
+            msg_record_modified = T("Hours updated"),
+            msg_record_deleted = T("Hours deleted"),
+            msg_list_empty = T("Currently no hours recorded"))
+
+        # Show new custom fields
+        phtable.event.readable = phtable.event.writable = True
+        phtable.place.readable = phtable.place.writable = True
+        # Hide old fields so they don't appear in list_fields in hrm_Record
+        phtable.programme_id.readable = phtable.programme_id.writable = False
+        phtable.job_title_id.readable = phtable.job_title_id.writable = False
+
+        crud_form = S3SQLCustomForm("date",
+                                    "place",
+                                    "event",
+                                    "hours",
+                                    )
+
+        list_fields = ["date",
+                       "place",
+                       "event",
+                       "hours",
+                       ]
+
+        s3db.configure("hrm_programme_hours",
+                       crud_form = crud_form,
+                       list_fields = list_fields,
+                       )
+
+    settings.customise_hrm_programme_hours_resource = customise_hrm_programme_hours_resource
 
     # -------------------------------------------------------------------------
     def customise_hrm_skill_resource(r, tablename):
