@@ -16,6 +16,8 @@
     [1] -s --suite is disabled. Give the path of the testsuite directly instead.
     [2] giving multiple testsuites as arguments is disabled
     [3] your testsuite must be present inside eden/tests/implementation/testsuites
+
+    @deprecated: use edentest.py instead
 """
 from sys import argv
 import os
@@ -23,6 +25,7 @@ import os
 try:
     from robot import run_cli
 except:
+    import sys
     print >> sys.stderr, "Robot Framework is not installed"
     exit(1)
 
@@ -73,4 +76,6 @@ if child_suite:
 argv = argv[:position] + ["-s"] + argv[position:]
 argv.append(testsuites_path)
 
-run_cli(argv[1:])
+print(argv[1:])
+
+#run_cli(argv[1:])

@@ -2,7 +2,7 @@
 
 """ Sahana Eden Project Model
 
-    @copyright: 2011-2017 (c) Sahana Software Foundation
+    @copyright: 2011-2018 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -6478,7 +6478,7 @@ class S3ProjectPlanningModel(S3Model):
                 project_id = indicator.project_id
                 atable = s3db.project_activity
                 db(atable.id == link.activity_id).update(project_id = project_id)
-                
+
                 if current.deployment_settings.get_project_status_from_activities():
                     # Update Statuses or else only this record's weighting is taken into account
                     self.project_planning_status_update(project_id)
@@ -10507,7 +10507,7 @@ class S3ProjectTaskModel(S3Model):
                                          _title="%s|%s" % (T("Detailed Description/URL"),
                                                            T("Please provide as much detail as you can, including the URL(s) where the bug occurs or you'd like the new feature to go."))),
                            ),
-                     self.org_site_id,
+                     self.org_site_id(),
                      self.gis_location_id(
                             # Can be enabled & labelled within a Template as-required
                             #label = T("Deployment Location"),

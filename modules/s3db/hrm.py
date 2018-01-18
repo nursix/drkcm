@@ -2,7 +2,7 @@
 
 """ Sahana Eden Human Resources Management
 
-    @copyright: 2011-2017 (c) Sahana Software Foundation
+    @copyright: 2011-2018 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -1361,7 +1361,7 @@ class S3HRSiteModel(S3Model):
         tablename = "hrm_human_resource_site"
         self.define_table(tablename,
                           self.hrm_human_resource_id(ondelete = "CASCADE"),
-                          self.org_site_id,
+                          self.org_site_id(),
                           self.org_sector_id(),
                           Field("site_contact", "boolean",
                                 label = T("Facility Contact"),
@@ -8721,7 +8721,7 @@ class hrm_Record(S3Method):
                     list_fields.append("programme_id")
                     # Exclude Training Hours
                     filter_ &= (FS("programme_id") != None)
-                else:
+                if phtable.place.readable:
                     # RMSAmericas
                     list_fields += ["place",
                                     "event",

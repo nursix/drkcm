@@ -2,7 +2,7 @@
 
 """ Sahana Eden Disaster Victim Registration Model
 
-    @copyright: 2012-2017 (c) Sahana Software Foundation
+    @copyright: 2012-2018 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -338,6 +338,7 @@ class DVRCaseModel(S3Model):
                              ),
                      # @todo: rename into "code"?
                      # @ToDo: Option to autogenerate these, like Waybills, et al
+                     # @ToDo: Deprecate: We use pe_label as primary ID and Tags for any additional IDs to cross-reference to 3rd-party systems
                      Field("reference",
                            label = T("Case Number"),
                            ),

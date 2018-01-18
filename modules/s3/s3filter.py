@@ -2,7 +2,7 @@
 
 """ Framework for filtered REST requests
 
-    @copyright: 2013-2017 (c) Sahana Software Foundation
+    @copyright: 2013-2018 (c) Sahana Software Foundation
     @license: MIT
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
@@ -1563,8 +1563,20 @@ class S3LocationFilter(S3FilterWidget):
         if "label" not in opts:
             opts["label"] = T("Filter by Location")
 
+        # Initialise Options Storage & Hierarchy
+        hierarchy = {}
+        first = True
+        for level in levels:
+            if first:
+                hierarchy[level] = {}
+                _level = level
+                first = False
+            levels[level] = {"label": levels[level],
+                             "options": {} if translate else [],
+                             }
+
         ftype = "reference gis_location"
-        default = (ftype, levels.keys(), opts.get("no_opts", NOOPT))
+        default = (ftype, levels, opts.get("no_opts", NOOPT))
 
         # Resolve the field selector
         selector = None
@@ -1656,6 +1668,7 @@ class S3LocationFilter(S3FilterWidget):
             rfilter.filters.pop()
             rfilter.filters.pop()
             rfilter.query = None
+            rfilter.transformed = None
 
         rows2 = []
         if not rows:
@@ -1728,18 +1741,6 @@ class S3LocationFilter(S3FilterWidget):
                     rows2 &= _rows
                 else:
                     rows2 = _rows
-
-        # Initialise Options Storage & Hierarchy
-        hierarchy = {}
-        first = True
-        for level in levels:
-            if first:
-                hierarchy[level] = {}
-                _level = level
-                first = False
-            levels[level] = {"label": levels[level],
-                             "options": {} if translate else [],
-                             }
 
         # Generate a name localization lookup dict
         name_l10n = {}
@@ -3297,7 +3298,7 @@ class S3Filter(S3Method):
             data = json.load(source)
         except ValueError:
             # Syntax error: no JSON data
-            r.error(501, current.ERROR.BAD_SOURCE)
+            r.error(400, current.ERROR.BAD_SOURCE)
 
         # Try to find the record
         db = current.db
@@ -3310,13 +3311,13 @@ class S3Filter(S3Method):
             query = (table.id == record_id) & (table.pe_id == pe_id)
             record = db(query).select(table.id, limitby=(0, 1)).first()
         if not record:
-            r.error(501, current.ERROR.BAD_RECORD)
+            r.error(404, current.ERROR.BAD_RECORD)
 
         resource = s3db.resource("pr_filter", id=record_id)
         success = resource.delete(format=r.representation)
 
         if not success:
-            raise(400, resource.error)
+            r.error(400, resource.error)
         else:
             current.response.headers["Content-Type"] = "application/json"
             return current.xml.json_message(deleted=record_id)
