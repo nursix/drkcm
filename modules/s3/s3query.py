@@ -45,7 +45,7 @@ from gluon.storage import Storage
 
 from s3dal import Field, Row
 from s3fields import S3RepresentLazy
-from s3utils import s3_get_foreign_key, s3_unicode, S3TypeConverter
+from s3utils import s3_get_foreign_key, s3_str, s3_unicode, S3TypeConverter
 
 ogetattr = object.__getattribute__
 
@@ -147,7 +147,7 @@ class S3FieldSelector(object):
 
         try:
             rfield = S3ResourceField(resource, self.name)
-        except:
+        except (SyntaxError, AttributeError):
             colname = None
         else:
             colname = rfield.colname
@@ -207,7 +207,7 @@ class S3FieldSelector(object):
                     value = ogetattr(ogetattr(row, tname), fname)
                 else:
                     value = ogetattr(row, fname)
-            except:
+            except AttributeError:
                 try:
                     value = row[colname]
                 except (KeyError, AttributeError):
@@ -314,7 +314,7 @@ class S3FieldPath(object):
 
         if not selector:
             raise SyntaxError("Invalid selector: %s" % selector)
-        tokens = re.split("(\.|\$)", selector)
+        tokens = re.split(r"(\.|\$)", selector)
         if tail:
             tokens.extend(tail)
         parser = cls(resource, None, tokens)
@@ -485,7 +485,7 @@ class S3FieldPath(object):
         else:
             raise AttributeError("key not found: %s" % fieldname)
 
-        ktablename, pkey, multiple = s3_get_foreign_key(f, m2m=False)
+        ktablename, pkey = s3_get_foreign_key(f, m2m=False)[:2]
 
         if not ktablename:
             raise SyntaxError("%s is not a foreign key" % f)
@@ -538,105 +538,80 @@ class S3FieldPath(object):
 
             return ktable, join, multiple, True
 
-        s3db = current.s3db
-        tablename = resource.tablename
-
-        # Try to attach the component
-        if alias not in resource.components and \
-           alias not in resource.links:
-            _alias = alias
-            hook = s3db.get_component(tablename, alias)
-            if not hook:
-                _alias = s3db.get_alias(tablename, alias)
-                if _alias:
-                    hook = s3db.get_component(tablename, _alias)
-            if hook:
-                resource._attach(_alias, hook)
-
-        components = resource.components
-        links = resource.links
-
-        if alias in components:
-
-            # Is a component
-            component = components[alias]
-
+        component = resource.components.get(alias)
+        if component:
+            # Component alias
             ktable = component.table
             join = component._join()
             multiple = component.multiple
-
-        elif alias in links:
-
-            # Is a linktable
-            link = links[alias]
-
-            ktable = link.table
-            join = link._join()
-
-        elif "_" in alias:
-
-            # Is a free join
-            DELETED = current.xml.DELETED
-
-            table = resource.table
+        else:
+            s3db = current.s3db
             tablename = resource.tablename
+            calias = s3db.get_alias(tablename, alias)
+            if calias:
+                # Link alias
+                component = resource.components.get(calias)
+                link = component.link
+                ktable = link.table
+                join = link._join()
+            elif "_" in alias:
+                # Free join
+                pkey = fkey = None
 
-            pkey = fkey = None
+                # Find the table
+                fkey, kname = (alias.split(":") + [None])[:2]
+                if not kname:
+                    fkey, kname = kname, fkey
+                ktable = s3db.table(kname,
+                                    AttributeError("table not found: %s" % kname),
+                                    db_only=True,
+                                    )
 
-            # Find the table
-            fkey, kname = (alias.split(":") + [None])[:2]
-            if not kname:
-                fkey, kname = kname, fkey
-
-            ktable = s3db.table(kname,
-                                AttributeError("table not found: %s" % kname),
-                                db_only=True)
-
-            if fkey is None:
-
-                # Autodetect left key
-                for fname in ktable.fields:
-                    tn, key, m = s3_get_foreign_key(ktable[fname], m2m=False)
-                    if not tn:
-                        continue
-                    if tn == tablename:
-                        if fkey is not None:
-                            raise SyntaxError("ambiguous foreign key in %s" %
-                                              alias)
-                        else:
-                            fkey = fname
-                            if key:
-                                pkey = key
                 if fkey is None:
-                    raise SyntaxError("no foreign key for %s in %s" %
-                                      (tablename, kname))
+                    # Autodetect left key
+                    for fname in ktable.fields:
+                        tn, key = s3_get_foreign_key(ktable[fname], m2m=False)[:2]
+                        if not tn:
+                            continue
+                        if tn == tablename:
+                            if fkey is not None:
+                                raise SyntaxError("ambiguous foreign key in %s" %
+                                                  alias)
+                            else:
+                                fkey = fname
+                                if key:
+                                    pkey = key
+                    if fkey is None:
+                        raise SyntaxError("no foreign key for %s in %s" %
+                                          (tablename, kname))
+
+                else:
+                    # Check left key
+                    if fkey not in ktable.fields:
+                        raise AttributeError("no field %s in %s" % (fkey, kname))
+
+                    tn, pkey = s3_get_foreign_key(ktable[fkey], m2m=False)[:2]
+                    if tn and tn != tablename:
+                        raise SyntaxError("%s.%s is not a foreign key for %s" %
+                                          (kname, fkey, tablename))
+                    elif not tn:
+                        raise SyntaxError("%s.%s is not a foreign key" %
+                                          (kname, fkey))
+
+                # Default primary key
+                table = resource.table
+                if pkey is None:
+                    pkey = table._id.name
+
+                # Build join
+                query = (table[pkey] == ktable[fkey])
+                DELETED = current.xml.DELETED
+                if DELETED in ktable.fields:
+                    query &= ktable[DELETED] != True
+                join = [ktable.on(query)]
 
             else:
-
-                # Check left key
-                if fkey not in ktable.fields:
-                    raise AttributeError("no field %s in %s" % (fkey, kname))
-
-                tn, pkey, m = s3_get_foreign_key(ktable[fkey], m2m=False)
-                if tn and tn != tablename:
-                    raise SyntaxError("%s.%s is not a foreign key for %s" %
-                                      (kname, fkey, tablename))
-                elif not tn:
-                    raise SyntaxError("%s.%s is not a foreign key" %
-                                      (kname, fkey))
-
-            # Default primary key
-            if pkey is None:
-                pkey = table._id.name
-
-            # Build join
-            query = (table[pkey] == ktable[fkey])
-            if DELETED in ktable.fields:
-                query &= ktable[DELETED] != True
-            join = [ktable.on(query)]
-
-        else:
-            raise SyntaxError("Invalid tablename: %s" % alias)
+                raise SyntaxError("Invalid tablename: %s" % alias)
 
         return ktable, join, multiple, True
 
@@ -796,7 +771,7 @@ class S3ResourceField(object):
                     value = ogetattr(ogetattr(row, tname), fname)
                 else:
                     value = ogetattr(row, fname)
-            except:
+            except AttributeError:
                 try:
                     value = row[colname]
                 except (KeyError, AttributeError):
@@ -845,7 +820,6 @@ class S3ResourceField(object):
 
             is_lookup = False
 
-            ftype = self.ftype
             field = self.field
 
             if field:
@@ -879,7 +853,6 @@ class S3ResourceField(object):
         if is_numeric is None:
 
             ftype = self.ftype
-            field = self.field
 
             if ftype == "integer" and self.is_lookup:
                 is_numeric = False
@@ -1214,9 +1187,8 @@ class S3Joins(object):
 
         append = r.append
         head = None
-        for i in xrange(len(joins)):
-            join = r.pop(0)
-            head = join
+        while r:
+            head = join = r.pop(0)
             tablenames = tables(join.second)
             for j in r:
                 try:
@@ -1427,7 +1399,7 @@ class S3ResourceQuery(object):
                 lfield = l.resolve(resource)
             else:
                 lfield = S3ResourceField(resource, l)
-        except:
+        except (SyntaxError, AttributeError):
             lfield = None
         if not lfield or lfield.field is None:
             return None, self
@@ -1491,7 +1463,7 @@ class S3ResourceQuery(object):
         if isinstance(l, S3FieldSelector):
             try:
                 rfield = S3ResourceField(resource, l.name)
-            except:
+            except (SyntaxError, AttributeError):
                 return None
             if rfield.virtual:
                 return None
@@ -1505,7 +1477,7 @@ class S3ResourceQuery(object):
         if isinstance(r, S3FieldSelector):
             try:
                 rfield = S3ResourceField(resource, r.name)
-            except:
+            except (SyntaxError, AttributeError):
                 return None
             rfield = rfield.field
             if rfield.virtual:
@@ -1769,10 +1741,8 @@ class S3ResourceQuery(object):
                     else:
                         s = item
                 else:
-                    try:
-                        s = str(item)
-                    except:
-                        continue
+                    s = s3_str(item)
+
                 if "%" in s:
                     wildcard = True
                     _expr = (field.like(s))
@@ -2024,32 +1994,31 @@ class S3ResourceQuery(object):
 
         if a is None:
             return False
-        try:
-            if isinstance(a, basestring):
-                return str(b) in a
-            elif isinstance(a, (list, tuple, set)):
-                if isinstance(b, (list, tuple, set)):
-                    convert = S3TypeConverter.convert
-                    found = True
-                    for _b in b:
-                        if _b not in a:
-                            found = False
-                            for _a in a:
-                                try:
-                                    if convert(_a, _b) == _a:
-                                        found = True
-                                        break
-                                except (TypeError, ValueError):
-                                    continue
-                        if not found:
-                            break
-                    return found
-                else:
-                    return b in a
+
+        if isinstance(a, basestring):
+            return s3_str(b) in s3_str(a)
+
+        if isinstance(a, (list, tuple, set)):
+            if isinstance(b, (list, tuple, set)):
+                convert = S3TypeConverter.convert
+                found = True
+                for b_item in b:
+                    if b_item not in a:
+                        found = False
+                        for a_item in a:
+                            try:
+                                if convert(a_item, b_item) == a_item:
+                                    found = True
+                                    break
+                            except (TypeError, ValueError):
+                                continue
+                    if not found:
+                        break
+                return found
             else:
-                return str(b) in str(a)
-        except:
-            return False
+                return b in a
+        else:
+            return s3_str(b) in s3_str(a)
 
     # -------------------------------------------------------------------------
     def represent(self, resource):
@@ -2216,27 +2185,25 @@ class S3URLQuery(object):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def parse(cls, resource, vars):
+    def parse(cls, resource, get_vars):
         """
             Construct a Storage of S3ResourceQuery from a Storage of get_vars
 
             @param resource: the S3Resource
-            @param vars: the get_vars
+            @param get_vars: the get_vars
             @return: Storage of S3ResourceQuery like {alias: query}, where
                      alias is the alias of the component the query concerns
         """
 
         query = Storage()
 
-        if resource is None:
-            return query
-        if not vars:
+        if resource is None or not get_vars:
             return query
 
         subquery = cls._subquery
         allof = lambda l, r: l if r is None else r if l is None else r & l
 
-        for key, value in vars.iteritems():
+        for key, value in get_vars.iteritems():
 
             if not key:
                 continue
@@ -2325,8 +2292,8 @@ class S3URLQuery(object):
         else:
             return Storage()
 
-        import cgi
-        dget = cgi.parse_qsl(query, keep_blank_values=1)
+        import urlparse
+        dget = urlparse.parse_qsl(query, keep_blank_values=1)
 
         get_vars = Storage()
         for (key, value) in dget:
@@ -2784,9 +2751,6 @@ class S3URLQueryParser(object):
             alias, sub = query.items()[0]
 
             if sub.op == S3ResourceQuery.OR and alias is None:
-
-                l = sub.left
-                r = sub.right
 
                 lalias = self._alias(sub.left.left)
                 ralias = self._alias(sub.right.left)

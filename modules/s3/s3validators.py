@@ -35,7 +35,6 @@ __all__ = ("single_phone_number_pattern",
            "s3_single_phone_requires",
            "s3_phone_requires",
            "IS_ACL",
-           "IS_ADD_PERSON_WIDGET2",
            "IS_COMBO_BOX",
            "IS_DYNAMIC_FIELDNAME",
            "IS_DYNAMIC_FIELDTYPE",
@@ -49,7 +48,6 @@ __all__ = ("single_phone_number_pattern",
            "IS_LON",
            "IS_LAT_LON",
            "IS_LOCATION",
-           "IS_LOCATION_SELECTOR",
            "IS_ONE_OF",
            "IS_ONE_OF_EMPTY",
            "IS_ONE_OF_EMPTY_SELECT",
@@ -58,7 +56,6 @@ __all__ = ("single_phone_number_pattern",
            "IS_PHONE_NUMBER",
            "IS_PHONE_NUMBER_MULTI",
            "IS_PROCESSED_IMAGE",
-           "IS_SITE_SELECTOR",
            "IS_UTC_DATETIME",
            "IS_UTC_DATE",
            "IS_UTC_OFFSET",
@@ -68,16 +65,14 @@ __all__ = ("single_phone_number_pattern",
 import datetime
 import json
 import re
-#import time
 
-from gluon import *
-#from gluon import current
-#from gluon.validators import IS_MATCH, IS_NOT_IN_DB, IS_IN_SET, IS_INT_IN_RANGE, IS_FLOAT_IN_RANGE, IS_EMAIL
+from gluon import current, IS_FLOAT_IN_RANGE, IS_INT_IN_RANGE, IS_IN_SET, \
+                  IS_MATCH, IS_NOT_IN_DB
 from gluon.storage import Storage
 from gluon.validators import Validator
 
 from s3datetime import S3DateTime
-from s3utils import s3_orderby_fields, s3_str, s3_unicode, s3_validate
+from s3utils import s3_orderby_fields, s3_str, s3_unicode
 
 DEFAULT = lambda: None
 JSONERRORS = (NameError, TypeError, ValueError, AttributeError, KeyError)
@@ -104,10 +99,10 @@ def options_sorter(x, y):
 # (Current use is in importing OSM files, so isn't interactive.)
 # @ToDo: Code that should only have a single # should use
 # s3_single_phone_requires. Check what messaging assumes.
-phone_number_pattern = "\+?\s*[\s\-\.\(\)\d]+(?:(?: x| ext)\s?\d{1,5})?"
+phone_number_pattern = r"\+?\s*[\s\-\.\(\)\d]+(?:(?: x| ext)\s?\d{1,5})?"
 single_phone_number_pattern = "%s$" % phone_number_pattern
-multi_phone_number_pattern = "%s(\s*(,|/|;)\s*%s)*$" % (phone_number_pattern,
-                                                        phone_number_pattern)
+multi_phone_number_pattern = r"%s(\s*(,|/|;)\s*%s)*$" % (phone_number_pattern,
+                                                         phone_number_pattern)
 
 s3_single_phone_requires = IS_MATCH(single_phone_number_pattern)
 s3_phone_requires = IS_MATCH(multi_phone_number_pattern,
@@ -216,49 +211,55 @@ class IS_LAT(Validator):
     def __call__(self, value):
         try:
             value = float(value)
+        except ValueError:
+            # DMS format
+            pass
+        else:
             if self.minimum <= value <= self.maximum:
                 return (value, None)
             else:
                 return (value, self.error_message)
-        except:
-            pattern = re.compile("^[0-9]{,3}[\D\W][0-9]{,3}[\D\W][0-9]+$")
-            if not pattern.match(value):
-                return (value, self.error_message)
-            else:
-                val = []
-                val.append(value)
-                sep = []
-                count = 0
-                for i in val[0]:
-                    try:
-                        int(i)
-                        count += 1
-                    except:
-                        sep.append(count)
-                        count += 1
-                sec = ""
-                posn = sep[1]
-                while posn != (count-1):
-                    sec = sec + val[0][posn+1]#to join the numbers for seconds
-                    posn += 1
-                posn2 = sep[0]
-                mins = ""
-                while posn2 != (sep[1]-1):
-                    mins = mins + val[0][posn2+1]# to join the numbers for minutes
-                    posn2 += 1
-                deg = ""
-                posn3 = 0
-                while posn3 != (sep[0]):
-                    deg = deg + val[0][posn3] # to join the numbers for degree
-                    posn3 += 1
-                e = int(sec)/60 #formula to get back decimal degree
-                f = int(mins) + e #formula
-                g = int(f) / 60 #formula
-                value = int(deg) + g
-                return (value, None)
+
+        pattern = re.compile(r"^[0-9]{,3}[\D\W][0-9]{,3}[\D\W][0-9]+$")
+        if not pattern.match(value):
+            return (value, self.error_message)
+        else:
+            val = []
+            val.append(value)
+            sep = []
+            count = 0
+            for i in val[0]:
+                try:
+                    int(i)
+                except ValueError:
+                    sep.append(count)
+                count += 1
+            sec = ""
+            posn = sep[1]
+            while posn != (count-1):
+                # join the numbers for seconds
+                sec = sec + val[0][posn+1]
+                posn += 1
+            posn2 = sep[0]
+            mins = ""
+            while posn2 != (sep[1]-1):
+                # join the numbers for minutes
+                mins = mins + val[0][posn2+1]
+                posn2 += 1
+            deg = ""
+            posn3 = 0
+            while posn3 != (sep[0]):
+                # join the numbers for degree
+                deg = deg + val[0][posn3]
+                posn3 += 1
+            e = int(sec) / 60 # formula to get back decimal degree
+            f = int(mins) + e # formula
+            g = int(f) / 60 # formula
+            value = int(deg) + g
+            return (value, None)
 
 # =============================================================================
-class IS_LON(Validator):
+class IS_LON(IS_LAT):
     """
         example:
 
@@ -272,59 +273,10 @@ class IS_LON(Validator):
                  error_message = "Longitude/Easting should be between -180 & 180!"
                  ):
 
+        super(IS_LON, self).__init__(error_message=error_message)
+
         self.minimum = -180
         self.maximum = 180
-        self.error_message = error_message
-        # Tell s3_mark_required that this validator doesn't accept NULL values
-        self.mark_required = True
-
-    # -------------------------------------------------------------------------
-    def __call__(self, value):
-        try:
-            value = float(value)
-            if self.minimum <= value <= self.maximum:
-                return (value, None)
-            else:
-                return (value, self.error_message)
-        except:
-            pattern = re.compile("^[0-9]{,3}[\D\W][0-9]{,3}[\D\W][0-9]+$")
-            if not pattern.match(value):
-                return (value, self.error_message)
-            else:
-                val = []
-                val.append(value)
-                sep = []
-                count = 0
-                for i in val[0]:
-                    try:
-                        int(i)
-                        count += 1
-                    except:
-                        sep.append(count)
-                        count += 1
-                sec = ""
-                posn = sep[1]
-                while posn != (count-1):
-                    # join the numbers for seconds
-                    sec = sec + val[0][posn+1]
-                    posn += 1
-                posn2 = sep[0]
-                mins = ""
-                while posn2 != (sep[1]-1):
-                    # join the numbers for minutes
-                    mins = mins + val[0][posn2+1]
-                    posn2 += 1
-                deg = ""
-                posn3 = 0
-                while posn3 != (sep[0]):
-                    # join the numbers for degree
-                    deg = deg + val[0][posn3]
-                    posn3 += 1
-                e = int(sec) / 60 #formula to get back decimal degree
-                f = int(mins) + e #formula
-                g = int(f) / 60 #formula
-                value = int(deg) + g
-                return (value, None)
 
 # =============================================================================
 class IS_LAT_LON(Validator):
@@ -414,18 +366,22 @@ class IS_INT_AMOUNT(IS_INT_IN_RANGE):
     def __init__(self,
                  minimum=None,
                  maximum=None,
-                 error_message=None):
+                 error_message=None,
+                 ):
 
         IS_INT_IN_RANGE.__init__(self,
                                  minimum=minimum,
                                  maximum=maximum,
-                                 error_message=error_message)
+                                 error_message=error_message,
+                                 )
 
     # -------------------------------------------------------------------------
     def __call__(self, value):
 
-        thousands_sep = ","
-        value = s3_str(value).replace(thousands_sep, "")
+        thousands_sep = current.deployment_settings.get_L10n_thousands_separator()
+        if thousands_sep:
+            value = s3_str(value).replace(thousands_sep, "")
+
         return IS_INT_IN_RANGE.__call__(self, value)
 
     # -------------------------------------------------------------------------
@@ -440,7 +396,7 @@ class IS_INT_AMOUNT(IS_INT_IN_RANGE):
             return ""
         try:
             intnumber = int(number)
-        except:
+        except ValueError:
             intnumber = number
 
         settings = current.deployment_settings
@@ -453,7 +409,7 @@ class IS_INT_AMOUNT(IS_INT_IN_RANGE):
         else:
             sign = ""
 
-        str_number = unicode(intnumber)
+        str_number = str(intnumber)
 
         if str_number[0] == "-":
             str_number = str_number[1:]
@@ -490,19 +446,26 @@ class IS_FLOAT_AMOUNT(IS_FLOAT_IN_RANGE):
                  minimum=None,
                  maximum=None,
                  error_message=None,
-                 dot="."):
+                 dot=None,
+                 ):
+
+        if dot is None:
+            dot = current.deployment_settings.get_L10n_decimal_separator()
 
         IS_FLOAT_IN_RANGE.__init__(self,
                                    minimum=minimum,
                                    maximum=maximum,
                                    error_message=error_message,
-                                   dot=dot)
+                                   dot=dot,
+                                   )
 
     # -------------------------------------------------------------------------
     def __call__(self, value):
 
-        thousands_sep = ","
-        value = s3_str(value).replace(thousands_sep, "")
+        thousands_sep = current.deployment_settings.get_L10n_thousands_separator()
+        if thousands_sep:
+            value = s3_str(value).replace(thousands_sep, "")
+
         return IS_FLOAT_IN_RANGE.__call__(self, value)
 
     # -------------------------------------------------------------------------
@@ -522,19 +485,21 @@ class IS_FLOAT_AMOUNT(IS_FLOAT_IN_RANGE):
 
         DECIMAL_SEPARATOR = current.deployment_settings.get_L10n_decimal_separator()
 
-        str_number = unicode(number)
+        if precision is not None:
+            str_number = format(number, ".0%df" % precision)
+        else:
+            # Default to any precision
+            str_number = format(number, "f").rstrip("0") \
+                                            .rstrip(DECIMAL_SEPARATOR)
 
         if "." in str_number:
             int_part, dec_part = str_number.split(".")
-            if precision is not None:
-                dec_part = dec_part[:precision]
         else:
             int_part, dec_part = str_number, ""
 
         if dec_part and int(dec_part) == 0 and not fixed:
+            # Omit decimal part if zero
             dec_part = ""
-        elif precision is not None:
-            dec_part = dec_part + ("0" * (precision - len(dec_part)))
 
         if dec_part:
             dec_part = DECIMAL_SEPARATOR + dec_part
@@ -568,8 +533,8 @@ class IS_HTML_COLOUR(IS_MATCH):
         IS_MATCH.__init__(self, "^[0-9a-fA-F]{6}$", error_message)
 
 # =============================================================================
-regex1 = re.compile("[\w_]+\.[\w_]+")
-regex2 = re.compile("%\((?P<name>[^\)]+)\)s")
+regex1 = re.compile(r"[\w_]+\.[\w_]+")
+regex2 = re.compile(r"%\((?P<name>[^\)]+)\)s")
 
 class IS_ONE_OF_EMPTY(Validator):
     """
@@ -721,9 +686,9 @@ class IS_ONE_OF_EMPTY(Validator):
         self.instance_types = instance_types
 
     # -------------------------------------------------------------------------
-    def set_self_id(self, id):
+    def set_self_id(self, record_id):
         if self._and:
-            self._and.record_id = id
+            self._and.record_id = record_id
 
     # -------------------------------------------------------------------------
     def set_filter(self,
@@ -809,24 +774,25 @@ class IS_ONE_OF_EMPTY(Validator):
                 if hasattr(label, "bulk"):
                     # S3Represent => use bulk option
                     d = label.bulk(None,
-                                   rows=records,
-                                   list_type=False,
-                                   show_link=False)
+                                   rows = records,
+                                   list_type = False,
+                                   show_link = False,
+                                   )
                     labels = [d.get(r[self.kfield], d[None]) for r in records]
                 else:
-                    # Standard representation function
-                    labels = map(label, records)
+                    # Other representation function
+                    labels = [label(r) for r in records]
             except TypeError:
                 if isinstance(label, str):
-                    labels = map(lambda r: label % dict(r), records)
+                    labels = [label % dict(r) for r in records]
                 elif isinstance(label, (list, tuple)):
-                    labels = map(lambda r: \
-                                 " ".join([r[l] for l in label if l in r]),
-                                 records)
+                    labels = [" ".join([r[l] for l in label if l in r])
+                              for r in records
+                              ]
                 elif "name" in table:
-                    labels = map(lambda r: r.name, records)
+                    labels = [r.name for r in records]
                 else:
-                    labels = map(lambda r: r[self.kfield], records)
+                    labels = [r[self.kfield] for r in records]
             self.labels = labels
 
             if labels and self.sort:
@@ -1245,1065 +1211,6 @@ class IS_LOCATION(Validator):
             return (value, self.error_message or current.T("Invalid Location!"))
 
 # =============================================================================
-class IS_LOCATION_SELECTOR(Validator):
-    """
-        Designed for use within the S3LocationSelectorWidget.
-        For Create forms, this will create a new location from the additional fields
-        For Update forms, this will check that we have a valid location_id FK and update any changes
-
-        @ToDo: Audit
-    """
-
-    def __init__(self,
-                 error_message = None,
-                 ):
-
-        self.error_message = error_message
-        self.errors = Storage()
-        self.id = None
-        # Tell s3_mark_required that this validator doesn't accept NULL values
-        self.mark_required = True
-
-    # -------------------------------------------------------------------------
-    def __call__(self, value):
-
-        if current.response.s3.bulk:
-            # Pointless in imports
-            return (value, None)
-
-        db = current.db
-        table = db.gis_location
-
-        if value == "dummy":
-            # Create form
-            if not current.auth.s3_has_permission("create", table):
-                return (None, current.auth.messages.access_denied)
-            location = self._process_values()
-            if self.errors:
-                errors = self.errors
-                error = ""
-                for e in errors:
-                    error = "%s\n%s" % (error, errors[e]) if error else errors[e]
-                return (None, error)
-            if location.name or location.lat or location.lon or location.wkt or \
-               location.street or location.postcode or location.parent:
-                vars = dict(name = location.name,
-                            lat = location.lat,
-                            lon = location.lon,
-                            wkt = location.wkt,
-                            gis_feature_type = location.gis_feature_type,
-                            addr_street = location.street,
-                            addr_postcode = location.postcode,
-                            parent = location.parent,
-                            lon_min = location.lon_min,
-                            lon_max = location.lon_max,
-                            lat_min = location.lat_min,
-                            lat_max = location.lat_max
-                            )
-
-                if vars["wkt"] and current.deployment_settings.get_gis_spatialdb():
-                    # Also populate the spatial field
-                    vars["the_geom"] = vars["wkt"]
-
-                value = table.insert(**vars)
-                # onaccept
-                vars["id"] = value
-                current.gis.update_location_tree(vars)
-                return (value, None)
-            else:
-                return (None, None)
-
-        else:
-            # This must be an Update form
-            if not current.auth.s3_has_permission("update", table, record_id=value):
-                return (value, current.auth.messages.access_denied)
-            # Check that this is a valid location_id
-            query = (table.id == value) & \
-                    (table.deleted == False) & \
-                    (table.level == None) # NB Specific Locations only
-            location = db(query).select(table.id,
-                                        limitby=(0, 1)).first()
-            if location:
-                # Update the record, in case changes have been made
-                self.id = value
-                location = self._process_values()
-                if self.errors:
-                    errors = self.errors
-                    error = ""
-                    for e in errors:
-                        error = "%s\n%s" % (error, errors[e]) if error else errors[e]
-                    return (value, error)
-                vars = dict(name = location.name,
-                            lat = location.lat,
-                            lon = location.lon,
-                            inherited = location.inherited,
-                            addr_street = location.street,
-                            addr_postcode = location.postcode,
-                            parent = location.parent,
-                            wkt = location.wkt,
-                            lon_min = location.lon_min,
-                            lon_max = location.lon_max,
-                            lat_min = location.lat_min,
-                            lat_max = location.lat_max
-                            )
-
-                if vars["wkt"] and current.deployment_settings.get_gis_spatialdb():
-                    # Also populate the spatial field
-                    vars["the_geom"] = vars["wkt"]
-
-                db(table.id == value).update(**vars)
-                # onaccept
-                vars["id"] = value
-                current.gis.update_location_tree(vars)
-                return (value, None)
-            else:
-                return (value, self.error_message or current.T("Invalid Location!"))
-
-    # -------------------------------------------------------------------------
-    def _process_values(self):
-        """
-            Read the request.vars & prepare for a record insert/update
-
-            Note: This is also used by IS_SITE_SELECTOR()
-        """
-
-        # Rough check for valid Lat/Lon (detailed later)
-        post_vars = current.request.post_vars
-        lat = post_vars.get("gis_location_lat", None)
-        lon = post_vars.get("gis_location_lon", None)
-        if lat:
-            try:
-                lat = float(lat)
-            except ValueError:
-                self.errors["lat"] = current.T("Latitude is Invalid!")
-        if lon:
-            try:
-                lon = float(lon)
-            except ValueError:
-                self.errors["lon"] = current.T("Longitude is Invalid!")
-        if self.errors:
-            return None
-
-        L0 = post_vars.get("gis_location_L0", None)
-
-        db = current.db
-        table = db.gis_location
-        # Are we allowed to create Locations?
-        auth = current.auth
-        def permitted_to_create():
-            if not auth.s3_has_permission("create", table):
-                self.errors["location_id"] = auth.messages.access_denied
-                return False
-            return True
-        # What level of hierarchy are we allowed to edit?
-        s3db = current.s3db
-        if auth.s3_has_role(current.session.s3.system_roles.MAP_ADMIN):
-            # 'MapAdmin' always has permission to edit hierarchy locations
-            L1_allowed = True
-            L2_allowed = True
-            L3_allowed = True
-            L4_allowed = True
-            L5_allowed = True
-        else:
-            if L0:
-                htable = s3db.gis_hierarchy
-                query = (htable.location_id == L0)
-                config = db(query).select(htable.edit_L1,
-                                          htable.edit_L2,
-                                          htable.edit_L3,
-                                          htable.edit_L4,
-                                          htable.edit_L5,
-                                          limitby=(0, 1)).first()
-            if L0 and config:
-                # Lookup each level individually
-                L1_allowed = config.edit_L1
-                L2_allowed = config.edit_L2
-                L3_allowed = config.edit_L3
-                L4_allowed = config.edit_L4
-                L5_allowed = config.edit_L5
-            else:
-                # default is True
-                L1_allowed = True
-                L2_allowed = True
-                L3_allowed = True
-                L4_allowed = True
-                L5_allowed = True
-
-        # We don't need to do onvalidation of the Location Hierarchy records
-        # separately as we don't have anything extra to validate than we have
-        # done already
-
-        onaccept = current.gis.update_location_tree
-
-        L1 = post_vars.get("gis_location_L1", None)
-        L2 = post_vars.get("gis_location_L2", None)
-        L3 = post_vars.get("gis_location_L3", None)
-        L4 = post_vars.get("gis_location_L4", None)
-        L5 = post_vars.get("gis_location_L5", None)
-
-        # Check if we have parents to create
-        # L1
-        if L1:
-            try:
-                # Is this an ID?
-                L1 = int(L1)
-                # Do we need to update it's parent?
-                if L0:
-                    location = db(table.id == L1).select(table.name,
-                                                         table.parent,
-                                                         limitby=(0, 1)
-                                                         ).first()
-                    if location and (location.parent != int(L0)):
-                        db(query).update(parent = L0)
-                        location["level"] = "L1"
-                        location["id"] = L1
-                        onaccept(location)
-            except:
-                # Name
-                # Test for duplicates
-                query = (table.name == L1) & (table.level == "L1")
-                if L0:
-                    query &= (table.parent == L0)
-                location = db(query).select(table.id,
-                                            limitby=(0, 1)).first()
-                if location:
-                    # Use Existing record
-                    L1 = location.id
-                elif L1_allowed:
-                    if permitted_to_create():
-                        if L0:
-                            f = dict(name = L1,
-                                    level = "L1",
-                                    parent = L0,
-                                    )
-                            L1 = table.insert(**f)
-                            f["id"] = L1
-                            onaccept(f)
-                        else:
-                            f = dict(name=L1,
-                                    level="L1",
-                                    )
-                            L1 = table.insert(**f)
-                            f["id"] = L1
-                            onaccept(f)
-                    else:
-                        return None
-                else:
-                    L1 = None
-        # L2
-        if L2:
-            try:
-                # Is this an ID?
-                L2 = int(L2)
-                # Do we need to update it's parent?
-                if L1:
-                    location = db(table.id == L2).select(table.name,
-                                                         table.parent,
-                                                         limitby=(0, 1)).first()
-                    if location and (location.parent != L1):
-                        db(query).update(parent=L1)
-                        location["level"] = "L2"
-                        location["id"] = L2
-                        onaccept(location)
-            except:
-                # Name
-                # Test for duplicates
-                # @ToDo: Also check for L2 parenting direct to L0
-                query = (table.name == L2) & (table.level == "L2")
-                if L1:
-                    query &= (table.parent == L1)
-                location = db(query).select(table.id,
-                                            limitby=(0, 1)).first()
-                if location:
-                    # Use Existing record
-                    L2 = location.id
-                elif L2_allowed:
-                    if permitted_to_create():
-                        if L1:
-                            f = dict(name=L2,
-                                    level="L2",
-                                    parent=L1,
-                                    )
-                            L2 = table.insert(**f)
-                            f["id"] = L2
-                            onaccept(f)
-                        elif L0:
-                            f = dict(name=L2,
-                                    level="L2",
-                                    parent=L0,
-                                    )
-                            L2 = table.insert(**f)
-                            f["id"] = L2
-                            onaccept(f)
-                        else:
-                            f = dict(name=L2,
-                                    level="L2",
-                                    )
-                            L2 = table.insert(**f)
-                            f["id"] = L2
-                            onaccept(f)
-                    else:
-                        return None
-                else:
-                    L2 = None
-        # L3
-        if L3:
-            try:
-                # Is this an ID?
-                L3 = int(L3)
-                # Do we need to update it's parent?
-                if L2:
-                    location = db(table.id == L3).select(table.name,
-                                                         table.parent,
-                                                         limitby=(0, 1)).first()
-                    if location and (location.parent != L2):
-                        db(query).update(parent=L2)
-                        location["level"] = "L3"
-                        location["id"] = L3
-                        onaccept(location)
-            except:
-                # Name
-                # Test for duplicates
-                # @ToDo: Also check for L3 parenting direct to L0/1
-                query = (table.name == L3) & (table.level == "L3")
-                if L2:
-                    query &= (table.parent == L2)
-                location = db(query).select(table.id,
-                                            limitby=(0, 1)).first()
-                if location:
-                    # Use Existing record
-                    L3 = location.id
-                elif L3_allowed:
-                    if permitted_to_create():
-                        if L2:
-                            f = dict(name=L3,
-                                    level="L3",
-                                    parent=L2,
-                                    )
-                            L3 = table.insert(**f)
-                            f["id"] = L3
-                            onaccept(f)
-                        elif L1:
-                            f = dict(name=L3,
-                                    level="L3",
-                                    parent=L1,
-                                    )
-                            L3 = table.insert(**f)
-                            f["id"] = L3
-                            onaccept(f)
-                        elif L0:
-                            f = dict(name=L3,
-                                    level="L3",
-                                    parent=L0,
-                                    )
-                            L3 = table.insert(**f)
-                            f["id"] = L3
-                            onaccept(f)
-                        else:
-                            f = dict(name=L3,
-                                    level="L3",
-                                    )
-                            L3 = table.insert(**f)
-                            f["id"] = L3
-                            onaccept(f)
-                    else:
-                        return None
-                else:
-                    L3 = None
-        # L4
-        if L4:
-            try:
-                # Is this an ID?
-                L4 = int(L4)
-                # Do we need to update it's parent?
-                if L3:
-                    location = db(table.id == L4).select(table.name,
-                                                         table.parent,
-                                                         limitby=(0, 1)).first()
-                    if location and (location.parent != L3):
-                        db(query).update(parent=L3)
-                        location["level"] = "L4"
-                        location["id"] = L4
-                        onaccept(location)
-            except:
-                # Name
-                # Test for duplicates
-                # @ToDo: Also check for L4 parenting direct to L0/1/2
-                query = (table.name == L4) & (table.level == "L4")
-                if L3:
-                    query &= (table.parent == L3)
-                location = db(query).select(table.id,
-                                            limitby=(0, 1)).first()
-                if location:
-                    # Use Existing record
-                    L4 = location.id
-                elif L4_allowed:
-                    if permitted_to_create():
-                        if L3:
-                            f = dict(name=L4,
-                                    level="L4",
-                                    parent=L3,
-                                    )
-                            L4 = table.insert(**f)
-                            f["id"] = L4
-                            onaccept(f)
-                        elif L2:
-                            f = dict(name=L4,
-                                    level="L4",
-                                    parent=L2,
-                                    )
-                            L4 = table.insert(**f)
-                            f["id"] = L4
-                            onaccept(f)
-                        elif L1:
-                            f = dict(name=L4,
-                                    level="L4",
-                                    parent=L1,
-                                    )
-                            L4 = table.insert(**f)
-                            f["id"] = L4
-                            onaccept(f)
-                        elif L0:
-                            f = dict(name=L4,
-                                    level="L4",
-                                    parent=L0,
-                                    )
-                            L4 = table.insert(**f)
-                            f["id"] = L4
-                            onaccept(f)
-                        else:
-                            f = dict(name=L4,
-                                    level="L4",
-                                    )
-                            L4 = table.insert(**f)
-                            f["id"] = L4
-                            onaccept(f)
-                    else:
-                        return None
-                else:
-                    L4 = None
-        # L5
-        if L5:
-            try:
-                # Is this an ID?
-                L5 = int(L5)
-                # Do we need to update it's parent?
-                if L4:
-                    location = db(table.id == L5).select(table.name,
-                                                         table.parent,
-                                                         limitby=(0, 1)).first()
-                    if location and (location.parent != L4):
-                        db(query).update(parent=L4)
-                        location["level"] = "L5"
-                        location["id"] = L5
-                        onaccept(location)
-            except:
-                # Name
-                # Test for duplicates
-                # @ToDo: Also check for L5 parenting direct to L0/1/2/3
-                query = (table.name == L5) & (table.level == "L5")
-                if L4:
-                    query &= (table.parent == L4)
-                location = db(query).select(table.id,
-                                            limitby=(0, 1)).first()
-                if location:
-                    # Use Existing record
-                    L5 = location.id
-                elif L5_allowed:
-                    if permitted_to_create():
-                        if L4:
-                            f = dict(name=L5,
-                                    level="L5",
-                                    parent=L4,
-                                    )
-                            L5 = table.insert(**f)
-                            f["id"] = L5
-                            onaccept(f)
-                        elif L3:
-                            f = dict(name=L5,
-                                    level="L5",
-                                    parent=L3,
-                                    )
-                            L5 = table.insert(**f)
-                            f["id"] = L5
-                            onaccept(f)
-                        elif L2:
-                            f = dict(name=L5,
-                                    level="L5",
-                                    parent=L2,
-                                    )
-                            L5 = table.insert(**f)
-                            f["id"] = L5
-                            onaccept(f)
-                        elif L1:
-                            f = dict(name=L5,
-                                    level="L5",
-                                    parent=L1,
-                                    )
-                            L5 = table.insert(**f)
-                            f["id"] = L5
-                            onaccept(f)
-                        elif L0:
-                            f = dict(name=L5,
-                                    level="L5",
-                                    parent=L1,
-                                    )
-                            L5 = table.insert(**f)
-                            f["id"] = L5
-                            onaccept(f)
-                        else:
-                            f = dict(name=L5,
-                                    level="L5",
-                                    )
-                            L5 = table.insert(**f)
-                            f["id"] = L5
-                            onaccept(f)
-                    else:
-                        return None
-                else:
-                    L5 = None
-
-        # Check if we have a specific location to create
-        name = post_vars.get("gis_location_name", None)
-        wkt = post_vars.get("gis_location_wkt", None)
-        street = post_vars.get("gis_location_street", None)
-        postcode = post_vars.get("gis_location_postcode", None)
-        parent = L5 or L4 or L3 or L2 or L1 or L0 or None
-
-        # Move vars into form.
-        form = Storage()
-        form.errors = dict()
-        form.vars = Storage()
-        form_vars = form.vars
-        form_vars.lat = lat
-        form_vars.lon = lon
-        form_vars.wkt = wkt
-        if wkt:
-            # Polygon (will be corrected as-required by wkt_centroid)
-            form_vars.gis_feature_type = "3"
-        else:
-            # Point
-            form_vars.gis_feature_type = "1"
-        form_vars.parent = parent
-        if self.id:
-            # Provide the old record to check inherited
-            form.record = db(table.id == self.id).select(table.inherited,
-                                                         table.lat,
-                                                         table.lon,
-                                                         limitby=(0, 1)).first()
-        # onvalidation
-        s3db.gis_location_onvalidation(form)
-        if form.errors:
-            self.errors = form.errors
-            return None
-        location = Storage(name=name,
-                           lat=form_vars.lat,
-                           lon=form_vars.lon,
-                           inherited=form_vars.inherited,
-                           street=street,
-                           postcode=postcode,
-                           parent=parent,
-                           wkt = form_vars.wkt,
-                           gis_feature_type = form_vars.gis_feature_type,
-                           lon_min = form_vars.lon_min,
-                           lon_max = form_vars.lon_max,
-                           lat_min = form_vars.lat_min,
-                           lat_max = form_vars.lat_max
-                           )
-
-        return location
-
-# =============================================================================
-class IS_SITE_SELECTOR(IS_LOCATION_SELECTOR):
-    """
-        Extends the IS_LOCATION_SELECTOR() validator to transparently support
-        Sites of the specified type.
-        Note that these cannot include any other mandatory fields other than Name & location_id
-
-        Designed for use within the S3LocationSelectorWidget with sites.
-        For Create forms, this will create a new site & location from the additional fields
-        For Update forms, this will normally just check that we have a valid site_id FK
-        - although there is the option to create a new location there too, in which case it acts as-above.
-
-        @ToDo: Audit
-    """
-
-    def __init__(self,
-                 site_type = "project_site",
-                 error_message = None,
-                 ):
-
-        self.error_message = error_message
-        self.errors = Storage()
-        self.id = None
-        self.site_type = site_type
-        # Tell s3_mark_required that this validator doesn't accept NULL values
-        self.mark_required = True
-
-    # -------------------------------------------------------------------------
-    def __call__(self, value):
-
-        if current.response.s3.bulk:
-            # Pointless in imports
-            return (value, None)
-
-        db = current.db
-        auth = current.auth
-        gis = current.gis
-        table = db.gis_location
-        stable = db[self.site_type]
-
-        if value == "dummy":
-            # Create form
-            if not auth.s3_has_permission("create", stable):
-                return (None, auth.messages.access_denied)
-            location = self._process_values()
-            if self.errors:
-                errors = self.errors
-                error = ""
-                for e in errors:
-                    error = "%s\n%s" % (error, errors[e]) if error else errors[e]
-                return (None, error)
-            if location.name or location.lat or location.lon or \
-               location.street or location.postcode or location.parent:
-                # Location creation
-                vars = dict(name = location.name,
-                            lat = location.lat,
-                            lon = location.lon,
-                            addr_street = location.street,
-                            addr_postcode = location.postcode,
-                            parent = location.parent,
-                            wkt = form.vars.wkt,
-                            lon_min = form.vars.lon_min,
-                            lon_max = form.vars.lon_max,
-                            lat_min = form.vars.lat_min,
-                            lat_max = form.vars.lat_max
-                            )
-                location_id = table.insert(**vars)
-                # Location onaccept
-                vars["id"] = location_id
-                gis.update_location_tree(vars)
-                # Site creation
-                value = stable.insert(name = location.name,
-                                      location_id = location_id)
-                return (value, None)
-            else:
-                return (None, None)
-        else:
-            # This must be an Update form
-            if not auth.s3_has_permission("update", stable, record_id=value):
-                return (value, auth.messages.access_denied)
-            # Check that this is a valid site_id
-            query = (stable.id == value) & \
-                    (stable.deleted == False)
-            site = db(query).select(stable.id,
-                                    stable.name,
-                                    stable.location_id,
-                                    limitby=(0, 1)).first()
-            location_id = site.location_id if site else None
-            if location_id:
-                # Update the location, in case changes have been made
-                self.id = value
-                location = self._process_values()
-                if self.errors:
-                    errors = self.errors
-                    error = ""
-                    for e in errors:
-                        error = "%s\n%s" % (error, errors[e]) if error else errors[e]
-                    return (value, error)
-                # Location update
-                name = location.name
-                vars = dict(name = name,
-                            lat = location.lat,
-                            lon = location.lon,
-                            addr_street = location.street,
-                            addr_postcode = location.postcode,
-                            parent = location.parent
-                            )
-                lquery = (table.id == location_id)
-                db(lquery).update(**vars)
-                # Location onaccept
-                vars["id"] = location_id
-                gis.update_location_tree(vars)
-
-                if stable.name != name:
-                    # Site Name has changed
-                    db(query).update(name = name)
-                return (value, None)
-
-        return (value, self.error_message or current.T("Invalid Site!"))
-
-# =============================================================================
-class IS_ADD_PERSON_WIDGET2(Validator):
-    """
-        Validator for S3AddPersonWidget2
-
-        @ToDo: get working human_resource_id
-    """
-
-    def __init__(self,
-                 error_message = None,
-                 allow_empty = False,
-                 first_name_only = None,
-                 separate_name_fields = None,
-                 ):
-        """
-            Constructor
-
-            @param error_message: alternative error message
-            @param allow_empty: allow the selector to be left empty
-            @param first_name_only: put all name elements into first_name field
-                                    None => activate if RTL otherwise don't
-
-            @note: This validator can *not* be used together with IS_EMPTY_OR,
-                   because when a new person gets entered, the submitted value
-                   for person_id would be None and hence satisfy IS_EMPTY_OR,
-                   and then this validator would never be reached and no new
-                   person record would be created => instead of IS_EMPTY_OR,
-                   use IS_ADD_PERSON_WIDGET2(allow_empty=True).
-        """
-
-        self.error_message = error_message
-        self.allow_empty = allow_empty
-        self.first_name_only = first_name_only
-        self.separate_name_fields = separate_name_fields
-
-        # Tell s3_mark_required that this validator doesn't accept NULL values
-        self.mark_required = not allow_empty
-
-    # -------------------------------------------------------------------------
-    def __call__(self, value):
-
-        s3 = current.response.s3
-        if s3.bulk:
-            # Pointless in imports
-            return (value, None)
-
-        person_id = None
-        if value:
-            try:
-                person_id = int(value)
-            except:
-                pass
-
-        if person_id:
-            # Nothing to do here - we can't change values within this widget
-            return (person_id, None)
-
-        request = current.request
-        if request.env.request_method == "POST":
-            if "import" in request.args:
-                # Widget Validator not appropriate for this context
-                return (person_id, None)
-
-            T = current.T
-            db = current.db
-            s3db = current.s3db
-            settings = current.deployment_settings
-
-            separate_name_fields = self.separate_name_fields
-            if separate_name_fields is None:
-                separate_name_fields = settings.get_pr_separate_name_fields()
-
-            ptable = db.pr_person
-            ctable = s3db.pr_contact
-
-            def name_split(name):
-                """
-                    Split a full name into First Middle Last
-
-                    NB This *will* cause issues as people often have multi-word firstnames and surnames
-                    http://stackoverflow.com/questions/259634/splitting-a-persons-name-into-forename-and-surname
-                    http://stackoverflow.com/questions/159567/how-can-i-parse-the-first-middle-and-last-name-from-a-full-name-field-in-sql
-                """
-
-                #names = name.split(" ")
-                # Remove prefixes & suffixes
-                #bad = ("mr", "mrs", "ms", "dr", "eng",
-                #       "jr", "sr", "esq", "junior", "senior",
-                #       "ii", "iii", "iv", "v",
-                #       "2nd", "3rd", "4th", "5th",
-                #       )
-                #names = filter(lambda x: x.lower() not in bad, names)
-
-                # Assume First Name is a single word
-                #first_name = names[0]
-                # Assume Last Name is a single word!
-                #if len(names) > 1:
-                #    last_name = names[-1]
-                #else:
-                #    last_name = None
-                # Assume all other names go into the Middle Name
-                #if len(names) > 2:
-                #    middle_name = " ".join(names[1:-1])
-                #else:
-                #    middle_name = None
-                #return first_name, middle_name, last_name
-
-                # https://github.com/derek73/python-nameparser
-                from nameparser import HumanName
-                name = HumanName(name)
-
-                # @ToDo?: name.nickname
-
-                return name.first, name.middle, name.last
-
-            def email_validate(value, person_id):
-                """ Validate the email address """
-
-                error_message = T("Please enter a valid email address")
-
-                if value is not None:
-                    value = value.strip()
-
-                # No email?
-                if not value:
-                    email_required = settings.get_pr_request_email() and \
-                                     settings.get_hrm_email_required()
-                    if email_required:
-                        return (value, error_message)
-                    return (value, None)
-
-                # Valid email?
-                value, error = IS_EMAIL()(value)
-                if error:
-                    return value, error_message
-
-                # Unique email?
-                query = (ctable.deleted != True) & \
-                        (ctable.contact_method == "EMAIL") & \
-                        (ctable.value == value)
-                if person_id:
-                    query &= (ctable.pe_id == ptable.pe_id) & \
-                             (ptable.id != person_id)
-                email = db(query).select(ctable.id, limitby=(0, 1)).first()
-                if email:
-                    error_message = T("This email-address is already registered.")
-                    return value, error_message
-
-                # Ok!
-                return value, None
-
-            post_vars = request.post_vars
-            mobile = post_vars["mobile_phone"]
-            if mobile:
-                # Validate the mobile phone number
-                validator = IS_PHONE_NUMBER(international = True)
-                mobile, error = validator(mobile)
-                if error:
-                    return (person_id, error)
-
-            home_phone = post_vars.get("home_phone", None)
-            if home_phone:
-                # Validate the home phone number
-                validator = IS_PHONE_NUMBER()
-                mobile, error = validator(mobile)
-                if error:
-                    return (person_id, error)
-
-            dob = post_vars["date_of_birth"]
-            if not dob and settings.get_pr_dob_required():
-                return (person_id, T("Date of Birth is Required"))
-
-            #if person_id:
-            #    # Filter out location_id (location selector form values
-            #    # being processed only after this widget has been validated)
-            #    post_vars = Storage([(k, post_vars[k])
-            #                         for k in post_vars if k != "location_id"])
-
-            #    # Separate the Name into components
-            #    first_name, middle_name, last_name = name_split(post_vars["full_name"])
-            #    post_vars["first_name"] = first_name
-            #    post_vars["middle_name"] = middle_name
-            #    post_vars["last_name"] = last_name
-
-            #    # Validate and update the person record
-            #    query = (ptable.id == person_id)
-            #    data = Storage()
-            #    for f in ptable._filter_fields(post_vars):
-            #        value, error = s3_validate(ptable, f, post_vars[f])
-            #        if error:
-            #            return (person_id, error)
-            #        if value:
-            #            if f == "date_of_birth":
-            #                data[f] = value.isoformat()
-            #            else:
-            #                data[f] = value
-            #    if data:
-            #        db(query).update(**data)
-
-            #    # Update the contact information & details
-            #    record = db(query).select(ptable.pe_id,
-            #                              limitby=(0, 1)).first()
-            #    if record:
-            #        pe_id = record.pe_id
-
-            #        r = ctable(pe_id=pe_id, contact_method="EMAIL")
-            #        email = post_vars["email"]
-            #        if email:
-            #            query = (ctable.pe_id == pe_id) & \
-            #                    (ctable.contact_method == "EMAIL") &\
-            #                    (ctable.deleted != True)
-            #            r = db(query).select(ctable.value,
-            #                                 limitby=(0, 1)).first()
-            #            if r: # update
-            #                if email != r.value:
-            #                    db(query).update(value=email)
-            #            else: # insert
-            #                ctable.insert(pe_id=pe_id,
-            #                              contact_method="EMAIL",
-            #                              value=email)
-
-            #        if mobile:
-            #            query = (ctable.pe_id == pe_id) & \
-            #                    (ctable.contact_method == "SMS") &\
-            #                    (ctable.deleted != True)
-            #            r = db(query).select(ctable.value,
-            #                                 limitby=(0, 1)).first()
-            #            if r: # update
-            #                if mobile != r.value:
-            #                    db(query).update(value=mobile)
-            #            else: # insert
-            #                ctable.insert(pe_id=pe_id,
-            #                              contact_method="SMS",
-            #                              value=mobile)
-
-            #        if home_phone:
-            #            query = (ctable.pe_id == pe_id) & \
-            #                    (ctable.contact_method == "HOME_PHONE") &\
-            #                    (ctable.deleted != True)
-            #            r = db(query).select(ctable.value,
-            #                                 limitby=(0, 1)).first()
-            #            if r: # update
-            #                if home_phone != r.value:
-            #                    db(query).update(value=home_phone)
-            #            else: # insert
-            #                ctable.insert(pe_id=pe_id,
-            #                              contact_method="HOME_PHONE",
-            #                              value=home_phone)
-
-            #        occupation = post_vars.get("occupation", None)
-            #        if occupation:
-            #            pdtable = s3db.pr_person_details
-            #            query = (pdtable.person_id == person_id) & \
-            #                    (pdtable.deleted != True)
-            #            r = db(query).select(pdtable.occupation,
-            #                                 limitby=(0, 1)).first()
-            #            if r: # update
-            #                if occupation != r.occupation:
-            #                    db(query).update(occupation=occupation)
-            #            else: # insert
-            #                pdtable.insert(person_id=person_id,
-            #                               occupation=occupation)
-
-            #else:
-            # Create a new person record
-
-            # Filter out location_id (location selector form values
-            # being processed only after this widget has been validated)
-            post_vars = Storage([(k, post_vars[k])
-                                 for k in post_vars if k != "location_id"])
-
-            if not separate_name_fields:
-                fullname = post_vars["full_name"]
-                if not fullname and self.allow_empty:
-                    return None, None
-
-            # Validate the email
-            email, error = email_validate(post_vars.email, None)
-            if error:
-                return (None, error)
-
-            if not separate_name_fields:
-                # Separate the Name into components
-                if self.first_name_only is None:
-                    # Activate if using RTL
-                    if s3.rtl:
-                        first_name_only = True
-                    else:
-                        first_name_only = False
-                else:
-                    first_name_only = self.first_name_only
-                if first_name_only:
-                    first_name = fullname
-                    middle_name = last_name = None
-                else:
-                    name_format = settings.get_pr_name_format()
-                    if name_format == "%(last_name)s %(middle_name)s %(first_name)s":
-                        # Viet Nam style
-                        last_name, middle_name, first_name = name_split(fullname)
-                    #elif name_format == "%(last_name)s, %(first_name)s":
-                    #    # DRK style (deprecated once we complete separation of widget fields)
-                    #    last_name, middle_name, first_name = name_split(fullname)
-                    else:
-                        # Assume default: "%(first_name)s %(middle_name)s %(last_name)s"
-                        # @ToDo: Actually parse the format string
-                        first_name, middle_name, last_name = name_split(fullname)
-                post_vars["first_name"] = first_name
-                post_vars["middle_name"] = middle_name
-                post_vars["last_name"] = last_name
-
-            # Validate and add the person record
-            for f in ptable._filter_fields(post_vars):
-                value, error = s3_validate(ptable, f, post_vars[f])
-                if error:
-                    return (None, error)
-                elif f == "date_of_birth" and \
-                    value:
-                    post_vars[f] = value.isoformat()
-            person_id = ptable.insert(**ptable._filter_fields(post_vars))
-
-            # Need to update post_vars here,
-            # for some reason this doesn't happen through validation alone
-            request.post_vars.update(person_id=str(person_id))
-
-            if person_id:
-                # Update the super-entities
-                s3db.update_super(ptable, dict(id=person_id))
-                # Read the created pe_id
-                person = db(ptable.id == person_id).select(ptable.pe_id,
-                                                           limitby=(0, 1)
-                                                           ).first()
-
-                # Add contact information as provided
-                pe_id = person.pe_id
-                if post_vars.email:
-                    ctable.insert(pe_id=pe_id,
-                                  contact_method="EMAIL",
-                                  value=post_vars.email)
-                if mobile:
-                    ctable.insert(pe_id=pe_id,
-                                  contact_method="SMS",
-                                  value=post_vars.mobile_phone)
-                if home_phone:
-                    ctable.insert(pe_id=pe_id,
-                                  contact_method="HOME_PHONE",
-                                  value=post_vars.home_phone)
-
-                # Add details
-                details = {}
-                if post_vars.occupation:
-                    details["occupation"] = post_vars.occupation
-                if post_vars.father_name:
-                    details["father_name"] = post_vars.father_name
-                if post_vars.grandfather_name:
-                    details["grandfather_name"] = post_vars.grandfather_name
-                if post_vars.year_of_birth:
-                    details["year_of_birth"] = post_vars.year_of_birth
-                if details:
-                    details["person_id"] = person_id
-                    s3db.pr_person_details.insert(**details)
-
-                # Update ownership & realm
-                current.auth.s3_set_record_owner(ptable, person_id)
-            else:
-                # Something went wrong
-                return (person_id, self.error_message or \
-                                   T("Could not add person record"))
-
-        return (person_id, None)
-
-# =============================================================================
 class IS_PROCESSED_IMAGE(Validator):
     """
         Uses an S3ImageCropWidget to allow the user to crop/scale images and
@@ -2339,7 +1246,7 @@ class IS_PROCESSED_IMAGE(Validator):
             return (value, None)
 
         r = current.request
-        vars = r.post_vars
+        post_vars = r.post_vars
 
         if r.env.request_method == "GET":
             return (value, None)
@@ -2347,19 +1254,19 @@ class IS_PROCESSED_IMAGE(Validator):
         # If there's a newly uploaded file, accept it. It'll be processed in
         # the update form.
         # NOTE: A FieldStorage with data evaluates as False (odd!)
-        file = vars.get(self.field_name)
-        if file not in ("", None):
-            return (file, None)
+        uploaded_image = post_vars.get(self.field_name)
+        if uploaded_image not in ("", None):
+            return (uploaded_image, None)
 
-        encoded_file = vars.get("imagecrop-data")
-        file = self.file_cb()
+        cropped_image = post_vars.get("imagecrop-data")
+        uploaded_image = self.file_cb()
 
-        if not (encoded_file or file):
+        if not (cropped_image or uploaded_image):
             return value, current.T(self.error_message)
 
         # Decode the base64-encoded image from the client side image crop
         # process if, that worked.
-        if encoded_file:
+        if cropped_image:
             import base64
             import uuid
             try:
@@ -2367,26 +1274,27 @@ class IS_PROCESSED_IMAGE(Validator):
             except ImportError:
                 from StringIO import StringIO
 
-            metadata, encoded_file = encoded_file.split(",")
-            filename, datatype, enctype = metadata.split(";")
+            metadata, cropped_image = cropped_image.split(",")
+            #filename, datatype, enctype = metadata.split(";")
+            filename = metadata.split(";", 1)[0]
 
             f = Storage()
             f.filename = uuid.uuid4().hex + filename
 
-            f.file = StringIO(base64.decodestring(encoded_file))
+            f.file = StringIO(base64.decodestring(cropped_image))
 
             return (f, None)
 
         # Crop the image, if we've got the crop points.
-        points = vars.get("imagecrop-points")
-        if points and file:
+        points = post_vars.get("imagecrop-points")
+        if points and uploaded_image:
             import os
             points = map(float, points.split(","))
 
             if not self.upload_path:
-                path = os.path.join(r.folder, "uploads", "images", file)
+                path = os.path.join(r.folder, "uploads", "images", uploaded_image)
             else:
-                path = os.path.join(self.upload_path, file)
+                path = os.path.join(self.upload_path, uploaded_image)
 
             current.s3task.async("crop_image",
                 args=[path] + points + [self.image_bounds[0]])
@@ -3127,8 +2035,8 @@ class IS_PHONE_NUMBER(Validator):
                     error_message = current.T("Enter phone number in international format like +46783754957")
 
                 # Require E.123 international format
-                number = "".join(re.findall("[\d+]+", number))
-                match = re.match("(\+)([1-9]\d+)$", number)
+                number = "".join(re.findall(r"[\d+]+", number))
+                match = re.match(r"(\+)([1-9]\d+)$", number)
                 #match = re.match("(\+|00|\+00)([1-9]\d+)$", number)
 
                 if match:

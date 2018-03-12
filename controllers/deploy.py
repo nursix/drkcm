@@ -67,7 +67,9 @@ def mission():
                     htable = s3db.hrm_human_resource
                     query = (htable.id == member_id) & \
                             (htable.deleted != True)
-                    row = db(query).select(htable.id, limitby=(0, 1)).first()
+                    row = db(query).select(htable.id,
+                                           limitby = (0, 1)
+                                           ).first()
                     if row:
                         field = s3db.deploy_assignment.human_resource_id
                         field.default = row.id
@@ -99,11 +101,11 @@ def mission():
         if not r.component:
             # Override mission open actions to go to the profile page
             s3_action_buttons(r,
-                              deletable=True,
-                              editable=True,
-                              read_url=r.url(method="profile", id="[id]"),
-                              update_url=r.url(method="profile", id="[id]"),
-                              delete_url=r.url(method="delete", id="[id]"),
+                              deletable = True,
+                              editable = True,
+                              read_url = r.url(method="profile", id="[id]"),
+                              update_url = r.url(method="profile", id="[id]"),
+                              delete_url = r.url(method="delete", id="[id]"),
                               )
             # Override the missions list-button go to the summary page
             if isinstance(output, dict) and "buttons" in output:
@@ -196,28 +198,40 @@ def group():
     """
 
     def prep(r):
-        table = r.table
+
         tablename = "pr_group"
         s3db.configure(tablename,
                        deletable = False,
                        )
 
         if r.component:
-            ctable = s3db.pr_group_membership
-            ctable.group_head.readable = ctable.group_head.writable = False
-            f = ctable.person_id
-            settings.pr.request_dob = False
-            settings.pr.request_gender = False
-            f.requires = s3base.IS_ADD_PERSON_WIDGET2()
-            f.widget = s3base.S3AddPersonWidget2(controller="deploy")
-            list_fields = ["person_id",
-                           "comments",
-                           ]
-            s3db.configure("pr_group_membership",
-                           list_fields = list_fields,
-                           )
 
+            if r.component_name == "group_membership":
+
+                ctable = r.component.table
+
+                # Hide group_head field
+                field = ctable.group_head
+                field.readable = field.writable = False
+
+                # Configure person_id widget
+                settings.pr.request_dob = False
+                settings.pr.request_gender = False
+
+                field = ctable.person_id
+                field.widget = s3base.S3AddPersonWidget(controller="deploy")
+
+                # Configure list_fields for this context
+                list_fields = ["person_id",
+                               "comments",
+                               ]
+                s3db.configure("pr_group_membership",
+                               list_fields = list_fields,
+                               )
         elif not r.id:
+
+            table = r.table
+
             # Have we got a group defined?
             ltable = s3db.org_organisation_team
             query = (table.deleted == False) & \
@@ -243,7 +257,7 @@ def group():
                 record = groups.first()
 
             if record:
-                record_id = record.id
+                record_id = record.pr_group.id
                 r.id = record_id
                 r.resource.add_filter(table.id == record_id)
                 r.method = "update"

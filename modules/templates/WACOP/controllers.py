@@ -168,10 +168,11 @@ class custom_WACOP(S3CRUD):
         get_config = s3db.get_config # Customise these inside customise() functions as-required
         list_fields = get_config(tablename, "list_fields")
         orderby = get_config(tablename, "orderby")
-        dt, totalrows, ids = resource.datatable(fields = list_fields,
-                                                start = 0,
-                                                limit = 2 * displayLength,
-                                                orderby = orderby)
+        dt, totalrows = resource.datatable(fields = list_fields,
+                                           start = 0,
+                                           limit = 2 * displayLength,
+                                           orderby = orderby,
+                                           )
         displayrows = totalrows
 
         if dt.empty:
@@ -931,13 +932,14 @@ class custom_WACOP(S3CRUD):
         # list_fields defined in customise() to be DRY
         list_fields = s3db.get_config(tablename, "list_fields")
 
-        datalist, numrows, ids = resource.datalist(fields=list_fields,
-                                                   start=None,
-                                                   limit=5,
-                                                   list_id=list_id,
-                                                   # This is the default but needs specifying when talking direct to the back-end
-                                                   orderby="cms_post.date desc",
-                                                   layout=cms_post_list_layout)
+        datalist, numrows = resource.datalist(fields = list_fields,
+                                              start = None,
+                                              limit = 5,
+                                              list_id = list_id,
+                                              # This is the default but needs specifying when talking direct to the back-end
+                                              orderby = "cms_post.date desc",
+                                              layout = cms_post_list_layout,
+                                              )
 
         s3.dl_no_header = True
 
@@ -2562,6 +2564,7 @@ def group_Notify(r, **attr):
 
     query = (ftable.pe_id == pe_id) & \
             (ftable.query == filter_string) & \
+            (ftable.resource == tablename) & \
             (ftable.id == stable.filter_id)
     exists = db(query).select(ftable.id,
                               stable.id,
@@ -2585,7 +2588,7 @@ def group_Notify(r, **attr):
                                       # Just used by Saved Filters, not Subscription
                                       #controller = controller,
                                       #function = function,
-                                      #resource = tablename,
+                                      resource = tablename, # But still useful to distinguish, in case saved filters also used
                                       query = filter_string,
                                       )
             # Create the Subscription
@@ -2965,6 +2968,7 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
             dropdown["_data-i"] = record_id
 
             dappend = dropdown.append
+            user_id = user.id
             for f in forums:
                 forum_id = f.id
                 checkbox_id = "post_%s_forum_%s" % (record_id, forum_id)

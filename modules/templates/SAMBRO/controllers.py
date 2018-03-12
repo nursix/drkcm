@@ -48,8 +48,7 @@ class index(S3CustomController):
         try:
             layer_id = layer.layer_id
         except:
-            from s3 import s3_debug
-            s3_debug("Cannot find Layer for Map")
+            current.log.error("Cannot find Layer for Map")
             layer_id = None
 
         feature_resources = [{"name"      : T("Alerts"),
@@ -102,13 +101,13 @@ class index(S3CustomController):
                        ]
         # Order with most recent Alert first
         orderby = "cap_alert.sent desc"
-        datalist, numrows, ids = resource.datalist(fields = list_fields,
-                                                   #start = None,
-                                                   limit = None,
-                                                   list_id = list_id,
-                                                   orderby = orderby,
-                                                   layout = s3db.cap_alert_list_layout
-                                                   )
+        datalist, numrows = resource.datalist(fields = list_fields,
+                                              #start = None,
+                                              limit = None,
+                                              list_id = list_id,
+                                              orderby = orderby,
+                                              layout = s3db.cap_alert_list_layout
+                                              )
         if numrows == 0:
             current.response.s3.crud_strings["cap_alert"].msg_no_match = T("No Current Alerts match these filters.")
 
@@ -166,14 +165,14 @@ class index(S3CustomController):
                        ]
         # Order with most recent Post first
         orderby = "cms_post.date desc"
-        datalist, numrows, ids = resource.datalist(fields = list_fields,
-                                                   #start = None,
-                                                   limit = 5,
-                                                   list_id = list_id,
-                                                   orderby = orderby,
-                                                   # @ToDo: Custom layout with more button to expand content block
-                                                   layout = s3db.cms_post_list_layout
-                                                   )
+        datalist, numrows = resource.datalist(fields = list_fields,
+                                              #start = None,
+                                              limit = 5,
+                                              list_id = list_id,
+                                              orderby = orderby,
+                                              # @ToDo: Custom layout with more button to expand content block
+                                              layout = s3db.cms_post_list_layout
+                                              )
         ajax_url = URL(c="cms", f="post", args="datalist.dl", vars={"list_id": list_id})
         output[list_id] = datalist.html(ajaxurl = ajax_url,
                                         pagesize = 5
@@ -1165,7 +1164,6 @@ $('#method_selector').change(function(){
         if subscribe:
             now = datetime.utcnow()
             resources = subscription["resources"]
-            print "Get resources", resources
 
             subscribed = {}
             timestamps = {}
@@ -1606,8 +1604,7 @@ class alert_hub_cop(S3CustomController):
         try:
             layer_id = layer.layer_id
         except:
-            from s3 import s3_debug
-            s3_debug("Cannot find Layer for Map")
+            current.log.error("Cannot find Layer for Map")
             layer_id = None
 
         time_filter = request.utcnow + timedelta(-7)
@@ -1665,13 +1662,13 @@ class alert_hub_cop(S3CustomController):
                        ]
         # Order with most recent Alert first
         orderby = "cap_alert.sent desc"
-        datalist, numrows, ids = resource.datalist(fields = list_fields,
-                                                   #start = None,
-                                                   limit = None,
-                                                   list_id = list_id,
-                                                   orderby = orderby,
-                                                   layout = s3db.cap_alert_list_layout
-                                                   )
+        datalist, numrows = resource.datalist(fields = list_fields,
+                                              #start = None,
+                                              limit = None,
+                                              list_id = list_id,
+                                              orderby = orderby,
+                                              layout = s3db.cap_alert_list_layout
+                                              )
         if numrows == 0:
             current.response.s3.crud_strings["cap_alert"].msg_no_match = T("No Current Alerts match these filters.")
 

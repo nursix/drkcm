@@ -32,7 +32,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import datetime
+#import datetime
 import json
 import os
 import re
@@ -42,10 +42,10 @@ import urllib2
 try:
     from lxml import etree
 except ImportError:
-    print >> sys.stderr, "ERROR: lxml module needed for XML handling"
+    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
     raise
 
-from gluon import *
+from gluon import current, HTTP, URL, IS_EMPTY_OR
 from gluon.storage import Storage
 
 from s3codec import S3Codec
@@ -563,7 +563,7 @@ class S3XML(S3Codec):
 
             try:
                 dbfield = ogetattr(table, f)
-            except:
+            except AttributeError:
                 continue
 
             ktablename, pkey, multiple = s3_get_foreign_key(dbfield)
@@ -796,7 +796,7 @@ class S3XML(S3Codec):
                    resource,
                    record,
                    element,
-                   location_data={},
+                   location_data=None,
                    ):
         """
             GIS-encodes the master resource so that it can be transformed into
@@ -810,8 +810,8 @@ class S3XML(S3Codec):
             @ToDo: Support multiple locations per master resource (e.g. event_event.location)
         """
 
-        format = current.auth.permission.format
-        if format not in ("geojson", "georss", "gpx", "kml"):
+        fmt = current.auth.permission.format
+        if fmt not in ("geojson", "georss", "gpx", "kml"):
             return
 
         tablename = resource.tablename
@@ -826,6 +826,8 @@ class S3XML(S3Codec):
         ATTRIBUTE = self.ATTRIBUTE
 
         # Retrieve data prepared earlier in gis.get_location_data()
+        if location_data is None:
+            location_data = {}
         latlons = location_data.get("latlons", [])
         geojsons = location_data.get("geojsons", [])
         #wkts = location_data.get("wkts", [])
@@ -883,7 +885,7 @@ class S3XML(S3Codec):
                 #if record_id in wkts:
                 #    attr[ATTRIBUTE.wkt] = wkts[record_id]
 
-            if format == "geojson":
+            if fmt == "geojson":
                 if tablename in attributes:
                     # Add Attributes
                     attrs = attributes[tablename][record_id]
@@ -928,10 +930,10 @@ class S3XML(S3Codec):
                 #url = "%s/%i.plain" % (url, record_id)
                 #attr[ATTRIBUTE.popup_url] = url
 
-                # End: format == "geojson"
+                # End: fmt == "geojson"
                 return
 
-            elif format == "kml":
+            elif fmt == "kml":
                 # GIS marker
                 marker = gis.get_marker() # Default Marker
                 # Quicker to download Icons from Static
@@ -943,7 +945,7 @@ class S3XML(S3Codec):
                 marker_url = "%s/%s" % (marker_download_url, marker.image)
                 attr[ATTRIBUTE.marker] = marker_url
 
-            elif format =="gpx":
+            elif fmt =="gpx":
                 symbol = "White Dot"
                 attr[ATTRIBUTE.sym] = symbol
 
@@ -994,7 +996,7 @@ class S3XML(S3Codec):
             return
 
         # Normal Resources
-        if format == "geojson":
+        if fmt == "geojson":
             if tablename in geojsons:
                 # These have been looked-up in bulk
                 geojson = geojsons[tablename].get(record_id, None)
@@ -1023,8 +1025,7 @@ class S3XML(S3Codec):
                 try:
                     attrs = attributes[tablename][record_id]
                 except KeyError:
-                    from s3utils import s3_debug
-                    s3_debug("S3XML", "record not found in lookup")
+                    current.log.debug("S3XML: record not found in lookup")
                     attrs = {}
                 if attrs:
                     # Encode in a way which we can decode in static/formats/geojson/export.xsl
@@ -1069,7 +1070,7 @@ class S3XML(S3Codec):
             # so use local URLs to keep filesize down
             #url = "%s/%i.plain" % (url, record_id)
             #attr[ATTRIBUTE.popup_url] = url
-            # End: format == "geojson"
+            # End: fmt == "geojson"
             return
 
         elif tablename in latlons:
@@ -1103,7 +1104,7 @@ class S3XML(S3Codec):
                 # We have a separate Marker per-Feature
                 m = _markers[record_id]
             if m:
-                if format == "gpx":
+                if fmt == "gpx":
                     attr[ATTRIBUTE.sym] = m.get("gps_marker",
                                                 gis.DEFAULT_SYMBOL)
                 else:
@@ -1120,7 +1121,7 @@ class S3XML(S3Codec):
                  table,
                  record,
                  alias=None,
-                 fields=[],
+                 fields=None,
                  url=None,
                  lazy=None,
                  llrepr=None,
@@ -1206,6 +1207,8 @@ class S3XML(S3Codec):
         _repr = self.represent
         to_json = json.dumps
 
+        if fields is None:
+            fields = set()
         for f in fields:
 
             if f == DELETED:
@@ -1389,10 +1392,12 @@ class S3XML(S3Codec):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def record(cls, table, element,
+    def record(cls,
+               table,
+               element,
                original=None,
                files=None,
-               skip=[],
+               skip=None,
                postprocess=None):
         """
             Creates a record (Storage) from a <resource> element and validates
@@ -1408,6 +1413,9 @@ class S3XML(S3Codec):
 
         valid = True
         record = Storage()
+
+        if skip is None:
+            skip = set()
 
         db = current.db
         auth = current.auth
@@ -2210,14 +2218,15 @@ class S3XML(S3Codec):
                     # Value should be a number not string
                     try:
                         float_represent = float(represent.replace(",", ""))
+                    except ValueError:
+                        # @ToDo: Don't assume this i18n formatting...
+                        pass
+                    else:
                         int_represent = int(float_represent)
                         if int_represent == float_represent:
                             represent = int_represent
                         else:
                             represent = float_represent
-                    except:
-                        # @ToDo: Don't assume this i18n formatting...
-                        pass
                 obj[PREFIX.text] = represent
 
             if len(obj) == 1 and obj.keys()[0] in \
@@ -2412,7 +2421,7 @@ class S3XML(S3Codec):
                         s = wb.sheet_by_index(0)
                 else:
                     raise SyntaxError("xls2tree: invalid sheet %s" % sheet)
-            except IndexError, xlrd.XLRDError:
+            except (IndexError, xlrd.XLRDError):
                 s = None
 
         def cell_range(cells, max_cells):
@@ -2470,7 +2479,7 @@ class S3XML(S3Codec):
                         # Convert into an ISO datetime string
                         text = s3_encode_iso_datetime(decode_date(v))
                     elif t == xlrd.XL_CELL_BOOLEAN:
-                        text = str(value).lower()
+                        text = str(v).lower()
                 return text
 
             def add_col(row, name, t, v, hashtags=None):
@@ -2555,7 +2564,7 @@ class S3XML(S3Codec):
                 record_idx += 1
 
         # Use this to debug the source tree if needed:
-        #print >>sys.stderr, cls.tostring(root, pretty_print=True)
+        #sys.stderr.write(cls.tostring(root, pretty_print=True))
 
         return  etree.ElementTree(root)
 
@@ -2676,7 +2685,7 @@ class S3XML(S3Codec):
             raise HTTP(400, body=cls.json_message(False, 400, e))
 
         # Use this to debug the source tree if needed:
-        #print >>sys.stderr, cls.tostring(root, pretty_print=True)
+        #sys.stderr.write(cls.tostring(root, pretty_print=True))
 
         return  etree.ElementTree(root)
 

@@ -313,8 +313,8 @@ class DVRCaseModel(S3Model):
 
                      # The primary case beneficiary
                      person_id(represent = self.pr_PersonRepresent(show_link=True),
-                               requires = IS_ADD_PERSON_WIDGET2(),
-                               widget = S3AddPersonWidget2(controller="dvr"),
+                               widget = S3AddPersonWidget(controller="dvr"),
+                               empty = False,
                                ),
 
                      # Case type and reference number
@@ -1412,6 +1412,8 @@ class DVRResponseModel(S3Model):
 
         hierarchical_response_types = settings.get_dvr_response_types_hierarchical()
 
+        NONE = current.messages["NONE"]
+
         # ---------------------------------------------------------------------
         # Response Types
         #
@@ -1571,6 +1573,14 @@ class DVRResponseModel(S3Model):
                              ),
                      self.hrm_human_resource_id(),
                      response_status_id(),
+                     Field("hours", "double",
+                           label = T("Effort (Hours)"),
+                           requires = IS_EMPTY_OR(
+                                       IS_FLOAT_IN_RANGE(0.0, None)),
+                           represent = lambda hours: "%.2f" % hours if hours else NONE,
+                           widget = S3HoursWidget(precision = 2,
+                                                  ),
+                           ),
                      s3_comments(label = T("Details"),
                                  comment = None,
                                  ),
@@ -1583,6 +1593,7 @@ class DVRResponseModel(S3Model):
                        "human_resource_id",
                        "date_due",
                        "date",
+                       "hours",
                        "status_id",
                        ]
 
@@ -5574,7 +5585,7 @@ class dvr_ActivityRepresent(S3Represent):
                                                     )
 
     # -------------------------------------------------------------------------
-    def lookup_rows(self, key, values, fields=[]):
+    def lookup_rows(self, key, values, fields=None):
         """
             Custom rows lookup
 
@@ -5686,7 +5697,7 @@ class dvr_CaseActivityRepresent(S3Represent):
             self.fmt = "%(first_name)s %(last_name)s"
 
     # -------------------------------------------------------------------------
-    def lookup_rows(self, key, values, fields=[]):
+    def lookup_rows(self, key, values, fields=None):
         """
             Custom rows lookup
 
@@ -7191,7 +7202,10 @@ class DVRRegisterCaseEvent(S3Method):
                     (FS("dvr_case.id") != None) & \
                     (FS("dvr_case.archived") != True) & \
                     (FS("dvr_case.status_id$is_closed") != True)
-            presource = s3db.resource("pr_person", filter=query)
+            presource = s3db.resource("pr_person",
+                                      components = ["dvr_case"],
+                                      filter = query,
+                                      )
             rows = presource.select(fields,
                                     start = 0,
                                     limit = 1,
@@ -7291,7 +7305,10 @@ class DVRRegisterCaseEvent(S3Method):
                      (FS("dvr_case.archived") != True) & \
                      (FS("dvr_case.status_id$is_closed") != True)
 
-            presource = s3db.resource("pr_person", filter=query)
+            presource = s3db.resource("pr_person",
+                                      components = ["dvr_case"],
+                                      filter = query,
+                                      )
             rows = presource.select(fields,
                                     start = 0,
                                     limit = 2,
@@ -7972,18 +7989,14 @@ class dvr_AssignMethod(S3Method):
             @param attr: controller options for this request
         """
 
-        component = self.component
-        components = r.resource.components
-        for c in components:
-            if c == component:
-                component = components[c]
-                break
         try:
-            if component.link:
-                component = component.link
-        except:
+            component = r.resource.components[self.component]
+        except KeyError:
             current.log.error("Invalid Component!")
             raise
+
+        if component.link:
+            component = component.link
 
         tablename = component.tablename
 
@@ -8311,17 +8324,21 @@ def dvr_update_last_seen(person_id):
     if not person_id:
         return
 
-    # Get the last case event
-    etable = s3db.dvr_case_event
+    # Get event types that require presence
     ettable = s3db.dvr_case_event_type
-    join = ettable.on(ettable.id == etable.type_id)
+    query = (ettable.presence_required == True) & \
+            (ettable.deleted == False)
+    types = db(query).select(ettable.id, cache=s3db.cache)
+    type_ids = set(t.id for t in types)
+
+    # Get the last case event that required presence
+    etable = s3db.dvr_case_event
     query = (etable.person_id == person_id) & \
-            (ettable.presence_required == True) & \
+            (etable.type_id.belongs(type_ids)) & \
             (etable.date != None) & \
             (etable.date <= now) & \
             (etable.deleted != True)
     event = db(query).select(etable.date,
-                             join = join,
                              orderby = ~etable.date,
                              limitby = (0, 1),
                              ).first()
@@ -8348,19 +8365,24 @@ def dvr_update_last_seen(person_id):
     # Case appointments to update last_seen_on?
     if settings.get_dvr_appointments_update_last_seen_on():
 
+        # Get appointment types that require presence
+        attable = s3db.dvr_case_appointment_type
+        query = (attable.presence_required == True) & \
+                (attable.deleted == False)
+        types = db(query).select(attable.id, cache=s3db.cache)
+        type_ids = set(t.id for t in types)
+
+        # Get last appointment that required presence
         atable = s3db.dvr_case_appointment
-        ttable = s3db.dvr_case_appointment_type
-        left = ttable.on(ttable.id == atable.type_id)
         query = (atable.person_id == person_id) & \
                 (atable.date != None) & \
-                (ttable.presence_required == True) & \
+                (atable.type_id.belongs(type_ids)) & \
                 (atable.date <= now.date()) & \
                 (atable.status == 4) & \
                 (atable.deleted != True)
         if last_seen_on is not None:
             query &= atable.date > last_seen_on.date()
         appointment = db(query).select(atable.date,
-                                       left = left,
                                        orderby = ~atable.date,
                                        limitby = (0, 1),
                                        ).first()

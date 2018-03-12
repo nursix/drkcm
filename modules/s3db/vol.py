@@ -58,7 +58,6 @@ class S3VolunteerModel(S3Model):
     def model(self):
 
         T = current.T
-        UNKNOWN_OPT = current.messages.UNKNOWN_OPT
 
         # ---------------------------------------------------------------------
         # Volunteer Details
@@ -550,19 +549,20 @@ def vol_activity_hours_onaccept(form):
         return
 
     # Deletion and update have a different format
+    delete = False
     try:
-        id = form.vars.id
-        delete = False
-    except:
-        id = form.id
+        record_id = form.vars.id
+    except AttributeError:
+        record_id = form.id
         delete = True
 
     # Get the full record
     db = current.db
     table = db.vol_activity_hours
-    record = db(table.id == id).select(table.person_id,
-                                       table.deleted_fk,
-                                       limitby=(0, 1)).first()
+    record = db(table.id == record_id).select(table.person_id,
+                                              table.deleted_fk,
+                                              limitby=(0, 1),
+                                              ).first()
 
     if delete:
         deleted_fks = json.loads(record.deleted_fk)
@@ -725,18 +725,25 @@ class S3VolunteerAwardModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def vol_award_file_represent(file):
-        """ File representation """
+    def vol_award_file_represent(filename):
+        """
+            File representation
 
-        if file:
+            @param filename: the stored file name (field value)
+
+            @return: a link to download the file
+        """
+
+        if filename:
             try:
-                # Read the filename from the file
-                filename = current.db.vol_volunteer_award.file.retrieve(file)[0]
+                # Check whether file exists and extract the original
+                # file name from the stored file name
+                origname = current.db.vol_volunteer_award.file.retrieve(filename)[0]
             except IOError:
                 return current.T("File not found")
             else:
-                return A(filename,
-                         _href=URL(c="default", f="download", args=[file]))
+                return A(origname,
+                         _href=URL(c="default", f="download", args=[filename]))
         else:
             return current.messages["NONE"]
 
@@ -919,9 +926,9 @@ $.filterOptionsS3({
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return dict(vol_cluster_type_id = vol_cluster_type_id,
-                    vol_cluster_id = vol_cluster_id,
-                    )
+        return {"vol_cluster_type_id": vol_cluster_type_id,
+                "vol_cluster_id": vol_cluster_id,
+                }
 
     # =====================================================================
     @staticmethod
@@ -932,11 +939,12 @@ $.filterOptionsS3({
             deployment_settings.
         """
 
-        return dict(
-            vol_cluster_id = S3ReusableField("vol_cluster_id", "integer",
-                                             readable=False,
-                                             writable=False),
-            )
+        return {"vol_cluster_id": S3ReusableField("vol_cluster_id",
+                                                  "integer",
+                                                  readable = False,
+                                                  writable = False,
+                                                  ),
+                }
 
 # =============================================================================
 def vol_service_record(r, **attr):
@@ -1027,8 +1035,6 @@ def vol_service_record(r, **attr):
                          )
             person_details[0].append(TD(avatar))
 
-        # Contact Details
-        contact_details = DIV()
         # Addresses
         addrtable = s3db.pr_address
         ltable = db.gis_location
@@ -1121,10 +1127,10 @@ def vol_service_record(r, **attr):
         for row in rows:
             _row = row["hrm_training"]
             _date = _row.date
-            hours[_date.date()] = dict(course = row["hrm_course"].name,
-                                       date = date_represent(_date),
-                                       hours = _row.hours or "",
-                                       )
+            hours[_date.date()] = {"course": row["hrm_course"].name,
+                                   "date": date_represent(_date),
+                                   "hours": _row.hours or "",
+                                   }
         courses = TABLE(TR(TH(T("Date")),
                            TH(T("Training")),
                            TH(T("Hours"))))
@@ -1179,10 +1185,10 @@ def vol_service_record(r, **attr):
                     a[role]["end_date"] = _date
                     a[role]["hours"] += hours
                 else:
-                    a[role] = dict(start_date = _date,
-                                   end_date = _date,
-                                   hours = hours,
-                                   )
+                    a[role] = {"start_date": _date,
+                               "end_date": _date,
+                               "hours": hours,
+                               }
             date_represent = hrstable.date.represent
             programme = TABLE(TR(TH(T("Start Date")),
                                  TH(T("End Date")),
@@ -1243,10 +1249,10 @@ def vol_service_record(r, **attr):
                     p[role]["end_date"] = _date
                     p[role]["hours"] += hours
                 else:
-                    p[role] = dict(start_date = _date,
-                                   end_date = _date,
-                                   hours = hours,
-                                   )
+                    p[role] = {"start_date": _date,
+                               "end_date": _date,
+                               "hours": hours,
+                               }
             date_represent = hrstable.date.represent
             programme = TABLE(TR(TH(T("Start Date")),
                                  TH(T("End Date")),
@@ -1295,7 +1301,9 @@ def vol_service_record(r, **attr):
 
     from s3.s3export import S3Exporter
     exporter = S3Exporter().pdf
-    pdf_title = vol_name + " - " + s3_unicode(T("Volunteer Service Record")) # %-string substitution doesn't work
+    pdf_title = "%s - %s" % (s3_str(vol_name),
+                             s3_str(T("Volunteer Service Record")),
+                             )
     return exporter(r.resource,
                     request = r,
                     method = "list",
@@ -1400,15 +1408,15 @@ def vol_volunteer_controller():
             if r.id:
                 if r.method not in ("profile", "delete"):
                     # Redirect to person controller
-                    vars = {"human_resource.id": r.id,
-                            "group": "volunteer"
-                            }
+                    req_vars = {"human_resource.id": r.id,
+                                "group": "volunteer"
+                                }
                     if r.representation == "iframe":
-                        vars["format"] = "iframe"
+                        req_vars["format"] = "iframe"
                         args = [r.method]
                     else:
                         args = []
-                    redirect(URL(f="person", vars=vars, args=args))
+                    redirect(URL(f="person", vars=req_vars, args=args))
             else:
                 if r.method == "import":
                     # Redirect to person controller
@@ -1417,8 +1425,8 @@ def vol_volunteer_controller():
                                  vars={"group": "volunteer"}))
 
                 elif not r.component and r.method != "delete":
-                    # Configure AddPersonWidget
-                    table.person_id.widget = S3AddPersonWidget2(controller="vol")
+                    # Use vol controller for person_id widget
+                    table.person_id.widget = S3AddPersonWidget(controller="vol")
                     # Show location ID
                     location_id.writable = location_id.readable = True
                     # Hide unwanted fields
@@ -1591,7 +1599,7 @@ def vol_person_controller():
             )
 
     # Upload for configuration (add replace option)
-    s3.importerPrep = lambda: dict(ReplaceOption=T("Remove existing data before import"))
+    s3.importerPrep = lambda: {"ReplaceOption": T("Remove existing data before import")}
 
     # Import pre-process
     def import_prep(data, group=group):
@@ -1691,8 +1699,8 @@ def vol_person_controller():
                 elif component_name == "hours":
                     # Exclude records which are just to link to Programme
                     component_table = r.component.table
-                    filter = (r.component.table.hours != None)
-                    r.resource.add_component_filter("hours", filter)
+                    query = (r.component.table.hours != None)
+                    r.resource.add_component_filter("hours", query)
                     component_table.training.readable = False
                     component_table.training_id.readable = False
 
@@ -1862,8 +1870,9 @@ def vol_person_controller():
                                    csv_template = ("hrm", "volunteer"),
                                    csv_stylesheet = ("hrm", "person.xsl"),
                                    csv_extra_fields = [
-                                        dict(label="Type",
-                                             field=s3db.hrm_human_resource.type)
+                                        {"label": "Type",
+                                         "field": s3db.hrm_human_resource.type,
+                                         }
                                         ],
                                    #orgname = orgname,
                                    replace_option = T("Remove existing data before import"),
