@@ -30,6 +30,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 __all__ = ("S3SetupModel",
            "setup_run_playbook",
+           "setup_instance_settings_read",
            "setup_rheader",
            )
 
@@ -45,18 +46,19 @@ from gluon import *
 TIME_FORMAT = "%b %d %Y %H:%M:%S"
 MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
 
-WEB_SERVERS = {1: "apache",
+WEB_SERVERS = {#1: "apache",
                2: "cherokee",
                }
 
-DB_SERVERS = {1: "mysql",
+DB_SERVERS = {#1: "mysql",
               2: "postgresql",
-              #3: "sqlite",
+              ##3: "sqlite",
               }
 
 INSTANCE_TYPES = {1: "prod",
-                  2: "test",
-                  3: "demo",
+                  2: "setup",
+                  3: "test",
+                  4: "demo",
                   }
 
 # =============================================================================
@@ -143,12 +145,22 @@ class S3SetupModel(S3Model):
                            label = T("Web Server"),
                            represent = S3Represent(options = WEB_SERVERS),
                            requires = IS_IN_SET(WEB_SERVERS),
+                           comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("Web Server"),
+                                                           T("Currently only Cherokee is supported by this tool, although Apache should be possible with a little work.")
+                                                           )
+                                         ),
                            ),
                      Field("db_type", "integer",
                            default = 2,
                            label = T("Database"),
                            represent = S3Represent(options = DB_SERVERS),
                            requires = IS_IN_SET(DB_SERVERS),
+                           comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("Database"),
+                                                           T("Currently only PostgreSQL is supported by this tool, although MySQL should be possible with a little work.")
+                                                           )
+                                         ),
                            ),
                      # Set automatically
                      Field("db_password", "password",
@@ -186,15 +198,15 @@ class S3SetupModel(S3Model):
                      #                                      )
                      #                    ),
                      #      ),
-                     Field("refresh_lock", "integer",
-                           default = 0,
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("last_refreshed", "datetime",
-                           readable = False,
-                           writable = False,
-                           ),
+                     #Field("refresh_lock", "integer",
+                     #      default = 0,
+                     #      readable = False,
+                     #      writable = False,
+                     #      ),
+                     #Field("last_refreshed", "datetime",
+                     #      readable = False,
+                     #      writable = False,
+                     #      ),
                      *s3_meta_fields()
                      )
 
@@ -250,6 +262,9 @@ class S3SetupModel(S3Model):
         # ---------------------------------------------------------------------
         # Servers
         #
+        # @ToDo: Should be able to over-ride deployment-default remote_user &
+        #        private_key
+        #
         SERVER_ROLES = {1: "all",
                         2: "db",
                         3: "webserver",
@@ -264,11 +279,23 @@ class S3SetupModel(S3Model):
                            label = T("Role"),
                            represent = S3Represent(options = SERVER_ROLES),
                            requires = IS_IN_SET(SERVER_ROLES),
+                           writable = False,
+                           comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("Role"),
+                                                           T("Currently only 'all' is supported by this tool, although others should be possible with a little work.")
+                                                           )
+                                         ),
                            ),
                      Field("host_ip", unique = True,
                            default = "127.0.0.1",
                            label = T("IP Address"),
                            requires = IS_IPV4(),
+                           writable = False,
+                           comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("IP Address"),
+                                                           T("Currently only 127.0.0.1 is supported by this tool, although others should be possible with a little work.")
+                                                           )
+                                         ),
                            ),
                      #Field("hostname",
                      #      label = T("Hostname"),
@@ -300,7 +327,12 @@ class S3SetupModel(S3Model):
                            default = 1,
                            label = T("Type"),
                            represent = S3Represent(options = INSTANCE_TYPES),
-                           requires = IS_IN_SET(INSTANCE_TYPES)
+                           requires = IS_IN_SET(INSTANCE_TYPES),
+                           comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("Type"),
+                                                           T("Currently only Production is supported by this tool, although Demo/Test should be possible with a little work.")
+                                                           )
+                                         ),
                            ),
                      # @ToDo: Add support for SSL Certificates
                      Field("url",
@@ -341,17 +373,19 @@ class S3SetupModel(S3Model):
             msg_record_deleted = T("Instance deleted"),
             msg_list_empty = T("No Instances currently registered"))
 
-        set_method("setup", "instance",
+        set_method("setup", "deployment",
+                   component_name = "instance",
                    method = "deploy",
                    action = self.setup_instance_deploy,
                    )
 
-        set_method("setup", "instance",
+        set_method("setup", "deployment",
+                   component_name = "instance",
                    method = "settings",
                    action = self.setup_instance_settings,
                    )
 
-        represent = S3Represent(lookup=tablename)
+        represent = S3Represent(lookup=tablename, fields=["type"])
 
         instance_id = S3ReusableField("instance_id", "reference %s" % tablename,
                                       label = T("Instance"),
@@ -399,10 +433,11 @@ class S3SetupModel(S3Model):
             msg_record_deleted = T("Setting deleted"),
             msg_list_empty = T("No Settings currently registered"))
 
-        #set_method("setup", "setting",
-        #           method = "apply",
-        #           action = self.setup_setting_apply,
-        #           )
+        set_method("setup", "deployment",
+                   component_name = "setting",
+                   method = "apply",
+                   action = self.setup_setting_apply,
+                   )
 
         return {}
 
@@ -423,12 +458,15 @@ class S3SetupModel(S3Model):
 
         # Assign a random DB password
         chars = string.ascii_letters + string.digits + string.punctuation
+        # Ensure that " isn't included otherwise we get a syntax error in 000_config.py
+        chars = chars.replace('"', "")
         password = "".join(random.choice(chars) for _ in range(12))
         db(table.id == deployment_id).update(db_password = password)
 
-        if db(table.deleted == False).count() < 2: 
+        if db(table.deleted == False).count() < 2:
             # Configure localhost to have all tiers (localhost & all tiers are defaults)
-            server_id = s3db.setup_server.insert(deployment_id = deployment_id)
+            s3db.setup_server.insert(deployment_id = deployment_id,
+                                     )
 
         # Configure a Production instance (needs Public URL so has to be done Inline)
         #instance_id = s3db.setup_instance.insert()
@@ -571,10 +609,27 @@ class S3SetupModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def setup_instance_settings(r, **attr):
+        """
+            Custom interactive S3Method to Read the Settings for an instance
+            from models/000_config.py
+        """
+
+        deployment_id = r.id
+        setup_instance_settings_read(r.component_id, deployment_id)
+
+        current.session.confirmation = current.T("Settings Read")
+
+        redirect(URL(c="setup", f="deployment",
+                     args = [deployment_id, "setting"]),
+                     )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def setup_write_playbook(hosts,
-                             password,
+                             db_password,
                              web_server,
-                             database_type,
+                             db_type,
                              instance_type,
                              template = "default",
                              sender = None,
@@ -606,30 +661,37 @@ class S3SetupModel(S3Model):
 
         hostname = sitename.split(".", 1)[0]
 
+        if instance_type == "setup":
+            appname = "eden_setup"
+        else:
+            appname = "eden"
+
         if len(hosts) == 1:
+            host = hosts[0][1]
             deployment = [
                 {
-                    "hosts": hosts[0][1],
+                    "hosts": host,
                     "connection": "local", # @ToDo: Don't assume this
                     "remote_user": remote_user,
                     "vars": {
-                        "password": password,
+                        "password": db_password,
                         "template": template,
                         "sender": sender,
                         "web_server": web_server,
                         "type": instance_type,
+                        "appname": appname,
                         "hostname": hostname,
                         "sitename": sitename,
                         "protocol": protocol,
-                        "eden_ip": hosts[0][1],
-                        "db_ip": hosts[0][1],
-                        "db_type": database_type
+                        "eden_ip": host,
+                        "db_ip": host,
+                        "db_type": db_type
                     },
                     "roles": [{ "role": "%s/common" % roles_path },
                               { "role": "%s/%s" % (roles_path, web_server) },
                               { "role": "%s/uwsgi" % roles_path },
-                              { "role": "%s/%s" % (roles_path, database_type) },
-                              { "role": "%s/configure" % roles_path },
+                              { "role": "%s/%s" % (roles_path, db_type) },
+                              { "role": "%s/final" % roles_path },
                               ]
                 }
             ]
@@ -639,10 +701,10 @@ class S3SetupModel(S3Model):
                     "hosts": hosts[0][1],
                     "remote_user": remote_user,
                     "vars": {
-                        "password": password,
+                        "password": db_password,
                         "type": instance_type
                     },
-                    "roles": [{ "role": "%s/%s" % (roles_path, database_type) },
+                    "roles": [{ "role": "%s/%s" % (roles_path, db_type) },
                               ]
                 },
                 {
@@ -650,19 +712,20 @@ class S3SetupModel(S3Model):
                     "remote_user": remote_user,
                     "vars": {
                         "db_ip": hosts[0][1],
-                        "db_type": database_type,
-                        "password": password,
+                        "db_type": db_type,
+                        "password": db_password,
                         "hostname": hostname,
                         "sitename": sitename,
                         "protocol": protocol,
                         "template": template,
                         "sender": sender,
                         "type": instance_type,
+                        "appname": appname,
                         "web_server": web_server,
                     },
                     "roles": [{ "role": "%s/common" % roles_path },
                               { "role": "%s/uwsgi" % roles_path },
-                              { "role": "%s/configure" % roles_path },
+                              { "role": "%s/final" % roles_path },
                               ]
                 },
                 {
@@ -671,7 +734,8 @@ class S3SetupModel(S3Model):
                     "vars": {
                         "protocol": protocol,
                         "eden_ip": hosts[2][1],
-                        "type": instance_type
+                        "type": instance_type,
+                        "appname": appname,
                     },
                     "roles": [{ "role": "%s/%s" % (roles_path, web_server) },
                               ]
@@ -684,14 +748,12 @@ class S3SetupModel(S3Model):
         with open(file_path, "w") as yaml_file:
             yaml_file.write(yaml.dump(deployment, default_flow_style=False))
 
-        if instance_type == "prod":
-            only_tags = []
-        else:
-            only_tags = [instance_type]
         task_vars = {"playbook": file_path,
                      "hosts": [host[1] for host in hosts],
-                     "tags": only_tags,
                      }
+        if instance_type != "prod":
+            # only_tags
+            task_vars["tags"] = [instance_type]
         if private_key:
             task_vars["private_key"] = os.path.join(folder, "uploads", private_key)
 
@@ -707,93 +769,135 @@ class S3SetupModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def setup_instance_settings_read(instance_id, deployment_id):
+    def setup_setting_apply(r, **attr):
         """
-            Read the Settings for an instance from models/000_config.py
-            - called onaccept from instance creation
-            - called by interactive method to read
+            Custom interactive S3Method to Apply a Setting to an instance
+            via models/000_config.py
         """
 
-        from gluon.cfs import getcfs
-        from gluon.compileapp import build_environment
-        from gluon.restricted import restricted
-
-        # Read current settings from file
-        request = current.request
-        model = "%s/models/000_config.py" % request.folder
-        code = getcfs(model, model, None)
-        environment = build_environment(request, current.response, current.session)
-        environment["settings"] = Storage2()
-        restricted(code, environment, layer=model)
-        nested_settings = environment["settings"]
-
-        # Flatten settings
-        file_settings = {}
-        for section in nested_settings:
-            subsection = nested_settings[section]
-            for setting in subsection:
-                file_settings["%s.%s" % (section, setting)] = subsection[setting]
-
-        # Read current Database Settings
         db = current.db
-        stable = current.s3db.setup_setting
-        id_field = stable.id
-        query = (stable.instance_id == instance_id) & \
-                (stable.deleted == False)
-        db_settings = db(query).select(id_field,
-                                       stable.setting,
-                                       #stable.current_value,
-                                       stable.new_value,
-                                       ).as_dict(key = "setting")
-        db_get = db_settings.get
+        s3db = current.s3db
 
-        # Ensure that database looks like file
-        checked_settings = []
-        cappend = checked_settings.append
-        for setting in file_settings:
-            s = db_get(setting)
-            if s:
-                # We update even if not changed so as to update modified_on
-                db(id_field == s["id"]).update(current_value = s["current_value"])
-            else:
-                stable.insert(deployment_id = deployment_id,
-                              instance_id = instance_id,
-                              setting = setting,
-                              current_value = file_settings[setting],
+        deployment_id = r.id
+        setting_id = r.component_id
+
+        stable = s3db.setup_setting
+        setting = db(stable.id == setting_id).select(stable.id,
+                                                     stable.instance_id,
+                                                     stable.setting,
+                                                     stable.new_value,
+                                                     limitby = (0, 1)
+                                                     ).first()
+        new_value = setting.new_value
+
+        dtable = s3db.setup_deployment
+        itable = s3db.setup_instance
+        query = (itable.id == setting.instance_id) & \
+                (dtable.id == itable.deployment_id)
+        deployment = db(query).select(dtable.remote_user,
+                                      dtable.private_key,
+                                      itable.type,
+                                      limitby = (0, 1)
+                                      ).first()
+        remote_user = deployment["setup_deployment.remote_user"]
+        private_key = deployment["setup_deployment.private_key"]
+        instance_type = deployment["setup_instance.type"]
+
+        # Lookup Server IP
+        # @ToDo: Support multiple Eden servers used as Load-balancers
+        svtable = s3db.setup_server
+        query = (svtable.deployment_id == deployment_id) & \
+                (svtable.role.belongs((1, 4)))
+        server = db(query).select(svtable.host_ip,
+                                  limitby = (0, 1)
+                                  ).first()
+        host = server.host_ip
+
+        # Build Ansible Playbook to apply the setting
+        try:
+            import yaml
+        except ImportError:
+            error = "PyYAML module needed for Setup"
+            current.log.error(error)
+            current.response.error = error
+            return
+
+        folder = r.folder
+
+        playbook_path = os.path.join(folder, "uploads", "playbook")
+        if not os.path.isdir(playbook_path):
+            os.mkdir(playbook_path)
+
+        the_setting = setting.setting
+        if new_value is True or new_value is False:
+            new_line = "settings.%s = %s" % (the_setting, new_value)
+        else:
+            # @ToDo: Handle lists/dicts (load into JSONS3?)
+            new_line = 'settings.%s = "%s"' % (the_setting, new_value)
+
+        appname = r.application
+
+        playbook = [{"hosts": host,
+                     "connection": "local", # @ToDo: Don't assume this
+                     "remote_user": remote_user,
+                     "tasks": [{"name": "Edit 000_config.py",
+                                "lineinfile": {"dest": "/home/%s/applications/%s/models/000_config.py" % (instance_type, appname),
+                                               "regexp": "^settings.%s =" % the_setting,
+                                               "line": new_line,
+                                               "state": "present",
+                                               },
+                                },
+                               # @ToDo: handle case where WebServer is on a different host
+                               {"name": "Compile & Restart WebServer",
+                                #"command": "sudo -H -u web2py python web2py.py -S %(appname)s -M -R applications/%(appname)s/static/scripts/tools/compile.py" % {"appname": appname},
+                                #"args": {"chdir": "/home/%s" % instance_type,
+                                #         },
+                                "command": "/usr/local/bin/compile",
+                                },
+                               ]
+                     },
+                    ]
+
+        name = "apply_%d" % int(time.time())
+        file_path = os.path.join(playbook_path, "%s.yml" % name)
+
+        with open(file_path, "w") as yaml_file:
+            yaml_file.write(yaml.dump(playbook, default_flow_style=False))
+
+        # Run the Playbook
+        task_vars = {"playbook": file_path,
+                     "hosts": [host],
+                     }
+        #if instance_type != "prod":
+        #    # only_tags
+        #    task_vars["tags"] = [instance_type]
+        if private_key:
+            task_vars["private_key"] = os.path.join(folder, "uploads", private_key)
+
+        current.s3task.async("deploy",
+                             vars = task_vars,
+                             timeout = 3600,
+                             )
+
+        # Update the DB to show that the setting has been applied
+        # @ToDo: Do this as a callback from the async task
+        setting.update_record(current_value = new_value,
+                              new_value = None,
                               )
-            cappend(setting)
 
-        # Handle db_settings not in file_settings
-        for setting in db_settings:
-            if setting in checked_settings:
-                continue
-            s = db_get(setting)
-            if s["new_value"] is not None:
-                db(id_field == s["id"]).update(current_value = None)
-            else:
-                db(id_field == s["id"]).update(deleted = True)
-
-    # -------------------------------------------------------------------------
-    def setup_instance_settings(self, r, **attr):
-        """
-            Custom interactive S3Method to Read the Settings for an instance
-            from models/000_config.py
-        """
-
-        deployment_id = r.record.deployment_id
-        self.setup_instance_settings_read(r.id, deployment_id)
-
-        current.session.confirmation = current.T("Settings Read")
+        current.session.confirmation = current.T("Setting Applied")
 
         redirect(URL(c="setup", f="deployment",
                      args = [deployment_id, "setting"]),
                      )
 
 # =============================================================================
-def setup_run_playbook(playbook, hosts, tags, private_key=None):
+def setup_run_playbook(playbook, hosts, tags=None, private_key=None):
     """
         Run an Ansible Playbook & return the result
-        - designed to be run from the 'deploy' Task
+        - designed to be run as a Scheduled Task
+            - 'deploy' a deployment
+            - 'apply' a setting
 
         http://docs.ansible.com/ansible/latest/dev_guide/developing_api.html
         https://serversforhackers.com/c/running-ansible-2-programmatically
@@ -814,12 +918,6 @@ def setup_run_playbook(playbook, hosts, tags, private_key=None):
     roles_path = os.path.join(current.request.folder, "private", "eden_deploy")
     os.chdir(roles_path)
 
-    # Create inventory file
-    #inventoryFile = open("inventory", "w")
-    #for host in hosts:
-    #    inventoryFile.write("%s\n" % host)
-    #inventoryFile.close()
-
     # Initialize needed objects
     loader = DataLoader()
     options = Storage(connection = "local", # @ToDo: Will need changing when doing multi-host
@@ -830,7 +928,7 @@ def setup_run_playbook(playbook, hosts, tags, private_key=None):
                       become_user = None,
                       check = False,
                       diff = False,
-                      tags = tags,
+                      tags = tags or [],
                       skip_tags = [], # Needs to be an iterable as hasattr(Storage()) is always True
                       private_key_file = private_key, # @ToDo: Needs testing
                       )
@@ -840,6 +938,7 @@ def setup_run_playbook(playbook, hosts, tags, private_key=None):
 
     # Create Inventory and pass to Var manager
     if len(hosts) == 1:
+        # Ensure that we have a comma to tell Ansible that this is a list of hosts not a file to read from
         sources = "%s," % hosts[0]
     else:
         sources = ",".join(hosts)
@@ -852,11 +951,11 @@ def setup_run_playbook(playbook, hosts, tags, private_key=None):
                                    }
 
     # Run Playbook
-    pbex = PlaybookExecutor(playbooks = [playbook], 
-                            inventory = inventory, 
+    pbex = PlaybookExecutor(playbooks = [playbook],
+                            inventory = inventory,
                             variable_manager = variable_manager,
-                            loader = loader, 
-                            options = options, 
+                            loader = loader,
+                            options = options,
                             passwords = {},
                             )
     pbex.run()
@@ -877,6 +976,73 @@ def setup_run_playbook(playbook, hosts, tags, private_key=None):
     os.chdir(cwd)
 
     return result
+
+# =============================================================================
+def setup_instance_settings_read(instance_id, deployment_id):
+    """
+        Read the Settings for an instance from models/000_config.py
+        - called onaccept from instance creation
+        - called by interactive method to read
+    """
+
+    from gluon.cfs import getcfs
+    from gluon.compileapp import build_environment
+    from gluon.restricted import restricted
+
+    # Read current settings from file
+    request = current.request
+    model = "%s/models/000_config.py" % request.folder
+    code = getcfs(model, model, None)
+    environment = build_environment(request, current.response, current.session)
+    environment["settings"] = Storage2()
+    restricted(code, environment, layer=model)
+    nested_settings = environment["settings"]
+
+    # Flatten settings
+    file_settings = {}
+    for section in nested_settings:
+        subsection = nested_settings[section]
+        for setting in subsection:
+            file_settings["%s.%s" % (section, setting)] = subsection[setting]
+
+    # Read current Database Settings
+    db = current.db
+    stable = current.s3db.setup_setting
+    id_field = stable.id
+    query = (stable.instance_id == instance_id) & \
+            (stable.deleted == False)
+    db_settings = db(query).select(id_field,
+                                   stable.setting,
+                                   #stable.current_value,
+                                   stable.new_value,
+                                   ).as_dict(key = "setting")
+    db_get = db_settings.get
+
+    # Ensure that database looks like file
+    checked_settings = []
+    cappend = checked_settings.append
+    for setting in file_settings:
+        s = db_get(setting)
+        if s:
+            # We update even if not changed so as to update modified_on
+            db(id_field == s["id"]).update(current_value = s["current_value"])
+        else:
+            stable.insert(deployment_id = deployment_id,
+                          instance_id = instance_id,
+                          setting = setting,
+                          current_value = file_settings[setting],
+                          )
+        cappend(setting)
+
+    # Handle db_settings not in file_settings
+    for setting in db_settings:
+        if setting in checked_settings:
+            continue
+        s = db_get(setting)
+        if s["new_value"] is not None:
+            db(id_field == s["id"]).update(current_value = None)
+        else:
+            db(id_field == s["id"]).update(deleted = True)
 
 # =============================================================================
 def setup_rheader(r, tabs=None):
