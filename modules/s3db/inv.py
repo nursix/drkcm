@@ -237,10 +237,16 @@ class S3WarehouseModel(S3Model):
                      Field("capacity", "integer",
                            label = T("Capacity (m3)"),
                            represent = lambda v: v or NONE,
+                           requires = IS_EMPTY_OR(
+                                        IS_INT_IN_RANGE(0, None)
+                                        ),
                            ),
                      Field("free_capacity", "integer",
                            label = T("Free Capacity (m3)"),
                            represent = lambda v: v or NONE,
+                           requires = IS_EMPTY_OR(
+                                        IS_INT_IN_RANGE(0, None)
+                                        ),
                            ),
                      Field("contact",
                            label = T("Contact"),
@@ -456,7 +462,7 @@ class S3InventoryModel(S3Model):
                                 label = T("Quantity"),
                                 represent = lambda v: \
                                     IS_FLOAT_AMOUNT.represent(v, precision=2),
-                                requires = IS_FLOAT_IN_RANGE(0, None),
+                                requires = IS_FLOAT_AMOUNT(minimum=0.0),
                                 writable = False,
                                 ),
                           Field("bin", length=16,
@@ -1600,7 +1606,7 @@ class S3InventoryTrackingModel(S3Model):
                            label = T("Quantity"),
                            represent = lambda v, row=None: \
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
-                           requires = IS_FLOAT_IN_RANGE(minimum=1),
+                           requires = IS_FLOAT_AMOUNT(minimum=1.0),
                            ),
                      s3_date(comment = DIV(_class="tooltip",
                                            _title="%s|%s" % \
@@ -3560,7 +3566,8 @@ S3.timeline.now="''', now.isoformat(), '''"
             return output
 
         else:
-            raise HTTP(501, "bad method")
+            r.error(405, current.ERROR.BAD_METHOD)
+
 # =============================================================================
 def inv_tabs(r):
     """
@@ -4478,12 +4485,14 @@ class S3InventoryAdjustModel(S3Model):
                      Field("old_quantity", "double", notnull=True,
                            default = 0,
                            label = T("Original Quantity"),
+                           represent = lambda v: \
+                                       IS_FLOAT_AMOUNT.represent(v, precision=2),
                            writable = False,
                            ),
                      Field("new_quantity", "double",
                            label = T("Revised Quantity"),
                            represent = self.qnty_adj_repr,
-                           requires = IS_NOT_EMPTY(),
+                           requires = IS_FLOAT_AMOUNT(minimum=0.0),
                            ),
                      Field("reason", "integer",
                            default = 1,
@@ -4583,9 +4592,10 @@ class S3InventoryAdjustModel(S3Model):
         """
 
         if value is None:
-            return B(value)
+            # We want the word "None" here, not just a bold dash
+            return B(T("None"))
         else:
-            return value
+            return IS_FLOAT_AMOUNT.represent(value, precision=2)
 
     # ---------------------------------------------------------------------
     @staticmethod

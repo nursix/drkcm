@@ -410,31 +410,39 @@ $.filterOptionsS3({
                      Field("year", "integer",
                            label = T("Year of Manufacture"),
                            represent = lambda v: v or NONE,
+                           requires = IS_EMPTY_OR(
+                                        IS_INT_IN_RANGE(1900, current.request.now.year)
+                                        ),
                            ),
                      Field("weight", "double",
                            label = T("Weight (kg)"),
                            represent = lambda v: \
                                        float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
                      Field("length", "double",
                            label = T("Length (m)"),
                            represent = lambda v: \
                                        float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
                      Field("width", "double",
                            label = T("Width (m)"),
                            represent = lambda v: \
                                        float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
                      Field("height", "double",
                            label = T("Height (m)"),
                            represent = lambda v: \
                                        float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
                      Field("volume", "double",
                            label = T("Volume (m3)"),
                            represent = lambda v: \
                                        float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
                      # These comments do *not* pull through to an Inventory's Items or a Request's Items
                      s3_comments(),

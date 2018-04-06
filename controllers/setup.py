@@ -9,9 +9,7 @@
 module = request.controller
 
 if not settings.has_module(module):
-    # This is likely to happen after deployment from co-app
-    #raise HTTP(404, body="Module disabled: %s" % module)
-    redirect(URL(c="default", f="index"))
+    raise HTTP(404, body="Module disabled: %s" % module)
 
 if not s3_has_role("ADMIN"):
         auth.permission.fail()
@@ -42,8 +40,7 @@ def index():
                         break
                 if country:
                     templates.remove("locations.%s" % country)
-            deployment_id = s3db.setup_deployment.insert(sender = settings.get_mail_sender(),
-                                                         # @ToDo:
+            deployment_id = s3db.setup_deployment.insert(# @ToDo:
                                                          #repo_url = ,
                                                          country = country,
                                                          template = templates,
@@ -55,6 +52,7 @@ def index():
             task_id = current.s3task.async("dummy")
             instance_id = s3db.setup_instance.insert(deployment_id = deployment_id,
                                                      url = settings.get_base_public_url(),
+                                                     sender = settings.get_mail_sender(),
                                                      task_id = task_id,
                                                      )
             s3db.setup_instance_settings_read(instance_id, deployment_id)
@@ -79,27 +77,29 @@ def deployment():
                 #               )
 
                 # Check if no scheduler task is pending
-                itable = s3db.setup_instance
-                sctable = db.scheduler_task
-                query = (itable.deployment_id == r.id) & \
-                        ((sctable.status != "COMPLETED") & \
-                        (sctable.status  != "FAILED")) & \
-                        (itable.task_id == sctable.id)
+                #itable = s3db.setup_instance
+                #sctable = db.scheduler_task
+                #query = (itable.deployment_id == r.id) & \
+                #        ((sctable.status != "COMPLETED") & \
+                #        (sctable.status  != "FAILED")) & \
+                #        (itable.task_id == sctable.id)
 
-                exists = db(query).select(itable.task_id,
-                                          limitby = (0, 1)
-                                          ).first()
+                #exists = db(query).select(itable.task_id,
+                #                          limitby = (0, 1)
+                #                          ).first()
 
-                if exists:
-                    # Disable creation of new instances
-                    s3db.configure("setup_instance",
-                                   insertable = False
-                                   )
+                #if exists:
+                #    # Disable creation of new instances
+                #    s3db.configure("setup_instance",
+                #                   insertable = False
+                #                   )
 
-                elif r.component.name == "instance":
+                if r.component.name == "instance":
                     if r.method in (None, "create"):
-                        # Remove already-deployed instances from dropdown
                         itable = db.setup_instance
+                        # Additional instances off by default
+                        itable.start.default = False
+                        # Remove already-deployed instances from dropdown
                         sctable = db.scheduler_task
                         query = (itable.deployment_id == r.id) & \
                                 (sctable.status == "COMPLETED")
@@ -118,22 +118,21 @@ def deployment():
                         itable.type.requires = IS_IN_SET(types)
 
             elif r.method == "create":
-                # Include Production URL in main form
+                # Include Production URL/Sender in main form
 
                 # Redefine Component to make 1:1
-                s3db.add_components("setup_deployment",
-                                    setup_instance = {"joinby": "deployment_id",
-                                                      "multiple": False,
-                                                      },
-                                    )
+                #s3db.add_components("setup_deployment",
+                #                    setup_instance = {"joinby": "deployment_id",
+                #                                      "multiple": False,
+                #                                      },
+                #                    )
                 # Reset the component (we're past resource initialization)
-                r.resource.components.reset(("instance",))
+                #r.resource.components.reset(("instance",))
 
                 from s3 import S3SQLCustomForm
-                crud_form = S3SQLCustomForm("name",
-                                            (T("Public URL"), "instance.url"),
-                                            "sender",
-                                            "repo_url",
+                crud_form = S3SQLCustomForm((T("Production URL"), "production.url"),
+                                            "production.sender",
+                                            #"repo_url",
                                             "country",
                                             "template",
                                             "webserver_type",
@@ -154,28 +153,29 @@ def deployment():
     def postp(r, output):
         component = r.component
         if component is None:
-            if r.id and r.method in (None, "read") and "item" in output:
-                # Get scheduler status for the last queued task
-                itable = db.setup_instance
-                sctable = db.scheduler_task
+            #if r.id and r.method in (None, "read") and "item" in output:
+            #    # Get scheduler status for the last queued task
+            #    itable = db.setup_instance
+            #    sctable = db.scheduler_task
 
-                query = (db.setup_instance.deployment_id == r.id)
-                row = db(query).select(sctable.id,
-                                       sctable.status,
-                                       join = itable.on(itable.task_id == sctable.id),
-                                       orderby = itable.task_id
-                                       ).last()
-                if row:
-                    item_append = output["item"][0].append
-                    item_append(TR(TD(LABEL("Status"), _class="w2p_fl")))
-                    item_append(TR(TD(row.status)))
-                    if row.status == "FAILED":
-                        resource = s3db.resource("scheduler_run")
-                        task = db(resource.table.task_id == row.id).select().first()
-                        item_append(TR(TD(LABEL("Traceback"), _class="w2p_fl")))
-                        item_append(TR(TD(task.traceback)))
-                        item_append(TR(TD(LABEL("Output"), _class="w2p_fl")))
-                        item_append(TR(TD(task.run_output)))
+            #    query = (db.setup_instance.deployment_id == r.id)
+            #    row = db(query).select(sctable.id,
+            #                           sctable.status,
+            #                           join = itable.on(itable.task_id == sctable.id),
+            #                           orderby = itable.task_id
+            #                           ).last()
+            #    if row:
+            #        item_append = output["item"][0].append
+            #        item_append(TR(TD(LABEL("Status"), _class="w2p_fl")))
+            #        item_append(TR(TD(row.status)))
+            #        if row.status == "FAILED":
+            #            resource = s3db.resource("scheduler_run")
+            #            task = db(resource.table.task_id == row.id).select().first()
+            #            item_append(TR(TD(LABEL("Traceback"), _class="w2p_fl")))
+            #            item_append(TR(TD(task.traceback)))
+            #            item_append(TR(TD(LABEL("Output"), _class="w2p_fl")))
+            #            item_append(TR(TD(task.run_output)))
+            pass
 
         else:
             cname = component.name
@@ -183,7 +183,7 @@ def deployment():
                 # Normal Action Buttons
                 s3_action_buttons(r)
                 # Custom Action Buttons
-                table = r.component.table
+                table = component.table
                 deployment_id = r.id
                 query = (table.deployment_id == deployment_id) & \
                         (table.deleted == False)
@@ -206,6 +206,22 @@ def deployment():
                                            ),
                                 "_class": "action-btn",
                                 "label": s3_str(T("Read Settings")),
+                                "restrict": restrict_s,
+                                },
+                               {"url": URL(c = module,
+                                           f = "deployment",
+                                           args = [deployment_id, "instance", "[id]", "start"],
+                                           ),
+                                "_class": "action-btn",
+                                "label": s3_str(T("Start")),
+                                "restrict": restrict_s,
+                                },
+                               {"url": URL(c = module,
+                                           f = "deployment",
+                                           args = [deployment_id, "instance", "[id]", "stop"],
+                                           ),
+                                "_class": "action-btn",
+                                "label": s3_str(T("Stop")),
                                 "restrict": restrict_s,
                                 },
                                #{"url": URL(c = module,
@@ -234,7 +250,7 @@ def deployment():
                 # Normal Action Buttons
                 s3_action_buttons(r)
                 # Custom Action Buttons
-                table = r.component.table
+                table = component.table
                 deployment_id = r.id
                 query = (table.deployment_id == deployment_id) & \
                         (table.deleted == False)

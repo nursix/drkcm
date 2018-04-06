@@ -505,6 +505,22 @@ def config(settings):
                 if field.name != "shelter_unit_id" or not is_staff:
                     field.writable = False
 
+        if r.controller == "dvr" and \
+           r.name == "person" and not r.component:
+
+            # Configure anonymize-method
+            # TODO make standard via setting
+            from s3 import S3Anonymize
+            s3db.set_method("pr", "person",
+                            method = "anonymize",
+                            action = S3Anonymize,
+                            )
+
+            # Configure anonymize-rules
+            s3db.configure("pr_person",
+                           anonymize = drk_person_anonymize(),
+                           )
+
         # Configure components to inherit realm_entity
         # from the person record
         s3db.configure("pr_person",
@@ -903,6 +919,33 @@ def config(settings):
 
             return result
         s3.prep = custom_prep
+
+        standard_postp = s3.postp
+        def custom_postp(r, output):
+
+            # Call standard postp
+            if callable(standard_postp):
+                output = standard_postp(r, output)
+
+            if r.controller == "dvr" and \
+               not r.component and r.record and \
+               r.method in (None, "update", "read") and \
+               isinstance(output, dict):
+
+                # Add anonymize-button
+                if "buttons" not in output:
+                    buttons = output["buttons"] = {}
+                else:
+                    buttons = output["buttons"]
+
+                from s3 import S3AnonymizeWidget
+                buttons["delete_btn"] = S3AnonymizeWidget.widget(
+                                            r,
+                                            _class="action-btn anonymize-btn",
+                                            )
+
+            return output
+        s3.postp = custom_postp
 
         # Custom rheader tabs
         if current.request.controller == "dvr":
@@ -1323,7 +1366,7 @@ def config(settings):
                     "status_id",
                     "priority",
                     "sector_id",
-                    "case_activity_need.need_id",
+                    #"case_activity_need.need_id",
                     "response_action.response_type_id",
                     )
             report_options = {
@@ -1419,14 +1462,14 @@ def config(settings):
             field.comment = None
 
             # Inline-needs
-            ntable = current.s3db.dvr_case_activity_need
-
-            field = ntable.human_resource_id
-            field.default = human_resource_id
-            field.widget = field.comment = None
-
-            field = ntable.need_id
-            field.comment = None
+            #ntable = current.s3db.dvr_case_activity_need
+            #
+            #field = ntable.human_resource_id
+            #field.default = human_resource_id
+            #field.widget = field.comment = None
+            #
+            #field = ntable.need_id
+            #field.comment = None
 
             # Inline-responses
             rtable = s3db.dvr_response_action
@@ -1456,17 +1499,17 @@ def config(settings):
                             "priority",
                             "human_resource_id",
 
-                            S3SQLInlineComponent("case_activity_need",
-                                                 label = T("Needs Assessment"),
-                                                 fields = [
-                                                     "date",
-                                                     "need_id",
-                                                     (T("Details"), "comments"),
-                                                     "human_resource_id",
-                                                     ],
-                                                 layout = S3SQLVerticalSubFormLayout,
-                                                 explicit_add = T("Add Need"),
-                                                 ),
+                            #S3SQLInlineComponent("case_activity_need",
+                            #                     label = T("Needs Assessment"),
+                            #                     fields = [
+                            #                         "date",
+                            #                         "need_id",
+                            #                         (T("Details"), "comments"),
+                            #                         "human_resource_id",
+                            #                         ],
+                            #                     layout = S3SQLVerticalSubFormLayout,
+                            #                     explicit_add = T("Add Need"),
+                            #                     ),
 
                             S3SQLInlineComponent("response_action",
                                                  label = T("Actions"),
@@ -1631,12 +1674,12 @@ def config(settings):
                                                                          translate = True,
                                                                          ),
                                     ),
-                    S3OptionsFilter("case_activity_need.need_id",
-                                    options = lambda: s3_get_filter_opts("dvr_need",
-                                                                         translate = True,
-                                                                         ),
-                                    hidden = True,
-                                    ),
+                    #S3OptionsFilter("case_activity_need.need_id",
+                    #                options = lambda: s3_get_filter_opts("dvr_need",
+                    #                                                     translate = True,
+                    #                                                     ),
+                    #                hidden = True,
+                    #                ),
                     S3OptionsFilter("person_id$person_details.nationality",
                                     label = T("Client Nationality"),
                                     hidden = True,
@@ -1859,7 +1902,7 @@ def config(settings):
                     "case_activity_id$person_id$person_details.nationality",
                     "case_activity_id$person_id$person_details.marital_status",
                     "case_activity_id$sector_id",
-                    "case_activity_id$case_activity_need.need_id",
+                    #"case_activity_id$case_activity_need.need_id",
                     "response_type_id",
                     )
             report_options = {
@@ -1867,7 +1910,7 @@ def config(settings):
                 "cols": axes,
                 "fact": facts,
                 "defaults": {"rows": "response_type_id",
-                             "cols": "case_activity_id$case_activity_need.need_id",
+                             "cols": "case_activity_id$sector_id",
                              "fact": "count(id)",
                              "totals": True,
                              },
@@ -2811,6 +2854,222 @@ def drk_org_rheader(r, tabs=None):
                                                          record=record,
                                                          )
     return rheader
+
+# =============================================================================
+def drk_anonymous_address(record_id, field, value):
+    """
+        Helper to anonymize a pr_address location; removes street and
+        postcode details, but retains Lx ancestry for statistics
+
+        @param record_id: the pr_address record ID
+        @param field: the location_id Field
+        @param value: the location_id
+
+        @return: the location_id
+    """
+
+    s3db = current.s3db
+    db = current.db
+
+    # Get the location
+    if value:
+        ltable = s3db.gis_location
+        row = db(ltable.id == value).select(ltable.id,
+                                            ltable.level,
+                                            limitby = (0, 1),
+                                            ).first()
+        if not row.level:
+            # Specific location => remove address details
+            data = {"addr_street": None,
+                    "addr_postcode": None,
+                    "gis_feature_type": 0,
+                    "lat": None,
+                    "lon": None,
+                    "wkt": None,
+                    }
+            if "the_geom" in ltable.fields:
+                data["the_geom"] = None
+            row.update_record(**data)
+
+    return value
+
+# -----------------------------------------------------------------------------
+def drk_obscure_dob(record_id, field, value):
+    """
+        Helper to obscure a date of birth; maps to the first day of
+        the quarter, thus retaining the approximate age for statistics
+
+        @param record_id: the pr_address record ID
+        @param field: the location_id Field
+        @param value: the location_id
+
+        @return: the new date
+    """
+
+    if value:
+        month = int((value.month - 1) / 3) * 3 + 1
+        value = value.replace(month=month, day=1)
+
+    return value
+
+# -----------------------------------------------------------------------------
+def drk_person_anonymize():
+    """ Rules to anonymize a case file """
+
+    ANONYMOUS = "-"
+
+    # Helper to produce an anonymous ID (pe_label)
+    anonymous_id = lambda record_id, f, v: "NN%06d" % long(record_id)
+
+    # General rule for attachments
+    documents = ("doc_document", {"key": "doc_id",
+                                  "match": "doc_id",
+                                  "fields": {"name": ("set", ANONYMOUS),
+                                             "file": "remove",
+                                             "comments": "remove",
+                                             },
+                                  "delete": True,
+                                  })
+
+    # Cascade rule for case activities
+    activity_details = [("dvr_response_action", {"key": "case_activity_id",
+                                                 "match": "id",
+                                                 "fields": {"comments": "remove",
+                                                            },
+                                               }),
+                        ("dvr_case_activity_need", {"key": "case_activity_id",
+                                                    "match": "id",
+                                                    "fields": {"comments": "remove",
+                                                               },
+                                                  }),
+                        ("dvr_case_activity_update", {"key": "case_activity_id",
+                                                      "match": "id",
+                                                      "fields": {"comments": ("set", ANONYMOUS),
+                                                                 },
+                                                      }),
+                        ]
+
+    rules = [# Remove identity of beneficiary
+             {"name": "default",
+              "title": "Names, IDs, Reference Numbers, Contact Information, Addresses",
+              "fields": {"first_name": ("set", ANONYMOUS),
+                         "last_name": ("set", ANONYMOUS),
+                         "pe_label": anonymous_id,
+                         "date_of_birth": drk_obscure_dob,
+                         "comments": "remove",
+                         },
+              "cascade": [("dvr_case", {"key": "person_id",
+                                        "match": "id",
+                                        "fields": {"comments": "remove",
+                                                   },
+                                        }),
+                          ("pr_contact", {"key": "pe_id",
+                                          "match": "pe_id",
+                                          "fields": {"contact_description": "remove",
+                                                     "value": ("set", ""),
+                                                     "comments": "remove",
+                                                     },
+                                          "delete": True,
+                                          }),
+                          ("pr_contact_emergency", {"key": "pe_id",
+                                                    "match": "pe_id",
+                                                    "fields": {"name": ("set", ANONYMOUS),
+                                                               "relationship": "remove",
+                                                               "phone": "remove",
+                                                               "comments": "remove",
+                                                               },
+                                                    "delete": True,
+                                                    }),
+                          ("pr_address", {"key": "pe_id",
+                                          "match": "pe_id",
+                                          "fields": {"location_id": drk_anonymous_address,
+                                                     "comments": "remove",
+                                                     },
+                                          }),
+                          ("pr_person_tag", {"key": "person_id",
+                                             "match": "id",
+                                             "fields": {"value": ("set", ANONYMOUS),
+                                                        },
+                                             "delete": True,
+                                             }),
+                          ("dvr_residence_status", {"key": "person_id",
+                                                    "match": "id",
+                                                    "fields": {"reference": ("set", ANONYMOUS),
+                                                               "comments": "remove",
+                                                               },
+                                                    }),
+                          ("dvr_service_contact", {"key": "person_id",
+                                                   "match": "id",
+                                                   "fields": {"reference": "remove",
+                                                              "contact": "remove",
+                                                              "phone": "remove",
+                                                              "email": "remove",
+                                                              "comments": "remove",
+                                                              },
+                                                   }),
+                          ],
+              },
+
+             # Remove activity details, appointments and notes
+             {"name": "activities",
+              "title": "Activity Details, Appointments, Notes",
+              "cascade": [("dvr_case_activity", {"key": "person_id",
+                                                 "match": "id",
+                                                 "fields": {"subject": ("set", ANONYMOUS),
+                                                            "need_details": "remove",
+                                                            "outcome": "remove",
+                                                            "comments": "remove",
+                                                            },
+                                                 "cascade": activity_details,
+                                                 }),
+                          ("dvr_case_appointment", {"key": "person_id",
+                                                    "match": "id",
+                                                    "fields": {"comments": "remove",
+                                                               },
+                                                    }),
+                          ("dvr_case_language", {"key": "person_id",
+                                                 "match": "id",
+                                                 "fields": {"comments": "remove",
+                                                            },
+                                                  }),
+                          ("dvr_note", {"key": "person_id",
+                                        "match": "id",
+                                        "fields": {"note": "remove",
+                                                   },
+                                        "delete": True,
+                                        }),
+                          ],
+              },
+
+             # Remove photos and attachments
+             {"name": "documents",
+              "title": "Photos and Documents",
+              "cascade": [("dvr_case", {"key": "person_id",
+                                        "match": "id",
+                                        "cascade": [documents,
+                                                    ],
+                                        }),
+                          ("dvr_case_activity", {"key": "person_id",
+                                                 "match": "id",
+                                                 "cascade": [documents,
+                                                             ],
+                                                 }),
+                          ("pr_image", {"key": "pe_id",
+                                        "match": "pe_id",
+                                        "fields": {"image": "remove",
+                                                   "url": "remove",
+                                                   "description": "remove",
+                                                   },
+                                        "delete": True,
+                                        }),
+                          ],
+              },
+
+              # TODO family membership
+
+             ]
+
+    return rules
 
 # =============================================================================
 class PriorityRepresent(object):

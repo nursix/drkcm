@@ -928,7 +928,7 @@ class S3ProjectModel(S3Model):
             response.view = "map.html"
             return output
         else:
-            raise HTTP(405, current.ERROR.BAD_METHOD)
+            r.error(405, current.ERROR.BAD_METHOD)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -990,8 +990,8 @@ class S3ProjectModel(S3Model):
         query = (ltable.id.belongs(countries))
         locations = db(query).select(ltable.id,
                                      ltable.wkt)
-        for location in locations:
-            pass
+        #for location in locations:
+        #    pass
 
         # Convert to GeoJSON
         output = json.dumps({})
@@ -1053,7 +1053,7 @@ class S3ProjectModel(S3Model):
             return output
 
         else:
-            raise HTTP(405, current.ERROR.BAD_METHOD)
+            r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
 class S3ProjectActivityModel(S3Model):
@@ -2189,7 +2189,7 @@ class S3ProjectBeneficiaryModel(S3Model):
                                                            T("The number of beneficiaries actually reached by this activity"))
                                                            ),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_INT_IN_RANGE(0, 99999999),
+                           requires = IS_INT_IN_RANGE(0, None),
                            ),
                      Field("target_value", "integer",
                            label = T("Targeted Number"),
@@ -2198,7 +2198,7 @@ class S3ProjectBeneficiaryModel(S3Model):
                                                            T("The number of beneficiaries targeted by this activity"))
                                                            ),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      s3_date("date",
                              #empty = False,
@@ -2733,7 +2733,7 @@ class S3ProjectCampaignModel(S3Model):
                      Field("value", "integer",
                            label = T("Number of Responses"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_INT_IN_RANGE(0, 99999999),
+                           requires = IS_INT_IN_RANGE(0, None),
                            ),
                      # @ToDo: Populate automatically from time Message is sent?
                      s3_date("date",
@@ -3221,12 +3221,12 @@ class S3ProjectIndicatorModel(S3Model):
                      Field("target_value", "integer",
                            label = T("Target Value"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      Field("value", "integer",
                            label = T("Actual Value"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      # Link to Source
                      #self.stats_source_id(),
@@ -4664,12 +4664,12 @@ class S3ProjectPlanningModel(S3Model):
                      Field("target_value", "integer",
                            label = T("Target Value"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      Field("value", "integer",
                            label = T("Actual Value"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      Field("unit",
                            label = T("Unit"),
@@ -4927,12 +4927,12 @@ class S3ProjectPlanningModel(S3Model):
                      Field("target_value", "integer",
                            label = T("Target Value"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      Field("value", "integer",
                            label = T("Actual Value"),
                            represent = IS_INT_AMOUNT.represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 99999999)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      Field("unit",
                            label = T("Unit"),
@@ -6810,7 +6810,7 @@ class project_SummaryReport(S3Method):
             elif representation == "pdf":
                 output = self.pdf(r, **attr)
                 return output
-        raise HTTP(405, current.ERROR.BAD_METHOD)
+        r.error(405, current.ERROR.BAD_METHOD)
 
     # -------------------------------------------------------------------------
     def _extract(self, r, **attr):
@@ -8016,7 +8016,7 @@ class project_SummaryReport(S3Method):
             -the actual report
         """
 
-        from ..s3.s3codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from s3.s3codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         db = current.db
@@ -8397,7 +8397,7 @@ class project_IndicatorSummaryReport(S3Method):
             elif r.representation == "xls":
                 output = self.xls(r, **attr)
                 return output
-        raise HTTP(405, current.ERROR.BAD_METHOD)
+        r.error(405, current.ERROR.BAD_METHOD)
 
     # -------------------------------------------------------------------------
     def _extract(self, r, **attr):
@@ -8770,14 +8770,12 @@ class project_IndicatorSummaryReport(S3Method):
             XLS Representation
         """
 
-        from ..s3.s3codecs import S3XLS
+        from s3.s3codecs import S3XLS
 
         try:
             import xlwt
         except ImportError:
-            error = S3XLS.ERROR.XLWT_ERROR
-            current.log.error(error)
-            raise HTTP(503, body=error)
+            r.error(503, S3XLS.ERROR.XLWT_ERROR)
 
         T = current.T
 
@@ -9436,7 +9434,7 @@ def project_ProgressReport(r, **attr):
         return output
 
     else:
-        raise HTTP(405, current.ERROR.BAD_METHOD)
+        r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
 #def project_BudgetProgressReport(r, **attr):
@@ -9472,7 +9470,7 @@ def project_ProgressReport(r, **attr):
 #        return output
 #
 #    else:
-#        raise HTTP(405, current.ERROR.BAD_METHOD)
+#        r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
 #def project_IndicatorProgressReport(r, **attr):
@@ -9508,7 +9506,7 @@ def project_ProgressReport(r, **attr):
 #        return output
 #
 #    else:
-#        raise HTTP(405, current.ERROR.BAD_METHOD)
+#        r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
 class S3ProjectProgrammeModel(S3Model):
@@ -10649,13 +10647,22 @@ class S3ProjectTaskModel(S3Model):
                      Field("time_estimated", "double",
                            label = "%s (%s)" % (T("Time Estimate"),
                                                 T("hours")),
-                           represent = lambda v: v or "",
+                           represent = lambda v: NONE if not v else \
+                                IS_FLOAT_AMOUNT.represent(v, precision=2),
+                           requires = IS_EMPTY_OR(
+                                        IS_FLOAT_AMOUNT(0, None)
+                                        ),
                            readable = staff,
                            writable = staff,
                            ),
                      Field("time_actual", "double",
                            label = "%s (%s)" % (T("Time Taken"),
                                                 T("hours")),
+                           represent = lambda v: NONE if not v else \
+                                IS_FLOAT_AMOUNT.represent(v, precision=2),
+                           requires = IS_EMPTY_OR(
+                                        IS_FLOAT_AMOUNT(0, None)
+                                        ),
                            readable = staff,
                            # This comes from the Time component
                            writable = False,
@@ -11212,9 +11219,11 @@ class S3ProjectTaskModel(S3Model):
                                  ),
                      Field("hours", "double",
                            label = T("Effort (Hours)"),
+                           represent = lambda v: NONE if not v else \
+                                IS_FLOAT_AMOUNT.represent(v, precision=2),
                            requires = IS_EMPTY_OR(
-                                       IS_FLOAT_IN_RANGE(0.0, None)),
-                           represent = lambda hours: "%.2f" % hours if hours else NONE,
+                                        IS_FLOAT_AMOUNT(0, None)
+                                        ),
                            widget = S3HoursWidget(precision = 2,
                                                   ),
                            ),
@@ -11647,7 +11656,7 @@ class S3ProjectTaskModel(S3Model):
 
         task_id = r.id
         if not task_id or len(r.args) < 3:
-            raise HTTP(405, current.ERROR.BAD_METHOD)
+            r.error(405, current.ERROR.BAD_METHOD)
 
         db = current.db
         s3db = current.s3db
@@ -11697,7 +11706,7 @@ class S3ProjectTaskModel(S3Model):
 
         task_id = r.id
         if not task_id or len(r.args) < 3:
-            raise HTTP(405, current.ERROR.BAD_METHOD)
+            r.error(405, current.ERROR.BAD_METHOD)
 
         db = current.db
         s3db = current.s3db
@@ -11774,7 +11783,7 @@ class S3ProjectTaskModel(S3Model):
             return output
 
         else:
-            raise HTTP(405, current.ERROR.BAD_METHOD)
+            r.error(405, current.ERROR.BAD_METHOD)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -13116,7 +13125,7 @@ def project_task_controller():
                     # Hide fields which don't make sense in a Create form
                     s3db.req_create_form_mods()
             elif r.component_name == "human_resource":
-                 r.component.table.type.default = 2
+                r.component.table.type.default = 2
         else:
             if not auth.s3_has_role("STAFF"):
                 # Hide fields to avoid confusion (both of inputters & recipients)
@@ -13915,7 +13924,7 @@ class project_Details(S3Method):
             return output
 
         else:
-            raise HTTP(405, current.ERROR.BAD_METHOD)
+            r.error(405, current.ERROR.BAD_METHOD)
 
 # END =========================================================================
 
