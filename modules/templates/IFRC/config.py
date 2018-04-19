@@ -3781,8 +3781,8 @@ def config(settings):
                     ptable.first_name.label = T("Name")
                     ptable.gender.label = T("Gender")
                     # Ensure that + appears at the beginning of the number
-                    # Done in Model
-                    #f = s3db.pr_phone_contact.value
+                    # Done in Model's controller prep
+                    #f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
                     #f.represent = s3_phone_represent
                     #f.widget = S3PhoneWidget()
                     s3db.pr_address.location_id.widget = S3LocationSelector(show_address = T("Village"),
@@ -5381,8 +5381,8 @@ def config(settings):
             f.readable = f.writable = True
             mtable.comments.label = T("Remarks")
             # Ensure that + appears at the beginning of the number
-            # Done in Model
-            #f = s3db.pr_phone_contact.value
+            # Done in controllers/member.py
+            #f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
             #f.represent = s3_phone_represent
             #f.widget = S3PhoneWidget()
             s3db.pr_address.location_id.widget = S3LocationSelector(show_address = T("Village"),
@@ -6498,8 +6498,8 @@ def config(settings):
                 from gluon import IS_EMPTY_OR
                 from s3 import IS_ONE_OF, S3SQLCustomForm, S3SQLInlineComponent, S3LocationSelector
                 # Ensure that + appears at the beginning of the number
-                # Done in Model
-                #f = s3db.pr_phone_contact.value
+                # Done in Model's controller prep
+                #f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
                 #f.represent = s3_phone_represent
                 #f.widget = S3PhoneWidget()
                 s3db.pr_address.location_id.widget = S3LocationSelector(show_address = T("Village"),

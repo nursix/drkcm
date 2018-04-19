@@ -271,6 +271,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Organisations Module Settings
     #
+    settings.org.sector = True
     settings.org.branches = True
     settings.org.offices_tab = False
 
@@ -300,9 +301,17 @@ def config(settings):
     settings.dvr.case_activity_use_status = True
     # Case activities cover multiple needs
     settings.dvr.case_activity_needs_multiple = True
+    # Beneficiary documents-tab includes case activity attachments
+    settings.dvr.case_include_activity_docs = True
 
     # Manage individual response actions in case activities
     settings.dvr.manage_response_actions = True
+    # Use response themes
+    settings.dvr.response_themes = True
+    # Response themes are org-specific
+    settings.dvr.response_themes_org_specific = True
+    # Do not use response types
+    settings.dvr.response_types = False
     # Response types hierarchical
     settings.dvr.response_types_hierarchical = True
 
@@ -360,6 +369,9 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_doc_document_controller(**attr):
 
+        s3db = current.s3db
+        s3 = current.response.s3
+
         current.deployment_settings.ui.export_formats = None
 
         if current.request.controller == "dvr":
@@ -368,11 +380,29 @@ def config(settings):
             attr["rheader"] = drk_dvr_rheader
 
             # Set contacts-method to retain the tab
-            s3db = current.s3db
             s3db.set_method("pr", "person",
                             method = "contacts",
                             action = s3db.pr_Contacts,
                             )
+
+        # Custom prep
+        standard_prep = s3.prep
+        def custom_prep(r):
+
+            # Call standard prep
+            if callable(standard_prep):
+                result = standard_prep(r)
+            else:
+                result = True
+
+            if r.controller == "dvr" and r.interactive:
+
+                table = r.table
+                field = table.doc_id
+                field.represent = s3db.dvr_DocEntityRepresent(show_link=True)
+
+            return result
+        s3.prep = custom_prep
 
         return attr
 
@@ -871,6 +901,11 @@ def config(settings):
                                          hidden = True,
                                          comment = T("Search for multiple IDs (separated by blanks)"),
                                          ),
+                            S3TextFilter(["service_contact.reference"],
+                                         label = T("Ref.No."),
+                                         hidden = True,
+                                         comment = T("Search by service contact reference number"),
+                                         ),
                             ]
                         if multiple_orgs:
                             filter_widgets.insert(1,
@@ -1366,8 +1401,7 @@ def config(settings):
                     "status_id",
                     "priority",
                     "sector_id",
-                    #"case_activity_need.need_id",
-                    "response_action.response_type_id",
+                    (T("Theme"), "response_action.response_theme_ids"),
                     )
             report_options = {
                 "rows": axes,
@@ -1407,6 +1441,36 @@ def config(settings):
             # Customise sector
             field = table.sector_id
             field.comment = None
+            root_org = auth.root_org()
+            if root_org and not auth.s3_has_roles("ADMIN", "ORG_GROUP_ADMIN"):
+
+                # Look up the sectors of the root org
+                db = current.db
+                ltable = s3db.org_sector_organisation
+                query = (ltable.organisation_id == root_org) & \
+                        (ltable.deleted == False)
+                rows = db(query).select(ltable.sector_id)
+                sector_ids = set(row.sector_id for row in rows)
+
+                # Include the sector_id of the current record (if any)
+                record = None
+                component = r.component
+                if not component:
+                    if r.tablename == "dvr_case_activity":
+                        record = r.record
+                elif component.tablename == "dvr_case_activity" and r.component_id:
+                    query = table.id == r.component_id
+                    record = db(query).select(table.sector_id,
+                                              limitby = (0, 1),
+                                              ).first()
+                if record and record.sector_id:
+                    sector_ids.add(record.sector_id)
+
+                # Limit the sector selection
+                subset = db(s3db.org_sector.id.belongs(sector_ids))
+                field.requires = IS_EMPTY_OR(IS_ONE_OF(subset, "org_sector.id",
+                                                       field.represent,
+                                                       ))
 
             # Show subject field
             field = table.subject
@@ -1514,7 +1578,7 @@ def config(settings):
                             S3SQLInlineComponent("response_action",
                                                  label = T("Actions"),
                                                  fields = [
-                                                     "response_type_id",
+                                                     "response_theme_ids",
                                                      "date_due",
                                                      "comments",
                                                      "human_resource_id",
@@ -1902,14 +1966,13 @@ def config(settings):
                     "case_activity_id$person_id$person_details.nationality",
                     "case_activity_id$person_id$person_details.marital_status",
                     "case_activity_id$sector_id",
-                    #"case_activity_id$case_activity_need.need_id",
-                    "response_type_id",
+                    (T("Theme"), "response_theme_ids"),
                     )
             report_options = {
                 "rows": axes,
                 "cols": axes,
                 "fact": facts,
-                "defaults": {"rows": "response_type_id",
+                "defaults": {"rows": "response_theme_ids",
                              "cols": "case_activity_id$sector_id",
                              "fact": "count(id)",
                              "totals": True,
@@ -1926,7 +1989,6 @@ def config(settings):
             # Custom Filter Options
             from s3 import S3AgeFilter, \
                            S3DateFilter, \
-                           S3HierarchyFilter, \
                            S3OptionsFilter, \
                            S3TextFilter, \
                            s3_get_filter_opts
@@ -1941,18 +2003,22 @@ def config(settings):
                                 label = T("Search"),
                                 ),
                               S3OptionsFilter(
-                                "status_id",
-                                options = lambda: \
-                                          s3_get_filter_opts("dvr_response_status"),
-                                          cols = 3,
-                                          translate = True,
-                                          ),
+                                    "status_id",
+                                    options = lambda: \
+                                              s3_get_filter_opts("dvr_response_status"),
+                                    cols = 3,
+                                    translate = True,
+                                    ),
                               S3DateFilter("date", hidden=not is_report),
                               S3DateFilter("date_due", hidden=is_report),
-                              S3HierarchyFilter("response_type_id",
-                                                lookup = "dvr_response_type",
-                                                hidden = True,
-                                                ),
+                              S3OptionsFilter(
+                                    "response_theme_ids",
+                                    hidden = True,
+                                    options = lambda: \
+                                              s3_get_filter_opts("dvr_response_theme",
+                                                                 org_filter = True,
+                                                                 ),
+                                    ),
                               S3OptionsFilter("case_activity_id$person_id$person_details.nationality",
                                               label = T("Client Nationality"),
                                               hidden = True,
@@ -2258,6 +2324,16 @@ def config(settings):
             return result
 
         s3.prep = custom_prep
+
+        attr = dict(attr)
+        tabs = [(T("Basic Details"), None),
+                (T("Branches"), "branch"),
+                (T("Facilities"), "facility"),
+                (T("Staff & Volunteers"), "human_resource"),
+                #(T("Projects"), "project"),
+                (T("Counseling Themes"), "response_theme"),
+                ]
+        attr["rheader"] = lambda r: current.s3db.org_rheader(r, tabs=tabs)
 
         return attr
 
