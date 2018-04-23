@@ -31,6 +31,7 @@
 
 __all__ = ("DataCollectionTemplateModel",
            "DataCollectionModel",
+           #"dc_TargetReport",
            "dc_rheader",
            "dc_target_check",
            "dc_target_report",
@@ -1331,6 +1332,7 @@ class dc_TargetReport(S3Method):
         db = current.db
         s3db = current.s3db
 
+        target_id = r.id
         template_id = r.record.template_id
 
         # Questions
@@ -1361,19 +1363,62 @@ class dc_TargetReport(S3Method):
                                     limitby=(0, 1),
                                     ).first()
 
+        # Responses (for Stats)
+        rtable = s3db.dc_response
+        ptable = s3db.pr_person
+        query = (rtable.target_id == target_id) & \
+                (rtable.deleted == False) & \
+                (rtable.person_id == ptable.id)
+        responses = db(query).select(ptable.id,
+                                     ptable.gender,
+                                     )
+
         # Answers
         atable = s3db.table(template.name)
         answer_fields = [atable[f] for f in fields]
-        rtable = s3db.dc_response
-        query = (rtable.target_id == r.id) & \
+        answer_fields.append(rtable.person_id) # For Stats & Contacts
+        query = (rtable.target_id == target_id) & \
                 (atable.response_id == rtable.id)
         answers = db(query).select(*answer_fields)
 
         # Build Data structure
-        # Collate Answers
-        for answer in answers:
+        # Collate Answers & collect people for Stats & Contacts
+        replied = []
+        rappend = replied.append
+        can_contact = []
+        cappend = can_contact.append
+
+        for row in answers:
+            person_id = row["dc_response.person_id"]
+            rappend(person_id)
+            answer = row[atable]
             for fieldname in answer:
-                fields[fieldname].append(answer[fieldname])
+                value = answer[fieldname]
+                fields[fieldname].append(value)
+                if value == "yes":
+                    # Hardcoded to IFRC bkk_training_evaluation!
+                    # - the only Question with Yes/No answers!
+                    cappend(person_id)
+
+        # Stats
+        total = 0
+        total_female = 0
+        total_replied = 0
+        replied_female = 0
+        for row in responses:
+            total += 1
+            gender = row.gender
+            if gender == 2:
+                total_female += 1
+            if row.id in replied:
+                total_replied += 1
+                if gender == 2:
+                    replied_female += 1
+        stats = {"total": total,
+                 "total_female": total_female,
+                 "total_replied": total_replied,
+                 "replied_female": replied_female,
+                 }
 
         # List of Questions
         ID = "dc_question.id"
@@ -1394,7 +1439,56 @@ class dc_TargetReport(S3Method):
                 question.options = None
                 question.answers = answers
 
-        return questions
+        # Contacts
+        ctable = s3db.pr_contact
+        query = (ptable.id.belongs(can_contact))
+        left = ctable.on((ctable.pe_id == ptable.pe_id) & \
+                         (ctable.contact_method.belongs(("EMAIL", "SMS"))) & \
+                         (ctable.deleted == False))
+        rows = db(query).select(ptable.id,
+                                ptable.first_name,
+                                ptable.middle_name,
+                                ptable.last_name,
+                                ctable.contact_method,
+                                ctable.priority,
+                                ctable.value,
+                                left = left,
+                                orderby = ctable.priority,
+                                )
+        contacts = {}
+        for row in rows:
+            person = row.pr_person
+            person_id = person.id
+            if person_id not in contacts:
+                contacts[person_id] = {"name": s3_fullname(person),
+                                       "email": None,
+                                       "phone": None,
+                                       }
+            contact_ = contacts[person_id]
+            contact = row.pr_contact
+            if not contact_["email"] and contact.contact_method == "EMAIL":
+                contact_["email"] = contact.value
+            elif not contact_["phone"] and contact.contact_method == "SMS":
+                contact_["phone"] = contact.value
+
+        for person_id in contacts:
+            contact = contacts[person_id]
+            repr_str = contact["name"]
+            email = contact["email"]
+            if email:
+                repr_str = "%s <%s>" % (repr_str,
+                                        email,
+                                        )
+            phone = contact["phone"]
+            if phone:
+                repr_str = "%s %s" % (repr_str,
+                                      s3_phone_represent(phone),
+                                      )
+            contact["repr_str"] = repr_str
+
+        stats["contacts"] = contacts
+
+        return questions, stats
 
     # -------------------------------------------------------------------------
     def html(self, r, title, **attr):
@@ -1412,11 +1506,11 @@ class dc_TargetReport(S3Method):
 
         #target_title = table.template_id.represent(r.record.template_id)
 
-        data = self._extract(r, **attr)
+        questions, stats = self._extract(r, **attr)
 
         table = TABLE()
         json_dumps = json.dumps
-        for question in data:
+        for question in questions:
             table.append(TR(TH(question.name)))
             if question.options:
                 # Graph
@@ -1436,9 +1530,21 @@ class dc_TargetReport(S3Method):
                 for answer in question.answers:
                     table.append(TR(TD(answer)))
 
+        contacts = P()
+        cappend = contacts.append
+        _contacts = stats["contacts"]
+        for person_id in _contacts:
+            cappend(_contacts[person_id]["repr_str"])
+            cappend(BR())
+
         item = DIV(H1(title),
                    H3("%s: %s" % (T("Up To Date"), date_represent(r.utcnow))),
+                   P("%i %s (%i %s)" % (stats["total"], T("Participants"), stats["total_female"], T("Female")),
+                     BR(),
+                     "%i %s (%i %s)" % (stats["total_replied"], T("Replied"), stats["replied_female"], T("Female")),
+                     ),
                    table,
+                   contacts,
                    )
 
         output = {"item": item,
@@ -1477,7 +1583,7 @@ class dc_TargetReport(S3Method):
         filename = "%s_%s.pdf" % (report_title, s3_str(target_title))
 
         # @ToDo
-        #data = self._extract(r, **attr)
+        #questions, stats = self._extract(r, **attr)
 
         # @ToDo
         header = DIV()
