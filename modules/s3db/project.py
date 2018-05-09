@@ -57,6 +57,7 @@ __all__ = ("S3ProjectModel",
            "S3ProjectTaskForumModel",
            "S3ProjectTaskHRMModel",
            "S3ProjectTaskIReportModel",
+           "S3ProjectWindowModel",
            "project_ActivityRepresent",
            "project_activity_year_options",
            "project_ckeditor",
@@ -1105,7 +1106,7 @@ class S3ProjectActivityModel(S3Model):
                      self.gis_location_id(readable = not mode_task,
                                           writable = not mode_task,
                                           ),
-                     s3_date("date",
+                     s3_date(#"date", # default
                              label = T("Start Date"),
                              set_min = "#project_activity_end_date",
                              ),
@@ -1888,11 +1889,16 @@ class S3ProjectActivityOrganisationModel(S3Model):
 
         configure = self.configure
         define_table = self.define_table
+
         project_activity_id = self.project_activity_id
+
+        NONE = current.messages["NONE"]
 
         # ---------------------------------------------------------------------
         # Activities <> Organisations - Link table
         #
+        project_organisation_roles = current.deployment_settings.get_project_organisation_roles()
+
         tablename = "project_activity_organisation"
         define_table(tablename,
                      project_activity_id(empty = False,
@@ -1902,6 +1908,15 @@ class S3ProjectActivityOrganisationModel(S3Model):
                      self.org_organisation_id(empty = False,
                                               ondelete = "CASCADE",
                                               ),
+                     Field("role", "integer",
+                           default = 1, # Lead
+                           label = T("Role"),
+                           requires = IS_EMPTY_OR(
+                                        IS_IN_SET(project_organisation_roles)
+                                      ),
+                           represent = lambda opt: \
+                                        project_organisation_roles.get(opt,
+                                                                       NONE)),
                      *s3_meta_fields())
 
         # CRUD Strings
@@ -5103,7 +5118,7 @@ class S3ProjectPlanningModel(S3Model):
                     total_percentage_target = 100
                 value = d.value
                 if value:
-                    total_percentage_value = value / target_value * 100
+                    total_percentage_value = min(100, value / target_value * 100)
                 else:
                     total_percentage_value = 0
                 if end_date.year == current_year:
@@ -6752,7 +6767,7 @@ class S3ProjectPlanningModel(S3Model):
                     # Treat as complete
                     return project_status_represent(100.0)
             # Calculate
-            percentage = actual / planned * 100
+            percentage = min(100, actual / planned * 100)
             return project_status_represent(percentage)
 
         # Ignored
@@ -11990,6 +12005,41 @@ class S3ProjectTaskIReportModel(S3Model):
         # Update the Task
         query = (table.id == task_id)
         db(query).update(location_id=location_id)
+
+# =============================================================================
+class S3ProjectWindowModel(S3Model):
+    """
+        Project Window Model
+
+        Allow setting of a Window of Time/Dates when values may be entered
+
+        Used by Honduran Red Cross
+    """
+
+    names = ("project_window",)
+
+    def model(self):
+
+        T = current.T
+
+        # ---------------------------------------------------------------------
+        # Time Window
+        #
+        tablename = "project_window"
+        self.define_table(tablename,
+                          s3_date("start_date",
+                                  label = T("Start Date"),
+                                  ),
+                          s3_date("end_date",
+                                  label = T("End Date"),
+                                  start_field = "project_window_date",
+                                  ),
+                          *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
 
 # =============================================================================
 def multi_theme_percentage_represent(record_id):

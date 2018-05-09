@@ -145,6 +145,7 @@ class S3Config(Storage):
     # Unifont can be downloaded from http://unifoundry.com/pub/unifont-7.0.06/font-builds/unifont-7.0.06.ttf
     fonts = {"ar": ["unifont", "unifont"],
              #"dv": ["unifont", "unifont"],
+             #"dz": ["unifont", "unifont"],
              "km": ["unifont", "unifont"],
              "ko": ["unifont", "unifont"],
              "mn": ["unifont", "unifont"],
@@ -211,9 +212,10 @@ class S3Config(Storage):
         self.setup = Storage()
         self.supply = Storage()
         self.sync = Storage()
+        self.tasks = Storage()
+        self.transport = Storage()
         self.ui = Storage()
         self.vulnerability = Storage()
-        self.transport = Storage()
         self.xforms = Storage()
 
         # Lazy property
@@ -468,13 +470,6 @@ class S3Config(Storage):
         return module_name in self.modules
 
     # -------------------------------------------------------------------------
-    def is_cd_version(self):
-        """
-            Whether we're running from a non-writable CD
-        """
-        return self.base.get("cd_version", False)
-
-    # -------------------------------------------------------------------------
     def get_google_analytics_tracking_id(self):
         """
             Google Analytics Key
@@ -487,6 +482,22 @@ class S3Config(Storage):
             List of YouTube IDs for the /default/video page
         """
         return self.base.get("youtube_id", [])
+
+    # -------------------------------------------------------------------------
+    def is_cd_version(self):
+        """
+            Whether we're running from a non-writable CD
+        """
+        return self.base.get("cd_version", False)
+
+    # -------------------------------------------------------------------------
+    # Tasks
+    # -------------------------------------------------------------------------
+    def get_task(self, taskname):
+        """
+            Ability to define custom Tasks in the Template
+        """
+        return self.tasks.get(taskname)
 
     # -------------------------------------------------------------------------
     # Authentication settings
@@ -652,26 +663,29 @@ class S3Config(Storage):
         " Make the selection of Organisation required during registration "
         return self.auth.get("registration_organisation_required", False)
 
+    def get_auth_registration_organisation_link_create(self):
+        """ Show a link to create new orgs in registration form """
+        return self.auth.get("registration_organisation_link_create", True)
+
     def get_auth_registration_organisation_hidden(self):
         " Hide the Organisation field in the registration form unless an email is entered which isn't whitelisted "
         return self.auth.get("registration_organisation_hidden", False)
 
     def get_auth_registration_organisation_default(self):
-        " Default the Organisation during registration "
-        return self.auth.get("registration_organisation_default")
-
-    def get_auth_registration_organisation_id_default(self):
         " Default the Organisation during registration - will return the organisation_id"
-        name = self.auth.get("registration_organisation_default")
-        if name:
-            otable = current.s3db.org_organisation
-            orow = current.db(otable.name == name).select(otable.id).first()
-            if orow:
-                organisation_id = orow.id
-            else:
-                organisation_id = otable.insert(name = name)
-        else:
-            organisation_id = None
+        organisation_id = self.__lazy("auth", "registration_organisation_default", default=None)
+        if organisation_id:
+            try:
+                int(organisation_id)
+            except:
+                # Must be a Name
+                table = current.s3db.org_organisation
+                row = current.db(table.name == organisation_id).select(table.id,
+                                                                       ).first()
+                if row:
+                    organisation_id = row.id
+                else:
+                    organisation_id = table.insert(name = name)
         return organisation_id
 
     def get_auth_registration_requests_organisation_group(self):
@@ -4130,11 +4144,23 @@ class S3Config(Storage):
                         current.session.s3.default_site_id = default_site
         return default_site
 
+    def get_org_country(self):
+        """
+            Whether to expose the "country" field of organisations
+        """
+        return self.org.get("country", True)
+
     def get_org_sector(self):
         """
             Whether to use an Organization Sector field
         """
         return self.org.get("sector", False)
+
+    def get_org_sector_rheader(self):
+        """
+            Whether Sectors should be visible in the rheader
+        """
+        return self.org.get("sector_rheader", self.get_org_sector())
 
     def get_org_branches(self):
         """
@@ -4173,6 +4199,12 @@ class S3Config(Storage):
             Whether Organisation Types are Multiple or not
         """
         return self.org.get("organisation_types_multiple", False)
+
+    def get_org_organisation_type_rheader(self):
+        """
+            Whether Organisation Types are visible in the rheader
+        """
+        return self.org.get("organisation_type_rheader", False)
 
     def get_org_facilities_tab(self):
         """

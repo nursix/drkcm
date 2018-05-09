@@ -67,6 +67,8 @@ def config(settings):
     #settings.auth.registration_requests_organisation = True
     # Uncomment this to have the Organisation selection during registration be mandatory
     #settings.auth.registration_organisation_required = True
+    # Uncomment this to hide the Create-Organisation link in registration forms
+    #settings.auth.registration_organisation_link_create = False
     # Uncomment this to have the Organisation input hidden unless the user enters a non-whitelisted domain
     #settings.auth.registration_organisation_hidden = True
     # Uncomment this to default the Organisation during registration
@@ -134,6 +136,7 @@ def config(settings):
         ("ar", "Arabic"),
         ("bs", "Bosnian"),
         #("dv", "Divehi"), # Maldives
+        #("dz", "Dzongkha"), # Bhutan
         ("en", "English"),
         ("fr", "French"),
         ("de", "German"),
@@ -631,6 +634,8 @@ def config(settings):
     #settings.org.autocomplete = True
     # Enable the Organisation Sector field
     #settings.org.sector = True
+    # But hide it from the rheader
+    #settings.org.sector_rheader = False
     # Enable the use of Organisation Branches
     #settings.org.branches = True
     # Show branches as tree rather than as table
@@ -646,6 +651,8 @@ def config(settings):
     #settings.org.organisation_types_hierarchical = True
     # Make Organisation Types Multiple
     #settings.org.organisation_types_multiple = True
+    # Show Organisation Types in the rheader
+    #settings.org.organisation_type_rheader = True
     # Enable the use of Organisation Regions
     #settings.org.regions = True
     # Make Organisation Regions Hierarchical
