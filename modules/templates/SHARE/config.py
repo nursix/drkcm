@@ -22,8 +22,7 @@ def config(settings):
                                 )
 
     # PrePopulate data
-    #settings.base.prepopulate = ("skeleton", "default/users")
-    settings.base.prepopulate += ("SHARE", "default/users", "SHARE/Demo")
+    settings.base.prepopulate += ("SHARE", "default/users")
 
     # Theme (folder to use for views/layout.html)
     #settings.base.theme = "SHARE"
@@ -105,6 +104,10 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     # Projects
+    # Don't use Beneficiaries
+    settings.project.activity_beneficiaries = False
+    # Don't use Item Catalog for Distributions
+    settings.project.activity_items = False
     settings.project.activity_sectors = True
     # Links to Filtered Components for Donors & Partners
     settings.project.organisation_roles = {
@@ -300,12 +303,12 @@ def config(settings):
             _id = table.insert(channel_id=channel_id, function_name="parse_tweet", enabled=True)
             s3db.msg_parser_enable(_id)
 
-            async = current.s3task.async
+            run_async = current.s3task.async
             # Poll
-            async("msg_poll", args=["msg_twitter_channel", channel_id])
+            run_async("msg_poll", args=["msg_twitter_channel", channel_id])
 
             # Parse
-            async("msg_parse", args=[channel_id, "parse_tweet"])
+            run_async("msg_parse", args=[channel_id, "parse_tweet"])
 
         s3db.configure(tablename,
                        create_onaccept = onaccept,
@@ -382,17 +385,14 @@ def config(settings):
                                                                     },
                                                        },
                             )
-                                              
+
         from s3 import S3SQLCustomForm, S3SQLInlineComponent
         crud_form = S3SQLCustomForm("name",
                                     "abrv",
                                     "comments",
-                                    S3SQLInlineComponent("sector_organisation",
+                                    S3SQLInlineComponent("sector_lead",
                                                          label = T("Lead Organization(s)"),
                                                          fields = [("", "organisation_id"),],
-                                                         filterby = ({"field": "lead",
-                                                                      "options": True,
-                                                                      },),
                                                          ),
                                     )
 
@@ -405,71 +405,99 @@ def config(settings):
                        )
 
         return attr
-        
+
     settings.customise_org_sector_controller = customise_org_sector_controller
 
     # -------------------------------------------------------------------------
-    def customise_project_activity_controller(**attr):
+    def customise_project_activity_resource(r, tablename):
 
         s3db = current.s3db
         tablename = "project_activity"
 
-        # Custom Components for Agency, Partners & Donors
+        # Custom Components for Agency, Partners & Donors; Modality & Number
         s3db.add_components(tablename,
-                           org_organisation = (# Agency
-                                               {"name": "agency",
-                                                "link": "project_activity_organisation",
-                                                "joinby": "activity_id",
-                                                "key": "organisation_id",
-                                                "actuate": "hide",
-                                                "filterby": {"role": 1,
-                                                             },
-                                                },
-                                               # Partners
-                                               {"name": "partner",
-                                                "link": "project_activity_organisation",
-                                                "joinby": "activity_id",
-                                                "key": "organisation_id",
-                                                "actuate": "hide",
-                                                "filterby": {"role": 2,
-                                                             },
-                                                },
-                                               # Donors
-                                               {"name": "donor",
-                                                "link": "project_activity_organisation",
-                                                "joinby": "activity_id",
-                                                "key": "organisation_id",
-                                                "actuate": "hide",
-                                                "filterby": {"role": 3,
-                                                             },
-                                                },
-                                               )
+                            project_activity_organisation = (# Agency
+                                                             {"name": "agency",
+                                                              "joinby": "activity_id",
+                                                              "filterby": {"role": 1,
+                                                                           },
+                                                              #"multiple": False,
+                                                              },
+                                                             # Partners
+                                                             {"name": "partner",
+                                                              "joinby": "activity_id",
+                                                              "filterby": {"role": 2,
+                                                                           },
+                                                              #"multiple": False,
+                                                              },
+                                                             # Donors
+                                                             {"name": "donor",
+                                                              "joinby": "activity_id",
+                                                              "filterby": {"role": 3,
+                                                                           },
+                                                              #"multiple": False,
+                                                              },
+                                                             ),
+                            project_activity_tag = (# Modality
+                                                    {"name": "modality",
+                                                     "joinby": "activity_id",
+                                                     "filterby": {"tag": "modality",
+                                                                  },
+                                                     "multiple": False,
+                                                     },
+                                                    # Number
+                                                    {"name": "number",
+                                                     "joinby": "activity_id",
+                                                     "filterby": {"tag": "number",
+                                                                  },
+                                                     "multiple": False,
+                                                     },
+                                                    )
                             )
-                                              
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent
-        crud_form = S3SQLCustomForm(S3SQLInlineComponent("activity_organisation",
+
+        # Individual settings for specific tag components
+        from gluon import IS_EMPTY_OR, IS_IN_SET, IS_INT_IN_RANGE
+        components_get = r.resource.components.get
+
+        modality = components_get("modality")
+        modality.table.value.requires = IS_EMPTY_OR(IS_IN_SET(("Cash", "In-kind")))
+
+        number = components_get("number")
+        number.table.value.requires = IS_EMPTY_OR(IS_INT_IN_RANGE())
+
+        s3db.project_activity_data.unit.requires = IS_EMPTY_OR(IS_IN_SET(("People", "Households")))
+
+        from s3 import S3SQLCustomForm, S3SQLInlineComponent #, S3SQLInlineLink
+        crud_form = S3SQLCustomForm(S3SQLInlineComponent("agency",
+                                                         name = "agency",
                                                          label = T("Agency"),
                                                          fields = [("", "organisation_id"),],
-                                                         filterby = ({"field": "role",
-                                                                      "options": 1,
-                                                                      },),
-                                                         multiple = False,
+                                                         #multiple = False,
+                                                         required = True,
                                                          ),
-                                    S3SQLInlineComponent("activity_organisation",
+                                    # @ToDo: MultiSelectWidget is nicer UI but S3SQLInlineLink
+                                    #        requires the link*ed* table as component (not the
+                                    #        link table as applied here) and linked components
+                                    #        cannot currently be filtered by link table fields
+                                    #        (=> should solve the latter rather than the former)
+                                    # @ToDo: Create Popups
+                                    S3SQLInlineComponent("partner",
+                                                         name = "partner",
                                                          label = T("Implementing Partner"),
-                                                         fields = [("", "organisation_id"),],
-                                                         filterby = ({"field": "role",
-                                                                      "options": 2,
-                                                                      },),
-                                                         #multiple = False,
+                                                         fields = [{"name": "organisation_id",
+                                                                    "label": "",
+                                                                    "default": None,
+                                                                    },
+                                                                   ],
                                                          ),
-                                    S3SQLInlineComponent("activity_organisation",
+                                    S3SQLInlineComponent("donor",
+                                                         name = "donor",
                                                          label = T("Donor"),
-                                                         fields = [("", "organisation_id"),],
-                                                         filterby = ({"field": "role",
-                                                                      "options": 3,
-                                                                      },),
-                                                         #multiple = False,
+                                                         fields = [{"name": "organisation_id",
+                                                                    "label": "",
+                                                                    "default": None,
+                                                                    },
+                                                                   ],
                                                          ),
                                     "location_id",
                                     S3SQLInlineComponent("sector_activity",
@@ -478,14 +506,28 @@ def config(settings):
                                                          multiple = False,
                                                          ),
                                     (T("Relief Items/Activity"), "name"),
-                                    #(T("Modality)", ""),
-                                    #(T("Number of Items/Kits)", ""),
-                                    #(T("Number of Activities)", ""),
+                                    S3SQLInlineComponent("modality",
+                                                         name = "modality",
+                                                         label = T("Modality"),
+                                                         fields = [("", "value"),],
+                                                         multiple = False,
+                                                         ),
+                                    S3SQLInlineComponent("number",
+                                                         name = "number",
+                                                         label = T("Number of Items/Kits/Activities"),
+                                                         fields = [("", "value"),],
+                                                         multiple = False,
+                                                         ),
                                     (T("Activity Date (Planned/Start Date)"), "date"),
                                     (T("Activity Date (Completion Date)"), "end_date"),
-                                    #(T("People / Households"), ""),
-                                    #(T("Total Number People/Hh Targeted"), ""),
-                                    #(T("Total Number Of People/HH Reached"), ""),
+                                    S3SQLInlineComponent("activity_data",
+                                                         label = "",
+                                                         fields = [(T("People / Households"), "unit"),
+                                                                   (T("Total Number People/HH Targeted"), "target_value"),
+                                                                   (T("Total Number Of People/HH Reache"), "value"),
+                                                                   ],
+                                                         multiple = False,
+                                                         ),
                                     (T("Activity Status"), "status_id"),
                                     "comments",
                                     )
@@ -500,15 +542,18 @@ def config(settings):
                                       (T("GN Division"), "location_id$L3"),
                                       (T("Sector"), "sector_activity.sector_id"),
                                       (T("Relief Items/Activity"), "name"),
+                                      (T("Modality"), "modality.value"),
+                                      (T("Number of Items/Kits/Activities"), "number.value"),
                                       (T("Activity Date (Planned/Start Date)"), "date"),
                                       (T("Activity Date (Completion Date)"), "end_date"),
+                                      (T("People / Households"), "activity_data.unit"),
+                                      (T("Total Number People/HH Targeted"), "activity_data.target_value"),
+                                      (T("Total Number Of People/HH Reached"), "activity_data.value"),
                                       (T("Activity Status"), "status_id"),
                                       "comments",
                                       ],
                        )
 
-        return attr
-        
-    settings.customise_project_activity_controller = customise_project_activity_controller
+    settings.customise_project_activity_resource = customise_project_activity_resource
 
 # END =========================================================================
