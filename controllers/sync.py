@@ -9,7 +9,8 @@ def index():
     module_name = T("Synchronization")
 
     response.title = module_name
-    return dict(module_name=module_name)
+    return {"module_name": module_name,
+            }
 
 # -----------------------------------------------------------------------------
 def config():
@@ -151,6 +152,30 @@ def repository():
                                                 DIV(s3base.s3_strip_markup(msg),
                                                     _class="message-body",
                                                     )
+
+                elif alias == "dataset":
+
+                    table = r.component.table
+                    tablename = r.component.tablename
+
+                    # Adapt CRUD strings to perspective
+                    s3.crud_strings[tablename].update(
+                       label_create = T("Add Data Set"),
+                       title_list = T("Data Sets"),
+                       label_list_button = T("List Data Sets"),
+                       msg_record_created = T("Data Set added"),
+                       msg_list_empty = T("No Data Sets currently registered"),
+                    )
+
+                    # Allow the same data set code only once per repository
+                    field = table.code
+                    field.requires = s3db.sync_dataset_code_requires + \
+                                     [IS_NOT_ONE_OF(db(table.repository_id == r.id),
+                                        "sync_dataset.code",
+                                        error_message = "Code already registered for this repository",
+                                        ),
+                                      ]
+
                 s3.cancel = URL(c = "sync",
                                 f = "repository",
                                 args = [str(r.id), alias],
@@ -162,31 +187,88 @@ def repository():
     def postp(r, output):
         if r.interactive and r.id:
             if r.component and r.component.alias == "job":
-                s3.actions = [dict(label=str(T("Reset")),
-                                   _class="action-btn",
-                                   url=URL(c="sync",
-                                           f="repository",
-                                           args=[str(r.id),
-                                                 "job",
-                                                 "[id]",
-                                                 "reset",
-                                                 ],
-                                           ),
-                                   )
+                s3.actions = [{"label": s3_str(T("Reset")),
+                               "url": URL(c = "sync",
+                                          f = "repository",
+                                          args = [str(r.id),
+                                                  "job",
+                                                  "[id]",
+                                                  "reset",
+                                                  ],
+                                          ),
+                               "_class": "action-btn",
+                               }
                               ]
         s3_action_buttons(r)
         return output
     s3.postp = postp
 
-    # Rheader tabs for repositories
-    tabs = [(T("Configuration"), None),
-            (T("Resources"), "task"),
-            (T("Schedule"), "job"),
-            (T("Log"), "log"),
-            ]
+    return s3_rest_controller("sync", "repository", rheader=s3db.sync_rheader)
 
-    rheader = lambda r: s3db.sync_rheader(r, tabs=tabs)
-    return s3_rest_controller("sync", "repository", rheader=rheader)
+# -----------------------------------------------------------------------------
+def dataset():
+    """ Public Data Sets: RESTful CRUD controller """
+
+    def prep(r):
+
+        resource = r.resource
+
+        # Filter to locally hosted data sets
+        resource.add_filter(FS("repository_id") == None)
+
+        if not r.component:
+
+            table = resource.table
+
+            if r.interactive:
+                # Require code to be unique among exposed data sets
+                field = table.code
+                field.requires = s3db.sync_dataset_code_requires + \
+                                 [IS_NOT_ONE_OF(db(table.repository_id == None),
+                                    "sync_dataset.code",
+                                    error_message = "Code already in use",
+                                    ),
+                                  ]
+
+            # Name is required for locally hosted data sets
+            field = table.name
+            field.requires = IS_NOT_EMPTY()
+
+        if r.record and r.component_name == "task":
+
+            table = r.component.table
+
+            # Default sync mode PULL
+            field = table.mode
+            field.default = 1
+
+            # TODO adapt tooltips to context
+
+            # Reduced form
+            crud_form = s3base.S3SQLCustomForm(
+                            "resource_name",
+                            "components",
+                            s3base.S3SQLInlineComponent(
+                                "resource_filter",
+                                label = T("Filters"),
+                                fields = ["tablename",
+                                          "filter_string",
+                                          ],
+                                ),
+                            )
+
+            # Reduced list fields
+            list_fields = ["resource_name",
+                           ]
+
+            s3db.configure("sync_task",
+                           crud_form = crud_form,
+                           list_fields = list_fields,
+                           )
+        return True
+    s3.prep = prep
+
+    return s3_rest_controller(rheader = s3db.sync_rheader)
 
 # -----------------------------------------------------------------------------
 def sync():
@@ -221,8 +303,7 @@ def sync():
                        )
 
         # Response
-        output = r(mixed=mixed)
-        return output
+        return r(mixed=mixed)
 
     raise HTTP(400, body=current.ERROR.BAD_REQUEST)
 
@@ -247,19 +328,47 @@ def log():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller("sync", "log",
-                                subtitle=None,
-                                rheader=s3base.S3SyncLog.rheader,
-                                list_btn=list_btn,
-                                )
-    return output
+    return s3_rest_controller("sync", "log",
+                              subtitle=None,
+                              rheader=s3base.S3SyncLog.rheader,
+                              list_btn=list_btn,
+                              )
 
 # -----------------------------------------------------------------------------
 def task():
-    """ RESTful CRUD controller for options.s3json lookups """
+    """ Sync Tasks: RESTful CRUD controller """
 
-    # Pre-process
-    s3.prep = lambda r: r.representation == "s3json" and r.method == "options"
+    def prep(r):
+
+        # Only XML and S3JSON formats allowed
+        if r.representation not in ("s3json", "xml"):
+            r.error(415, current.ERROR.BAD_FORMAT)
+
+        # Limit to local public data sets
+        # (=do not expose repositories and corresponding credentials)
+        r.resource.add_filter(FS("repository_id") == None)
+
+        return True
+    s3.prep = prep
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def resource_filter():
+    """ Sync Resource Filters: RESTful CRUD controller """
+
+    def prep(r):
+
+        # Only XML and S3JSON formats allowed
+        if r.representation not in ("s3json", "xml"):
+            r.error(415, current.ERROR.BAD_FORMAT)
+
+        # Limit to local public data sets
+        # (=do not expose repositories and corresponding credentials)
+        r.resource.add_filter(FS("task_id$repository_id") == None)
+
+        return True
+    s3.prep = prep
 
     return s3_rest_controller()
 

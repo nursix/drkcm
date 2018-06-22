@@ -443,7 +443,10 @@ class S3OptionsMenu(object):
 
         ADMIN = current.session.s3.system_roles.ADMIN
         settings_messaging = self.settings_messaging()
-        translate = current.deployment_settings.has_module("translate")
+
+        settings = current.deployment_settings
+        translate = settings.has_module("translate")
+        is_data_repository = lambda i: settings.get_sync_data_repository()
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
@@ -480,6 +483,7 @@ class S3OptionsMenu(object):
                     M("Synchronization", c="sync", f="index")(
                         M("Settings", f="config", args=[1], m="update"),
                         M("Repositories", f="repository"),
+                        M("Public Data Sets", f="dataset", check=is_data_repository),
                         M("Log", f="log"),
                     ),
                     #M("Edit Application", a="admin", c="default", f="design",
@@ -912,12 +916,15 @@ class S3OptionsMenu(object):
     def event():
         """ EVENT / Event Module """
 
-        if current.deployment_settings.get_event_label(): # == "Disaster"
+        settings = current.deployment_settings
+        if settings.get_event_label(): # == "Disaster"
             EVENTS = "Disasters"
             EVENT_TYPES = "Disaster Types"
         else:
             EVENTS = "Events"
             EVENT_TYPES = "Event Types"
+
+        incidents = lambda i: settings.get_event_incident()
 
         return M()(
                     #M("Scenarios", c="event", f="scenario")(
@@ -931,13 +938,16 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                         #M("Import", m="import", p="create"),
                     ),
-                    M("Incidents", c="event", f="incident")(
+                    M("Incidents", c="event", f="incident",
+                      check=incidents)(
                         M("Create", m="create"),
                     ),
-                    M("Incident Reports", c="event", f="incident_report", m="summary")(
+                    M("Incident Reports", c="event", f="incident_report", m="summary",
+                      check=incidents)(
                         M("Create", m="create"),
                     ),
-                    M("Incident Types", c="event", f="incident_type")(
+                    M("Incident Types", c="event", f="incident_type",
+                      check=incidents)(
                         M("Create", m="create"),
                         #M("Import", m="import", p="create"),
                     ),

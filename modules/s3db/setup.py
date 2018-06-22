@@ -396,11 +396,6 @@ class S3SetupModel(S3Model):
                            label = T("Type"),
                            represent = S3Represent(options = INSTANCE_TYPES),
                            requires = IS_IN_SET(INSTANCE_TYPES),
-                           comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Type"),
-                                                           T("Currently only Production is supported by this tool, although Demo/Test should be possible with a little work.")
-                                                           )
-                                         ),
                            ),
                      Field("url",
                            label = T("URL"),
@@ -507,6 +502,12 @@ class S3SetupModel(S3Model):
                    component_name = "instance",
                    method = "stop",
                    action = self.setup_instance_stop,
+                   )
+
+        set_method("setup", "deployment",
+                   component_name = "instance",
+                   method = "clean",
+                   action = self.setup_instance_clean,
                    )
 
         represent = S3Represent(lookup=tablename, fields=["type"])
@@ -880,6 +881,21 @@ class S3SetupModel(S3Model):
         setup_instance_method(r.component_id, "stop")
 
         current.session.confirmation = current.T("Instance Stopped")
+
+        redirect(URL(c="setup", f="deployment",
+                     args = [r.id, "instance"]),
+                     )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def setup_instance_clean(r, **attr):
+        """
+            Custom interactive S3Method to Clean an Instance
+        """
+
+        setup_instance_method(r.component_id, "clean")
+
+        current.session.confirmation = current.T("Instance Clean Started")
 
         redirect(URL(c="setup", f="deployment",
                      args = [r.id, "instance"]),
@@ -1917,7 +1933,7 @@ def setup_instance_settings_read(instance_id, deployment_id):
 def setup_instance_method(instance_id, method="start"):
     """
         Run individual Ansible Roles ('methods')
-            e.g. Start or Stop an Instance
+            e.g. Start, Stop or Clean an Instance
             - called by interactive method to start/stop
     """
 
@@ -1945,7 +1961,8 @@ def setup_instance_method(instance_id, method="start"):
 
     # Get Deployment details
     dtable = s3db.setup_deployment
-    deployment = db(dtable.id == deployment_id).select(dtable.webserver_type,
+    deployment = db(dtable.id == deployment_id).select(dtable.db_type,
+                                                       dtable.webserver_type,
                                                        limitby=(0, 1)
                                                        ).first()
 
@@ -1957,7 +1974,8 @@ def setup_instance_method(instance_id, method="start"):
                  "remote_user": server.remote_user,
                  "become_method": "sudo",
                  "become_user": "root",
-                 "vars": {"web_server": WEB_SERVERS[deployment.webserver_type],
+                 "vars": {"db_type": DB_SERVERS[deployment.db_type],
+                          "web_server": WEB_SERVERS[deployment.webserver_type],
                           "type": INSTANCE_TYPES[instance.type],
                           },
                  "roles": [{ "role": "%s/%s" % (roles_path, method) },
