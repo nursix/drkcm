@@ -40,6 +40,7 @@ __all__ = ("S3EventModel",
            "S3EventAssetModel",
            "S3EventBookmarkModel",
            "S3EventCMSModel",
+           "S3EventCMSTagModel",
            "S3EventDCModel",
            "S3EventForumModel",
            "S3EventHRModel",
@@ -47,6 +48,7 @@ __all__ = ("S3EventModel",
            "S3EventImpactModel",
            "S3EventMapModel",
            "S3EventNeedModel",
+           "S3EventNeedResponseModel",
            "S3EventOrganisationModel",
            "S3EventProjectModel",
            "S3EventRequestModel",
@@ -942,7 +944,7 @@ class S3EventLocationModel(S3Model):
 
     def model(self):
 
-        T = current.T
+        #T = current.T
 
         # ---------------------------------------------------------------------
         # Event Locations (link table)
@@ -1042,24 +1044,24 @@ class S3EventTagModel(S3Model):
         # - can be a Triple Store for Semantic Web support
         #
         tablename = "event_event_tag"
-        define_table(tablename,
-                     self.event_event_id(),
-                     # key is a reserved word in MySQL
-                     Field("tag",
-                           label = T("Key"),
-                           ),
-                     Field("value",
-                           label = T("Value"),
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
+        self.define_table(tablename,
+                          self.event_event_id(),
+                          # key is a reserved word in MySQL
+                          Field("tag",
+                                label = T("Key"),
+                                ),
+                          Field("value",
+                                label = T("Value"),
+                                ),
+                          s3_comments(),
+                          *s3_meta_fields())
 
-        configure(tablename,
-                  deduplicate = S3Duplicate(primary = ("event_id",
-                                                       "tag",
-                                                       ),
-                                            ),
-                  )
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("event_id",
+                                                            "tag",
+                                                            ),
+                                                 ),
+                       )
 
         # Pass names back to global scope (s3.*)
         return {}
@@ -2865,6 +2867,40 @@ class S3EventCMSModel(S3Model):
         return {}
 
 # =============================================================================
+class S3EventCMSTagModel(S3Model):
+    """
+        Link (CMS) Tags to Events or Incidents (used in WACOP)
+        - the Incident tags do NOT populate the Event's
+
+        TODO rename into event_cms_tag for clarity (event_tag is easily
+             confused with event_event_tag)?
+    """
+
+    names = ("event_tag",
+             )
+
+    def model(self):
+
+        #T = current.T
+
+        # ---------------------------------------------------------------------
+        # Tags
+
+        tablename = "event_tag"
+        self.define_table(tablename,
+                          self.event_event_id(ondelete = "CASCADE",
+                                              ),
+                          self.event_incident_id(ondelete = "CASCADE",
+                                                 ),
+                          self.cms_tag_id(empty = False,
+                                          ondelete = "CASCADE",
+                                          ),
+                          *s3_meta_fields())
+
+        # Pass names back to global scope (s3.*)
+        return {}
+
+# =============================================================================
 class S3EventDCModel(S3Model):
     """
         Link Data Collections to Events &/or Incidents
@@ -3369,6 +3405,59 @@ class S3EventNeedModel(S3Model):
         #    msg_record_modified = T("Need updated"),
         #    msg_record_deleted = T("Need removed"),
         #    msg_list_empty = T("No Needs currently registered in this Event"))
+
+        # Pass names back to global scope (s3.*)
+        return {}
+
+# =============================================================================
+class S3EventNeedResponseModel(S3Model):
+    """
+        Link Events &/or Incidents with Need Responses (Activity Groups)
+    """
+
+    names = ("event_event_need_response",
+             )
+
+    def model(self):
+
+        #T = current.T
+
+        if current.deployment_settings.get_event_cascade_delete_incidents():
+            ondelete = "CASCADE"
+        else:
+            ondelete = "SET NULL"
+
+        # ---------------------------------------------------------------------
+        # Events <> Impacts
+        #
+
+        tablename = "event_event_need_response"
+        self.define_table(tablename,
+                          self.event_event_id(ondelete = ondelete),
+                          self.event_incident_id(ondelete = "CASCADE"),
+                          self.req_need_response_id(empty = False,
+                                                    ondelete = "CASCADE",
+                                                    ),
+                          *s3_meta_fields())
+
+        # Table configuration
+        self.configure(tablename,
+                       onaccept = lambda form: \
+                        set_event_from_incident(form, "event_event_need_response"),
+                       )
+
+        # Not accessed directly
+        #current.response.s3.crud_strings[tablename] = Storage(
+        #    label_create = T("Add Activity Group"),
+        #    title_display = T("Activity Group Details"),
+        #    title_list = T("Activity Groups"),
+        #    title_update = T("Edit Activity Group"),
+        #    label_list_button = T("List Activity Groups"),
+        #    label_delete_button = T("Delete Activity Group"),
+        #    msg_record_created = T("Activity Group added"),
+        #    msg_record_modified = T("Activity Group updated"),
+        #    msg_record_deleted = T("Activity Group removed"),
+        #    msg_list_empty = T("No Activity Groups currently registered in this Event"))
 
         # Pass names back to global scope (s3.*)
         return {}
@@ -4183,6 +4272,7 @@ class S3EventSitRepModel(S3Model):
                                               writable = sitrep_dynamic,
                                               ),
                           s3_comments("summary",
+                                      comment = None,
                                       label = T("Summary"),
                                       #readable = not sitrep_edxl,
                                       #writable = not sitrep_edxl,
@@ -4358,37 +4448,6 @@ class S3EventSitRepModel(S3Model):
 
         # Link this Table to the Template
         db(db.event_sitrep.id == sitrep_id).update(table_id=table_id)
-
-# =============================================================================
-class S3EventTagModel(S3Model):
-    """
-        Link (CMS) Tags to Events or Incidents
-        - the Incident tags do NOT populate the Event's
-    """
-
-    names = ("event_tag",
-             )
-
-    def model(self):
-
-        #T = current.T
-
-        # ---------------------------------------------------------------------
-        # Tags
-
-        tablename = "event_tag"
-        self.define_table(tablename,
-                          self.event_event_id(ondelete = "CASCADE",
-                                              ),
-                          self.event_incident_id(ondelete = "CASCADE",
-                                                 ),
-                          self.cms_tag_id(empty = False,
-                                          ondelete = "CASCADE",
-                                          ),
-                          *s3_meta_fields())
-
-        # Pass names back to global scope (s3.*)
-        return {}
 
 # =============================================================================
 class S3EventTaskModel(S3Model):

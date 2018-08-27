@@ -504,11 +504,22 @@ S3.maxLength = {
 };
 
 // ============================================================================
-// Code to warn on exit without saving
-var S3SetNavigateAwayConfirm = function() {
-    window.onbeforeunload = function() {
-        return i18n.unsaved_changes;
-    };
+/**
+ * Activate warning on exit without saving form data
+ *
+ * @param {Event} event - the event triggering the activation
+ * @param {string} trigger - event parameter indicating the trigger
+ *
+ * Use element.trigger('change', 'implicit') instead of element.change()
+ * to prevent activation if the event must be triggered for other reasons
+ * than user input
+ */
+var S3SetNavigateAwayConfirm = function(event, trigger) {
+    if (trigger !== 'implicit') {
+        window.onbeforeunload = function() {
+            return i18n.unsaved_changes;
+        };
+    }
 };
 
 var S3ClearNavigateAwayConfirm = function() {
@@ -521,13 +532,12 @@ var S3EnableNavigateAwayConfirm = function() {
             // If there are errors, ensure the unsaved form is still protected
             S3SetNavigateAwayConfirm();
         }
-        var form = 'form:not(form.filter-form)',
-            input = 'input:not(input[id=gis_location_advanced_checkbox])',
-            select = 'select';
-        $(form + ' ' + input).keypress(S3SetNavigateAwayConfirm);
-        $(form + ' ' + input).change(S3SetNavigateAwayConfirm);
-        $(form + ' ' + select).change(S3SetNavigateAwayConfirm);
-        $('form').submit(S3ClearNavigateAwayConfirm);
+        var form = $('form:not(.filter-form)');
+
+        $('input', form).keypress(S3SetNavigateAwayConfirm)
+                        .change(S3SetNavigateAwayConfirm);
+        $('select', form).change(S3SetNavigateAwayConfirm);
+        form.submit(S3ClearNavigateAwayConfirm);
     });
 };
 
@@ -575,6 +585,7 @@ var S3EnableNavigateAwayConfirm = function() {
 
         // Alerts
         this.alerts = [];
+        this.ignoreStatus = options.ignoreStatus || [];
     }
 
     /**
@@ -677,13 +688,17 @@ var S3EnableNavigateAwayConfirm = function() {
             S3.showAlert(i18n.ajax_500, 'error');
         } else {
             // Other error or server unreachable
-            var responseJSON = jqXHR.responseJSON;
-            if (responseJSON && responseJSON.message) {
-                // A json_message with a specific error text
-                S3.showAlert(responseJSON.message, 'error');
+            if (self.ignoreStatus.indexOf(httpStatus) != -1) {
+                // Status handled by caller => do not display alert
             } else {
-                // HTTP status code only
-                S3.showAlert(i18n.ajax_dwn, 'error');
+                var responseJSON = jqXHR.responseJSON;
+                if (responseJSON && responseJSON.message) {
+                    // A json_message with a specific error text
+                    S3.showAlert(responseJSON.message, 'error');
+                } else {
+                    // HTTP status code only
+                    S3.showAlert(i18n.ajax_dwn, 'error');
+                }
             }
         }
 
@@ -1362,6 +1377,8 @@ S3.openPopup = function(url, center) {
                 target.multiselect('refresh')
                       .multiselect('disable');
             }
+            // Trigger change-event on target for filter cascades
+            target.change();
             updateAddResourceLink(lookupResource, lookupKey);
             return;
         }
@@ -2051,7 +2068,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
         });
         $("input[type='checkbox'].delete").click(function() {
             if ((this.checked) && (!confirm(i18n.delete_confirmation))) {
-                    this.checked = false;
+                this.checked = false;
             }
         });
 

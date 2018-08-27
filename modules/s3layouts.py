@@ -110,7 +110,12 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
                         if item.selected:
                             classes.append("active")
                         _class = " ".join(classes)
-                        return LI(A(item.label,
+                        icon = item.opts.icon
+                        if icon:
+                            label = LABEL(ICON(icon), item.label)
+                        else:
+                            label = item.label
+                        return LI(A(label,
                                     _href=item_url,
                                     _id=item.attr._id,
                                     _target=item.attr._target,
@@ -449,17 +454,14 @@ class S3HomepageMenuLayout(S3NavigationItem):
 
                 icon = item.opts.icon
                 if icon:
-                    return A(LABEL(ICON(icon), item.label),
-                             _class = _class,
-                             _href = item.url(),
-                             _id = _id,
-                             )
+                    label = LABEL(ICON(icon), item.label)
                 else:
-                    return A(LABEL(item.label),
-                             _class = _class,
-                             _href = item.url(),
-                             _id = _id,
-                             )
+                    label = LABEL(item.label)
+                return A(label,
+                         _class = _class,
+                         _href = item.url(),
+                         _id = _id,
+                         )
         else:
             return None
 
@@ -516,15 +518,15 @@ class S3PopupLink(S3NavigationItem):
                 # Fall back to label_update
                 label = S3CRUD.crud_string(t, "label_update")
 
-        return super(S3PopupLink, self).__init__(label,
-                                                 c=c, f=f, t=t,
-                                                 m=m,
-                                                 args=args,
-                                                 vars=vars,
-                                                 info=info,
-                                                 title=title,
-                                                 tooltip=tooltip,
-                                                 mandatory=True)
+        super(S3PopupLink, self).__init__(label,
+                                          c=c, f=f, t=t,
+                                          m=m,
+                                          args=args,
+                                          vars=vars,
+                                          info=info,
+                                          title=title,
+                                          tooltip=tooltip,
+                                          mandatory=True)
 
     # -------------------------------------------------------------------------
     @staticmethod

@@ -312,20 +312,6 @@ class S3Config(Storage):
         """
         return self.base.get("template", "default")
 
-    def get_template_location(self):
-
-        return self.base.get("template_location", "modules")
-
-    def exec_template(self, path):
-        """
-            Legacy function, retained for backwards-compatibility with
-            existing 000_config.py instances => modern 000_config.py
-            should just call settings.import_template()
-
-            @todo: deprecate
-        """
-        self.import_template()
-
     def import_template(self, config="config"):
         """
             Import and invoke the template config (new module pattern). Allows
@@ -336,9 +322,6 @@ class S3Config(Storage):
             Configurations will be imported and executed in order of appearance
 
             @param config: name of the config-module
-
-            @todo: remove fallback when migration complete (+giving some
-                   time for downstream projects to adapt)
         """
 
         names = self.get_template()
@@ -355,71 +338,122 @@ class S3Config(Storage):
                 # Import the template
                 template = getattr(__import__(package, fromlist=[config]), config)
             except ImportError:
-                # Legacy template in "private"?
-                if len(names) > 1:
-                    raise SyntaxError("Cascading templates not supported for script pattern")
-                self.execute_template(name)
-                break
+                raise RuntimeError("Template not found: %s" % name)
             else:
                 template.config(self)
 
-        # Store location in response.s3 for compiled views
-        # No longer supported
-        #current.response.s3.template_location = "modules"
-
         return self
-
-    def execute_template(self, name):
-        """
-            Fallback for legacy templates - execute config.py
-        """
-
-        import os
-
-        location = "private"
-        path = os.path.join(current.request.folder,
-                            location,
-                            "templates",
-                            name,
-                            "config.py")
-
-        if os.path.exists(path):
-            # Old-style config.py => deprecation warning (S3Log not available yet)
-            import sys
-            sys.stderr.write("%s/config.py: script pattern deprecated.\n" % name)
-            # Remember the non-standard location
-            # (need to be in response.s3 for compiled views)
-            # No longer supported
-            #current.response.s3.template_location =
-            self.base.template_location = location
-            # Execute config.py
-            from gluon.fileutils import read_file
-            from gluon.restricted import restricted
-            code = read_file(path)
-            restricted(code, layer=path)
-        else:
-            # Nonexistent template
-            # => could be ignored here, but would crash later anyway,
-            #    so exit early with a clear error message
-            raise RuntimeError("Template not found: %s" % name)
 
     # -------------------------------------------------------------------------
     # Theme
+    #
+    def set_theme(self):
+        """
+            Inspect base.theme_* settings and cache paths in response.s3
+            accordingly (this needs to be run only once, getters will then
+            use cached paths)
+
+            @returns: the theme name
+        """
+
+        s3 = current.response.s3
+
+        #import os
+        path_to = lambda names: "/".join(names) #os.path.join(*names)
+
+        default = self.base.get("theme", "default")
+
+        theme = default.split(".")
+        theme_path = path_to(theme)
+
+        # The theme name
+        s3.theme = theme_name = theme[-1]
+
+        # Path under modules/templates/ for layouts (views, e.g. layout.html)
+        layouts = self.base.get("theme_layouts")
+        if layouts:
+            s3.theme_layouts = path_to(layouts.split("."))
+        else:
+            s3.theme_layouts = theme_path
+
+        # Path under modules/templates/ for css.cfg
+        # NB this is also the path under static/themes/ for eden.min.css
+        styles = self.base.get("theme_styles")
+        if styles:
+            s3.theme_styles = path_to(styles.split("."))
+        else:
+            s3.theme_styles = theme_path
+
+        # Path under static/themes/ for base styles (e.g. foundation/*.css)
+        base = self.base.get("theme_base")
+        if base:
+            s3.theme_base = path_to(base.split("."))
+        else:
+            s3.theme_base = s3.theme_styles
+
+        return theme_name
+
     def get_theme(self):
         """
-            Which template folder to use for views/layout.html
+            The location of the current theme, relative to modules/templates
+            and static/themes, respectively. Uses "." as path separator, e.g.:
 
-            NB Only themes in modules/templates are supported now
+                settings.base.theme = "SAMBRO.AlertHub"
+
+            This is the default location of theme components, which can be
+            individually adjusted with theme_layouts, theme_styles and
+            theme_base settings if required.
         """
 
-        theme = self.base.get("theme", "default")
-        if "." in theme:
-            theme_location, theme = theme.split(".", 1)
-            # Result cached in response.s3 for compiled views
-            current.response.s3.theme_location = "%s/" % theme_location
-        else:
-            current.response.s3.theme_location = ""
+        theme = current.response.s3.theme
+        if not theme:
+            theme = self.set_theme()
+
         return theme
+
+    def get_theme_layouts(self):
+        """
+            The location of the layouts for the current theme:
+            - modules/templates/[theme_layouts]/layouts.py
+            - modules/templates/[theme_layouts]/views
+
+            => defaults to theme
+        """
+
+        layouts = current.response.s3.theme_layouts
+        if not layouts:
+            self.set_theme()
+            layouts = current.response.s3.theme_layouts
+        return layouts
+
+    def get_theme_styles(self):
+        """
+            The location of the theme styles:
+            - modules/templates/[theme_styles]/css.cfg
+            - static/themes/[theme_styles]/eden.min.css
+
+            => defaults to theme
+        """
+
+        styles = current.response.s3.theme_styles
+        if not styles:
+            self.set_theme()
+            styles = current.response.s3.theme_styles
+        return styles
+
+    def get_theme_base(self):
+        """
+            The location of the theme base styles (Foundation):
+            - static/themes/[theme_base]/foundation
+
+            => defaults to theme_styles
+        """
+
+        base = current.response.s3.theme_base
+        if not base:
+            self.set_theme()
+            base = current.response.s3.theme_base
+        return base
 
     def get_base_xtheme(self):
         """
@@ -685,7 +719,7 @@ class S3Config(Storage):
                 if row:
                     organisation_id = row.id
                 else:
-                    organisation_id = table.insert(name = name)
+                    organisation_id = table.insert(name = organisation_id)
         return organisation_id
 
     def get_auth_registration_requests_organisation_group(self):
@@ -2076,8 +2110,9 @@ class S3Config(Storage):
     def get_ui_label_permalink(self):
         """
             Label for the Permalink on dataTables
+            - set to None to disable
         """
-        return current.T(self.ui.get("label_permalink", "Link to this result"))
+        return self.ui.get("label_permalink", "Link to this result")
 
     def get_ui_label_postcode(self):
         """

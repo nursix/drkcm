@@ -39,6 +39,7 @@ __all__ = ("get_cap_options",
            "cap_alert_list_layout",
            "add_area_from_template",
            "cap_expirydate",
+           "cap_ImportAlert",
            "cap_AssignArea",
            "cap_AreaRepresent",
            "cap_CloneAlert",
@@ -47,19 +48,14 @@ __all__ = ("get_cap_options",
            #"cap_gis_location_xml_post_render",
            )
 
+import os
 import datetime
-#import json
 import urllib2 # Needed for quoting & error handling on fetch
 
 from collections import OrderedDict
-try:
-    from cStringIO import StringIO    # Faster, where available
-except:
-    from StringIO import StringIO
 
 from gluon import *
 from gluon.storage import Storage
-#from gluon.tools import fetch
 
 from ..s3 import *
 from s3layouts import S3PopupLink
@@ -351,7 +347,7 @@ class S3CAPModel(S3Model):
                            readable = False,
                            writable = True,
                            ),
-                     self.event_type_id(empty = False,
+                     self.event_type_id(#empty = False,
                                         ondelete = "SET NULL",
                                         label = T("Event Type"),
                                         comment = DIV(_class="tooltip",
@@ -390,11 +386,14 @@ $.filterOptionsS3({
                            default = "{}",
                            readable = False,
                            ),
-                     Field("identifier", unique=True, length=128,
+                     Field("identifier", unique=True, length=256,
                            default = self.generate_identifier,
                            label = T("Identifier"),
-                           requires = IS_MATCH(OIDPATTERN,
-                                               error_message=T("Cannot be empty and Must not include spaces, commas, or restricted characters (< and &).")),
+                           requires = [IS_LENGTH(256),
+                                       IS_MATCH(OIDPATTERN,
+                                                error_message=T("Cannot be empty and Must not include spaces, commas, or restricted characters (< and &)."),
+                                                ),
+                                       ],
                            # Dont Allow to change the identifier
                            writable = False,
                            readable = False,
@@ -611,7 +610,9 @@ $.filterOptionsS3({
                   context = {"location": "location.location_id",
                              },
                   create_onaccept = self.cap_alert_create_onaccept,
-                  deduplicate = S3Duplicate(primary=("identifier",)),
+                  deduplicate = S3Duplicate(primary = ("identifier", ),
+                                            secondary = ("sender", ),
+                                            ),
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,
                   list_layout = cap_alert_list_layout,
@@ -642,7 +643,7 @@ $.filterOptionsS3({
         # Custom Methods
         set_method("cap", "alert",
                    method = "import_feed",
-                   action = CAPImportFeed())
+                   action = cap_ImportAlert())
 
         set_method("cap", "alert",
                    method = "assign",
@@ -704,9 +705,12 @@ $.filterOptionsS3({
                            ),
                      Field("name", notnull=True, length=64, unique=True,
                            label = T("Name"),
-                           requires = [IS_NOT_ONE_OF(db, "%s.name" % tablename),
+                           requires = [IS_LENGTH(64),
+                                       IS_NOT_ONE_OF(db, "%s.name" % tablename),
                                        IS_MATCH('^[^"\']+$',
-                                               error_message=T('Name cannot be empty and Must not include " or (\')'))],
+                                               error_message=T('Name cannot be empty and Must not include " or (\')'),
+                                               ),
+                                       ],
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Name"),
                                                            T("The actual name for the warning priority, for eg. Typhoons in Philippines have five priority names (PSWS# 1, PSWS# 2, PSWS# 3, PSWS# 4 and PSWS# 5)"))),
@@ -854,7 +858,7 @@ $.filterOptionsS3({
                                          _title="%s|%s" % (T("The text denoting the type of the subject event of the alert message"),
                                                            T("If not specified, will the same as the Event Type."))),
                            ),
-                     self.event_type_id(empty = False,
+                     self.event_type_id(#empty = False,
                                         readable = False,
                                         ondelete = "SET NULL",
                                         label = T("Event Type"),
@@ -1343,9 +1347,11 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                            readable = False,
                            writable = False,
                            ),
-                     Field("name",
+                     Field("name", length=1024,
                            label = T("Area Description"),
-                           requires = IS_NOT_EMPTY(),
+                           requires = [IS_NOT_EMPTY(),
+                                       IS_LENGTH(1024),
+                                       ],
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("The affected area of the alert message"),
                                                            T("A text description of the affected area."))),
@@ -1827,75 +1833,97 @@ current.T("This combination of the 'Event Type', 'Urgency', 'Certainty' and 'Sev
             return
 
         db = current.db
-        atable = db.cap_alert
         itable = db.cap_info
 
-        info = db(itable.id == info_id).select(itable.language,
+        info = db(itable.id == info_id).select(itable.id,
                                                itable.alert_id,
+                                               itable.language,
+                                               itable.web,
                                                itable.event,
                                                itable.event_type_id,
                                                itable.event_code,
                                                itable.audience,
-                                               limitby=(0, 1)).first()
+                                               limitby = (0, 1),
+                                               ).first()
         if info:
             alert_id = info.alert_id
-            set_ = db(itable.id == info_id)
+
+            # Details to update in this info-record:
+            update = {}
+
             if alert_id and cap_alert_is_template(alert_id):
-                set_.update(is_template = True)
+                update["is_template"] = True
+
             if not info.event:
-                set_.update(event = current.db.cap_info.event_type_id.\
-                            represent(info.event_type_id))
-            event_code = info.event_code
-            #parameter = info.parameter
+                update["event"] = itable.event_type_id.represent(info.event_type_id)
+
             # For prepopulating
+            event_code = info.event_code
             if event_code and ("|{" in event_code or "||" in event_code):
-                fstring = json_formatter(event_code)
-                set_.update(event_code = fstring)
+                update["event_code"] = json_formatter(event_code)
+
+            # Unused:
+            #parameter = info.parameter
             #if parameter and ("|{" in parameter or "||" in parameter):
-            #    fstring = json_formatter(parameter)
-            #    set_.update(parameter = fstring)
+            #    update["parameter"] = json_formatter(parameter)
+
             audience = info.audience
             if not audience or audience == current.messages["NONE"]:
-                set_.update(audience = None)
-            if info.language == "en":
-                set_.update(language = "en-US")
+                update["audience"] = None
 
-            row = db(atable.id == alert_id).select(atable.scope, limitby=(0, 1)).first()
-            if row and row.scope == "Public":
-                fn = "public"
+            if info.language == "en":
+                update["language"] = "en-US"
+
+            if not info.web:
+                # Use the local alert URL for "web"
+                atable = current.s3db.cap_alert
+                row = db(atable.id == alert_id).select(atable.scope,
+                                                       limitby = (0, 1),
+                                                       ).first()
+                if row and row.scope == "Public":
+                    fn = "public"
+                else:
+                    fn = "alert"
+                web = "%s%s" % (current.deployment_settings.get_base_public_url(),
+                                URL(c="cap", f=fn, args=[alert_id]),
+                                )
+                update["web"] = web
             else:
-                fn = "alert"
-            web = "%s%s" % (current.deployment_settings.get_base_public_url(),
-                            URL(c="cap", f=fn, args=[alert_id]))
+                web = None
+
             form_vars_get = form_vars.get
-            form_effective = form_vars_get("effective", current.request.now)
+
+            # Defaults for relevance date fields
+            form_effective = form_vars_get("effective", current.request.utcnow)
             form_expires = form_vars_get("expires", cap_expirydate())
             form_onset = form_vars_get("onset", form_effective)
 
-            idata = {"priority"       : form_vars_get("priority", None),
-                     "urgency"        : form_vars_get("urgency", None),
-                     "severity"       : form_vars_get("severity", None),
-                     "certainty"      : form_vars_get("certainty", None),
+            update.update({"effective": form_effective,
+                           "expires": form_expires,
+                           "onset": form_onset,
+                           })
+
+            if update:
+                info.update_record(**update)
+
+            # Sync data in all other info-records of the same alert
+            idata = {"category"       : form_vars_get("category"),
+                     "certainty"      : form_vars_get("certainty"),
                      "effective"      : form_effective,
-                     "onset"          : form_onset,
+                     "event_type_id"  : form_vars_get("event_type_id"),
                      "expires"        : form_expires,
-                     "web"            : web,
-                     "event_type_id"  : form_vars_get("event_type_id", None),
-                     "category"       : form_vars_get("category", None),
-                     "response_type"  : form_vars_get("response_type", None),
+                     "onset"          : form_onset,
+                     "priority"       : form_vars_get("priority"),
+                     "response_type"  : form_vars_get("response_type"),
+                     "severity"       : form_vars_get("severity"),
+                     "urgency"        : form_vars_get("urgency"),
                      }
-            query = (itable.deleted != True) & \
-                    (itable.alert_id == alert_id)
-            rows = db(query).select(itable.id)
-            for row in rows:
-                if int(row.id) == int(info_id):
-                    row.update_record(web=web,
-                                      effective=form_effective,
-                                      expires=form_expires,
-                                      onset=form_onset,
-                                      )
-                else:
-                    row.update_record(**idata)
+            if web:
+                idata["web"] = web
+            query = (itable.alert_id == alert_id) & \
+                    (itable.id != info_id) & \
+                    (itable.deleted == False)
+            db(query).update(**idata)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2370,10 +2398,13 @@ class S3CAPHistoryModel(S3Model):
                      Field("event_type",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     Field("identifier", unique=True, length=128,
+                     Field("identifier", unique=True, length=256,
                            label = T("Identifier"),
-                           requires = IS_MATCH(OIDPATTERN,
-                                               error_message=T("Cannot be empty and Must not include spaces, commas, or restricted characters (< and &).")),
+                           requires = [IS_LENGTH(256),
+                                       IS_MATCH(OIDPATTERN,
+                                                error_message=T("Cannot be empty and Must not include spaces, commas, or restricted characters (< and &)."),
+                                                ),
+                                       ],
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("A unique identifier of the alert message"),
                                                            T("A number or string uniquely identifying this message, assigned by the sender. Must not include spaces, commas or restricted characters (< and &)."))),
@@ -4120,14 +4151,14 @@ def add_area_from_template(area_id, alert_id):
     return aid
 
 # =============================================================================
-class CAPImportFeed(S3Method):
+class cap_ImportAlert(S3Method):
     """
-        Import CAP alerts from a URL
+        Simple interactive CAP-XML Alert importer
+        - designed as REST method for the cap_alert resource
     """
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def apply_method(r, **attr):
+    def apply_method(self, r, **attr):
         """
             Apply method.
 
@@ -4135,7 +4166,7 @@ class CAPImportFeed(S3Method):
             @param attr: controller options for this request
         """
 
-        # Requires permission to create the alert
+        # Requires permission to create alerts
         authorised = current.auth.s3_has_permission("create", "cap_alert")
         if not authorised:
             r.unauthorised()
@@ -4145,12 +4176,10 @@ class CAPImportFeed(S3Method):
             T = current.T
             response = current.response
 
-            title = T("Import from Feed URL")
-
             fields = [Field("url",
                             label=T("URL"),
                             requires=[IS_NOT_EMPTY(),
-                                      IS_URL(),
+                                      IS_URL(mode="generic"),
                                       ],
                             comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("URL of the alert"),
@@ -4160,22 +4189,23 @@ class CAPImportFeed(S3Method):
                             label=T("Username"),
                             comment = DIV(_class="tooltip",
                                           _title="%s|%s" % (T("Username"),
-                                                            T("Optional username for HTTP Basic Authentication."))),
+                                                            T("Optional username for HTTP Authentication."))),
                             ),
                       Field("password",
                             label=T("Password"),
                             widget = S3PasswordWidget(),
                             comment = DIV(_class="tooltip",
                                           _title="%s|%s" % (T("Password"),
-                                                            T("Optional password for HTTP Basic Authentication."))),
+                                                            T("Optional password for HTTP Authentication."))),
                             ),
-                      Field("ignore_errors", "boolean",
-                            label=T("Ignore Errors?"),
-                            represent = s3_yes_no_represent,
-                            comment = DIV(_class="tooltip",
-                                          _title="%s|%s" % (T("Ignore Errors"),
-                                                            T("skip invalid record silently?"))),
-                            ),
+                      # TODO This is pointless:
+                      #Field("ignore_errors", "boolean",
+                      #      label=T("Ignore Errors?"),
+                      #      represent = s3_yes_no_represent,
+                      #      comment = DIV(_class="tooltip",
+                      #                    _title="%s|%s" % (T("Ignore Errors"),
+                      #                                      T("skip invalid record silently?"))),
+                      #      ),
                       ]
             labels, required = s3_mark_required(fields)
             response.s3.has_required = required
@@ -4186,68 +4216,284 @@ class CAPImportFeed(S3Method):
                                    labels = labels,
                                    separator = "",
                                    table_name = "import_alert", # Dummy table name
-                                   _id="importform",
+                                   _id = "importform",
                                    *fields
                                    )
 
             response.view = "create.html"
-            output = dict(title=title,
-                          form=form)
+            output = {"title": T("Import from Feed URL"),
+                      "form": form,
+                      }
 
             if form.accepts(r.post_vars,
                             current.session,
-                            formname="import_form"):
+                            formname = "import_form",
+                            ):
 
-                form_vars_get = form.vars.get
-                url = form_vars_get("url", None)
-                username = form_vars_get("user", None)
-                password = form_vars_get("password", None)
+                resource = r.resource
+                error, msg = self.accept(resource, form)
 
-                request = urllib2.Request(url)
-                if username and password:
-                    import base64
-                    base64string = base64.b64encode("%s:%s" % (username, password))
-                    request.add_header("Authorization", "Basic %s" % base64string)
-                try:
-                    stream = urllib2.urlopen(request).read()
-                except urllib2.URLError: # also catches urllib2.HTTPError
-                    response.error = str(sys.exc_info()[1])
-                    return output
-
-                File = StringIO(stream)
-                stylesheet = os.path.join(r.folder, "static", "formats",
-                                          "cap", "import.xsl")
-                resource = current.s3db.resource("cap_alert")
-                try:
-                    resource.import_xml(File,
-                                        stylesheet=stylesheet,
-                                        ignore_errors=form_vars_get("ignore_errors", False))
-                except:
-                    response.error = str(sys.exc_info()[1])
-                    return output
+                if error:
+                    response.error = error
                 else:
-                    if not resource.error:
-                        if len(resource.import_created):
+                    if msg:
+                        response.confirmation = msg
+
+                        # Get the ID of the newly created/updated cap_alert
+                        if resource.import_created:
                             alert_id = resource.import_created[0]
-                        elif len(resource.import_updated):
+                        elif resource.import_updated:
                             alert_id = resource.import_updated[0]
-                        response.confirmation = T("Alert successfully imported.")
-                        redirect(URL(c="cap", f="alert", args=[alert_id]))
+                        else:
+                            alert_id = None
+
+                        # Forward to a view of the alert
+                        if alert_id:
+                            self.next = URL(c="cap", f="alert", args=[alert_id])
+                        else:
+                            self.next = URL(c="cap", f="alert")
                     else:
-                        response.information = resource.error
-                        return output
-                    #import_count = resource.import_count
-                    #if import_count:
-                    #    response.confirmation = "%s %s" % \
-                    #        (import_count,
-                    #         T("Alerts successfully imported."))
-                    #else:
-                    #    response.information = T("No Alerts available.")
+                        response.warning = T("No CAP alerts found at URL")
 
             return output
 
         else:
             r.error(405, current.ERROR.BAD_METHOD)
+
+    # -------------------------------------------------------------------------
+    def accept(self, resource, form):
+        """
+            Accept the import-form
+
+            @param resource: the target import resource
+            @param form: the FORM
+            @returns: tuple (error, msg)
+                      error - error message (if an error occured)
+                      msg - confirmation message of the import
+        """
+
+        formvars_get = form.vars.get
+
+        url = formvars_get("url")
+        opener = self.opener(url,
+                             username = formvars_get("user"),
+                             password = formvars_get("password"),
+                             )
+
+        tree = version = error = None
+        try:
+            content = opener.open(url)
+        except urllib2.HTTPError, e:
+            # HTTP status
+            error = "HTTP %s: %s" % (e.code, e.read())
+        except urllib2.URLError, e:
+            # URL Error (network error)
+            error = "CAP source unavailable (%s)" % e.reason
+        except Exception:
+            # Other error (local error)
+            import sys
+            error = sys.exc_info()[1]
+        else:
+            # Try parse
+            tree, version, error = self.parse_cap(content)
+
+        if tree:
+            error, msg = self.import_cap(tree,
+                                         version = version,
+                                         resource = resource,
+                                         url = url,
+                                         # TODO Pointless:
+                                         #ignore_errors = formvars_get("ignore_errors", False),
+                                         )
+        else:
+            msg = None
+
+        return error, msg
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def import_cap(tree, version=None, resource=None, url=None, ignore_errors=False):
+        """
+            Import a CAP-XML element tree into a cap_alert resource
+
+            @param tree: the ElementTree
+            @param version: the detected CAP version (see parse_cap)
+            @param resource: the cap_alert resource to import to,
+                             will be instantiated if not passed in
+            @param url: the CAP-XML source URL
+            @param ignore_errors: skip invalid cap_alert records
+
+            TODO ignore_errors gives no benefit because it means to
+                 skip invalid master records, but a CAP-XML source
+                 can only contain one master record anyway - so the
+                 outcome would be the same
+        """
+
+        msg = None
+        s3db = current.s3db
+
+        # Version-specific import transformation stylesheet?
+        if version == "cap11":
+            filename = "import11.xsl"
+        else:
+            # Default CAP-1.2
+            filename = "import.xsl"
+        stylesheet = os.path.join(current.request.folder,
+                                  "static", "formats", "cap", filename,
+                                  )
+
+        # Set default for cap_info.web
+        itable = s3db.table("cap_info")
+        field = itable.web
+        field.default = url or None
+
+        # Import the CAP-XML
+        if resource is None:
+            resource = s3db.resource("cap_alert")
+        try:
+            resource.import_xml(tree,
+                                stylesheet = stylesheet,
+                                ignore_errors = ignore_errors,
+                                )
+        except (IOError, SyntaxError):
+            import sys
+            error = "CAP import error: %s" % sys.exc_info()[1]
+        else:
+            if resource.error:
+                # Import validation error
+                errors = current.xml.collect_errors(resource.error_tree)
+                error = "%s\n%s" % (resource.error, "\n".join(errors))
+            else:
+                error = None
+
+            if resource.import_count == 0:
+                if not error:
+                    # No error, but nothing imported either
+                    error = "No CAP alerts found in source"
+            else:
+                # Success
+                error = None
+                msg = "%s new CAP alerts imported, %s alerts updated" % (
+                        len(resource.import_created),
+                        len(resource.import_updated))
+
+        return error, msg
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def parse_cap(source):
+        """
+            Parse a CAP-XML source and detect the CAP version
+
+            @param source: the CAP-XML source
+
+            @returns: tuple (tree, version, error)
+                      - tree    = ElementTree of the CAP source
+                      - version = the detected CAP version
+                      - error   = error message if parsing failed, else None
+        """
+
+        version = error = None
+
+        xml = current.xml
+
+        # Attempt to parse the source
+        tree = xml.parse(source)
+
+        if not tree:
+            # Capture parser error
+            error = xml.error or "XML parsing failed"
+
+        else:
+            # All supported CAP versions and their namespace URIs
+            namespaces = (("cap11", "urn:oasis:names:tc:emergency:cap:1.1"),
+                          ("cap12", "urn:oasis:names:tc:emergency:cap:1.2"),
+                          )
+
+            # Default
+            version = "cap12"
+
+            root = tree.getroot()
+            for ns, uri in namespaces:
+                if root.xpath("/%s:alert[1]" % ns, namespaces = {ns: uri}):
+                    version = ns
+                    break
+
+        return tree, version, error
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def opener(url,
+               headers=None,
+               username=None,
+               password=None,
+               preemptive_auth=False,
+               proxy=None,
+               ):
+        """
+            Configure a HTTP opener to fetch CAP messages
+
+            @param url: the target URL
+            @param headers: HTTP request headers, list of tuples (header, value)
+            @param username: user name for auth
+            @param password: password for auth
+            @param preemptive_auth: send credentials without waiting for a
+                                    HTTP401 challenge
+            @param proxy: proxy URL (if required)
+
+            @returns: an OpenerDirector instance with proxy and
+                      auth handlers installed
+
+            @example:
+                url = "http://example.com/capfile.xml"
+                opener = self._opener(url, username="user", password="password")
+                content = opener.open(url)
+        """
+
+        # Configure opener headers
+        addheaders = []
+        if headers:
+            addheaders.extend(headers)
+
+        # Configure opener handlers
+        handlers = []
+
+        # Proxy handling
+        if proxy:
+            # Figure out the protocol from the URL
+            url_split = url.split("://", 1)
+            if len(url_split) == 2:
+                protocol = url_split[0]
+            else:
+                protocol = "http"
+            proxy_handler = urllib2.ProxyHandler({protocol: proxy})
+            handlers.append(proxy_handler)
+
+        # Authentication handling
+        if username and password:
+            # Add a 401 handler
+            passwd_manager = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            passwd_manager.add_password(realm = None,
+                                        uri = url,
+                                        user = username,
+                                        passwd = password,
+                                        )
+            auth_handler = urllib2.HTTPBasicAuthHandler(passwd_manager)
+            handlers.append(auth_handler)
+
+        # Create the opener
+        opener = urllib2.build_opener(*handlers)
+
+        # Pre-emptive basic auth
+        if preemptive_auth and username and password:
+            import base64
+            base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
+            addheaders.append(("Authorization", "Basic %s" % base64string))
+
+        if addheaders:
+            opener.addheaders = addheaders
+
+        return opener
 
 # -----------------------------------------------------------------------------
 class cap_AssignArea(S3Method):
@@ -4552,8 +4798,8 @@ def clone(r, record=None, **attr):
     location_table = s3db.cap_area_location
     tag_table = s3db.cap_area_tag
     resource_table = s3db.cap_resource
-    unwanted_fields = s3_all_meta_field_names()
-    unwanted_fields.extend(["id", "doc_id"])
+    unwanted_fields = ["id", "doc_id"]
+    unwanted_fields.extend(s3_all_meta_field_names())
     if record:
         unwanted_fields = ["id", "alert_id", "info_id", "is_template", "doc_id"]
     unwanted_fields = set(unwanted_fields)

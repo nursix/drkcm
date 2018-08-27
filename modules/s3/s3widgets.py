@@ -80,6 +80,7 @@ __all__ = ("S3ACLWidget",
            "s3_richtext_widget",
            "search_ac",
            "S3XMLContents",
+           "S3TagCheckboxWidget",
            "ICON",
            )
 
@@ -110,6 +111,7 @@ from s3datetime import S3Calendar, S3DateTime
 from s3utils import *
 from s3validators import *
 
+DEFAULT = lambda:None
 ogetattr = object.__getattribute__
 repr_select = lambda l: len(l.name) > 48 and "%s..." % l.name[:44] or l.name
 
@@ -1545,10 +1547,9 @@ class S3BooleanWidget(BooleanWidget):
         fields = self.fields
         click_to_show = self.click_to_show
 
-        default = dict(
-                        _type="checkbox",
-                        value=value,
-                    )
+        default = {"_type": "checkbox",
+                   "value": value,
+                   }
 
         attr = BooleanWidget._attributes(field, default, **attributes)
 
@@ -4092,14 +4093,25 @@ class S3LocationAutocompleteWidget(FormWidget):
 class S3LocationDropdownWidget(FormWidget):
     """
         Renders a dropdown for an Lx level of location hierarchy
-
     """
 
-    def __init__(self, level="L0", default=None, empty=False):
-        """ Set Defaults """
+    def __init__(self, level="L0", default=None, validate=False, empty=DEFAULT, blank=False):
+        """
+            Constructor
+
+            @param level: the Lx-level (as string)
+            @param default: the default location name
+            @param validate: validate input in-widget (special purpose)
+            @param empty: allow selection to be empty
+            @param blank: start without options (e.g. when options are
+                          Ajax-added later by filterOptionsS3)
+        """
+
         self.level = level
         self.default = default
+        self.validate = validate
         self.empty = empty
+        self.blank = blank
 
     def __call__(self, field, value, **attributes):
 
@@ -4107,9 +4119,13 @@ class S3LocationDropdownWidget(FormWidget):
         default = self.default
         empty = self.empty
 
+        opts = []
+        # Get locations
         s3db = current.s3db
         table = s3db.gis_location
-        if level:
+        if self.blank:
+            query = (table.id == value)
+        elif level:
             query = (table.deleted != True) & \
                     (table.level == level)
         else:
@@ -4118,27 +4134,40 @@ class S3LocationDropdownWidget(FormWidget):
         locations = current.db(query).select(table.name,
                                              table.id,
                                              cache=s3db.cache)
-        opts = []
+
+        # Build OPTIONs
         for location in locations:
             opts.append(OPTION(location.name, _value=location.id))
             if not value and default and location.name == default:
                 value = location.id
-        locations = locations.as_dict()
+
+        # Widget attributes
         attr = dict(attributes)
         attr["_type"] = "int"
         attr["value"] = value
-        attr_dropdown = OptionsWidget._attributes(field, attr)
-        requires = IS_IN_SET(locations)
-        if empty:
-            requires = IS_EMPTY_OR(requires)
-        attr_dropdown["requires"] = requires
+        attr = OptionsWidget._attributes(field, attr)
 
-        attr_dropdown["represent"] = \
-            lambda id: locations["id"]["name"] or current.messages.UNKNOWN_OPT
+        if self.validate:
+            # Validate widget input to enforce Lx subset
+            # - not normally needed (Field validation should suffice)
+            requires = IS_IN_SET(locations.as_dict())
+            if empty is DEFAULT:
+                # Introspect the field
+                empty = isinstance(field.requires, IS_EMPTY_OR)
+            if empty:
+                requires = IS_EMPTY_OR(requires)
 
-        return TAG[""](SELECT(*opts, **attr_dropdown),
-                       requires=field.requires
-                       )
+            # Skip in-widget validation on POST if inline
+            widget_id = attr.get("_id")
+            if widget_id and widget_id[:4] == "sub_":
+                from s3forms import SKIP_POST_VALIDATION
+                requires = SKIP_POST_VALIDATION(requires)
+
+            widget = TAG[""](SELECT(*opts, **attr), requires = requires)
+        else:
+            widget = SELECT(*opts, **attr)
+
+        return widget
 
 # =============================================================================
 class S3LocationLatLonWidget(FormWidget):
@@ -4823,11 +4852,12 @@ class S3LocationSelector(S3Selector):
 
         # Lx Dropdowns
         multiselect = settings.get_ui_multiselect_widget()
-        lx_rows = self._lx_selectors(fieldname,
+        lx_rows = self._lx_selectors(field,
+                                     fieldname,
                                      levels,
                                      labels,
-                                     required=required,
                                      multiselect=multiselect,
+                                     required=required,
                                      )
         components.update(lx_rows)
 
@@ -5339,20 +5369,22 @@ class S3LocationSelector(S3Selector):
 
     # -------------------------------------------------------------------------
     def _lx_selectors(self,
+                      field,
                       fieldname,
                       levels,
                       labels,
-                      required=False,
-                      multiselect=False):
+                      multiselect=False,
+                      required=False):
         """
             Render the Lx-dropdowns
 
+            @param field: the field (to construct the HTML Names)
             @param fieldname: the fieldname (to construct the HTML IDs)
             @param levels: tuple of levels in order, like ("L0", "L1", ...)
             @param labels: the labels for the hierarchy levels as dict {level:label}
-            @param required: whether selection is required,
             @param multiselect: Use multiselect-dropdowns (specify "search" to
                                 make the dropdowns searchable)
+            @param required: whether selection is required
 
             @return: a dict of components
                      {name: (label, widget, id, hidden)}
@@ -5372,9 +5404,13 @@ class S3LocationSelector(S3Selector):
         # 1st level is always hidden until populated
         hidden = True
 
+        _fieldname = fieldname.split("%s_" % field.tablename)[1]
+
         #T = current.T
         required_levels = self.required_levels
         for level in levels:
+
+            _name = "%s_%s" % (_fieldname, level)
 
             _id = "%s_%s" % (fieldname, level)
 
@@ -5384,6 +5420,7 @@ class S3LocationSelector(S3Selector):
             #placeholder = T("Select %(level)s") % {"level": label}
             placeholder = ""
             widget = SELECT(OPTION(placeholder, _value=""),
+                            _name = _name,
                             _id = _id,
                             _class = _class,
                             )
@@ -7896,21 +7933,16 @@ def s3_comments_widget(field, value, **attr):
         to be used by the s3.comments() & gis.desc_field Reusable fields
     """
 
-    if "_id" not in attr:
-        _id = "%s_%s" % (field._tablename, field.name)
-    else:
-        _id = attr["_id"]
+    _id = attr.get("_id", "%s_%s" % (field._tablename, field.name))
 
-    if "_name" not in attr:
-        _name = field.name
-    else:
-        _name = attr["_name"]
+    _name = attr.get("_name", field.name)
 
-    return TEXTAREA(_name=_name,
-                    _id=_id,
-                    _class="comments %s" % (field.type),
-                    value=value,
-                    requires=field.requires)
+    return TEXTAREA(_name = _name,
+                    _id = _id,
+                    _class = "comments %s" % (field.type),
+                    _placeholder = attr.get("_placeholder"),
+                    value = value,
+                    requires = field.requires)
 
 # =============================================================================
 def s3_richtext_widget(field, value):
@@ -8402,6 +8434,61 @@ class S3QuestionWidget(FormWidget):
                            _value=value)
 
         return (_label, widget, input_id)
+
+# =============================================================================
+class S3TagCheckboxWidget(FormWidget):
+    """
+        Simple widget to use a checkbox to toggle a string-type Field
+        between two values (default "Y"|"N").
+        Like an S3BooleanWidget but real Booleans cannot be stored in strings.
+        Designed for use with tag.value
+
+        NB it is usually better to use a boolean Field with a context-specific
+           representation function than this.
+
+        NB make sure the field validator accepts the configured on/off values,
+           e.g. IS_IN_SET(("Y", "N")) (also for consistency with imports)
+    """
+
+    def __init__(self, on="Y", off="N"):
+        """
+            Constructor
+
+            @param on: the value of the tag for checkbox=on
+            @param off: the value of the tag for checkbox=off
+        """
+
+        self.on = on
+        self.off = off
+
+    # -------------------------------------------------------------------------
+    def __call__(self, field, value, **attributes):
+        """
+            Widget construction
+
+            @param field: the Field
+            @param value: the current (or default) value
+            @param attributes: overrides for default attributes
+        """
+
+        defaults = {"_type": "checkbox",
+                    "value": str(value) == self.on,
+                    "requires": self.requires,
+                    }
+        attr = self._attributes(field, defaults, **attributes)
+        return INPUT(**attr)
+
+    # -------------------------------------------------------------------------
+    def requires(self, value):
+        """
+            Input-validator to convert the checkbox value into the
+            corresponding tag value
+
+            @param value: the checkbox value ("on" if checked)
+        """
+
+        v = self.on if value == "on" else self.off
+        return v, None
 
 # =============================================================================
 class ICON(I):
