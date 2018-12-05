@@ -50,11 +50,13 @@ __all__ = ("DVRCaseModel",
            "dvr_ActivityRepresent",
            "dvr_CaseActivityRepresent",
            "dvr_DocEntityRepresent",
+           "dvr_ResponseThemeRepresent",
            "dvr_AssignMethod",
            "dvr_case_default_status",
            "dvr_case_activity_default_status",
            "dvr_case_status_filter_opts",
            "dvr_response_default_status",
+           "dvr_response_status_colors",
            "dvr_case_household_size",
            "dvr_due_followups",
            "dvr_get_flag_instructions",
@@ -98,6 +100,7 @@ class DVRCaseModel(S3Model):
         settings = current.deployment_settings
 
         crud_strings = current.response.s3.crud_strings
+        NONE = current.messages["NONE"]
 
         configure = self.configure
         define_table = self.define_table
@@ -620,6 +623,11 @@ class DVRCaseModel(S3Model):
                      s3_date("arrival_date",
                              label = T("Arrival Date"),
                              ),
+                     Field("lodging", length=128,
+                           label = T("Lodging"),
+                           represent = lambda v: v if v else NONE,
+                           requires = IS_LENGTH(128),
+                           ),
                      s3_date("on_site_from",
                              label = T("On-site from"),
                              ),
@@ -1099,17 +1107,28 @@ class DVRNeedsModel(S3Model):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     service_id(label = T("Service Type"),
-                                ondelete = "SET NULL",
-                                readable = service_type,
-                                writable = service_type,
-                                ),
                      # This form of hierarchy may not work on all Databases:
                      Field("parent", "reference dvr_need",
                            label = T("Subtype of"),
                            ondelete = "RESTRICT",
                            readable = hierarchical_needs,
                            writable = hierarchical_needs,
+                           ),
+                     service_id(label = T("Service Type"),
+                                ondelete = "SET NULL",
+                                readable = service_type,
+                                writable = service_type,
+                                ),
+                     # Activate in template as needed:
+                     self.org_organisation_id(readable = False,
+                                              writable = False,
+                                              ),
+                     Field("protection", "boolean",
+                           default = False,
+                           label = T("Protection Need"),
+                           represent = s3_yes_no_represent,
+                           readable = False,
+                           writable = False,
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -1127,7 +1146,9 @@ class DVRNeedsModel(S3Model):
         # Table configuration
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",),
-                                            secondary = ("parent",),
+                                            secondary = ("parent",
+                                                         "organisation_id",
+                                                         ),
                                             ),
                   hierarchy = hierarchy,
                   )
@@ -1412,6 +1433,8 @@ class DVRResponseModel(S3Model):
         configure = self.configure
 
         hierarchical_response_types = settings.get_dvr_response_types_hierarchical()
+        themes_sectors = settings.get_dvr_response_themes_sectors()
+        themes_needs = settings.get_dvr_response_themes_needs()
 
         NONE = current.messages["NONE"]
 
@@ -1420,10 +1443,17 @@ class DVRResponseModel(S3Model):
         #
         tablename = "dvr_response_theme"
         define_table(tablename,
+                     self.org_organisation_id(),
                      Field("name",
+                           label = T("Theme"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     self.org_organisation_id(),
+                     self.dvr_need_id(readable = themes_needs,
+                                      writable = themes_needs,
+                                      ),
+                     self.org_sector_id(readable = themes_sectors,
+                                        writable = themes_sectors,
+                                        ),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1450,12 +1480,11 @@ class DVRResponseModel(S3Model):
         )
 
         # Reusable field
-        represent = S3Represent(lookup = tablename,
-                                multiple = True,
-                                translate = True,
-                                )
+        themes_represent = dvr_ResponseThemeRepresent(multiple = True,
+                                                      translate = True,
+                                                      )
         requires = IS_ONE_OF(db, "%s.id" % tablename,
-                             represent,
+                             themes_represent,
                              multiple = True,
                              )
         if settings.get_dvr_response_themes_org_specific():
@@ -1469,7 +1498,7 @@ class DVRResponseModel(S3Model):
                                 "list:reference %s" % tablename,
                                 label = T("Themes"),
                                 ondelete = "RESTRICT",
-                                represent = represent,
+                                represent = themes_represent,
                                 requires = IS_EMPTY_OR(requires),
                                 sortby = "name",
                                 widget = S3MultiSelectWidget(header = False,
@@ -1569,6 +1598,10 @@ class DVRResponseModel(S3Model):
                            default = False,
                            label = T("Default Closure Status"),
                            ),
+                     Field("color",
+                           requires = IS_HTML_COLOUR(),
+                           widget = S3ColorPickerWidget(),
+                           ),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1620,11 +1653,19 @@ class DVRResponseModel(S3Model):
         use_response_types = settings.get_dvr_response_types()
         use_response_themes = settings.get_dvr_response_themes()
 
+        use_due_date = settings.get_dvr_response_due_date()
+
         tablename = "dvr_response_action"
         define_table(tablename,
+                     # Beneficiary
+                     self.pr_person_id(
+                         label = CASE,
+                         widget = S3PersonAutocompleteWidget(controller="dvr"),
+                         empty = False,
+                         ),
                      self.dvr_case_activity_id(
                          empty = False,
-                         label = CASE,
+                         label = T("Activity"),
                          ondelete = "CASCADE",
                          writable = False,
                          ),
@@ -1642,8 +1683,11 @@ class DVRResponseModel(S3Model):
                          ),
                      s3_date("date_due",
                              label = T("Date Due"),
+                             readable = use_due_date,
+                             writable = use_due_date,
                              ),
-                     s3_date(label = T("Date Actioned"),
+                     s3_date(label = T("Date Actioned") if use_due_date else T("Date"),
+                             default = None if use_due_date else "now",
                              ),
                      self.hrm_human_resource_id(),
                      response_status_id(),
@@ -1664,11 +1708,13 @@ class DVRResponseModel(S3Model):
         list_fields = ["case_activity_id",
                        "comments",
                        "human_resource_id",
-                       "date_due",
+                       #"date_due",
                        "date",
                        "hours",
                        "status_id",
                        ]
+        if use_due_date:
+            list_fields[3:3] = ["date_due"]
         if use_response_types:
             list_fields[1:1] = ["response_type_id"]
         if use_response_themes:
@@ -1692,6 +1738,11 @@ class DVRResponseModel(S3Model):
         else:
             response_type_filter = None
 
+        if use_due_date:
+            due_filter = S3DateFilter("date_due")
+        else:
+            due_filter = None
+
         filter_widgets = [S3TextFilter(["case_activity_id$person_id$pe_label",
                                         "case_activity_id$person_id$first_name",
                                         "case_activity_id$person_id$middle_name",
@@ -1702,25 +1753,28 @@ class DVRResponseModel(S3Model):
                                        ),
                           S3OptionsFilter("status_id",
                                           options = lambda: \
-                                              s3_get_filter_opts("dvr_response_status"),
+                                                    s3_get_filter_opts("dvr_response_status"),
                                           cols = 3,
                                           translate = True,
                                           ),
-                          S3DateFilter("date_due"),
+                          due_filter,
                           response_type_filter,
                           ]
 
         # CRUD Form
         type_field = "response_type_id" if use_response_types else None
         theme_field = "response_theme_ids" if use_response_themes else None
-        crud_form = S3SQLCustomForm("case_activity_id",
+        due_field = "date_due" if use_due_date else None
+        crud_form = S3SQLCustomForm("person_id",
+                                    "case_activity_id",
                                     theme_field,
                                     type_field,
                                     "comments",
                                     "human_resource_id",
-                                    "date_due",
+                                    due_field,
                                     "date",
                                     "status_id",
+                                    "hours",
                                     )
 
         # Table Configuration
@@ -1728,6 +1782,7 @@ class DVRResponseModel(S3Model):
                   crud_form = crud_form,
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,
+                  onaccept = self.response_action_onaccept,
                   )
 
         # CRUD Strings
@@ -1744,6 +1799,29 @@ class DVRResponseModel(S3Model):
             msg_list_empty = T("No Actions currently registered"),
         )
 
+
+        # ---------------------------------------------------------------------
+        # Response Action <=> Theme link table
+        #   - for filtering/reporting by extended theme attributes
+        #   - not exposed directly, populated onaccept from response_theme_ids
+        #
+        theme_represent = S3Represent(lookup = tablename,
+                                      translate = True,
+                                      )
+        tablename = "dvr_response_action_theme"
+        define_table(tablename,
+                     Field("action_id", "reference dvr_response_action",
+                           ondelete = "CASCADE",
+                           requires = IS_ONE_OF(db, "dvr_response_action.id"),
+                           ),
+                     Field("theme_id", "reference dvr_response_theme",
+                           ondelete = "CASCADE",
+                           represent = theme_represent,
+                           requires = IS_ONE_OF(db, "dvr_response_theme.id",
+                                                theme_represent,
+                                                ),
+                           ),
+                     *s3_meta_fields())
 
         # ---------------------------------------------------------------------
         # Response Types <=> Case Activities link table
@@ -1764,6 +1842,18 @@ class DVRResponseModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
+        return {}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def defaults():
+        """ Safe defaults for names in case the module is disabled """
+
+        #dummy = S3ReusableField("dummy_id", "integer",
+                                #readable = False,
+                                #writable = False,
+                                #)
+
         return {}
 
     # -------------------------------------------------------------------------
@@ -1837,15 +1927,135 @@ class DVRResponseModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def defaults():
-        """ Safe defaults for names in case the module is disabled """
+    def response_action_onaccept(form):
+        """
+            Onaccept routine for response actions
+                - update theme links from inline response_theme_ids
+        """
 
-        #dummy = S3ReusableField("dummy_id", "integer",
-                                #readable = False,
-                                #writable = False,
-                                #)
+        form_vars = form.vars
+        try:
+            record_id = form_vars.id
+        except AttributeError:
+            record_id = None
+        if not record_id:
+            return
 
-        return {}
+        db = current.db
+        s3db = current.s3db
+
+        # Get the record
+        atable = s3db.dvr_response_action
+        query = (atable.id == record_id)
+        record = db(query).select(atable.id,
+                                  atable.person_id,
+                                  atable.case_activity_id,
+                                  atable.response_theme_ids,
+                                  atable.human_resource_id,
+                                  limitby = (0, 1),
+                                  ).first()
+        if not record:
+            return
+
+        settings = current.deployment_settings
+
+        theme_ids = record.response_theme_ids
+        if not theme_ids:
+            theme_ids = []
+
+        if not record.person_id:
+            # Inherit the person_id from the case activity (if any)
+            case_activity_id = record.case_activity_id
+            if case_activity_id:
+                catable = s3db.dvr_case_activity
+                query = (catable.id == case_activity_id)
+                case_activity = db(query).select(catable.person_id,
+                                                 limitby = (0, 1),
+                                                 ).first()
+                if case_activity:
+                    record.update_record(person_id = case_activity.person_id)
+
+        elif settings.get_dvr_response_activity_autolink():
+
+            # Automatically link the response action to a case activity
+            # (using matching needs)
+
+            # Get all needs of the response
+            ttable = s3db.dvr_response_theme
+            if theme_ids:
+                query = ttable.id.belongs(theme_ids)
+                themes = db(query).select(ttable.need_id,
+                                          groupby = ttable.need_id,
+                                          )
+                need_ids = set(theme.need_id for theme in themes)
+            else:
+                need_ids = None
+
+            if not need_ids:
+                # Response is not linked to any needs
+                # => Remove activity link
+                activity_id = None
+
+            else:
+                catable = s3db.dvr_case_activity
+
+                activity_id = record.case_activity_id
+                if activity_id:
+                    # Verify that the case activity's need matches person+theme
+                    query = (catable.id == activity_id) & \
+                            (catable.person_id == record.person_id) & \
+                            (catable.deleted == False)
+                    activity = db(query).select(catable.need_id,
+                                                limitby = (0, 1),
+                                                ).first()
+                    if not activity or activity.need_id not in need_ids:
+                        activity_id = None
+
+                if not activity_id:
+                    # Find the latest activity that matches person+theme
+                    query = (catable.person_id == record.person_id) & \
+                            (catable.need_id.belongs(need_ids)) & \
+                            (catable.deleted == False)
+                    activity = db(query).select(catable.id,
+                                                orderby = ~catable.start_date,
+                                                limitby = (0, 1),
+                                                ).first()
+                    if activity:
+                        # Link to this activity
+                        activity_id = activity.id
+                    elif len(need_ids) == 1:
+                        # Create an activity for the case
+                        activity_id = catable.insert(
+                                        person_id = record.person_id,
+                                        need_id = list(need_ids)[0],
+                                        start_date = current.request.utcnow,
+                                        human_resource_id = record.human_resource_id,
+                                        )
+            # Update the activity link
+            record.update_record(case_activity_id = activity_id)
+
+        # Get all selected themes
+        selected = set(theme_ids)
+
+        # Get all linked themes
+        ltable = s3db.dvr_response_action_theme
+        query = (ltable.action_id == record_id) & \
+                (ltable.deleted == False)
+        links = db(query).select(ltable.theme_id)
+        linked = set(link.theme_id for link in links)
+
+        # Remove obsolete theme links
+        obsolete = linked - selected
+        if obsolete:
+            query &= ltable.theme_id.belongs(obsolete)
+            db(query).delete()
+
+        # Add links for newly selected themes
+        added = selected - linked
+        for theme_id in added:
+            ltable.insert(action_id = record_id,
+                          theme_id = theme_id,
+                          )
 
 # =============================================================================
 class DVRCaseActivityModel(S3Model):
@@ -2351,8 +2561,10 @@ class DVRCaseActivityModel(S3Model):
         # Case Activity (case-specific)
         #
         twoweeks = current.request.utcnow + datetime.timedelta(days=14)
+
         multiple_needs = settings.get_dvr_case_activity_needs_multiple()
         use_status = settings.get_dvr_case_activity_use_status()
+        follow_up = settings.get_dvr_case_activity_follow_up()
 
         # Priority options
         priority_opts = [#(0, T("Urgent")),
@@ -2492,13 +2704,17 @@ class DVRCaseActivityModel(S3Model):
 
                      # Follow-up
                      Field("followup", "boolean",
-                           default = True,
+                           default = True if follow_up else None,
                            label = T("Follow up"),
                            represent = s3_yes_no_represent,
+                           readable = follow_up,
+                           writable = follow_up,
                            ),
                      s3_date("followup_date",
-                             default = twoweeks,
+                             default = twoweeks if follow_up else None,
                              label = T("Date for Follow-up"),
+                             readable = follow_up,
+                             writable = follow_up,
                              ),
 
                      # Status, type of exit
@@ -2586,10 +2802,10 @@ class DVRCaseActivityModel(S3Model):
                        "need_details",
                        "emergency",
                        "activity_details",
-                       "followup",
-                       "followup_date",
                        "completed",
                        ]
+        if follow_up:
+            list_fields[-1:-1] = ["followup", "followup_date"]
 
         # Filter widgets
         filter_widgets = [S3TextFilter(["person_id$pe_label",
@@ -2619,31 +2835,33 @@ class DVRCaseActivityModel(S3Model):
                                                      },
                                           cols = 2,
                                           ),
-                          S3OptionsFilter("followup",
-                                          label = T("Follow-up required"),
-                                          options = {True: T("Yes"),
-                                                     False: T("No"),
-                                                     },
-                                          cols = 2,
-                                          hidden = True,
-                                          ),
-                          S3DateFilter("followup_date",
-                                       cols = 2,
-                                       hidden = True,
-                                       ),
                           ]
+        if follow_up:
+            filter_widgets.extend([S3OptionsFilter("followup",
+                                                   label = T("Follow-up required"),
+                                                   options = {True: T("Yes"),
+                                                              False: T("No"),
+                                                              },
+                                                   cols = 2,
+                                                   hidden = True,
+                                                   ),
+                                   S3DateFilter("followup_date",
+                                                cols = 2,
+                                                hidden = True,
+                                                ),
+                                   ])
 
         if service_type:
-            filter_widgets.insert(3, S3OptionsFilter("service_id",
-                                                     ))
+            filter_widgets.insert(3, S3OptionsFilter("service_id"))
 
         # Report options
         axes = [need_field,
                 (T("Case Status"), "case_id$status_id"),
                 "emergency",
-                "followup",
                 "completed",
                 ]
+        if follow_up:
+            axes.insert(-1, "followup")
         if service_type:
             axes.insert(2, "service_id")
 
@@ -3266,6 +3484,10 @@ class DVRCaseAppointmentModel(S3Model):
                                          ),
                      s3_date(label = T("Planned on"),
                              ),
+                     # Activate in template as needed:
+                     self.hrm_human_resource_id(readable=False,
+                                                writable=False,
+                                                ),
                      Field("status", "integer",
                            default = 1, # Planning
                            requires = IS_IN_SET(appointment_status_opts,
@@ -5585,17 +5807,46 @@ def dvr_response_default_status():
     default = field.default
     if not default:
 
-        # Look up the default status
         stable = s3db.dvr_response_status
-        query = (stable.is_default == True) & \
-                (stable.deleted != True)
-        row = current.db(query).select(stable.id, limitby=(0, 1)).first()
+
+        if current.deployment_settings.get_dvr_response_planning():
+            # Actions are planned ahead, so initial status by default
+            query = (stable.is_default == True)
+        else:
+            # Actions are documented in hindsight, so closed by default
+            query = (stable.is_default_closure == True)
+
+        # Look up the default status
+        query = query & (stable.deleted != True)
+        row = current.db(query).select(stable.id,
+                                       cache = s3db.cache,
+                                       limitby = (0, 1),
+                                       ).first()
 
         if row:
             # Set as field default in responses table
             default = field.default = row.id
 
     return default
+
+# =============================================================================
+def dvr_response_status_colors(resource, selector):
+    """
+        Get colors for response statuses
+
+        @param resource: the S3Resource the caller is looking at
+        @param selector: the Field selector (usually "status_id")
+
+        @returns: a dict with colors {field_value: "#RRGGBB", ...}
+    """
+
+    table = current.s3db.dvr_response_status
+    query = (table.color != None)
+
+    rows = current.db(query).select(table.id,
+                                    table.color,
+                                    )
+    return {row.id: ("#%s" % row.color) for row in rows if row.color}
 
 # =============================================================================
 def dvr_case_household_size(group_id):
@@ -5802,13 +6053,101 @@ class dvr_ActivityRepresent(S3Represent):
         return A(v, _href = url)
 
 # =============================================================================
+class dvr_ResponseThemeRepresent(S3Represent):
+    """ Representation of response themes """
+
+    def __init__(self, multiple=False, translate=True, show_need=False):
+
+        super(dvr_ResponseThemeRepresent, self).__init__(
+                                                lookup = "dvr_response_theme",
+                                                multiple = multiple,
+                                                translate = translate,
+                                                )
+        self.show_need = show_need
+
+    # -------------------------------------------------------------------------
+    def lookup_rows(self, key, values, fields=None):
+        """
+            Custom rows lookup
+
+            @param key: the key Field
+            @param values: the values
+            @param fields: unused (retained for API compatibility)
+        """
+
+        table = self.table
+
+        count = len(values)
+        if count == 1:
+            query = (key == values[0])
+        else:
+            query = key.belongs(values)
+
+        if self.show_need:
+            ntable = current.s3db.dvr_need
+            left = ntable.on(ntable.id == table.need_id)
+            rows = current.db(query).select(table.id,
+                                            table.name,
+                                            ntable.id,
+                                            ntable.name,
+                                            left = left,
+                                            limitby = (0, count),
+                                            )
+        else:
+            rows = current.db(query).select(table.id,
+                                            table.name,
+                                            limitby = (0, count),
+                                            )
+        self.queries += 1
+
+        return rows
+
+    # -------------------------------------------------------------------------
+    def represent_row(self, row):
+        """
+            Represent a row
+
+            @param row: the Row
+        """
+
+        T = current.T
+        translate = self.translate
+
+        if self.show_need:
+
+            theme = row.dvr_response_theme.name
+            if theme:
+                theme = T(theme) if translate else theme
+            else:
+                theme = self.none
+
+            need = row.dvr_need.name
+            if need:
+                need = T(need) if translate else need
+
+            if need:
+                reprstr = "%s: %s" % (need, theme)
+            else:
+                reprstr = theme
+        else:
+            theme = row.name
+            if theme:
+                reprstr = T(theme) if translate else theme
+            else:
+                reprstr = self.none
+
+        return reprstr
+
+# =============================================================================
 class dvr_CaseActivityRepresent(S3Represent):
     """ Representation of case activity IDs """
 
-    def __init__(self, show_link=False, fmt=None):
+    def __init__(self, show_as=None, fmt=None, show_link=False, linkto=None):
         """
             Constructor
 
+            @param show_as: alternative representations:
+                            "beneficiary"|"need"|"subject"
             @param show_link: show representation as clickable link
             @param fmt: string format template for person record
         """
@@ -5816,7 +6155,13 @@ class dvr_CaseActivityRepresent(S3Represent):
         super(dvr_CaseActivityRepresent, self).__init__(
                                                 lookup = "dvr_case_activity",
                                                 show_link = show_link,
+                                                linkto = linkto,
                                                 )
+
+        if show_as is None:
+            self.show_as = "beneficiary"
+        else:
+            self.show_as = show_as
 
         if fmt:
             self.fmt = fmt
@@ -5842,17 +6187,37 @@ class dvr_CaseActivityRepresent(S3Represent):
             query = key.belongs(values)
 
         ptable = current.s3db.pr_person
-        left = ptable.on(ptable.id == table.person_id)
+        left = [ptable.on(ptable.id == table.person_id)]
 
-        rows = current.db(query).select(table.id,
-                                        ptable.id,
-                                        ptable.pe_label,
-                                        ptable.first_name,
-                                        ptable.middle_name,
-                                        ptable.last_name,
-                                        left = left,
-                                        limitby = (0, count),
-                                        )
+        show_as = self.show_as
+        if show_as == "beneficiary":
+            rows = current.db(query).select(table.id,
+                                            ptable.id,
+                                            ptable.pe_label,
+                                            ptable.first_name,
+                                            ptable.middle_name,
+                                            ptable.last_name,
+                                            left = left,
+                                            limitby = (0, count),
+                                            )
+
+        elif show_as == "need":
+            ntable = current.s3db.dvr_need
+            left.append(ntable.on(ntable.id == table.need_id))
+            rows = current.db(query).select(table.id,
+                                            ptable.id,
+                                            ntable.name,
+                                            left = left,
+                                            limitby = (0, count),
+                                            )
+        else:
+            rows = current.db(query).select(table.id,
+                                            table.subject,
+                                            ptable.id,
+                                            left = left,
+                                            limitby = (0, count),
+                                            )
+
         self.queries += 1
 
         return rows
@@ -5865,13 +6230,27 @@ class dvr_CaseActivityRepresent(S3Represent):
             @param row: the Row
         """
 
-        beneficiary = dict(row.pr_person)
+        show_as = self.show_as
+        if show_as == "beneficiary":
+            beneficiary = dict(row.pr_person)
 
-        # Do not show "None" for no label
-        if beneficiary.get("pe_label") is None:
-            beneficiary["pe_label"] = ""
+            # Do not show "None" for no label
+            if beneficiary.get("pe_label") is None:
+                beneficiary["pe_label"] = ""
 
-        return self.fmt % beneficiary
+            return self.fmt % beneficiary
+
+        elif show_as == "need":
+
+            need = row.dvr_need.name
+            if self.translate:
+                need = current.T(need) if need else self.none
+
+            return need
+
+        else:
+
+            return row.dvr_case_activity.subject
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):

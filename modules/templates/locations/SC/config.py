@@ -15,10 +15,12 @@ def config(settings):
 
     # Uncomment to restrict to specific country/countries
     settings.gis.countries.append("SC")
+    # Disable the Postcode selector in the LocationSelector
+    settings.gis.postcode_selector = False
 
     # L10n (Localization) settings
-    #settings.L10n.languages["fr"] = "French"
-    #settings.L10n.languages["crs"] = "Seychellois Creole"
+    settings.L10n.languages["fr"] = "French"
+    settings.L10n.languages["crs"] = "Seychellois Creole"
     # Default Language (put this in custom template if-required)
     #settings.L10n.default_language = "crs"
     # Default timezone for users

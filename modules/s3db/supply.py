@@ -480,7 +480,7 @@ $.filterOptionsS3({
         supply_item_represent = supply_ItemRepresent(show_link = True)
 
         # Reusable Field
-        supply_item_tootip = T("Type the name of an existing catalog item OR Click 'Create Item' to add an item which is not in the catalog.")
+        supply_item_tooltip = T("Type the name of an existing catalog item OR Click 'Create Item' to add an item which is not in the catalog.")
         supply_item_id = S3ReusableField("item_id",
             "reference %s" % tablename, # 'item_id' for backwards-compatibility
             label = T("Item"),
@@ -496,7 +496,7 @@ $.filterOptionsS3({
                                   f = "item",
                                   label = ADD_ITEM,
                                   title = T("Item"),
-                                  tooltip = supply_item_tootip,
+                                  tooltip = supply_item_tooltip,
                                   ),
             )
 
@@ -830,7 +830,7 @@ $.filterOptionsS3({
                                                           f = "item",
                                                           label = ADD_ITEM,
                                                           title = T("Item"),
-                                                          tooltip = supply_item_tootip,
+                                                          tooltip = supply_item_tooltip,
                                                           vars = {"child": "alt_item_id"
                                                                   },
                                                           ),
@@ -2528,6 +2528,20 @@ def supply_item_controller():
                 # field = r.table.kit
                 # field.default = True
                 # field.readable = field.writable = False
+
+        elif r.get_vars.get("caller") in ("event_asset_item_id", "event_scenario_asset_item_id"):
+            # Category is mandatory
+            f = s3db.supply_item.item_category_id
+            f.requires = f.requires.other
+            # Need to tell Item Category controller that new categories must be 'Can be Assets'
+            ADD_ITEM_CATEGORY = s3.crud_strings["supply_item_category"].label_create
+            f.comment = S3PopupLink(c = "supply",
+                                    f = "item_category",
+                                    vars = {"assets": 1},
+                                    label = ADD_ITEM_CATEGORY,
+                                    title = current.T("Item Category"),
+                                    tooltip = ADD_ITEM_CATEGORY,
+                                    )
 
         elif r.representation == "xls":
             # Use full Category names in XLS output

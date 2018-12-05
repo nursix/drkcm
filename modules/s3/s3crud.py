@@ -45,11 +45,12 @@ except ImportError:
 
 from gluon import current, redirect, HTTP, URL, \
                   A, DIV, FORM, INPUT, TABLE, TD, TR, XML
+from gluon.contenttype import contenttype
 from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from s3datetime import S3DateTime
+from s3datetime import S3DateTime, s3_decode_iso_datetime
 from s3export import S3Exporter
 from s3forms import S3SQLDefaultForm
 from s3rest import S3Method
@@ -304,6 +305,11 @@ class S3CRUD(S3Method):
                         except KeyError:
                             import sys
                             r.error(404, sys.exc_info()[1])
+
+            # Organizer
+            organizer = get_vars.get("organizer")
+            if organizer:
+                self._set_organizer_dates(organizer)
 
             # Copy record
             from_table = None
@@ -811,6 +817,21 @@ class S3CRUD(S3Method):
                 tooltip = None
 
             output = exporter(resource, tooltip=tooltip)
+
+        elif representation == "card":
+
+            if not resource.get_config("pdf_card_layout"):
+                # This format is not supported for this resource
+                r.error(415, current.ERROR.BAD_FORMAT)
+
+            pagesize = resource.get_config("pdf_card_pagesize")
+            output = S3Exporter().pdfcard(resource,
+                                          pagesize = pagesize,
+                                          )
+
+            disposition = "attachment; filename=\"%s_card.pdf\"" % resource.name
+            response.headers["Content-Type"] = contenttype(".pdf")
+            response.headers["Content-disposition"] = disposition
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
@@ -1381,6 +1402,23 @@ class S3CRUD(S3Method):
                 return S3Notifications.send(r, resource)
             else:
                 r.error(405, current.ERROR.BAD_METHOD)
+
+        elif representation == "card":
+            if not resource.get_config("pdf_card_layout"):
+                # This format is not supported for this resource
+                r.error(415, current.ERROR.BAD_FORMAT)
+
+            pagesize = resource.get_config("pdf_card_pagesize")
+            output = S3Exporter().pdfcard(resource,
+                                          pagesize = pagesize,
+                                          )
+
+            response = current.response
+            disposition = "attachment; filename=\"%s_cards.pdf\"" % resource.name
+            response.headers["Content-Type"] = contenttype(".pdf")
+            response.headers["Content-disposition"] = disposition
+
+            return output
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
@@ -2536,7 +2574,7 @@ class S3CRUD(S3Method):
 
         link = dict(attr)
         link["label"] = s3_str(label)
-        link["url"] = url
+        link["url"] = url if url else ""
         if icon and current.deployment_settings.get_ui_use_button_icons():
             link["icon"] = ICON.css_class(icon)
         if "_class" not in link:
@@ -2773,7 +2811,7 @@ class S3CRUD(S3Method):
 
         xml = current.xml
 
-        prefix, name, table, tablename = r.target()
+        table = r.target()[2]
 
         record = r.record
         resource = r.resource
@@ -3008,7 +3046,7 @@ class S3CRUD(S3Method):
 
         s3db = current.s3db
 
-        prefix, name, table, tablename = r.target()
+        prefix, name, _, tablename = r.target()
         permit = current.auth.s3_has_permission
 
         if authorised is None:
@@ -3043,6 +3081,7 @@ class S3CRUD(S3Method):
                     url = linkto % record_id
             else:
                 get_vars = self._linkto_vars(r)
+
                 if r.component:
                     if r.link and not r.actuate_link():
                         # We're rendering a link table here, but must
@@ -3059,34 +3098,25 @@ class S3CRUD(S3Method):
                             # record_id, so we replace that too just in case
                             # the action button cannot be displayed
                             record_id = r.link.component_id(r.id, record_id)
+
                     if c and f:
                         args = [record_id]
                     else:
                         c = r.controller
                         f = r.function
                         args = [r.id, r.component_name, record_id]
-                    if update:
-                        url = str(URL(r=r, c=c, f=f,
-                                      args = args + ["update"],
-                                      vars = get_vars
-                                      ))
-                    else:
-                        url = str(URL(r=r, c=c, f=f,
-                                      args = args + ["read"],
-                                      vars = get_vars
-                                      ))
                 else:
                     args = [record_id]
+
+                # Add explicit open-method if required
+                if update != "auto":
                     if update:
-                        url = str(URL(r=r, c=c, f=f,
-                                      args = args + ["update"],
-                                      vars = get_vars
-                                      ))
+                        args = args + ["update"]
                     else:
-                        url = str(URL(r=r, c=c, f=f,
-                                      args = args + ["read"],
-                                      vars = get_vars
-                                      ))
+                        args = args + ["read"]
+
+                url = str(URL(r=r, c=c, f=f, args=args, vars=get_vars))
+
             if iframe_safe:
                 url = iframe_safe(url)
             return url
@@ -3195,6 +3225,43 @@ class S3CRUD(S3Method):
             return current.xml.json_message(message=message, uuid=uid)
         else:
             r.error(404, current.ERROR.BAD_RECORD)
+
+    # -------------------------------------------------------------------------
+    def _set_organizer_dates(self, dates):
+        """
+            Set default dates for organizer resources
+
+            @param dates: a string with two ISO dates separated by --, like:
+                          "2010-11-29T23:00:00.000Z--2010-11-29T23:59:59.000Z"
+        """
+
+        resource = self.resource
+
+        if dates:
+            dates = dates.split("--")
+            if len(dates) != 2:
+                return
+
+            from s3organizer import S3Organizer
+
+            try:
+                config = S3Organizer.parse_config(resource)
+            except AttributeError:
+                return
+
+            start = config["start"]
+            if start and start.field:
+                try:
+                    start.field.default = s3_decode_iso_datetime(dates[0])
+                except ValueError:
+                    pass
+
+            end = config["end"]
+            if end and end.field:
+                try:
+                    end.field.default = s3_decode_iso_datetime(dates[1])
+                except ValueError:
+                    pass
 
     # -------------------------------------------------------------------------
     @staticmethod

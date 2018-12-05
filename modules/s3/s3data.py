@@ -479,6 +479,25 @@ class S3DataTable(object):
             append_icon = icons.append
             for fmt in export_formats:
 
+                # CSS classes and on-hover title
+                title = None
+                if isinstance(fmt, tuple):
+                    if len(fmt) >= 3:
+                        title = fmt[2]
+                    fmt, css = fmt[:2] if len(fmt) >= 2 else (fmt[0], "")
+                else:
+                    css = ""
+
+                class_ = "dt-export export_%s" % fmt
+                if css:
+                    class_ = "%s %s" % (class_, css)
+
+                if title is None:
+                    if fmt == "map":
+                        title = T("Show on Map")
+                    else:
+                        title = EXPORT % dict(format=fmt.upper())
+
                 # Export format URL
                 if fmt in default_formats:
                     url = formats.get(fmt, default_url)
@@ -487,16 +506,10 @@ class S3DataTable(object):
                 if not url:
                     continue
 
-                # Onhover title for the icon
-                if fmt == "map":
-                    title = T("Show on Map")
-                else:
-                    title = EXPORT % dict(format=fmt.upper())
-
-                append_icon(DIV(_class="dt-export export_%s" % fmt,
-                                _title=title,
+                append_icon(DIV(_class = class_,
+                                _title = title,
                                 data = {"url": url,
-                                        "extension": fmt,
+                                        "extension": fmt.split(".")[-1],
                                         },
                                 ))
 
@@ -644,6 +657,8 @@ class S3DataTable(object):
                                "alert" : [2,10,13]}
                    dt_text_maximum_len: The maximum length of text before it is condensed
                    dt_text_condense_len: The length displayed text is condensed down to
+                   dt_double_scroll: Render double scroll bars (top+bottom), only available
+                                     with settings.ui.datatables_responsive=False
                    dt_shrink_groups: If set then the rows within a group will be hidden
                                      two types are supported, 'individual' and 'accordion'
                    dt_group_types: The type of indicator for groups that can be 'shrunk'
@@ -656,6 +671,7 @@ class S3DataTable(object):
 
         from gluon.serializers import json as jsons
 
+        request = current.request
         s3 = current.response.s3
         settings = current.deployment_settings
 
@@ -685,7 +701,6 @@ class S3DataTable(object):
 
         ajaxUrl = attr_get("dt_ajax_url", None)
         if not ajaxUrl:
-            request = current.request
             url = URL(c=request.controller,
                       f=request.function,
                       args=request.args,
@@ -736,6 +751,20 @@ class S3DataTable(object):
         config.textShrinkLength = attr_get("dt_text_condense_len", 75)
         config.shrinkGroupedRows = attr_get("dt_shrink_groups")
         config.groupIcon = attr_get("dt_group_types", [])
+
+        # Activate double scroll and inject jQuery plugin
+        if not settings.get_ui_datatables_responsive():
+            double_scroll = attr.get("dt_double_scroll")
+            if double_scroll is None:
+                double_scroll = settings.get_ui_datatables_double_scroll()
+            if double_scroll:
+                if s3.debug:
+                    script = "/%s/static/scripts/jquery.doubleScroll.js" % request.application
+                else:
+                    script = "/%s/static/scripts/jquery.doubleScroll.min.js" % request.application
+                if script not in s3.scripts:
+                    s3.scripts.append(script)
+                html.add_class("doublescroll")
 
         # Wrap the table in a form and add some data in hidden fields
         form = FORM(_class="dt-wrapper")
@@ -854,6 +883,7 @@ class S3DataTable(object):
                         tr.append(TD(row[field]))
                 body.append(tr)
         table = TABLE([header, body], _id=id, _class="dataTable display")
+
         if current.deployment_settings.get_ui_datatables_responsive():
             table.add_class("responsive")
         return table

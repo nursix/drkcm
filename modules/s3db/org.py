@@ -650,6 +650,7 @@ class S3OrganisationModel(S3Model):
                        # Documents
                        doc_document = "organisation_id",
                        doc_image = "organisation_id",
+                       doc_card_config = "organisation_id",
                        # Groups
                        org_group = {"link": "org_group_membership",
                                     "joinby": "organisation_id",
@@ -678,6 +679,8 @@ class S3OrganisationModel(S3Model):
                        hrm_human_resource = "organisation_id",
                        # Members
                        member_membership = "organisation_id",
+                       # DVR needs
+                       dvr_need = "organisation_id",
                        # DVR response themes
                        dvr_response_theme = "organisation_id",
                        # Evacuees
@@ -1413,6 +1416,10 @@ class S3OrganisationBranchModel(S3Model):
                branch.root_organisation is None or \
                branch.root_organisation != organisation.root_organisation:
                 org_update_root_organisation(branch_id)
+
+            # Update realm entity, because realm rules may depend
+            # on branch relationships and/or inherited data
+            current.auth.set_realm_entity(otable, branch_id, force_update=True)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -6385,10 +6392,11 @@ def org_rheader(r, tabs=None):
                         facilities,
                         (T("Staff & Volunteers"), "human_resource"),
                         (T("Assets"), "asset"),
-                        (T("Projects"), "project"),
                         #(T("Tasks"), "task"),
                         ]
                 append_tab = tabs.append
+                if settings.get_org_projects_tab():
+                    append_tab((T("Projects"), "project"))
                 if settings.get_org_tags():
                     append_tab((T("Tags"), "tag"))
                 if settings.get_org_resources_tab():
@@ -6397,6 +6405,10 @@ def org_rheader(r, tabs=None):
                     append_tab((T("Needs"), "needs"))
                 if settings.get_org_service_locations():
                     append_tab((T("Service Locations"), "service_location"))
+                if settings.get_org_documents_tab():
+                    append_tab((T("Documents"), "document"))
+                if settings.get_org_pdf_card_configs():
+                    append_tab((T("Cards"), "card_config"))
                 # Org Role Manager always last
                 append_tab((T("User Roles"), "roles"))
 
@@ -6825,6 +6837,9 @@ def org_organisation_controller():
                     s3db.configure("project_project",
                                    create_next = None,
                                    )
+
+                elif cname == "card_config":
+                    s3db.doc_update_card_type_requires(r.component_id, r.id)
 
         return True
     s3.prep = prep
@@ -8122,7 +8137,7 @@ class org_CapacityReport(S3Method):
 
                 T = current.T
 
-                output = dict(title = T("Branch Organisational Capacity Assessment"))
+                output = {"title": T("Branch Organisational Capacity Assessment")}
                 current.response.view = "org/capacity_report.html"
 
                 # Maintain RHeader for consistency
@@ -8277,7 +8292,7 @@ class org_CapacityReport(S3Method):
         try:
             import xlwt
         except ImportError:
-            from s3.s3codecs import S3XLS
+            from s3.codecs.xls import S3XLS
             if current.auth.permission.format in S3Request.INTERACTIVE_FORMATS:
                 current.session.error = S3XLS.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))

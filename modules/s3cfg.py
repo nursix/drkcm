@@ -210,6 +210,8 @@ class S3Config(Storage):
         self.search = Storage()
         self.security = Storage()
         self.setup = Storage()
+        # Allow templates to append rather than replace
+        self.setup.wizard_questions = []
         self.supply = Storage()
         self.sync = Storage()
         self.tasks = Storage()
@@ -662,6 +664,7 @@ class S3Config(Storage):
             * Staff
             * Volunteer
             * Member
+            Should be an iterable.
         """
         return self.auth.get("registration_link_user_to_default")
 
@@ -1043,6 +1046,7 @@ class S3Config(Storage):
                 - default onxxxx
             NB: Currently only onaccept is actually used
         """
+
         callbacks = self.base.get("import_callbacks", [])
         if tablename in callbacks:
             callbacks = callbacks[tablename]
@@ -1812,15 +1816,30 @@ class S3Config(Storage):
     # -------------------------------------------------------------------------
     # PDF settings
     #
-    def get_paper_size(self):
-        return self.base.get("paper_size", "A4")
+    def get_pdf_size(self):
+        """
+            PDF default page size
+                * "A4"
+                * "Letter"
+                * or a tuple (width, height) in points (1 inch = 72 points)
+                  => pre-defined tuples in reportlab.lib.pagesizes
+        """
+        return self.base.get("pdf_size", "A4")
+
+    def get_pdf_orientation(self):
+        """
+            PDF default page orientation
+                * Auto (Portrait if possible, Landscape for wide tables)
+                * Portrait
+                * Landscape
+        """
+        return self.base.get("pdf_orientation", "Auto")
 
     def get_pdf_bidi(self):
         """
-            Whether to enable BiDi support for PDF exports
-            - without this RTL text will be LTR
-
-            Defaults to off to enhance performance
+            Enable BiDi support for PDF exports
+                - without this RTL text will be LTR
+                - default off to enhance performance
         """
         return self.__lazy("L10n", "pdf_bidi", False)
 
@@ -1955,9 +1974,19 @@ class S3Config(Storage):
         return self.ui.get("datatables_pagingType", "full_numbers")
 
     def get_ui_datatables_responsive(self):
-        """ Whether dataTables should be responsive when resized """
+        """ Make data tables responsive (auto-collapsing columns when too wide) """
 
         return self.ui.get("datatables_responsive", True)
+
+    def get_ui_datatables_double_scroll(self):
+        """ Render double scroll bars (top+bottom) for non-responsive data tables """
+
+        return self.ui.get("datatables_double_scroll", False)
+
+    def get_ui_auto_open_update(self):
+        """ Render "Open" action buttons without explicit CRUD-method """
+
+        return self.ui.get("auto_open_update", False)
 
     def get_ui_default_cancel_button(self):
         """
@@ -2029,7 +2058,10 @@ class S3Config(Storage):
     def get_ui_export_formats(self):
         """
             Which export formats should we display?
-            - specify a list of export formats to restrict
+            - specify a list of export formats to restrict/override
+            - each list item can be
+              * a string with the format extension
+              * a tuple (extension, css-class[, onhover-title])
         """
         return self.ui.get("export_formats",
                            ("cap", "have", "kml", "map", "pdf", "rss", "xls", "xml"))
@@ -2571,6 +2603,12 @@ class S3Config(Storage):
         """
         return self.setup.get("monitor_template", "default")
 
+    def get_setup_wizard_questions(self):
+        """
+            Configuration options to see in the Setup Wizard
+        """
+        return self.setup.get("wizard_questions", [])
+
     # =========================================================================
     # Sync
     #
@@ -3054,6 +3092,16 @@ class S3Config(Storage):
         """
         return self.doc.get("label", "Document")
 
+    def get_doc_mailmerge_fields(self):
+        """
+            Dictionary of mailmerge fields
+            - assumes starting from pr_person
+        """
+        return self.doc.get("mailmerge_fields", {"First Name": "first_name",
+                                                 "Last Name": "last_name",
+                                                 "Date of Birth": "date_of_birth",
+                                                 })
+
     # -------------------------------------------------------------------------
     # DVR Options
     #
@@ -3213,6 +3261,12 @@ class S3Config(Storage):
         """
         return self.dvr.get("case_activity_needs_multiple", False)
 
+    def get_dvr_case_activity_follow_up(self):
+        """
+            Enable/disable fields to schedule case activities for follow-up
+        """
+        return self.__lazy("dvr", "case_activity_follow_up", default=True)
+
     def get_dvr_case_include_activity_docs(self):
         """
             Documents-tab of beneficiaries includes case
@@ -3244,6 +3298,20 @@ class S3Config(Storage):
         """
         return self.dvr.get("manage_response_actions", False)
 
+    def get_dvr_response_planning(self):
+        """
+            Response actions can be planned
+            (as opposed to being documented in hindsight)
+        """
+        return self.__lazy("dvr", "response_planning", default=False)
+
+    def get_dvr_response_due_date(self):
+        """
+            Response planning uses separate due-date field
+        """
+        return self.get_dvr_response_planning() and \
+               self.__lazy("dvr", "response_due_date", default=False)
+
     def get_dvr_response_types(self):
         """
             Use response type categories
@@ -3267,6 +3335,26 @@ class S3Config(Storage):
             Response themes are org-specific
         """
         return self.dvr.get("response_themes_org_specific", True)
+
+    def get_dvr_response_themes_sectors(self):
+        """
+            Response themes are organized per org sector
+        """
+        return self.__lazy("dvr", "response_themes_sectors", default=False)
+
+    def get_dvr_response_themes_needs(self):
+        """
+            Response themes are linked to needs
+        """
+        return self.__lazy("dvr", "response_themes_needs", default=False)
+
+    def get_dvr_response_activity_autolink(self):
+        """
+            Automatically link response actions to case activities
+            based on matching needs
+        """
+        return self.get_dvr_response_themes_needs() and \
+               self.__lazy("dvr", "response_activity_autolink", default=False)
 
     # -------------------------------------------------------------------------
     # Education
@@ -3594,6 +3682,12 @@ class S3Config(Storage):
         """
         return self.__lazy("hrm", "event_types", default=False)
 
+    def get_hrm_id_cards(self):
+        """
+            Show buttons to download printable ID cards for staff/volunteers
+        """
+        return self.__lazy("hrm", "id_cards", default=False)
+
     def get_hrm_job_title_deploy(self):
         """
             Whether the 'deploy' Job Title type should be used
@@ -3804,6 +3898,14 @@ class S3Config(Storage):
             Whether Human Resources should show Job Titles
         """
         return self.hrm.get("use_job_titles", True)
+
+    def get_hrm_use_national_id(self):
+        """
+            Whether Human Resources should show National IDs in list_fields
+            & text_search_fields
+            either True or False
+        """
+        return self.__lazy("hrm", "use_national_id", default=False)
 
     def get_hrm_use_skills(self):
         """
@@ -4269,6 +4371,18 @@ class S3Config(Storage):
         """
         return self.org.get("group_team_represent", False)
 
+    def get_org_pdf_card_configs(self):
+        """
+            Show a tab in organisation rheader to manage PDF card configurations
+        """
+        return self.__lazy("org", "pdf_card_configs", default=False)
+
+    def get_org_documents_tab(self):
+        """
+            Whether to show a Tab for Documents
+        """
+        return self.org.get("documents_tab", False)
+
     def get_org_needs_tab(self):
         """
             Whether to show a Tab for Organisation Needs
@@ -4280,6 +4394,12 @@ class S3Config(Storage):
             Whether to show a Tab for Offices
         """
         return self.org.get("offices_tab", True)
+
+    def get_org_projects_tab(self):
+        """
+            Whether to show a Tab for Projects
+        """
+        return self.org.get("projects_tab", True) # Will be hidden anyway if Projects module disabled
 
     def get_org_regions(self):
         """

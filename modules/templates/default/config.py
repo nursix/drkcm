@@ -135,6 +135,7 @@ def config(settings):
     settings.L10n.languages = OrderedDict([
         ("ar", "Arabic"),
         ("bs", "Bosnian"),
+        #("crs", "Seychellois Creole"),
         #("dv", "Divehi"), # Maldives
         #("dz", "Dzongkha"), # Bhutan
         ("en", "English"),
@@ -223,8 +224,10 @@ def config(settings):
     #settings.fin.currency_writable = False # False currently breaks things
 
     # PDF settings
-    # Default page size for reports (defaults to A4)
-    #settings.base.paper_size = T("Letter")
+    # Default page size (defaults to A4)
+    #settings.base.pdf_size = "Letter"
+    # Default page orientation (defaults to "Auto" to auto-adapt for wide tables)
+    #settings.base.pdf_orientation = "Landscape"
     # Location of Logo used in pdfs headers
     #settings.ui.pdf_logo = "static/img/mylogo.png"
 
@@ -454,6 +457,8 @@ def config(settings):
     #settings.ui.default_cancel_button = True
     # Uncomment to disable responsive behavior of datatables
     #settings.ui.datatables_responsive = False
+    # Uncomment to enable double scroll bars on non-responsive datatables
+    #settings.ui.datatables_double_scroll = True
     # Uncomment to modify the label of the Permalink
     #settings.ui.label_permalink = "Permalink"
     # Uncomment to modify the main menu logo
@@ -551,6 +556,8 @@ def config(settings):
     #settings.dvr.activity_types_hierarchical = True
     # Uncomment this to use status field in case activities
     #settings.dvr.case_activity_use_status = True
+    # Uncomment this to disable follow-up fields in case activities
+    #settings.dvr.case_activity_follow_up = False
 
     # Uncomment this if Case activities use multiple Needs
     #settings.dvr.case_activity_needs_multiple = True
@@ -563,6 +570,22 @@ def config(settings):
 
     # Uncomment this to manage individual response actions in case activities
     #settings.dvr.manage_response_actions = True
+    # Uncomment this to not use response action types
+    #settings.dvr.response_types = False
+    # Uncomment this to use response themes
+    #settings.dvr.response_themes = True
+    # Uncomment this to not use org-specific response themes
+    #settings.dvr.response_themes_org_specific = False
+    # Uncomment this to link response themes to org sectors
+    #settings.dvr.response_themes_sectors = True
+    # Uncomment this to link response themes to needs
+    #settings.dvr.response_themes_needs = True
+    # Uncomment this to automatically link responses to case activities
+    #settings.dvr.response_activity_autolink = True
+    # Uncomment this to activate features for response planning
+    #settings.dvr.response_planning = True
+    # Uncomment this to use a separate due-date for responses
+    #settings.dvr.response_due_date = True
 
     # Configure a regular expression pattern for ID Codes (QR Codes)
     #settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
@@ -715,7 +738,7 @@ def config(settings):
     #settings.hrm.email_required = False
     # Uncomment to allow Staff & Volunteers to be registered without an Organisation
     #settings.hrm.org_required = False
-    # Uncomment to if their are only Staff & Volunteers from a single Organisation with no Branches
+    # Uncomment if their are only Staff & Volunteers from a single Organisation with no Branches
     #settings.hrm.multiple_orgs = False
     # Uncomment to disable the 'Send Message' action button
     #settings.hrm.compose_button = False
@@ -727,6 +750,8 @@ def config(settings):
     #settings.hrm.multiple_job_titles = True
     # Uncomment to have each root Org use a different Job Title Catalog
     #settings.hrm.org_dependent_job_titles = True
+    # Uncomment to display & search by National ID
+    #settings.hrm.use_national_id = True
     # Uncomment to hide the Staff resource
     #settings.hrm.show_staff = False
     # Uncomment to have Staff use their Home Address as fallback if they have no Site defined

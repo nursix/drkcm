@@ -177,6 +177,8 @@ class S3Report(S3Method):
             if show_filter_form:
                 advanced = False
                 for widget in filter_widgets:
+                    if not widget:
+                        continue
                     if "hidden" in widget.opts and widget.opts.hidden:
                         advanced = resource.get_config("report_advanced", True)
                         break
@@ -882,7 +884,9 @@ class S3ReportForm(object):
         rfields = []
         append = rfields.append
         for f in fields:
-            if isinstance(f, (tuple, list)):
+            if not f:
+                continue
+            elif isinstance(f, (tuple, list)):
                 label, selector = f[:2]
             else:
                 label, selector = None, f
@@ -961,7 +965,9 @@ class S3ReportForm(object):
         layer_opts = []
         for option in layers:
 
-            if isinstance(option, tuple):
+            if not option:
+                continue
+            elif isinstance(option, tuple):
                 title, layer = option
             else:
                 title, layer = None, option

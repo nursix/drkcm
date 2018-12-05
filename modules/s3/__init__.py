@@ -78,6 +78,7 @@ from s3resource import *
 
 # Authentication, Authorization, Accounting
 from s3aaa import *
+from s3roles import *
 
 # RESTful API =================================================================
 
@@ -87,6 +88,7 @@ from s3rest import *
 # CRUD
 from s3crud import *
 from s3forms import *
+from s3organizer import *
 
 # Filtering
 from s3filter import *

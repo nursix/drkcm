@@ -93,6 +93,7 @@ def config(settings):
 
     # UI Settings
     settings.ui.datatables_responsive = False
+    settings.ui.datatables_double_scroll = True
 
     # Disable permalink
     settings.ui.label_permalink = None
@@ -1223,7 +1224,7 @@ def config(settings):
                                        required = not org_readonly,
                                        ),
                        "location_id",
-                       "date",
+                       (T("Date entered"), "date"),
                        #(T("Urgency"), "priority"),
                        # Moved into Lines
                        #S3SQLInlineLink("sector",
@@ -1357,7 +1358,7 @@ def config(settings):
                 # Inject the javascript to handle dropdown filtering
                 # - normally injected through AddResourceLink, but this isn't there in Inline widget
                 # - we also need to turn the trigger & target into dicts
-                s3.scripts.append("/%s/static/themes/SHARE/js/supply.js" % r.application)
+                s3.scripts.append("/%s/static/themes/SHARE/js/need.js" % r.application)
 
                 if r.id and isinstance(output, dict) and \
                    current.auth.s3_has_permission("create", "project_activity"):
@@ -1477,6 +1478,8 @@ def config(settings):
 
         s3db = current.s3db
 
+        settings.base.pdf_orientation = "Landscape"
+
         settings.ui.summary = (# Gets replaced in postp
                                # @ToDo: better performance by not including here & placing directly into the view instead
                                {"common": True,
@@ -1586,7 +1589,7 @@ def config(settings):
                        # We create a custom Create Button to create a Need not a Need Line
                        listadd = False,
                        list_fields = [(T("Status"), "status"),
-                                      (T("Commits"), "need_response_line.need_response_id$agency.organisation_id"),
+                                      (T("Orgs responding"), "need_response_line.need_response_id$agency.organisation_id"),
                                       "need_id$date",
                                       "need_id$organisation__link.organisation_id",
                                       # These levels/Labels are for SHARE/LK
@@ -1842,7 +1845,7 @@ def config(settings):
                                             fields = [("", "organisation_id"),],
                                             ),
                        "location_id",
-                       (T("Date"), "date"),
+                       (T("Date entered"), "date"),
                        (T("Summary of Needs/Activities"), "name"),
                        S3SQLInlineComponent("need_response_line",
                                             label = "",
@@ -1929,7 +1932,7 @@ def config(settings):
                 # Inject the javascript to handle dropdown filtering
                 # - normally injected through AddResourceLink, but this isn't there in Inline widget
                 # - we also need to turn the trigger & target into dicts
-                s3.scripts.append("/%s/static/themes/SHARE/js/supply.js" % r.application)
+                s3.scripts.append("/%s/static/themes/SHARE/js/need_response.js" % r.application)
 
             return output
         s3.postp = postp
@@ -2009,6 +2012,8 @@ def config(settings):
         from s3 import S3OptionsFilter #, S3DateFilter, S3LocationFilter, S3TextFilter
 
         s3db = current.s3db
+
+        settings.base.pdf_orientation = "Landscape"
 
         settings.ui.summary = (# Gets replaced in postp
                                # @ToDo: better performance by not including here & placing directly into the view instead

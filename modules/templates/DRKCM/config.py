@@ -4,12 +4,104 @@ import datetime
 
 from collections import OrderedDict
 
-from gluon import current, A, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, SPAN, URL
+from gluon import current, A, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, SPAN, TAG, URL
 from gluon.storage import Storage
 
 from s3 import FS, IS_ONE_OF
 from s3dal import original_tablename
 
+# =============================================================================
+# UI options per organisation
+#
+UI_DEFAULTS = {"case_bamf_first": False,
+               "case_document_templates": False,
+               "case_header_protection_themes": False,
+               "case_hide_default_org": False,
+               "case_use_response_tab": False,
+               "case_use_address": True,
+               "case_use_arrival_date": True,
+               "case_use_appointments": True,
+               "case_use_education": False,
+               "case_use_flags": True,
+               "case_use_notes": True,
+               "case_use_occupation": True,
+               "case_use_residence_status": True,
+               "case_use_service_contacts": True,
+               "case_lodging": "site", # "site"|"text"|None
+               "case_lodging_dates": True,
+               "activity_closure": True,
+               "activity_comments": True,
+               "activity_use_sector": True,
+               "activity_need_details": True,
+               "activity_follow_up": True,
+               "activity_use_need": False,
+               "appointments_staff_link": False,
+               "appointments_use_organizer": False,
+               "response_activity_autolink": False,
+               "response_due_date": True,
+               "response_planning": True,
+               "response_themes_sectors": False,
+               "response_themes_needs": False,
+               "response_themes_single": False,
+               "response_themes_optional": False,
+               "response_use_organizer": False,
+               }
+
+UI_OPTIONS = {"LEA": {"case_bamf_first": True,
+                      "case_document_templates": True,
+                      "case_header_protection_themes": True,
+                      "case_hide_default_org": True,
+                      "case_use_response_tab": True,
+                      "case_use_address": False,
+                      "case_use_arrival_date": False,
+                      "case_use_appointments": False,
+                      "case_use_education": True,
+                      "case_use_flags": False,
+                      "case_use_notes": False,
+                      "case_use_occupation": False,
+                      "case_use_residence_status": False,
+                      "case_use_service_contacts": False,
+                      "case_lodging": "text",
+                      "case_lodging_dates": False,
+                      "activity_closure": False,
+                      "activity_comments": False,
+                      "activity_use_sector": False,
+                      "activity_need_details": False,
+                      "activity_follow_up": False,
+                      "activity_use_need": True,
+                      "appointments_staff_link": True,
+                      "appointments_use_organizer": True,
+                      "response_activity_autolink": True,
+                      "response_due_date": False,
+                      "response_planning": False,
+                      "response_themes_sectors": True,
+                      "response_themes_needs": True,
+                      "response_themes_single": True,
+                      "response_themes_optional": True,
+                      "response_use_organizer": True,
+                      },
+              }
+
+UI_TYPES = {"LEA Ellwangen": "LEA",
+            }
+
+def get_ui_options():
+    """ Get the UI options for the current user's root organisation """
+
+    ui_options = dict(UI_DEFAULTS)
+    ui_type = UI_TYPES.get(current.auth.root_org_name())
+    if ui_type:
+        ui_options.update(UI_OPTIONS[ui_type])
+    return ui_options
+
+def get_ui_option(key):
+    """ Getter for UI options, for lazy deployment settings """
+
+    def getter(default=None):
+        return get_ui_options().get(key, default)
+    return getter
+
+# =============================================================================
 def config(settings):
     """
         DRKCM Template: Case Management, German Red Cross
@@ -130,6 +222,18 @@ def config(settings):
     # General UI settings
     #
     settings.ui.calendar_clear_icon = True
+    #settings.ui.auto_open_update = True
+
+    # -------------------------------------------------------------------------
+    # Document settings
+    #
+    settings.doc.mailmerge_fields = {"ID": "pe_label",
+                                     "Vorname": "first_name",
+                                     "Name": "last_name",
+                                     "Geburtsdatum": "date_of_birth",
+                                     "Land": "pr_person_details.nationality",
+                                     "Registrierungsdatum": "dvr_case.date",
+                                     }
 
     # -------------------------------------------------------------------------
     # Realm Rules
@@ -315,11 +419,17 @@ def config(settings):
     settings.dvr.case_activity_use_status = True
     # Case activities cover multiple needs
     settings.dvr.case_activity_needs_multiple = True
+    # Case activities use follow-up fields
+    settings.dvr.case_activity_follow_up = get_ui_option("activity_follow_up")
     # Beneficiary documents-tab includes case activity attachments
     settings.dvr.case_include_activity_docs = True
 
     # Manage individual response actions in case activities
     settings.dvr.manage_response_actions = True
+    # Planning response actions, or just documenting them?
+    settings.dvr.response_planning = get_ui_option("response_planning")
+    # Response planning uses separate due-date
+    settings.dvr.response_due_date = get_ui_option("response_due_date")
     # Use response themes
     settings.dvr.response_themes = True
     # Response themes are org-specific
@@ -328,13 +438,19 @@ def config(settings):
     settings.dvr.response_types = False
     # Response types hierarchical
     settings.dvr.response_types_hierarchical = True
+    # Response themes organized by sectors
+    settings.dvr.response_themes_sectors = get_ui_option("response_themes_sectors")
+    # Response themes linked to needs
+    settings.dvr.response_themes_needs = get_ui_option("response_themes_needs")
+    # Auto-link responses to case activities
+    settings.dvr.response_activity_autolink = get_ui_option("response_activity_autolink")
 
     # Expose flags to mark appointment types as mandatory
     settings.dvr.mandatory_appointments = False
     # Appointments with personal presence update last_seen_on
     settings.dvr.appointments_update_last_seen_on = False
     # Automatically update the case status when appointments are completed
-    settings.dvr.appointments_update_case_status = False
+    settings.dvr.appointments_update_case_status = True
     # Automatically close appointments when registering certain case events
     settings.dvr.case_events_close_appointments = True
 
@@ -349,7 +465,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_doc_document_resource(r, tablename):
 
-        if r.controller == "dvr":
+        if r.controller == "dvr" or r.function == "organisation":
 
             s3db = current.s3db
             table = s3db.doc_document
@@ -565,6 +681,17 @@ def config(settings):
                            anonymize = drk_person_anonymize(),
                            )
 
+            if current.auth.s3_has_role("CASE_MANAGEMENT"):
+                # Allow use of Document Templates
+                s3db.set_method("pr", "person",
+                                method = "templates",
+                                action = s3db.pr_Templates(),
+                                )
+                s3db.set_method("pr", "person",
+                                method = "template",
+                                action = s3db.pr_Template(),
+                                )
+
         # Configure components to inherit realm_entity
         # from the person record
         s3db.configure("pr_person",
@@ -616,6 +743,8 @@ def config(settings):
         auth = current.auth
         realms = auth.permission.permitted_realms("dvr_case", "create")
 
+        default_org = None
+
         if realms is None:
             # User can create cases for any org
             orgs = []
@@ -632,13 +761,12 @@ def config(settings):
             # User can create cases for multiple orgs
             user_org = auth.user.organisation_id if auth.user else None
             if user_org and user_org in orgs:
-                return user_org
+                default_org = user_org
         elif orgs:
             # User can create cases for exactly one org
-            return orgs[0]
+            default_org = orgs[0]
 
-        # No default, must choose
-        return None
+        return default_org, multiple_orgs
 
     # -------------------------------------------------------------------------
     def customise_pr_person_controller(**attr):
@@ -647,6 +775,7 @@ def config(settings):
 
         auth = current.auth
         s3db = current.s3db
+        ui_options = get_ui_options()
 
         settings.base.bigtable = True
 
@@ -678,11 +807,16 @@ def config(settings):
                                 )
 
                 # Autocomplete search-method
-                search_fields = ("first_name", "last_name")
+                if r.function == "person_search":
+                    # Autocomplete-Widget (e.g. response actions)
+                    search_fields = ("first_name", "last_name", "pe_label")
+                else:
+                    # Add-Person-Widget (family members)
+                    search_fields = ("first_name", "last_name")
                 s3db.set_method("pr", "person",
-                                method = "search_ac",
-                                action = s3db.pr_PersonSearchAutocomplete(search_fields),
-                                )
+                               method = "search_ac",
+                               action = s3db.pr_PersonSearchAutocomplete(search_fields),
+                               )
 
                 table = r.table
                 ctable = s3db.dvr_case
@@ -707,6 +841,15 @@ def config(settings):
                         multiple_orgs = False
 
                     configure_person_tags()
+
+                    # Alternatives: site_id or simple text field
+                    lodging_opt = ui_options.get("case_lodging")
+                    if lodging_opt == "site":
+                        lodging = "dvr_case.site_id"
+                    elif lodging_opt == "text":
+                        lodging = "case_details.lodging"
+                    else:
+                        lodging = None
 
                     if r.method == "report":
 
@@ -751,7 +894,12 @@ def config(settings):
                         # Default organisation
                         ctable = s3db.dvr_case
                         field = ctable.organisation_id
-                        field.default = case_default_org()
+                        default_org, selectable = case_default_org()
+                        if default_org:
+                            if ui_options.get("case_hide_default_org"):
+                                field.writable = selectable
+                                field.readable = selectable or multiple_orgs
+                        field.default = default_org
 
                         # Organisation is required
                         requires = field.requires
@@ -765,7 +913,19 @@ def config(settings):
                         if human_resource_id:
                             field.default = human_resource_id
                         field.readable = field.writable = True
+                        field.represent = s3db.hrm_HumanResourceRepresent(show_link=False)
                         field.widget = None
+
+                        # Optional: Case Flags
+                        if ui_options.get("case_use_flags"):
+                            case_flags = S3SQLInlineLink("case_flag",
+                                                         label = T("Flags"),
+                                                         field = "flag_id",
+                                                         help_field = "comments",
+                                                         cols = 4,
+                                                         )
+                        else:
+                            case_flags = None
 
                         # Make marital status mandatory, remove "other"
                         dtable = s3db.pr_person_details
@@ -773,13 +933,6 @@ def config(settings):
                         options = dict(s3db.pr_marital_status_opts)
                         del options[9] # Remove "other"
                         field.requires = IS_IN_SET(options, zero=None)
-
-                        # Remove Add-links in residence status
-                        rtable = s3db.dvr_residence_status
-                        field = rtable.status_type_id
-                        field.comment = None
-                        field = rtable.permit_type_id
-                        field.comment = None
 
                         # Make gender mandatory, remove "unknown"
                         field = table.gender
@@ -796,45 +949,8 @@ def config(settings):
                         field = table.last_name
                         field.requires = IS_NOT_EMPTY()
 
-                        # Custom CRUD form
-                        crud_form = S3SQLCustomForm(
-
-                            # Case Details ----------------------------
-                            "dvr_case.date",
-                            "dvr_case.organisation_id",
-                            "dvr_case.human_resource_id",
-                            (T("Case Status"), "dvr_case.status_id"),
-                            S3SQLInlineLink("case_flag",
-                                           label = T("Flags"),
-                                           field = "flag_id",
-                                           help_field = "comments",
-                                           cols = 4,
-                                           ),
-
-                            # Person Details --------------------------
-                            (T("ID"), "pe_label"),
-                            "last_name",
-                            "first_name",
-                            "person_details.nationality",
-                            "date_of_birth",
-                            "gender",
-                            "person_details.marital_status",
-
-                            # Process Data ----------------------------
-                            "dvr_case.site_id",
-                            (T("Moving-in Date"), "case_details.on_site_from"),
-                            (T("Moving-out Date"), "case_details.on_site_until"),
-                            S3SQLInlineComponent(
-                                    "address",
-                                    label = T("Current Address"),
-                                    fields = [("", "location_id")],
-                                    filterby = {"field": "type",
-                                                "options": "1",
-                                                },
-                                    link = False,
-                                    multiple = False,
-                                    ),
-                            S3SQLInlineComponent(
+                        # Alternatives: BAMF first or last
+                        bamf = S3SQLInlineComponent(
                                     "bamf",
                                     fields = [("", "value")],
                                     filterby = {"field": "tag",
@@ -843,24 +959,113 @@ def config(settings):
                                     label = T("BAMF Reference Number"),
                                     multiple = False,
                                     name = "bamf",
-                                    ),
-                            (T("Date of Entry"), "case_details.arrival_date"),
-                            S3SQLInlineComponent(
-                                    "residence_status",
-                                    fields = ["status_type_id",
-                                              "permit_type_id",
-                                              #"reference",
-                                              #"valid_from",
-                                              "valid_until",
-                                              "comments",
-                                              ],
-                                    label = T("Residence Status"),
-                                    multiple = False,
-                                    layout = S3SQLVerticalSubFormLayout,
-                                    ),
+                                    )
+                        if ui_options.get("case_bamf_first"):
+                            bamf_first = bamf
+                            bamf_last = None
+                        else:
+                            bamf_first = None
+                            bamf_last = bamf
+
+                        # Optional: site dates
+                        if ui_options.get("case_lodging_dates"):
+                            on_site_from = (T("Moving-in Date"),
+                                            "case_details.on_site_from",
+                                            )
+                            on_site_until = (T("Moving-out Date"),
+                                             "case_details.on_site_until",
+                                             )
+                        else:
+                            on_site_from = None
+                            on_site_until = None
+
+                        # Optional: Address
+                        if ui_options.get("case_use_address"):
+                            address = S3SQLInlineComponent(
+                                            "address",
+                                            label = T("Current Address"),
+                                            fields = [("", "location_id")],
+                                            filterby = {"field": "type",
+                                                        "options": "1",
+                                                        },
+                                            link = False,
+                                            multiple = False,
+                                            )
+                        else:
+                            address = None
+
+                        # Optional: Date of Entry
+                        if ui_options.get("case_use_arrival_date"):
+                            arrival_date = (T("Date of Entry"),
+                                            "case_details.arrival_date",
+                                            )
+                        else:
+                            arrival_date = None
+
+                        # Optional: Residence Status
+                        if ui_options.get("case_use_residence_status"):
+                            # Remove Add-links
+                            rtable = s3db.dvr_residence_status
+                            field = rtable.status_type_id
+                            field.comment = None
+                            field = rtable.permit_type_id
+                            field.comment = None
+                            residence_status = S3SQLInlineComponent(
+                                                "residence_status",
+                                                fields = ["status_type_id",
+                                                          "permit_type_id",
+                                                          #"reference",
+                                                          #"valid_from",
+                                                          "valid_until",
+                                                          "comments",
+                                                          ],
+                                                label = T("Residence Status"),
+                                                multiple = False,
+                                                layout = S3SQLVerticalSubFormLayout,
+                                                )
+                        else:
+                            residence_status = None
+
+                        # Optional: Occupation/Educational Background
+                        if ui_options.get("case_use_occupation"):
+                            occupation = "person_details.occupation"
+                        else:
+                            occupation = None
+                        if ui_options.get("case_use_education"):
+                            education = "person_details.education"
+                        else:
+                            education = None
+
+                        # Custom CRUD form
+                        crud_form = S3SQLCustomForm(
+
+                            # Case Details ----------------------------
+                            "dvr_case.date",
+                            "dvr_case.organisation_id",
+                            "dvr_case.human_resource_id",
+                            (T("Case Status"), "dvr_case.status_id"),
+                            case_flags,
+
+                            # Person Details --------------------------
+                            (T("ID"), "pe_label"),
+                            bamf_first,
+                            "last_name",
+                            "first_name",
+                            "person_details.nationality",
+                            "date_of_birth",
+                            "gender",
+                            "person_details.marital_status",
+
+                            # Process Data ----------------------------
+                            lodging,
+                            on_site_from,
+                            on_site_until,
+                            address,
+                            bamf_last,
+                            arrival_date,
+                            residence_status,
 
                             # Other Details ---------------------------
-                            "person_details.occupation",
                             S3SQLInlineComponent(
                                     "contact",
                                     fields = [("", "value")],
@@ -871,6 +1076,8 @@ def config(settings):
                                     multiple = False,
                                     name = "phone",
                                     ),
+                            education,
+                            occupation,
                             "person_details.literacy",
                             S3SQLInlineComponent(
                                     "case_language",
@@ -912,14 +1119,6 @@ def config(settings):
                             S3DateFilter("date_of_birth",
                                          hidden = True,
                                          ),
-                            S3OptionsFilter("case_flag_case.flag_id",
-                                            label = T("Flags"),
-                                            options = s3_get_filter_opts("dvr_case_flag",
-                                                                         translate = True,
-                                                                         ),
-                                            cols = 3,
-                                            hidden = True,
-                                            ),
                             S3OptionsFilter("dvr_case.status_id",
                                             cols = 3,
                                             #default = None,
@@ -944,12 +1143,28 @@ def config(settings):
                                          hidden = True,
                                          comment = T("Search for multiple IDs (separated by blanks)"),
                                          ),
-                            S3TextFilter(["service_contact.reference"],
-                                         label = T("Ref.No."),
-                                         hidden = True,
-                                         comment = T("Search by service contact reference number"),
-                                         ),
                             ]
+
+                        # Ref.No.-filter if using service contacts
+                        if ui_options.get("case_use_service_contacts"):
+                            filter_widgets.append(S3TextFilter(
+                                                    ["service_contact.reference"],
+                                                    label = T("Ref.No."),
+                                                    hidden = True,
+                                                    comment = T("Search by service contact reference number"),
+                                                    ))
+                        # Flag-filter if using case flags
+                        if case_flags:
+                            filter_widgets.insert(2, S3OptionsFilter(
+                                                    "case_flag_case.flag_id",
+                                                    label = T("Flags"),
+                                                    options = s3_get_filter_opts("dvr_case_flag",
+                                                                                 translate = True,
+                                                                                 ),
+                                                    cols = 3,
+                                                    hidden = True,
+                                                    ))
+                        # Org-filter if user can see cases from multiple orgs/branches
                         if multiple_orgs:
                             filter_widgets.insert(1,
                                                   S3OptionsFilter("dvr_case.organisation_id"),
@@ -968,12 +1183,18 @@ def config(settings):
                                    "person_details.nationality",
                                    "dvr_case.date",
                                    "dvr_case.status_id",
-                                   "dvr_case.site_id",
+                                   lodging,
                                    ]
                     if multiple_orgs:
                         list_fields.insert(-1, "dvr_case.organisation_id")
 
                     configure(list_fields = list_fields)
+
+                elif r.component_name == "case_appointment":
+
+                    if ui_options.get("appointments_use_organizer") and \
+                       r.interactive and r.method is None and not r.component_id:
+                        r.method = "organize"
 
             elif r.controller == "default":
 
@@ -1010,17 +1231,32 @@ def config(settings):
                r.method in (None, "update", "read") and \
                isinstance(output, dict):
 
-                # Add anonymize-button
+                # Custom CRUD buttons
                 if "buttons" not in output:
                     buttons = output["buttons"] = {}
                 else:
                     buttons = output["buttons"]
 
+                # Anonymize-button
                 from s3 import S3AnonymizeWidget
-                buttons["delete_btn"] = S3AnonymizeWidget.widget(
-                                            r,
-                                            _class="action-btn anonymize-btn",
-                                            )
+                anonymize = S3AnonymizeWidget.widget(r,
+                                         _class="action-btn anonymize-btn")
+
+                # Doc-From-Template-button
+                if ui_options.get("case_document_templates") and \
+                   auth.s3_has_role("CASE_MANAGEMENT"):
+                    doc_from_template = A(T("Document from Template"),
+                                          _class = "action-btn s3_modal",
+                                          _title = T("Generate Document from Template"),
+                                          _href = URL(args=[r.id, "templates"]),
+                                          )
+                else:
+                    doc_from_template = ""
+
+                # Render in place of the delete-button
+                buttons["delete_btn"] = TAG[""](doc_from_template,
+                                                anonymize,
+                                                )
 
             return output
         s3.postp = custom_postp
@@ -1432,12 +1668,39 @@ def config(settings):
 
         auth = current.auth
         s3db = current.s3db
+        table = s3db.dvr_case_activity
 
         if r.method == "count_due_followups":
             # Just counting due followups => skip customisation
             return
 
         human_resource_id = auth.s3_logged_in_human_resource()
+        ui_options = get_ui_options()
+
+        # Optional: closure details
+        if ui_options.get("activity_closure"):
+            # Activities can be closed
+            status_id = "status_id"
+            end_date = "end_date"
+            outcome = "outcome"
+        else:
+            # Activities are never closed
+            status_id = None
+            table.start_date.label = T("Date")
+            end_date = None
+            outcome = None
+
+        # Activity subject
+        if ui_options.get("activity_use_need"):
+            # Use need type
+            subject_field = "need_id"
+            subject_list_field = (T("Counseling Reason"), "need_id")
+        else:
+            # Use free-text field
+            subject_list_field = subject_field = "subject"
+
+        # Using sectors?
+        activity_use_sector = ui_options.get("activity_use_sector")
 
         if r.method == "report":
 
@@ -1445,20 +1708,35 @@ def config(settings):
             facts = ((T("Number of Activities"), "count(id)"),
                      (T("Number of Clients"), "count(person_id)"),
                      )
-            axes = ("person_id$gender",
+            axes = ["person_id$gender",
                     "person_id$person_details.nationality",
                     "person_id$person_details.marital_status",
-                    "status_id",
                     "priority",
-                    "sector_id",
                     (T("Theme"), "response_action.response_theme_ids"),
-                    )
+                    ]
+
+            default_rows = "response_action.response_theme_ids"
+            default_cols = "person_id$person_details.nationality"
+
+            # Add the sector_id axis when using sectors
+            if activity_use_sector:
+                axes.insert(-1, "sector_id")
+                default_rows = "sector_id"
+
+            # Add the need_id axis when using needs
+            if subject_field == "need_id":
+                axes.insert(-1, "need_id")
+                default_rows = "need_id"
+
+            # Add status_id axis when using status
+            if status_id == "status_id":
+                axes.insert(3, status_id)
             report_options = {
                 "rows": axes,
                 "cols": axes,
                 "fact": facts,
-                "defaults": {"rows": "sector_id",
-                             "cols": "person_id$person_details.nationality",
+                "defaults": {"rows": default_rows,
+                             "cols": default_cols,
                              "fact": "count(id)",
                              "totals": True,
                              },
@@ -1471,86 +1749,143 @@ def config(settings):
 
         if r.interactive or r.representation == "aadata":
 
-            from gluon.sqlhtml import OptionsWidget
             from s3 import S3SQLCustomForm, \
                            S3SQLInlineComponent
 
-            table = s3db.dvr_case_activity
-
             # Represent person_id as link
             field = table.person_id
-            #fmt = "%(pe_label)s %(last_name)s, %(first_name)s"
-            field.represent = s3db.pr_PersonRepresent(#fields = ("pe_label",
-                                                      #          "last_name",
-                                                      #          "first_name",
-                                                      #          ),
-                                                      #labels = fmt,
-                                                      show_link = True,
-                                                      )
+            field.represent = s3db.pr_PersonRepresent(show_link = True)
 
-            # If looking at a particular case, get the person_id
+            # Get person_id, case_activity_id and case activity record
+            person_id = case_activity_id = case_activity = None
             if r.tablename == "pr_person":
+                # On activities-tab of a case
                 person_id = r.record.id if r.record else None
+                component = r.component
+                if component and component.tablename == "dvr_case_activity":
+                    case_activity_id = r.component_id
+
             elif r.tablename == "dvr_case_activity":
-                person_id = r.record.person_id if r.record else None
-            else:
-                person_id = None
+                # Primary case activity controller
+                case_activity = r.record
+                if case_activity:
+                    person_id = case_activity.person_id
+                    case_activity_id = r.id
 
             db = current.db
 
-            # Get the root org of the case org
-            if person_id:
-                ctable = s3db.dvr_case
-                otable = s3db.org_organisation
-                left = otable.on(otable.id == ctable.organisation_id)
-                query = (ctable.person_id == person_id) & \
-                        (ctable.archived == False) & \
-                        (ctable.deleted == False)
-                row = db(query).select(otable.root_organisation,
-                                       left = left,
-                                       limitby = (0, 1),
-                                       orderby = ~ctable.modified_on,
-                                       ).first()
-                case_root_org = row.root_organisation if row else None
-            else:
-                case_root_org = None
-
-            # Limit the sector selection to the case root org's sectors
-            if case_root_org:
-                ltable = s3db.org_sector_organisation
-                query = (ltable.organisation_id == case_root_org) & \
-                        (ltable.deleted == False)
-                rows = db(query).select(ltable.sector_id)
-                sector_ids = set(row.sector_id for row in rows)
-            else:
-                sector_ids = set()
-
-            # Include the sector_id of the current record (if any)
-            record = None
-            component = r.component
-            if not component:
-                if r.tablename == "dvr_case_activity":
-                    record = r.record
-            elif component.tablename == "dvr_case_activity" and r.component_id:
-                query = table.id == r.component_id
-                record = db(query).select(table.sector_id,
-                                          limitby = (0, 1),
-                                          ).first()
-            if record and record.sector_id:
-                sector_ids.add(record.sector_id)
+            # Get the root org of the case
+            case_root_org = get_case_root_org(person_id)
 
             # Configure sector_id
             field = table.sector_id
             field.comment = None
-            subset = db(s3db.org_sector.id.belongs(sector_ids))
-            field.requires = IS_EMPTY_OR(IS_ONE_OF(subset, "org_sector.id",
-                                                   field.represent,
-                                                   ))
+            if ui_options.get("activity_use_sector"):
 
-            # Show subject field
-            field = table.subject
-            field.readable = field.writable = True
-            field.requires = IS_NOT_EMPTY()
+                # Get the root org for sector selection
+                if case_root_org:
+                    sector_root_org = case_root_org
+                else:
+                    sector_root_org = auth.root_org()
+
+                if sector_root_org:
+                    # Limit the sector selection
+                    ltable = s3db.org_sector_organisation
+                    query = (ltable.organisation_id == sector_root_org) & \
+                            (ltable.deleted == False)
+                    rows = db(query).select(ltable.sector_id)
+                    sector_ids = set(row.sector_id for row in rows)
+
+                    # Default sector
+                    if len(sector_ids) == 1:
+                        default_sector_id = rows.first().sector_id
+                    else:
+                        default_sector_id = None
+
+                    # Include the sector_id of the current record (if any)
+                    record = None
+                    component = r.component
+                    if not component:
+                        if r.tablename == "dvr_case_activity":
+                            record = r.record
+                    elif component.tablename == "dvr_case_activity" and r.component_id:
+                        query = table.id == r.component_id
+                        record = db(query).select(table.sector_id,
+                                                  limitby = (0, 1),
+                                                  ).first()
+                    if record and record.sector_id:
+                        sector_ids.add(record.sector_id)
+
+                    # Set selectable sectors
+                    subset = db(s3db.org_sector.id.belongs(sector_ids))
+                    field.requires = IS_EMPTY_OR(IS_ONE_OF(subset, "org_sector.id",
+                                                           field.represent,
+                                                           ))
+
+                    # Default selection?
+                    if len(sector_ids) == 1 and default_sector_id:
+                        # Single option => set as default and hide selector
+                        field.default = default_sector_id
+                        field.readable = field.writable = False
+            else:
+                field.readable = field.writable = False
+
+            # Configure subject field (alternatives)
+            if subject_field == "need_id":
+
+                # Are we looking at a particular case activity?
+                if r.tablename != "dvr_case_activity":
+                    activity_id = r.component_id
+                else:
+                    activity_id = r.id
+
+                # Shall we automatically link responses to activities?
+                autolink = ui_options.get("response_activity_autolink")
+
+                # Expose need_id
+                field = table.need_id
+                field.label = T("Counseling Reason")
+                field.readable = True
+                field.writable = not activity_id or not autolink
+
+                # Limit to org-specific need types
+                if case_root_org:
+                    needs_root_org = case_root_org
+                else:
+                    needs_root_org = auth.root_org()
+                ntable = s3db.dvr_need
+                if needs_root_org:
+                    query = (ntable.organisation_id == needs_root_org)
+                else:
+                    query = None
+
+                # With autolink, prevent multiple activities per need type
+                if autolink:
+                    joinq = (table.need_id == ntable.id) & \
+                            (table.person_id == person_id) & \
+                            (table.deleted == False)
+                    if activity_id:
+                        joinq &= (table.activity_id != activity_id)
+                    left = table.on(joinq)
+                    q = (table.id == None)
+                    query = query & q if query else q
+                else:
+                    left = None
+
+                if query:
+                    field.requires = IS_ONE_OF(db(query), "dvr_need.id",
+                                               field.represent,
+                                               left = left,
+                                               )
+            else:
+                # Expose simple free-text subject
+                field = table.subject
+                field.readable = field.writable = True
+                field.requires = IS_NOT_EMPTY()
+
+            # Show need details (optional)
+            field = table.need_details
+            field.readable = field.writable = ui_options.get("activity_need_details")
 
             # Customise Priority
             field = table.priority
@@ -1570,107 +1905,81 @@ def config(settings):
                                                  3: "grey",
                                                  }).represent
 
-            # Customise "completed" flag
-            # => label as "Status" and use drop-down for open/closed
-            CURRENT = T("Current")
-            COMPLETED = T("Completed")
-            field = table.completed
-            field.label = T("Status")
-            field.represent = lambda v, row=None: COMPLETED if v else CURRENT
-            field.requires = [IS_IN_SET([(False, CURRENT),
-                                         (True, COMPLETED),
-                                         ],
-                                        zero=None,
-                                        ),
-                              # Form option is a str => convert to boolean
-                              lambda v: (str(v) == "True", None),
-                              ]
-            field.widget = OptionsWidget.widget
+            # Show human_resource_id
+            hr_represent = s3db.hrm_HumanResourceRepresent(show_link=False)
+            field = table.human_resource_id
+            field.comment = None
+            field.default = human_resource_id
+            field.label = T("Consultant in charge")
+            field.readable = field.writable = True
+            field.represent = hr_represent
+            field.widget = None
 
             # Show end_date field (read-only)
-            field = table.end_date
-            field.label = T("Completed on")
-            field.readable = True
+            if end_date is not None:
+                field = table.end_date
+                field.label = T("Completed on")
+                field.readable = True
 
-            # Show human_resource_id
-            field = table.human_resource_id
-            field.readable = field.writable = True
-            field.label = T("Consultant in charge")
-            field.default = human_resource_id
-            field.widget = None
-            field.comment = None
-
-            # Inline-needs
-            #ntable = current.s3db.dvr_case_activity_need
-            #
-            #field = ntable.human_resource_id
-            #field.default = human_resource_id
-            #field.widget = field.comment = None
-            #
-            #field = ntable.need_id
-            #field.comment = None
+            # Show comments
+            field = table.comments
+            field.readable = field.writable = ui_options.get("activity_comments")
 
             # Inline-responses
             rtable = s3db.dvr_response_action
 
+            if person_id:
+                # Set the person_id for inline responses (does not not happen
+                # automatically since using case_activity_id as component key)
+                field = rtable.person_id
+                field.default = person_id
+
             field = rtable.human_resource_id
-            field.label = T("Assigned to")
             field.default = human_resource_id
+            field.represent = hr_represent
             field.widget = field.comment = None
 
-            # Filter themes-options to themes of the case root org
-            if case_root_org and r.tablename == "pr_person" and r.record:
-                requires = rtable.response_theme_ids.requires
-                if isinstance(requires, IS_EMPTY_OR):
-                    requires = requires.other
-                if hasattr(requires, "set_filter"):
-                    requires.set_filter(filterby = "organisation_id",
-                                        filter_opts = (case_root_org,),
-                                        )
+            configure_response_theme_selector(ui_options,
+                                              case_root_org = case_root_org,
+                                              case_activity = case_activity,
+                                              case_activity_id = case_activity_id,
+                                              )
+
+            response_action_fields = ["response_theme_ids",
+                                      "comments",
+                                      "human_resource_id",
+                                      "date",
+                                      "status_id",
+                                      "hours",
+                                      ]
+            if settings.get_dvr_response_due_date():
+                response_action_fields[1:1] = ["date_due"]
 
             # Inline-updates
             utable = current.s3db.dvr_case_activity_update
 
             field = utable.human_resource_id
             field.default = human_resource_id
+            field.represent = hr_represent
             field.widget = field.comment = None
 
+            # Custom CRUD form
             from s3 import S3SQLVerticalSubFormLayout
             crud_form = S3SQLCustomForm(
                             "person_id",
 
                             "sector_id",
 
-                            "subject",
+                            subject_field,
                             (T("Initial Situation Details"), ("need_details")),
 
                             "start_date",
                             "priority",
                             "human_resource_id",
 
-                            #S3SQLInlineComponent("case_activity_need",
-                            #                     label = T("Needs Assessment"),
-                            #                     fields = [
-                            #                         "date",
-                            #                         "need_id",
-                            #                         (T("Details"), "comments"),
-                            #                         "human_resource_id",
-                            #                         ],
-                            #                     layout = S3SQLVerticalSubFormLayout,
-                            #                     explicit_add = T("Add Need"),
-                            #                     ),
-
                             S3SQLInlineComponent("response_action",
                                                  label = T("Actions"),
-                                                 fields = [
-                                                     "response_theme_ids",
-                                                     "date_due",
-                                                     "comments",
-                                                     "human_resource_id",
-                                                     "status_id",
-                                                     "date",
-                                                     "hours",
-                                                     ],
+                                                 fields = response_action_fields,
                                                  layout = S3SQLVerticalSubFormLayout,
                                                  explicit_add = T("Add Action"),
                                                  ),
@@ -1690,10 +1999,10 @@ def config(settings):
                                                  explicit_add = T("Add Entry"),
                                                  ),
 
-                            "status_id",
-                            "end_date",
+                            status_id,
+                            end_date,
 
-                            "outcome",
+                            outcome,
 
                             S3SQLInlineComponent(
                                 "document",
@@ -1717,14 +2026,16 @@ def config(settings):
         # Custom list fields for case activity component tab
         if r.tablename != "dvr_case_activity":
             list_fields = ["priority",
-                           "sector_id",
-                           "subject",
+                           #"sector_id",
+                           subject_list_field,
                            #"followup",
                            #"followup_date",
                            "start_date",
                            "human_resource_id",
-                           "status_id",
+                           status_id,
                            ]
+            if table.sector_id.readable:
+                list_fields.insert(1, "sector_id")
 
             # Custom list fields
             s3db.configure("dvr_case_activity",
@@ -1767,6 +2078,9 @@ def config(settings):
             # Configure person tags
             configure_person_tags()
 
+            # Get UI options
+            ui_options = get_ui_options()
+
             # Adapt list title when filtering for priority 0 (Emergency)
             if r.get_vars.get("~.priority") == "0":
                 emergencies = True
@@ -1783,24 +2097,39 @@ def config(settings):
             if not r.component and not r.record:
 
                 from s3 import S3TextFilter, \
-                               S3OptionsFilter, \
-                               s3_get_filter_opts
+                               S3OptionsFilter
 
                 db = current.db
 
-                # Status filter options + defaults
-                stable = s3db.dvr_case_activity_status
-                query = (stable.deleted == False)
-                rows = db(query).select(stable.id,
-                                        stable.name,
-                                        stable.is_closed,
-                                        cache = s3db.cache,
-                                        orderby = stable.workflow_position,
-                                        )
-                status_filter_options = OrderedDict((row.id, T(row.name))
-                                                    for row in rows)
-                status_filter_defaults = [row.id for row in rows
-                                                 if not row.is_closed]
+                # Sector filter options
+                # (field options are configured in customise_*_resource)
+                sector_id = resource.table.sector_id
+                sector_options = {k:v for k, v in sector_id.requires.options() if k}
+
+                # Status filter options + defaults, status list field
+                if ui_options.get("activity_closure"):
+                    stable = s3db.dvr_case_activity_status
+                    query = (stable.deleted == False)
+                    rows = db(query).select(stable.id,
+                                            stable.name,
+                                            stable.is_closed,
+                                            cache = s3db.cache,
+                                            orderby = stable.workflow_position,
+                                            )
+                    status_filter_options = OrderedDict((row.id, T(row.name))
+                                                        for row in rows)
+                    status_filter_defaults = [row.id for row in rows
+                                                     if not row.is_closed]
+                    status_filter = S3OptionsFilter("status_id",
+                                                    options = status_filter_options,
+                                                    cols = 3,
+                                                    default = status_filter_defaults,
+                                                    sort = False,
+                                                    )
+                    status_id = "status_id"
+                else:
+                    status_filter = None
+                    status_id = None
 
                 # Filter widgets
                 filter_widgets = [
@@ -1811,29 +2140,20 @@ def config(settings):
                                   ],
                                   label = T("Search"),
                                   ),
-                    S3OptionsFilter("status_id",
-                                    options = status_filter_options,
-                                    cols = 3,
-                                    default = status_filter_defaults,
-                                    sort = False,
-                                    ),
-                    S3OptionsFilter("sector_id",
-                                    hidden = True,
-                                    options = lambda: s3_get_filter_opts("org_sector",
-                                                                         translate = True,
-                                                                         ),
-                                    ),
-                    #S3OptionsFilter("case_activity_need.need_id",
-                    #                options = lambda: s3_get_filter_opts("dvr_need",
-                    #                                                     translate = True,
-                    #                                                     ),
-                    #                hidden = True,
-                    #                ),
                     S3OptionsFilter("person_id$person_details.nationality",
                                     label = T("Client Nationality"),
                                     hidden = True,
                                     ),
                     ]
+
+                if sector_id.readable:
+                    filter_widgets.insert(1, S3OptionsFilter(
+                                                "sector_id",
+                                                hidden = True,
+                                                options = sector_options,
+                                                ))
+                if status_filter:
+                    filter_widgets.insert(1, status_filter)
 
                 # Priority filter (unless pre-filtered to emergencies anyway)
                 if not emergencies:
@@ -1864,17 +2184,25 @@ def config(settings):
                                           S3OptionsFilter("person_id$dvr_case.organisation_id"),
                                           )
 
+                # Subject field (alternatives)
+                if ui_options.get("activity_use_need"):
+                    subject_field = "need_id"
+                else:
+                    subject_field = "subject"
+
                 # Custom list fields
                 list_fields = ["priority",
                                (T("ID"), "person_id$pe_label"),
                                (T("Case"), "person_id"),
-                               "sector_id",
-                               "subject",
+                               #"sector_id",
+                               subject_field,
                                "start_date",
                                #"followup",
                                #"followup_date",
-                               "status_id",
+                               status_id,
                                ]
+                if sector_id.readable:
+                    list_fields.insert(3, "sector_id")
 
                 # Person responsible filter and list_field
                 if not r.get_vars.get("mine"):
@@ -1892,6 +2220,67 @@ def config(settings):
         return attr
 
     settings.customise_dvr_case_activity_controller = customise_dvr_case_activity_controller
+
+    # -------------------------------------------------------------------------
+    def customise_dvr_case_appointment_resource(r, tablename):
+
+        s3db = current.s3db
+
+        # Organizer popups
+        if r.tablename == "pr_person":
+            title = "type_id"
+            description = ["status",
+                           "comments",
+                           ]
+        elif r.tablename == "dvr_case_appointment":
+            title = "person_id"
+            description = [(T("ID"), "person_id$pe_label"),
+                           "type_id",
+                           "status",
+                           "comments",
+                           ]
+        else:
+            title = description = None
+
+        table = s3db.dvr_case_appointment
+
+        field = table.status
+        # Using only a subset of the standard status opts
+        appointment_status_opts = {#1: T("Planning"),
+                                   2: T("Planned"),
+                                   #3: T("In Progress"),
+                                   4: T("Completed##appointment"),
+                                   5: T("Missed"),
+                                   6: T("Cancelled"),
+                                   #7: T("Not Required"),
+                                   }
+        field.default = 2
+        field.requires = IS_IN_SET(appointment_status_opts,
+                                   zero = None,
+                                   )
+
+        ui_options = get_ui_options()
+        if ui_options.get("appointments_staff_link"):
+            # Enable staff link and default to logged-in user
+            field = table.human_resource_id
+            field.default = current.auth.s3_logged_in_human_resource()
+            field.readable = field.writable = True
+            field.represent = s3db.hrm_HumanResourceRepresent(show_link=False)
+            field.widget = None
+            # Also show staff link in organizer popup
+            if description:
+                description.insert(-1, "human_resource_id")
+
+        # Configure Organizer
+        if title:
+            s3db.configure("dvr_case_appointment",
+                           organize = {"start": "date",
+                                       "title": title,
+                                       "description": description,
+                                       },
+                           )
+
+    settings.customise_dvr_case_appointment_resource = customise_dvr_case_appointment_resource
 
     # -------------------------------------------------------------------------
     def customise_dvr_case_appointment_controller(**attr):
@@ -2029,22 +2418,164 @@ def config(settings):
     settings.customise_dvr_case_flag_resource = customise_dvr_case_flag_resource
 
     # -------------------------------------------------------------------------
+    def customise_dvr_need_resource(r, tablename):
+
+        table = current.s3db.dvr_need
+
+        # Expose organisation_id (only relevant for ADMINs)
+        field = table.organisation_id
+        field.readable = field.writable = True
+
+        # Expose protection flag
+        field = table.protection
+        field.readable = field.writable = True
+
+        # Custom CRUD Strings
+        current.response.s3.crud_strings["dvr_need"] = Storage(
+            label_create = T("Create Counseling Reason"),
+            title_display = T("Counseling Reason Details"),
+            title_list = T("Counseling Reason"),
+            title_update = T("Edit Counseling Reason"),
+            label_list_button = T("List Counseling Reasons"),
+            label_delete_button = T("Delete Counseling Reason"),
+            msg_record_created = T("Counseling Reason created"),
+            msg_record_modified = T("Counseling Reason updated"),
+            msg_record_deleted = T("Counseling Reason deleted"),
+            msg_list_empty = T("No Counseling Reasons currently defined"),
+        )
+
+    settings.customise_dvr_need_resource = customise_dvr_need_resource
+
+    # -------------------------------------------------------------------------
+    def get_case_root_org(person_id):
+        """
+            Get the root organisation managing a case
+
+            @param person_id: the person record ID
+
+            @returns: the root organisation record ID
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        if person_id:
+            ctable = s3db.dvr_case
+            otable = s3db.org_organisation
+            left = otable.on(otable.id == ctable.organisation_id)
+            query = (ctable.person_id == person_id) & \
+                    (ctable.archived == False) & \
+                    (ctable.deleted == False)
+            row = db(query).select(otable.root_organisation,
+                                   left = left,
+                                   limitby = (0, 1),
+                                   orderby = ~ctable.modified_on,
+                                   ).first()
+            case_root_org = row.root_organisation if row else None
+        else:
+            case_root_org = None
+
+        return case_root_org
+
+    # -------------------------------------------------------------------------
+    def configure_response_theme_selector(ui_options,
+                                          case_root_org = None,
+                                          person_id = None,
+                                          case_activity = None,
+                                          case_activity_id = None,
+                                          ):
+        """
+            Configure response theme selector
+
+            @param ui_options: the UI options for the current org
+            @param case_root_org: the case root organisation
+            @param person_id: the person record ID (to look up the root org)
+            @param case_activity: the case activity record
+            @param case_activity_id: the case activity record ID
+                                     (to look up the case activity record)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ttable = s3db.dvr_response_theme
+        query = None
+
+        # Limit themes to the themes of the case root organisation
+        if not case_root_org:
+            case_root_org = get_case_root_org(person_id)
+            if not case_root_org:
+                case_root_org = current.auth.root_org()
+        if case_root_org:
+            query = (ttable.organisation_id == case_root_org)
+
+        themes_needs = settings.get_dvr_response_themes_needs()
+        if ui_options.get("activity_use_need") and themes_needs:
+
+            # Limit themes to those matching the need of the activity
+            if case_activity:
+                need_id = case_activity.need_id
+            elif case_activity_id:
+                # Look up the parent record
+                catable = s3db.dvr_case_activity
+                case_activity = db(catable.id == case_activity_id).select(catable.need_id,
+                                                                          limitby = (0, 1),
+                                                                          ).first()
+                need_id = case_activity.need_id if case_activity else None
+            else:
+                need_id = None
+            if need_id:
+                q = (ttable.need_id == need_id)
+                query = query & q if query else q
+
+        dbset = db(query) if query else db
+
+        table = s3db.dvr_response_action
+        field = table.response_theme_ids
+
+        if themes_needs:
+            # Include the need in the themes-selector
+            # - helps to find themes using the selector search field
+            represent = s3db.dvr_ResponseThemeRepresent(multiple = True,
+                                                        translate = True,
+                                                        show_need = True,
+                                                        )
+        else:
+            represent = field.represent
+
+        field.requires = IS_ONE_OF(dbset, "dvr_response_theme.id",
+                                   represent,
+                                   multiple = True,
+                                   )
+
+        requires = field.requires
+        if ui_options.get("response_themes_optional"):
+            # Allow responses without theme
+            if not isinstance(requires, IS_EMPTY_OR):
+                requires = field.requires = IS_EMPTY_OR(requires)
+        else:
+            # Make theme-selection mandatory
+            if isinstance(requires, IS_EMPTY_OR):
+                requires = field.requires = requires.other
+
+        if ui_options.get("response_themes_single"):
+            # Make theme-selector single-option
+            field.label = T("Theme")
+            from s3 import S3MultiSelectWidget
+            field.widget = S3MultiSelectWidget(header = False,
+                                               multiple = False,
+                                               )
+            if isinstance(requires, IS_EMPTY_OR):
+                # Override IS_EMPTY_OR.multiple to get empty option
+                requires.multiple = False
+
+    # -------------------------------------------------------------------------
     def customise_dvr_response_action_resource(r, tablename):
 
         db = current.db
         s3db = current.s3db
 
         table = s3db.dvr_response_action
-
-        # Custom format for case activity representation
-        field = table.case_activity_id
-        #fmt = "%(pe_label)s %(last_name)s, %(first_name)s"
-        fmt = "%(last_name)s, %(first_name)s"
-        field.represent = s3db.dvr_CaseActivityRepresent(fmt = fmt,
-                                                         show_link = True,
-                                                         )
-
-        is_report = r.method == "report"
 
         # Can the user see cases from more than one org?
         realms = current.auth.permission.permitted_realms("dvr_case", "read")
@@ -2053,21 +2584,39 @@ def config(settings):
         else:
             multiple_orgs = False
 
-        org_context = "case_activity_id$person_id$dvr_case.organisation_id"
+        org_context = "person_id$dvr_case.organisation_id"
 
+        is_report = r.method == "report"
         if is_report:
 
+            # Sector Axis
+            if settings.get_dvr_response_themes_sectors():
+                sector = "dvr_response_action_theme.theme_id$sector_id"
+                default_cols = None
+            else:
+                sector = "case_activity_id$sector_id"
+                default_cols = sector
+
+            # Needs Axis
+            if settings.get_dvr_response_themes_needs():
+                need = (T("Counseling Reason"),
+                        "dvr_response_action_theme.theme_id$need_id",
+                        )
+            else:
+                need = None
+
             # Custom Report Options
-            facts = ((T("Number of Clients"), "count(case_activity_id$person_id)"),
-                     (T("Hours (Average)"), "avg(hours)"),
+            facts = ((T("Number of Actions"), "count(id)"),
+                     (T("Number of Clients"), "count(person_id)"),
                      (T("Hours (Total)"), "sum(hours)"),
-                     (T("Number of Actions"), "count(id)"),
+                     (T("Hours (Average)"), "avg(hours)"),
                      )
-            axes = ("case_activity_id$person_id$gender",
-                    "case_activity_id$person_id$person_details.nationality",
-                    "case_activity_id$person_id$person_details.marital_status",
-                    "case_activity_id$sector_id",
+            axes = ("person_id$gender",
+                    "person_id$person_details.nationality",
+                    "person_id$person_details.marital_status",
                     (T("Theme"), "response_theme_ids"),
+                    need,
+                    sector,
                     "human_resource_id",
                     )
             if multiple_orgs:
@@ -2079,7 +2628,7 @@ def config(settings):
                 "cols": axes,
                 "fact": facts,
                 "defaults": {"rows": "response_theme_ids",
-                             "cols": "case_activity_id$sector_id",
+                             "cols": default_cols,
                              "fact": "count(id)",
                              "totals": True,
                              },
@@ -2092,100 +2641,224 @@ def config(settings):
             crud_strings = current.response.s3.crud_strings["dvr_response_action"]
             crud_strings["title_report"] = T("Action Statistic")
 
-        if r.interactive or r.representation == "aadata":
+        if r.interactive or r.representation in ("aadata", "xls", "pdf"):
 
-            # Custom Filter Options
-            from s3 import S3AgeFilter, \
-                           S3DateFilter, \
-                           S3OptionsFilter, \
-                           S3TextFilter, \
-                           s3_get_filter_opts
+            ui_options = get_ui_options()
 
-            filter_widgets = [S3TextFilter(
-                                ["case_activity_id$person_id$pe_label",
-                                 "case_activity_id$person_id$first_name",
-                                 "case_activity_id$person_id$middle_name",
-                                 "case_activity_id$person_id$last_name",
-                                 "comments",
-                                 ],
-                                label = T("Search"),
-                                ),
-                              S3OptionsFilter(
-                                    "status_id",
-                                    options = lambda: \
-                                              s3_get_filter_opts("dvr_response_status"),
-                                    cols = 3,
-                                    translate = True,
-                                    ),
-                              S3DateFilter("date", hidden=not is_report),
-                              S3DateFilter("date_due", hidden=is_report),
-                              S3OptionsFilter(
-                                    "response_theme_ids",
-                                    hidden = True,
-                                    options = lambda: \
-                                              s3_get_filter_opts("dvr_response_theme",
-                                                                 org_filter = True,
-                                                                 ),
-                                    ),
-                              S3OptionsFilter("case_activity_id$person_id$person_details.nationality",
-                                              label = T("Client Nationality"),
-                                              hidden = True,
-                                              ),
-                              S3AgeFilter("case_activity_id$person_id$date_of_birth",
-                                          label = T("Client Age"),
-                                          hidden = True,
-                                          )
-                              #S3DateFilter("case_activity_id$person_id$date_of_birth",
-                              #             label = T("Client Date of Birth"),
-                              #             hidden = True,
-                              #             ),
-                              ]
+            # Use drop-down for human_resource_id
+            field = table.human_resource_id
+            field.default = current.auth.s3_logged_in_human_resource()
+            field.represent = s3db.hrm_HumanResourceRepresent(show_link=False)
+            field.widget = None
 
-            if r.interactive and multiple_orgs:
-                # Add case organisation filter
-                if realms:
-                    # Provide the realms as filter options
-                    otable = s3db.org_organisation
-                    orgs = db(otable.pe_id.belongs(realms)).select(otable.id)
-                    org_filter_opts = s3db.org_organisation_represent.bulk(
-                                            [org.id for org in orgs],
-                                            show_link = False,
-                                            )
-                    org_filter_opts.pop(None, None)
-                else:
-                    # Look up from records
-                    org_filter_opts = None
-                filter_widgets.insert(1,
-                                      S3OptionsFilter(org_context,
-                                                      options = org_filter_opts,
-                                                      ),
-                                      )
+            # Use separate due-date field?
+            use_due_date = settings.get_dvr_response_due_date()
+            date_due = "date_due" if use_due_date else None
 
-            s3db.configure("dvr_response_action",
-                           filter_widgets = filter_widgets,
-                           )
-
+            # Configure theme selector
             if r.tablename == "dvr_response_action":
-                list_fields = [(T("ID"), "case_activity_id$person_id$pe_label"),
-                               "case_activity_id",
+                is_master = True
+                person_id = r.record.person_id if r.record else None
+            elif r.tablename == "pr_person" and \
+                 r.component and r.component.tablename == "dvr_response_action":
+                is_master = False
+                person_id = r.record.id if r.record else None
+
+            configure_response_theme_selector(ui_options,
+                                              person_id = person_id,
+                                              )
+
+            get_vars = r.get_vars
+            if not is_master or "viewing" in get_vars:
+                # Component tab (or viewing-tab) of case
+
+                # Hide person_id
+                field = table.person_id
+                field.readable = field.writable = False
+
+                # Show activity_id (read-only), represent by subject
+                field = table.case_activity_id
+                field.readable = True
+                field.writable = False
+                if ui_options.get("activity_use_need"):
+                    field.label = T("Counseling Reason")
+                    show_as = "need"
+                else:
+                    field.label = T("Subject")
+                    show_as = "subject"
+                field.represent = s3db.dvr_CaseActivityRepresent(
+                                            show_as=show_as,
+                                            show_link=True,
+                                            )
+
+                # Adapt list-fields to perspective
+                list_fields = ["case_activity_id",
                                "response_theme_ids",
                                "comments",
                                "human_resource_id",
-                               "date_due",
+                               date_due,
                                "date",
                                "hours",
                                "status_id",
                                ]
+
                 s3db.configure("dvr_response_action",
                                list_fields = list_fields,
+                               filter_widgets = None,
+                               orderby = "dvr_response_action.date desc",
                                )
+                if "viewing" in get_vars:
+                    s3db.configure("dvr_response_action",
+                                   create_next = r.url(id="", method=""),
+                                   update_next = r.url(id="", method=""),
+                                   )
+            else:
+                # Primary dvr/response_action controller
+
+                # Adapt list-fields to perspective
+                list_fields = [(T("ID"), "person_id$pe_label"),
+                               "response_theme_ids",
+                               "comments",
+                               "human_resource_id",
+                               date_due,
+                               "date",
+                               "hours",
+                               "status_id",
+                               ]
+
+                if ui_options.get("response_themes_optional"):
+                    # Show person_id (read-only)
+                    field = table.person_id
+                    field.represent =  s3db.pr_PersonRepresent(show_link = True)
+                    field.readable = True
+                    field.writable = False
+                    list_fields.insert(1, (T("Case"), "person_id"))
+
+                    # Hide activity_id
+                    field = table.case_activity_id
+                    field.readable = field.writable = False
+                else:
+                    # Hide person_id
+                    field = table.person_id
+                    field.readable = field.writable = False
+
+                    # Show activity_id (read-only)
+                    field = table.case_activity_id
+                    field.label = T("Case")
+                    field.represent = s3db.dvr_CaseActivityRepresent(
+                                                show_as = "beneficiary",
+                                                fmt = "%(last_name)s, %(first_name)s",
+                                                show_link = True,
+                                                )
+                    field.readable = True
+                    field.writable = False
+                    list_fields.insert(1, "case_activity_id")
+
+                # Custom Filter Options
+                if r.interactive:
+                    from s3 import S3AgeFilter, \
+                                   S3DateFilter, \
+                                   S3OptionsFilter, \
+                                   S3TextFilter, \
+                                   s3_get_filter_opts
+
+                    filter_widgets = [
+                        S3TextFilter(
+                            ["person_id$pe_label",
+                             "person_id$first_name",
+                             "person_id$middle_name",
+                             "person_id$last_name",
+                             "comments",
+                             ],
+                            label = T("Search"),
+                            ),
+                        S3OptionsFilter("status_id",
+                                        options = lambda: \
+                                                  s3_get_filter_opts("dvr_response_status"),
+                                        cols = 3,
+                                        translate = True,
+                                        ),
+                        S3DateFilter("date", hidden=not is_report),
+                        S3OptionsFilter(
+                            "response_theme_ids",
+                            hidden = True,
+                            options = lambda: \
+                                      s3_get_filter_opts("dvr_response_theme",
+                                                         org_filter = True,
+                                                         ),
+                            ),
+                        S3OptionsFilter("person_id$person_details.nationality",
+                                        label = T("Client Nationality"),
+                                        hidden = True,
+                                        ),
+                        S3AgeFilter("person_id$date_of_birth",
+                                    label = T("Client Age"),
+                                    hidden = True,
+                                    )
+                        ]
+
+                    if use_due_date:
+                        filter_widgets.insert(3, S3DateFilter("date_due",
+                                                              hidden=is_report,
+                                                              ))
+
+                    if multiple_orgs:
+                        # Add case organisation filter
+                        if realms:
+                            # Provide the realms as filter options
+                            otable = s3db.org_organisation
+                            orgs = db(otable.pe_id.belongs(realms)).select(otable.id)
+                            org_filter_opts = s3db.org_organisation_represent.bulk(
+                                                    [org.id for org in orgs],
+                                                    show_link = False,
+                                                    )
+                            org_filter_opts.pop(None, None)
+                        else:
+                            # Look up from records
+                            org_filter_opts = None
+                        filter_widgets.insert(1, S3OptionsFilter(org_context,
+                                                                 options = org_filter_opts,
+                                                                 ))
+
+                s3db.configure("dvr_response_action",
+                               filter_widgets = filter_widgets,
+                               list_fields = list_fields,
+                               )
+
+        # TODO Complete this (perspective? status?)
+        s3db.configure("dvr_response_action",
+                       organize = {"title": "person_id",
+                                   "description": ["response_theme_ids",
+                                                   "comments",
+                                                   "human_resource_id",
+                                                   "status_id",
+                                                   ],
+                                   "color": "status_id",
+                                   "colors": s3db.dvr_response_status_colors,
+                                   },
+                       )
 
     settings.customise_dvr_response_action_resource = customise_dvr_response_action_resource
 
     # -------------------------------------------------------------------------
     def customise_dvr_response_action_controller(**attr):
 
-        settings.base.bigtable = True
+        s3db = current.s3db
+
+        if "viewing" in current.request.get_vars:
+            # Set contacts-method to retain the tab
+            s3db.set_method("pr", "person",
+                            method = "contacts",
+                            action = s3db.pr_Contacts,
+                            )
+
+        else:
+            settings.base.bigtable = True
+
+        # Custom rheader tabs
+        if current.request.controller == "dvr":
+            attr = dict(attr)
+            attr["rheader"] = drk_dvr_rheader
 
         return attr
 
@@ -2194,6 +2867,46 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_dvr_response_theme_resource(r, tablename):
 
+        is_admin = current.auth.s3_has_role("ADMIN")
+
+
+        if r.tablename == "org_organisation" and r.id:
+
+            s3db = current.s3db
+
+            ttable = s3db.dvr_response_theme
+
+            if is_admin or settings.get_dvr_response_themes_sectors():
+
+                # Limit sector selection to the sectors of the organisation
+                stable = s3db.org_sector
+                ltable = s3db.org_sector_organisation
+
+                dbset = current.db((ltable.sector_id == stable.id) & \
+                                   (ltable.organisation_id == r.id) & \
+                                   (ltable.deleted == False))
+                field = ttable.sector_id
+                field.comment = None
+                field.readable = field.writable = True
+                field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "org_sector.id",
+                                                       field.represent,
+                                                       ))
+
+            if is_admin or settings.get_dvr_response_themes_needs():
+
+                # Limit needs selection to the needs of the organisation
+                ntable = s3db.dvr_need
+
+                dbset = current.db(ntable.organisation_id == r.id)
+                field = ttable.need_id
+                field.label = T("Counseling Reason")
+                field.comment = None
+                field.readable = field.writable = True
+                field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_need.id",
+                                                       field.represent,
+                                                       ))
+
+        # Custom CRUD Strings
         current.response.s3.crud_strings["dvr_response_theme"] = Storage(
             label_create = T("Create Counseling Theme"),
             title_display = T("Counseling Theme Details"),
@@ -2482,6 +3195,14 @@ def config(settings):
                                                 sysroles.ORG_GROUP_ADMIN,
                                                 ))
                 r.resource.configure(insertable = insertable)
+
+            if r.component_name == "document":
+                s3.crud_strings["doc_document"].label_create = T("Add Document Template")
+                # Done in customise_doc_document_resource
+                #f = current.s3db.doc_document.url
+                #f.readable = f.writable = False
+                current.s3db.doc_document.is_template.default = True
+                r.resource.add_component_filter("document", FS("is_template") == True)
 
             return result
 
@@ -2908,6 +3629,52 @@ def drk_cr_rheader(r, tabs=None):
     return rheader
 
 # =============================================================================
+def get_protection_themes(person):
+    """
+        Get response themes of a case that are linked to protection needs
+
+        @param person: the beneficiary record (pr_person Row)
+
+        @returns: list-representation of response themes
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Get all theme_ids that are linked to protection needs
+    ntable = s3db.dvr_need
+    ttable = s3db.dvr_response_theme
+
+    query = (ntable.protection == True) & \
+            (ntable.id == ttable.need_id) & \
+            (ttable.deleted == False)
+    themes = db(query).select(ttable.id,
+                              cache = s3db.cache,
+                              )
+    theme_ids = set(theme.id for theme in themes)
+
+    # Find out which of these themes are linked to the person
+    atable = s3db.dvr_case_activity
+    rtable = s3db.dvr_response_action
+    ltable = s3db.dvr_response_action_theme
+
+    query = (ltable.theme_id.belongs(theme_ids)) & \
+            (ltable.action_id == rtable.id) & \
+            (ltable.deleted == False) & \
+            (rtable.case_activity_id == atable.id) & \
+            (rtable.deleted == False) & \
+            (atable.person_id == person.id) & \
+            (atable.deleted == False)
+    rows = db(query).select(ltable.theme_id,
+                            groupby = ltable.theme_id,
+                            )
+    theme_list = [row.theme_id for row in rows]
+
+    # Return presented as list
+    represent = rtable.response_theme_ids.represent
+    return represent(theme_list)
+
+# =============================================================================
 def drk_dvr_rheader(r, tabs=None):
     """ DVR custom resource headers """
 
@@ -2930,6 +3697,7 @@ def drk_dvr_rheader(r, tabs=None):
 
     if record:
         T = current.T
+        record_id = record.id
 
         if tablename == "pr_person":
 
@@ -2950,17 +3718,53 @@ def drk_dvr_rheader(r, tabs=None):
 
             else:
 
+                ui_opts = get_ui_options()
+                ui_opts_get = ui_opts.get
+
                 if not tabs:
+                    response_tab = ui_opts_get("case_use_response_tab")
+                    if response_tab and ui_opts_get("activity_use_need"):
+                        ACTIVITIES = T("Counseling Reasons")
+                    else:
+                        ACTIVITIES = T("Activities")
+
+                    # Basic Case Documentation
                     tabs = [(T("Basic Details"), None),
                             (T("Contact Info"), "contacts"),
                             (T("Family Members"), "group_membership/"),
-                            (T("Activities"), "case_activity"),
-                            (T("Appointments"), "case_appointment"),
-                            (T("Service Contacts"), "service_contact"),
-                            (T("Photos"), "image"),
-                            (T("Documents"), "document/"),
-                            (T("Notes"), "case_note"),
+                            (ACTIVITIES, "case_activity"),
                             ]
+
+                    # Optional Case Documentation
+                    if response_tab:
+                        tabs.append((T("Actions"), "response_action"))
+                    if ui_opts_get("case_use_appointments"):
+                        tabs.append((T("Appointments"), "case_appointment"))
+                    if ui_opts_get("case_use_service_contacts"):
+                        tabs.append((T("Service Contacts"), "service_contact"))
+
+                    # Uploads, Notes etc.
+                    tabs.extend([(T("Photos"), "image"),
+                                 (T("Documents"), "document/"),
+                                 ])
+                    if ui_opts_get("case_use_notes"):
+                        tabs.append((T("Notes"), "case_note"))
+
+                lodging_opt = ui_opts_get("case_lodging")
+                if lodging_opt == "site":
+                    lodging_sel = "dvr_case.site_id"
+                    lodging_col = "dvr_case.site_id"
+                elif lodging_opt == "text":
+                    lodging_sel = "case_details.lodging"
+                    lodging_col = "dvr_case_details.lodging"
+                else:
+                    lodging_sel = None
+                    lodging_col = None
+
+                if ui_opts_get("case_use_flags"):
+                    flags_sel = "dvr_case_flag_case.flag_id"
+                else:
+                    flags_sel = None
 
                 case = resource.select(["first_name",
                                         "last_name",
@@ -2968,8 +3772,8 @@ def drk_dvr_rheader(r, tabs=None):
                                         "dvr_case.archived",
                                         "dvr_case.household_size",
                                         "dvr_case.organisation_id",
-                                        "dvr_case.site_id",
-                                        "dvr_case_flag_case.flag_id",
+                                        lodging_sel,
+                                        flags_sel,
                                         ],
                                         represent = True,
                                         raw_data = True,
@@ -2983,8 +3787,14 @@ def drk_dvr_rheader(r, tabs=None):
                     archived = case["_row"]["dvr_case.archived"]
                     household_size = lambda row: case["dvr_case.household_size"]
                     organisation = lambda row: case["dvr_case.organisation_id"]
-                    facility = lambda row: case["dvr_case.site_id"]
-                    flags = lambda row: case["dvr_case_flag_case.flag_id"]
+                    if lodging_col:
+                        lodging = (T("Lodging"), lambda row: case[lodging_col])
+                    else:
+                        lodging = None
+                    if flags_sel:
+                        flags = lambda row: case["dvr_case_flag_case.flag_id"]
+                    else:
+                        flags = None
                 else:
                     # Target record exists, but doesn't match filters
                     return None
@@ -2995,14 +3805,19 @@ def drk_dvr_rheader(r, tabs=None):
                                    ],
                                   [(T("Name"), name),
                                    (T("Size of Family"), household_size),
-                                   (T("Shelter"), facility),
+                                   lodging,
                                    ],
                                   ["date_of_birth",
                                    ],
-                                  [(T("Flags"), flags),
-                                   ],
                                   ]
 
+                if flags_sel:
+                    rheader_fields.append([(T("Flags"), flags, 5)])
+                if ui_opts_get("case_header_protection_themes"):
+                    rheader_fields.append([(T("Protection Need"),
+                                            get_protection_themes,
+                                            5,
+                                            )])
                 if archived:
                     rheader_fields.insert(0, [(None, hint)])
 
@@ -3015,7 +3830,6 @@ def drk_dvr_rheader(r, tabs=None):
 
                 # Add profile picture
                 from s3 import s3_avatar_represent
-                record_id = record.id
                 rheader.insert(0, A(s3_avatar_represent(record_id,
                                                         "pr_person",
                                                         _class = "rheader-avatar",
@@ -3070,10 +3884,19 @@ def drk_org_rheader(r, tabs=None):
 
     if record:
         T = current.T
+        record_id = record.id
+
+        ui_options = get_ui_options()
+        is_admin = current.auth.s3_has_role("ADMIN")
 
         if tablename == "org_organisation":
 
             table = resource.table
+
+            if record.root_organisation == record_id:
+                branch = False
+            else:
+                branch = True
 
             # Custom tabs
             tabs = [(T("Basic Details"), None),
@@ -3083,6 +3906,17 @@ def drk_org_rheader(r, tabs=None):
                     #(T("Projects"), "project"),
                     (T("Counseling Themes"), "response_theme"),
                     ]
+
+            if is_admin or ui_options.get("response_themes_needs"):
+                # Ability to manage org-specific need types
+                # as they are used in themes:
+                tabs.append((T("Counseling Reasons"), "need"))
+
+            if not branch and \
+               (is_admin or \
+                ui_options.get("case_document_templates") and \
+                current.auth.s3_has_role("ORG_ADMIN")):
+                tabs.append((T("Document Templates"), "document"))
 
             rheader_tabs = s3_rheader_tabs(r, tabs)
 
@@ -3097,8 +3931,7 @@ def drk_org_rheader(r, tabs=None):
                                 )
 
             # Parent Organisation
-            record_id = record.id
-            if record.root_organisation != record_id:
+            if branch:
                 btable = s3db.org_organisation_branch
                 query = (btable.branch_id == record_id) & \
                         (btable.organisation_id == table.id)
@@ -3255,6 +4088,11 @@ def drk_person_anonymize():
                                         "fields": {"comments": "remove",
                                                    },
                                         }),
+                          ("dvr_case_details", {"key": "person_id",
+                                                "match": "id",
+                                                "fields": {"lodging": "remove",
+                                                           },
+                                                }),
                           ("pr_contact", {"key": "pe_id",
                                           "match": "pe_id",
                                           "fields": {"contact_description": "remove",
@@ -3278,6 +4116,12 @@ def drk_person_anonymize():
                                                      "comments": "remove",
                                                      },
                                           }),
+                          ("pr_person_details", {"key": "person_id",
+                                                 "match": "id",
+                                                 "fields": {"education": "remove",
+                                                            "occupation": "remove",
+                                                            },
+                                                 }),
                           ("pr_person_tag", {"key": "person_id",
                                              "match": "id",
                                              "fields": {"value": ("set", ANONYMOUS),

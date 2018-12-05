@@ -60,7 +60,6 @@ __all__ = ("S3ProjectModel",
            "S3ProjectTaskModel",
            "S3ProjectTaskForumModel",
            "S3ProjectTaskHRMModel",
-           "S3ProjectTaskIReportModel",
            "S3ProjectWindowModel",
            "project_ActivityRepresent",
            "project_activity_year_options",
@@ -4192,16 +4191,16 @@ class S3ProjectOrganisationModel(S3Model):
             & update the realm_entity.
         """
 
-        formvars = form.vars
+        form_vars = form.vars
 
-        if str(formvars.role) == \
+        if str(form_vars.role) == \
              str(current.deployment_settings.get_project_organisation_lead_role()):
 
             # Read the record
             # (safer than relying on vars which might be missing on component tabs)
             db = current.db
             ltable = db.project_organisation
-            record = db(ltable.id == formvars.id).select(ltable.project_id,
+            record = db(ltable.id == form_vars.id).select(ltable.project_id,
                                                          ltable.organisation_id,
                                                          limitby = (0, 1),
                                                          ).first()
@@ -8252,7 +8251,7 @@ class project_SummaryReport(S3Method):
             -the actual report
         """
 
-        from s3.s3codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from s3.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         db = current.db
@@ -9006,7 +9005,7 @@ class project_IndicatorSummaryReport(S3Method):
             XLS Representation
         """
 
-        from s3.s3codecs import S3XLS
+        from s3.codecs.xls import S3XLS
 
         try:
             import xlwt
@@ -10845,10 +10844,10 @@ class S3ProjectTaskModel(S3Model):
                                        ]
                            ),
                      Field("description", "text",
-                           label = T("Detailed Description/URL"),
+                           label = T("Detailed Description"),
                            comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Detailed Description/URL"),
-                                                           T("Please provide as much detail as you can, including the URL(s) where the bug occurs or you'd like the new feature to go."))),
+                                         _title="%s|%s" % (T("Detailed Description"),
+                                                           T("Please provide as much detail as you can, including any URL(s) for more information."))),
                            ),
                      self.org_site_id(),
                      self.gis_location_id(
@@ -10864,6 +10863,9 @@ class S3ProjectTaskModel(S3Model):
                            label = T("Source Link"),
                            represent = s3_url_represent,
                            requires = IS_EMPTY_OR(IS_URL()),
+                           # Can be enabled & labelled within a Template as-required
+                           readable = False,
+                           writable = False
                            ),
                      Field("priority", "integer",
                            default = 3,
@@ -11152,6 +11154,7 @@ class S3ProjectTaskModel(S3Model):
                              "location": "location_id",
                              # Assignee instead?
                              "organisation": "created_by$organisation_id",
+                             "scenario": "scenario.scenario_id",
                              },
                   copyable = True,
                   #create_next = URL(f="task", args=["[id]"]),
@@ -11236,6 +11239,9 @@ class S3ProjectTaskModel(S3Model):
                        event_task = {"name": "incident",
                                      "joinby": "task_id",
                                      },
+                       event_scenario_task = {"name": "scenario",
+                                              "joinby": "task_id",
+                                              },
                        # Forums
                        project_task_forum = "task_id",
                        # Milestones
@@ -11678,14 +11684,14 @@ class S3ProjectTaskModel(S3Model):
     def project_task_onvalidation(form):
         """ Task form validation """
 
-        formvars = form.vars
-        if str(formvars.status) == "3" and not formvars.pe_id:
+        form_vars = form.vars
+        if str(form_vars.status) == "3" and not form_vars.pe_id:
             form.errors.pe_id = \
                 current.T("Status 'assigned' requires the %(fieldname)s to not be blank") % \
                     dict(fieldname=current.db.project_task.pe_id.label)
-        elif formvars.pe_id and str(formvars.status) == "2":
+        elif form_vars.pe_id and str(form_vars.status) == "2":
             # Set the Status to 'Assigned' if left at default 'New'
-            formvars.status = 3
+            form_vars.status = 3
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -11711,15 +11717,15 @@ class S3ProjectTaskModel(S3Model):
 
         ltp = db.project_task_project
 
-        post_vars = current.request.post_vars
-        project_id = post_vars.get("project_id")
+        post_vars_get = current.request.post_vars.get
+        project_id = post_vars_get("project_id")
         if project_id:
             # Create Link to Project
             ltp.insert(task_id = task_id,
                        project_id = project_id,
                        )
 
-        activity_id = post_vars.get("activity_id")
+        activity_id = post_vars_get("activity_id")
         if activity_id:
             # Create Link to Activity
             lta = db.project_task_activity
@@ -11727,7 +11733,7 @@ class S3ProjectTaskModel(S3Model):
                        activity_id = activity_id,
                        )
 
-        milestone_id = post_vars.get("milestone_id")
+        milestone_id = post_vars_get("milestone_id")
         if milestone_id:
             # Create Link to Milestone
             ltable = db.project_task_milestone
@@ -11772,8 +11778,8 @@ class S3ProjectTaskModel(S3Model):
 
         table = db.project_task
 
-        changed = {}
         if record: # Not True for a record merger
+            changed = {}
             for var in form_vars:
                 vvar = form_vars[var]
                 if isinstance(vvar, Field):
@@ -11798,14 +11804,14 @@ class S3ProjectTaskModel(S3Model):
                         changed[var] = "%s changed to %s" % \
                             (table[var].label, represent(vvar))
 
-        if changed:
-            table = db.project_comment
-            text = s3_auth_user_represent(current.auth.user.id)
-            for var in changed:
-                text = "%s\n%s" % (text, changed[var])
-            table.insert(task_id = task_id,
-                         body = text,
-                         )
+            if changed:
+                table = db.project_comment
+                text = s3_auth_user_represent(current.auth.user.id)
+                for var in changed:
+                    text = "%s\n%s" % (text, changed[var])
+                table.insert(task_id = task_id,
+                             body = text,
+                             )
 
         post_vars = current.request.post_vars
         if "project_id" in post_vars:
@@ -12182,74 +12188,6 @@ class S3ProjectTaskHRMModel(S3Model):
         return {}
 
 # =============================================================================
-class S3ProjectTaskIReportModel(S3Model):
-    """
-        Project Task IReport Model
-
-        This class holds the table used to link Tasks with Incident Reports.
-        @ToDo: Deprecate as we link to Incidents instead: S3EventTaskModel
-    """
-
-    names = ("project_task_ireport",)
-
-    def model(self):
-
-        # Link Tasks <-> Incident Reports
-        #
-        tablename = "project_task_ireport"
-        self.define_table(tablename,
-                          self.project_task_id(empty = False,
-                                               ondelete = "CASCADE",
-                                               ),
-                          self.irs_ireport_id(empty = False,
-                                              ondelete = "CASCADE",
-                                              ),
-                          *s3_meta_fields())
-
-        self.configure(tablename,
-                       onaccept=self.task_ireport_onaccept)
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return {}
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def task_ireport_onaccept(form):
-        """
-            When a Task is linked to an IReport, then populate the location_id
-        """
-
-        formvars = form.vars
-        ireport_id = formvars.ireport_id
-        task_id = formvars.task_id
-
-        db = current.db
-
-        # Check if we already have a Location for the Task
-        table = db.project_task
-        query = (table.id == task_id)
-        record = db(query).select(table.location_id,
-                                  limitby=(0, 1)).first()
-        if not record or record.location_id:
-            return
-
-        # Find the Incident Location
-        itable = db.irs_ireport
-        query = (itable.id == ireport_id)
-        record = db(query).select(itable.location_id,
-                                  limitby=(0, 1)).first()
-        if not record or not record.location_id:
-            return
-
-        location_id = record.location_id
-
-        # Update the Task
-        query = (table.id == task_id)
-        db(query).update(location_id=location_id)
-
-# =============================================================================
 class S3ProjectWindowModel(S3Model):
     """
         Project Window Model
@@ -12493,10 +12431,10 @@ def task_notify(form):
         If the task is assigned to someone then notify them
     """
 
-    formvars = form.vars
+    form_vars = form.vars
     record = form.record
 
-    pe_id = formvars.pe_id
+    pe_id = form_vars.pe_id
     if not pe_id:
         # Not assigned to anyone
         return
@@ -12506,7 +12444,7 @@ def task_notify(form):
         # Don't notify the user when they assign themselves tasks
         return
 
-    status = formvars.status
+    status = form_vars.status
     if status is not None:
         status = int(status)
     else:
@@ -12528,9 +12466,9 @@ def task_notify(form):
             # Notify assignee
             subject = "%s: Task assigned to you" % settings.get_system_name_short()
             url = "%s%s" % (settings.get_base_public_url(),
-                            URL(c="project", f="task", args=[formvars.id]))
+                            URL(c="project", f="task", args=[form_vars.id]))
 
-            priority = formvars.priority
+            priority = form_vars.priority
             if priority is not None:
                 priority = current.s3db.project_task.priority.represent(int(priority))
             else:
@@ -12539,8 +12477,8 @@ def task_notify(form):
             message = "You have been assigned a Task:\n\n%s\n\n%s\n\n%s\n\n%s" % \
                             (url,
                              "%s priority" % priority,
-                             formvars.name,
-                             formvars.description or "")
+                             form_vars.name,
+                             form_vars.description or "")
 
             current.msg.send_by_pe_id(pe_id, subject, message)
 
