@@ -7,12 +7,9 @@ from gluon.storage import Storage
 
 def config(settings):
     """
-        Template settings: 'Skeleton' designed to be copied to quickly create
-                           custom templates
+        Template settings for SaFiRe: Sahana First Response
 
-        All settings which are to configure a specific template are located
-        here. Deployers should ideally not need to edit any other files outside
-        of their template folder.
+        http://eden.sahanafoundation.org/wiki/BluePrint/SAFIRE
     """
 
     T = current.T
@@ -303,29 +300,34 @@ def config(settings):
                 record_id = r.id
                 incident_type_id = record.incident_type_id
 
-                # Dropdown of Scenarios to select
-                stable = current.s3db.event_scenario
-                query = (stable.incident_type_id == incident_type_id) & \
-                        (stable.deleted == False)
-                scenarios = current.db(query).select(stable.id,
-                                                     stable.name,
-                                                     )
-                if len(scenarios) and r.method != "event":
-                    from gluon import SELECT, OPTION
-                    dropdown = SELECT(_id="scenarios")
-                    dropdown["_data-incident_id"] = record_id
-                    dappend = dropdown.append
-                    dappend(OPTION(T("Select Scenario")))
-                    for s in scenarios:
-                        dappend(OPTION(s.name, _value=s.id))
-                    scenarios = TR(TH("%s: " % T("Scenario")),
-                                   dropdown,
-                                   )
-                    s3 = current.response.s3
-                    script = "/%s/static/themes/SAFIRE/js/incident_profile.js" % r.application
-                    if script not in s3.scripts:
-                        s3.scripts.append(script)
-                        s3.js_global.append('''i18n.scenarioConfirm="%s"''' % T("Populate Incident with Tasks, Organizations, Positions and Equipment from the Scenario?"))
+                editable = current.auth.s3_has_permission("UPDATE", "event_incident", record_id)
+
+                if editable:
+                    # Dropdown of Scenarios to select
+                    stable = current.s3db.event_scenario
+                    query = (stable.incident_type_id == incident_type_id) & \
+                            (stable.deleted == False)
+                    scenarios = current.db(query).select(stable.id,
+                                                         stable.name,
+                                                         )
+                    if len(scenarios) and r.method != "event":
+                        from gluon import SELECT, OPTION
+                        dropdown = SELECT(_id="scenarios")
+                        dropdown["_data-incident_id"] = record_id
+                        dappend = dropdown.append
+                        dappend(OPTION(T("Select Scenario")))
+                        for s in scenarios:
+                            dappend(OPTION(s.name, _value=s.id))
+                        scenarios = TR(TH("%s: " % T("Scenario")),
+                                       dropdown,
+                                       )
+                        s3 = current.response.s3
+                        script = "/%s/static/themes/SAFIRE/js/incident_profile.js" % r.application
+                        if script not in s3.scripts:
+                            s3.scripts.append(script)
+                            s3.js_global.append('''i18n.scenarioConfirm="%s"''' % T("Populate Incident with Tasks, Organizations, Positions and Equipment from the Scenario?"))
+                    else:
+                        scenarios = ""
                 else:
                     scenarios = ""
 
@@ -338,7 +340,7 @@ def config(settings):
                 else:
                     closed = TH()
 
-                if record.event_id or r.method == "event":
+                if record.event_id or r.method == "event" or not editable:
                     event = ""
                 else:
                     event = A(T("Assign to Event"),
@@ -1087,6 +1089,7 @@ def config(settings):
                              )
             instance_type = s3db.pr_instance_type(pe_id)
             if instance_type == "org_organisation":
+                # Notify the Duty Number for the Organisation, not everyone in the Organisation!
                 otable = s3db.org_organisation
                 ottable = s3db.org_organisation_tag
                 query = (otable.pe_id == pe_id) & \
@@ -1099,10 +1102,12 @@ def config(settings):
                     current.msg.send_sms_via_api(duty.value,
                                                  message)
             else:
-                current.msg.send_by_pe_id(pe_id,
-                                          subject = "",
-                                          message = message,
-                                          contact_method = "SMS")
+                task_notification = settings.get_event_task_notification()
+                if task_notification:
+                    current.msg.send_by_pe_id(pe_id,
+                                              subject = "%s: Task assigned to you" % settings.get_system_name_short(),
+                                              message = message,
+                                              contact_method = task_notification)
             
     # -------------------------------------------------------------------------
     def customise_project_task_resource(r, tablename):

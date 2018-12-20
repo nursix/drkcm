@@ -606,6 +606,25 @@ class S3Config(Storage):
         """ Use OpenID for Authentication """
         return self.auth.get("openid", False)
 
+    def get_auth_openid_connect(self):
+        """
+            Use an OpenID Connect authentication service
+                - must be configured with a dict like:
+                    {"auth_url": authURL,
+                     "token_url": tokenURL,
+                     "userinfo_url": userinfoURL,
+                     "id": clientID,
+                     "secret": clientSecret,
+                     }
+        """
+        required = ("auth_url", "token_url", "userinfo_url", "id", "secret")
+
+        setting = self.auth.get("openid_connect")
+        if setting and all(setting.get(k) for k in required):
+            return setting
+        else:
+            return None
+
     def get_security_self_registration(self):
         """
             Whether Users can register themselves
@@ -2346,6 +2365,13 @@ class S3Config(Storage):
         self.ui.inline_component_layout = layout
         return layout
 
+    def get_ui_inline_cancel_edit(self):
+        """
+            Behavior of inline components when switching edit rows
+            without explicit submit/cancel: cancel|submit|ask|refuse
+        """
+        return self.ui.get("inline_cancel_edit", "ask")
+
     def get_ui_profile_header(self, r):
         """
             What Header should be shown in the Profile page
@@ -3348,6 +3374,12 @@ class S3Config(Storage):
         """
         return self.__lazy("dvr", "response_themes_needs", default=False)
 
+    def get_dvr_response_themes_details(self):
+        """
+            Record response details per theme
+        """
+        return self.__lazy("dvr", "response_themes_details", default=False)
+
     def get_dvr_response_activity_autolink(self):
         """
             Automatically link response actions to case activities
@@ -3422,6 +3454,15 @@ class S3Config(Storage):
             Whether Incident Types are Hierarchical or not
         """
         return self.event.get("incident_types_hierarchical", False)
+
+    def get_event_task_notification(self):
+        """
+            Whether to send Notifications for Tasks linked to Events
+            - only used in SaFiRe template currently
+
+            Options: None, contact_method (e.g. "SMS", "EMAIL")
+        """
+        return self.event.get("task_notification", "EMAIL")
 
     def get_event_dc_response_tab(self):
         """
