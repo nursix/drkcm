@@ -561,6 +561,11 @@ def config(settings):
     # Uncomment this to disable follow-up fields in case activities
     #settings.dvr.case_activity_follow_up = False
 
+    # Uncomment this to include case activity docs on beneficiary documents-tab
+    #settings.dvr.case_include_activity_docs = True
+    # Uncomment this to include case group docs on beneficiary documents-tab
+    #settings.dvr.case_include_group_docs = True
+
     # Uncomment this if Case activities use multiple Needs
     #settings.dvr.case_activity_needs_multiple = True
     # Uncomment this to use service types for needs
@@ -1225,18 +1230,18 @@ def config(settings):
             restricted = True,
             module_type = 2
         )),
-        ("survey", Storage(
-            name_nice = T("Surveys"),
-            #description = "Create, enter, and manage surveys.",
-            restricted = True,
-            module_type = 5,
-        )),
-        #("dc", Storage(
-        #   name_nice = T("Data Collection"),
-        #   #description = "Data collection tool",
-        #   restricted = True,
-        #   module_type = 10
+        #("survey", Storage(
+        #    name_nice = T("Surveys"),
+        #    #description = "Create, enter, and manage surveys.",
+        #    restricted = True,
+        #    module_type = 5,
         #)),
+        ("dc", Storage(
+           name_nice = T("Assessments"),
+           #description = "Data collection tool",
+           restricted = True,
+           module_type = 5
+        )),
         ("cr", Storage(
             name_nice = T("Shelters"),
             #description = "Tracks the location, capacity and breakdown of victims in Shelters",

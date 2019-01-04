@@ -13,13 +13,13 @@ from s3dal import original_tablename
 # =============================================================================
 # UI options per organisation
 #
-UI_DEFAULTS = {"case_bamf_first": False,
+UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
+               "case_bamf_first": False,
                "case_document_templates": False,
                "case_header_protection_themes": False,
                "case_hide_default_org": False,
                "case_use_response_tab": False,
                "case_use_address": True,
-               "case_use_arrival_date": True,
                "case_use_appointments": True,
                "case_use_education": False,
                "case_use_flags": True,
@@ -47,13 +47,13 @@ UI_DEFAULTS = {"case_bamf_first": False,
                "response_use_organizer": False,
                }
 
-UI_OPTIONS = {"LEA": {"case_bamf_first": True,
+UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
+                      "case_bamf_first": True,
                       "case_document_templates": True,
                       "case_header_protection_themes": True,
                       "case_hide_default_org": True,
                       "case_use_response_tab": True,
                       "case_use_address": False,
-                      "case_use_arrival_date": False,
                       "case_use_appointments": False,
                       "case_use_education": True,
                       "case_use_flags": False,
@@ -430,6 +430,8 @@ def config(settings):
     settings.dvr.case_activity_follow_up = get_ui_option("activity_follow_up")
     # Beneficiary documents-tab includes case activity attachments
     settings.dvr.case_include_activity_docs = True
+    # Beneficiary documents-tab includes case group attachments
+    settings.dvr.case_include_group_docs = True
 
     # Manage individual response actions in case activities
     settings.dvr.manage_response_actions = True
@@ -551,9 +553,10 @@ def config(settings):
                     use_need = False
                     activity_label = None
                 field.represent = s3db.dvr_DocEntityRepresent(
-                                            show_link=True,
-                                            use_need=use_need,
-                                            activity_label=activity_label,
+                                            show_link = True,
+                                            use_need = use_need,
+                                            case_group_label = T("Family"),
+                                            activity_label = activity_label,
                                             )
 
                 # Also update requires with this represent
@@ -570,6 +573,8 @@ def config(settings):
                                            field.represent,
                                            filterby = filterby,
                                            filter_opts = filter_opts,
+                                           orderby = "instance_type",
+                                           sort = False,
                                            )
             return result
         s3.prep = custom_prep
@@ -1034,13 +1039,17 @@ def config(settings):
                         else:
                             address = None
 
-                        # Optional: Date of Entry
-                        if ui_options.get("case_use_arrival_date"):
-                            arrival_date = (T("Date of Entry"),
-                                            "case_details.arrival_date",
+                        # Date of Entry (alternative labels)
+                        dtable = s3db.dvr_case_details
+                        field = dtable.arrival_date
+                        label = ui_options.get("case_arrival_date_label")
+                        label = T(label) if label else T("Date of Entry")
+                        field.label = label
+                        field.comment = DIV(_class = "tooltip",
+                                            _title = "%s|%s" % (label,
+                                                                T("Date of Entry Certificate"),
+                                                                ),
                                             )
-                        else:
-                            arrival_date = None
 
                         # Optional: Residence Status
                         if ui_options.get("case_use_residence_status"):
@@ -1102,7 +1111,7 @@ def config(settings):
                             on_site_until,
                             address,
                             bamf_last,
-                            arrival_date,
+                            "case_details.arrival_date",
                             residence_status,
 
                             # Other Details ---------------------------
