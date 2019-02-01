@@ -3,7 +3,7 @@
 from gluon import *
 from s3 import S3CustomController
 
-THEME = "skeleton"
+THEME = "HR"
 
 # =============================================================================
 class index(S3CustomController):

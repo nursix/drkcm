@@ -242,7 +242,10 @@ def config(settings):
                                      "Geburtsdatum": "date_of_birth",
                                      "Geburtsort": "pr_person_details.place_of_birth",
                                      "Land": "pr_person_details.nationality",
-                                     "Registrierungsdatum": "dvr_case.date",
+                                     "Registrierungsdatum": "case_details.arrival_date",
+                                     "AKN-Datum": "case_details.arrival_date",
+                                     "Falldatum": "dvr_case.date",
+                                     "BAMF-Az": "bamf.value",
                                      }
 
     # -------------------------------------------------------------------------
@@ -417,8 +420,6 @@ def config(settings):
     #
     # Enable features to manage case flags
     settings.dvr.case_flags = True
-    # Allow cases to belong to multiple case groups ("households")
-    #settings.dvr.multiple_case_groups = True
 
     # Enable household size in cases, "auto" for automatic counting
     settings.dvr.household_size = "auto"
@@ -1453,7 +1454,10 @@ def config(settings):
                     field = table.role_id
                     field.readable = field.writable = True
                     field.label = ROLE
-                    field.comment = None
+                    field.comment = DIV(_class="tooltip",
+                                        _title="%s|%s" % (T("Role"),
+                                                          T("The role of the person within the family"),
+                                                          ))
                     field.requires = IS_EMPTY_OR(
                                         IS_ONE_OF(current.db, "pr_group_member_role.id",
                                                   field.represent,
@@ -1485,6 +1489,7 @@ def config(settings):
                                "group_head",
                                (ROLE, "role_id"),
                                (T("Case Status"), "person_id$dvr_case.status_id"),
+                               "comments",
                                ]
                 # Retain group_id in list_fields if added in standard prep
                 lfields = resource.get_config("list_fields")

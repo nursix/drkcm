@@ -160,6 +160,7 @@ class S3Config(Storage):
         # Allow templates to append rather than replace
         self.base.prepopulate = ["default/base"]
         self.base.prepopulate_demo = ["default/users"]
+        self.br = Storage()
         self.cap = Storage()
         self.cms = Storage()
         self.cr = Storage()
@@ -1082,6 +1083,8 @@ class S3Config(Storage):
             if default:
                 return default
 
+        return None
+
     # -------------------------------------------------------------------------
     # Logger settings
     def get_log_level(self):
@@ -1868,19 +1871,16 @@ class S3Config(Storage):
         """
             Optical Character Recognition (OCR)
         """
-        excluded_fields_dict = {
-            "hms_hospital" : [
-                "hrm_human_resource",
-                ],
 
-            "pr_group" : [
-                "pr_group_membership",
-                ],
-            }
-        excluded_fields =\
-                excluded_fields_dict.get(resourcename, [])
+        excluded_fields = self.pdf.get("excluded_fields")
+        if excluded_fields is None:
+            excluded_fields = {"hms_hospital" : ["hrm_human_resource",
+                                                 ],
+                               "pr_group" : ["pr_group_membership",
+                                             ],
+                               }
 
-        return excluded_fields
+        return excluded_fields.get(resourcename, [])
 
     # -------------------------------------------------------------------------
     # XLS Export Settings
@@ -2679,6 +2679,156 @@ class S3Config(Storage):
         return self.asset.get("telephones", False)
 
     # -------------------------------------------------------------------------
+    # BR: Beneficiary Registry
+    #
+    def get_br_terminology(self):
+        """
+            Terminology to use when referring to cases: Beneficiary|Client|Case
+        """
+        return self.br.get("terminology", "Case")
+
+    def get_br_case_hide_default_org(self):
+        """
+            Hide the organisation field in cases if only one allowed
+        """
+        return self.br.get("case_hide_default_org", True)
+
+    def get_br_case_manager(self):
+        """
+            Assign cases to individual case managers (staff members)
+        """
+        return self.br.get("case_manager", True)
+
+    def get_br_case_address(self):
+        """
+            Document the current address of beneficiaries
+        """
+        return self.br.get("case_address", False)
+
+    def get_br_case_language_details(self):
+        """
+            Document languages that can be used when communicating with
+            a beneficiary
+        """
+        return self.br.get("case_language_details", True)
+
+    def get_br_household_size(self):
+        """
+            Track the number of persons per household (family)
+
+            - False = off
+            - True = manual
+            - "auto" = count family members automatically
+        """
+        return self.br.get("household_size", "auto")
+
+    def get_br_case_contacts_tab(self):
+        """
+            Case file use tab to track beneficiary contact information
+        """
+        return self.br.get("case_contacts_tab", True)
+
+    def get_br_case_id_tab(self):
+        """
+            Case file use tab to track identity documents
+        """
+        return self.br.get("case_id_tab", False)
+
+    def get_br_case_family_tab(self):
+        """
+            Case file use tab to track family members
+        """
+        return self.br.get("case_family_tab", True)
+
+    def get_br_case_photos_tab(self):
+        """
+            Case file use tab to upload photos
+
+            NB image-component can also be reached by clicking on the
+               profile photo (or the placeholder, respectively)
+        """
+        return self.br.get("case_photos_tab", False)
+
+    def get_br_case_documents_tab(self):
+        """
+            Case file use tab to upload documents
+        """
+        return self.br.get("case_documents_tab", True)
+
+    def get_br_case_include_activity_docs(self):
+        """
+            Documents-tab of case files includes activity attachments
+        """
+        return self.get_br_case_activity_documents() and \
+               self.br.get("case_include_activity_docs", True)
+
+    def get_br_case_include_group_docs(self):
+        """
+            Documents-tab of case files includes case group attachments
+        """
+        return self.br.get("case_include_group_docs", True)
+
+    def get_br_case_activities(self):
+        """
+            Track case activities
+        """
+        return self.br.get("case_activities", True)
+
+    def get_br_case_activity_manager(self):
+        """
+            Assign case activities to individual staff members
+        """
+        return self.br.get("case_activity_manager", True)
+
+    def get_br_case_activity_urgent_option(self):
+        """
+            Expose features for urgent case activities ("emergencies")
+        """
+        return self.br.get("case_activity_urgent_option", False)
+
+    def get_br_case_activity_need(self):
+        """
+            Use need categories for case activities
+        """
+        return self.br.get("case_activity_need", True)
+
+    def get_br_case_activity_subject(self):
+        """
+            Have a subject line (title) for case activities
+        """
+        return self.br.get("case_activity_subject", False)
+
+    def get_br_case_activity_need_details(self):
+        """
+            Have a text field to document need details in case activities
+        """
+        return self.br.get("case_activity_need_details", False)
+
+    def get_br_case_activity_updates(self):
+        """
+            Use case activity update journal (inline-component)
+        """
+        return self.br.get("case_activity_updates", True)
+
+    def get_br_case_activity_documents(self):
+        """
+            Case activities have attachments
+        """
+        return self.br.get("case_activity_documents", False)
+
+    def get_br_needs_hierarchical(self):
+        """
+            Need categories are hierarchical
+        """
+        return self.br.get("needs_hierarchical", False)
+
+    def get_br_needs_org_specific(self):
+        """
+            Need categories are specific per root organisation
+        """
+        return self.br.get("needs_org_specific", True)
+
+    # -------------------------------------------------------------------------
     # CAP: Common Alerting Protocol
     #
     def get_cap_identifier_oid(self):
@@ -3157,12 +3307,6 @@ class S3Config(Storage):
             Enable features to manage transferability of cases
         """
         return self.dvr.get("manage_transferability", False)
-
-    def get_dvr_multiple_case_groups(self):
-        """
-            Whether a case can belong to multiple case groups at the same time
-        """
-        return self.dvr.get("multiple_case_groups", False)
 
     def get_dvr_household_size(self):
         """
@@ -4729,6 +4873,12 @@ class S3Config(Storage):
             label = defaults.get(group)
 
         return current.T(label) if label else label
+
+    def get_pr_multiple_case_groups(self):
+        """
+            Whether a person can belong to multiple case groups at the same time
+        """
+        return self.pr.get("multiple_case_groups", False)
 
     # -------------------------------------------------------------------------
     # Proc

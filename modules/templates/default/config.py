@@ -477,6 +477,55 @@ def config(settings):
     #settings.asset.telephones = True
 
     # -------------------------------------------------------------------------
+    # Beneficiary Registry
+    # Terminology to use when referring to cases (Beneficiary|Client|Case)
+    #settings.br.terminology = "Beneficiary"
+    # Show the case organisation even if only one option
+    #settings.br.case_hide_default_org = False
+    # Disable assignment of cases to staff
+    #settings.br.case_manager = False
+    # Expose fields to track home address in case file
+    #settings.br.case_address = True
+    # Disable documentation of language details in case file
+    #settings.br.case_language_details = False
+    # Control household size tracking in case files: False, True or "auto" (=default)
+    #settings.br.household_size = "auto"
+    # Hide the contact info tab in case files
+    #settings.br.case_contacts_tab = False
+    # Show the ID-tab in case files
+    #settings.br.case_id_tab = True
+    # Hide the family members tab in case files
+    #settings.br.case_family_tab = False
+    # Show the photos-tab in case files
+    #settings.br.case_photos_tab = True
+    # Hide the documents-tab in case files
+    #settings.br.case_documents_tab = False
+    # Hide activity attachments from case documents-tab
+    #settings.br.case_include_activity_docs = False
+    # Hide case group attachments from case documents-tab
+    #settings.br.case_include_group_docs = False
+    # Disable tracking of case activities
+    #settings.br.case_activities = False
+    # Disable assignment of case activities to staff
+    #settings.br.case_activity_manager = False
+    # Expose "urgent" priority for case activities (=emergencies)
+    #settings.br.case_activity_urgent_option = True
+    # Disable need categories in case activities
+    #settings.br.case_activity_need = False
+    # Use a free-text subject line in case activities
+    #settings.br.case_activity_subject = True
+    # Use a free-text field to document need details in case activities
+    #settings.br.case_activity_need_details = True
+    # Disable inline-updates of case activities
+    #settings.br.case_activity_updates = False
+    # Allow documents to be attached to case activities
+    #settings.br.case_activity_documents = True
+    # Use hierarchical need categories
+    #settings.br.needs_hierarchical = True
+    # Let all orgs use a common set of need categories
+    #settings.br.needs_org_specific = False
+
+    # -------------------------------------------------------------------------
     # CMS
     # Uncomment this to hide CMS from module index pages
     #settings.cms.hide_index = True
@@ -524,9 +573,6 @@ def config(settings):
 
     # Uncomment to use the term Beneficiary instead of Case
     #settings.dvr.label = "Beneficiary"
-
-    # Uncomment this to allow cases to belong to multiple case groups ("households")
-    #settings.dvr.multiple_case_groups = True
 
     # Uncomment this to enable tracking of transfer origin/destination sites
     #settings.dvr.track_transfer_sites = True
@@ -664,6 +710,8 @@ def config(settings):
     #settings.pr.use_address = False
     # Show separate Public and Private Contacts Tabs
     #settings.pr.contacts_tabs = ("public", "private")
+    # Uncomment this to allow persons to belong to multiple case groups ("households")
+    #settings.pr.multiple_case_groups = True
 
     # -------------------------------------------------------------------------
     # Organisations
@@ -1260,11 +1308,17 @@ def config(settings):
         #    restricted = True,
         #    module_type = 10
         #)),
+        #("br", Storage(
+        #    name_nice = T("Beneficiary Registry"),
+        #    #description = "Beneficiary Registry and Case Management",
+        #    restricted = True,
+        #    module_type = 10,
+        #)),
         ("dvr", Storage(
-        name_nice = T("Disaster Victim Registry"),
-        #description = "Allow affected individuals & households to register to receive compensation and distributions",
-        restricted = True,
-        module_type = 10,
+            name_nice = T("Disaster Victim Registry"),
+            #description = "Allow affected individuals & households to register to receive compensation and distributions",
+            restricted = True,
+            module_type = 10,
         )),
         ("event", Storage(
             name_nice = T("Events"),
@@ -1273,9 +1327,9 @@ def config(settings):
             module_type = 10,
         )),
         ("transport", Storage(
-        name_nice = T("Transport"),
-        restricted = True,
-        module_type = 10,
+            name_nice = T("Transport"),
+            restricted = True,
+            module_type = 10,
         )),
         ("stats", Storage(
             name_nice = T("Statistics"),
@@ -1284,10 +1338,10 @@ def config(settings):
             module_type = None,
         )),
         ("member", Storage(
-        name_nice = T("Members"),
-        #description = "Membership Management System",
-        restricted = True,
-        module_type = 10,
+            name_nice = T("Members"),
+            #description = "Membership Management System",
+            restricted = True,
+            module_type = 10,
         )),
         ("budget", Storage(
             name_nice = T("Budgeting Module"),

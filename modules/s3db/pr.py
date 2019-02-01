@@ -743,6 +743,7 @@ class PRPersonModel(S3Model):
         NONE = messages["NONE"]
 
         super_link = self.super_link
+        add_components = self.add_components
 
         # ---------------------------------------------------------------------
         # Person
@@ -756,6 +757,7 @@ class PRPersonModel(S3Model):
             # meaning neither female nor male, officially recognized
             # in various countries)
             pr_gender_opts[4] = T("other")
+
         pr_gender = S3ReusableField("gender", "integer",
                                     default = 1,
                                     label = T("Sex"),
@@ -952,6 +954,11 @@ class PRPersonModel(S3Model):
                        onaccept = self.pr_person_onaccept,
                        realm_components = ("address",
                                            "contact",
+                                           "contact_emergency",
+                                           "identity",
+                                           "image",
+                                           "person_details",
+                                           "person_tag",
                                            "presence",
                                            ),
                        super_entity = ("pr_pentity", "sit_trackable"),
@@ -964,30 +971,11 @@ class PRPersonModel(S3Model):
 
         person_represent = pr_PersonRepresent()
 
-        name_format = settings.get_pr_name_format()
-        test = name_format % dict(first_name=1,
-                                  middle_name=2,
-                                  last_name=3,
-                                  )
-        test = "".join(ch for ch in test if ch in ("1", "2", "3"))
-        if test[:1] == "1":
-            orderby = "pr_person.first_name"
-            if test[:2] == "2":
-                sortby = ["first_name", "middle_name", "last_name"]
-            else:
-                sortby = ["first_name", "last_name", "middle_name"]
-        elif test[:1] == "2":
-            orderby = "pr_person.middle_name"
-            if test[:2] == "1":
-                sortby = ["middle_name", "first_name", "last_name"]
-            else:
-                sortby = ["middle_name", "last_name", "first_name"]
-        else:
-            orderby = "pr_person.last_name"
-            if test[:2] == "1":
-                sortby = ["last_name", "first_name", "middle_name"]
-            else:
-                sortby = ["last_name", "middle_name", "first_name"]
+        # Adapt sorting/ordering to name order
+        NAMES = ("first_name", "middle_name", "last_name")
+        keys = StringTemplateParser.keys(settings.get_pr_name_format())
+        sortby = [fn for fn in keys if fn in NAMES]
+        orderby = "pr_person.%s" % (sortby[0] if sortby else NAMES[0])
 
         person_id = S3ReusableField("person_id", "reference %s" % tablename,
                                     sortby = sortby,
@@ -1030,162 +1018,175 @@ class PRPersonModel(S3Model):
         #           action = pr_Template())
 
         # Components
-        self.add_components(tablename,
-                            # Assets
-                            asset_asset = "assigned_to_id",
-                            # User account
-                            auth_user = {"link": "pr_person_user",
-                                         "joinby": "pe_id",
-                                         "key": "user_id",
-                                         "fkey": "id",
-                                         "pkey": "pe_id",
+        add_components(tablename,
+                       # Assets
+                       asset_asset = "assigned_to_id",
+                       # User account
+                       auth_user = {"link": "pr_person_user",
+                                    "joinby": "pe_id",
+                                    "key": "user_id",
+                                    "fkey": "id",
+                                    "pkey": "pe_id",
+                                    },
+                       # Shelter (Camp) Registry
+                       cr_shelter_registration = {"joinby": "person_id",
+                                                  # A person can be assigned to only one shelter
+                                                  # @todo: when fully implemented this needs to allow
+                                                  # multiple instances for tracking reasons
+                                                  "multiple": False,
+                                                  },
+                       cr_shelter_registration_history = "person_id",
+                       project_activity_person = "person_id",
+                       supply_distribution_person = "person_id",
+                       event_incident = {"link": "event_human_resource",
+                                         "joinby": "person_id",
+                                         "key": "incident_id",
+                                         "actuate": "hide",
                                          },
-                            # Shelter (Camp) Registry
-                            cr_shelter_registration = {"joinby": "person_id",
-                                                       # A person can be assigned to only one shelter
-                                                       # @todo: when fully implemented this needs to allow
-                                                       # multiple instances for tracking reasons
-                                                       "multiple": False,
-                                                       },
-                            cr_shelter_registration_history = "person_id",
-                            # Case Management (Disaster Victim Registry)
-                            dvr_allowance = "person_id",
-                            dvr_case = {"name": "dvr_case",
-                                        "joinby": "person_id",
+                       # HR Records
+                       hrm_human_resource = "person_id",
+                       # HR Documents
+                       doc_document = {"link": "hrm_human_resource",
+                                       "joinby": "person_id",
+                                       "key": "doc_id",
+                                       "fkey": "doc_id",
+                                       "pkey": "id",
+                                       "actuate": "replace",
+                                       },
+                       # Skills
+                       hrm_certification = "person_id",
+                       hrm_competency = "person_id",
+                       hrm_credential = "person_id",
+                       hrm_training = "person_id",
+                       hrm_trainings = {"joinby": "person_id",
                                         "multiple": False,
                                         },
-                            dvr_case_activity = "person_id",
-                            project_activity_person = "person_id",
-                            supply_distribution_person = "person_id",
-                            dvr_response_action = "person_id",
-                            dvr_case_appointment = "person_id",
-                            dvr_case_details = {"joinby": "person_id",
-                                                "multiple": False,
-                                                },
-                            dvr_case_effort = "person_id",
-                            dvr_case_event = "person_id",
-                            dvr_case_flag_case = {"name": "dvr_flag",
-                                                  "joinby": "person_id",
-                                                  },
-                            dvr_case_flag = {"link": "dvr_case_flag_case",
-                                             "joinby": "person_id",
-                                             "key": "flag_id",
-                                             "actuate": "link",
-                                             "autodelete": False,
-                                             },
-                            dvr_case_language = "person_id",
-                            dvr_economy = {"joinby": "person_id",
-                                           "multiple": False,
-                                           },
-                            dvr_evaluation = {"joinby": "person_id",
-                                              "multiple": False,
-                                              },
-                            dvr_household = {"joinby": "person_id",
-                                             "multiple": False,
-                                             },
-                            dvr_household_member = "person_id",
-                            dvr_note = {"name": "case_note",
-                                        "joinby": "person_id",
-                                        },
-                            dvr_residence_status = "person_id",
-                            dvr_service_contact = "person_id",
-
-                            event_incident = {"link": "event_human_resource",
+                       # Facilitated Trainings (Instructor)
+                       hrm_training_event = "person_id",
+                       # Experience
+                       hrm_experience = "person_id",
+                       hrm_programme_hours = {"name": "hours",
                                               "joinby": "person_id",
-                                              "key": "incident_id",
-                                              "actuate": "hide",
                                               },
-
-                            # HR Records
-                            hrm_human_resource = "person_id",
-                            # HR Documents
-                            doc_document = {"link": "hrm_human_resource",
-                                            "joinby": "person_id",
-                                            "key": "doc_id",
-                                            "fkey": "doc_id",
-                                            "pkey": "id",
-                                            "actuate": "replace",
-                                            },
-                            # Skills
-                            hrm_certification = "person_id",
-                            hrm_competency = "person_id",
-                            hrm_credential = "person_id",
-                            hrm_training = "person_id",
-                            hrm_trainings = {"joinby": "person_id",
-                                             "multiple": False,
-                                             },
-                            # Facilitated Trainings (Instructor)
-                            hrm_training_event = "person_id",
-                            # Experience
-                            hrm_experience = "person_id",
-                            hrm_programme_hours = {"name": "hours",
-                                                   "joinby": "person_id",
-                                                   },
-                            vol_activity_hours = "person_id",
-                            # Appraisals
-                            hrm_appraisal = "person_id",
-                            # Availability
-                            pr_person_availability = {"name": "availability",
-                                                      "joinby": "person_id",
-                                                      # Will need tochange in future
-                                                      "multiple": False,
-                                                      },
-                            # Awards
-                            hrm_award = {"name": "staff_award",
-                                         "joinby": "person_id",
-                                         },
-                            vol_volunteer_award = {"name": "award",
-                                                   "joinby": "person_id",
-                                                   },
-                            # Disciplinary Record
-                            hrm_disciplinary_action = "person_id",
-                            # Salary Information
-                            hrm_salary = "person_id",
-                            # Organisation Memberships
-                            member_membership = "person_id",
-                            # Organisation Group Association
-                            org_group_person = "person_id",
-                            # Education history
-                            pr_education = "person_id",
-                            # Occupation Types
-                            pr_occupation_type = {
-                                "link": "pr_occupation_type_person",
-                                "joinby": "person_id",
-                                "key": "occupation_type_id",
-                                "actuate": "link",
-                                "autodelete": False,
-                                },
-                            # Group Memberships
-                            pr_group_membership = "person_id",
-                            # Identity Documents
-                            pr_identity = (# All Identity Documents
-                                           {"name": "identity",
-                                            "joinby": "person_id",
-                                            },
-                                           # Passports in particular
-                                           {"name": "passport",
-                                            "joinby": "person_id",
-                                            "filterby": {
-                                                "type": 1,
-                                                },
-                                            },
-                                           # National ID in particular
-                                           {"name": "national_id",
-                                            "joinby": "person_id",
-                                            "filterby": {
-                                                "type": 2,
-                                                },
-                                            },
-                                           ),
-                            # Personal Details
-                            pr_person_details = {"joinby": "person_id",
+                       vol_activity_hours = "person_id",
+                       # Appraisals
+                       hrm_appraisal = "person_id",
+                       # Availability
+                       pr_person_availability = {"name": "availability",
+                                                 "joinby": "person_id",
+                                                 # Will need tochange in future
                                                  "multiple": False,
                                                  },
-                            # Tags
-                            pr_person_tag = "person_id",
-                            # Seized Items (owner)
-                            security_seized_item = "person_id",
-                            )
+                       # Awards
+                       hrm_award = {"name": "staff_award",
+                                    "joinby": "person_id",
+                                    },
+                       vol_volunteer_award = {"name": "award",
+                                              "joinby": "person_id",
+                                              },
+                       # Disciplinary Record
+                       hrm_disciplinary_action = "person_id",
+                       # Salary Information
+                       hrm_salary = "person_id",
+                       # Organisation Memberships
+                       member_membership = "person_id",
+                       # Organisation Group Association
+                       org_group_person = "person_id",
+                       # Education history
+                       pr_education = "person_id",
+                       # Occupation Types
+                       pr_occupation_type = {
+                           "link": "pr_occupation_type_person",
+                           "joinby": "person_id",
+                           "key": "occupation_type_id",
+                           "actuate": "link",
+                           "autodelete": False,
+                           },
+                       # Group Memberships
+                       pr_group_membership = "person_id",
+                       # Identity Documents
+                       pr_identity = (# All Identity Documents
+                                      {"name": "identity",
+                                       "joinby": "person_id",
+                                       },
+                                      # Passports in particular
+                                      {"name": "passport",
+                                       "joinby": "person_id",
+                                       "filterby": {
+                                           "type": 1,
+                                           },
+                                       },
+                                      # National ID in particular
+                                      {"name": "national_id",
+                                       "joinby": "person_id",
+                                       "filterby": {
+                                           "type": 2,
+                                           },
+                                       },
+                                      ),
+                       # Personal Details
+                       pr_person_details = {"joinby": "person_id",
+                                            "multiple": False,
+                                            },
+                       # Tags
+                       pr_person_tag = "person_id",
+                       # Seized Items (owner)
+                       security_seized_item = "person_id",
+                       )
+
+        # Beneficiary/Case Management
+        if settings.has_module("br"):
+            # Use BR for case management
+            add_components(tablename,
+                           # Beneficiary Registry
+                           br_case = {"joinby": "person_id",
+                                      "multiple": False,
+                                      },
+                           br_case_language = "person_id",
+                           br_case_activity = "person_id",
+                           )
+        else:
+            # Use DVR for case management
+            add_components(tablename,
+                           dvr_allowance = "person_id",
+                           dvr_case = {"name": "dvr_case",
+                                       "joinby": "person_id",
+                                       "multiple": False,
+                                       },
+                           dvr_case_activity = "person_id",
+                           dvr_response_action = "person_id",
+                           dvr_case_appointment = "person_id",
+                           dvr_case_details = {"joinby": "person_id",
+                                               "multiple": False,
+                                               },
+                           dvr_case_effort = "person_id",
+                           dvr_case_event = "person_id",
+                           dvr_case_flag_case = {"name": "dvr_flag",
+                                                 "joinby": "person_id",
+                                                 },
+                           dvr_case_flag = {"link": "dvr_case_flag_case",
+                                            "joinby": "person_id",
+                                            "key": "flag_id",
+                                            "actuate": "link",
+                                            "autodelete": False,
+                                            },
+                           dvr_case_language = "person_id",
+                           dvr_economy = {"joinby": "person_id",
+                                          "multiple": False,
+                                          },
+                           dvr_evaluation = {"joinby": "person_id",
+                                             "multiple": False,
+                                             },
+                           dvr_household = {"joinby": "person_id",
+                                            "multiple": False,
+                                            },
+                           dvr_household_member = "person_id",
+                           dvr_note = {"name": "case_note",
+                                       "joinby": "person_id",
+                                       },
+                           dvr_residence_status = "person_id",
+                           dvr_service_contact = "person_id",
+                           )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1795,7 +1796,9 @@ class PRPersonModel(S3Model):
                   ]
 
         separate_name_fields = settings.get_pr_separate_name_fields()
-        if separate_name_fields or site_contact_person:
+        get_name = separate_name_fields or get_vars.get("name") == "1"
+
+        if get_name or site_contact_person:
             middle_name = separate_name_fields == 3
             fields.extend((ptable.first_name,
                            ptable.middle_name,
@@ -1840,7 +1843,7 @@ class PRPersonModel(S3Model):
             last_name = row.last_name
             if middle_name:
                 middle_name = row.middle_name
-        elif site_contact_person:
+        elif get_name or site_contact_person:
             name = s3_fullname(row)
         pe_label = row.pe_label if get_pe_label else None
         if request_dob:
@@ -1894,7 +1897,7 @@ class PRPersonModel(S3Model):
             item["last_name"] = last_name
             if middle_name:
                 item["middle_name"] = middle_name
-        elif site_contact_person:
+        elif get_name or site_contact_person:
             item["name"] = name
         if pe_label:
             item["pe_label"] = pe_label
@@ -2772,7 +2775,7 @@ class PRGroupModel(S3Model):
                 (table.group_id == group_id)
 
         multiple_case_groups = current.deployment_settings \
-                                      .get_dvr_multiple_case_groups()
+                                      .get_pr_multiple_case_groups()
         if not multiple_case_groups:
             # Check if group is a case group
             gtable = s3db.pr_group
@@ -2885,6 +2888,11 @@ class PRGroupModel(S3Model):
 
         # Update PE hierarchy affiliations
         pr_update_affiliations(table, record)
+
+        # BR extensions
+        s3db = current.s3db
+        if settings.has_module("br"):
+            s3db.br_group_membership_onaccept(record, row.pr_group, group_id, person_id)
 
         # DVR extensions
         s3db = current.s3db
@@ -5479,11 +5487,10 @@ class PRPersonDetailsModel(S3Model):
     def model(self):
 
         T = current.T
-        gis = current.gis
         settings = current.deployment_settings
         messages = current.messages
+
         NONE = messages["NONE"]
-        UNKNOWN_OPT = messages.UNKNOWN_OPT
 
         # ---------------------------------------------------------------------
         # Person Details
@@ -5509,14 +5516,8 @@ class PRPersonDetailsModel(S3Model):
         }
 
         # Nationality Options
-        STATELESS = T("Stateless")
-        def nationality_opts():
-            opts = gis.get_countries(key_type="code")
-            opts["XX"] = STATELESS
-            return opts
-        nationality_repr = lambda code: STATELESS if code == "XX" else \
-                                        gis.get_country(code, key_type="code") or \
-                                        UNKNOWN_OPT
+        nationality_opts = pr_nationality_opts
+        nationality_repr = pr_nationality_prepresent
 
         # Religion Options
         religion_opts = settings.get_L10n_religions()
@@ -6510,6 +6511,8 @@ class pr_PersonRepresent(S3Represent):
                     controller = "hrm"
                 elif c == "vol":
                     controller = "vol"
+                elif c == "br":
+                    controller = "br"
                 elif c == "dvr":
                     controller = "dvr"
                 else:
@@ -7036,6 +7039,47 @@ def pr_rheader(r, tabs=None):
     return None
 
 # =============================================================================
+def pr_nationality_opts():
+    """
+        Nationality options
+
+        @returns: a sorted list of nationality options
+    """
+
+    T = current.T
+
+    countries = current.gis.get_countries(key_type="code")
+    opts = sorted([(k, T(countries[k])) for k in countries.keys()],
+                  # NB applies server locale's sorting rules, not
+                  #    the user's chosen language (not easily doable
+                  #    in Python, would require pyICU or similar)
+                  key=lambda x: x[1],
+                  )
+
+    # Stateless always last
+    opts.append(("XX", T("Stateless")))
+
+    return opts
+
+def pr_nationality_prepresent(code):
+    """
+        Representation of Nationality
+
+        @param code: ISO2 country code
+
+        @returns: T-translated name of the country
+    """
+
+    if code == "XX":
+        return current.T("Stateless")
+    else:
+        country_name = current.gis.get_country(code, key_type="code")
+        if country_name:
+            return current.T(country_name)
+
+    return current.messages.UNKNOWN_OPT
+
+# =============================================================================
 # Custom Resource Methods
 # =============================================================================
 #
@@ -7098,10 +7142,7 @@ class pr_AssignMethod(S3Method):
         #    controller = "vol"
         #else:
         #    controller = "hrm"
-        if tablename == "pr_forum_membership":
-            USERS = True
-        else:
-            USERS = False
+        USERS = tablename == "pr_forum_membership"
         controller = "pr"
 
         T = current.T
@@ -7612,27 +7653,18 @@ class pr_Contacts(S3Method):
 
         # Use field.readable to hide fields if-required
         r.customise_resource(tablename)
-        if table.comments.readable:
-            comments_readable = True
-        else:
-            comments_readable = False
-        if table.contact_description.readable:
-            description_readable = True
-        else:
-            description_readable = False
-        if table.priority.readable:
-            priority_readable = True
-        else:
-            priority_readable = False
+        comments_readable = table.comments.readable
+        description_readable = table.contact_description.readable
+        priority_readable = table.priority.readable
 
         # Contact information by contact method
         opts = current.msg.CONTACT_OPTS
         action_buttons = self.action_buttons
         inline_edit_hint = T("Click to edit")
-        for method, contacts in groups:
+        for contact_method, contacts in groups:
 
             # Subtitle
-            form.append(H3(opts[method]))
+            form.append(H3(opts[contact_method]))
 
             # Individual Rows
             for contact in contacts:
@@ -7910,21 +7942,27 @@ class pr_Template(S3Method):
                 template_path = os.path.join(r.folder, "uploads", template.file)
 
                 # Extract Data
+                resource = r.resource
                 mailmerge_fields = current.deployment_settings.get_doc_mailmerge_fields()
-
-                data = r.resource.select(mailmerge_fields.values(),
-                                         represent = True,
-                                         show_links = False,
-                                         raw_data = True,
-                                         ).rows[0]
+                data = resource.select(mailmerge_fields.values(),
+                                       represent = True,
+                                       show_links = False,
+                                       )
+                record = data.rows[0]
+                rfields = {rfield.selector: rfield for rfield in data.rfields}
 
                 # Format Data
+                NONE = current.messages["NONE"]
+                prefix = resource.prefix_selector
+
                 doc_data = {}
-                for field in mailmerge_fields:
-                    selector = mailmerge_fields[field]
-                    if "." not in selector:
-                        selector = "pr_person.%s" % selector
-                    doc_data[field] = data[selector]
+                for key, selector in mailmerge_fields.items():
+                    rfield = rfields.get(prefix(selector))
+                    if rfield:
+                        value = record[rfield.colname]
+                        doc_data[key] = s3_unicode(value)
+                    else:
+                        doc_data[key] = NONE
 
                 # Merge
                 filename = "%s_%s.docx" % (template.name, person_id)
