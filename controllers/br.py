@@ -50,7 +50,8 @@ def person():
         human_resource_id = auth.s3_logged_in_human_resource()
         insertable = True
 
-        if not r.record:
+        record = r.record
+        if not record:
 
             # Enable bigtable strategies for better performance
             settings.base.bigtable = True
@@ -192,7 +193,7 @@ def person():
                 language_details = None
 
             # Expose the "invalid"-flag? (update forms only)
-            if r.record and r.method != "read":
+            if record and r.method != "read":
                 field = ctable.invalid
                 field.readable = field.writable = True
 
@@ -251,7 +252,7 @@ def person():
                                )
 
             # Filter Widgets
-            if not r.record:
+            if not record:
                 from s3 import S3TextFilter, S3DateFilter, S3OptionsFilter
                 filter_widgets = [
                     S3TextFilter(name_fields + ["pe_label", "case.comments"],
@@ -284,41 +285,45 @@ def person():
                 resource.configure(filter_widgets = filter_widgets)
 
             # Autocomplete search-method
-            if r.function == "person_search":
-                # Autocomplete-Widget (e.g. response actions)
-                search_fields = tuple(name_fields) + ("pe_label",)
-            else:
-                # Add-Person-Widget (family members)
-                search_fields = tuple(name_fields)
             s3db.set_method("pr", "person",
                             method = "search_ac",
-                            action = s3db.pr_PersonSearchAutocomplete(search_fields),
+                            action = s3db.pr_PersonSearchAutocomplete(name_fields),
                             )
 
         elif r.component_name == "case_activity":
 
-            # Configure case_activity.human_resource_id
             atable = r.component.table
 
+            assistance_inline = settings.get_br_manage_assistance() and \
+                                settings.get_br_assistance_inline()
+            mtable =  s3db.br_assistance_measure
+
+            # Default human_resource_id
             if human_resource_id:
+
+                # Activities
                 if settings.get_br_case_activity_manager():
                     atable.human_resource_id.default = human_resource_id
 
+                # Inline updates
                 if settings.get_br_case_activity_updates():
                     utable = s3db.br_case_activity_update
                     utable.human_resource_id.default = human_resource_id
 
+                # Inline assistance measures
+                if assistance_inline:
+                    mtable.human_resource_id.default = human_resource_id
+
             root_org = None
             org_specific_needs = settings.get_br_case_activity_need() and \
                                  settings.get_br_needs_org_specific()
-
             if org_specific_needs:
                 root_org = s3db.br_case_root_org(r.id)
                 if not root_org:
                     root_org = auth.root_org()
 
+            # Limit selectable need types to the case root org
             if org_specific_needs and root_org:
-                # Limit selectable need types to the case root org
                 field = atable.need_id
                 field.requires = IS_EMPTY_OR(
                                     IS_ONE_OF(db, "br_need.id",
@@ -326,7 +331,37 @@ def person():
                                               filterby = "organisation_id",
                                               filter_opts = (root_org,),
                                               ))
-            # TODO when using inline responses, filter themes to root org
+
+            # TODO when assistance inline and using themes,
+            #      limit selectable themes to case root org
+
+            # Default person_id in inline-measures
+            if assistance_inline:
+                if record:
+                    mtable.person_id.default = record.id
+
+
+        elif r.component_name == "assistance_measure":
+
+            # Default human_resource_id in assistance measures
+            mtable = r.component.table
+            if human_resource_id and settings.get_br_assistance_manager():
+                mtable.human_resource_id.default = human_resource_id
+
+            # Filter case_activity_id selector to current case
+            field = mtable.case_activity_id
+            if record and field.writable:
+                requires = field.requires
+                if isinstance(requires, IS_EMPTY_OR):
+                    requires = requires.other
+                requires.set_filter(filterby = "person_id",
+                                    filter_opts = (record.id,))
+
+            # Allow organizer to set an end_date
+            if r.method == "organize" and \
+               settings.get_br_assistance_measures_use_time():
+                field = mtable.end_date
+                field.writable = True
 
         return True
     s3.prep = prep
@@ -344,11 +379,24 @@ def person_search():
         if r.method != "search_ac":
             return False
 
-        # Filter to persons who have a case registered
-        resource = r.resource
-        resource.add_filter(FS("br_case.id") != None)
-        return True
+        # Filter for valid+open cases
+        query = (FS("case.id") != None) & \
+                (FS("case.invalid") == False) & \
+                (FS("case.status_id$is_closed") == False)
+        r.resource.add_filter(query)
 
+        # Auto-detect name parts from current name format
+        NAMES = ("first_name", "middle_name", "last_name")
+        keys = s3base.StringTemplateParser.keys(settings.get_pr_name_format())
+        name_fields = [fn for fn in keys if fn in NAMES]
+
+        # Autocomplete search-method including pe_label
+        search_fields = tuple(name_fields) + ("pe_label",)
+        s3db.set_method("pr", "person",
+                        method = "search_ac",
+                        action = s3db.pr_PersonSearchAutocomplete(search_fields),
+                        )
+        return True
     s3.prep = prep
 
     return s3_rest_controller("pr", "person")
@@ -733,6 +781,116 @@ def case_activity():
         resource.configure(insertable = False,
                            deletable = False,
                            )
+
+        return True
+    s3.prep = prep
+
+    return s3_rest_controller()
+
+# =============================================================================
+# Assistance
+#
+def assistance_status():
+    """ Assistance Statuses: RESTful CRUD controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def assistance_type():
+    """ Types of Assistance: RESTful CRUD controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def assistance_measure():
+    """ Assistance Measures: RESTful CRUD controller """
+
+    def prep(r):
+
+        resource = r.resource
+        table = resource.table
+
+        # Populate human_resource_id with current user, don't link
+        human_resource_id = auth.s3_logged_in_human_resource()
+        if human_resource_id:
+            table.human_resource_id.default = human_resource_id
+
+        # Filter for valid+open cases
+        query = (FS("person_id$case.id") != None) & \
+                (FS("person_id$case.invalid") == False) & \
+                (FS("person_id$case.status_id$is_closed") == False)
+
+        resource.add_filter(query)
+
+        # Filter for "my measures"
+        crud_strings = response.s3.crud_strings["br_assistance_measure"]
+        mine = get_vars.get("mine")
+        if mine == "1":
+            mine = True
+            if human_resource_id:
+                query = FS("human_resource_id") == human_resource_id
+            else:
+                query = FS("human_resource_id").belongs(set())
+            resource.add_filter(query)
+            crud_strings.title_list = T("My Measures")
+        else:
+            mine = False
+
+        # Allow organizer to set an end_date
+        method = r.method
+        if method == "organize" and \
+           settings.get_br_assistance_measures_use_time():
+            field = table.end_date
+            field.writable = True
+
+        if not r.component:
+
+            # Show person_id as link to case file, not writable in this perspective
+            field = table.person_id
+            field.writable = False
+            if r.representation != "popup":
+                field.represent = s3db.pr_PersonRepresent(show_link=True)
+
+            # Filter case_activity_id selector to current case
+            record = r.record
+            field = table.case_activity_id
+            if record and field.writable:
+                requires = field.requires
+                if isinstance(requires, IS_EMPTY_OR):
+                    requires = requires.other
+                requires.set_filter(filterby = "person_id",
+                                    filter_opts = (record.person_id,))
+
+            # Adapt list fields to perspective
+            list_fields = [(T("ID"), "person_id$pe_label"),
+                           "person_id",
+                           #"assistance_type_id"|"comments",
+                           #"human_resource_id",
+                           "start_date",
+                           #"hours",
+                           "status_id",
+                           ]
+
+            # Include human_resource_id if not using mine-filter
+            if not mine and settings.get_br_assistance_manager():
+                list_fields.insert(2, "human_resource_id")
+
+            # Include type when using types, otherwise show details
+            if settings.get_br_assistance_types():
+                list_fields.insert(2, "assistance_type_id")
+            else:
+                list_fields.insert(2, "comments")
+
+            # Show effort when tracking effort
+            if settings.get_br_assistance_track_effort():
+                list_fields.insert(-1, "hours")
+
+            resource.configure(list_fields = list_fields,
+                               # Measures should only be added or deleted
+                               # from case perspective
+                               insertable = False,
+                               deletable = False,
+                               )
 
         return True
     s3.prep = prep

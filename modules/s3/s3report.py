@@ -2,7 +2,7 @@
 
 """ S3 Pivot Table Reports Method
 
-    @copyright: 2011-2018 (c) Sahana Software Foundation
+    @copyright: 2011-2019 (c) Sahana Software Foundation
     @license: MIT
 
     @requires: U{B{I{Python 2.6}} <http://www.python.org>}
@@ -50,11 +50,11 @@ from gluon.sqlhtml import OptionsWidget
 from gluon.storage import Storage
 from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
-from s3query import FS
-from s3rest import S3Method
-from s3utils import s3_flatlist, s3_has_foreign_key, s3_str, S3MarkupStripper, s3_represent_value
-from s3xml import S3XMLFormat
-from s3validators import IS_NUMBER, JSONERRORS
+from .s3query import FS
+from .s3rest import S3Method
+from .s3utils import s3_flatlist, s3_has_foreign_key, s3_str, S3MarkupStripper, s3_represent_value
+from .s3xml import S3XMLFormat
+from .s3validators import IS_NUMBER, JSONERRORS
 
 # Compact JSON encoding
 DEFAULT = lambda: None
@@ -112,7 +112,7 @@ class S3Report(S3Method):
             filter_widgets = get_config("filter_widgets", None)
             if filter_widgets and not self.hide_filter:
                 # Apply filter defaults (before rendering the data!)
-                from s3filter import S3FilterForm
+                from .s3filter import S3FilterForm
                 show_filter_form = True
                 S3FilterForm.apply_filter_defaults(r, resource)
 
@@ -2373,7 +2373,7 @@ class S3PivotTable(object):
             @returns: the XLS file as stream
         """
 
-        from s3codec import S3Codec
+        from .s3codec import S3Codec
         exporter = S3Codec.get_codec("xls")
 
         return exporter.encode_pt(self, title)

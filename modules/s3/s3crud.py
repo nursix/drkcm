@@ -7,7 +7,7 @@
     @requires: U{B{I{gluon}} <http://web2py.com>}
     @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -50,12 +50,12 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from s3datetime import S3DateTime, s3_decode_iso_datetime
-from s3export import S3Exporter
-from s3forms import S3SQLDefaultForm
-from s3rest import S3Method
-from s3utils import s3_str, s3_unicode, s3_validate, s3_represent_value, s3_set_extension
-from s3widgets import S3EmbeddedComponentWidget, S3Selector, ICON
+from .s3datetime import S3DateTime, s3_decode_iso_datetime
+from .s3export import S3Exporter
+from .s3forms import S3SQLDefaultForm
+from .s3rest import S3Method
+from .s3utils import s3_str, s3_unicode, s3_validate, s3_represent_value, s3_set_extension
+from .s3widgets import S3EmbeddedComponentWidget, S3Selector, ICON
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -297,7 +297,7 @@ class S3CRUD(S3Method):
                 except ValueError:
                     r.error(400, "Invalid parent record ID: %s" % link_to_parent)
                 else:
-                    from s3hierarchy import S3Hierarchy
+                    from .s3hierarchy import S3Hierarchy
                     h = S3Hierarchy(tablename)
                     if h.config:
                         try:
@@ -480,7 +480,7 @@ class S3CRUD(S3Method):
                 session.confirmation = current.T("Data uploaded")
 
         elif representation == "pdf":
-            from s3pdf import S3PDF
+            from .s3pdf import S3PDF
             exporter = S3PDF()
             return exporter(r, **attr)
 
@@ -712,7 +712,7 @@ class S3CRUD(S3Method):
                     pass
 
             # De-duplication
-            from s3merge import S3Merge
+            from .s3merge import S3Merge
             output["deduplicate"] = S3Merge.bookmark(r, tablename, record_id)
 
         elif representation == "plain":
@@ -991,7 +991,7 @@ class S3CRUD(S3Method):
                     pass
 
             # De-duplication
-            from s3merge import S3Merge
+            from .s3merge import S3Merge
             output["deduplicate"] = S3Merge.bookmark(r, tablename, record_id)
 
             # Redirection
@@ -1097,7 +1097,7 @@ class S3CRUD(S3Method):
             if recursive and recursive.lower() in ("1", "true"):
                 # Try recursive deletion of the whole hierarchy branch
                 # => falls back to normal delete if no hierarchy configured
-                from s3hierarchy import S3Hierarchy
+                from .s3hierarchy import S3Hierarchy
                 h = S3Hierarchy(resource.tablename)
                 if h.config:
                     node_ids = None
@@ -1166,7 +1166,7 @@ class S3CRUD(S3Method):
                representation not in ("aadata", "dl"):
                 show_filter_form = True
                 # Apply filter defaults (before rendering the data!)
-                from s3filter import S3FilterForm
+                from .s3filter import S3FilterForm
                 default_filters = S3FilterForm.apply_filter_defaults(r, resource)
             else:
                 default_filters = None
@@ -1398,7 +1398,7 @@ class S3CRUD(S3Method):
 
         elif representation == "msg":
             if r.http == "POST":
-                from s3notify import S3Notifications
+                from .s3notify import S3Notifications
                 return S3Notifications.send(r, resource)
             else:
                 r.error(405, current.ERROR.BAD_METHOD)
@@ -1682,7 +1682,7 @@ class S3CRUD(S3Method):
         record_id = get_vars.get("record", None)
         if record_id is not None:
             # Ajax-reload of a single record
-            from s3query import FS
+            from .s3query import FS
             resource.add_filter(FS("id") == record_id)
             start = 0
             limit = 1
@@ -2590,13 +2590,13 @@ class S3CRUD(S3Method):
     @classmethod
     def action_buttons(cls,
                        r,
-                       deletable=True,
-                       editable=True,
-                       copyable=False,
-                       read_url=None,
-                       delete_url=None,
-                       update_url=None,
-                       copy_url=None):
+                       deletable = True,
+                       editable = None,
+                       copyable = False,
+                       read_url = None,
+                       delete_url = None,
+                       update_url = None,
+                       copy_url = None):
         """
             Provide the usual action buttons in list views.
             Allow customizing the urls, since this overwrites anything
@@ -2636,10 +2636,12 @@ class S3CRUD(S3Method):
 
         get_vars = cls._linkto_vars(r)
 
+        settings = current.deployment_settings
+
         # If this request is in iframe-format, action URLs should be in
         # iframe-format as well
         if r.representation == "iframe":
-            if current.deployment_settings.get_ui_iframe_opens_full():
+            if settings.get_ui_iframe_opens_full():
                 iframe_safe = lambda url: url
                 # This is processed client-side in s3.ui.datatable.js
                 target = {"_target": "_blank"}
@@ -2650,14 +2652,19 @@ class S3CRUD(S3Method):
             iframe_safe = lambda url: url
             target = {}
 
+        if editable is None:
+            # Fall back to settings if caller didn't override
+            editable = False if settings.get_ui_open_read_first() else \
+                       "auto" if settings.get_ui_auto_open_update() else True
+
         # Open-action (Update or Read)
-        if editable and has_permission("update", table) and \
-           not ownership_required("update", table):
+        authorised = has_permission("update", table)
+        if editable and authorised and not ownership_required("update", table):
+            # User has permission to edit all records, and caller allows edit
             if not update_url:
-                # To use modals
-                #get_vars["refresh"] = "list"
                 update_url = iframe_safe(URL(args = args + ["update"], #.popup to use modals
-                                             vars = get_vars))
+                                             vars = get_vars,
+                                             ))
             s3crud.action_button(labels.UPDATE, update_url,
                                  # To use modals
                                  #_class="action-btn s3_modal"
@@ -2666,9 +2673,13 @@ class S3CRUD(S3Method):
                                  **target
                                  )
         else:
+            # User is not permitted to edit at least some of the records,
+            # or caller doesn't allow edit
             if not read_url:
-                read_url = iframe_safe(URL(args = args,
-                                           vars = get_vars))
+                method = ["read"] if not editable or not authorised else []
+                read_url = iframe_safe(URL(args = args + method, #.popup to use modals
+                                           vars = get_vars,
+                                           ))
             s3crud.action_button(labels.READ, read_url,
                                  # To use modals
                                  #_class="action-btn s3_modal"
@@ -3242,7 +3253,7 @@ class S3CRUD(S3Method):
             if len(dates) != 2:
                 return
 
-            from s3organizer import S3Organizer
+            from .s3organizer import S3Organizer
 
             try:
                 config = S3Organizer.parse_config(resource)

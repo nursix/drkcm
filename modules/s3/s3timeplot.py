@@ -2,7 +2,7 @@
 
 """ S3 TimePlot Reports Method
 
-    @copyright: 2013-2018 (c) Sahana Software Foundation
+    @copyright: 2013-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -50,11 +50,11 @@ from gluon.html import *
 from gluon.validators import IS_IN_SET
 from gluon.sqlhtml import OptionsWidget
 
-from s3datetime import s3_decode_iso_datetime, s3_utc
-from s3rest import S3Method
-from s3query import FS
-from s3report import S3Report, S3ReportForm
-from s3utils import s3_flatlist, s3_represent_value, s3_unicode, S3MarkupStripper
+from .s3datetime import s3_decode_iso_datetime, s3_utc
+from .s3rest import S3Method
+from .s3query import FS
+from .s3report import S3Report, S3ReportForm
+from .s3utils import s3_flatlist, s3_represent_value, s3_unicode, S3MarkupStripper
 
 tp_datetime = lambda *t: datetime.datetime(tzinfo=dateutil.tz.tzutc(), *t)
 
@@ -212,7 +212,7 @@ class S3TimePlot(S3Method):
         if r.representation in ("html", "iframe"):
             filter_widgets = get_config("filter_widgets", None)
             if filter_widgets and not self.hide_filter:
-                from s3filter import S3FilterForm
+                from .s3filter import S3FilterForm
                 show_filter_form = True
                 S3FilterForm.apply_filter_defaults(r, resource)
 

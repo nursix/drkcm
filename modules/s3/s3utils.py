@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: (c) 2010-2018 Sahana Software Foundation
+    @copyright: (c) 2010-2019 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -49,7 +49,7 @@ from gluon.languages import lazyT
 from gluon.tools import addrow
 
 from s3dal import Expression, Field, Row, S3DAL
-from s3datetime import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime
+from .s3datetime import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime
 
 URLSCHEMA = re.compile(r"((?:(())(www\.([^/?#\s]*))|((http(s)?|ftp):)"
                        r"(//([^/?#\s]*)))([^?#\s]*)(\?([^#\s]*))?(#([^\s]*))?)")
@@ -935,6 +935,22 @@ def s3_yes_no_represent(value):
         return current.messages["NONE"]
 
 # =============================================================================
+def s3_keep_messages():
+    """
+        Retain user messages from previous request - prevents the messages
+        from being swallowed by overhanging Ajax requests or intermediate
+        pages with mandatory redirection (see s3_redirect_default)
+    """
+
+    response = current.response
+    session = current.session
+
+    session.flash = response.flash
+    session.confirmation = response.confirmation
+    session.error = response.error
+    session.warning = response.warning
+
+# =============================================================================
 def s3_redirect_default(location="", how=303, client_side=False, headers=None):
     """
         Redirect preserving response messages, useful when redirecting from
@@ -948,13 +964,7 @@ def s3_redirect_default(location="", how=303, client_side=False, headers=None):
         @param headers: response headers
     """
 
-    response = current.response
-    session = current.session
-
-    session.error = response.error
-    session.warning = response.warning
-    session.confirmation = response.confirmation
-    session.flash = response.flash
+    s3_keep_messages()
 
     redirect(location,
              how=how,
@@ -1916,7 +1926,7 @@ def URL2(a=None, c=None, r=None):
     if c:
         controller = c
     if not (application and controller):
-        raise SyntaxError, "not enough information to build the url"
+        raise SyntaxError("not enough information to build the url")
     #other = ""
     url = "/%s/%s" % (application, controller)
     return url
@@ -2107,7 +2117,7 @@ class S3TypeConverter(object):
                 else:
                     dt = datetime.datetime(y, m, d, hh, mm, ss)
                 # Validate and convert to UTC (assuming local timezone)
-                from s3validators import IS_UTC_DATETIME
+                from .s3validators import IS_UTC_DATETIME
                 validator = IS_UTC_DATETIME()
                 dt, error = validator(dt)
                 if error:
@@ -2135,7 +2145,7 @@ class S3TypeConverter(object):
                 if dt:
                     value = dt.date()
             if value is None:
-                from s3validators import IS_UTC_DATE
+                from .s3validators import IS_UTC_DATE
                 # Try ISO format first (e.g. S3DateFilter)
                 value, error = IS_UTC_DATE(format="%Y-%m-%d")(b)
                 if error:

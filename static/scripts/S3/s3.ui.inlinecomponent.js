@@ -1,7 +1,7 @@
 /**
  * jQuery UI InlineComponent Widget
  *
- * @copyright 2015-2018 (c) Sahana Software Foundation
+ * @copyright 2015-2019 (c) Sahana Software Foundation
  * @license MIT
  *
  * requires jQuery 1.9.1+
@@ -611,7 +611,7 @@
                             // Reference values need to be ints for S3Represent to find a match in theset
                             // - ensure we don't do this to dates though!
                             intvalue = parseInt(value, 10);
-                            if (!isNaN(intvalue)) {
+                            if (!isNaN(intvalue) && value == '' + intvalue) {
                                 value = intvalue;
                             }
                         }

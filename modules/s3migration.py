@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2012-2018 (c) Sahana Software Foundation
+    @copyright: 2012-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -523,7 +523,7 @@ class S3Migration(object):
         from s3 import S3BulkImporter
         bi = S3BulkImporter()
         templates = current.deployment_settings.get_template()
-        if not isinstance(templates, list):
+        if not isinstance(templates, (tuple, list)):
             templates = [templates]
         for t in templates:
             filename = os.path.join(current.request.folder, "modules", "templates", t, "auth_roles.csv")
@@ -1067,7 +1067,7 @@ class S3Migration(object):
             sql = "ALTER TABLE %s RENAME TO %s;" % (tablename_old,
                                                     tablename_new)
             self.db.executesql(sql)
-        except Exception, e:
+        except Exception as e:
             import sys
             sys.stderr.write("%s\n" % e)
 

@@ -2,7 +2,7 @@
 
 """ S3 Date/Time Toolkit
 
-    @copyright: 2015-2018 (c) Sahana Software Foundation
+    @copyright: 2015-2019 (c) Sahana Software Foundation
     @license: MIT
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
@@ -40,6 +40,7 @@ __all__ = ("ISOFORMAT",
            "s3_encode_iso_datetime",
            "s3_utc",
            "s3_get_utc_offset",
+           "s3_timezone_offset",
            "s3_relative_datetime",
            )
 
@@ -429,7 +430,7 @@ class S3Calendar(object):
                 dtfmt = "%Y-%m-%d" # ISO Date Format
 
         # Deal with T's
-        from s3utils import s3_str
+        from .s3utils import s3_str
         dtfmt = s3_str(dtfmt)
 
         return self.calendar._format(dt, dtfmt)
@@ -454,7 +455,7 @@ class S3Calendar(object):
                 dtfmt = ISOFORMAT # ISO Date/Time Format
 
         # Deal with T's
-        from s3utils import s3_str
+        from .s3utils import s3_str
         dtfmt = s3_str(dtfmt)
 
         # Remove microseconds
@@ -549,7 +550,7 @@ class S3Calendar(object):
             # Gregorian calendar - use strptime
             try:
                 timetuple = time.strptime(dtstr, dtfmt)
-            except ValueError, e:
+            except ValueError as e:
                 # Seconds missing?
                 try:
                     timetuple = time.strptime(dtstr + ":00", dtfmt)
@@ -1163,7 +1164,7 @@ class S3DateTimeParser(object):
         import pyparsing as pp
         self.ParseException = pp.ParseException
 
-        from s3utils import s3_unicode
+        from .s3utils import s3_unicode
 
         # Get the rules
         rules = self.rules
@@ -1430,7 +1431,7 @@ class S3DateTimeFormatter(object):
         T = current.T
         calendar = self.calendar
 
-        from s3utils import s3_unicode
+        from .s3utils import s3_unicode
 
         rules = {"d": "%02d" % d,
                  "b": T(calendar.MONTH_ABBR[m - 1]),
@@ -1617,12 +1618,50 @@ def s3_get_utc_offset():
                 session.auth.user.utc_offset = offset
 
     if not offset:
-        # 3rd choice is the server default (what most clients should see
+        # 3rd choice is to stick with whatever is already stored in
+        # the current session
+        offset = session.s3.utc_offset
+
+    if not offset:
+        # 4th choice is the server default (what most clients should see
         # the timezone as)
-        offset = current.deployment_settings.L10n.utc_offset
+        offset = current.deployment_settings.get_L10n_utc_offset()
 
     session.s3.utc_offset = offset
     return offset
+
+#--------------------------------------------------------------------------
+def s3_timezone_offset(tzname):
+    """
+        Simple utility to convert a time zone name into an offset
+        string, can be used to configure the default offset of the
+        site in 000_config.py (effective for anonymous users), like:
+
+            from s3 import s3_timezone_offset
+            settings.L10n.utc_offset = s3_timezone_offset("Canada/Mountain")
+
+        Differs from a fixed offset string in that it adapts to DST.
+
+        @param tzname: the time zone name
+
+        NB a list of available time zone names can be obtained from the
+           dateutil-zoneinfo.tar.gz file like:
+
+        import os, tarfile, dateutil.zoneinfo
+        path = os.path.abspath(os.path.dirname(dateutil.zoneinfo.__file__))
+        zonesfile = tarfile.TarFile.open(os.path.join(path, 'dateutil-zoneinfo.tar.gz'))
+        zonenames = zonesfile.getnames()
+    """
+
+    tz = dateutil.tz.gettz(tzname)
+    if tz:
+        delta = (tz.utcoffset(datetime.datetime.utcnow())).total_seconds()
+        hours, minutes = abs(delta) // 3600, (abs(delta) % 3600) // 60
+        sign = "+" if abs(delta) / delta == 1 else "-"
+        deltastr = "%s%02d%02d" % (sign, hours, minutes)
+    else:
+        deltastr = None
+    return deltastr
 
 # =============================================================================
 # Utilities

@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: (c) 2010-2018 Sahana Software Foundation
+    @copyright: (c) 2010-2019 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -56,13 +56,13 @@ from gluon.tools import Auth, callback, DEFAULT, replace_id
 from gluon.utils import web2py_uuid
 
 from s3dal import Row, Rows, Query, Table, Field, original_tablename
-from s3datetime import S3DateTime
-from s3error import S3PermissionError
-from s3fields import S3MetaFields, S3Represent, s3_comments
-from s3rest import S3Method, S3Request
-from s3track import S3Tracker
-from s3utils import s3_addrow, s3_get_extension, s3_mark_required, s3_str
-from s3validators import IS_ISO639_2_LANGUAGE_CODE
+from .s3datetime import S3DateTime
+from .s3error import S3PermissionError
+from .s3fields import S3MetaFields, S3Represent, s3_comments
+from .s3rest import S3Method, S3Request
+from .s3track import S3Tracker
+from .s3utils import s3_addrow, s3_get_extension, s3_mark_required, s3_str
+from .s3validators import IS_ISO639_2_LANGUAGE_CODE
 
 # =============================================================================
 class AuthS3(Auth):
@@ -1717,7 +1717,7 @@ Thank you"""
                     i.e. org_admin coming from admin.py/user()
         """
 
-        from s3validators import IS_ONE_OF
+        from .s3validators import IS_ONE_OF
 
         T = current.T
         db = current.db
@@ -1729,7 +1729,7 @@ Thank you"""
         deployment_settings = current.deployment_settings
 
         if deployment_settings.get_ui_multiselect_widget():
-            from s3widgets import S3MultiSelectWidget
+            from .s3widgets import S3MultiSelectWidget
             multiselect_widget = True
         else:
             multiselect_widget = False
@@ -1791,7 +1791,7 @@ Thank you"""
                                                    messages.help_utc_offset)
                                  )
         try:
-            from s3validators import IS_UTC_OFFSET
+            from .s3validators import IS_UTC_OFFSET
             utc_offset.requires = IS_EMPTY_OR(IS_UTC_OFFSET())
         except:
             pass
@@ -1848,7 +1848,7 @@ Thank you"""
                                                       label = org_crud_strings.label_create,
                                                       title = org_crud_strings.title_list,
                                                       )
-                #from s3widgets import S3OrganisationAutocompleteWidget
+                #from .s3widgets import S3OrganisationAutocompleteWidget
                 #organisation_id.widget = S3OrganisationAutocompleteWidget()
                 #organisation_id.comment = DIV(_class="tooltip",
                 #                              _title="%s|%s" % (T("Organization"),
@@ -1900,7 +1900,7 @@ Thank you"""
                 #field.default = deployment_settings.get_auth_registration_site_id_default()
                 site_required = deployment_settings.get_auth_registration_site_required()
                 if show_org:
-                    from s3validators import IS_ONE_OF_EMPTY
+                    from .s3validators import IS_ONE_OF_EMPTY
                     requires = IS_ONE_OF_EMPTY(db, "org_site.site_id",
                                                site_represent,
                                                orderby="org_site.name",
@@ -1923,7 +1923,7 @@ $.filterOptionsS3({
                                          site_represent,
                                          orderby="org_site.name",
                                          sort=True)
-                #from s3widgets import S3SiteAutocompleteWidget
+                #from .s3widgets import S3SiteAutocompleteWidget
                 #field.widget = S3SiteAutocompleteWidget()
                 field.comment = DIV(_class="tooltip",
                                     _title="%s|%s" % (T("Facility"),
@@ -2321,12 +2321,7 @@ $.filterOptionsS3({
             this function may become redundant
         """
 
-        db = current.db
-        s3db = current.s3db
-        session = current.session
-
-        utable = self.settings.table_user
-        temptable = s3db.auth_user_temp
+        temptable = current.s3db.auth_user_temp
 
         form_vars = form.vars
         user_id = form_vars.id
@@ -2334,12 +2329,7 @@ $.filterOptionsS3({
         if not user_id:
             return None
 
-        # If the user hasn't set a personal UTC offset,
-        # then read the UTC offset from the form:
-        if not form_vars.utc_offset:
-            db(utable.id == user_id).update(utc_offset = session.s3.utc_offset)
-
-        record  = dict(user_id = user_id)
+        record  = {"user_id": user_id}
 
         # Add the home_phone to pr_contact
         home = form_vars.home

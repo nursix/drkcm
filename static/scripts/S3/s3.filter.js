@@ -315,7 +315,12 @@ S3.search = {};
 
         // Clear hierarchy filters
         form.find('.hierarchy-filter').each(function() {
-            $(this).hierarchicalopts('reset');
+            var $this = $(this);
+            if ($this.hasClass('s3-cascade-select')) {
+                $this.cascadeSelect('reset');
+            } else {
+                $this.hierarchicalopts('reset');
+            }
         });
 
         // Clear age filters
@@ -605,7 +610,11 @@ S3.search = {};
             urlVar = $('#' + id + '-data').val();
             value = '';
 
-            values = $this.hierarchicalopts('get');
+            if ($this.hasClass('s3-cascade-select')) {
+                values = $this.cascadeSelect('get');
+            } else {
+                values = $this.hierarchicalopts('get');
+            }
             if (values) {
                 for (i=0; i < values.length; i++) {
                     if (value === '') {
@@ -646,6 +655,20 @@ S3.search = {};
                        ('0' + (dt.getMonth() + 1)).slice(-2) + '-' +
                        ('0' + dt.getDate()).slice(-2);
                 queries.push([urlVar, dt]);
+            } else {
+                queries.push([urlVar, null]);
+            }
+        });
+
+        // Value filter widgets
+        $('.value-filter:visible', form).each(function() {
+
+            $this = $(this);
+            id = $this.attr('id');
+            urlVar = $('#' + id + '-data').val();
+
+            if ($this.prop('checked')) {
+                queries.push([urlVar, 'None']);
             } else {
                 queries.push([urlVar, null]);
             }
@@ -906,7 +929,11 @@ S3.search = {};
                     toggleAdvanced(form);
                 }
                 values = q[expression];
-                $this.hierarchicalopts('set', values);
+                if ($this.hasClass('s3-cascade-select')) {
+                    $this.cascadeSelect('set', values);
+                } else {
+                    $this.hierarchicalopts('set', values);
+                }
             }
         });
 
@@ -1303,7 +1330,7 @@ S3.search = {};
             } else if (t.hasClass('dl')) {
                 t.datalist('ajaxReload', target_data.queries);
             } else if (t.hasClass('map_wrapper')) {
-                S3.gis.refreshLayer('search_results');
+                S3.gis.refreshLayer('search_results', target_data.queries);
             } else if (t.hasClass('gi-container')) {
                 t.groupedItems('reload', null, target_data.queries);
             } else if (t.hasClass('pt-container')) {
@@ -2125,7 +2152,7 @@ S3.search = {};
         $('.text-filter, .range-filter-input').on('input.autosubmit', function () {
             $(this).closest('form').trigger('optionChanged');
         });
-        $('.options-filter, .location-filter, .date-filter-input, .age-filter-input, .map-filter').on('change.autosubmit', function () {
+        $('.options-filter, .location-filter, .date-filter-input, .age-filter-input, .map-filter, .value-filter').on('change.autosubmit', function () {
             $(this).closest('form').trigger('optionChanged');
         });
         $('.s3-options-filter-anyall input[type="radio"]').on('change.autosubmit', function() {

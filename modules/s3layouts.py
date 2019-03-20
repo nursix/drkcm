@@ -2,7 +2,7 @@
 
 """ Sahana Eden GUI Layouts (HTML Renderers)
 
-    @copyright: 2012-2018 (c) Sahana Software Foundation
+    @copyright: 2012-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -44,8 +44,10 @@ __all__ = ("S3MainMenuDefaultLayout",
            "homepage",
            )
 
-from gluon import *
-from s3 import *
+from gluon import current, URL, \
+                  A, DIV, H3, IMG, INPUT, LABEL, LI, SPAN, TAG, UL
+
+from s3 import S3NavigationItem, S3CRUD, ICON
 from s3theme import NAV, SECTION
 
 # =============================================================================
@@ -537,7 +539,6 @@ class S3PopupLink(S3NavigationItem):
             return None
 
         if current.deployment_settings.get_ui_use_button_icons():
-            from s3.s3widgets import ICON
             label = (ICON("add"), item.label)
         else:
             label = item.label

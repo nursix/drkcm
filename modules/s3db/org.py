@@ -2,7 +2,7 @@
 
 """ Sahana Eden Organisation Model
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -435,12 +435,15 @@ class S3OrganisationModel(S3Model):
                        S3SQLInlineLink(
                             "organisation_type",
                             field = "organisation_type_id",
-                            # Default 10 options just triggers which adds unnecessary complexity to a commonly-used form & commonly an early one (create Org when registering)
-                            filter = False,
+                            # Disable "Search"-field in multi-select widget:
+                            # - default "auto" shows Search field at 10 or more options,
+                            #   which adds unnecessary complexity to a commonly and
+                            #   often early used form (e.g. create Org when registering)
+                            search = False,
                             label = T("Type"),
                             multiple = multiple_organisation_types,
                             widget = type_widget,
-                       ),
+                            ),
                        "region_id",
                        "country" if use_country else None,
                        "phone",
@@ -677,6 +680,11 @@ class S3OrganisationModel(S3Model):
                        inv_warehouse = "organisation_id",
                        # Staff/Volunteers
                        hrm_human_resource = "organisation_id",
+                       pr_person = {"link": "hrm_human_resource",
+                                    "joinby": "organisation_id",
+                                    "key": "person_id",
+                                    "actuate": "link",
+                                    },
                        # Members
                        member_membership = "organisation_id",
                        # Locations served
@@ -700,6 +708,14 @@ class S3OrganisationModel(S3Model):
                        supply_catalog = "organisation_id",
                        # Resources
                        org_resource = "organisation_id",
+                       # Religion
+                       pr_religion = {"link": "pr_religion_organisation",
+                                      "joinby": "organisation_id",
+                                      "key": "religion_id",
+                                      "multiple": False,
+                                      "actuate": "hide",
+                                      },
+                       pr_religion_organisation = "organisation_id",
                        # Sectors
                        org_sector = {"link": "org_sector_organisation",
                                      "joinby": "organisation_id",
@@ -884,13 +900,13 @@ class S3OrganisationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return dict(org_organisation_type_id = organisation_type_id,
-                    org_organisation_crud_fields = crud_fields,
-                    org_organisation_id = organisation_id,
-                    org_organisation_represent = org_organisation_represent,
-                    org_region_id = region_id,
-                    org_region_represent = region_represent,
-                    )
+        return {"org_organisation_type_id": organisation_type_id,
+                "org_organisation_crud_fields": crud_fields,
+                "org_organisation_id": organisation_id,
+                "org_organisation_represent": org_organisation_represent,
+                "org_region_id": region_id,
+                "org_region_represent": region_represent,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1129,8 +1145,8 @@ class S3OrganisationModel(S3Model):
         limit = int(_vars.limit or MAX_SEARCH_RESULTS)
         if (not limit or limit > MAX_SEARCH_RESULTS) and resource.count() > MAX_SEARCH_RESULTS:
             output = [
-                dict(label=str(current.T("There are more than %(max)s results, please input more characters.") % \
-                    dict(max=MAX_SEARCH_RESULTS)))
+                {"label": str(current.T("There are more than %(max)s results, please input more characters.") % \
+                    {"max": MAX_SEARCH_RESULTS})}
                 ]
         else:
             # Fields to return
@@ -1165,9 +1181,9 @@ class S3OrganisationModel(S3Model):
                 else:
                     name = _row.name
                     acronym = _row.acronym
-                record = dict(id = _row.id,
-                              name = name,
-                              )
+                record = {"id": _row.id,
+                          "name": name,
+                          }
                 if acronym:
                     record["acronym"] = acronym
 
@@ -1748,9 +1764,9 @@ class S3OrganisationGroupModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return dict(org_group_id = group_id,
-                    org_group_represent = group_represent,
-                    )
+        return {"org_group_id": group_id,
+                "org_group_represent": group_represent,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2421,8 +2437,8 @@ class S3OrganisationSectorModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return dict(org_sector_id = sector_id,
-                    )
+        return {"org_sector_id": sector_id,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3334,9 +3350,9 @@ class S3SiteModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return dict(org_site_id = site_id,
-                    org_site_represent = org_site_represent,
-                    )
+        return {"org_site_id": site_id,
+                "org_site_represent": org_site_represent,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3533,8 +3549,8 @@ class S3SiteModel(S3Model):
         limit = int(_vars.limit or MAX_SEARCH_RESULTS)
         if (not limit or limit > MAX_SEARCH_RESULTS) and resource.count() > MAX_SEARCH_RESULTS:
             output = [
-                dict(label=str(current.T("There are more than %(max)s results, please input more characters.") % \
-                    dict(max=MAX_SEARCH_RESULTS)))
+                {"label": str(current.T("There are more than %(max)s results, please input more characters.") % \
+                    {"max": MAX_SEARCH_RESULTS})}
                 ]
         else:
             # default fields to return
@@ -3662,15 +3678,15 @@ class S3SiteDetailsModel(S3Model):
         # CRUD Strings
         site_label = settings.get_org_site_label()
         current.response.s3.crud_strings[tablename] = Storage(
-            label_create = T("Add %(site_label)s Status") % dict(site_label=site_label),
-            title_display = T("%(site_label)s Status") % dict(site_label=site_label),
-            title_list = T("%(site_label)s Status") % dict(site_label=site_label),
-            title_update = T("Edit %(site_label)s Status") % dict(site_label=site_label),
-            label_list_button = T("List %(site_label)s Status") % dict(site_label=site_label),
-            msg_record_created = T("%(site_label)s Status added") % dict(site_label=site_label),
-            msg_record_modified = T("%(site_label)s Status updated") % dict(site_label=site_label),
-            msg_record_deleted = T("%(site_label)s Status deleted") % dict(site_label=site_label),
-            msg_list_empty = T("There is no status for this %(site_label)s yet. Add %(site_label)s Status.") % dict(site_label=site_label),
+            label_create = T("Add %(site_label)s Status") % {"site_label": site_label},
+            title_display = T("%(site_label)s Status") % {"site_label": site_label},
+            title_list = T("%(site_label)s Status") % {"site_label": site_label},
+            title_update = T("Edit %(site_label)s Status") % {"site_label": site_label},
+            label_list_button = T("List %(site_label)s Status") % {"site_label": site_label},
+            msg_record_created = T("%(site_label)s Status added") % {"site_label": site_label},
+            msg_record_modified = T("%(site_label)s Status updated") % {"site_label": site_label},
+            msg_record_deleted = T("%(site_label)s Status deleted") % {"site_label": site_label},
+            msg_list_empty = T("There is no status for this %(site_label)s yet. Add %(site_label)s Status.") % {"site_label": site_label},
             )
 
         # ---------------------------------------------------------------------
@@ -3819,10 +3835,10 @@ class S3SiteLocationModel(S3Model):
             title_update = T("Edit Location"),
             title_upload = T("Import Location data"),
             label_list_button = T("List Locations"),
-            msg_record_created = T("Location added to %(site_label)s") % dict(site_label=site_label),
+            msg_record_created = T("Location added to %(site_label)s") % {"site_label": site_label},
             msg_record_modified = T("Location updated"),
-            msg_record_deleted = T("Location removed from %(site_label)s") % dict(site_label=site_label),
-            msg_list_empty = T("No Locations found for this %(site_label)s") % dict(site_label=site_label))
+            msg_record_deleted = T("Location removed from %(site_label)s") % {"site_label": site_label},
+            msg_list_empty = T("No Locations found for this %(site_label)s") % {"site_label": site_label})
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("site_id",
@@ -4281,9 +4297,9 @@ class S3FacilityModel(S3Model):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return dict(org_facility_type_id = facility_type_id,
-                    org_facility_geojson = self.org_facility_geojson,
-                    )
+        return {"org_facility_type_id": facility_type_id,
+                "org_facility_geojson": self.org_facility_geojson,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4443,14 +4459,14 @@ class S3FacilityModel(S3Model):
             #            properties["need"] = needs["need"]
             #        if "no" in needs:
             #            properties["no"] = needs["no"]
-            f = dict(type = "Feature",
-                     properties = properties,
-                     geometry = json.loads(geojson)
-                     )
+            f = {"type": "Feature",
+                 "properties": properties,
+                 "geometry": json.loads(geojson)
+                 }
             append(f)
-        data = dict(type = "FeatureCollection",
-                    features = features
-                    )
+        data = {"type": "FeatureCollection",
+                "features": features
+                }
         output = json.dumps(data, separators=SEPARATORS)
         if jsonp:
             filename = "facility.geojsonp"
@@ -4572,8 +4588,8 @@ class S3RoomModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return dict(org_room_id = room_id,
-                    )
+        return {"org_room_id": room_id,
+                }
 
 # =============================================================================
 class S3OfficeModel(S3Model):
@@ -4906,8 +4922,8 @@ class S3OfficeModel(S3Model):
                            )
 
         # Pass names back to global scope (s3.*)
-        return dict(org_office_type_id = office_type_id,
-                    )
+        return {"org_office_type_id": office_type_id,
+                }
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -5265,12 +5281,12 @@ class org_OrganisationRepresent(S3Represent):
     """ Representation of Organisations """
 
     def __init__(self,
-                 show_link=False,
-                 linkto=None,
-                 parent=True,
-                 acronym=True,
-                 multiple=False,
-                 skip_dt_orderby=False,
+                 show_link = False,
+                 linkto = None,
+                 parent = True,
+                 acronym = True,
+                 multiple = False,
+                 skip_dt_orderby = False,
                  ):
 
         self.acronym = acronym
@@ -6529,7 +6545,7 @@ def org_rheader(r, tabs=None):
             permitted = current.auth.s3_has_permission
             if permitted("update", tablename, r.id) and \
                permitted("create", "hrm_human_resource_site"):
-                append_tab((T("Assign %(staff)s") % dict(staff=STAFF), "assign"))
+                append_tab((T("Assign %(staff)s") % {"staff": STAFF}, "assign"))
         if settings.has_module("inv"):
             tabs = tabs + s3db.inv_tabs(r)
         if settings.get_org_needs_tab():
@@ -6730,9 +6746,9 @@ def org_organisation_controller():
                                                              name = tag,
                                                              multiple = False,
                                                              fields = [("", "value")],
-                                                             filterby = dict(field = "tag",
-                                                                             options = tag,
-                                                                             )
+                                                             filterby = {"field": "tag",
+                                                                         "options": tag,
+                                                                         }
                                                              ))
                                 add_component(tablename,
                                               org_organisation_tag = {"name": tag,
@@ -7998,7 +8014,7 @@ class org_AssignMethod(S3Method):
                                 onaccept(form)
                             added += 1
             current.session.confirmation = T("%(number)s assigned") % \
-                                           dict(number=added)
+                                           {"number": added}
             if added > 0:
                 redirect(URL(args=[r.id, "organisation"], vars={}))
             else:
@@ -8107,9 +8123,10 @@ class org_AssignMethod(S3Method):
                 else:
                     ff = ""
 
-                output = dict(items = items,
-                              title = T("Add Organization"),
-                              list_filter_form = ff)
+                output = {"items": items,
+                          "title": T("Add Organization"),
+                          "list_filter_form": ff,
+                          }
 
                 response.view = "list_filter.html"
                 return output

@@ -1,7 +1,7 @@
 /**
  * jQuery UI Widget for Charts
  *
- * @copyright 2018 (c) Sahana Software Foundation
+ * @copyright 2018-2019 (c) Sahana Software Foundation
  * @license MIT
  *
  * requires jQuery 1.9.1+
@@ -326,22 +326,61 @@
             var el = $(this.element),
                 opts = this.options;
 
+            var showLegend = el.data('legend') != 'off', // on, off
+                showLabels = el.data('labels'),          // inside, outside, off
+                labelType = el.data('labeltype'),        // key, value, percent
+                labelThreshold = 0.05,
+                labelsOutside = true;
+
+            if (!labelType) {
+                if (showLegend) {
+                    labelType = 'percent';
+                } else {
+                    labelType = 'key';
+                }
+            }
+
+            switch(showLabels) {
+                case 'off':
+                    showLabels = false;
+                    break;
+                case 'outside':
+                    showLabels = true;
+                    if (showLegend) {
+                        if (labelType == 'percent' || labelType == 'value') {
+                            labelThreshold = 0.03;
+                        } else {
+                            labelThreshold = 0.20;
+                        }
+                    }
+                    break;
+                default:
+                    showLabels = true;
+                    labelsOutside = false;
+                    if (showLegend) {
+                        if (labelType != 'percent' && labelType != 'value') {
+                            labelThreshold = 0.25;
+                        }
+                    } else {
+                        labelThreshold = 0.10;
+                    }
+                    break;
+            }
+
             var chart = nv.models.pieChart()
                                  .duration(opts.transition)
                                  .x(function(d) { return d.label; })
                                  .y(function(d) { return d.value; })
-                                 .showLabels(true)
-                                 //.labelsOutside(true)
+                                 .showLabels(showLabels)
+                                 .labelType(labelType)
+                                 .showLegend(showLegend)
+                                 .labelsOutside(labelsOutside)
+                                 .labelThreshold(labelThreshold)
                                  .showTooltipPercent(true);
 
             // Set number format
             var valueFormat = d3.format(opts.valueFormat);
             chart.valueFormat(valueFormat);
-
-            // Hide legend?
-            if (el.data('legend') == 'off') {
-                chart.showLegend(false);
-            }
 
             // Set chart default colors
             if (opts.colors) {

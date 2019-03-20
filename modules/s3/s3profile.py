@@ -2,7 +2,7 @@
 
 """ S3 Profile
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -31,11 +31,11 @@ from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from s3crud import S3CRUD
-from s3report import S3Report
-from s3query import FS
-from s3utils import s3_str
-from s3widgets import ICON
+from .s3crud import S3CRUD
+from .s3report import S3Report
+from .s3query import FS
+from .s3utils import s3_str
+from .s3widgets import ICON
 
 # =============================================================================
 class S3Profile(S3CRUD):
@@ -69,7 +69,7 @@ class S3Profile(S3CRUD):
                 self.settings = current.response.s3.crud
                 self.sqlform = sqlform = self._config("crud_form")
                 if not sqlform:
-                    from s3forms import S3SQLDefaultForm
+                    from .s3forms import S3SQLDefaultForm
                     self.sqlform = S3SQLDefaultForm()
 
                 # Render page
@@ -98,9 +98,11 @@ class S3Profile(S3CRUD):
         tablename = self.tablename
         get_config = current.s3db.get_config
 
+        header = get_config(tablename, "profile_header")
+
         # Get the page widgets
         widgets = get_config(tablename, "profile_widgets")
-        if not widgets:
+        if not widgets and not header:
             # Profile page not configured:
             if r.representation not in ("dl", "aadata"):
                 # Redirect to the Read View
@@ -155,13 +157,14 @@ class S3Profile(S3CRUD):
                 title = title(r)
 
             # Page Header
-            header = get_config(tablename, "profile_header")
             if not header:
                 header = H2(title, _class="profile-header")
             elif callable(header):
                 header = header(r)
 
-            output = dict(title=title, header=header)
+            output = {"title": title,
+                      "header": header,
+                      }
 
             # Update Form, if configured
             update = get_config(tablename, "profile_update")
@@ -814,7 +817,7 @@ class S3Profile(S3CRUD):
         if not sqlform:
             sqlform = resource.get_config("crud_form")
         if not sqlform:
-            from s3forms import S3SQLDefaultForm
+            from .s3forms import S3SQLDefaultForm
             sqlform = S3SQLDefaultForm()
 
         get_config = current.s3db.get_config
@@ -905,10 +908,10 @@ class S3Profile(S3CRUD):
             # @ToDo: Check permission to access layer (both controller/function & also within Map Config)
             tablename = widget["tablename"]
             list_id = "profile-list-%s-%s" % (tablename, widget["index"])
-            layer = dict(name = T(widget["label"]),
-                         id = list_id,
-                         active = True,
-                         )
+            layer = {"name": T(widget["label"]),
+                     "id": list_id,
+                     "active": True,
+                     }
             filter = widget_get("filter", None)
             marker = widget_get("marker", None)
             if marker:

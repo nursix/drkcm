@@ -2,7 +2,7 @@
 
 """ Sahana Eden Menu Structure and Layout
 
-    @copyright: 2011-2018 (c) Sahana Software Foundation
+    @copyright: 2011-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -617,7 +617,13 @@ class S3OptionsMenu(object):
                           ),
                         M("Need Types", f="need",
                           check = lambda i: not settings.get_br_needs_org_specific(),
-                          )
+                          ),
+                        M("Assistance Statuses", f="assistance_status",
+                          check = lambda i: settings.get_br_manage_assistance(),
+                          ),
+                        M("Assistance Types", f="assistance_type",
+                          check = lambda i: settings.get_br_assistance_types(),
+                          ),
                         ),
                     )
 

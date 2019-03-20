@@ -465,6 +465,10 @@ def config(settings):
     #settings.ui.label_permalink = "Permalink"
     # Uncomment to modify the main menu logo
     #settings.ui.menu_logo = URL(c="static", f="img", args=["S3menulogo.png"])
+    # Configure business hours to indicate in organizer (can be a list)
+    #settings.ui.organizer_business_hours = {"dow": [1,2,3,4,5], "start": "08:00", "end": "18:00"}
+    # Configure a time format for organizer events to override locale default
+    #settings.ui.organizer_time_format = "H:mm"
 
     # -------------------------------------------------------------------------
     # Sync
@@ -524,6 +528,18 @@ def config(settings):
     #settings.br.needs_hierarchical = True
     # Let all orgs use a common set of need categories
     #settings.br.needs_org_specific = False
+    # Disable tracking of individual assistance measures
+    #settings.br.manage_assistance = False
+    # Hide inline assistance measures on activity-tab
+    #settings.br.assistance_inline = False
+    # Enable/disable assistance tab
+    #settings.br.assistance_tab = True
+    # Disable assignment of assistance measures to staff
+    #settings.br.assistance_manager = False
+    # Disable types of assistance (e.g. if there is only one type)
+    #settings.br.assistance_types = False
+    # Disable tracking of effort (=hours spent) for assistance measures
+    #settings.br.assistance_track_effort = False
 
     # -------------------------------------------------------------------------
     # CMS

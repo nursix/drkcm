@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -1314,6 +1314,15 @@ class S3Config(Storage):
         """
         return self.gis.get("edit_GR", False)
 
+    def get_gis_geocode_service(self):
+        """
+            Which Geocoder Service should be used?
+            Supported options:
+                "nominatim" (default)
+                "google"
+        """
+        return self.gis.get("geocode_service", "nominatim")
+
     def get_gis_geocode_imported_addresses(self):
         """
             Should Addresses imported from CSV be passed to a
@@ -1714,7 +1723,15 @@ class S3Config(Storage):
                            )
 
     def get_L10n_utc_offset(self):
-        return self.L10n.get("utc_offset", "+0000")
+        """
+            The default UTC offset for datetime representation in the UI,
+            can be a fixed offset in the format [+|-]HHMM, or a callable
+            for org-specific offsets and/or to prevent repeated lookups of
+            timezone definitions, e.g.:
+
+            settings.L10n.utc_offset = lambda default: s3_timezone_offset("Europe/Berlin")
+        """
+        return self.__lazy("L10n", "utc_offset", "+0000")
 
     def get_L10n_firstDOW(self):
         """
@@ -1994,9 +2011,22 @@ class S3Config(Storage):
         return self.ui.get("datatables_double_scroll", False)
 
     def get_ui_auto_open_update(self):
-        """ Render "Open" action buttons without explicit CRUD-method """
-
+        """
+            Render "Open" action buttons in datatables without explicit
+            CRUD-method => this allows automatic per-record decision
+            whether to open as update- or read-form based on permissions,
+            e.g. if the user doesn't have permission to update for all
+            records in the datatable due to oACL or realm-restriction
+        """
         return self.ui.get("auto_open_update", False)
+
+    def get_ui_open_read_first(self):
+        """
+            Render "Open" action buttons with explicit "read" method
+            irrespective permissions (i.e. always, even if the user
+            were permitted to edit records)
+        """
+        return self.ui.get("open_read_first", False)
 
     def get_ui_default_cancel_button(self):
         """
@@ -2408,6 +2438,22 @@ class S3Config(Storage):
                                args = ["S3menu_logo.png"],
                                )
                            )
+
+    def get_ui_organizer_business_hours(self):
+        """
+            Business hours to indicate in organizer,
+            - a dict {dow:[0,1,2,3,4,5,6], start: "HH:MM", end: "HH:MM"},
+            - or a list of such dicts
+            - dow 0 being Sunday
+            - False to disable
+        """
+        return self.__lazy("ui", "organizer_business_hours", False)
+
+    def get_ui_organizer_time_format(self):
+        """
+            The time format for organizer (overrides locale default)
+        """
+        return self.__lazy("ui", "organizer_time_format", None)
 
     # =========================================================================
     # Messaging
@@ -2827,6 +2873,53 @@ class S3Config(Storage):
             Need categories are specific per root organisation
         """
         return self.br.get("needs_org_specific", True)
+
+    def get_br_manage_assistance(self):
+        """
+            Track individual measures of assistance
+        """
+        return self.br.get("manage_assistance", True)
+
+    def get_br_assistance_inline(self):
+        """
+            Document assistance measures inline in activities
+        """
+        return self.br.get("assistance_inline", True)
+
+    def get_br_assistance_tab(self):
+        """
+            Document assistance measures on separate case file tab
+        """
+        setting = self.br.get("assistance_tab")
+        if setting is None:
+            # Show the tab if managing assistance without activities
+            setting = self.get_br_manage_assistance() and \
+                      not self.get_br_case_activities()
+        return setting
+
+    def get_br_assistance_manager(self):
+        """
+            Assign assistance measures to individual staff members
+        """
+        return self.br.get("assistance_manager", True)
+
+    def get_br_assistance_types(self):
+        """
+            Use assistance type categories
+        """
+        return self.br.get("assistance_types", True)
+
+    def get_br_assistance_measures_use_time(self):
+        """
+            Assistance measures use date+time (instead of just date)
+        """
+        return self.br.get("assistance_measures_use_time", False)
+
+    def get_br_assistance_track_effort(self):
+        """
+            Track effort (=hours spent) for assistance measures
+        """
+        return self.br.get("assistance_track_effort", True)
 
     # -------------------------------------------------------------------------
     # CAP: Common Alerting Protocol

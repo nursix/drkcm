@@ -2,7 +2,7 @@
 
 """ Simple Generic Location Tracking System
 
-    @copyright: 2011-2018 (c) Sahana Software Foundation
+    @copyright: 2011-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -34,7 +34,7 @@ from gluon import current, HTTP, FORM, INPUT, LABEL, TABLE
 from gluon.storage import Storage
 
 from s3dal import Table, Rows, Row
-from s3rest import S3Method
+from .s3rest import S3Method
 
 __all__ = ("S3Trackable",
            "S3Tracker",
@@ -805,7 +805,7 @@ class S3CheckInMethod(S3Method):
                 _id = "location_id"
                 label = LABEL("%s:" % T("Location"))
 
-                from s3.s3widgets import S3LocationSelector
+                from .s3widgets import S3LocationSelector
                 field = table.location_id
                 #value = tracker.get_location(_fields=["id"],
                 #                             as_rows=True).first().id

@@ -2,7 +2,7 @@
 
 """ Sahana Eden Assets Model
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -330,7 +330,7 @@ class S3AssetModel(S3Model):
                                            )
         else:
             org_filter = S3OptionsFilter("organisation_id",
-                                         filter = True,
+                                         search = True,
                                          header = "",
                                          # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
                                          hidden = True,

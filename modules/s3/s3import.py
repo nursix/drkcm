@@ -2,7 +2,7 @@
 
 """ Resource Import Tools
 
-    @copyright: 2011-2018 (c) Sahana Software Foundation
+    @copyright: 2011-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -62,12 +62,12 @@ from gluon.storage import Storage, Messages
 from gluon.tools import callback, fetch
 
 from s3dal import Field
-from s3datetime import s3_utc
-from s3rest import S3Method, S3Request
-from s3resource import S3Resource
-from s3utils import s3_auth_user_represent_name, s3_get_foreign_key, \
-                    s3_has_foreign_key, s3_mark_required, s3_unicode
-from s3validators import IS_JSONS3
+from .s3datetime import s3_utc
+from .s3rest import S3Method, S3Request
+from .s3resource import S3Resource
+from .s3utils import s3_auth_user_represent_name, s3_get_foreign_key, \
+                     s3_has_foreign_key, s3_mark_required, s3_unicode
+from .s3validators import IS_JSONS3
 
 # =============================================================================
 class S3Importer(S3Method):
@@ -1241,7 +1241,7 @@ $('#import-items').on('click','.toggle-item',function(){$('.importItem.item-'+$(
                NOTE: limit - recordsFiltered = total cached
         """
 
-        from s3data import S3DataTable
+        from .s3data import S3DataTable
         request = self.request
         resource = self.resource
         s3 = current.response.s3
@@ -4059,7 +4059,7 @@ class S3BulkImporter(object):
                 req = urllib2.Request(url=filename)
                 try:
                     f = urllib2.urlopen(req)
-                except urllib2.HTTPError, e:
+                except urllib2.HTTPError as e:
                     self.errorList.append("Could not access %s: %s" % (filename, e.read()))
                     return
                 except:
@@ -4108,7 +4108,7 @@ class S3BulkImporter(object):
                                     stylesheet=task[4],
                                     extra_data=extra_data,
                                     )
-            except SyntaxError, e:
+            except SyntaxError as e:
                 self.errorList.append("WARNING: import error - %s (file: %s, stylesheet: %s)" %
                                      (e, filename, task[4]))
                 auth.rollback = False
@@ -4133,13 +4133,8 @@ class S3BulkImporter(object):
             end = datetime.datetime.now()
             duration = end - start
             csvName = task[3][task[3].rfind("/") + 1:]
-            try:
-                # Python 2.7
-                duration = '{:.2f}'.format(duration.total_seconds() / 60)
-                msg = "%s import job completed in %s mins" % (csvName, duration)
-            except AttributeError:
-                # older Python
-                msg = "%s import job completed in %s" % (csvName, duration)
+            duration = '{:.2f}'.format(duration.total_seconds())
+            msg = "%s imported (%s sec)" % (csvName, duration)
             self.resultList.append(msg)
             current.log.debug(msg)
 
@@ -4169,13 +4164,8 @@ class S3BulkImporter(object):
                 self.errorList.append(error)
             end = datetime.datetime.now()
             duration = end - start
-            try:
-                # Python 2.7
-                duration = '{:.2f}'.format(duration.total_seconds()/60)
-                msg = "%s import job completed in %s mins" % (fun, duration)
-            except AttributeError:
-                # older Python
-                msg = "%s import job completed in %s" % (fun, duration)
+            duration = '{:.2f}'.format(duration.total_seconds())
+            msg = "%s completed (%s sec)" % (fun, duration)
             self.resultList.append(msg)
             current.log.debug(msg)
 
@@ -4512,7 +4502,7 @@ class S3BulkImporter(object):
         os.chdir(fontPath)
         try:
             _file = fetch(url)
-        except urllib2.URLError, exception:
+        except urllib2.URLError as exception:
             current.log.error(exception)
             # Revert back to the working directory as before.
             os.chdir(cwd)
@@ -4577,7 +4567,7 @@ class S3BulkImporter(object):
             os.chdir(tempPath)
             try:
                 _file = fetch(url)
-            except urllib2.URLError, exception:
+            except urllib2.URLError as exception:
                 current.log.error(exception)
                 # Revert back to the working directory as before.
                 os.chdir(cwd)
@@ -4588,7 +4578,7 @@ class S3BulkImporter(object):
                 import zipfile
                 try:
                     myfile = zipfile.ZipFile(StringIO(_file))
-                except zipfile.BadZipfile, exception:
+                except zipfile.BadZipfile as exception:
                     # e.g. trying to download through a captive portal
                     current.log.error(exception)
                     # Revert back to the working directory as before.
@@ -4759,7 +4749,7 @@ class S3BulkImporter(object):
                                 stylesheet = stylesheet,
                                 source_type = source_type,
                                 )
-        except SyntaxError, e:
+        except SyntaxError as e:
             self.errorList.append("WARNING: import error - %s (file: %s, stylesheet: %s/import.xsl)" %
                                  (e, filepath, dataformat))
             auth.rollback = False

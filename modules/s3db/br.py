@@ -30,7 +30,7 @@
 __all__ = ("BRCaseModel",
            "BRNeedsModel",
            "BRCaseActivityModel",
-           "BRResponseModel",
+           "BRAssistanceModel",
            "BRAppointmentModel",
            "BRCaseEventModel",
            "BRPaymentModel",
@@ -47,6 +47,7 @@ __all__ = ("BRCaseModel",
            "br_case_default_status",
            "br_case_status_filter_opts",
            "br_group_membership_onaccept",
+           "br_assistance_status_colors",
            "br_household_size",
            "br_rheader",
            "br_terminology",
@@ -448,6 +449,7 @@ class BRCaseActivityModel(S3Model):
     """
 
     names = ("br_case_activity",
+             "br_case_activity_id",
              "br_case_activity_status",
              "br_case_activity_update_type",
              )
@@ -638,9 +640,21 @@ class BRCaseActivityModel(S3Model):
         # Components
         self.add_components(tablename,
                             br_case_activity_update = "case_activity_id",
+                            br_assistance_measure = "case_activity_id",
                             )
 
         # Optional inline components
+        manage_assistance = settings.get_br_manage_assistance()
+        if manage_assistance and settings.get_br_assistance_inline():
+            # Show inline assistance measures
+            assistance = BRAssistanceModel.assistance_inline_component()
+        elif not manage_assistance:
+            # Show a free-text field to record "support provided"
+            assistance = "activity_details"
+        else:
+            # Track assistance measures on separate tab
+            assistance = None
+
         if settings.get_br_case_activity_updates():
             updates = S3SQLInlineComponent("case_activity_update",
                                            label = T("Progress"),
@@ -676,7 +690,7 @@ class BRCaseActivityModel(S3Model):
                        "need_id",
                        "subject",
                        "need_details",
-                       "activity_details",  # TODO alternative: responses
+                       assistance,
                        "status_id",         # TODO make optional
                        updates,
                        #"end_date",         # TODO make optional
@@ -766,18 +780,33 @@ class BRCaseActivityModel(S3Model):
             )
 
         # Reusable field
-        # TODO switch default representation between subject and need
-        #      based on deployment setting
-        represent = br_CaseActivityRepresent(show_link=True,
-                                             show_as = "subject",
+        if case_activity_subject:
+            label = T("Subject")
+            show_as = "subject"
+            show_date = False
+        else:
+            label = T("Need")
+            show_as = "need"
+            show_date = True
+        represent = br_CaseActivityRepresent(show_as = show_as,
+                                             show_date = show_date,
+                                             show_link = True,
                                              )
+        if show_date:
+            # Don't alphasort, show latest first
+            sort, orderby = False, "%s.date desc" % tablename
+        else:
+            sort, orderby = True, None
         case_activity_id = S3ReusableField("case_activity_id",
                                            "reference %s" % tablename,
+                                           label = label,
                                            ondelete = "CASCADE",
                                            represent = represent,
                                            requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
+                                                                  orderby = orderby,
+                                                                  sort = sort,
                                                                   )),
                                                         )
 
@@ -855,19 +884,20 @@ class BRCaseActivityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return {"br_case_activity_id": case_activity_id,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField("dummy_id", "integer",
-        #                        readable = False,
-        #                        writable = False,
-        #                        )
+        dummy = S3ReusableField("dummy_id", "integer",
+                                readable = False,
+                                writable = False,
+                                )
 
-        return {#"example_example_id": lambda **attr: dummy("example_id"),
+        return {"br_case_activity_id": lambda **attr: dummy("case_activity_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1020,7 +1050,7 @@ class BRAppointmentModel(S3Model):
                                               ondelete = "RESTRICT",
                                               represent = represent,
                                               requires = IS_EMPTY_OR(
-                                                              IS_ONE_OF(db, "dvr_case_appointment_type.id",
+                                                              IS_ONE_OF(db, "%s.id" % tablename,
                                                                         represent,
                                                                         )),
                                               )
@@ -1231,22 +1261,375 @@ class BRNeedsModel(S3Model):
                 }
 
 # =============================================================================
-class BRVulnerabilityModel(S3Model):
-    pass
+# Assistance Models
+# =============================================================================
+class BRAssistanceModel(S3Model):
+    """
+        Generic model to track individual measures of assistance
+    """
 
-# =============================================================================
-# Response Action Models
-# =============================================================================
-class BRResponseModel(S3Model):
-    """
-        Model to document individual measures taken in support of a case
-    """
-    pass
+    names = ("br_assistance_measure",
+             "br_assistance_status",
+             "br_assistance_type",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        db = current.db
+        settings = current.deployment_settings
+        s3 = current.response.s3
+        crud_strings = s3.crud_strings
+
+        define_table = self.define_table
+        configure = self.configure
+
+        labels = br_terminology()
+        NONE = current.messages["NONE"]
+
+        # ---------------------------------------------------------------------
+        # Types of Assistance
+        #
+        tablename = "br_assistance_type"
+        define_table(tablename,
+                     Field("name",
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Table configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Type"),
+            title_display = T("Assistance Type Details"),
+            title_list = T("Types of Assistance"),
+            title_update = T("Edit Type"),
+            label_list_button = T("List Types"),
+            label_delete_button = T("Delete Type"),
+            msg_record_created = T("Type created"),
+            msg_record_modified = T("Type updated"),
+            msg_record_deleted = T("Type deleted"),
+            msg_list_empty = T("No Types of Assistance currently defined"),
+        )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        assistance_type_id = S3ReusableField(
+                                "assistance_type_id",
+                                "reference %s" % tablename,
+                                label = T("Type of Assistance"),
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
+                                            IS_ONE_OF(db, "%s.id" % tablename,
+                                                      represent,
+                                                      )),
+                                sortby = "name",
+                                )
+
+        # ---------------------------------------------------------------------
+        # Themes of Assistance TODO
+        #
+
+        # ---------------------------------------------------------------------
+        # Status of Assistance
+        #
+        tablename = "br_assistance_status"
+        define_table(tablename,
+                     Field("workflow_position", "integer",
+                           label = T("Workflow Position"),
+                           requires = IS_INT_IN_RANGE(0, None),
+                           ),
+                     Field("name",
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     Field("is_default", "boolean",
+                           default = False,
+                           label = T("Default Initial Status"),
+                           ),
+                     Field("is_termination", "boolean",
+                           default = False,
+                           label = T("Terminates the Measure"),
+                           ),
+                     Field("is_default_termination", "boolean",
+                           default = False,
+                           label = T("Default Termination"),
+                           ),
+                     Field("color",
+                           requires = IS_HTML_COLOUR(),
+                           widget = S3ColorPickerWidget(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Table Configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  onaccept = self.assistance_status_onaccept,
+                  orderby = "%s.workflow_position" % tablename,
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Status"),
+            title_display = T("Status Details"),
+            title_list = T("Assistance Statuses"),
+            title_update = T("Edit Status"),
+            label_list_button = T("List Statuses"),
+            label_delete_button = T("Delete Status"),
+            msg_record_created = T("Status created"),
+            msg_record_modified = T("Status updated"),
+            msg_record_deleted = T("Status deleted"),
+            msg_list_empty = T("No Assistance Statuses currently defined"),
+        )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        assistance_status_id = S3ReusableField(
+                                "status_id",
+                                "reference %s" % tablename,
+                                label = T("Status"),
+                                represent = represent,
+                                requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                     represent,
+                                                     orderby = "workflow_position",
+                                                     sort = False,
+                                                     zero = None,
+                                                     ),
+                                sortby = "workflow_position",
+                                )
+
+        # ---------------------------------------------------------------------
+        # Measures of Assistance
+        #
+        use_type = settings.get_br_assistance_types()
+        assistance_manager = settings.get_br_assistance_manager()
+        track_effort = settings.get_br_assistance_track_effort()
+        use_activities = settings.get_br_case_activities()
+
+        use_time = settings.get_br_assistance_measures_use_time()
+
+        tablename = "br_assistance_measure"
+        define_table(tablename,
+                     # Beneficiary
+                     self.pr_person_id(
+                         comment = None,
+                         empty = False,
+                         label = labels.CASE,
+                         widget = S3PersonAutocompleteWidget(controller="br"),
+                         ),
+                     self.br_case_activity_id(
+                         readable = use_activities,
+                         writable = use_activities,
+                         ),
+                     s3_datetime("start_date",
+                                 label = T("Date"),
+                                 default = "now",
+                                 widget = None if use_time else "date",
+                                 ),
+                     s3_datetime("end_date",
+                                 label = T("End"),
+                                 widget = None if use_time else "date",
+                                 readable = False,
+                                 writable = False,
+                                 ),
+                     assistance_type_id(
+                        readable = use_type,
+                        writable = use_type,
+                        ),
+                     assistance_status_id(),
+                     self.hrm_human_resource_id(
+                        represent = self.hrm_HumanResourceRepresent(show_link=False),
+                        widget = None,
+                        readable = assistance_manager,
+                        writable = assistance_manager,
+                        ),
+                     Field("hours", "double",
+                           label = T("Effort (Hours)"),
+                           requires = IS_EMPTY_OR(
+                                       IS_FLOAT_IN_RANGE(0.0, None)),
+                           represent = lambda hours: "%.2f" % hours if hours else NONE,
+                           widget = S3HoursWidget(precision = 2,
+                                                  ),
+                           readable = track_effort,
+                           writable = track_effort,
+                           ),
+                     s3_comments(label = T("Details"),
+                                 comment = None,
+                                 represent = lambda v: s3_text_represent(v, lines=8),
+                                 ),
+                     *s3_meta_fields())
+
+        # List_fields
+        list_fields = ["start_date",
+                       #"case_activity_id",
+                       #"assistance_type_id",
+                       "comments",
+                       #"human_resource_id",
+                       #"hours",
+                       "status_id",
+                       ]
+        if use_type:
+            list_fields.insert(1, "assistance_type_id")
+        if use_activities:
+            list_fields.insert(1, "case_activity_id")
+        if assistance_manager:
+            list_fields.insert(-1, "human_resource_id")
+        if track_effort:
+            list_fields.insert(-1, "hours")
+
+        # Filter widgets
+        filter_widgets = [S3TextFilter(["person_id$pe_label",
+                                        "person_id$first_name",
+                                        "person_id$middle_name",
+                                        "person_id$last_name",
+                                        "comments",
+                                        ],
+                                       label = T("Search"),
+                                       ),
+                          S3OptionsFilter("status_id",
+                                          options = lambda: \
+                                                    s3_get_filter_opts("br_assistance_status"),
+                                          cols = 3,
+                                          translate = True,
+                                          ),
+                          S3DateFilter("start_date",
+                                       hidden = True,
+                                       hide_time = not use_time,
+                                       ),
+                          ]
+        if use_type:
+            filter_widgets.append(S3OptionsFilter(
+                                        "assistance_type_id",
+                                        hidden = True,
+                                        options = lambda: \
+                                        s3_get_filter_opts("br_assistance_type"),
+                                        ))
+
+        # Organizer
+        description = ["status_id"]
+        if assistance_manager:
+            description.insert(0, "human_resource_id")
+        if use_type:
+            description.insert(0, "assistance_type_id")
+        else:
+            description.insert(0, "comments")
+        organize = {"start": "start_date",
+                    "title": "person_id",
+                    "description": description,
+                    "color": "status_id",
+                    "colors": br_assistance_status_colors,
+                    }
+        if use_time:
+            organize["end"] = "end_date"
+        else:
+            organize["use_time"] = False
+
+        # Table Configuration
+        configure(tablename,
+                  filter_widgets = filter_widgets,
+                  list_fields = list_fields,
+                  organize = organize,
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Measure"),
+            title_display = T("Measure Details"),
+            title_list = T("Measures"),
+            title_update = T("Edit Measure"),
+            label_list_button = T("List Measures"),
+            label_delete_button = T("Delete Measure"),
+            msg_record_created = T("Measure created"),
+            msg_record_modified = T("Measure updated"),
+            msg_record_deleted = T("Measure deleted"),
+            msg_list_empty = T("No Measures currently registered"),
+        )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def defaults():
+        """ Safe defaults for names in case the module is disabled """
+
+        return {}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def assistance_status_onaccept(form):
+        """
+            Onaccept routine for assistance statuses:
+            - only one status can be the default
+            - only one status can be the default termination
+
+            @param form: the FORM
+        """
+
+        form_vars = form.vars
+        try:
+            record_id = form_vars.id
+        except AttributeError:
+            record_id = None
+        if not record_id:
+            return
+
+        table = current.s3db.br_assistance_status
+        db = current.db
+
+        if form_vars.get("is_default"):
+            db(table.id != record_id).update(is_default = False)
+
+        if form_vars.get("is_default_termination"):
+            db(table.id == record_id).update(is_termination = True)
+            db(table.id != record_id).update(is_default_termination = False)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def assistance_inline_component():
+        """
+            Configure inline-form for assistance measures
+
+            @returns: S3SQLInlineComponent
+        """
+
+        T = current.T
+
+        fields = ["start_date",
+                  #"assistance_type_id",
+                  "comments",
+                  #"human_resource_id",
+                  #"hours",
+                  "status_id",
+                  ]
+
+        settings = current.deployment_settings
+        if settings.get_br_assistance_types():
+            fields.insert(1, "assistance_type_id")
+        if settings.get_br_assistance_manager():
+            fields.insert(-1, "human_resource_id")
+        if settings.get_br_assistance_track_effort():
+            fields.insert(-1, "hours")
+
+        return S3SQLInlineComponent("assistance_measure",
+                                    label = T("Measures"),
+                                    fields = fields,
+                                    layout = S3SQLVerticalSubFormLayout,
+                                    explicit_add = T("Add Measure"),
+                                    )
 
 # =============================================================================
 class BRDistributionModel(S3Model):
     """
-        Model to process+track item distributions to beneficiaries
+        Model to process+track relief item distributions to beneficiaries
     """
     pass
 
@@ -1346,19 +1729,32 @@ class BRReferralModel(S3Model):
     pass
 
 # =============================================================================
+class BRVulnerabilityModel(S3Model):
+    pass
+
+# =============================================================================
 # Representation Methods
 # =============================================================================
 class br_CaseActivityRepresent(S3Represent):
     """ Representation of case activity IDs """
 
-    def __init__(self, show_as=None, fmt=None, show_link=False, linkto=None):
+    def __init__(self,
+                 show_as=None,
+                 fmt=None,
+                 show_date=False,
+                 show_link=False,
+                 linkto=None,
+                 ):
         """
             Constructor
 
             @param show_as: alternative representations:
                             "beneficiary"|"need"|"subject"
-            @param show_link: show representation as clickable link
             @param fmt: string format template for person record
+            @param show_date: include the activity date in the representation
+            @param show_link: show representation as clickable link
+            @param linkto: URL for the link, using "[id]" as placeholder
+                           for the record ID
         """
 
         super(br_CaseActivityRepresent, self).__init__(
@@ -1376,6 +1772,8 @@ class br_CaseActivityRepresent(S3Represent):
             self.fmt = fmt
         else:
             self.fmt = "%(first_name)s %(last_name)s"
+
+        self.show_date = show_date
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -1400,7 +1798,9 @@ class br_CaseActivityRepresent(S3Represent):
 
         show_as = self.show_as
         if show_as == "beneficiary":
+            # Beneficiary name
             rows = current.db(query).select(table.id,
+                                            table.date,
                                             ptable.id,
                                             ptable.pe_label,
                                             ptable.first_name,
@@ -1410,19 +1810,21 @@ class br_CaseActivityRepresent(S3Represent):
                                             limitby = (0, count),
                                             )
 
-        # TODO
-        #elif show_as == "need":
-        #    ntable = current.s3db.br_need
-        #    left.append(ntable.on(ntable.id == table.need_id))
-        #    rows = current.db(query).select(table.id,
-        #                                    ptable.id,
-        #                                    ntable.name,
-        #                                    left = left,
-        #                                    limitby = (0, count),
-        #                                    )
+        elif show_as == "need":
+            # Need type
+            ntable = current.s3db.br_need
+            left.append(ntable.on(ntable.id == table.need_id))
+            rows = current.db(query).select(table.id,
+                                            table.date,
+                                            ptable.id,
+                                            ntable.name,
+                                            left = left,
+                                            limitby = (0, count),
+                                            )
         else:
             # Subject line (default)
             rows = current.db(query).select(table.id,
+                                            table.date,
                                             table.subject,
                                             ptable.id,
                                             left = left,
@@ -1444,32 +1846,32 @@ class br_CaseActivityRepresent(S3Represent):
         show_as = self.show_as
         if show_as == "beneficiary":
             beneficiary = dict(row.pr_person)
-
             # Do not show "None" for no label
             if beneficiary.get("pe_label") is None:
                 beneficiary["pe_label"] = ""
+            reprstr = self.fmt % beneficiary
 
-            return self.fmt % beneficiary
-
-        # TODO
-        #elif show_as == "need":
-        #
-        #    need = row.br_need.name
-        #    if self.translate:
-        #        need = current.T(need) if need else self.none
-        #
-        #    return need
+        elif show_as == "need":
+            need = row.br_need.name
+            if self.translate:
+                need = current.T(need) if need else self.none
+            reprstr = need
 
         else:
+            reprstr = row.br_case_activity.subject
 
-            return row.dvr_case_activity.subject
+        if self.show_date:
+            dt = S3DateTime.date_represent(row.br_case_activity.date)
+            reprstr = "[%s] %s" % (dt, reprstr)
+
+        return reprstr
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
         """
             Represent a (key, value) as hypertext link
 
-            @param k: the key (dvr_case_activity.id)
+            @param k: the key (br_case_activity.id)
             @param v: the representation of the key
             @param row: the row with this key
         """
@@ -1885,6 +2287,24 @@ def br_case_status_filter_opts(closed=None):
     return OrderedDict((row.id, T(row.name)) for row in rows)
 
 # -----------------------------------------------------------------------------
+def br_assistance_status_colors(resource, selector):
+    """
+        Get colors for assistance statuses (organizer)
+
+        @param resource: the S3Resource the caller is looking at
+        @param selector: the Field selector (usually "status_id")
+
+        @returns: a dict with colors {field_value: "#RRGGBB", ...}
+    """
+
+    table = current.s3db.br_assistance_status
+    query = (table.color != None)
+    rows = current.db(query).select(table.id,
+                                    table.color,
+                                    )
+    return {row.id: ("#%s" % row.color) for row in rows if row.color}
+
+# -----------------------------------------------------------------------------
 def br_household_size(group_id):
     """
         Update the household_size for all cases in the given case group,
@@ -2101,8 +2521,23 @@ def br_rheader(r, tabs=None):
                     append((T("ID"), "identity"))
                 if settings.get_br_case_family_tab():
                     append((T("Family Members"), "group_membership/"))
-                if settings.get_br_case_activities():
-                    append((T("Activities"), "case_activity"))
+
+                activities_tab = settings.get_br_case_activities()
+                measures_tab = settings.get_br_manage_assistance() and \
+                               settings.get_br_assistance_tab()
+
+                if activities_tab and measures_tab:
+                    activities_label = T("Needs")
+                    measures_label = T("Measures")
+                else:
+                    activities_label = T("Activities")
+                    measures_label = T("Assistance")
+
+                if activities_tab:
+                    append((activities_label, "case_activity"))
+                if measures_tab:
+                    append((measures_label, "assistance_measure"))
+
                 if settings.get_br_case_photos_tab():
                     append((T("Photos"), "image"))
                 if settings.get_br_case_documents_tab():

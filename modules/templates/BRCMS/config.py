@@ -94,6 +94,8 @@ def config(settings):
     settings.L10n.decimal_separator = "."
     # Thousands separator for numbers (defaults to space)
     settings.L10n.thousands_separator = ","
+    # First day of the week
+    settings.L10n.firstDOW = 1
     # Uncomment this to Translate Layer Names
     #settings.L10n.translate_gis_layer = True
     # Uncomment this to Translate Location Names
@@ -134,6 +136,12 @@ def config(settings):
 
     settings.ui.auto_open_update = True
     #settings.ui.inline_cancel_edit = "submit"
+
+    # Business hours to indicate in organizer (Mo-Fr 08-18)
+    settings.ui.organizer_business_hours = {"dow": [1, 2, 3, 4, 5],
+                                            "start": "08:00",
+                                            "end": "18:00",
+                                            }
 
     # -------------------------------------------------------------------------
     # BR Module Settings
@@ -221,11 +229,8 @@ def config(settings):
                                                  )
 
         elif tablename in ("br_case_activity",
-                           #"br_case_details",
-                           #"br_case_flag_case",
+                           "br_assistance_measure",
                            "br_case_language",
-                           #"br_note",
-                           #"br_residence_status",
                            "pr_group_membership",
                            "pr_person_details",
                            "pr_person_tag",
@@ -262,7 +267,7 @@ def config(settings):
         # TODO
         #elif tablename in ("br_case_activity_need",
         #                   "br_case_activity_update",
-        #                   "br_response_action",
+        #                   "br_assistance_measure",
         #                   ):
         #
         #    # Inherit from case activity

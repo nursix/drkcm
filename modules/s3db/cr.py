@@ -2,7 +2,7 @@
 
 """ Shelter (Camp) Registry, model
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -485,7 +485,7 @@ class CRShelterModel(S3Model):
                                            )
         else:
             org_filter = S3OptionsFilter("organisation_id",
-                                         filter = True,
+                                         search = True,
                                          header = "",
                                          #hidden = True,
                                          )
@@ -1270,7 +1270,7 @@ class CRShelterInspectionModel(S3Model):
 
         # Filter widgets
         filter_widgets = [S3OptionsFilter("inspection_id$shelter_unit_id",
-                                          filter = 10,
+                                          search = 10,
                                           header = True,
                                           ),
                           S3OptionsFilter("flag_id",
@@ -2725,8 +2725,8 @@ class CRShelterInspection(S3Method):
                                                  shelter_unit_represent,
                                                  orderby = "shelter_id",
                                                  ),
-                            widget = S3MultiSelectWidget(multiple=False,
-                                                         filter=True,
+                            widget = S3MultiSelectWidget(multiple = False,
+                                                         search = True,
                                                          ),
                             ),
                       Field("shelter_flags",

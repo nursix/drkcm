@@ -2,7 +2,7 @@
 
 """ S3 User Roles Management
 
-    @copyright: 2018 (c) Sahana Software Foundation
+    @copyright: 2018-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -37,13 +37,13 @@ import json
 from gluon import current, URL, DIV, SQLFORM, INPUT, A, LI, UL
 
 from s3dal import Field
-from s3crud import S3CRUD
-from s3rest import S3Method
-from s3query import FS
-from s3utils import s3_str, s3_mark_required
-from s3validators import JSONERRORS
-from s3widgets import s3_comments_widget
-from s3xml import SEPARATORS
+from .s3crud import S3CRUD
+from .s3rest import S3Method
+from .s3query import FS
+from .s3utils import s3_str, s3_mark_required
+from .s3validators import JSONERRORS
+from .s3widgets import s3_comments_widget
+from .s3xml import SEPARATORS
 
 # =============================================================================
 class S3RoleManager(S3Method):

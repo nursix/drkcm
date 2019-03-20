@@ -6,7 +6,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -35,7 +35,7 @@ __all__ = ("S3Exporter",)
 
 from gluon import current
 
-from s3codec import S3Codec
+from .s3codec import S3Codec
 
 # =============================================================================
 class S3Exporter(object):
@@ -181,7 +181,7 @@ class S3Exporter(object):
                     else:
                         # Add tooltips as "_tooltip" to the corresponding rows
                         if isinstance(tooltips, dict):
-                            from s3utils import s3_unicode
+                            from .s3utils import s3_unicode
                             for k, v in tooltips.items():
                                 if k in items:
                                     items[k]["_tooltip"] = s3_unicode(v)
@@ -196,7 +196,7 @@ class S3Exporter(object):
                 else:
                     # Extract the tooltip field from each row
                     # and add it as _tooltip
-                    from s3utils import s3_unicode
+                    from .s3utils import s3_unicode
                     for row in rows:
                         try:
                             value = tooltip_rfield.extract(row)

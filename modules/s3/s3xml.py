@@ -7,7 +7,7 @@
     @requires: U{B{I{gluon}} <http://web2py.com>}
     @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -48,10 +48,10 @@ except ImportError:
 from gluon import current, HTTP, URL, IS_EMPTY_OR
 from gluon.storage import Storage
 
-from s3codec import S3Codec
-from s3datetime import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc
-from s3fields import S3RepresentLazy
-from s3utils import s3_get_foreign_key, s3_represent_value, s3_str, s3_strip_markup, s3_unicode, s3_validate
+from .s3codec import S3Codec
+from .s3datetime import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc
+from .s3fields import S3RepresentLazy
+from .s3utils import s3_get_foreign_key, s3_represent_value, s3_str, s3_strip_markup, s3_unicode, s3_validate
 
 ogetattr = object.__getattribute__
 
@@ -1745,7 +1745,7 @@ class S3XML(S3Codec):
                         for row in rows:
                             uids[str(row[key])] = row[UID]
                     if hierarchy:
-                        from s3hierarchy import S3Hierarchy
+                        from .s3hierarchy import S3Hierarchy
                         h = S3Hierarchy(ktablename)
                         if h.config:
                             for _id in ids:

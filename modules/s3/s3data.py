@@ -2,7 +2,7 @@
 
 """ S3 Data Views
 
-    @copyright: 2009-2018 (c) Sahana Software Foundation
+    @copyright: 2009-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -39,7 +39,7 @@ from gluon.html import *
 from gluon.storage import Storage
 
 from s3dal import Expression, S3DAL
-from s3utils import s3_orderby_fields, s3_str, s3_unicode, s3_set_extension
+from .s3utils import s3_orderby_fields, s3_str, s3_unicode, s3_set_extension
 
 # =============================================================================
 class S3DataTable(object):
@@ -551,7 +551,7 @@ class S3DataTable(object):
             @ToDo: DRY with S3CRUD.action_buttons()
         """
 
-        from s3crud import S3CRUD
+        from .s3crud import S3CRUD
 
         s3 = current.response.s3
         auth = current.auth

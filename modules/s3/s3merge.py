@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2012-2018 (c) Sahana Software Foundation
+    @copyright: 2012-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -35,10 +35,10 @@ from gluon import current, IS_NOT_IN_DB, \
 from gluon.storage import Storage
 
 from s3dal import Field
-from s3data import S3DataTable
-from s3query import FS
-from s3rest import S3Method
-from s3utils import s3_get_foreign_key, s3_represent_value, s3_str
+from .s3data import S3DataTable
+from .s3query import FS
+from .s3rest import S3Method
+from .s3utils import s3_get_foreign_key, s3_represent_value, s3_str
 
 # =============================================================================
 class S3Merge(S3Method):

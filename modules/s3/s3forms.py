@@ -2,7 +2,7 @@
 
 """ S3 SQL Forms
 
-    @copyright: 2012-2018 (c) Sahana Software Foundation
+    @copyright: 2012-2019 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -48,9 +48,9 @@ from gluon.tools import callback
 from gluon.validators import Validator
 
 from s3dal import original_tablename
-from s3query import FS
-from s3utils import s3_mark_required, s3_store_last_record_id, s3_str, s3_validate
-from s3widgets import S3Selector, S3UploadWidget
+from .s3query import FS
+from .s3utils import s3_mark_required, s3_store_last_record_id, s3_str, s3_validate
+from .s3widgets import S3Selector, S3UploadWidget
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -701,7 +701,7 @@ class S3SQLDefaultForm(S3SQLForm):
                 if record_id is None or undelete:
                     # Create hierarchy link
                     if hierarchy:
-                        from s3hierarchy import S3Hierarchy
+                        from .s3hierarchy import S3Hierarchy
                         h = S3Hierarchy(tablename)
                         if h.config:
                             h.postprocess_create_node(hierarchy, form_vars)
@@ -870,7 +870,7 @@ class S3SQLCustomForm(S3SQLForm):
         if subtables:
             if not request:
                 # Create dummy S3Request
-                from s3rest import S3Request
+                from .s3rest import S3Request
                 r = S3Request(resource.prefix,
                               resource.name,
                               # Current request args/vars could be in a different
@@ -1472,7 +1472,7 @@ class S3SQLCustomForm(S3SQLForm):
             if record_id is None or undelete:
                 # Create hierarchy link
                 if hierarchy:
-                    from s3hierarchy import S3Hierarchy
+                    from .s3hierarchy import S3Hierarchy
                     h = S3Hierarchy(tablename)
                     if h.config:
                         h.postprocess_create_node(hierarchy, form_vars)
@@ -1683,7 +1683,7 @@ class S3SQLField(S3SQLFormElement):
         """
 
         # Import S3ResourceField only here, to avoid circular dependency
-        from s3query import S3ResourceField
+        from .s3query import S3ResourceField
 
         rfield = S3ResourceField(resource, self.selector)
 
@@ -3568,25 +3568,24 @@ class S3SQLInlineLink(S3SQLInlineComponent):
 
         Constructor options:
 
+            ** Common options:
+
             readonly..........True|False......render read-only always
             multiple..........True|False......allow selection of multiple
                                               options (default True)
+            widget............string..........which widget to use, one of:
+                                              - multiselect (default)
+                                              - groupedopts (default when cols is specified)
+                                              - hierarchy   (requires hierarchical lookup-table)
+                                              - cascade     (requires hierarchical lookup-table)
             render_list.......True|False......in read-only mode, render HTML
                                               list rather than comma-separated
                                               strings (default False)
-            widget............string..........which widget to use, one of:
-                                                  - multiselect (default)
-                                                  - groupedopts
-                                                  - hierarchy
-            requires..........Validator.......validator to determine the
-                                              selectable options (defaults to
-                                              field validator), not supported
-                                              for hierarchy widget
+
+            ** Options for groupedopts widget:
+
             cols..............integer.........number of columns for grouped
                                               options (default: None)
-            help_field........string..........additional field in the look-up
-                                              table to render as tooltip for
-                                              grouped options
             orientation.......string..........orientation for grouped options
                                               order, one of:
                                                   - cols
@@ -3596,23 +3595,32 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                                               grouping
             sort..............True|False......sort grouped options (always True
                                               when grouping, i.e. size!=None)
+            help_field........string..........additional field in the look-up
+                                              table to render as tooltip for
+                                              grouped options
             table.............True|False......render grouped options as HTML
                                               TABLE rather than nested DIVs
                                               (default True)
-            represent.........callback........representation method for hierarchy
-                                              nodes (defaults to field represent)
-            leafonly..........True|False......only leaf nodes can be selected
-            columns...........integer.........Foundation column-width for the
-                                              widget (for custom forms), hierarchy
-                                              and multi-select only
-            filter............resource query..filter query for hierarchy and
-                                              multi-select widget
+
+            ** Options for multi-select widget:
+
             header............True|False......multi-select to show a header with
-                                              search-option
+                                              bulk-select options and optional
+                                              search-field
+            search............True|False......show the search-field in the header
             selectedList......integer.........how many items to show on multi-select
                                               button before collapsing into number
             noneSelectedText..string..........placeholder text on multi-select button
+            columns...........integer.........Foundation column-width for the
+                                              widget (for custom forms)
 
+            ** Options-filtering:
+               - multiselect and groupedopts only
+               - for hierarchy and cascade widgets, use the "filter" option
+
+            requires..........Validator.......validator to determine the
+                                              selectable options (defaults to
+                                              field validator)
             filterby..........field selector..filter look-up options by this field
                                               (can be a field in the look-up table
                                               itself or in another table linked to it)
@@ -3620,6 +3628,23 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             match.............field selector..lookup the filter value from this
                                               field (can be a field in the master
                                               table, or in linked table)
+
+            ** Options for hierarchy and cascade widgets:
+
+            levels............list............ordered list of labels for hierarchy
+                                              levels (top-down order), to override
+                                              the lookup-table's "hierarchy_levels"
+                                              setting, cascade-widget only
+            represent.........callback........representation method for hierarchy
+                                              nodes (defaults to field represent)
+            leafonly..........True|False......only leaf nodes can be selected
+            cascade...........True|False......automatically select the entire branch
+                                              when a parent node is newly selected;
+                                              with multiple=False, this will
+                                              auto-select single child options
+                                              (default True when leafonly=True)
+            filter............resource query..filter expression to filter the
+                                              selectable options
     """
 
     prefix = "link"
@@ -3640,7 +3665,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         component, link = self.get_link()
 
         # Customise resources
-        from s3rest import S3Request
+        from .s3rest import S3Request
         r = S3Request(resource.prefix,
                       resource.name,
                       # Current request args/vars could be in a different
@@ -3703,12 +3728,13 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         kfield = link.table[component.rkey]
         dummy_field = Storage(name = field.name,
                               type = kfield.type,
+                              label = options.label or kfield.label,
                               represent = kfield.represent,
                               )
 
         # Widget type
         widget = options.get("widget")
-        if widget != "hierarchy":
+        if widget not in ("hierarchy", "cascade"):
             requires = options.get("requires")
             if requires is None:
                 # Get the selectable entries for the widget and construct
@@ -3733,7 +3759,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
 
         # Instantiate the widget
         if widget == "groupedopts" or not widget and "cols" in options:
-            from s3widgets import S3GroupedOptionsWidget
+            from .s3widgets import S3GroupedOptionsWidget
             w_opts = widget_opts(("cols",
                                   "help_field",
                                   "multiple",
@@ -3744,23 +3770,34 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                                   ))
             w = S3GroupedOptionsWidget(**w_opts)
         elif widget == "hierarchy":
-            from s3widgets import S3HierarchyWidget
-            w_opts = widget_opts(("represent",
-                                  "multiple",
-                                  "leafonly",
-                                  "columns",
+            from .s3widgets import S3HierarchyWidget
+            w_opts = widget_opts(("multiple",
                                   "filter",
+                                  "leafonly",
+                                  "cascade",
+                                  "represent",
                                   ))
             w_opts["lookup"] = component.tablename
             w = S3HierarchyWidget(**w_opts)
+        elif widget == "cascade":
+            from .s3widgets import S3CascadeSelectWidget
+            w_opts = widget_opts(("levels",
+                                  "multiple",
+                                  "filter",
+                                  "leafonly",
+                                  "cascade",
+                                  "represent",
+                                  ))
+            w_opts["lookup"] = component.tablename
+            w = S3CascadeSelectWidget(**w_opts)
         else:
             # Default to multiselect
-            from s3widgets import S3MultiSelectWidget
-            w_opts = widget_opts(("filter",
+            from .s3widgets import S3MultiSelectWidget
+            w_opts = widget_opts(("multiple",
+                                  "search",
                                   "header",
                                   "selectedList",
                                   "noneSelectedText",
-                                  "multiple",
                                   "columns",
                                   ))
             w = S3MultiSelectWidget(**w_opts)
@@ -3907,7 +3944,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                 if fname in component.fields:
                     lookup_field = fname
                     break
-            from s3fields import S3Represent
+            from .s3fields import S3Represent
             represent = S3Represent(lookup = component.tablename,
                                     fields = [lookup_field],
                                     )
