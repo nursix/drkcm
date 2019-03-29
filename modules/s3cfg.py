@@ -2727,11 +2727,17 @@ class S3Config(Storage):
     # -------------------------------------------------------------------------
     # BR: Beneficiary Registry
     #
-    def get_br_terminology(self):
+    def get_br_case_terminology(self):
         """
             Terminology to use when referring to cases: Beneficiary|Client|Case
         """
-        return self.br.get("terminology", "Case")
+        return self.br.get("case_terminology", "Case")
+
+    def get_br_assistance_terminology(self):
+        """
+            Terminology to use when referring to measures of assistance: Counseling|Assistance
+        """
+        return self.br.get("assistance_terminology", "Assistance")
 
     def get_br_case_hide_default_org(self):
         """
@@ -2909,11 +2915,43 @@ class S3Config(Storage):
         """
         return self.br.get("assistance_types", True)
 
+    def get_br_assistance_themes(self):
+        """
+            Use assistance theme categories
+        """
+        return self.br.get("assistance_themes", False)
+
+    def get_br_assistance_themes_org_specific(self):
+        """
+            Assistance themes are specific per root organisation
+        """
+        return self.br.get("assistance_themes_org_specific", True)
+
+    def get_br_assistance_themes_sectors(self):
+        """
+            Assistance themes are organized by org sector
+        """
+        return self.br.get("assistance_themes_sectors", False)
+
+    def get_br_assistance_themes_needs(self):
+        """
+            Assistance themes are linked to needs
+        """
+        return self.br.get("assistance_themes_needs", False)
+
     def get_br_assistance_measures_use_time(self):
         """
             Assistance measures use date+time (instead of just date)
         """
         return self.br.get("assistance_measures_use_time", False)
+
+    def get_br_assistance_details_per_theme(self):
+        """
+            Document assistance measure details per theme
+            - requires assistance tab
+        """
+        return self.get_br_assistance_tab() and \
+               self.br.get("assistance_details_per_theme", False)
 
     def get_br_assistance_track_effort(self):
         """

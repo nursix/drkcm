@@ -812,7 +812,7 @@ class S3OrganisationModel(S3Model):
             # Use BR for org-specific categories in case management
             add_components(tablename,
                            br_need = "organisation_id",
-                           #br_response_theme = "organisation_id",
+                           br_assistance_theme = "organisation_id",
                            )
         else:
             # Use DVR for org-specific categories in case management
@@ -880,9 +880,14 @@ class S3OrganisationModel(S3Model):
                      *s3_meta_fields())
 
         configure(tablename,
-                  xml_post_parse = self.org_organisation_organisation_type_xml_post_parse,
+                  # Whilst S3SQLInlineLink can resolve duplicates automatically, imports cannot
+                  deduplicate = S3Duplicate(primary = ("organisation_id",
+                                                       "organisation_type_id",
+                                                       ),
+                                            ),
                   onaccept = self.org_organisation_organisation_type_onaccept,
                   ondelete = self.org_organisation_organisation_type_ondelete,
+                  xml_post_parse = self.org_organisation_organisation_type_xml_post_parse,
                   )
 
         # ---------------------------------------------------------------------
@@ -6436,9 +6441,12 @@ def org_rheader(r, tabs=None):
 
                 # Org-specific categories for beneficiary/case management
                 if settings.has_module("br"):
+                    labels = s3db.br_terminology()
                     if settings.get_br_needs_org_specific():
                         append_tab((T("Need Types"), "need"))
-                    # TODO org-specific response types/themes
+                    if settings.get_br_assistance_themes() and \
+                       settings.get_br_assistance_themes_org_specific():
+                        append_tab((labels.THEMES, "assistance_theme"))
 
                 # Org Role Manager always last
                 append_tab((T("User Roles"), "roles"))
@@ -6868,6 +6876,33 @@ def org_organisation_controller():
                     s3db.configure("project_project",
                                    create_next = None,
                                    )
+
+                elif cname == "assistance_theme":
+                    # Filter sector_id to the sectors of the current org
+                    ttable = component.table
+                    stable = s3db.org_sector
+                    ltable = s3db.org_sector_organisation
+
+                    left = ltable.on(ltable.sector_id == stable.id)
+                    dbset = db((ltable.organisation_id == r.id) & \
+                               (ltable.deleted == False))
+
+                    field = ttable.sector_id
+                    field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "org_sector.id",
+                                                           field.represent,
+                                                           left = left,
+                                                           ))
+
+                    # If need types are org-specific, filter need_id to org's needs
+                    if settings.get_br_needs_org_specific():
+                        ntable = s3db.br_need
+
+                        dbset = db(ntable.organisation_id == r.id)
+
+                        field = ttable.need_id
+                        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "br_need.id",
+                                                               field.represent,
+                                                               ))
 
                 elif cname == "card_config":
                     s3db.doc_update_card_type_requires(r.component_id, r.id)

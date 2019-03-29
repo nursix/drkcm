@@ -481,7 +481,9 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Beneficiary Registry
     # Terminology to use when referring to cases (Beneficiary|Client|Case)
-    #settings.br.terminology = "Beneficiary"
+    #settings.br.case_terminology = "Beneficiary"
+    # Terminology to use when referring to measures of assistance (Counseling|Assistance)
+    #settings.br.assistance_terminology = "Counseling"
     # Show the case organisation even if only one option
     #settings.br.case_hide_default_org = False
     # Disable assignment of cases to staff
@@ -536,6 +538,14 @@ def config(settings):
     #settings.br.assistance_manager = False
     # Disable types of assistance (e.g. if there is only one type)
     #settings.br.assistance_types = False
+    # Enable assistance themes
+    #settings.br.assistance_themes = True
+    # Use a common set of assistance themes rather than org-specific
+    #settings.br.assistance_themes_org_specific = False
+    # Organize assistance themes by org sector
+    #settings.br.assistance_themes_sectors = True
+    # Organize assistance themes by need type
+    #settings.br.assistance_themes_needs = True
     # Disable tracking of effort (=hours spent) for assistance measures
     #settings.br.assistance_track_effort = False
 
