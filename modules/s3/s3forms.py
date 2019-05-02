@@ -47,7 +47,7 @@ from gluon.sqlhtml import StringWidget
 from gluon.tools import callback
 from gluon.validators import Validator
 
-from s3dal import original_tablename
+from s3dal import Field, original_tablename
 from .s3query import FS
 from .s3utils import s3_mark_required, s3_store_last_record_id, s3_str, s3_validate
 from .s3widgets import S3Selector, S3UploadWidget
@@ -3613,6 +3613,12 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             noneSelectedText..string..........placeholder text on multi-select button
             columns...........integer.........Foundation column-width for the
                                               widget (for custom forms)
+            create............dict............Options to create a new record {"c": "controller",
+                                                                              "f": "function",
+                                                                              "label": "label",
+                                                                              "parent": "parent", (optional: which function to lookup options from)
+                                                                              "child": "child", (optional: which field to lookup options for)
+                                                                              }
 
             ** Options-filtering:
                - multiselect and groupedopts only
@@ -3799,6 +3805,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                                   "selectedList",
                                   "noneSelectedText",
                                   "columns",
+                                  "create",
                                   ))
             w = S3MultiSelectWidget(**w_opts)
 

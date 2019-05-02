@@ -981,7 +981,7 @@ def s3_include_debug_css():
 
     request = current.request
 
-    location = current.response.s3.theme_styles
+    location = current.response.s3.theme_config
     filename = "%s/modules/templates/%s/css.cfg" % (request.folder, location)
     if not os.path.isfile(filename):
         raise HTTP(500, "Theme configuration file missing: modules/templates/%s/css.cfg" % location)
@@ -1960,8 +1960,9 @@ class S3CustomController(object):
             # Pass view as file not str to work in compiled mode
             current.response.view = open(view, "rb")
         except IOError:
-            raise HTTP(404, "Unable to open Custom View: %s" % view)
-        return
+            msg = "Unable to open Custom View: %s" % view
+            current.log.error("%s (%s)" % (msg, sys.exc_info()[1]))
+            raise HTTP(404, msg)
 
 # =============================================================================
 class S3TypeConverter(object):

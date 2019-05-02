@@ -181,6 +181,7 @@ class S3DateTime(object):
         tzinfo = s3_get_tzinfo()
         if tzinfo:
             if not isinstance(dt, datetime.datetime):
+                # Compute breakpoint local time for UTC date
                 combine = datetime.datetime.combine
                 bp = cls.to_utc(combine(dt, datetime.time(8, 0, 0))).time()
                 dt = combine(dt, bp)
@@ -194,6 +195,7 @@ class S3DateTime(object):
             else:
                 delta = datetime.timedelta(0)
             if not isinstance(dt, datetime.datetime):
+                # Compute breakpoint local time for UTC date
                 combine = datetime.datetime.combine
                 bp = (combine(dt, datetime.time(8, 0, 0)) - delta).time()
                 dt = combine(dt, bp)
@@ -223,9 +225,8 @@ class S3DateTime(object):
             tzinfo = s3_get_tzinfo()
             if tzinfo:
                 if date_only:
+                    # Compute UTC date for 08:00 local time
                     dt = datetime.datetime.combine(dt, datetime.time(8, 0, 0))
-                    offset = tzinfo.utcoffset(dt)
-                    dt = dt + datetime.timedelta(seconds=offset)
                 dt = dt.replace(tzinfo=tzinfo)
             else:
                 offset = cls.get_offset_value(cls.get_utc_offset())
@@ -234,9 +235,8 @@ class S3DateTime(object):
                 else:
                     delta = datetime.timedelta(0)
                 if date_only:
-                    combine = datetime.datetime.combine
-                    bp = (combine(dt, datetime.time(8, 0, 0)) + delta).time()
-                    dt = combine(dt, bp)
+                    # Compute UTC date for 08:00 local time
+                    dt = datetime.datetime.combine(dt, datetime.time(8, 0, 0))
                 dt = dt - datetime.timedelta(seconds=offset)
 
         if dt.tzinfo:

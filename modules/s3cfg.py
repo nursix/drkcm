@@ -368,13 +368,19 @@ class S3Config(Storage):
         else:
             s3.theme_layouts = theme_path
 
-        # Path under modules/templates/ for css.cfg
-        # NB this is also the path under static/themes/ for eden.min.css
+        # Path under static/themes/ for eden.min.css
         styles = self.base.get("theme_styles")
         if styles:
             s3.theme_styles = path_to(styles.split("."))
         else:
             s3.theme_styles = theme_path
+
+        # Path under modules/templates/ for css.cfg
+        config = self.base.get("theme_config")
+        if config:
+            s3.theme_config = path_to(config.split("."))
+        else:
+            s3.theme_config = s3.theme_styles
 
         # Path under static/themes/ for base styles (e.g. foundation/*.css)
         base = self.base.get("theme_base")
@@ -396,11 +402,9 @@ class S3Config(Storage):
             individually adjusted with theme_layouts, theme_styles and
             theme_base settings if required.
         """
-
         theme = current.response.s3.theme
         if not theme:
             theme = self.set_theme()
-
         return theme
 
     def get_theme_layouts(self):
@@ -411,7 +415,6 @@ class S3Config(Storage):
 
             => defaults to theme
         """
-
         layouts = current.response.s3.theme_layouts
         if not layouts:
             self.set_theme()
@@ -421,17 +424,28 @@ class S3Config(Storage):
     def get_theme_styles(self):
         """
             The location of the theme styles:
-            - modules/templates/[theme_styles]/css.cfg
             - static/themes/[theme_styles]/eden.min.css
 
             => defaults to theme
         """
-
         styles = current.response.s3.theme_styles
         if not styles:
             self.set_theme()
             styles = current.response.s3.theme_styles
         return styles
+
+    def get_theme_config(self):
+        """
+            The location of the theme CSS config:
+            - modules/templates/[theme_config]/css.cfg
+
+            => defaults to theme_styles
+        """
+        config = current.response.s3.theme_config
+        if not config:
+            self.set_theme()
+            config = current.response.s3.theme_config
+        return config
 
     def get_theme_base(self):
         """
@@ -440,7 +454,6 @@ class S3Config(Storage):
 
             => defaults to theme_styles
         """
-
         base = current.response.s3.theme_base
         if not base:
             self.set_theme()
@@ -809,6 +822,10 @@ class S3Config(Storage):
             - uses <template>/views/tos.html
         """
         return self.auth.get("terms_of_service", False)
+
+    def get_auth_consent_tracking(self):
+        """ Expose options to track user consent """
+        return self.auth.get("consent_tracking", False)
 
     def get_auth_registration_volunteer(self):
         """ Redirect the newly-registered user to their volunteer details page """
@@ -2739,6 +2756,30 @@ class S3Config(Storage):
         """
         return self.br.get("assistance_terminology", "Assistance")
 
+    def get_br_needs_hierarchical(self):
+        """
+            Need categories are hierarchical
+        """
+        return self.br.get("needs_hierarchical", False)
+
+    def get_br_needs_org_specific(self):
+        """
+            Need categories are specific per root organisation
+        """
+        return self.br.get("needs_org_specific", True)
+
+    def get_br_id_card_layout(self):
+        """
+            Layout class for beneficiary ID cards
+        """
+        return self.br.get("id_card_layout")
+
+    def get_br_id_card_export_roles(self):
+        """
+            User roles permitted to export beneficiary ID cards
+        """
+        return self.br.get("id_card_export_roles")
+
     def get_br_case_hide_default_org(self):
         """
             Hide the organisation field in cases if only one allowed
@@ -2791,6 +2832,18 @@ class S3Config(Storage):
             Case file use tab to track family members
         """
         return self.br.get("case_family_tab", True)
+
+    def get_br_service_contacts(self):
+        """
+            Enable case file tab to track service contacts
+        """
+        return self.br.get("service_contacts", False)
+
+    def get_br_case_notes_tab(self):
+        """
+            Use a simple notes journal in case files
+        """
+        return self.br.get("case_notes_tab", False)
 
     def get_br_case_photos_tab(self):
         """
@@ -2856,29 +2909,29 @@ class S3Config(Storage):
         """
         return self.br.get("case_activity_need_details", False)
 
+    def get_br_case_activity_status(self):
+        """
+            Case activities have a status (and possibly an end date)
+        """
+        return self.br.get("case_activity_status", True)
+
     def get_br_case_activity_updates(self):
         """
             Use case activity update journal (inline-component)
         """
-        return self.br.get("case_activity_updates", True)
+        return self.br.get("case_activity_updates", False)
+
+    def get_br_case_activity_outcome(self):
+        """
+            Show field to track outcomes of case activities (free-text)
+        """
+        return self.br.get("case_activity_outcome", True)
 
     def get_br_case_activity_documents(self):
         """
             Case activities have attachments
         """
         return self.br.get("case_activity_documents", False)
-
-    def get_br_needs_hierarchical(self):
-        """
-            Need categories are hierarchical
-        """
-        return self.br.get("needs_hierarchical", False)
-
-    def get_br_needs_org_specific(self):
-        """
-            Need categories are specific per root organisation
-        """
-        return self.br.get("needs_org_specific", True)
 
     def get_br_manage_assistance(self):
         """
@@ -2945,6 +2998,13 @@ class S3Config(Storage):
         """
         return self.br.get("assistance_measures_use_time", False)
 
+    def get_br_assistance_measure_default_closed(self):
+        """
+            Set default status of assistance measures to closed
+            (useful if the primary use-case is post-action documentation)
+        """
+        return self.br.get("assistance_measure_default_closed", False)
+
     def get_br_assistance_details_per_theme(self):
         """
             Document assistance measure details per theme
@@ -2952,6 +3012,15 @@ class S3Config(Storage):
         """
         return self.get_br_assistance_tab() and \
                self.br.get("assistance_details_per_theme", False)
+
+    def get_br_assistance_activity_autolink(self):
+        """
+            Auto-link assistance details to case activities
+            - requires case_activity_need
+            - requires assistance_themes and assistance_themes_needs
+            - requires assistance_tab and assistance_details_per_theme
+        """
+        return self.br.get("assistance_activity_autolink", False)
 
     def get_br_assistance_track_effort(self):
         """

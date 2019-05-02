@@ -20,8 +20,12 @@ def index():
 def index_alt():
     """ Default Module Homepage """
 
-    # Just redirect to list of current cases
-    s3_redirect_default(URL(f="person", vars={"closed": "0"}))
+    from gluon import current
+    if current.auth.s3_has_permission("read", "pr_person", c="br", f="person"):
+        # Just redirect to list of current cases
+        s3_redirect_default(URL(f="person", vars={"closed": "0"}))
+
+    return {"module_name": settings.modules["br"].name_nice}
 
 # =============================================================================
 # Case File and Component Tabs
@@ -30,13 +34,22 @@ def person():
     """ Case File: RESTful CRUD Controller """
 
     # Set the default case status
-    default_status = s3db.br_case_default_status()
+    s3db.br_case_default_status()
 
     # Set contacts-method for tab
     s3db.set_method("pr", "person",
                     method = "contacts",
                     action = s3db.pr_Contacts,
                     )
+
+    # ID Card Export
+    id_card_layout = settings.get_br_id_card_layout()
+    id_card_export_roles = settings.get_br_id_card_export_roles()
+    if id_card_layout and id_card_export_roles and \
+       auth.s3_has_roles(id_card_export_roles):
+        id_card_export = True
+    else:
+        id_card_export = False
 
     def prep(r):
 
@@ -57,7 +70,6 @@ def person():
             settings.base.bigtable = True
 
             get_vars = r.get_vars
-
             queries = []
 
             # Filter for "my cases"
@@ -110,10 +122,33 @@ def person():
         crud_strings.title_list = CASES
         s3.crud_strings["pr_person"] = crud_strings
 
-        # Should not be able to delete records in this view
-        resource.configure(deletable = False,
+        # Configure Anonymizer
+        from s3 import S3Anonymize
+        s3db.set_method("pr", "person",
+                        method = "anonymize",
+                        action = S3Anonymize,
+                        )
+
+        # Update resource configuration for perspective
+        resource.configure(anonymize = s3db.br_person_anonymize(),
+                           deletable = False,
                            insertable = insertable,
                            )
+
+        # Configure ID Cards
+        if id_card_export:
+            if r.representation == "card":
+                # Configure ID card layout
+                resource.configure(pdf_card_layout = id_card_layout,
+                                   #pdf_card_pagesize="A4",
+                                   )
+
+            if not r.id and not r.component:
+                # Add export-icon for ID cards
+                export_formats = list(settings.get_ui_export_formats())
+                export_formats.append(("card", "fa fa-id-card", T("Export ID Cards")))
+                settings.ui.export_formats = export_formats
+                s3.formats["card"] = r.url(method="")
 
         if not r.component:
 
@@ -298,6 +333,10 @@ def person():
                                 settings.get_br_assistance_inline()
             mtable =  s3db.br_assistance_measure
 
+            # Default status
+            if settings.get_br_case_activity_status():
+                s3db.br_case_activity_default_status()
+
             # Default human_resource_id
             if human_resource_id:
 
@@ -332,27 +371,29 @@ def person():
                                               filter_opts = (root_org,),
                                               ))
 
-            if assistance_inline and settings.get_br_assistance_themes() and root_org:
-                # Limit selectable themes to the case root org
-                field = mtable.theme_ids
-                dbset = s3db.br_org_assistance_themes(root_org)
-                field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "br_assistance_theme.id",
-                                                       field.represent,
-                                                       multiple = True,
-                                                       ))
-
-            # Default person_id in inline-measures
+            # Configure inline assistance measures
             if assistance_inline:
                 if record:
                     mtable.person_id.default = record.id
-
+                if settings.get_br_assistance_themes() and root_org:
+                    # Limit selectable themes to the case root org
+                    field = mtable.theme_ids
+                    dbset = s3db.br_org_assistance_themes(root_org)
+                    field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "br_assistance_theme.id",
+                                                           field.represent,
+                                                           multiple = True,
+                                                           ))
+                s3db.br_assistance_default_status()
 
         elif r.component_name == "assistance_measure":
 
             mtable = r.component.table
             ltable = s3db.br_assistance_measure_theme
 
-            # Default human_resource_id in assistance measures
+            # Default status
+            s3db.br_assistance_default_status()
+
+            # Default human_resource_id
             if human_resource_id and settings.get_br_assistance_manager():
                 mtable.human_resource_id.default = human_resource_id
 
@@ -395,10 +436,51 @@ def person():
                 field = mtable.end_date
                 field.writable = True
 
+        elif r.component_name == "br_note":
+
+            # Represent the note author by their name (rather than email)
+            ntable = r.component.table
+            ntable.modified_by.represent = s3base.s3_auth_user_represent_name
+
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person", rheader=s3db.br_rheader)
+    def postp(r, output):
+
+        if not r.component and r.record and isinstance(output, dict):
+
+            # Custom CRUD buttons
+            if "buttons" not in output:
+                buttons = output["buttons"] = {}
+            else:
+                buttons = output["buttons"]
+
+            # Anonymize-button
+            from s3 import S3AnonymizeWidget
+            anonymize = S3AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
+
+            # ID-Card button
+            if id_card_export:
+                card_button = A(T("ID Card"),
+                                data = {"url": URL(c="br", f="person",
+                                                   args = ["%s.card" % r.id]
+                                                   ),
+                                        },
+                                _class = "action-btn s3-download-button",
+                                _script = "alert('here')",
+                                )
+            else:
+                card_button = ""
+
+            # Render in place of the delete-button
+            buttons["delete_btn"] = TAG[""](card_button,
+                                            anonymize,
+                                            )
+        return output
+    s3.postp = postp
+
+    output = s3_rest_controller("pr", "person", rheader=s3db.br_rheader)
+    return output
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -780,16 +862,134 @@ def case_activity():
             # Filter for "my activities"
             mine = get_vars.get("mine")
             if mine == "1":
+                mine = True
                 if human_resource_id:
                     query = FS("human_resource_id") == human_resource_id
                 else:
                     query = FS("human_resource_id").belongs(set())
                 resource.add_filter(query)
                 crud_strings.title_list = T("My Activities")
+            else:
+                mine = False
 
             # Adapt list title when filtering for priority 0 (Emergency)
             if get_vars.get("~.priority") == "0":
                 crud_strings.title_list = T("Emergencies")
+
+            case_activity_status = settings.get_br_case_activity_status()
+            case_activity_need = settings.get_br_case_activity_need()
+
+            # Default status
+            if case_activity_status:
+                s3db.br_case_activity_default_status()
+
+            # Filter widgets
+            from s3 import S3DateFilter, \
+                           S3OptionsFilter, \
+                           S3TextFilter, \
+                           s3_get_filter_opts
+
+            text_filter_fields = ["person_id$pe_label",
+                                  "person_id$first_name",
+                                  "person_id$middle_name",
+                                  "person_id$last_name",
+                                  ]
+            if settings.get_br_case_activity_subject():
+                text_filter_fields.append("subject")
+            if settings.get_br_case_activity_need_details():
+                text_filter_fields.append("need_details")
+
+            filter_widgets = [S3TextFilter(text_filter_fields,
+                                           label = T("Search"),
+                                           ),
+                             ]
+
+            multiple_orgs = s3db.br_case_read_orgs()[0]
+            if multiple_orgs:
+                filter_widgets.append(S3OptionsFilter("person_id$case.organisation_id"))
+
+            if case_activity_status:
+                stable = s3db.br_case_activity_status
+                query = (stable.deleted == False)
+                rows = db(query).select(stable.id,
+                                        stable.name,
+                                        stable.is_closed,
+                                        cache = s3db.cache,
+                                        orderby = stable.workflow_position,
+                                        )
+                status_filter_options = OrderedDict((row.id, T(row.name)) for row in rows)
+                status_filter_defaults = [row.id for row in rows if not row.is_closed]
+                filter_widgets.append(S3OptionsFilter("status_id",
+                                                      options = status_filter_options,
+                                                      default = status_filter_defaults,
+                                                      cols = 3,
+                                                      hidden = True,
+                                                      sort = False,
+                                                      ))
+
+            if not mine and settings.get_br_case_activity_manager():
+                filter_widgets.append(S3OptionsFilter("human_resource_id",
+                                                      hidden = True,
+                                                      ))
+
+            filter_widgets.extend([S3DateFilter("date",
+                                                hidden = True,
+                                                ),
+                                   S3OptionsFilter("person_id$person_details.nationality",
+                                                   label = T("Client Nationality"),
+                                                   hidden = True,
+                                                   ),
+                                   ])
+
+            if case_activity_need:
+                org_specific_needs = settings.get_br_needs_org_specific()
+                filter_widgets.append(S3OptionsFilter("need_id",
+                                                      hidden = True,
+                                                      header = True,
+                                                      options = lambda: \
+                                                                s3_get_filter_opts(
+                                                                  "br_need",
+                                                                  org_filter = org_specific_needs,
+                                                                  translate = True,
+                                                                  ),
+                                                      ))
+
+            resource.configure(filter_widgets=filter_widgets)
+
+            # Report options
+            if r.method == "report":
+                facts = ((T("Number of Activities"), "count(id)"),
+                         (labels.NUMBER_OF_CASES, "count(person_id)"),
+                         )
+                axes = ["person_id$case.organisation_id",
+                        "person_id$gender",
+                        "person_id$person_details.nationality",
+                        "person_id$person_details.marital_status",
+                        "priority",
+                        ]
+                default_rows = "person_id$case.organisation_id"
+                default_cols = "person_id$person_details.nationality"
+
+                if settings.get_br_manage_assistance() and \
+                   settings.get_br_assistance_themes():
+                    axes.insert(1, "assistance_measure_theme.theme_id")
+                if case_activity_need:
+                    axes.insert(1, "need_id")
+                    default_cols = "need_id"
+                if case_activity_status:
+                    axes.insert(4, "status_id")
+
+                report_options = {
+                    "rows": axes,
+                    "cols": axes,
+                    "fact": facts,
+                    "defaults": {"rows": default_rows,
+                                 "cols": default_cols,
+                                 "fact": "count(id)",
+                                 "totals": True,
+                                 },
+                    }
+                resource.configure(report_options=report_options)
 
         # Set default for human_resource_ids
         if human_resource_id:
@@ -847,6 +1047,9 @@ def assistance_measure():
 
         resource = r.resource
         table = resource.table
+
+        # Set default status
+        s3db.br_assistance_default_status()
 
         # Populate human_resource_id with current user, don't link
         human_resource_id = auth.s3_logged_in_human_resource()
@@ -950,7 +1153,6 @@ def assistance_measure():
 
                     list_fields.insert(2, (T("Themes"), "assistance_measure_theme.id"))
                 else:
-                    # TODO consider using link table entries throughout
                     list_fields.insert(2, "theme_ids")
 
             # Include type when using types, otherwise show details
@@ -1005,6 +1207,18 @@ def case_activity_update_type():
 # -----------------------------------------------------------------------------
 def need():
     """ Needs: RESTful CRUD Controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def note_type():
+    """ Note Types: RESTful CRUD Controller """
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
+def service_contact_type():
+    """ Service Contact Types: RESTful CRUD Controller """
 
     return s3_rest_controller()
 

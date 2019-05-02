@@ -47,13 +47,16 @@ __all__ = ("BRCaseModel",
            "br_case_root_org",
            "br_case_default_status",
            "br_case_status_filter_opts",
+           "br_case_activity_default_status",
            "br_org_assistance_themes",
            "br_group_membership_onaccept",
+           "br_assistance_default_status",
            "br_assistance_status_colors",
            "br_household_size",
            "br_rheader",
            "br_terminology",
            "br_crud_strings",
+           "br_person_anonymize",
            )
 
 from collections import OrderedDict
@@ -413,7 +416,7 @@ class BRCaseModel(S3Model):
                                                # TODO
                                                # appointments
                                                # case events
-                                               # notes
+                                               "br_note",
                                                ),
                            )
             set_realm_entity("pr_person", person_id, force_update=True)
@@ -423,7 +426,10 @@ class BRCaseModel(S3Model):
             query = (atable.person_id == person_id)
             set_realm_entity(atable, query, force_update=True)
 
-            # Force-update the realm entity for all related responses (TODO)
+            # Force-update the realm entity for all related assistance measures
+            mtable = s3db.br_assistance_measure
+            query = (mtable.person_id == person_id)
+            set_realm_entity(mtable, query, force_update=True)
 
             # Auto-create standard appointments (if create) TODO
 
@@ -461,12 +467,14 @@ class BRCaseActivityModel(S3Model):
         T = current.T
 
         db = current.db
-        s3 = current.response.s3
         settings = current.deployment_settings
+        s3 = current.response.s3
+        crud_strings = s3.crud_strings
 
         define_table = self.define_table
         configure = self.configure
-        crud_strings = s3.crud_strings
+
+        labels = br_terminology()
 
         hr_represent = self.hrm_HumanResourceRepresent(show_link=False)
 
@@ -539,6 +547,7 @@ class BRCaseActivityModel(S3Model):
         #           (subject-based/need-based)
         #
         case_activity_manager = settings.get_br_case_activity_manager()
+        case_activity_status = settings.get_br_case_activity_status()
         case_activity_need = settings.get_br_case_activity_need()
         case_activity_subject = settings.get_br_case_activity_subject()
         case_activity_need_details = settings.get_br_case_activity_need_details()
@@ -559,6 +568,7 @@ class BRCaseActivityModel(S3Model):
                      # Beneficiary
                      self.pr_person_id(comment = None,
                                        empty = False,
+                                       label = labels.CASE,
                                        ondelete = "CASCADE",
                                        writable = False,
                                        ),
@@ -615,8 +625,9 @@ class BRCaseActivityModel(S3Model):
                            ),
 
                      # Status
-                     status_id(),
-
+                     status_id(readable = case_activity_status,
+                               writable = case_activity_status,
+                               ),
                      # Dates
                      s3_date(label = T("Date"),
                              default = "now",
@@ -643,9 +654,10 @@ class BRCaseActivityModel(S3Model):
         self.add_components(tablename,
                             br_case_activity_update = "case_activity_id",
                             br_assistance_measure = "case_activity_id",
+                            br_assistance_measure_theme = "case_activity_id",
                             )
 
-        # Optional inline components
+        # Optional fields and inline components
         manage_assistance = settings.get_br_manage_assistance()
         if manage_assistance and settings.get_br_assistance_inline():
             # Show inline assistance measures
@@ -671,6 +683,11 @@ class BRCaseActivityModel(S3Model):
         else:
             updates = None
 
+        if settings.get_br_case_activity_outcome():
+            outcome = "outcome"
+        else:
+            outcome = None
+
         if settings.get_br_case_activity_documents():
             attachments = S3SQLInlineComponent("document",
                                                name = "file",
@@ -693,10 +710,10 @@ class BRCaseActivityModel(S3Model):
                        "subject",
                        "need_details",
                        assistance,
-                       "status_id",         # TODO make optional
+                       "status_id",
                        updates,
                        #"end_date",         # TODO make optional
-                       "outcome",           # TODO make optional
+                       outcome,
                        attachments,
                        "comments",
                        ]
@@ -704,64 +721,28 @@ class BRCaseActivityModel(S3Model):
         # List fields (for case file tab)
         list_fields = ["priority",
                        "date",
-                       "status_id",         # TODO make optional
+                       #"need_id",
+                       #"subject",
+                       #"human_resource_id",
+                       #"status_id",
                        #"end_date",         # TODO make optional
                        ]
+        append = list_fields.append
+        if case_activity_need:
+            append("need_id")
+        if case_activity_subject:
+            append("subject")
         if case_activity_manager:
-            list_fields.insert(2, "human_resource_id")
-        if case_activity_subject:
-            list_fields.insert(2, "subject")
-        if case_activity_need:
-            list_fields.insert(2, "need_id")
-
-        # Filter widgets
-        text_filter_fields = ["person_id$pe_label",
-                              "person_id$first_name",
-                              "person_id$middle_name",
-                              "person_id$last_name",
-                              ]
-        if case_activity_subject:
-            text_filter_fields.append("subject")
-
-        filter_widgets = [S3TextFilter(text_filter_fields,
-                                       label = T("Search"),
-                                       ),
-                          S3DateFilter("date",
-                                       hidden = True,
-                                       ),
-                          S3OptionsFilter("status_id",
-                                          cols = 4,
-                                          hidden = True,
-                                          sort = False,
-                                          options = lambda: \
-                                                    s3_get_filter_opts(
-                                                      "br_case_activity_status",
-                                                      orderby = "br_case_activity_status.workflow_position",
-                                                      ),
-                                          ),
-                         ]
-        if case_activity_need:
-            org_specific_needs = settings.get_br_needs_org_specific()
-            filter_widgets.append(S3OptionsFilter("need_id",
-                                                  hidden = True,
-                                                  header = True,
-                                                  options = lambda: \
-                                                            s3_get_filter_opts(
-                                                              "br_need",
-                                                              org_filter = org_specific_needs
-                                                              ),
-                                                  ))
-
-        # Report options TODO
+            append("human_resource_id")
+        if case_activity_status:
+            append("status_id")
 
         # Table configuration
         configure(tablename,
                   crud_form = S3SQLCustomForm(*crud_fields),
-                  filter_widgets = filter_widgets,
                   list_fields = list_fields,
                   onaccept = self.case_activity_onaccept,
                   orderby = "br_case_activity.priority",
-                  #report_options = report_options,
                   realm_components = ("case_activity_update",
                                       ),
                   super_entity = "doc_entity",
@@ -772,6 +753,7 @@ class BRCaseActivityModel(S3Model):
             label_create = T("Create Activity"),
             title_display = T("Activity Details"),
             title_list = T("Activities"),
+            title_report = T("Activity Statistic"),
             title_update = T("Edit Activity"),
             label_list_button = T("List Activities"),
             label_delete_button = T("Delete Activity"),
@@ -872,6 +854,7 @@ class BRCaseActivityModel(S3Model):
                              ),
                      update_type_id(),
                      self.hrm_human_resource_id(
+                            comment = None,
                             represent = hr_represent,
                             widget = None,
                             ),
@@ -1271,6 +1254,7 @@ class BRAssistanceModel(S3Model):
     """
 
     names = ("br_assistance_measure",
+             "br_assistance_measure_theme",
              "br_assistance_status",
              "br_assistance_theme",
              "br_assistance_type",
@@ -1290,6 +1274,8 @@ class BRAssistanceModel(S3Model):
 
         labels = br_terminology()
         NONE = current.messages["NONE"]
+
+        case_activity_id = self.br_case_activity_id
 
         # ---------------------------------------------------------------------
         # Assistance Theme
@@ -1484,7 +1470,7 @@ class BRAssistanceModel(S3Model):
                          label = labels.CASE,
                          widget = S3PersonAutocompleteWidget(controller="br"),
                          ),
-                     self.br_case_activity_id(
+                     case_activity_id(
                          readable = use_activities,
                          writable = use_activities,
                          ),
@@ -1507,6 +1493,7 @@ class BRAssistanceModel(S3Model):
                                ),
                      assistance_status_id(),
                      self.hrm_human_resource_id(
+                        comment = None,
                         represent = self.hrm_HumanResourceRepresent(show_link=False),
                         widget = None,
                         readable = assistance_manager,
@@ -1536,7 +1523,7 @@ class BRAssistanceModel(S3Model):
         # CRUD form
         crud_fields = ["person_id",
                        "start_date",
-                       "case_activity_id",
+                       #"case_activity_id",
                        "assistance_type_id",
                        #"theme_ids" | inline theme links,
                        #"comments",
@@ -1545,14 +1532,21 @@ class BRAssistanceModel(S3Model):
                        "status_id",
                        ]
         details_per_theme = settings.get_br_assistance_details_per_theme()
+        autolink = settings.get_br_assistance_activity_autolink()
         if use_themes and details_per_theme:
-            crud_fields.insert(4, S3SQLInlineComponent("assistance_measure_theme",
-                                                       fields = ["theme_id",
-                                                                 "comments",
-                                                                 ],
-                                                       label = T("Details"),
-                                                       ))
+            if autolink:
+                pos = 3
+            else:
+                crud_fields.insert(2, "case_activity_id")
+                pos = 4
+            crud_fields.insert(pos, S3SQLInlineComponent("assistance_measure_theme",
+                                                         fields = ["theme_id",
+                                                                   "comments",
+                                                                   ],
+                                                         label = T("Details"),
+                                                         ))
         else:
+            crud_fields.insert(2, "case_activity_id")
             crud_fields[4:4] = ["theme_ids",
                                 "comments",
                                 ]
@@ -1575,11 +1569,10 @@ class BRAssistanceModel(S3Model):
             if details_per_theme:
                 list_fields.insert(1, (T("Themes"), "assistance_measure_theme.id"))
             else:
-                # TODO consider using link table entries throughout
                 list_fields.insert(1, "theme_ids")
         if use_type:
             list_fields.insert(1, "assistance_type_id")
-        if use_activities:
+        if use_activities and not autolink:
             list_fields.insert(1, "case_activity_id")
         if assistance_manager:
             list_fields.insert(-1, "human_resource_id")
@@ -1596,8 +1589,7 @@ class BRAssistanceModel(S3Model):
                                        label = T("Search"),
                                        ),
                           S3OptionsFilter("status_id",
-                                          options = lambda: \
-                                                    s3_get_filter_opts("br_assistance_status"),
+                                          options = lambda: s3_get_filter_opts("br_assistance_status"),
                                           cols = 3,
                                           translate = True,
                                           ),
@@ -1607,19 +1599,21 @@ class BRAssistanceModel(S3Model):
                                        ),
                           ]
         if use_type:
-            filter_widgets.append(S3OptionsFilter(
-                                        "assistance_type_id",
-                                        hidden = True,
-                                        options = lambda: \
-                                        s3_get_filter_opts("br_assistance_type"),
-                                        ))
+            filter_widgets.append(S3OptionsFilter("assistance_type_id",
+                                                  hidden = True,
+                                                  options = lambda: s3_get_filter_opts("br_assistance_type"),
+                                                  ))
+        if use_themes:
+            filter_widgets.append(S3OptionsFilter("theme_ids",
+                                                  hidden = True,
+                                                  options = lambda: s3_get_filter_opts("br_assistance_theme"),
+                                                  ))
 
         # Organizer
         description = ["status_id"]
         if assistance_manager:
             description.insert(0, "human_resource_id")
         if use_themes:
-            # TODO consider using link table entries throughout
             description.insert(0, "theme_ids")
         if use_type:
             description.insert(0, "assistance_type_id")
@@ -1684,11 +1678,10 @@ class BRAssistanceModel(S3Model):
                                                 theme_represent,
                                                 ),
                            ),
-                     # TODO
-                     #case_activity_id(ondelete = "SET NULL",
-                     #                 readable = False,
-                     #                 writable = False,
-                     #                 ),
+                     case_activity_id(ondelete = "SET NULL",
+                                      readable = False,
+                                      writable = False,
+                                      ),
                      s3_comments(label = T("Details"),
                                  comment = None,
                                  represent = lambda v: s3_text_represent(v, lines=8),
@@ -1802,6 +1795,7 @@ class BRAssistanceModel(S3Model):
         query = (mtable.id == record_id)
         record = db(query).select(mtable.id,
                                   mtable.theme_ids,
+                                  mtable.case_activity_id,
                                   limitby = (0, 1),
                                   ).first()
         if not record:
@@ -1828,12 +1822,63 @@ class BRAssistanceModel(S3Model):
                 query &= ltable.theme_id.belongs(obsolete)
                 db(query).delete()
 
+            # Inline-created theme links inherit case_activity_id
+            case_activity_id = record.case_activity_id
+
             # Add links for newly selected themes
             added = selected - linked
             for theme_id in added:
                 ltable.insert(measure_id = record_id,
                               theme_id = theme_id,
+                              case_activity_id = case_activity_id,
                               )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_case_activity_by_need(person_id, need_id, hr_id=None):
+        """
+            DRY helper to find or create a case activity matching a need_id
+
+            @param person_id: the beneficiary person ID
+            @param need_id: the need ID (or a list of need IDs)
+            @param human_resource_id: the HR responsible
+
+            @returns: a br_case_activity record ID
+        """
+
+        if not person_id:
+            return None
+
+        s3db = current.s3db
+        table = s3db.br_case_activity
+
+        # Look up a matching case activity for this beneficiary
+        query = (table.person_id == person_id)
+        if isinstance(need_id, (list, tuple)):
+            need = need_id[0] if len(need_id) == 1 else None
+            query &= (table.need_id.belongs(need_id))
+        else:
+            need = need_id
+            query &= (table.need_id == need_id)
+        query &= (table.deleted == False)
+        activity = current.db(query).select(table.id,
+                                            orderby = ~table.date,
+                                            limitby = (0, 1),
+                                            ).first()
+        if activity:
+            activity_id = activity.id
+        elif need is not None:
+            # Create an activity for the case
+            activity_id = table.insert(person_id = person_id,
+                                       need_id = need,
+                                       start_date = current.request.utcnow,
+                                       human_resource_id = hr_id,
+                                       )
+            s3db.update_super(table, {"id": activity_id})
+        else:
+            activity_id = None
+
+        return activity_id
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1913,6 +1958,24 @@ class BRAssistanceModel(S3Model):
             theme_ids = [row.theme_id for row in rows if row.theme_id]
             measure.update_record(theme_ids=theme_ids)
 
+            # Auto-link to case activity
+            settings = current.deployment_settings
+            if settings.get_br_case_activity_need() and \
+               settings.get_br_assistance_themes_needs() and \
+               settings.get_br_assistance_activity_autolink():
+
+                # Look up the theme's need_id
+                ttable = s3db.br_assistance_theme
+                query = (ttable.id == record.theme_id)
+                theme = db(query).select(ttable.need_id, limitby=(0, 1)).first()
+                if theme:
+                    activity_id = cls.get_case_activity_by_need(
+                                            measure.person_id,
+                                            theme.need_id,
+                                            hr_id = measure.human_resource_id,
+                                            )
+                    record.update_record(case_activity_id=activity_id)
+
     # -------------------------------------------------------------------------
     @staticmethod
     def assistance_measure_theme_ondelete(row):
@@ -1953,34 +2016,51 @@ class BRAssistanceModel(S3Model):
 
         T = current.T
 
-        fields = ["start_date",
-                  #"assistance_type_id",
-                  #"theme_ids",
-                  #"comments",
-                  #"human_resource_id",
-                  #"hours",
-                  "status_id",
-                  ]
-
         settings = current.deployment_settings
-        use_themes = settings.get_br_assistance_themes()
-        if not use_themes or not settings.get_br_assistance_details_per_theme():
-            fields.insert(1, "comments")
-        if use_themes:
-            fields.insert(1, "theme_ids")
-        if settings.get_br_assistance_types():
-            fields.insert(1, "assistance_type_id")
-        if settings.get_br_assistance_manager():
-            fields.insert(-1, "human_resource_id")
-        if settings.get_br_assistance_track_effort():
-            fields.insert(-1, "hours")
 
-        return S3SQLInlineComponent("assistance_measure",
-                                    label = T("Measures"),
-                                    fields = fields,
-                                    layout = S3SQLVerticalSubFormLayout,
-                                    explicit_add = T("Add Measure"),
-                                    )
+        use_themes = settings.get_br_assistance_themes()
+        details_per_theme = settings.get_br_assistance_details_per_theme()
+
+        if use_themes and details_per_theme and \
+           settings.get_br_case_activity_need() and \
+           settings.get_br_assistance_activity_autolink():
+
+            # Embed details per theme rather than measures
+            return S3SQLInlineComponent("assistance_measure_theme",
+                                        fields = ["measure_id",
+                                                  "theme_id",
+                                                  "comments",
+                                                  ],
+                                        label = T("Themes"),
+                                        orderby = "measure_id",
+                                        )
+        else:
+            fields = ["start_date",
+                      #"assistance_type_id",
+                      #"theme_ids",
+                      #"comments",
+                      #"human_resource_id",
+                      #"hours",
+                      "status_id",
+                      ]
+
+            if not use_themes or not details_per_theme:
+                fields.insert(1, "comments")
+            if use_themes:
+                fields.insert(1, "theme_ids")
+            if settings.get_br_assistance_types():
+                fields.insert(1, "assistance_type_id")
+            if settings.get_br_assistance_manager():
+                fields.insert(-1, "human_resource_id")
+            if settings.get_br_assistance_track_effort():
+                fields.insert(-1, "hours")
+
+            return S3SQLInlineComponent("assistance_measure",
+                                        label = T("Measures"),
+                                        fields = fields,
+                                        layout = S3SQLVerticalSubFormLayout,
+                                        explicit_add = T("Add Measure"),
+                                        )
 
 # =============================================================================
 class BRDistributionModel(S3Model):
@@ -2074,11 +2154,265 @@ class BRLegalStatusModel(S3Model):
 
 # =============================================================================
 class BRServiceContactModel(S3Model):
-    pass
+    """ Model to track external service contacts of beneficiaries """
+
+    names = ("br_service_contact",
+             "br_service_contact_type",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        db = current.db
+        s3 = current.response.s3
+
+        crud_strings = s3.crud_strings
+
+        define_table = self.define_table
+        configure = self.configure
+
+        # ---------------------------------------------------------------------
+        # Service Contact Types
+        #
+        tablename = "br_service_contact_type"
+        define_table(tablename,
+                     Field("name",
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Table configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(),
+                  )
+
+        # CRUD Strings
+        ADD_TYPE = T("Create Service Contact Type")
+        crud_strings[tablename] = Storage(
+            label_create = ADD_TYPE,
+            title_display = T("Service Contact Type"),
+            title_list = T("Service Contact Types"),
+            title_update = T("Edit Service Contact Types"),
+            label_list_button = T("List Service Contact Types"),
+            label_delete_button = T("Delete Service Contact Type"),
+            msg_record_created = T("Service Contact Type added"),
+            msg_record_modified = T("Service Contact Type updated"),
+            msg_record_deleted = T("Service Contact Type deleted"),
+            msg_list_empty = T("No Service Contact Types currently defined"),
+            )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        contact_type_id = S3ReusableField("contact_type_id", "reference %s" % tablename,
+                                          label = T("Contact Type"),
+                                          ondelete = "RESTRICT",
+                                          represent = represent,
+                                          requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  )),
+                                          sortby = "name",
+                                          )
+
+        # ---------------------------------------------------------------------
+        # Service Contacts of Beneficiaries
+        #
+        AGENCY = T("Providing Agency")
+
+        tablename = "br_service_contact"
+        define_table(tablename,
+                     # Beneficiary (component link):
+                     self.pr_person_id(empty = False,
+                                       ondelete = "CASCADE",
+                                       ),
+
+                     # Service and contact type
+                     self.org_service_id(readable = False,
+                                         writable = False,
+                                         ),
+                     contact_type_id(),
+
+                     Field("organisation",
+                           label = AGENCY,
+                           ),
+                     # Alternative organisation_id (if tracking providers in-DB)
+                     # - enable in template as required
+                     self.org_organisation_id(label = AGENCY,
+                                              readable = False,
+                                              writable = False,
+                                              ),
+
+                     Field("reference",
+                           label = T("Ref.No."),
+                           comment = DIV(_class = "tooltip",
+                                         _title = "%s|%s" % (T("Ref.No."),
+                                                             T("Customer number, file reference or other reference number"),
+                                                             ),
+                                         ),
+                           ),
+                     Field("contact",
+                           label = T("Contact Person"),
+                           ),
+                     Field("phone",
+                           label = T("Phone"),
+                           ),
+                     Field("email",
+                           label = T("Email"),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Service Contact"),
+            title_display = T("Service Contact Details"),
+            title_list = T("Service Contacts"),
+            title_update = T("Edit Service Contacts"),
+            label_list_button = T("List Service Contacts"),
+            label_delete_button = T("Delete Service Contact"),
+            msg_record_created = T("Service Contact added"),
+            msg_record_modified = T("Service Contact updated"),
+            msg_record_deleted = T("Service Contact deleted"),
+            msg_list_empty = T("No Service Contacts currently registered"),
+            )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def defaults():
+        """ Safe defaults for names in case the module is disabled """
+
+        return {}
 
 # =============================================================================
 class BRNotesModel(S3Model):
-    pass
+    """ Simple Journal for Case Files """
+
+    names = ("br_note",
+             "br_note_type",
+             )
+
+    def model(self):
+
+        T = current.T
+        db = current.db
+
+        crud_strings = current.response.s3.crud_strings
+
+        define_table = self.define_table
+
+        # ---------------------------------------------------------------------
+        # Note Types
+        #
+        tablename = "br_note_type"
+        define_table(tablename,
+                     Field("name",
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     # Code field for deduplication, and to allow hard-coded
+                     # filters and differential authorization
+                     Field("code", length=64, notnull=True, unique=True,
+                           label = T("Type Code"),
+                           requires = [IS_NOT_EMPTY(),
+                                       IS_LENGTH(64),
+                                       IS_NOT_ONE_OF(db,
+                                                     "%s.code" % tablename,
+                                                     ),
+                                       ],
+                           comment = DIV(_class = "tooltip",
+                                         _title = "%s|%s" % (T("Type Code"),
+                                                             T("A unique code to identify this type"),
+                                                             ),
+                                         ),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Note Type"),
+            title_display = T("Note Type Details"),
+            title_list = T("Note Types"),
+            title_update = T("Edit Note Type"),
+            label_list_button = T("List Note Types"),
+            label_delete_button = T("Delete Note Type"),
+            msg_record_created = T("Note Type added"),
+            msg_record_modified = T("Note Type updated"),
+            msg_record_deleted = T("Note Type deleted"),
+            msg_list_empty = T("No Note Types found"),
+            )
+
+        # Reusable field
+        represent = S3Represent(lookup=tablename, translate=True)
+        note_type_id = S3ReusableField("note_type_id", "reference %s" % tablename,
+                                       label = T("Note Type"),
+                                       ondelete = "RESTRICT",
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(IS_ONE_OF(db,
+                                                        "%s.id" % tablename,
+                                                        represent,
+                                                        )),
+                                       )
+
+        # ---------------------------------------------------------------------
+        # Notes
+        #
+        tablename = "br_note"
+        define_table(tablename,
+                     self.pr_person_id(empty = False,
+                                       ondelete = "CASCADE",
+                                       ),
+                     note_type_id(empty = False,
+                                  ),
+                     s3_datetime(default = "now",
+                                 ),
+                     s3_comments("note",
+                                 label = T("Note"),
+                                 represent = lambda v: s3_text_represent(v, lines=8),
+                                 comment = None,
+                                 ),
+                     *s3_meta_fields())
+
+        # List fields
+        list_fields = ["id",
+                       "person_id",
+                       "date",
+                       "note_type_id",
+                       "note",
+                       (T("Author"), "modified_by"),
+                       ]
+
+        # Table configuration
+        self.configure(tablename,
+                       list_fields = list_fields,
+                       )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Note"),
+            title_display = T("Note Details"),
+            title_list = T("Notes"),
+            title_update = T("Edit Note"),
+            label_list_button = T("List Notes"),
+            label_delete_button = T("Delete Note"),
+            msg_record_created = T("Note added"),
+            msg_record_modified = T("Note updated"),
+            msg_record_deleted = T("Note deleted"),
+            msg_list_empty = T("No Notes found"),
+            )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
 
 # =============================================================================
 class BRReferralModel(S3Model):
@@ -2920,6 +3254,34 @@ def br_case_status_filter_opts(closed=None):
     return OrderedDict((row.id, T(row.name)) for row in rows)
 
 # -----------------------------------------------------------------------------
+def br_case_activity_default_status():
+    """
+        Helper to get/set the default status for case activities
+
+        @return: the default status_id
+    """
+
+    s3db = current.s3db
+
+    atable = s3db.br_case_activity
+    field = atable.status_id
+
+    default = field.default
+    if not default:
+
+        # Look up the default status
+        stable = s3db.br_case_activity_status
+        query = (stable.is_default == True) & \
+                (stable.deleted != True)
+        row = current.db(query).select(stable.id, limitby=(0, 1)).first()
+
+        if row:
+            # Set as field default in case table
+            default = field.default = row.id
+
+    return default
+
+# -----------------------------------------------------------------------------
 def br_org_assistance_themes(organisation_id):
     """
         Generate a dbset of br_assistance_theme filtered to organisation_id,
@@ -2976,6 +3338,37 @@ def br_org_assistance_themes(organisation_id):
         dbset = db
 
     return dbset
+
+# -----------------------------------------------------------------------------
+def br_assistance_default_status():
+    """
+        Set the default status for assistance measures
+
+        @returns: the default status ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.br_assistance_measure
+    field = table.status_id
+
+    default = field.default
+    if not default:
+        stable = s3db.br_assistance_status
+        if current.deployment_settings.get_br_assistance_measure_default_closed():
+            query = (stable.is_default_termination == True)
+        else:
+            query = (stable.is_default == True)
+        query &= (stable.deleted == False)
+        row = db(query).select(stable.id,
+                               limitby = (0, 1),
+                               orderby = stable.workflow_position,
+                               ).first()
+        if row:
+            default = field.default = row.id
+
+    return default
 
 # -----------------------------------------------------------------------------
 def br_assistance_status_colors(resource, selector):
@@ -3229,6 +3622,10 @@ def br_rheader(r, tabs=None):
                 if measures_tab:
                     append((measures_label, "assistance_measure"))
 
+                if settings.get_br_service_contacts():
+                    append((T("Service Contacts"), "service_contact"))
+                if settings.get_br_case_notes_tab():
+                    append((T("Notes"), "br_note"))
                 if settings.get_br_case_photos_tab():
                     append((T("Photos"), "image"))
                 if settings.get_br_case_documents_tab():
@@ -3334,6 +3731,7 @@ def br_terminology():
             labels.CURRENT = "Current Beneficiaries"
             labels.CURRENT_MINE = "My Current Beneficiaries"
             labels.CLOSED = "Former Beneficiaries"
+            labels.NUMBER_OF_CASES = "Number of Beneficiaries"
 
         elif terminology == "Client":
             labels.CASE = "Client"
@@ -3342,6 +3740,7 @@ def br_terminology():
             labels.CURRENT = "Current Clients"
             labels.CURRENT_MINE = "My Current Clients"
             labels.CLOSED = "Former Clients"
+            labels.NUMBER_OF_CASES = "Number of Clients"
 
         else:
             labels.CASE = "Case"
@@ -3350,6 +3749,7 @@ def br_terminology():
             labels.CURRENT = "Current Cases"
             labels.CURRENT_MINE = "My Current Cases"
             labels.CLOSED = "Closed Cases"
+            labels.NUMBER_OF_CASES = "Number of Cases"
 
         # Assistance Terminology
         terminology = settings.get_br_assistance_terminology()
@@ -3453,5 +3853,224 @@ def br_crud_strings(tablename):
         crud_strings = current.response.s3.crud_strings.get(tablename)
 
     return crud_strings
+
+# =============================================================================
+def br_anonymous_address(record_id, field, value):
+    """
+        Helper to anonymize a pr_address location; removes street and
+        postcode details, but retains Lx ancestry for statistics
+
+        @param record_id: the pr_address record ID
+        @param field: the location_id Field
+        @param value: the location_id
+
+        @return: the location_id
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Get the location
+    if value:
+        ltable = s3db.gis_location
+        row = db(ltable.id == value).select(ltable.id,
+                                            ltable.level,
+                                            limitby = (0, 1),
+                                            ).first()
+        if not row.level:
+            # Specific location => remove address details
+            data = {"addr_street": None,
+                    "addr_postcode": None,
+                    "gis_feature_type": 0,
+                    "lat": None,
+                    "lon": None,
+                    "wkt": None,
+                    }
+            # Doesn't work - PyDAL doesn't detect the None value:
+            #if "the_geom" in ltable.fields:
+            #    data["the_geom"] = None
+            row.update_record(**data)
+            if "the_geom" in ltable.fields:
+                db.executesql("UPDATE gis_location SET the_geom=NULL WHERE id=%s" % row.id)
+
+    return value
+
+# -----------------------------------------------------------------------------
+def br_obscure_dob(record_id, field, value):
+    """
+        Helper to obscure a date of birth; maps to the first day of
+        the quarter, thus retaining the approximate age for statistics
+
+        @param record_id: the pr_address record ID
+        @param field: the location_id Field
+        @param value: the location_id
+
+        @return: the new date
+    """
+
+    if value:
+        month = int((value.month - 1) / 3) * 3 + 1
+        value = value.replace(month=month, day=1)
+
+    return value
+
+# -----------------------------------------------------------------------------
+def br_person_anonymize():
+    """ Rules to anonymize a case file """
+
+    ANONYMOUS = "-"
+
+    # Helper to produce an anonymous ID (pe_label)
+    anonymous_id = lambda record_id, f, v: "NN%06d" % long(record_id)
+
+    # General rule for attachments
+    documents = ("doc_document", {"key": "doc_id",
+                                  "match": "doc_id",
+                                  "fields": {"name": ("set", ANONYMOUS),
+                                             "file": "remove",
+                                             "url": "remove",
+                                             "comments": "remove",
+                                             },
+                                  "delete": True,
+                                  })
+
+    # Cascade rule for case activities
+    activity_details = [("br_case_activity_update", {
+                                "key": "case_activity_id",
+                                "match": "id",
+                                "fields": {"comments": ("set", ANONYMOUS),
+                                           },
+                                }),
+                        ]
+
+    # Cascade rule for assistance measures
+    assistance_details = [("br_assistance_measure_theme", {
+                                "key": "measure_id",
+                                "match": "id",
+                                "fields": {"comments": ("set", ANONYMOUS),
+                                           },
+                                }),
+                          ]
+
+    rules = [# Rules to remove PID from basic beneficiary details
+             {"name": "default",
+              "title": "Names, IDs, Reference Numbers, Contact Information, Addresses",
+              "fields": {"first_name": ("set", ANONYMOUS),
+                         "last_name": ("set", ANONYMOUS),
+                         "pe_label": anonymous_id,
+                         "date_of_birth": br_obscure_dob,
+                         "comments": "remove",
+                         },
+              "cascade": [("br_case", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"comments": "remove",
+                                           },
+                                }),
+                          ("br_case_language", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"comments": "remove",
+                                           },
+                                }),
+                          ("pr_contact", {
+                                "key": "pe_id",
+                                "match": "pe_id",
+                                "fields": {"contact_description": "remove",
+                                           "value": ("set", ""),
+                                           "comments": "remove",
+                                           },
+                                "delete": True,
+                                }),
+                          ("pr_contact_emergency", {
+                                "key": "pe_id",
+                                "match": "pe_id",
+                                "fields": {"name": ("set", ANONYMOUS),
+                                           "relationship": "remove",
+                                           "phone": "remove",
+                                           "comments": "remove",
+                                           },
+                                "delete": True,
+                                }),
+                          ("pr_address", {
+                                "key": "pe_id",
+                                "match": "pe_id",
+                                "fields": {"location_id": br_anonymous_address,
+                                           "comments": "remove",
+                                           },
+                                }),
+                          ("pr_person_details", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"education": "remove",
+                                           "occupation": "remove",
+                                           },
+                                }),
+                          ("pr_person_tag", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"value": ("set", ANONYMOUS),
+                                           },
+                                "delete": True,
+                                }),
+                          ],
+              },
+
+             # Rules to remove PID from activities, assistance details and notes
+             {"name": "activities",
+              "title": "Activities, Assistance Details and Notes",
+              "cascade": [("br_case_activity", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"subject": ("set", ANONYMOUS),
+                                           "need_details": "remove",
+                                           "outcome": "remove",
+                                           "comments": "remove",
+                                           },
+                                "cascade": activity_details,
+                                }),
+                          ("br_assistance_measure", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"comments": "remove",
+                                           },
+                                "cascade": assistance_details,
+                                }),
+                          ("br_note", {
+                                "key": "person_id",
+                                "match": "id",
+                                "fields": {"note": "remove",
+                                           },
+                                "delete": True,
+                                }),
+                          ],
+              },
+
+             # Rules to remove photos and attachments
+             {"name": "documents",
+              "title": "Photos and Documents",
+              "cascade": [("br_case", {"key": "person_id",
+                                       "match": "id",
+                                       "cascade": [documents,
+                                                   ],
+                                       }),
+                          ("br_case_activity", {"key": "person_id",
+                                                "match": "id",
+                                                "cascade": [documents,
+                                                            ],
+                                                }),
+                          ("pr_image", {"key": "pe_id",
+                                        "match": "pe_id",
+                                        "fields": {"image": "remove",
+                                                   "url": "remove",
+                                                   "description": "remove",
+                                                   },
+                                        "delete": True,
+                                        }),
+                          ],
+              },
+             ]
+
+    return rules
 
 # END =========================================================================

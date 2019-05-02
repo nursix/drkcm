@@ -445,8 +445,9 @@ class S3OptionsMenu(object):
         settings_messaging = self.settings_messaging()
 
         settings = current.deployment_settings
-        translate = settings.has_module("translate")
+        consent_tracking = lambda i: settings.get_auth_consent_tracking()
         is_data_repository = lambda i: settings.get_sync_data_repository()
+        translate = settings.has_module("translate")
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
@@ -470,6 +471,10 @@ class S3OptionsMenu(object):
                         #M("Roles", f="group"),
                         #M("Membership", f="membership"),
                     ),
+                    M("Consent Tracking", c="admin", link=False, check=consent_tracking)(
+                        M("Processing Types", f="processing_type"),
+                        M("Consent Options", f="consent_option"),
+                        ),
                     M("CMS", c="cms", f="post")(
                     ),
                     M("Database", c="appadmin", f="index")(
@@ -586,53 +591,65 @@ class S3OptionsMenu(object):
     def br():
         """ Beneficiary Registry """
 
-        ADMIN = current.session.s3.system_roles.ADMIN
+        ADMIN = current.auth.get_system_roles().ADMIN
 
         s3db = current.s3db
         labels = s3db.br_terminology()
         crud_strings = s3db.br_crud_strings("pr_person")
 
         settings = current.deployment_settings
+        use_activities = settings.get_br_case_activities()
+        urgent_activities = use_activities and settings.get_br_case_activity_urgent_option()
+
         manage_assistance = settings.get_br_manage_assistance()
 
         return M(c="br")(
-                    M(labels.CURRENT, f="person", vars={"closed": "0"})(
-                        M(crud_strings.label_create, m="create"),
-                        ),
-                    M("Overviews", link=False)(
-                        M("All Activities", f="case_activity"),
-                        ),
-                    M("Archive", link=False)(
-                        M(labels.CLOSED, f="person",
-                          vars = {"closed": "1"},
-                          ),
-                        M("Invalid Cases", f="person",
-                          vars = {"invalid": "1"},
-                          restrict = [ADMIN],
-                          ),
-                        ),
-                    M("Administration", link=False, restrict=[ADMIN])(
-                        M("Case Statuses", f="case_status"),
-                        M("Case Activity Statuses", f="case_activity_status",
-                          check = lambda i: settings.get_br_case_activities(),
-                          ),
-                        M("Need Types", f="need",
-                          check = lambda i: not settings.get_br_needs_org_specific(),
-                          ),
-                        M("Assistance Statuses", f="assistance_status",
-                          check = manage_assistance,
-                          ),
-                        M("Assistance Types", f="assistance_type",
-                          check = lambda i: manage_assistance and \
-                                            settings.get_br_assistance_types(),
-                          ),
-                        M(labels.THEMES, f="assistance_theme",
-                          check = lambda i: manage_assistance and \
-                                            settings.get_br_assistance_themes() and \
-                                            not settings.get_br_assistance_themes_org_specific(),
-                          ),
-                        ),
-                    )
+                M(labels.CURRENT, f="person", vars={"closed": "0"})(
+                    M(crud_strings.label_create, m="create"),
+                    M("Activities", f="case_activity", check=use_activities,
+                      ),
+                    M("Emergencies", f="case_activity",
+                      vars={"~.priority": "0"}, check=urgent_activities,
+                      ),
+                    ),
+                 M("Measures", f="assistance_measure", check=manage_assistance)(
+                    #M("Overview"),
+                    ),
+                 #M("Appointments"),
+                 M("Statistics", link=False)(
+                    M("Cases", f="person", m="report"),
+                    M("Activities", f="case_activity", m="report", check=use_activities),
+                    M("Measures", f="assistance_measure", m="report", check=manage_assistance),
+                    ),
+                 M("Compilations", link=False)(
+                    M("All Cases", f="person"),
+                    ),
+                 M("Archive", link=False)(
+                    M(labels.CLOSED, f="person", vars={"closed": "1"}),
+                    M("Invalid Cases", f="person", vars={"invalid": "1"}, restrict=[ADMIN]),
+                    ),
+                 M("Administration", link=False, restrict=[ADMIN])(
+                    M("Case Statuses", f="case_status"),
+                    M("Case Activity Statuses", f="case_activity_status",
+                      check = lambda i: use_activities and settings.get_br_case_activity_status(),
+                      ),
+                    M("Need Types", f="need",
+                      check = lambda i: not settings.get_br_needs_org_specific(),
+                      ),
+                    M("Assistance Statuses", f="assistance_status",
+                      check = manage_assistance,
+                      ),
+                    M("Assistance Types", f="assistance_type",
+                      check = lambda i: manage_assistance and \
+                                        settings.get_br_assistance_types(),
+                      ),
+                    M(labels.THEMES, f="assistance_theme",
+                      check = lambda i: manage_assistance and \
+                                        settings.get_br_assistance_themes() and \
+                                        not settings.get_br_assistance_themes_org_specific(),
+                      ),
+                    ),
+                 )
 
     # -------------------------------------------------------------------------
     @staticmethod

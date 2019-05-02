@@ -492,7 +492,8 @@ Thank you"""
         return False
 
     # -------------------------------------------------------------------------
-    def set_cookie(self):
+    @staticmethod
+    def set_cookie():
         """
             Set a Cookie to the client browser so that we know this user has
             registered & so we should present them with a login form instead
@@ -2490,7 +2491,7 @@ $.filterOptionsS3({
 
         user_id = user.id
         if not user_id:
-            return None
+            return
 
         db = current.db
         s3db = current.s3db
@@ -3049,7 +3050,8 @@ $.filterOptionsS3({
         return organisation_id
 
     # -------------------------------------------------------------------------
-    def s3_link_to_org_group(self, user, person_id):
+    @staticmethod
+    def s3_link_to_org_group(user, person_id):
         """
             Link a user account to an organisation group
 
@@ -3121,13 +3123,9 @@ $.filterOptionsS3({
             """ Customise hrm_human_resource """
             customise = settings.customise_resource(htablename)
             if customise:
-                if hr_id:
-                    args = [str(hr_id)]
-                else:
-                    args = None
                 request = S3Request("hrm", "human_resource",
                                     current.request,
-                                    args = args,
+                                    args = [str(hr_id)] if hr_id else [],
                                     )
                 customise(request, htablename)
 
@@ -3287,7 +3285,8 @@ $.filterOptionsS3({
         return member_id
 
     # -------------------------------------------------------------------------
-    def s3_approver(self, user):
+    @staticmethod
+    def s3_approver(user):
         """
             Returns the Approver for a new Registration &
             the organisation_id field
@@ -4775,18 +4774,17 @@ $.filterOptionsS3({
         except:
             group_id = self.id_group(group_id) # interpret group_id as a role
 
-        if self.s3_has_role(group_id):
-            r = True
-        else:
-            r = False
+        has_role = self.s3_has_role(group_id)
 
         log = self.messages.has_membership_log
         if log:
             if not user_id and self.user:
                 user_id = self.user.id
-            self.log_event(log, dict(user_id=user_id,
-                                     group_id=group_id, check=r))
-        return r
+            self.log_event(log, {"user_id": user_id,
+                                 "group_id":group_id,
+                                 "check": has_role,
+                                 })
+        return has_role
 
     # Override original method
     has_membership = s3_has_membership
@@ -4880,7 +4878,8 @@ $.filterOptionsS3({
         return False
 
     # -------------------------------------------------------------------------
-    def s3_clear_session_ownership(self, table=None, record_id=None):
+    @staticmethod
+    def s3_clear_session_ownership(table=None, record_id=None):
         """
             Removes session ownership for a record
 
@@ -5245,7 +5244,8 @@ $.filterOptionsS3({
         return
 
     # -------------------------------------------------------------------------
-    def get_realm_entity(self, table, record, entity=0):
+    @staticmethod
+    def get_realm_entity(table, record, entity=0):
         """
             Lookup the realm entity for a record
 
@@ -5298,7 +5298,8 @@ $.filterOptionsS3({
         return realm_entity
 
     # -------------------------------------------------------------------------
-    def update_shared_fields(self, table, record, **data):
+    @staticmethod
+    def update_shared_fields(table, record, **data):
         """
             Update the shared fields in data in all super-entity rows linked
             with this record.
@@ -5317,7 +5318,7 @@ $.filterOptionsS3({
         if not isinstance(super_entities, (list, tuple)):
             super_entities = [super_entities]
 
-        tables = dict()
+        tables = {}
         load = s3db.table
         super_key = s3db.super_key
         for se in super_entities:
@@ -5869,7 +5870,8 @@ class S3Permission(object):
     # -------------------------------------------------------------------------
     # Record Ownership
     # -------------------------------------------------------------------------
-    def get_owners(self, table, record):
+    @staticmethod
+    def get_owners(table, record):
         """
             Get the entity/group/user owning a record
 
@@ -5979,11 +5981,7 @@ class S3Permission(object):
                 record_id = record[table._id.name]
             else:
                 record_id = record
-            if auth.s3_session_owns(table, record_id):
-                # Session owns record
-                return True
-            else:
-                return False
+            return auth.s3_session_owns(table, record_id)
 
         # Individual record ownership
         if owner_user and owner_user == user_id:
@@ -6006,10 +6004,7 @@ class S3Permission(object):
                     append(r)
 
         # Ownership based on user role
-        if owner_group and owner_group in roles:
-            return True
-        else:
-            return False
+        return bool(owner_group and owner_group in roles)
 
     # -------------------------------------------------------------------------
     def owner_query(self,
@@ -6128,7 +6123,8 @@ class S3Permission(object):
         return query
 
     # -------------------------------------------------------------------------
-    def realm_query(self, table, entities):
+    @staticmethod
+    def realm_query(table, entities):
         """
             Returns a query to select the records owned by one of the entities.
 
@@ -7030,10 +7026,7 @@ class S3Permission(object):
 
         # Default page ACL
         if "c" in acl:
-            if "f" in acl:
-                default_page_acl = acl["f"]
-            else:
-                default_page_acl = acl["c"]
+            default_page_acl = acl["f"] if "f" in acl else acl["c"]
         elif page_restricted:
             default_page_acl = NONE
         else:
@@ -7041,10 +7034,14 @@ class S3Permission(object):
 
         # Default table ACL
         if "t" in acl:
+            # If we have a table rule, apply it
             default_table_acl = acl["t"]
-        elif table_restricted:
-            default_table_acl = default_page_acl if page_restricted else NONE
+        elif self.use_tacls and table_restricted:
+            # A restricted table is not accessible on any page without an
+            # explicit table rule (once explicit => always explicit!)
+            default_table_acl = NONE
         else:
+            # An unrestricted table is accessible under the page rule
             default_table_acl = default_page_acl if page_restricted else ALL
 
         # No ACLs inevitably causes a "no applicable ACLs" permission failure,
