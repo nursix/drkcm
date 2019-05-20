@@ -232,6 +232,8 @@ def config(settings):
     #settings.base.pdf_orientation = "Landscape"
     # Location of Logo used in pdfs headers
     #settings.ui.pdf_logo = "static/img/mylogo.png"
+    # Maximum number of records in PDF exports (None for unlimited)
+    #settings.base.pdf_max_rows = 1000
 
     #Uncomment to add a title row to XLS exports
     #settings.base.xls_title_row = True

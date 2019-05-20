@@ -49,6 +49,7 @@ from ..s3codec import S3Codec
 from ..s3utils import s3_strip_markup, s3_unicode, s3_str
 
 try:
+    from reportlab.graphics.shapes import Drawing, Line
     from reportlab.lib import colors
     from reportlab.lib.colors import Color, HexColor
     from reportlab.lib.pagesizes import A4, LETTER, landscape, portrait
@@ -57,8 +58,13 @@ try:
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     from reportlab.pdfgen import canvas
-    from reportlab.platypus import BaseDocTemplate, PageBreak, PageTemplate, \
-                                   Paragraph, Spacer, Table
+    from reportlab.platypus import BaseDocTemplate, \
+                                   KeepTogether, \
+                                   PageBreak, \
+                                   PageTemplate, \
+                                   Paragraph, \
+                                   Spacer, \
+                                   Table
     from reportlab.platypus.frames import Frame
     reportLabImported = True
 except ImportError:
@@ -214,9 +220,6 @@ class S3RL_PDF(S3Codec):
             @keyword use_colour:      True to add colour to the cells. default False
 
             @keyword pdf_html_styles: styles for S3html2pdf (dict)
-
-            @ToDo: Add Page Numbers in Footer:
-                   http://www.blog.pythonlibrary.org/2013/08/12/reportlab-how-to-add-page-numbers/
         """
 
         if not reportLabImported:
@@ -231,8 +234,8 @@ class S3RL_PDF(S3Codec):
         self.pdf_orderby = attr_get("pdf_orderby")
         self.pdf_hide_comments = attr_get("pdf_hide_comments")
         self.table_autogrow = attr_get("pdf_table_autogrow")
-        self.pdf_header_padding = attr_get("pdf_header_padding", 0)
-        self.pdf_footer_padding = attr_get("pdf_footer_padding", 0)
+        self.pdf_header_padding = attr_get("pdf_header_padding", 6)
+        self.pdf_footer_padding = attr_get("pdf_footer_padding", 3)
 
         # Get the title & filename
         now = current.request.now.isoformat()[:19].replace("T", " ")
@@ -274,7 +277,7 @@ class S3RL_PDF(S3Codec):
                                                      doc.printable_width,
                                                      styles = pdf_html_styles,
                                                      )
-            if self.pdf_header_padding:
+            if header_flowable and self.pdf_header_padding:
                 header_flowable.append(Spacer(1, self.pdf_header_padding))
 
         # Get the footer
@@ -287,7 +290,7 @@ class S3RL_PDF(S3Codec):
                                                      doc.printable_width,
                                                      styles = pdf_html_styles,
                                                      )
-            if self.pdf_footer_padding:
+            if footer_flowable and self.pdf_footer_padding:
                 footer_flowable.append(Spacer(1, self.pdf_footer_padding))
 
         # Build report template
@@ -332,6 +335,7 @@ class S3RL_PDF(S3Codec):
         doc.build(header_flowable,
                   body_flowable,
                   footer_flowable,
+                  canvasmaker = S3NumberedCanvas,
                   )
 
         # Return the generated PDF
@@ -407,24 +411,37 @@ class S3RL_PDF(S3Codec):
         dtfilter, orderby, left = resource.datatable_filter(list_fields, get_vars)
         resource.add_filter(dtfilter)
 
-        result = resource.select(list_fields,
-                                 left=left,
-                                 limit=None,
-                                 count=True,
-                                 getids=True,
-                                 orderby=orderby,
-                                 represent=True,
-                                 show_links=False)
+        # Should we limit the number of rows in the export?
+        max_rows = current.deployment_settings.get_pdf_max_rows()
+        limit, count = (max_rows, True) if max_rows else (None, False)
 
-        # Now generate the PDF table
-        pdf_table = S3PDFTable(doc,
+        result = resource.select(list_fields,
+                                 count = count,
+                                 left = left,
+                                 limit = limit,
+                                 orderby = orderby,
+                                 represent = True,
+                                 show_links = False,
+                                 )
+        totalrows = result.numrows if count else None
+
+        if resource.get_config("pdf_format") == "list":
+            # Export as data list
+            output = S3PDFList(doc,
                                result.rfields,
                                result.rows,
-                               groupby = self.pdf_groupby,
-                               autogrow = self.table_autogrow,
+                               totalrows = totalrows,
                                ).build()
-
-        return pdf_table
+        else:
+            # Export as data table
+            output = S3PDFTable(doc,
+                                result.rfields,
+                                result.rows,
+                                groupby = self.pdf_groupby,
+                                autogrow = self.table_autogrow,
+                                totalrows = totalrows,
+                                ).build()
+        return output
 
 # =============================================================================
 class EdenDocTemplate(BaseDocTemplate):
@@ -708,6 +725,235 @@ class EdenDocTemplate(BaseDocTemplate):
         return (table, style)
 
 # =============================================================================
+class S3PDFList(object):
+    """ Export resource data as list-style report """
+
+    def __init__(self,
+                 document,
+                 rfields,
+                 rows,
+                 totalrows = None,
+                 ):
+        """
+            Constructor
+
+            @param document: the DocTemplate
+            @param rfields: the S3ResourceFields (for labels and order)
+            @param rows: the data (S3ResourceData.rows)
+            @param totalrows: total number of rows matching the filter
+        """
+
+        self.document = document
+
+        self.rfields = rfields
+        self.rows = rows
+
+        self.numrows = len(rows)
+        self.totalrows = totalrows
+
+        # Set fonts
+        self.font_name = None
+        self.font_name_bold = None
+        set_fonts(self)
+
+        self.styles = self.get_styles()
+
+    # -------------------------------------------------------------------------
+    def build(self):
+        """
+            Build the list
+
+            @returns: list of Flowables
+        """
+
+        flowables = []
+
+        document = self.document
+        try:
+            printable_width = document.printable_width
+        except AttributeError:
+            printable_width = document.width
+
+        rfields = self.rfields
+        formatted = self.formatted
+        for index, row in enumerate(self.rows):
+
+            # Insert a horizontal line between records
+            ruler = Drawing(printable_width,6)
+            ruler.add(Line(0, 6, printable_width, 6,
+                           strokeColor = colors.grey,
+                           strokeWidth = 0.5,
+                           ))
+
+            item = [ruler]
+            for rfield in rfields:
+                item.extend(formatted(rfield, row[rfield.colname]))
+            if index == 0:
+                flowables.extend(item)
+            else:
+                flowables.append(KeepTogether(item))
+
+        # Hint for too many records
+        totalrows = self.totalrows
+        numrows = self.numrows
+        if totalrows and totalrows > numrows:
+            hint = current.T("Too many records - %(number)s more records not included") % \
+                                {"number": totalrows - numrows}
+            flowables.append(PageBreak())
+            flowables.append(Paragraph(s3_str(hint), self.styles["warning"]))
+
+        return flowables
+
+    # -------------------------------------------------------------------------
+    def formatted(self, rfield, value):
+        """
+            Format a field value with label
+
+            @returns: a list of Flowables
+        """
+
+        label = biDiText(rfield.label)
+
+        inline = self.styles["inline"]
+        indented = self.styles["indented"]
+
+        if isinstance(value, (basestring, lazyT)):
+            v = biDiText(value)
+            if "\n" in v:
+                flowables = [Paragraph("<b>%s:</b>" % label, inline),
+                             Paragraph(v.replace("\n", "<br/>"), indented),
+                             ]
+            else:
+                # Convert to paragraph with inline label
+                flowables = [Paragraph("<b>%s:</b> %s" % (label, biDiText(value)), inline),
+                             ]
+        else:
+            flowables = self.format_value(rfield, value)
+            label_paragraph = Paragraph("<b>%s:</b>" % label, inline)
+            if isinstance(flowables, list):
+                flowables.insert(0, label_paragraph)
+                flowables.append(Spacer(1, 6))
+            else:
+                flowables = [label_paragraph,
+                             Paragraph(s3_str(flowables).replace("\n", "<br/>"), indented),
+                             ]
+
+        # Return list of flowables
+        return flowables
+
+    # -------------------------------------------------------------------------
+    def format_value(self, rfield, value):
+        """
+            Convert represented field value into suitable ReportLab elements
+
+            @param rfield: the S3ResourceField
+            @param value: the field value
+
+            @returns: a BiDi-converted unicode string, or a list of Flowables
+        """
+
+        if isinstance(value, (basestring, lazyT)):
+            formatted = biDiText(value)
+
+        elif isinstance(value, IMG):
+            field = rfield.field
+            if field:
+                formatted = S3html2pdf.parse_img(value, field.uploadfolder)
+                if formatted:
+                    formatted = formatted[:1]
+            else:
+                formatted = []
+
+        elif isinstance(value, DIV):
+            is_header = isinstance(value, (H1, H2, H3, H4, H5, H6))
+            is_block = is_header or isinstance(value, (P, DIV))
+
+            # Paragraph Style
+            style = self.styles["indented_bold"] \
+                    if is_header else self.styles["indented"]
+
+            num_components = len(value.components)
+
+            if num_components == 1:
+                # Simple tag => convert to string
+                formatted = self.format_value(rfield, value.components[0])
+
+                # Wrap in paragraph if string contains newlines or component is
+                # a block-element, preserving newlines and setting font weight
+                if isinstance(formatted, basestring) and (is_block or "\n" in formatted):
+                    formatted = [Paragraph(formatted.replace("\n", "<br/>"), style)]
+                elif not isinstance(formatted, list):
+                    formatted = [formatted]
+
+            elif num_components > 0:
+                # Complex tag => convert to list of paragraphs
+                # @todo: support bulleted lists and tables in represents
+                formatted = []
+
+                def add_paragraph(text):
+                    # Wrap text in Paragraph to preserve newlines and set font weight
+                    para = Paragraph(biDiText(text).replace("\n", "<br/>"), style)
+                    formatted.append(para)
+
+                text = ""
+                for component in value.components:
+                    if isinstance(component, basestring):
+                        # Concatenate consecutive strings
+                        text = "".join((text, component))
+                    else:
+                        # Convert component
+                        sub = self.format_value(rfield, component)
+                        if isinstance(sub, basestring):
+                            text = "".join((text, sub))
+                            continue
+                        elif text:
+                            add_paragraph(text)
+                            text = ""
+                        if isinstance(sub, list):
+                            formatted.extend(sub)
+                        else:
+                            formatted.append(sub)
+                if text:
+                    add_paragraph(text)
+            else:
+                # Empty tag => empty string
+                formatted = ""
+        else:
+            formatted = biDiText(value)
+
+        return formatted
+
+    # -------------------------------------------------------------------------
+    def get_styles(self):
+        """
+            Get the paragraph styles used in this layout
+
+            @returns: dict of paragraph styles
+        """
+
+        styles = {}
+
+        styles["inline"] = style = getSampleStyleSheet()["Normal"]
+        style.spaceAfter = 6
+        style.fontName = self.font_name
+
+        styles["indented"] = style = getSampleStyleSheet()["Normal"]
+        style.leftIndent = style.rightIndent = 12
+        style.spaceAfter = 6
+        style.fontName = self.font_name
+
+        styles["indented_bold"] = style = getSampleStyleSheet()["Normal"]
+        style.leftIndent = style.rightIndent = 12
+        style.spaceAfter = 6
+        style.fontName = self.font_name_bold
+
+        styles["warning"] = style = getSampleStyleSheet()["Normal"]
+        style.textColor = colors.red
+        style.fontSize = 12
+
+        return styles
+
+# =============================================================================
 class S3PDFTable(object):
     """
         Class to build a table that can then be placed in a pdf document
@@ -725,6 +971,7 @@ class S3PDFTable(object):
                  rows,
                  groupby = None,
                  autogrow = False,
+                 totalrows = None,
                  ):
         """
             Constructor
@@ -742,6 +989,7 @@ class S3PDFTable(object):
                              "V" - add extra (empty) rows to fill vertically
                              "B" - do both
                              False - do nothing
+            @param totalrows: total number of rows matching the filter
         """
 
         rtl = current.response.s3.rtl
@@ -771,6 +1019,10 @@ class S3PDFTable(object):
         self.labels = labels
 
         # Convert the input data into suitable ReportLab elements
+
+        self.totalrows = totalrows
+        self.numrows = len(rows)
+
         convert = self.convert
         data = []
         append = data.append
@@ -1198,6 +1450,19 @@ class S3PDFTable(object):
                 tables.append(PageBreak())
             if next_part % num_horz_parts == 0:
                 start_row += num_rows - 1 # Don't include the heading
+
+        # Hint for too many records
+        totalrows = self.totalrows
+        numrows = self.numrows
+        if totalrows and totalrows > numrows:
+            hint = current.T("Too many records - %(number)s more records not included") % \
+                                {"number": totalrows - numrows}
+            stylesheet = getSampleStyleSheet()
+            style = stylesheet["Normal"]
+            style.textColor = colors.red
+            style.fontSize = 12
+            tables.append(PageBreak())
+            tables.append(Paragraph(s3_str(hint), style))
 
         # Return a list of table objects
         return tables
@@ -1892,5 +2157,38 @@ class S3html2pdf():
                 except AttributeError:
                     color = None
         return color
+
+# =============================================================================
+class S3NumberedCanvas(canvas.Canvas):
+    """
+        Canvas type with page numbers
+        - based on http://code.activestate.com/recipes/576832
+    """
+    def __init__(self, *args, **kwargs):
+
+        canvas.Canvas.__init__(self, *args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            canvas.Canvas.showPage(self)
+        canvas.Canvas.save(self)
+
+    def draw_page_number(self, page_count):
+
+        self.setFont("Helvetica", 7)
+        self.drawRightString(self._pagesize[0] - 12,
+                             self._pagesize[1] - 12,
+                             "%d / %d" % (self._pageNumber, page_count),
+                             )
 
 # END =========================================================================
