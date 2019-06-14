@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#from collections import OrderedDict
+from collections import OrderedDict
 
 from gluon import current
 from gluon.storage import Storage
@@ -15,8 +15,8 @@ def config(settings):
 
     T = current.T
 
-    settings.base.system_name = T("Help for Cumbria")
-    settings.base.system_name_short = T("Help Cumbria")
+    settings.base.system_name = T("Support Cumbria")
+    settings.base.system_name_short = T("Support Cumbria")
 
     # Theme
     settings.base.theme = "CCC"
@@ -25,15 +25,23 @@ def config(settings):
 
     # PrePopulate data
     settings.base.prepopulate += ("VM/CCC",)
-    #settings.base.prepopulate_demo += ("VM/CCC/Demo",)
+    settings.base.prepopulate_demo = ("VM/CCC/Demo",)
 
     # Authentication settings
     # Do new users need to verify their email address?
     settings.auth.registration_requires_verification = True
     # Do new users need to be approved by an administrator prior to being able to login?
+    # - varies by path (see customise_auth_user_controller)
     #settings.auth.registration_requires_approval = True
     settings.auth.registration_requests_organisation = True
 
+    # -------------------------------------------------------------------------
+    # L10n (Localization) settings
+    settings.L10n.languages = OrderedDict([
+        ("en-gb", "English"),
+    ])
+    # Default Language
+    settings.L10n.default_language = "en-gb"
     # Uncomment to Hide the language toolbar
     settings.L10n.display_toolbar = False
 
@@ -113,5 +121,19 @@ def config(settings):
                                       view = "VM/CCC/views/volunteer.html")
 
     settings.customise_vol_home = customise_vol_home
+
+    # -------------------------------------------------------------------------
+    def customise_auth_user_controller(**attr):
+
+        if current.request.args(0) == "register":
+            # Not easy to tweak the URL in the login form's buttons
+            from gluon import redirect, URL
+            redirect(URL(c="default", f="index",
+                         args="register",
+                         vars=current.request.get_vars))
+
+        return attr
+
+    settings.customise_auth_user_controller = customise_auth_user_controller
 
 # END =========================================================================

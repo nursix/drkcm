@@ -807,6 +807,43 @@ class auth_Consent(object):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def register_consent(cls, user_id):
+        """
+            Track consent responses given during user self-registration
+
+            @param user_id: the auth_user ID
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ltable = s3db.pr_person_user
+        ptable = s3db.pr_person
+
+        # Look up the person ID
+        join = ptable.on(ptable.pe_id == ltable.pe_id)
+        person = db(ltable.user_id == user_id).select(ptable.id,
+                                                      join = join,
+                                                      limitby = (0, 1),
+                                                      ).first()
+        if person:
+            person_id = person.id
+
+            # Look up the consent response from temp user record
+            ttable = s3db.auth_user_temp
+            row = db(ttable.user_id == user_id).select(ttable.id,
+                                                       ttable.consent,
+                                                       limitby = (0, 1),
+                                                       ).first()
+            if row and row.consent:
+                # Track consent
+                cls.track(person_id, row.consent)
+
+                # Reset consent response in temp user record
+                row.update_record(consent=None)
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def verify(cls, record_id):
         """
             Verify a consent record (checks the hash, not expiry)
@@ -951,6 +988,8 @@ class auth_Consent(object):
             @param code: the processing type code to check
             @param field: the field in the table referencing pr_person.id
 
+            @returns: Query
+
             @example:
                 consent = s3db.auth_Consent()
                 query = consent.consent_query(table, "PIDSHARE") & (table.deleted == False)
@@ -980,16 +1019,51 @@ class auth_Consent(object):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def consent_filter(cls, selector, code):
+    def consent_filter(cls, code, selector=None):
         """
             Filter resource for records where the person identified by
             selector has consented to a certain type of data processing.
 
             - useful to limit REST methods that require consent
+
+            @param code: the processing type code to check
+            @param selector: a field selector (string) that references
+                             pr_person.id; if not specified pr_person is
+                             assumed to be the master resource
+
+            @returns: S3ResourceQuery
+
+            @example:
+                consent = s3db.auth_Consent
+                resource.add_filter(consent.consent_filter("PIDSHARE", "~.person_id"))
+
+            NB only one consent filter can be used for the same resource;
+               if multiple consent options must be checked and/or multiple
+               person_id references apply independently, then either aliased
+               auth_consent components can be used to construct a filter, or
+               the query must be split (the latter typically performs better).
+               Ideally, however, the consent decision for a single operation
+               should not be complex or second-guessing.
         """
 
-        # TODO implement this
-        pass
+        option_ids = cls.get_consent_options(code)
+        today = current.request.utcnow.date()
+
+        # Construct sub-selectors
+        if selector and selector not in ("id", "~.id"):
+            consent = "%s$person_id:auth_consent" % selector
+        else:
+            # Assume pr_person is master
+            consent = "person_id:auth_consent"
+        option_id = FS("%s.option_id" % consent)
+        expires_on = FS("%s.expires_on" % consent)
+        consenting = FS("%s.consenting" % consent)
+
+        query = (option_id.belongs(option_ids)) & \
+                ((expires_on == None) | (expires_on > today)) & \
+                (consenting == True)
+
+        return query
 
 # =============================================================================
 def auth_user_options_get_osm(pe_id):

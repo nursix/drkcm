@@ -226,6 +226,8 @@
          * @prop {string} labelEdit: label for Edit-button
          * @prop {string} labelDelete: label for the Delete-button
          * @prop {string} deleteConfirmation: the question for the delete-confirmation
+         * @prop {string} refreshIconClass: the CSS class for the refresh button icon
+         * @prop {string} calendarIconClass: the CSS class for the calendar button icon
          *
          */
         options: {
@@ -245,7 +247,10 @@
             labelEdit: 'Edit',
             labelDelete: 'Delete',
             deleteConfirmation: 'Do you want to delete this entry?',
-            firstDay: 1
+            firstDay: 1,
+
+            refreshIconClass: 'fa fa-refresh',
+            calendarIconClass: 'fa fa-calendar'
         },
 
         /**
@@ -344,13 +349,13 @@
                 // View options
                 customButtons: {
                     reload: {
-                        text: '',
+                        text: 'Reload',
                         click: function() {
                             self.reload();
                         }
                     },
                     calendar: {
-                        text: '',
+                        text: 'Calendar',
                         click: function() {
                             datePicker.datepicker('show');
                         }
@@ -382,11 +387,15 @@
                 timezone: 'local'
             });
 
-            // Remember reloadButton, use icon
-            this.reloadButton = $('.fc-reload-button').html('<i class="fa fa-refresh">');
+            // Button icons
+            var refreshIcon = $('<i>').addClass(opts.refreshIconClass),
+                calendarIcon = $('<i>').addClass(opts.calendarIconClass);
+
+            // Store reloadButton, use icon
+            this.reloadButton = $('.fc-reload-button').empty().append(refreshIcon);
 
             // Move datepicker into header, use icon for calendar button
-            var calendarButton = $('.fc-calendar-button').html('<i class="fa fa-calendar">');
+            var calendarButton = $('.fc-calendar-button').empty().append(calendarIcon);
             datePicker.datepicker('option', {showOn: 'focus', showButtonPanel: true, firstDay: opts.firstDay})
                       .insertBefore(calendarButton)
                       .on('change', function() {
@@ -395,6 +404,9 @@
                               el.fullCalendar('gotoDate', date);
                           }
                       });
+
+            // Hide the datepicker dialog (sometimes showing after init)
+            datePicker.datepicker('widget').hide();
 
             // Add throbber
             var throbber = $('<div class="inline-throbber">').css({visibility: 'hidden'});
@@ -678,8 +690,13 @@
                     url = resource.baseURL;
 
                 if (url && label) {
-                    url += '/create.popup';
-                    var query = [];
+
+                    var link = createButton.get(0),
+                        query = [];
+
+                    // Set path to create-dialog
+                    link.href = url;
+                    link.pathname += '/create.popup';
 
                     // Add refresh-target
                     if (widgetID) {
@@ -690,9 +707,15 @@
                     var dates = start.toISOString() + '--' + moment(end).subtract(1, 'seconds').toISOString();
                     query.push('organizer=' + encodeURIComponent(dates));
 
-                    url += '?' + query.join('&');
-                    createButton.attr('href', url)
-                                .text(label)
+                    // Update query part of link URL
+                    if (link.search) {
+                        link.search += '&' + query.join('&');
+                    } else {
+                        link.search = '?' + query.join('&');
+                    }
+
+                    // Complete the button and append it to popup
+                    createButton.text(label)
                                 .appendTo(contents)
                                 .on('click' + ns, function() {
                                     api.hide();

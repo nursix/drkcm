@@ -341,6 +341,7 @@ Thank you"""
                      Field("image", "upload",
                            length = current.MAX_FILENAME_LENGTH,
                            ),
+                     Field("consent"),
                      S3MetaFields.uuid(),
                      S3MetaFields.created_on(),
                      S3MetaFields.modified_on(),
@@ -1155,13 +1156,13 @@ Thank you"""
             @return: a registration form
         """
 
+        T = current.T
         db = current.db
         settings = self.settings
         messages = self.messages
         request = current.request
         session = current.session
         deployment_settings = current.deployment_settings
-        T = current.T
 
         # Customise the resource
         customise = deployment_settings.customise_resource("auth_user")
@@ -1245,6 +1246,7 @@ Thank you"""
                           )
 
         # Add an opt in clause to receive emails depending on the deployment settings
+        # @ToDo: Replace with Consent Tracking
         if deployment_settings.get_auth_opt_in_to_email():
             field_id = "%s_opt_in" % utablename
             comment = DIV(DIV(_class="tooltip",
@@ -1329,6 +1331,7 @@ Thank you"""
                       field_id + SQLFORM.ID_ROW_SUFFIX,
                       )
 
+        # @ToDo: Replace with Consent Tracking
         if deployment_settings.get_auth_terms_of_service():
             field_id = "%s_tos" % utablename
             label = T("I agree to the %(terms_of_service)s") % \
@@ -1948,7 +1951,7 @@ $.filterOptionsS3({
 
             Lookups Pseudo-reference Integer fields from Names
             e.g.:
-            auth_membership.pe_id from organisation.name=<Org Name>
+            auth_membership.pe_id from org_organisation.name=<Org Name>
         """
 
         db = current.db
@@ -2102,9 +2105,9 @@ $.filterOptionsS3({
                 # Replace string with pe_id
                 element.text = new_value
                 # Store in case we get called again with same value
-                looked_up[pe_tablename][pe_value] = dict(pe_id=new_value,
-                                                         id=str(record_id),
-                                                         )
+                looked_up[pe_tablename][pe_value] = {"pe_id": new_value,
+                                                     "id": str(record_id),
+                                                     }
 
         # No longer required since we can use references in the import CSV
         # Organisations
@@ -2316,6 +2319,11 @@ $.filterOptionsS3({
         mobile = form_vars.mobile
         if mobile:
             record["mobile"] = mobile
+
+        # Store Consent Question Response
+        consent = form_vars.consent
+        if consent:
+            record["consent"] = consent
 
         # Insert the profile picture
         image = form_vars.image
@@ -2561,6 +2569,10 @@ $.filterOptionsS3({
 
         self.s3_link_user(user)
 
+        # Track consent
+        if deployment_settings.get_auth_consent_tracking():
+            s3db.auth_Consent.register_consent(user_id)
+
         if current.response.s3.bulk is True:
             # Non-interactive imports should stop here
             user_email = db(utable.id == user_id).select(utable.email,
@@ -2684,8 +2696,6 @@ $.filterOptionsS3({
         ttable = s3db.auth_user_temp
         ptable = s3db.pr_person
         ctable = s3db.pr_contact
-        atable = s3db.pr_address
-        gctable = s3db.gis_config
         ltable = s3db.pr_person_user
 
         # Organisation becomes the realm entity of the person record
@@ -2698,7 +2708,8 @@ $.filterOptionsS3({
 
         left = [ltable.on(ltable.user_id == utable.id),
                 ptable.on(ptable.pe_id == ltable.pe_id),
-                ttable.on(utable.id == ttable.user_id)]
+                ttable.on(utable.id == ttable.user_id),
+                ]
 
         if user is not None:
             if not isinstance(user, (list, tuple)):
@@ -2824,7 +2835,7 @@ $.filterOptionsS3({
                     person = None
 
                 # Users own their person records
-                owner = Storage(owned_by_user=user.id)
+                owner = Storage(owned_by_user = user.id)
 
                 if person:
                     other = db(ltable.pe_id == person.pe_id).select(ltable.id,
@@ -2834,6 +2845,7 @@ $.filterOptionsS3({
                     # Match found, and it isn't linked to another user account
                     # => link to this person record (+update it)
                     pe_id = person.pe_id
+                    person_id = person.id
 
                     # Get the realm entity
                     realm_entity = self.get_realm_entity(ptable, person)
@@ -2852,16 +2864,22 @@ $.filterOptionsS3({
                     db(ctable.pe_id == pe_id).update(**owner)
 
                     # Assign ownership of the Address record(s)
+                    atable = s3db.pr_address
                     db(atable.pe_id == pe_id).update(**owner)
 
+                    # Assign ownership of the Details record
+                    dtable = s3db.pr_person_details
+                    db(dtable.person_id == person_id).update(**owner)
+
                     # Assign ownership of the GIS Config record(s)
+                    gctable = s3db.gis_config
                     db(gctable.pe_id == pe_id).update(**owner)
 
                     # Set pe_id if this is the current user
                     if self.user and self.user.id == user.id:
                         self.user.pe_id = pe_id
 
-                    person_ids.append(person.id)
+                    person_ids.append(person_id)
 
                 else:
                     # There is no match or it is linked to another user account
@@ -2883,7 +2901,7 @@ $.filterOptionsS3({
                     if person_id:
 
                         # Update the super-entities
-                        person = Storage(id=person_id)
+                        person = Storage(id = person_id)
                         s3db.update_super(ptable, person)
                         pe_id = person.pe_id
 
@@ -2960,11 +2978,12 @@ $.filterOptionsS3({
                     if image: # and hasattr(image, "file"):
                         itable = s3db.pr_image
                         url = URL(c="default", f="download", args=image)
-                        itable.insert(pe_id=pe_id,
-                                      profile=True,
-                                      image=image,
+                        itable.insert(pe_id = pe_id,
+                                      profile = True,
+                                      image = image,
                                       url = url,
-                                      description=current.T("Profile Picture"))
+                                      description = current.T("Profile Picture"),
+                                      )
 
                     # Set pe_id if this is the current user
                     if self.user and self.user.id == user.id:
@@ -5083,6 +5102,7 @@ $.filterOptionsS3({
                   "pr_contact",
                   "pr_address",
                   "pr_contact_emergency",
+                  "pr_person_details",
                   "pr_physical_description",
                   "pr_group_membership",
                   "pr_image",
