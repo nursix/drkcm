@@ -50,6 +50,7 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
+from s3compat import basestring, long
 from .s3datetime import S3DateTime, s3_decode_iso_datetime
 from .s3export import S3Exporter
 from .s3forms import S3SQLDefaultForm
@@ -428,8 +429,7 @@ class S3CRUD(S3Method):
                 if not create_next:
                     next_vars = self._remove_filters(r.get_vars)
                     if r.component:
-                        self.next = r.url(method="",
-                                          vars=next_vars)
+                        self.next = r.url(method="", vars=next_vars)
                     else:
                         self.next = r.url(id="[id]",
                                           method="read",
@@ -667,7 +667,7 @@ class S3CRUD(S3Method):
                                         subheadings = subheadings,
                                         format = representation,
                                         )
-                except HTTP, e:
+                except HTTP as e:
                     message = current.ERROR.BAD_RECORD \
                               if e.status == 404 else e.message
                     r.error(e.status, message)
@@ -953,7 +953,7 @@ class S3CRUD(S3Method):
                                     link=link,
                                     subheadings=subheadings,
                                     format=representation)
-            except HTTP, e:
+            except HTTP as e:
                 message = current.ERROR.BAD_RECORD \
                           if e.status == 404 else e.message
                 r.error(e.status, message)
@@ -995,27 +995,31 @@ class S3CRUD(S3Method):
             output["deduplicate"] = S3Merge.bookmark(r, tablename, record_id)
 
             # Redirection
-            if r.http == "POST" and "interim_save" in r.post_vars:
-                next_vars = self._remove_filters(r.get_vars)
-                self.next = r.url(target="[id]", method="update",
-                                  vars=next_vars)
+            if representation in ("popup", "iframe", "plain", "dl"):
+                self.next = None
             else:
-                update_next = _config("update_next")
-                if representation in ("popup", "iframe", "plain", "dl"):
-                    self.next = None
-                elif not update_next:
+                if r.http == "POST" and "interim_save" in r.post_vars:
+                    next_vars = self._remove_filters(r.get_vars)
+                    update_next = r.url(target = "[id]",
+                                        method = "update",
+                                        vars = next_vars,
+                                        )
+                else:
+                    update_next = _config("update_next")
+
+                if not update_next:
                     next_vars = self._remove_filters(r.get_vars)
                     if r.component:
                         self.next = r.url(method="", vars=next_vars)
                     else:
-                        self.next = r.url(id="[id]",
-                                          method="read",
-                                          vars=next_vars)
+                        self.next = r.url(id = "[id]",
+                                          method = "read",
+                                          vars = next_vars,
+                                          )
+                elif callable(update_next):
+                    self.next = update_next(r)
                 else:
-                    try:
-                        self.next = update_next(self)
-                    except TypeError:
-                        self.next = update_next
+                    self.next = update_next
 
         elif representation == "url":
             return self.import_url(r)
@@ -1733,8 +1737,8 @@ class S3CRUD(S3Method):
             # plain.html view for pagination to work properly!
             ajax_url = attr.get("list_ajaxurl", None)
             if not ajax_url:
-                ajax_vars = dict((k,v) for k, v in r.get_vars.iteritems()
-                                       if k not in ("start", "limit"))
+                ajax_vars = {k: v for k, v in r.get_vars.items()
+                                  if k not in ("start", "limit")}
                 ajax_url = r.url(representation="dl", vars=ajax_vars)
 
             # Render the list (even if empty => Ajax-section is required
@@ -2697,8 +2701,13 @@ class S3CRUD(S3Method):
         if deletable and has_permission("delete", table):
             icon = "delete"
             if not delete_url:
-                delete_url = iframe_safe(URL(args = args + ["delete"],
-                                             vars = get_vars))
+                if r.function[:6] == "table/":
+                    # Dynamic Table
+                    delete_url = iframe_safe(URL(args = [r.function[6:]] + args + ["delete"],
+                                                 vars = get_vars))
+                else:
+                    delete_url = iframe_safe(URL(args = args + ["delete"],
+                                                 vars = get_vars))
             if ownership_required("delete", table):
                 # Check which records can be deleted
                 query = auth.s3_accessible_query("delete", table)

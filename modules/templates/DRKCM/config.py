@@ -4,10 +4,11 @@ import datetime
 
 from collections import OrderedDict
 
-from gluon import current, A, DIV,IS_EMPTY_OR, IS_IN_SET, IS_LENGTH, IS_NOT_EMPTY, SPAN, TAG, URL
+from gluon import current, A, DIV, IS_EMPTY_OR, IS_IN_SET, IS_LENGTH, IS_NOT_EMPTY, SPAN, TAG, URL
 from gluon.storage import Storage
 
 from s3 import FS, IS_ONE_OF
+from s3compat import long
 from s3dal import original_tablename
 
 # =============================================================================
@@ -46,6 +47,7 @@ UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
                "response_themes_sectors": False,
                "response_themes_needs": False,
                "response_themes_optional": False,
+               "response_types": True,
                "response_use_organizer": False,
                }
 
@@ -82,6 +84,7 @@ UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
                       "response_themes_sectors": True,
                       "response_themes_needs": True,
                       "response_themes_optional": True,
+                      "response_types": False,
                       "response_use_organizer": True,
                       },
               }
@@ -451,8 +454,8 @@ def config(settings):
     settings.dvr.response_themes_details = get_ui_option("response_themes_details")
     # Response themes are org-specific
     settings.dvr.response_themes_org_specific = True
-    # Do not use response types
-    settings.dvr.response_types = False
+    # Use response types
+    settings.dvr.response_types = get_ui_option("response_types")
     # Response types hierarchical
     settings.dvr.response_types_hierarchical = True
     # Response themes organized by sectors
@@ -2044,7 +2047,9 @@ def config(settings):
                                           "hours",
                                           ]
                 if settings.get_dvr_response_due_date():
-                    response_action_fields[1:1] = ["date_due"]
+                    response_action_fields.insert(1, "date_due")
+                if settings.get_dvr_response_types():
+                    response_action_fields.insert(0, "response_type_id")
 
                 s3db.add_custom_callback("dvr_response_action",
                                          "onvalidation",
@@ -2722,6 +2727,10 @@ def config(settings):
                                             details = True,
                                             )
 
+        # Using response types?
+        use_response_type = settings.get_dvr_response_types()
+        response_type = "response_type_id" if use_response_type else None
+
         is_report = r.method == "report"
         if is_report:
 
@@ -2751,6 +2760,7 @@ def config(settings):
                     "person_id$person_details.nationality",
                     "person_id$person_details.marital_status",
                     (T("Size of Family"), "person_id$dvr_case.household_size"),
+                    response_type,
                     (T("Theme"), "response_theme_ids"),
                     need,
                     sector,
@@ -2854,6 +2864,7 @@ def config(settings):
 
                     # Adapt list-fields to perspective
                     list_fields = ["case_activity_id",
+                                   response_type,
                                    "response_theme_ids",
                                    "comments",
                                    "human_resource_id",
@@ -2865,6 +2876,7 @@ def config(settings):
                     pdf_fields = ["date",
                                   #"human_resource_id",
                                   "case_activity_id",
+                                  response_type,
                                   "response_theme_ids",
                                   "comments",
                                   ]
@@ -2884,6 +2896,7 @@ def config(settings):
 
                 # Adapt list-fields to perspective
                 list_fields = [(T("ID"), "person_id$pe_label"),
+                               response_type,
                                "human_resource_id",
                                date_due,
                                "date",
@@ -2892,9 +2905,9 @@ def config(settings):
                                ]
 
                 if response_themes_details:
-                    list_fields[1:1] = [(T("Themes"), "dvr_response_action_theme.id")]
+                    list_fields[2:2] = [(T("Themes"), "dvr_response_action_theme.id")]
                 else:
-                    list_fields[1:1] = ["response_theme_ids", "comments"]
+                    list_fields[2:2] = ["response_theme_ids", "comments"]
 
                 if ui_options.get("response_themes_optional"):
                     # Show person_id (read-only)
@@ -2932,27 +2945,29 @@ def config(settings):
                 if r.interactive:
                     from s3 import S3AgeFilter, \
                                    S3DateFilter, \
+                                   S3HierarchyFilter, \
                                    S3OptionsFilter, \
                                    S3TextFilter, \
                                    s3_get_filter_opts
 
                     filter_widgets = [
-                        S3TextFilter(
-                            ["person_id$pe_label",
-                             "person_id$first_name",
-                             "person_id$middle_name",
-                             "person_id$last_name",
-                             "comments",
-                             ],
-                            label = T("Search"),
-                            ),
+                        S3TextFilter(["person_id$pe_label",
+                                      "person_id$first_name",
+                                      "person_id$middle_name",
+                                      "person_id$last_name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
                         S3OptionsFilter("status_id",
                                         options = lambda: \
                                                   s3_get_filter_opts("dvr_response_status"),
                                         cols = 3,
                                         translate = True,
                                         ),
-                        S3DateFilter("date", hidden=not is_report),
+                        S3DateFilter("date",
+                                     hidden = not is_report,
+                                     ),
                         S3OptionsFilter(
                             "response_theme_ids",
                             header = True,
@@ -2972,18 +2987,25 @@ def config(settings):
                                     )
                         ]
 
+                    if use_response_type:
+                        filter_widgets.insert(3,
+                            S3HierarchyFilter("response_type_id",
+                                              hidden = True,
+                                              ))
                     if use_due_date:
-                        filter_widgets.insert(3, S3DateFilter("date_due",
-                                                              hidden = is_report,
-                                                              ))
+                        filter_widgets.insert(3,
+                            S3DateFilter("date_due",
+                                         hidden = is_report,
+                                         ))
                     if hr_filter_opts:
                         hr_filter_opts = dict(hr_filter_opts)
                         hr_filter_opts.pop('', None)
-                        filter_widgets.insert(-2, S3OptionsFilter("human_resource_id",
-                                                                  hidden = True,
-                                                                  options = dict(hr_filter_opts),
-                                                                  header = True,
-                                                                  ))
+                        filter_widgets.insert(-2,
+                            S3OptionsFilter("human_resource_id",
+                                            header = True,
+                                            hidden = True,
+                                            options = dict(hr_filter_opts),
+                                            ))
 
                     if multiple_orgs:
                         # Add case organisation filter
@@ -3066,7 +3088,7 @@ def config(settings):
                     return False
 
             if not r.id:
-                from stats import ResponsePerformanceIndicators
+                from .stats import ResponsePerformanceIndicators
                 s3db.set_method("dvr", "response_action",
                                 method = "indicators",
                                 action = ResponsePerformanceIndicators,

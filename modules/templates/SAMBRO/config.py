@@ -479,7 +479,7 @@ def config(settings):
                             current.msg.send_tweet(text=s3_str(twitter_text),
                                                    alert_id=alert_id,
                                                    )
-                        except tweepy.error.TweepError, e:
+                        except tweepy.error.TweepError as e:
                             current.log.debug("Sending tweets failed: %s" % e)
 
                 # Facebook Post
@@ -490,7 +490,7 @@ def config(settings):
                         current.msg.post_to_facebook(text=content,
                                                      alert_id=alert_id,
                                                      )
-                    except Exception, e:
+                    except Exception as e:
                         current.log.debug("Posting Alert to Facebook failed: %s" % e)
 
             addresses = record["addresses"]

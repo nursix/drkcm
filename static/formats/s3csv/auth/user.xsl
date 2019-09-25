@@ -16,10 +16,11 @@
          Branch.........................optional.....branch organisation name
          ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
 
-         Link....................auth_user.link_user_to (=> human_resource.type)L Staff, Volunteer or Member
+         Link....................auth_user.link_user_to (=> human_resource.type): Staff, Volunteer or Member
          Facility Type...........s3db[tablename]
          Office..................org_site.name
          Organisation Group......org_group.name
+         MasterKey..............auth_masterkey.name
 
     *********************************************************************** -->
     <xsl:import href="../orgh.xsl"/>
@@ -78,6 +79,7 @@
         <xsl:variable name="OfficeName" select="col[@field='Office']/text()"/>
         <xsl:variable name="FacilityType" select="col[@field='Facility Type']/text()"/>
         <xsl:variable name="Link" select="col[@field='Link']/text()"/>
+        <xsl:variable name="MasterKey" select="col[@field='MasterKey']/text()"/>
 
         <!-- Create the User -->
         <resource name="auth_user">
@@ -161,7 +163,17 @@
                 </reference>
             </xsl:if>
 
+            <!-- Master Key
+                 - component configured in s3import import_user()
+            -->
+            <xsl:if test="$MasterKey!=''">
+                <resource name="auth_masterkey">
+                    <data field="name"><xsl:value-of select="$MasterKey"/></data>
+                </resource>
+            </xsl:if>
+
         </resource>
+
     </xsl:template>
 
     <!-- ****************************************************************** -->

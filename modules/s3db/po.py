@@ -266,7 +266,7 @@ class OutreachAreaModel(S3Model):
             s3db.pr_remove_affiliation(row.pe_id, area_pe_id, role=ROLE)
 
         # Add current affiliation
-        from pr import OU
+        from .pr import OU
         s3db.pr_add_affiliation(organisation_pe_id, area_pe_id, role=ROLE, role_type=OU)
 
 # =============================================================================
@@ -704,7 +704,7 @@ class OutreachHouseholdModel(S3Model):
         define_table(tablename,
                      household_id(),
                      s3_language(label = T("Main Language"),
-                                 list_from_settings = False,
+                                 select = None,
                                  ),
                      Field("community", "text",
                            label = T("Community Connections"),

@@ -152,51 +152,6 @@ class S3DeploymentModel(S3Model):
 
         # Profile
         list_layout = deploy_MissionProfileLayout()
-        alert_widget = {"label": "Alerts",
-                        "insert": lambda r, list_id, title, url: \
-                                         A(title,
-                                           _href = r.url(component = "alert",
-                                                         method = "create"),
-                                           _class = "action-btn profile-add-btn",
-                                           ),
-                        "label_create": "Create Alert",
-                        "type": "datalist",
-                        "list_fields": ["modified_on",
-                                        "mission_id",
-                                        "message_id",
-                                        "subject",
-                                        "body",
-                                        ],
-                        "tablename": "deploy_alert",
-                        "context": "mission",
-                        "list_layout": list_layout,
-                        "pagesize": 10,
-                        }
-
-        response_widget = {"label": "Responses",
-                           "insert": False,
-                           "type": "datalist",
-                           "tablename": "deploy_response",
-                           # Can't be 'response' as this clobbers web2py global
-                           "function": "response_message",
-                           "list_fields": [
-                               "created_on",
-                               "mission_id",
-                               "comments",
-                               "human_resource_id$id",
-                               "human_resource_id$person_id",
-                               "human_resource_id$organisation_id",
-                               "message_id$body",
-                               "message_id$from_address",
-                               "message_id$attachment.document_id$file",
-                               ],
-                           "context": "mission",
-                           "list_layout": list_layout,
-                           # The popup datalist isn't currently functional
-                           # (needs card layout applying) and not ideal UX anyway
-                           #"pagesize": 10,
-                           "pagesize": None,
-                           }
 
         hr_label = settings.get_deploy_hr_label()
         if hr_label == "Member":
@@ -248,6 +203,63 @@ class S3DeploymentModel(S3Model):
                        #"list_layout": s3db.doc_document_list_layouts,
                        }
 
+        if settings.get_deploy_alerts():
+            alert_widget = {"label": "Alerts",
+                            "insert": lambda r, list_id, title, url: \
+                                             A(title,
+                                               _href = r.url(component = "alert",
+                                                             method = "create"),
+                                               _class = "action-btn profile-add-btn",
+                                               ),
+                            "label_create": "Create Alert",
+                            "type": "datalist",
+                            "list_fields": ["modified_on",
+                                            "mission_id",
+                                            "message_id",
+                                            "subject",
+                                            "body",
+                                            ],
+                            "tablename": "deploy_alert",
+                            "context": "mission",
+                            "list_layout": list_layout,
+                            "pagesize": 10,
+                            }
+
+            response_widget = {"label": "Responses",
+                               "insert": False,
+                               "type": "datalist",
+                               "tablename": "deploy_response",
+                               # Can't be 'response' as this clobbers web2py global
+                               "function": "response_message",
+                               "list_fields": [
+                                   "created_on",
+                                   "mission_id",
+                                   "comments",
+                                   "human_resource_id$id",
+                                   "human_resource_id$person_id",
+                                   "human_resource_id$organisation_id",
+                                   "message_id$body",
+                                   "message_id$from_address",
+                                   "message_id$attachment.document_id$file",
+                                   ],
+                               "context": "mission",
+                               "list_layout": list_layout,
+                               # The popup datalist isn't currently functional
+                               # (needs card layout applying) and not ideal UX anyway
+                               #"pagesize": 10,
+                               "pagesize": None,
+                               }
+
+            profile_widgets = [alert_widget,
+                               response_widget,
+                               assignment_widget,
+                               docs_widget,
+                               ]
+        else:
+            profile_widgets = [assignment_widget,
+                               docs_widget,
+                               ]
+
         # Table configuration
         profile_url = URL(c="deploy", f="mission", args=["[id]", "profile"])
         configure(tablename,
@@ -264,11 +276,7 @@ class S3DeploymentModel(S3Model):
                   profile_cols = 1,
                   profile_header = lambda r: \
                                    deploy_rheader(r, profile=True),
-                  profile_widgets = [alert_widget,
-                                     response_widget,
-                                     assignment_widget,
-                                     docs_widget,
-                                     ],
+                  profile_widgets = profile_widgets,
                   summary = [{"name": "rheader",
                               "common": True,
                               "widgets": [{"method": self.add_button},
@@ -1271,7 +1279,7 @@ class S3DeploymentAlertModel(S3Model):
                 # @ToDo: Handle the multi-message nicely?
                 try:
                     msg.send_tweet(text=message)
-                except tweepy.error.TweepError, e:
+                except tweepy.error.TweepError as e:
                     current.log.debug("Sending tweets failed: %s" % e)
 
         # Update the Alert to show it's been Sent
@@ -1635,6 +1643,34 @@ def deploy_member_filters(status=False):
                                                      },
                                           ))
 
+        if settings.get_deploy_select_ratings():
+            rating_opts = {1: 1,
+                           2: 2,
+                           3: 3,
+                           4: 4,
+                           }
+            widgets.extend((S3OptionsFilter("application.status",
+                                            label = T("Category"),
+                                            options = {1: "I",
+                                                       2: "II",
+                                                       3: "III",
+                                                       4: "IV",
+                                                       5: "V",
+                                                       },
+                                            cols = 5,
+                                            ),
+                            S3OptionsFilter("training.grade",
+                                            label = T("Training Grade"),
+                                            options = rating_opts,
+                                            cols = 4,
+                                            ),
+                            S3OptionsFilter("appraisal.rating",
+                                            label = T("Deployment Rating"),
+                                            options = rating_opts,
+                                            cols = 4,
+                                            ),
+                            ))
+
     return widgets
 
 # =============================================================================
@@ -1930,7 +1966,8 @@ def deploy_apply(r, **attr):
     elif r.http == "GET":
 
         # Filter widgets
-        filter_widgets = deploy_member_filters()
+        filter_widgets = settings.get_deploy_member_filters() or \
+                         deploy_member_filters()
 
         # List fields
         list_fields = ["id",
@@ -2003,7 +2040,7 @@ def deploy_apply(r, **attr):
             # Selection of Deploying Organisation
             if not organisation_id and len(deploying_orgs) > 1:
                 opts = [OPTION(v, _value=k)
-                        for k, v in deploying_orgs.iteritems()
+                        for k, v in deploying_orgs.items()
                         ]
                 form = SELECT(_id = "deploy_application_organisation_id",
                               _name = "organisation_id",
@@ -2179,34 +2216,8 @@ def deploy_alert_select_recipients(r, **attr):
                              )
 
     # Filter widgets (including roster status)
-    filter_widgets = deploy_member_filters(status=True)
-    if current.deployment_settings.get_deploy_select_ratings():
-        rating_opts = {1: 1,
-                       2: 2,
-                       3: 3,
-                       4: 4,
-                       }
-        filter_widgets.extend((S3OptionsFilter("application.status",
-                                               label = T("Category"),
-                                               options = {1: "I",
-                                                          2: "II",
-                                                          3: "III",
-                                                          4: "IV",
-                                                          5: "V",
-                                                          },
-                                               cols = 5,
-                                               ),
-                               S3OptionsFilter("training.grade",
-                                               label = T("Training Grade"),
-                                               options = rating_opts,
-                                               cols = 4,
-                                               ),
-                               S3OptionsFilter("appraisal.rating",
-                                               label = T("Deployment Rating"),
-                                               options = rating_opts,
-                                               cols = 4,
-                                               ),
-                               ))
+    filter_widgets = current.deployment_settings.get_deploy_member_filters() or \
+                     deploy_member_filters(status=True)
 
     if filter_widgets and representation == "html":
         # Apply filter defaults
@@ -2742,7 +2753,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
                     # Should be the same for all rows
                     mission_id = raw["deploy_response.mission_id"]
 
-            hr_ids = dcount.keys()
+            hr_ids = list(dcount.keys())
             if hr_ids:
 
                 # Number of previous deployments

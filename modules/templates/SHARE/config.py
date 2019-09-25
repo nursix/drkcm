@@ -1495,7 +1495,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
                        "comments",
                        ]
 
-        from controllers import project_ActivityRepresent
+        from .controllers import project_ActivityRepresent
         natable = s3db.req_need_activity
         #f = natable.activity_id
         #f.represent = project_ActivityRepresent()
@@ -1633,7 +1633,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
             on the homepage
         """
 
-        from controllers import HomepageStatistics
+        from .controllers import HomepageStatistics
         HomepageStatistics.update_data()
 
     settings.tasks.homepage_stats_update = homepage_stats_update
@@ -1672,6 +1672,8 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
 
         from s3 import S3Represent
 
+        s3db = current.s3db
+
         current.response.s3.crud_strings["req_need_line"]["title_map"] = T("Map of Needs")
 
         req_status_opts = {0: SPAN(T("Uncommitted"),
@@ -1688,7 +1690,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
                                    ),
                            }
 
-        table = current.s3db.req_need_line
+        table = s3db.req_need_line
 
         f = table.status
         f.requires = IS_EMPTY_OR(IS_IN_SET(req_status_opts, zero = None))
@@ -1709,10 +1711,10 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
             f.label = T("GN")
 
         # Custom method to (manually) update homepage statistics
-        current.s3db.set_method("req", "need_line",
-                                method = "update_stats",
-                                action = req_need_line_update_stats,
-                                )
+        s3db.set_method("req", "need_line",
+                        method = "update_stats",
+                        action = req_need_line_update_stats,
+                        )
 
     settings.customise_req_need_line_resource = customise_req_need_line_resource
 
@@ -2135,7 +2137,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
                        ]
 
         if r.id and r.resource.tablename == tablename and r.record.need_id:
-            from controllers import req_NeedRepresent
+            from .controllers import req_NeedRepresent
             f = table.need_id
             f.represent = req_NeedRepresent()
             f.writable = False

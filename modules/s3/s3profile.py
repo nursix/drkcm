@@ -27,10 +27,14 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
+__all__ = ("S3Profile",
+           )
+
 from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
+from s3compat import basestring
 from .s3crud import S3CRUD
 from .s3report import S3Report
 from .s3query import FS
@@ -1136,18 +1140,19 @@ class S3Profile(S3CRUD):
         start = config["start"]
         end = config["end"]
 
+        get_config = resource.get_config
         resource_config = {
             "ajaxURL": ajax_url,
             "useTime": config.get("use_time"),
             "baseURL": base_url,
             "labelCreate": s3_str(self.crud_string(tablename, "label_create")),
-            "insertable": resource.get_config("insertable", True) and \
+            "insertable": get_config("insertable", True) and \
                           permitted("create", table),
-            "editable": resource.get_config("editable", True) and \
+            "editable": get_config("editable", True) and \
                         permitted("update", table),
             "startEditable": start.field and start.field.writable,
             "durationEditable": end and end.field and end.field.writable,
-            "deletable": resource.get_config("deletable", True) and \
+            "deletable": get_config("deletable", True) and \
                          permitted("delete", table),
             "start": start.selector if start else None,
             "end": end.selector if end else None,
@@ -1173,7 +1178,7 @@ class S3Profile(S3CRUD):
 
         # Generate form key
         import uuid
-        formkey = uuid.uuid4().get_hex()
+        formkey = uuid.uuid4().hex
 
         # Determine the formname (see also S3Organizer.formname)
         master = widget_get("master")
@@ -1320,7 +1325,7 @@ class S3Profile(S3CRUD):
             if component:
                 args = [r.id, component, "create.popup"]
             else:
-                args = ["create.popup"]
+                args = widget_get("create_args", ["create.popup"])
             add_url = URL(c=c, f=f, args=args, vars=url_vars)
 
             if callable(insert):

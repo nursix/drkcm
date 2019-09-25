@@ -55,6 +55,7 @@ from gluon.storage import Storage
 from gluon.tools import Auth, callback, DEFAULT, replace_id
 from gluon.utils import web2py_uuid
 
+from s3compat import basestring, reduce
 from s3dal import Row, Rows, Query, Table, Field, original_tablename
 from .s3datetime import S3DateTime
 from .s3error import S3PermissionError
@@ -62,7 +63,7 @@ from .s3fields import S3MetaFields, S3Represent, s3_comments
 from .s3rest import S3Method, S3Request
 from .s3track import S3Tracker
 from .s3utils import s3_addrow, s3_get_extension, s3_mark_required, s3_str
-from .s3validators import IS_ISO639_2_LANGUAGE_CODE
+from .s3validators import IS_ISO639_2_LANGUAGE_CODE, IS_JSONS3
 
 # =============================================================================
 class AuthS3(Auth):
@@ -166,7 +167,7 @@ class AuthS3(Auth):
 %(email)s
 Please go to %(url)s to approve this user."""
         messages.email_approver_failed = "Failed to send mail to Approver - see if you can notify them manually!"
-        messages.email_sent = "Verification Email sent - please check your email to validate. If you do not receive this email please check you junk email or spam filters"
+        messages.email_sent = "Verification Email sent - please check your email to validate. If you do not receive this email please check your junk email or spam filters"
         messages.email_verification_failed = "Unable to send verification email - either your email is invalid or our email server is down"
         messages.email_verified = "Email verified - you can now login"
         messages.duplicate_email = "This email address is already in use"
@@ -310,22 +311,25 @@ Thank you"""
             userfield = settings.login_userfield
             if userfield != "email":
                 # Use username (not used by default in Sahana)
-                utable_fields.insert(2, Field(userfield, length=128,
-                                              default="",
-                                              unique=True))
+                utable_fields.insert(2, Field(userfield,
+                                              length = 128,
+                                              default = "",
+                                              unique = True,
+                                              ))
 
             # Insert password field after either email or username
             passfield = settings.password_field
             utable_fields.insert(3, Field(passfield, "password", length=512,
-                                          requires=CRYPT(key=settings.hmac_key,
-                                                         min_length=deployment_settings.get_auth_password_min_length(),
-                                                         digest_alg="sha512"),
-                                          readable=False,
-                                          label=messages.label_password))
+                                          requires = CRYPT(key = settings.hmac_key,
+                                                           min_length = deployment_settings.get_auth_password_min_length(),
+                                                           digest_alg = "sha512"),
+                                          readable = False,
+                                          label = messages.label_password,
+                                          ))
 
             define_table(uname,
                          migrate = migrate,
-                         fake_migrate=fake_migrate,
+                         fake_migrate = fake_migrate,
                          *utable_fields)
             utable = settings.table_user = db[uname]
 
@@ -342,6 +346,9 @@ Thank you"""
                            length = current.MAX_FILENAME_LENGTH,
                            ),
                      Field("consent"),
+                     Field("custom", "json",
+                           requires = IS_EMPTY_OR(IS_JSONS3()),
+                           ),
                      S3MetaFields.uuid(),
                      S3MetaFields.created_on(),
                      S3MetaFields.modified_on(),
@@ -943,7 +950,7 @@ Thank you"""
                               ],
                   ),
             submit_button = messages.password_reset_button,
-            hidden = dict(_next=next),
+            hidden = {"_next": next},
             formstyle = settings.formstyle,
             separator = settings.label_separator
             )
@@ -1067,7 +1074,7 @@ Thank you"""
             last_visit=request.now,
             expiration = req_vars.get("remember", False) and \
                 settings.long_expiration or settings.expiration,
-            remember = req_vars.has_key("remember"),
+            remember = "remember" in req_vars,
             hmac_key = web2py_uuid()
             )
         self.user = user
@@ -1089,10 +1096,9 @@ Thank you"""
 
         # Set user's position
         # @ToDo: Per-User settings
-        if deployment_settings.get_auth_set_presence_on_login() and \
-           req_vars.has_key("auth_user_clientlocation") and \
-           req_vars.get("auth_user_clientlocation"):
-            position = req_vars.get("auth_user_clientlocation").split("|", 3)
+        client_location = req_vars.get("auth_user_clientlocation")
+        if deployment_settings.get_auth_set_presence_on_login() and client_location:
+            position = client_location.split("|", 3)
             userlat = float(position[0])
             userlon = float(position[1])
             accuracy = float(position[2]) / 1000 # Ensures accuracy is in km
@@ -1186,6 +1192,8 @@ Thank you"""
         if onvalidation == DEFAULT:
             onvalidation = settings.register_onvalidation
         if onaccept == DEFAULT:
+            # Usually empty, other than DRRPP template or
+            #                           registration via LDAP, OAuth
             onaccept = settings.register_onaccept
         if log == DEFAULT:
             log = messages.register_log
@@ -1480,12 +1488,14 @@ Thank you"""
         if record:
             return record.id
         else:
-            membership_id = membership.insert(group_id=group_id,
-                                              user_id=user_id,
-                                              pe_id=entity)
+            membership_id = membership.insert(group_id = group_id,
+                                              user_id = user_id,
+                                              pe_id = entity)
         self.update_groups()
         self.log_event(self.messages.add_membership_log,
-                       dict(user_id=user_id, group_id=group_id))
+                       {"user_id": user_id,
+                        "group_id": group_id,
+                        })
         return membership_id
 
     # -------------------------------------------------------------------------
@@ -1584,6 +1594,7 @@ Thank you"""
         labels = s3_mark_required(utable)[0]
 
         # If we have an opt_in and some post_vars then update the opt_in value
+        # @ToDo: Replace with an AuthConsent-integrated solution
         opt_in_to_email = deployment_settings.get_auth_opt_in_to_email()
         if opt_in_to_email:
             team_list = deployment_settings.get_auth_opt_in_team_list()
@@ -1657,7 +1668,7 @@ Thank you"""
                         formname="profile",
                         onvalidation=onvalidation,
                         hideerror=settings.hideerror):
-            self.auth_user_onaccept(form.vars.email, self.user.id)
+            #self.s3_auth_user_register_onaccept(form.vars.email, self.user.id)
             self.user.update(utable._filter_fields(form.vars))
             session.flash = messages.profile_updated
             if log:
@@ -1731,7 +1742,7 @@ Thank you"""
 
         first_name = utable.first_name
         first_name.label = T("First Name") #messages.label_first_name
-        first_name.requires = IS_NOT_EMPTY(error_message=messages.is_empty),
+        first_name.requires = IS_NOT_EMPTY(error_message=messages.is_empty)
 
         last_name = utable.last_name
         last_name.label = T("Last Name") #messages.label_last_name
@@ -1772,7 +1783,7 @@ Thank you"""
             if multiselect_widget:
                 language.widget = S3MultiSelectWidget(multiple=False)
         else:
-            language.default = languages.keys()[0]
+            language.default = list(languages.keys())[0]
             language.readable = language.writable = False
 
         utable.registration_key.label = messages.label_registration_key
@@ -2254,14 +2265,30 @@ $.filterOptionsS3({
         s3.jquery_ready.append('''s3_register_validation()''')
 
     # -------------------------------------------------------------------------
-    def auth_user_onaccept(self, email, user_id):
-        db = current.db
+    def s3_auth_user_register_onaccept(self, email, user_id):
+        """
+            S3 framework function
+
+            Allows customisation of the process for creating/updating users
+            - called by s3_approve_user when new users are created or approved
+            - (was called by 'profile' method for updates, but no longer)
+        """
+
+        # Check for any custom functionality
+        onaccept = current.s3db.get_config("auth_user", "register_onaccept")
+        if callable(onaccept):
+            onaccept(user_id)
+
+        # Default functionality
+
+        # Handle any OpenFire Chat Server integration
         if self.settings.login_userfield != "username":
             deployment_settings = current.deployment_settings
-            chat_username = email.replace("@", "_")
-            db(db.auth_user.id == user_id).update(username = chat_username)
             chat_server = deployment_settings.get_chat_server()
             if chat_server:
+                chat_username = email.replace("@", "_")
+                db = current.db
+                db(db.auth_user.id == user_id).update(username = chat_username)
                 chatdb = DAL(deployment_settings.get_chatdb_string(), migrate=False)
                 # Using RawSQL as table not created in web2py
                 sql_query="insert into ofGroupUser values (\'%s\',\'%s\' ,0);" % (chat_server["groupname"], chat_username)
@@ -2300,22 +2327,22 @@ $.filterOptionsS3({
             this function may become redundant
         """
 
-        temptable = current.s3db.auth_user_temp
+        temptable = current.db.auth_user_temp
 
         form_vars = form.vars
         user_id = form_vars.id
 
         if not user_id:
-            return None
+            return
 
         record  = {"user_id": user_id}
 
-        # Add the home_phone to pr_contact
+        # Store the home_phone ready to go to pr_contact
         home = form_vars.home
         if home:
             record["home"] = home
 
-        # Add the mobile to pr_contact
+        # Store the mobile_phone ready to go to pr_contact
         mobile = form_vars.mobile
         if mobile:
             record["mobile"] = mobile
@@ -2325,7 +2352,7 @@ $.filterOptionsS3({
         if consent:
             record["consent"] = consent
 
-        # Insert the profile picture
+        # Store the profile picture ready to go to pr_image
         image = form_vars.image
         if image != None and  hasattr(image, "file"):
             # @ToDo: DEBUG!!!
@@ -2362,14 +2389,17 @@ $.filterOptionsS3({
         db = current.db
         deployment_settings = current.deployment_settings
         session = current.session
+        auth_messages = self.messages
         utable = self.settings.table_user
+
+        user_id = user.id
 
         # Lookup the Approver
         approver, organisation_id = self.s3_approver(user)
 
         if deployment_settings.get_auth_registration_requires_approval() and approver:
             approved = False
-            db(utable.id == user.id).update(registration_key = "pending")
+            db(utable.id == user_id).update(registration_key = "pending")
 
             if user.registration_key:
                 # User has just been verified
@@ -2384,17 +2414,18 @@ $.filterOptionsS3({
             if organisation_id and not user.get("organisation_id", None):
                 # Use the whitelist
                 user["organisation_id"] = organisation_id
-                db(utable.id == user.id).update(organisation_id = organisation_id)
+                db(utable.id == user_id).update(organisation_id = organisation_id)
                 link_user_to = deployment_settings.get_auth_registration_link_user_to_default()
                 if link_user_to and not user.get("link_user_to", None):
                     user["link_user_to"] = link_user_to
                 self.s3_link_user(user)
             self.s3_approve_user(user)
-            session.confirmation = self.messages.email_verified
-            session.flash = self.messages.registration_successful
+            session.confirmation = auth_messages.email_verified
+            session.flash = auth_messages.registration_successful
 
             if not deployment_settings.get_auth_always_notify_approver():
-                return True
+                return approved
+
             message = "new_user"
 
         # Ensure that we send out the mails in the language that the approver(s) want
@@ -2422,13 +2453,11 @@ $.filterOptionsS3({
                 aappend(each_approver)
 
         T = current.T
-        auth_messages = self.messages
         subjects = {}
         messages = {}
         first_name = user.first_name
         last_name = user.last_name
         email = user.email
-        user_id = user.id
         base_url = current.response.s3.base_url
         system_name = deployment_settings.get_system_name()
         for language in languages:
@@ -2438,22 +2467,25 @@ $.filterOptionsS3({
                     s3_str(T("%(system_name)s - New User Registration Approval Pending") % \
                             {"system_name": system_name})
                 messages[language] = s3_str(auth_messages.approve_user % \
-                            dict(system_name = system_name,
-                                 first_name = first_name,
-                                 last_name = last_name,
-                                 email = email,
-                                 url = "%(base_url)s/admin/user/%(id)s" % \
-                                    dict(base_url=base_url,
-                                         id=user_id)))
+                            {"system_name": system_name,
+                             "first_name": first_name,
+                             "last_name": last_name,
+                             "email": email,
+                             "url": "%(base_url)s/admin/user/%(id)s" % \
+                                    {"base_url": base_url,
+                                     "id": user_id,
+                                     },
+                             })
             elif message == "new_user":
                 subjects[language] = \
                     s3_str(T("%(system_name)s - New User Registered") % \
                             {"system_name": system_name})
                 messages[language] = \
-                    s3_str(auth_messages.new_user % dict(system_name = system_name,
-                                                  first_name = first_name,
-                                                  last_name = last_name,
-                                                  email = email))
+                    s3_str(auth_messages.new_user % {"system_name": system_name,
+                                                     "first_name": first_name,
+                                                     "last_name": last_name,
+                                                     "email": email
+                                                     })
 
         # Restore language for UI
         T.force(session.s3.language)
@@ -2471,7 +2503,7 @@ $.filterOptionsS3({
         if not result:
             # Don't prevent registration just because email not configured
             #db.rollback()
-            current.response.error = self.messages.email_send_failed
+            current.response.error = auth_messages.email_send_failed
             return False
 
         return approved
@@ -2573,11 +2605,12 @@ $.filterOptionsS3({
         if deployment_settings.get_auth_consent_tracking():
             s3db.auth_Consent.register_consent(user_id)
 
+        user_email = db(utable.id == user_id).select(utable.email,
+                                                     ).first().email
+        self.s3_auth_user_register_onaccept(user_email, user_id)
+
         if current.response.s3.bulk is True:
             # Non-interactive imports should stop here
-            user_email = db(utable.id == user_id).select(utable.email,
-                                                         ).first().email
-            self.auth_user_onaccept(user_email, user_id)
             return
 
         # Allow them to login
@@ -2598,11 +2631,8 @@ $.filterOptionsS3({
             if not approved:
                 # User is verifying their email and is not yet
                 # logged-in, so approve by system authority
-                org_resource.approve(approved_by=0)
+                org_resource.approve(approved_by = 0)
 
-        user_email = db(utable.id == user_id).select(utable.email,
-                                                     ).first().email
-        self.auth_user_onaccept(user_email, user_id)
         # Send Welcome mail
         self.s3_send_welcome_email(user, password)
 
@@ -2693,7 +2723,7 @@ $.filterOptionsS3({
 
         utable = self.settings.table_user
 
-        ttable = s3db.auth_user_temp
+        ttable = db.auth_user_temp
         ptable = s3db.pr_person
         ctable = s3db.pr_contact
         ltable = s3db.pr_person_user
@@ -3039,7 +3069,7 @@ $.filterOptionsS3({
                 # Update user record
                 user.organisation_id = organisation_id
                 utable = self.settings.table_user
-                db(utable.id == user_id).update(organisation_id=organisation_id)
+                db(utable.id == user_id).update(organisation_id = organisation_id)
 
         if not organisation_id:
             return None
@@ -3050,7 +3080,7 @@ $.filterOptionsS3({
         # Update if the User's Organisation has changed
         query = (ltable.user_id == user_id)
         rows = db(query).select(ltable.organisation_id,
-                                limitby=(0, 2))
+                                limitby = (0, 2))
         if len(rows) == 1:
             # We know which record to update - this should always be 1
             if rows.first().organisation_id != organisation_id:
@@ -3063,8 +3093,8 @@ $.filterOptionsS3({
                     (ltable.organisation_id == organisation_id)
             row = db(query).select(ltable.id, limitby=(0, 1)).first()
             if not row:
-                ltable.insert(user_id=user_id,
-                              organisation_id=organisation_id)
+                ltable.insert(user_id = user_id,
+                              organisation_id = organisation_id)
 
         return organisation_id
 
@@ -3106,9 +3136,9 @@ $.filterOptionsS3({
             ptable = s3db.pr_person
             gtable = s3db.org_group
             if ptable[person_id] and gtable[org_group_id]:
-                ltable.insert(person_id=person_id,
-                              org_group_id=org_group_id,
-                              status_id=status_id,
+                ltable.insert(person_id = person_id,
+                              org_group_id = org_group_id,
+                              status_id = status_id,
                               )
         return org_group_id
 
@@ -3210,11 +3240,11 @@ $.filterOptionsS3({
             else:
                 # Create new HR record
                 customise(hr_id = None)
-                record = Storage(person_id=person_id,
-                                 organisation_id=organisation_id,
+                record = Storage(person_id = person_id,
+                                 organisation_id = organisation_id,
                                  site_id = site_id,
-                                 type=hr_type,
-                                 owned_by_user=user_id,
+                                 type = hr_type,
+                                 owned_by_user = user_id,
                                  )
                 hr_id = htable.insert(**record)
                 record["id"] = hr_id
@@ -3468,6 +3498,33 @@ $.filterOptionsS3({
         return user
 
     # -------------------------------------------------------------------------
+    @staticmethod
+    def s3_masterkey_login():
+        """
+            Master Key Authentication
+
+            @returns: None if master key authentication is disabled or
+                      wasn't attempted, otherwise True|False whether it
+                      succeeded
+        """
+
+        success = None
+
+        s3 = current.response.s3
+        if s3.masterkey_auth_failed:
+            # Already failed during this request cycle, no point trying again
+            success = False
+        else:
+            from s3.s3masterkey import S3MasterKey
+            access_key = S3MasterKey.get_access_key()
+            if access_key is not None:
+                success = S3MasterKey.authenticate(access_key)
+                if not success:
+                    s3.masterkey_auth_failed = True
+
+        return success
+
+    # -------------------------------------------------------------------------
     def s3_logged_in(self):
         """
             Check whether the user is currently logged-in
@@ -3478,10 +3535,19 @@ $.filterOptionsS3({
             return True
 
         if not self.is_logged_in():
-            # @note: MUST NOT send an HTTP Auth challenge here because
-            #        otherwise, negative tests (e.g. if not auth.s3_logged_in())
-            #        would always raise and never succeed => omit basic_auth_realm,
-            #        and send the challenge in permission.fail() instead
+            # NB MUST NOT send an HTTP-401 challenge here because otherwise,
+            #    negative tests (e.g. if not auth.s3_logged_in()) would always
+            #    challenge, and never succeed
+            #    => omit basic_auth_realm
+            #    => send the challenge in permission.fail() instead
+
+            # Probe for Master Key Auth
+            if current.deployment_settings.get_auth_masterkey():
+                success = self.s3_masterkey_login()
+                if success is not None:
+                    return success
+
+            # Basic Auth (default)
             basic = self.basic()
             try:
                 return basic[2]
@@ -3515,7 +3581,7 @@ $.filterOptionsS3({
         if gtable is not None:
             S3_SYSTEM_ROLES = self.S3_SYSTEM_ROLES
             query = (gtable.deleted != True) & \
-                     gtable.uuid.belongs(S3_SYSTEM_ROLES.values())
+                     gtable.uuid.belongs(set(S3_SYSTEM_ROLES.values()))
             rows = current.db(query).select(gtable.id, gtable.uuid)
             system_roles = Storage([(role.uuid, role.id) for role in rows])
         else:
@@ -3614,7 +3680,7 @@ $.filterOptionsS3({
                                     cacheable=True)
 
             # Add all group_ids to session.s3.roles
-            session.s3.roles.extend(list(set([row.group_id for row in rows])))
+            session.s3.roles.extend(row.group_id for row in rows)
 
             # Realms:
             # Permissions of a group apply only for records owned by any of
@@ -3814,14 +3880,14 @@ $.filterOptionsS3({
 
         if record:
             role_id = record.id
-            record.update_record(deleted=False,
-                                 role=role,
-                                 description=description,
+            record.update_record(deleted = False,
+                                 role = role,
+                                 description = description,
                                  **system_data)
         else:
-            role_id = table.insert(uuid=uid,
-                                   role=role,
-                                   description=description,
+            role_id = table.insert(uuid = uid,
+                                   role = role,
+                                   description = description,
                                    **system_data)
         if role_id:
             update_acl = self.permission.update_acl
@@ -4015,10 +4081,10 @@ $.filterOptionsS3({
             if for_pe:
                 deleted_fk["pe_id"] = for_pe
             deleted_fk = json.dumps(deleted_fk)
-            m.update_record(deleted=True,
-                            deleted_fk=deleted_fk,
-                            user_id=None,
-                            group_id=None)
+            m.update_record(deleted = True,
+                            deleted_fk = deleted_fk,
+                            user_id = None,
+                            group_id = None)
 
         # Update roles for current user if required
         if self.user and str(user_id) == str(self.user.id):
@@ -4045,10 +4111,10 @@ $.filterOptionsS3({
         elif for_pe is not DEFAULT:
             query &= (mtable.pe_id == for_pe)
         rows = current.db(query).select(mtable.group_id)
-        return list(set([row.group_id for row in rows]))
+        return list({row.group_id for row in rows})
 
     # -------------------------------------------------------------------------
-    def s3_has_role(self, role, for_pe=None):
+    def s3_has_role(self, role, for_pe=None, include_admin=True):
         """
             Check whether the currently logged-in user has a certain role
             (auth_group membership).
@@ -4056,9 +4122,11 @@ $.filterOptionsS3({
             @param role: the record ID or UID of the role
             @param for_pe: check for this particular realm, possible values:
 
-                           None - for any entity
-                           0 - site-wide
-                           X - for entity X
+                           - None: for any entity
+                           - 0: site-wide
+                           - X: for entity X
+
+            @param include_admin: ADMIN matches all Roles
         """
 
         # Allow override
@@ -4087,7 +4155,7 @@ $.filterOptionsS3({
             return False
 
         # Administrators have all roles
-        if system_roles.ADMIN in realms:
+        if include_admin and system_roles.ADMIN in realms:
             return True
 
         # Resolve role ID/UID
@@ -4112,6 +4180,7 @@ $.filterOptionsS3({
             realm = realms[role]
             if realm is None or for_pe is None or for_pe in realm:
                 return True
+
         return False
 
     # -------------------------------------------------------------------------
@@ -4333,8 +4402,8 @@ $.filterOptionsS3({
                 if receivers is not None:
                     pr_rebuild_path = s3db.pr_rebuild_path
                     for pe_id in receivers:
-                        atable.insert(role_id=role_id,
-                                      pe_id=pe_id)
+                        atable.insert(role_id = role_id,
+                                      pe_id = pe_id)
                         pr_rebuild_path(pe_id, clear=True)
                 roles.append(role_id)
 
@@ -4546,7 +4615,8 @@ $.filterOptionsS3({
         return result
 
     # -------------------------------------------------------------------------
-    def s3_user_pe_id(self, user_id):
+    @staticmethod
+    def s3_user_pe_id(user_id):
         """
             Get the person pe_id for a user ID
 
@@ -4560,7 +4630,8 @@ $.filterOptionsS3({
         return row.pe_id if row else None
 
     # -------------------------------------------------------------------------
-    def s3_bulk_user_pe_id(self, user_ids):
+    @staticmethod
+    def s3_bulk_user_pe_id(user_ids):
         """
             Get the list of person pe_id for list of user_ids
 
@@ -4570,9 +4641,9 @@ $.filterOptionsS3({
         table = current.s3db.pr_person_user
         if not isinstance(user_ids, list):
             user_ids = [user_ids]
-        rows = current.db(table.user_id.belongs([user_id for user_id in user_ids])).\
-                                                            select(table.pe_id,
-                                                                   table.user_id)
+        rows = current.db(table.user_id.belongs(user_ids)).select(table.pe_id,
+                                                                  table.user_id,
+                                                                  )
         if rows:
             return {row.user_id: row.pe_id for row in rows}
         return None
@@ -4800,7 +4871,7 @@ $.filterOptionsS3({
             if not user_id and self.user:
                 user_id = self.user.id
             self.log_event(log, {"user_id": user_id,
-                                 "group_id":group_id,
+                                 "group_id": group_id,
                                  "check": has_role,
                                  })
         return has_role
@@ -5410,7 +5481,7 @@ $.filterOptionsS3({
             site_types = self.org_site_types
         else:
             if facility_type not in self.org_site_types:
-                return
+                return site_ids
             site_types = [s3db[facility_type]]
         for site_type in site_types:
             try:
@@ -5635,7 +5706,7 @@ class S3Permission(object):
         # Policy: which level of granularity do we want?
         self.policy = settings.get_security_policy()
         # ACLs to control access per controller:
-        self.use_cacls = self.policy in (3, 4, 5, 6, 7 ,8)
+        self.use_cacls = self.policy in (3, 4, 5, 6, 7, 8)
         # ACLs to control access per function within controllers:
         self.use_facls = self.policy in (4, 5, 6, 7, 8)
         # ACLs to control access per table:
@@ -6180,7 +6251,7 @@ class S3Permission(object):
 
         if not self.entity_realm:
             # Security Policy doesn't use Realms, so unrestricted
-            return
+            return None
 
         auth = self.auth
         sr = auth.get_system_roles()
@@ -6816,15 +6887,22 @@ class S3Permission(object):
                 current.session.error = self.AUTHENTICATION_REQUIRED
                 redirect(self.loginpage)
         else:
-            # non-HTML request => raise proper HTTP error
+            # Non-HTML request => raise HTTP status
             if self.auth.s3_logged_in():
                 raise HTTP(403, body=self.INSUFFICIENT_PRIVILEGES)
-            else:
-                # RFC1945/2617 compliance:
-                # Must raise an HTTP Auth challenge with status 401
-                challenge = {"WWW-Authenticate":
-                             u"Basic realm=\"%s\"" % current.request.application}
-                raise HTTP(401, body=self.AUTHENTICATION_REQUIRED, **challenge)
+
+            # RFC1945/2617 compliance:
+            # Must raise an HTTP Auth challenge with status 401
+            headers = {"WWW-Authenticate":
+                       "Basic realm=\"%s\"" % current.request.application,
+                       }
+
+            # Add Master Key Auth token if enabled + requested
+            if current.deployment_settings.get_auth_masterkey():
+                from s3.s3masterkey import S3MasterKey
+                S3MasterKey.challenge(headers)
+
+            raise HTTP(401, body=self.AUTHENTICATION_REQUIRED, **headers)
 
     # -------------------------------------------------------------------------
     # ACL Lookup
@@ -7918,13 +7996,15 @@ class S3EntityRoleManager(S3Method):
 
         # Get the realm from the current realms
         if ADMIN in realms:
-            return realms[ADMIN]
+            realm = realms[ADMIN]
         elif ORG_ADMIN in realms:
-            return realms[ORG_ADMIN]
+            realm = realms[ORG_ADMIN]
         else:
             # raise an error here - user is not permitted
             # to access the role matrix
             auth.permission.fail()
+
+        return realm
 
     # -------------------------------------------------------------------------
     def get_modules(self):
@@ -8042,8 +8122,7 @@ class S3EntityRoleManager(S3Method):
         """
 
         fields = []
-        requires = IS_EMPTY_OR(IS_IN_SET(self.acls.keys(),
-                                         labels=self.acls.values()))
+        requires = IS_EMPTY_OR(IS_IN_SET(self.acls))
         for module_uid, module_label in self.modules.items():
             field = Field(module_uid,
                           label=module_label,
@@ -8197,14 +8276,12 @@ class S3OrgRoleManager(S3EntityRoleManager):
         if not self.user:
             assigned_roles = self.assigned_roles
 
-            realm_users = dict((k, v)
-                               for k, v in self.realm_users.items()
-                               if k not in assigned_roles)
+            realm_users = {k: v for k, v in self.realm_users.items()
+                                if k not in assigned_roles}
 
-            other_users = dict((k, v)
-                               for k, v in self.objects.items()
-                               if k not in assigned_roles and \
-                                  k not in self.realm_users)
+            other_users = {k: v for k, v in self.objects.items()
+                                if k not in assigned_roles and \
+                                   k not in self.realm_users}
 
             options = [("", ""),
                        (T("Users in my Organizations"), realm_users),

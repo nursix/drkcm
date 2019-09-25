@@ -36,8 +36,6 @@ import os
 import re
 import sys
 import time
-import urlparse
-import HTMLParser
 
 from collections import OrderedDict
 
@@ -48,6 +46,8 @@ from gluon.storage import Storage
 from gluon.languages import lazyT
 from gluon.tools import addrow
 
+from s3compat import HTMLParser, INTEGER_TYPES, PY2, STRING_TYPES, \
+                     basestring, long, unichr, unicodeT, urlparse
 from s3dal import Expression, Field, Row, S3DAL
 from .s3datetime import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime
 
@@ -241,14 +241,14 @@ def s3_represent_value(field,
     # Get text representation
     if field.represent:
         try:
-            key = "%s_repr_%s" % (field, val)
-            unicode(key)
+            key = s3_str("%s_repr_%s" % (field, val))
         except (UnicodeEncodeError, UnicodeDecodeError):
             text = field.represent(val)
         else:
             text = cache.ram(key,
                              lambda: field.represent(val),
-                             time_expire=60)
+                             time_expire = 60,
+                             )
             if isinstance(text, DIV):
                 text = str(text)
             elif not isinstance(text, basestring):
@@ -259,7 +259,7 @@ def s3_represent_value(field,
         elif fname == "comments" and not extended_comments:
             ur = s3_unicode(text)
             if len(ur) > 48:
-                text = "%s..." % ur[:45].encode("utf8")
+                text = s3_str("%s..." % ur[:45])
         else:
             text = s3_unicode(text)
 
@@ -310,7 +310,7 @@ def s3_dev_toolbar():
     dbstats = []
     dbtables = {}
     infos = DAL.get_instances()
-    for k, v in infos.iteritems():
+    for k, v in infos.items():
         dbstats.append(TABLE(*[TR(PRE(row[0]), "%.2fms" %
                                       (row[1] * 1000))
                                        for row in v["dbstats"]]))
@@ -492,7 +492,7 @@ def s3_truncate(text, length=48, nice=True):
 
 
     if len(text) > length:
-        if type(text) is unicode:
+        if type(text) is unicodeT:
             encode = False
         else:
             # Make sure text is multi-byte-aware before truncating it
@@ -503,7 +503,7 @@ def s3_truncate(text, length=48, nice=True):
         else:
             truncated = "%s..." % text[:length-3]
         if encode:
-            truncated = truncated.encode("utf-8")
+            truncated = s3_str(truncated)
         return truncated
     else:
         return text
@@ -666,7 +666,7 @@ def s3_fullname(person=None, pe_id=None, truncate=True):
     record = None
     query = None
 
-    if isinstance(person, (int, long)) or str(person).isdigit():
+    if isinstance(person, INTEGER_TYPES) or str(person).isdigit():
         db = current.db
         ptable = db.pr_person
         query = (ptable.id == person)
@@ -769,7 +769,7 @@ def s3_phone_represent(value):
 
     if not value:
         return current.messages["NONE"]
-    return ("%s%s" % (unichr(8206), s3_unicode(value))).encode("utf-8")
+    return s3_str("%s%s" % (unichr(8206), s3_unicode(value)))
 
 # =============================================================================
 def s3_url_represent(url):
@@ -1019,7 +1019,7 @@ def s3_include_debug_js():
     configFilename = "%s/tools/sahana.js.cfg"  % scripts_dir
     files = mergejsmf.getFiles(configDictCore, configFilename)[1]
 
-    script_template = '<script src="/%s/static/scripts/%%s" type="text/javascript"></script>' % \
+    script_template = '<script src="/%s/static/scripts/%%s"></script>' % \
                       request.application
 
     scripts = "\n".join(script_template % scriptname for scriptname in files)
@@ -1201,7 +1201,7 @@ def s3_populate_browser_compatibility(request):
         current.log.warning("pywurfl python module has not been installed, browser compatibility listing will not be populated. Download pywurfl from http://pypi.python.org/pypi/pywurfl/")
         return False
     import wurfl
-    device = wurfl.devices.select_ua(unicode(request.env.http_user_agent),
+    device = wurfl.devices.select_ua(s3_unicode(request.env.http_user_agent),
                                      search=TwoStepAnalysis(wurfl.devices))
 
     browser = Storage()
@@ -1232,7 +1232,7 @@ def s3_filename(filename):
 
     validFilenameChars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 
-    filename = unicode(filename)
+    filename = s3_unicode(filename)
     cleanedFilename = unicodedata.normalize("NFKD",
                                             filename).encode("ASCII", "ignore")
 
@@ -1307,52 +1307,74 @@ def s3_get_foreign_key(field, m2m=True):
     return (rtablename, key, multiple)
 
 # =============================================================================
-def s3_unicode(s, encoding="utf-8"):
-    """
-        Convert an object into an unicode instance, to be used instead of
-        unicode(s)
+if PY2:
 
-        @param s: the object
-        @param encoding: the character encoding
-    """
+    def s3_unicode(s, encoding="utf-8"):
+        """
+            Convert an object into an unicode instance, to be used
+            instead of unicode(s)
 
-    if type(s) is unicode:
-        return s
-    try:
-        if not isinstance(s, basestring):
-            if hasattr(s, "__unicode__"):
-                s = unicode(s)
+            @param s: the object
+            @param encoding: the character encoding
+        """
+
+        if type(s) is unicode:
+            return s
+        try:
+            if not isinstance(s, basestring):
+                if hasattr(s, "__unicode__"):
+                    s = unicode(s)
+                else:
+                    try:
+                        s = unicode(str(s), encoding, "strict")
+                    except UnicodeEncodeError:
+                        if not isinstance(s, Exception):
+                            raise
+                        s = " ".join([s3_unicode(arg, encoding) for arg in s])
             else:
-                try:
-                    s = unicode(str(s), encoding, "strict")
-                except UnicodeEncodeError:
-                    if not isinstance(s, Exception):
-                        raise
-                    s = " ".join([s3_unicode(arg, encoding) for arg in s])
-        else:
-            s = s.decode(encoding)
-    except UnicodeDecodeError:
-        if not isinstance(s, Exception):
-            raise
-        s = " ".join([s3_unicode(arg, encoding) for arg in s])
-    return s
-
-def s3_str(s):
-    """
-        Unicode-safe conversion of an object s into a utf-8 encoded str,
-        to be used instead of str(s)
-
-        @param s: the object
-
-        @note: assumes utf-8, for other character encodings use explicit:
-
-                - s3_unicode(s, encoding=<in>).encode(<out>)
-    """
-
-    if type(s) is str:
+                s = s.decode(encoding)
+        except UnicodeDecodeError:
+            if not isinstance(s, Exception):
+                raise
+            s = " ".join([s3_unicode(arg, encoding) for arg in s])
         return s
-    else:
-        return s3_unicode(s).encode("utf-8", "strict")
+
+    def s3_str(s):
+        """
+            Unicode-safe conversion of an object s into a utf-8 encoded str,
+            to be used instead of str(s)
+
+            @param s: the object
+
+            @note: assumes utf-8, for other character encodings use explicit:
+
+                    - s3_unicode(s, encoding=<in>).encode(<out>)
+        """
+
+        if type(s) is str:
+            return s
+        else:
+            return s3_unicode(s).encode("utf-8", "strict")
+
+else:
+
+    def s3_unicode(s, encoding="utf-8"):
+        """
+            Convert an object into a str, for backwards-compatibility
+
+            @param s: the object
+            @param encoding: the character encoding
+        """
+
+        if type(s) is str:
+            return s
+        elif type(s) is bytes:
+            return s.decode(encoding, "strict")
+        else:
+            return str(s)
+
+    # In Python-3 this is just an alias:
+    s3_str = s3_unicode
 
 # =============================================================================
 def s3_flatlist(nested):
@@ -1540,22 +1562,22 @@ def search_vars_represent(search_vars):
         @return: HTML as string
     """
 
-    import cPickle
+    from s3compat import pickle
 
     s = ""
     search_vars = search_vars.replace("&apos;", "'")
 
     try:
-        search_vars = cPickle.loads(str(search_vars))
+        search_vars = pickle.loads(str(search_vars))
     except:
         raise HTTP(500, "ERROR RETRIEVING THE SEARCH CRITERIA")
     else:
         s = "<p>"
-        for var in search_vars.iterkeys():
+        for var in search_vars.keys():
             if var == "criteria" :
                 c_dict = search_vars[var]
                 #s = s + crud_string("pr_save_search", "Search Criteria")
-                for j in c_dict.iterkeys():
+                for j in c_dict.keys():
                     st = str(j)
                     if st[0] == '_':
                         continue
@@ -1874,7 +1896,7 @@ class Traceback(object):
         lwords = traceback.split('"')
 
         # Make the short circuit compatible with <= python2.4
-        result = (len(lwords) != 0) and lwords[0] or ""
+        result = lwords[0] if len(lwords) else ""
 
         i = 1
 
@@ -1884,7 +1906,7 @@ class Traceback(object):
             if link == "":
                 result += '"' + lwords[i]
             else:
-                result += link
+                result += s3_str(link)
 
                 if i + 1 < len(lwords):
                     result += lwords[i + 1]
@@ -1941,8 +1963,8 @@ class S3CustomController(object):
         @ToDo: Add Helper Function for dataLists
     """
 
-    @classmethod
-    def _view(cls, template, filename):
+    @staticmethod
+    def _view(template, filename):
         """
             Use a custom view template
 
@@ -1983,7 +2005,7 @@ class S3TypeConverter(object):
         if b is None:
             return None
         if type(a) is type:
-            if a in (str, unicode):
+            if a in STRING_TYPES:
                 return cls._str(b)
             if a is int:
                 return cls._int(b)
@@ -2000,7 +2022,7 @@ class S3TypeConverter(object):
             if a is datetime.time:
                 return cls._time(b)
             raise TypeError
-        if type(b) is type(a) or isinstance(b, type(a)):
+        if isinstance(b, type(a)):
             return b
         if isinstance(a, (list, tuple, set)):
             if isinstance(b, (list, tuple, set)):
@@ -2050,7 +2072,7 @@ class S3TypeConverter(object):
                 return True
             elif b.lower() in ("false", "0"):
                 return False
-        if isinstance(b, (int, long)):
+        if isinstance(b, INTEGER_TYPES):
             if b == 0:
                 return False
             else:
@@ -2089,7 +2111,7 @@ class S3TypeConverter(object):
     def _float(b):
         """ Convert into float """
 
-        if isinstance(b, long):
+        if isinstance(b, float):
             return b
         return float(b)
 
@@ -2424,9 +2446,8 @@ class S3MultiPath:
 
             @param path: the path as a list of node IDs
         """
-        seq = map(str, path)
-        l = zip(seq, seq[1:])
-        if not l:
+        seq = [str(item) for item in path]
+        if len(seq) < 2:
             return [path]
         seq = S3MultiPath.__resolve(seq)
         pop = seq.pop
@@ -2688,10 +2709,11 @@ class StringTemplateParser(object):
         return parser._keys
 
 # =============================================================================
-class S3MarkupStripper(HTMLParser.HTMLParser):
+class S3MarkupStripper(HTMLParser):
     """ Simple markup stripper """
 
     def __init__(self):
+        super(S3MarkupStripper, self).__init__()
         self.reset()
         self.result = []
 

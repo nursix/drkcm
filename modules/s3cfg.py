@@ -27,7 +27,6 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-
 """
 
 __all__ = ("S3Config",)
@@ -37,6 +36,7 @@ from collections import OrderedDict
 from gluon import current, URL
 from gluon.storage import Storage
 
+from s3compat import basestring, INTEGER_TYPES
 from s3theme import FORMSTYLES
 
 class S3Config(Storage):
@@ -628,6 +628,43 @@ class S3Config(Storage):
         else:
             return None
 
+    def get_auth_masterkey(self):
+        """
+            Allow authentication with master key (= a single key instead of
+            username+password)
+        """
+        return self.auth.get("masterkey", False)
+
+    def get_auth_masterkey_app_key(self):
+        """
+            App key for clients using master key authentication
+            - a string (recommended length 32 chars, random pattern)
+            - specific for the deployment (i.e. not template)
+            - should be configured in 000_config.py (alongside hmac_key)
+        """
+        return self.auth.get("masterkey_app_key")
+
+    def get_auth_masterkey_token_ttl(self):
+        """
+            The time-to-live for master key auth tokens in seconds
+            - tokens must survive two request cycles incl. prep, so
+              TTL shouldn't be too short with slow network/server
+            - should be short enough to prevent unused tokens from
+              lingering
+        """
+        return self.auth.get("masterkey_token_ttl", 600)
+
+    def get_auth_masterkey_context(self):
+        """
+            Getter for master key context information
+            - a JSON-serializable dict with context data, or
+            - a function that takes a master key (Row) and returns such a dict
+
+            NB the getter should not expose the master key itself
+               in the context dict!
+        """
+        return self.auth.get("masterkey_context")
+
     def get_security_self_registration(self):
         """
             Whether Users can register themselves
@@ -680,18 +717,18 @@ class S3Config(Storage):
     def get_auth_registration_link_user_to(self):
         """
             Link User accounts to none or more of:
-            * Staff
-            * Volunteer
-            * Member
+            * staff
+            * volunteer
+            * member
         """
         return self.auth.get("registration_link_user_to")
 
     def get_auth_registration_link_user_to_default(self):
         """
             Link User accounts to none or more of:
-            * Staff
-            * Volunteer
-            * Member
+            * staff
+            * volunteer
+            * member
             Should be an iterable.
         """
         return self.auth.get("registration_link_user_to_default")
@@ -1207,9 +1244,9 @@ class S3Config(Storage):
         currencies = self.__lazy("fin", "currencies", {})
         if currencies == {}:
             currencies = {
-                "EUR" : "Euros",
-                "GBP" : "Great British Pounds",
-                "USD" : "United States Dollars",
+                "EUR": "Euros",
+                "GBP": "Great British Pounds",
+                "USD": "United States Dollars",
             }
         return currencies
 
@@ -1908,10 +1945,10 @@ class S3Config(Storage):
 
         excluded_fields = self.pdf.get("excluded_fields")
         if excluded_fields is None:
-            excluded_fields = {"hms_hospital" : ["hrm_human_resource",
-                                                 ],
-                               "pr_group" : ["pr_group_membership",
-                                             ],
+            excluded_fields = {"hms_hospital": ["hrm_human_resource",
+                                                ],
+                               "pr_group": ["pr_group_membership",
+                                            ],
                                }
 
         return excluded_fields.get(resourcename, [])
@@ -3384,25 +3421,9 @@ class S3Config(Storage):
     # -------------------------------------------------------------------------
     # DC: Data Collection
     #
-    def get_dc_response_label(self):
-        """
-            Label for Responses
-            - 'Assessment;
-            - 'Response' (default if set to None)
-            - 'Survey'
-        """
-        return self.dc.get("response_label", "Assessment")
-
-    def get_dc_unique_question_names_per_template(self):
-        """
-            Deduplicate Questions by Name/Template
-             - needed for importing multiple translations
-        """
-        return self.dc.get("unique_question_names_per_template", False)
-
     def get_dc_mobile_data(self):
         """
-            Whether Mobile Clients should download Assessments
+            Whether Mobile Clients should download Assessments (Data not just Forms)
             - e.g. when these are created through Targetting
         """
         return self.dc.get("mobile_data", False)
@@ -3413,9 +3434,49 @@ class S3Config(Storage):
         """
         return self.dc.get("mobile_inserts", True)
 
+    def get_dc_response_label(self):
+        """
+            Label for Responses
+            - 'Assessment;
+            - 'Response' (default if set to None)
+            - 'Survey'
+        """
+        return self.dc.get("response_label", "Assessment")
+
+    def get_dc_response_mobile(self):
+        """
+            Whether Assessments are filled-out on the EdenMobile App
+        """
+        return self.dc.get("response_mobile", True)
+
+    def get_dc_response_web(self):
+        """
+            Whether Assessments are filled-out on the Web interface
+        """
+        return self.dc.get("response_web", True)
+
+    def get_dc_target_status(self):
+        """
+            Whether Assessment Targets have Statuses
+        """
+        return self.dc.get("target_status", False)
+
+    def get_dc_unique_question_names_per_template(self):
+        """
+            Deduplicate Questions by Name/Template
+             - needed for importing multiple translations
+        """
+        return self.dc.get("unique_question_names_per_template", False)
+
     # -------------------------------------------------------------------------
     # Deployments
     #
+    def get_deploy_alerts(self):
+        """
+            Whether the system is used to send Alerts
+        """
+        return self.__lazy("deploy", "alerts", default=True)
+
     def get_deploy_cc_groups(self):
         """
             List of Group names that are cc'd on Alerts
@@ -3434,6 +3495,14 @@ class S3Config(Storage):
             Whether Alert recipients should be selected manually
         """
         return self.deploy.get("manual_recipients", True)
+
+    def get_deploy_member_filters(self):
+        """
+            Custom set of filter_widgets for members (hrm_human_resource),
+            used in custom methods for member selection, e.g. deploy_apply
+            or deploy_alert_select_recipients
+        """
+        return self.__lazy("deploy", "member_filters", default=None)
 
     def get_deploy_post_to_twitter(self):
         """
@@ -3696,7 +3765,7 @@ class S3Config(Storage):
         """
             Use response type categories
         """
-        return self.dvr.get("response_types", True)
+        return self.__lazy("dvr", "response_types", default=True)
 
     def get_dvr_response_types_hierarchical(self):
         """
@@ -4556,8 +4625,8 @@ class S3Config(Storage):
     #
     def get_mobile_forms(self):
         """
-            Configure mobile forms - a list of items, or a callable returning
-            a list of items.
+            Configure mobile forms - a list of items, or a callable accepting
+            a auth_masterkey.id as parameter and returning a list of items.
 
             Item formats:
                 "tablename"
@@ -4575,13 +4644,19 @@ class S3Config(Storage):
             Example:
                 settings.mobile.forms = [("Request", "req_req")]
         """
-        return self.__lazy("mobile", "forms", [])
+        return self.mobile.get("forms", [])
 
     def get_mobile_dynamic_tables(self):
         """
             Expose mobile forms for dynamic tables
         """
         return self.mobile.get("dynamic_tables", True)
+
+    def get_mobile_masterkey_filter(self):
+        """
+            Filter mobile forms by master key
+        """
+        return self.mobile.get("masterkey_filter", False)
 
     # -------------------------------------------------------------------------
     # Organisations
@@ -4599,7 +4674,7 @@ class S3Config(Storage):
         """
         default_organisation = self.__lazy("org", "default_organisation", default=None)
         if default_organisation:
-            if not isinstance(default_organisation, (int, long)):
+            if not isinstance(default_organisation, INTEGER_TYPES):
                 # Check Session cache
                 default_organisation_id = current.session.s3.default_organisation_id
                 if default_organisation_id:
@@ -4628,7 +4703,7 @@ class S3Config(Storage):
         """
         default_site = self.org.get("default_site", None)
         if default_site:
-            if not isinstance(default_site, (int, long)):
+            if not isinstance(default_site, INTEGER_TYPES):
                 # Check Session cache
                 default_site_id = current.session.s3.default_site_id
                 if default_site_id:
@@ -4847,13 +4922,6 @@ class S3Config(Storage):
             Get custom tasks for scheduled site checks
         """
         return self.org.get("site_check")
-
-    def get_org_summary(self):
-        """
-            Whether to use Summary fields for Organisation/Office:
-                # National/International staff
-        """
-        return self.org.get("summary", False)
 
     def set_org_dependent_field(self,
                                 tablename=None,
@@ -5366,12 +5434,6 @@ class S3Config(Storage):
             The lead role of organisations within projects
         """
         return self.project.get("organisation_lead_role", 1)
-
-    def get_project_task_tag(self):
-        """
-            Use Tags in Tasks
-        """
-        return self.project.get("task_tag", False)
 
     def get_project_task_status_opts(self):
         """

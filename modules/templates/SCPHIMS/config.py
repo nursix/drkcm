@@ -163,6 +163,8 @@ def config(settings):
     settings.dc.mobile_data = True
     # Don't Create Assessments on Mobile
     settings.dc.mobile_inserts = False
+    # Sections can be Hierarchical
+    settings.dc.sections_hierarchical = True
 
     def dc_target_onaccept(form):
         """
@@ -518,6 +520,8 @@ def config(settings):
                 #r.table.response_id.represent = response_represent
 
                 # Configure dc_response as mere lookup-list
+                # NB In SCPHIMS, we need response_id predefined since this is the only way that we can link to the correct dc_target
+                # (In UCCE, we can find the target from the template from the table since 1 Target == 1 Template)
                 s3db.configure("dc_response",
                                mobile_form = lambda record_id: \
                                              response_represent(record_id,

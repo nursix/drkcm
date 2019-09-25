@@ -75,7 +75,7 @@ __all__ = ("S3ACLWidget",
            "S3TimeIntervalWidget",
            #"S3UploadWidget",
            "S3FixedOptionsWidget",
-           "S3QuestionWidget",
+           "S3QuestionEditorWidget",
            "CheckboxesWidgetS3",
            "s3_comments_widget",
            "s3_richtext_widget",
@@ -108,6 +108,7 @@ from gluon.languages import lazyT
 from gluon.sqlhtml import *
 from gluon.storage import Storage
 
+from s3compat import INTEGER_TYPES, basestring, long, sorted_locale, unicodeT, xrange
 from .s3datetime import S3Calendar, S3DateTime
 from .s3utils import *
 from .s3validators import *
@@ -3246,7 +3247,7 @@ class S3GroupedOptionsWidget(FormWidget):
                         rows = current.db(query).select(ktable[pkey],
                                                         ktable[help_field])
                         for row in rows:
-                            helptext[unicode(row[pkey])] = row[help_field]
+                            helptext[s3_unicode(row[pkey])] = row[help_field]
 
         # Get all letters and their options
         letter_options = {}
@@ -3258,16 +3259,15 @@ class S3GroupedOptionsWidget(FormWidget):
                     letter_options[letter].append((key, label))
                 else:
                     letter_options[letter] = [(key, label)]
-        all_letters = letter_options.keys()
 
         # Sort letters
-        import locale
-        if all_letters:
-            all_letters.sort(locale.strcoll)
+        if letter_options:
+            all_letters = sorted_locale(letter_options.keys())
             first_letter = min(u"A", all_letters[0])
             last_letter = max(u"Z", all_letters[-1])
         else:
             # No point with grouping if we don't have any labels
+            all_letters = []
             size = 0
 
         size = self.size
@@ -3506,8 +3506,8 @@ class S3RadioOptionsWidget(FormWidget):
             if callable(help_field):
                 help_field = help_field(options)
             if isinstance(help_field, dict):
-                for key in help_field.keys():
-                    helptext[s3_unicode(key)] = help_field[key]
+                for k, v in help_field.items():
+                    helptext[s3_unicode(k)] = v
             else:
                 ktablename, pkey = s3_get_foreign_key(field)[:2]
                 if ktablename is not None:
@@ -3518,7 +3518,7 @@ class S3RadioOptionsWidget(FormWidget):
                         rows = current.db(query).select(ktable[pkey],
                                                         ktable[help_field])
                         for row in rows:
-                            helptext[unicode(row[pkey])] = row[help_field]
+                            helptext[s3_unicode(row[pkey])] = row[help_field]
 
         # Prepare output for _render_item()
         _options = []
@@ -3641,7 +3641,9 @@ class S3HumanResourceAutocompleteWidget(FormWidget):
 class S3ImageCropWidget(FormWidget):
     """
         Allows the user to crop an image and uploads it.
-        Cropping & Scaling( if necessary ) done at client-side
+        Cropping & Scaling (if necessary) done client-side
+        - currently using JCrop (https://jcrop.com)
+        - @ToDo: Replace with https://blueimp.github.io/jQuery-File-Upload/ ?
 
         @ToDo: Doesn't currently work with Inline Component Forms
     """
@@ -3714,7 +3716,8 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
         # Set up the canvas
         # Canvas is used to scale and crop the Image on the client side
         canvas = TAG["canvas"](_class="imagecrop-canvas",
-                               _style="display:none")
+                               _style="display:none",
+                               )
         image_bounds = self.image_bounds
 
         if image_bounds:
@@ -3761,7 +3764,7 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
             if callable(download_url):
                 download_url = download_url()
 
-            url = "%s/%s" % (download_url ,value)
+            url = "%s/%s" % (download_url, value)
             # Add Image
             crop_data_attr["_value"] = url
             append(FIELDSET(LEGEND(A(T("Upload different Image")),
@@ -4588,7 +4591,7 @@ class S3LocationSelector(S3Selector):
 
         if feature_required:
             show_map = True
-            if not any((points,lines, polygons, circles)):
+            if not any((points, lines, polygons, circles)):
                 points = True
             if lines or polygons or circles:
                 required = "wkt" if not points else "any"
@@ -4778,7 +4781,7 @@ class S3LocationSelector(S3Selector):
                     if s3.debug:
                         raise RuntimeError(error)
 
-        if not location_id and values.keys() == ["id"]:
+        if not location_id and list(values.keys()) == ["id"]:
             location_id = values["id"] = default
 
         # Update the values dict from the database
@@ -5499,13 +5502,11 @@ class S3LocationSelector(S3Selector):
             _placeholder = label
         else:
             _placeholder = None
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
-        widget = INPUT(_name=name,
-                       _id=input_id,
-                       _class=_class,
-                       _placeholder=_placeholder,
-                       value=value,
+        widget = INPUT(_name = name,
+                       _id = input_id,
+                       _class = _class,
+                       _placeholder = _placeholder,
+                       value = s3_str(value),
                        )
 
         return (_label, widget, input_id, hidden)
@@ -6026,7 +6027,7 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
         ltable = s3db.gis_location
 
         if lx_ids:
-            query = ltable.id.belongs(lx_ids.values())
+            query = ltable.id.belongs(set(lx_ids.values()))
             limitby = (0, len(lx_ids))
             lx_names = current.db(query).select(ltable.id,
                                                 ltable.name,
@@ -6639,7 +6640,7 @@ class S3MultiSelectWidget(MultipleOptionsWidget):
             # Select All / Unselect All doesn't make sense if multiple == False
             header_opt = False
         if not isinstance(search_opt, bool) and \
-           (search_opt == "auto" or isinstance(search_opt, (int, long))):
+           (search_opt == "auto" or isinstance(search_opt, INTEGER_TYPES)):
             max_options = 10 if search_opt == "auto" else search_opt
             if options_len > max_options:
                 search_opt = True
@@ -6861,7 +6862,7 @@ class S3CascadeSelectWidget(FormWidget):
         else:
             values = value
         for v in values:
-            if isinstance(v, (int, long)) or str(v).isdigit():
+            if isinstance(v, INTEGER_TYPES) or str(v).isdigit():
                 append(v)
 
         # Prepend value parser to field validator
@@ -7080,7 +7081,7 @@ class S3HierarchyWidget(FormWidget):
         else:
             values = value
         for v in values:
-            if isinstance(v, (int, long)) or str(v).isdigit():
+            if isinstance(v, INTEGER_TYPES) or str(v).isdigit():
                 append(v)
 
         # Prepend value parser to field validator
@@ -7361,7 +7362,7 @@ class S3OrganisationHierarchyWidget(OptionsWidget):
                     for row in rows:
                         options.append(row.as_dict())
                 else:
-                    raise SyntaxError, "widget cannot determine options of %s" % field
+                    raise SyntaxError("widget cannot determine options of %s" % field)
 
         javascript_array = '''%s_options=%s''' % (name,
                                                   json.dumps(options, separators=SEPARATORS))
@@ -8093,8 +8094,7 @@ class CheckboxesWidgetS3(OptionsWidget):
         if hasattr(requires[0], "options"):
             options = requires[0].options()
         else:
-            raise SyntaxError, "widget cannot determine options of %s" \
-                % field
+            raise SyntaxError("widget cannot determine options of %s" % field)
 
         options = [(k, v) for k, v in options if k != ""]
 
@@ -8473,11 +8473,17 @@ class S3XMLContents(object):
         return re.sub(r"\{\{(.+?)\}\}", self.link, self.contents)
 
 # =============================================================================
-class S3QuestionWidget(FormWidget):
+class S3QuestionEditorWidget(FormWidget):
     """
-        A Question widget which takes attributes
-        of a typical question as input and converts
-        it into a JSON
+        A Question Editor widget for DC
+        Client-side JS in s3.ui.question.js
+
+        Currently unused.
+        - replace with simple DIV + Hidden IINPUT & build UI client-side?
+            . less load on server
+            . DRYer (no need to read/extend settings in 2 places)
+            . faster for user (faster download and hence time before interaction)
+        - for now the replacement is in UCCE as styled to it's Theme
     """
 
     # -------------------------------------------------------------------------
@@ -8696,18 +8702,11 @@ class S3QuestionWidget(FormWidget):
 
         _label = LABEL("%s: " % label, _for=input_id)
 
-        if isinstance(value, unicode):
-            value = value.encode("utf-8")
-
         # If the input is of type checkbox
         if name in ("is_required", "multiple"):
-            widget = INPUT(_type=_type,
-                           _id=input_id,
-                           value=value)
+            widget = INPUT(_type=_type, _id=input_id, value=s3_str(value))
         else:
-            widget = INPUT(_type=_type,
-                           _id=input_id,
-                           _value=value)
+            widget = INPUT(_type=_type, _id=input_id, _value=s3_str(value))
 
         return (_label, widget, input_id)
 
@@ -8725,7 +8724,7 @@ class S3TagCheckboxWidget(FormWidget):
         NB make sure the field validator accepts the configured on/off values,
            e.g. IS_IN_SET(("Y", "N")) (also for consistency with imports)
 
-        NB when using this with a filtered key-value-component (e.g.
+        NB when using this with a filtered key-value component (e.g.
            pr_person_tag), make the filtered component multiple=False and
            embed *.value as subtable-field (do not use S3SQLInlineComponent)
     """
@@ -8803,7 +8802,7 @@ class ICON(I):
     #
     icons = {
         # Font-Awesome 4
-        # http://fontawesome.io/icons/
+        # https://fontawesome.com/v4.7.0/icons/
         "font-awesome": {
             "_base": "fa",
             "active": "fa-check",
@@ -8825,6 +8824,7 @@ class ICON(I):
             "certificate": "fa-certificate",
             "comment-alt": "fa-comment-o",
             "commit": "fa-check-square-o",
+            "copy": "fa-copy",
             "delete": "fa-trash",
             "delivery": "fa-thumbs-up",
             "deploy": "fa-plus",
@@ -8834,26 +8834,36 @@ class ICON(I):
             "edit": "fa-edit",
             "event": "fa-bolt",
             "exclamation": "fa-exclamation",
+            "eye": "fa-eye",
             "facebook": "fa-facebook",
             "facility": "fa-home",
             "file": "fa-file",
-            "file-alt": "fa-file-alt",
+            "file-alt": "fa-file-o",
+            "file-text": "fa-file-text",
+            "file-text-alt": "fa-file-text-o",
             "flag": "fa-flag",
             "flag-alt": "fa-flag-o",
+            "folder": "fa-folder",
+            "folder-alt": "fa-folder-o",
             "folder-open-alt": "fa-folder-open-o",
             "fullscreen": "fa-fullscreen",
             "globe": "fa-globe",
             "goods": "fa-cubes",
             "group": "fa-group",
+            "hashtag": "fa-hashtag",
             "hint": "fa-hand-o-right",
             "home": "fa-home",
             "inactive": "fa-check-empty",
             "incident": "fa-bolt",
+            "info": "fa-info",
+            "info-circle": "fa-info-circle",
+            #"instructions": "fa-edit", # UCCE
             "link": "fa-external-link",
             "list": "fa-list",
             "location": "fa-globe",
             "mail": "fa-envelope-o",
             "map-marker": "fa-map-marker",
+            "minus": "fa-minus",
             "move": "fa-arrows",
             "news": "fa-info",
             "offer": "fa-truck",
@@ -8864,6 +8874,7 @@ class ICON(I):
             "pause": "fa-pause",
             "pencil": "fa-pencil",
             "phone": "fa-phone",
+            "picture": "fa-picture-o",
             "play": "fa-play",
             "plus": "fa-plus",
             "plus-sign": "fa-plus-sign",
@@ -8871,10 +8882,13 @@ class ICON(I):
             "project": "fa-dashboard",
             "radio": "fa-microphone",
             "remove": "fa-remove",
+            #"reports": "fi-bar-chart", # UCCE
             "request": "fa-flag",
             "responsibility": "fa-briefcase",
             "return": "fa-arrow-left",
             "rss": "fa-rss",
+            "search": "fa-search",
+            #"section-break": "fa-minus", # UCCE
             "sent": "fa-check",
             "settings": "fa-wrench",
             "share": "fa-share-alt",
@@ -8917,28 +8931,38 @@ class ICON(I):
             "certificate": "fi-burst",
             "comment-alt": "fi-comment",
             "commit": "fi-check",
+            "copy": "fi-page-copy",
             "delete": "fi-trash",
             "deploy": "fi-plus",
             "deployed": "fi-check",
             "edit": "fi-page-edit",
             "exclamation": "fi-alert",
+            "eye": "fi-eye",
             "facebook": "fi-social-facebook",
             "facility": "fi-home",
             "file": "fi-page-filled",
             "file-alt": "fi-page",
+            "file-text": "fi-page-filled",
+            "file-text-alt": "fi-page",
             "flag": "fi-flag",
             "flag-alt": "fi-flag",
+            "folder": "fi-folder",
+            "folder-alt": "fi-folder",
             "folder-open-alt": "fi-folder",
             "fullscreen": "fi-arrows-out",
             "globe": "fi-map",
             "group": "fi-torsos-all",
             "home": "fi-home",
             "inactive": "fi-x",
+            "info": "fi-info",
+            "info-circle": "fi-info",
+            #"instructions": "fi-page-edit", # UCCE
             "link": "fi-web",
-            "list": "fi-list",
+            "list": "fi-list-thumbnails",
             "location": "fi-map",
             "mail": "fi-mail",
             "map-marker": "fi-marker",
+            "minus": "fi-minus",
             "offer": "fi-burst",
             "organisation": "fi-torsos-all",
             "org-network": "fi-asterisk",
@@ -8953,10 +8977,13 @@ class ICON(I):
             "print": "fi-print",
             "radio": "fi-microphone",
             "remove": "fi-x",
+            #"reports": "fi-graph-bar", # UCCE
             "request": "fi-flag",
             "responsibility": "fi-sheriff-badge",
             "return": "fi-arrow-left",
             "rss": "fi-rss",
+            "search": "fi-magnifying-glass",
+            #"section-break": "fi-minus", # UCCE
             "sent": "fi-check",
             "settings": "fi-wrench",
             "share": "fi-share",
@@ -8977,7 +9004,7 @@ class ICON(I):
             "zoomout": "fi-zoom-out",
         },
         # Font-Awesome 3
-        # http://fontawesome.io/3.2.1/icons/
+        # https://fontawesome.com/v3.2.1/icons/
         "font-awesome3": {
             "_base": "icon",
             "active": "icon-check",
@@ -8996,29 +9023,39 @@ class ICON(I):
             "certificate": "icon-certificate",
             "comment-alt": "icon-comment-alt",
             "commit": "icon-truck",
+            "copy": "icon-copy",
             "delete": "icon-trash",
             "deploy": "icon-plus",
             "deployed": "icon-ok",
             "down": "icon-caret-down",
             "edit": "icon-edit",
             "exclamation": "icon-exclamation",
+            "eye": "icon-eye-open",
             "facebook": "icon-facebook",
             "facility": "icon-home",
             "file": "icon-file",
             "file-alt": "icon-file-alt",
+            "file-text": "icon-file-text",
+            "file-text-alt": "icon-file-text-alt",
             "flag": "icon-flag",
             "flag-alt": "icon-flag-alt",
+            "folder": "icon-folder-close",
+            "folder-alt": "icon-folder-close-alt",
             "folder-open-alt": "icon-folder-open-alt",
             "fullscreen": "icon-fullscreen",
             "globe": "icon-globe",
             "group": "icon-group",
             "home": "icon-home",
             "inactive": "icon-check-empty",
+            "info": "icon-info",
+            "info-circle": "icon-info-sign",
+            #"instructions": "icon-edit", # UCCE
             "link": "icon-external-link",
             "list": "icon-list",
             "location": "icon-globe",
             "mail": "icon-envelope-alt",
             "map-marker": "icon-map-marker",
+            "minus": "icon-minus",
             "offer": "icon-truck",
             "organisation": "icon-sitemap",
             "org-network": "icon-umbrella",
@@ -9027,16 +9064,20 @@ class ICON(I):
             "pause": "icon-pause",
             "pencil": "icon-pencil",
             "phone": "icon-phone",
+            "picture": "icon-picture",
             "play": "icon-play",
             "plus": "icon-plus",
             "plus-sign": "icon-plus-sign",
             "print": "icon-print",
             "radio": "icon-microphone",
             "remove": "icon-remove",
+            #"reports": "icon-bar-chart", # UCCE
             "request": "icon-flag",
             "responsibility": "icon-briefcase",
             "return": "icon-arrow-left",
             "rss": "icon-rss",
+            "search": "icon-search",
+            #"section-break": "icon-minus", # UCCE
             "sent": "icon-ok",
             "settings": "icon-wrench",
             "share": "icon-share",

@@ -62,28 +62,9 @@ class S3MainMenu(default.S3MainMenu):
                             #MM("Training Courses", c="hrm", f="course"),
                             ),
                         ]
-            elif not has_role("RDRT_ADMIN") and auth.s3_has_role("RDRT_MEMBER"):
+            elif not has_role("RDRT_ADMIN") and has_role("RDRT_MEMBER"):
                 # Simplified menu for AP RDRT
-                db = current.db
-                person_id = auth.s3_logged_in_person()
-                atable = s3db.deploy_application
-                htable = s3db.hrm_human_resource
-                query = (atable.human_resource_id == htable.id) & \
-                        (htable.person_id == person_id)
-                member = db(query).select(htable.id,
-                                          cache = s3db.cache,
-                                          limitby = (0, 1),
-                                          ).first()
-                if member:
-                    profile = MM("My RDRT Profile",
-                                 c="deploy", f="human_resource", args=[member.id, "profile"],
-                                 )
-                else:
-                    profile = None
-                return [homepage("deploy", name="RDRT")(
-                            profile,
-                            ),
-                        ]
+                return []
 
         settings = current.deployment_settings
 
@@ -216,7 +197,7 @@ class S3MainMenu(default.S3MainMenu):
                 MM("Events", c="event", f="event", m="summary"),
                 MM("Incident Reports", c="event", f="incident_report", m="summary"),
             ),
-            homepage("deploy", name="RDRT", f="mission", m="summary",
+            homepage("deploy", name="Surge", f="mission", m="summary",
                      vars={"~.status__belongs": "2"})(
                 MM("InBox", c="deploy", f="email_inbox"),
                 MM("Missions", c="deploy", f="mission", m="summary"),
@@ -388,15 +369,33 @@ class S3MainMenu(default.S3MainMenu):
                         menu_lang
             )
         else:
-            s3_has_role = auth.s3_has_role
-            is_org_admin = lambda i: s3_has_role("ORG_ADMIN") and \
-                                     not s3_has_role("ADMIN")
+            has_role = auth.s3_has_role
+            ADMIN = has_role("ADMIN")
+            if not ADMIN and has_role("RDRT_MEMBER") and not has_role("RDRT_ADMIN"):
+                db = current.db
+                s3db = current.s3db
+                person_id = auth.s3_logged_in_person()
+                atable = s3db.deploy_application
+                htable = s3db.hrm_human_resource
+                query = (atable.human_resource_id == htable.id) & \
+                        (htable.person_id == person_id)
+                member = db(query).select(htable.id,
+                                          cache = s3db.cache,
+                                          limitby = (0, 1),
+                                          ).first()
+                if member:
+                    profile = MP("Profile", c="deploy", f="human_resource", args=[member.id, "profile"])
+                else:
+                    profile = MP("Profile", c="default", f="person")
+            else:
+                profile = MP("Profile", c="default", f="person")
+            is_org_admin = lambda i: not ADMIN and has_role("ORG_ADMIN")
             menu_personal = MP()(
                         MP("Administration", c="admin", f="index",
-                           check=s3_has_role("ADMIN")),
+                           check=has_role("ADMIN")),
                         MP("Administration", c="admin", f="user",
                            check=is_org_admin),
-                        MP("Profile", c="default", f="person"),
+                        profile,
                         MP("Change Password", c="default", f="user",
                            m="change_password"),
                         MP("Logout", c="default", f="user",
@@ -450,7 +449,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
     # -------------------------------------------------------------------------
     @staticmethod
     def deploy():
-        """ RDRT Alerting and Deployments """
+        """ Surge Register (RDRT Alerting and Deployments) """
 
         auth = current.auth
         user = auth.user
@@ -480,85 +479,95 @@ class S3OptionsMenu(default.S3OptionsMenu):
                                           limitby = (0, 1),
                                           ).first()
                 if member:
-                    profile = M("My RDRT Profile",
+                    profile = M("My Surge Profile",
                                 c="deploy", f="human_resource", args=[member.id, "profile"],
                                 )
                 else:
                     profile = None
 
                 if auth.s3_has_role("RDRT_ADMIN"):
-                    gtable = s3db.pr_group
-                    group = db(gtable.name == "RDRT Focal Points").select(gtable.id,
-                                                                          cache = s3db.cache,
-                                                                          limitby=(0, 1)
-                                                                          ).first()
-                    if group:
-                        args = [group.id, "group_membership"]
-                    else:
-                        args = "create"
-                    focal_points = M("Focal Points",
-                                     c="deploy", f="group",
-                                     args = args,
-                                     )
+                    #gtable = s3db.pr_group
+                    #group = db(gtable.name == "RDRT Focal Points").select(gtable.id,
+                    #                                                      cache = s3db.cache,
+                    #                                                      limitby=(0, 1)
+                    #                                                      ).first()
+                    #if group:
+                    #    args = [group.id, "group_membership"]
+                    #else:
+                    #    args = "create"
+                    #focal_points = M("Focal Points",
+                    #                 c="deploy", f="group",
+                    #                 args = args,
+                    #                 )
                     inbox = M("InBox",
                               c="deploy", f="email_inbox",
                               )
-                    training = M("Training",
-                                 c="deploy", f="training", m="summary")(
-                                    M("Create", m="create"),
-                                    M("Search Training", m="summary"),
-                                    M("Import Training Participants", m="import"),
-                                 )
-                    members = M("RDRT Members",
+                    #training = M("Training",
+                    #             c="deploy", f="training", m="summary")(
+                    #                M("Create", m="create"),
+                    #                M("Search Training", m="summary"),
+                    #                M("Import Training Participants", m="import"),
+                    #             )
+                    members = M("Surge Members",
                                  c="deploy", f="human_resource", m="summary")(
-                                    M("Find RDRT"),
-                                    M("Add Member",
-                                      c="deploy", f="application", m="select",
-                                      p="create", t="deploy_application",
-                                      ),
+                                    #M("Find RDRT"),
+                                    #M("Add Member",
+                                    #  c="deploy", f="application", m="select",
+                                    #  p="create", t="deploy_application",
+                                    #  ),
                                     M("Import Members", c="deploy", f="person", m="import"),
                                     M("Report by Region", c="deploy", f="human_resource", m="report",
                                       vars=Storage(rows = "organisation_id$region_id",
-                                                   cols = "training.course_id",
+                                                   cols = "organisation_id",
                                                    fact = "count(person_id)",
                                                    ),
                                       ),
                                     M("Report by CCST / CO", c="deploy", f="human_resource", m="report",
                                       vars=Storage(rows = "organisation_id$root_organisation$supported_by.name",
-                                                   cols = "training.course_id",
+                                                   cols = "organisation_id",
                                                    fact = "count(person_id)",
                                                    ),
                                       ),
                                )
+                    ttable = s3db.dc_template
+                    template = db(ttable.name == "Surge Member").select(ttable.id,
+                                                                        limitby=(0,1))
+                    if template:
+                        template_id = template.first().id
+                    else:
+                        template_id = None
                     return M()(M("Alerts",
-                             c="deploy", f="alert")(
-                                M("Create", m="create"),
-                                inbox,
-                                focal_points,
-                                M("Settings",
-                                  c="deploy", f="email_channel",
-                                  p="update", t="msg_email_channel",
-                                  ),
-                           ),
-                           profile,
-                           M("Missions",
-                             c="deploy", f="mission", m="summary")(
-                                M("Create", m="create"),
-                                M("Active Missions", m="summary",
-                                  vars={"~.status__belongs": "2"}),
-                                M("Closed Missions", m="summary",
-                                  vars={"~.status__belongs": "1"}),
-                           ),
-                           training,
-                           #M("Deployments",
-                           #  c="deploy", f="assignment", m="summary"
-                           #),
-                           members,
-                           M("Sectors",
-                             c="deploy", f="job_title", restrict=["ADMIN"],
-                           ),
-                           #M("Online Manual", c="deploy", f="index"),
-                       )
+                                 c="deploy", f="alert")(
+                                    M("Create", m="create"),
+                                    inbox,
+                                    #focal_points,
+                                    M("Settings",
+                                      c="deploy", f="email_channel",
+                                      p="update", t="msg_email_channel",
+                                      ),
+                                 ),
+                               profile,
+                               M("Missions",
+                                 c="deploy", f="mission", m="summary")(
+                                    M("Create", m="create"),
+                                    M("Active Missions", m="summary",
+                                      vars={"~.status__belongs": "2"}),
+                                    M("Closed Missions", m="summary",
+                                      vars={"~.status__belongs": "1"}),
+                                 ),
+                               #training,
+                               M("Deployments",
+                                 c="deploy", f="assignment", m="summary"
+                                 ),
+                               members,
+                               M("Questions",
+                                 c="dc", f="template", args=[template_id, "question"]
+                                 ),
+                               #M("Sectors",
+                               #  c="deploy", f="job_title", restrict=["ADMIN"],
+                               #  ),
+                               #M("Online Manual", c="deploy", f="index"),
+                               )
                 else:
                     return M()(profile)
 

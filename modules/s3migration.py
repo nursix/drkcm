@@ -321,7 +321,7 @@ class S3Migration(object):
                     tables.append(s)
                     stable = db[s]
                     rows = db(stable._id > 0).select(stable.instance_type)
-                    instance_types = set([r.instance_type for r in rows])
+                    instance_types = {r.instance_type for r in rows}
                     for t in instance_types:
                         tables.append(t)
         if strbools:
@@ -406,7 +406,7 @@ class S3Migration(object):
         new_version = new_version.strip()
 
         # Look for a script to the current version
-        path = os.path.join(request.folder, "static", "scripts", "upgrade")
+        path = os.path.join(current.request.folder, "static", "scripts", "upgrade")
 
     # -------------------------------------------------------------------------
     def run_model(self):
@@ -1038,7 +1038,7 @@ class S3Migration(object):
 
         elif db_engine == "mysql":
             field = db[tablename][fieldname_old]
-            sql_type = map_type_web2py_to_sql(field.type)
+            sql_type = self.map_type_web2py_to_sql(field.type)
             sql = "ALTER TABLE %s CHANGE %s %s %s(%s)" % (tablename,
                                                           fieldname_old,
                                                           fieldname_new,
@@ -1118,6 +1118,7 @@ class S3Migration(object):
         self.update_field_by_mapping(db, tablename, field_to_update, mapping_function)
 
     # -------------------------------------------------------------------------
+    @staticmethod
     def update_field_by_mapping(db,
                                 tablename,
                                 field_to_update,
@@ -1196,7 +1197,7 @@ class S3Migration(object):
         new_field = Field(new_list_field, new_field_type)
         new_id_field = Field("%s_%s" % (tablename_old, table_old_id_field),
                              "reference %s" % tablename_old)
-        db.define_table(tablename,
+        db.define_table(tablename_new,
                         new_id_field,
                         new_field)
 
@@ -1218,6 +1219,8 @@ class S3Migration(object):
             @param table_old_id_field : name of the id field in the original table
             @param tablename_old      : name of the original table
         """
+
+        db = current.db
 
         update_dict = {}
         table_old = db[tablename_old]
@@ -1252,7 +1255,7 @@ class S3Migration(object):
         for attribute in attributes_to_copy:
             exec_str = "field_new.%(attribute)s = table[fieldname_old].%(attribute)s" % \
                 dict(attribute=attribute)
-            exec exec_str in globals(), locals()
+            exec(exec_str, globals(), locals())
         db.define_table(tablename,
                         table, # Table to inherit from
                         field_new,

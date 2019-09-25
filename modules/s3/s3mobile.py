@@ -37,9 +37,12 @@ __all__ = ("S3MobileFormList",
 
 import json
 
-from gluon import *
+from gluon import IS_EMPTY_OR, IS_IN_SET, current
+
+from s3compat import basestring
 from .s3datetime import s3_parse_datetime
-from .s3forms import S3SQLForm, S3SQLCustomForm, S3SQLDummyField, S3SQLField
+from .s3forms import S3SQLCustomForm, S3SQLDummyField, S3SQLField, \
+                     S3SQLForm, S3SQLInlineInstruction, S3SQLSectionBreak
 from .s3rest import S3Method
 from .s3utils import s3_get_foreign_key, s3_str
 from .s3validators import SEPARATORS
@@ -58,9 +61,12 @@ class S3MobileFormList(object):
         Form List Generator
     """
 
-    def __init__(self):
+    def __init__(self, masterkey_id=None):
         """
             Constructor
+
+            @param masterkey_id: auth_masterkey record ID to filter the form
+                                 list by
         """
 
         T = current.T
@@ -71,6 +77,8 @@ class S3MobileFormList(object):
         formdict = {}
 
         forms = settings.get_mobile_forms()
+        if callable(forms):
+            forms = forms(masterkey_id)
         if forms:
             keys = set()
             for item in forms:
@@ -161,6 +169,8 @@ class S3MobileFormList(object):
             ttable = s3db.s3_table
             query = (ttable.mobile_form == True) & \
                     (ttable.deleted != True)
+            if masterkey_id is not None:
+                query = (ttable.masterkey_id == masterkey_id) & query
             rows = current.db(query).select(ttable.name,
                                             ttable.title,
                                             ttable.mobile_data,
@@ -220,6 +230,9 @@ class S3MobileSchema(object):
                              "boolean",
                              "reference",
                              "upload",
+                             "json",
+                             "list:string",
+                             "list:integer",
                              )
 
     # -------------------------------------------------------------------------
@@ -356,6 +369,9 @@ class S3MobileSchema(object):
             @return: the field description as JSON-serializable dict
         """
 
+        if not field:
+            return None
+
         fieldtype = str(field.type)
         SUPPORTED_FIELD_TYPES = set(self.SUPPORTED_FIELD_TYPES)
 
@@ -408,11 +424,7 @@ class S3MobileSchema(object):
             ktablename = None
 
         # Check that field type is supported
-        if fieldtype in SUPPORTED_FIELD_TYPES or is_foreign_key:
-            supported = True
-        else:
-            supported = False
-        if not supported:
+        if not is_foreign_key and fieldtype not in SUPPORTED_FIELD_TYPES:
             return None
 
         # Create a field description
@@ -484,7 +496,8 @@ class S3MobileSchema(object):
         return required
 
     # -------------------------------------------------------------------------
-    def get_options(self, field, lookup=None):
+    @staticmethod
+    def get_options(field, lookup=None):
         """
             Get the options for a field with IS_IN_SET
 
@@ -513,7 +526,7 @@ class S3MobileSchema(object):
             #    for proper authorization, customise_* and filtering
             return None
 
-        elif fieldtype in ("string", "integer"):
+        elif fieldtype in ("string", "integer", "list:string", "list:integer"):
 
             # Check for IS_IN_SET, and extract the options
             if isinstance(requires, IS_IN_SET):
@@ -606,6 +619,7 @@ class S3MobileSchema(object):
         resource = self.resource
         resolve_selector = resource.resolve_selector
 
+        table = resource.table
         tablename = resource.tablename
 
         fields = []
@@ -617,23 +631,75 @@ class S3MobileSchema(object):
         include = fnames.add
 
         form = self.mobile_form(resource)
-        for element in form.elements:
 
-            if isinstance(element, S3SQLField):
-                rfield = resolve_selector(element.selector)
+        if isinstance(form, list):
+            for element in form:
 
-                fname = rfield.fname
+                selector = None
+                if isinstance(element, dict):
+                    etype = element.get("type")
+                    if etype == "input":
+                        selector = element.get("field")
+                    elif etype:
+                        mappend(element)
+                elif isinstance(element, basestring):
+                    selector = element
+                else:
+                    continue
 
-                if rfield.tname == tablename and fname not in fnames:
-                    fields.append(rfield.field)
-                    mappend(fname)
-                    include(fname)
+                if selector:
+                    rfield = resolve_selector(selector)
+                    fname = rfield.fname
+                    if rfield.field and \
+                       rfield.tname == tablename and fname not in fnames:
+                        fields.append(rfield.field)
+                        mappend(element)
+                        include(fname)
 
-            elif isinstance(element, S3SQLDummyField):
-                field = {"type": "dummy",
-                         "name": element.selector,
-                         }
-                mappend(field)
+                        # Other-field
+                        other = self.get_other_field(table, rfield.field)
+                        if other and other not in fnames:
+                            fields.append(table[other])
+                            include(other)
+
+        else:
+            for element in form.elements:
+                if isinstance(element, S3SQLField):
+                    rfield = resolve_selector(element.selector)
+
+                    fname = rfield.fname
+
+                    if rfield.field and \
+                       rfield.tname == tablename and fname not in fnames:
+                        fields.append(rfield.field)
+                        mappend(fname)
+                        include(fname)
+
+                        # Other-field
+                        other = self.get_other_field(table, rfield.field)
+                        if other and other not in fnames:
+                            fields.append(table[other])
+                            include(other)
+
+                elif isinstance(element, S3SQLDummyField):
+                    field = {"type": "dummy",
+                             "name": element.selector,
+                             }
+                    mappend(field)
+
+                elif isinstance(element, S3SQLInlineInstruction):
+                    field = {"type": "instructions",
+                             "do": element.do,
+                             "say": element.say,
+                             #"name": element.selector,
+                             }
+                    mappend(field)
+
+                elif isinstance(element, S3SQLSectionBreak):
+                    field = {"type": "section-break",
+                             #"name": element.selector,
+                             }
+                    mappend(field)
 
         if resource.parent and not resource.linktable:
 
@@ -644,6 +710,33 @@ class S3MobileSchema(object):
                 #include(fkey)
 
         return fields
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_other_field(table, field):
+        """
+            Check for an "other"-field
+            - additional input for option-widgets when the user chooses
+              the "other"-option
+            - other-field must be in the schema, but not in the mobile_form
+
+            @param table: the table
+            @param field: the option-field
+
+            @returns: the name of the other-field, or None
+        """
+
+        other = None
+
+        if hasattr(field, "s3_settings"):
+            mobile_settings = field.s3_settings.get("mobile")
+            if mobile_settings:
+                other = mobile_settings.get("other")
+
+        if other and other in table.fields:
+            return other
+        else:
+            return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -696,7 +789,7 @@ class S3MobileSchema(object):
 
         # Get the form definition from "mobile_form" table setting
         form = resource.get_config("mobile_form")
-        if not form or not isinstance(form, S3SQLCustomForm):
+        if not form or not isinstance(form, (S3SQLCustomForm, list)):
             # Fallback
             form = resource.get_config("crud_form")
 
@@ -967,7 +1060,7 @@ class S3MobileForm(object):
         for tn, record_ids in required_records.items():
             kresource = s3db.resource(tn, id=list(record_ids))
             spec = provided[tn][1]
-            fields = spec["schema"].keys()
+            fields = list(spec["schema"].keys())
             tree = kresource.export_tree(fields = fields,
                                          references = fields,
                                          msince = msince,
@@ -1148,10 +1241,10 @@ class S3MobileForm(object):
             supertables = [supertables]
 
         super_entities = {}
-        for tablename in supertables:
-            table = s3db.table(tablename)
-            if table:
-                super_entities[tablename] = table._id.name
+        for super_tablename in supertables:
+            super_table = s3db.table(super_tablename)
+            if super_table:
+                super_entities[super_tablename] = super_table._id.name
 
         return super_entities
 

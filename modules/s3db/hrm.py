@@ -78,6 +78,7 @@ from gluon.sqlhtml import RadioWidget
 from gluon.storage import Storage
 
 from ..s3 import *
+from s3compat import long
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -2010,6 +2011,7 @@ class S3HRSkillModel(S3Model):
              "hrm_skill",
              "hrm_competency_rating",
              "hrm_competency",
+             #"hrm_competency_id",
              "hrm_credential",
              "hrm_training",
              "hrm_trainings",
@@ -2832,10 +2834,10 @@ class S3HRSkillModel(S3Model):
                                         "actuate": "hide",
                                         },
                        project_project = {"link": "hrm_event_project",
-                                           "joinby": "training_event_id",
-                                           "key": "project_id",
-                                           "actuate": "hide",
-                                           },
+                                          "joinby": "training_event_id",
+                                          "key": "project_id",
+                                          "actuate": "hide",
+                                          },
                        project_strategy = {"link": "hrm_event_strategy",
                                            "joinby": "training_event_id",
                                            "key": "strategy_id",
@@ -3521,7 +3523,8 @@ class S3HRSkillModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {"hrm_course_id": course_id,
+        return {#"hrm_competency_id": competency_id,
+                "hrm_course_id": course_id,
                 "hrm_skill_id": skill_id,
                 "hrm_multi_skill_id": multi_skill_id,
                 "hrm_multi_skill_represent": multi_skill_represent,
@@ -3544,7 +3547,8 @@ class S3HRSkillModel(S3Model):
                                         readable = False,
                                         writable = False)
 
-        return {"hrm_course_id": lambda **attr: dummy("course_id"),
+        return {#"hrm_competency_id": lambda **attr: dummy("competency_id"),
+                "hrm_course_id": lambda **attr: dummy("course_id"),
                 "hrm_skill_id": lambda **attr: dummy("skill_id"),
                 "hrm_multi_skill_id": lambda **attr: dummy_listref("skill_id"),
                 }
@@ -5690,7 +5694,7 @@ def hrm_human_resource_onaccept(form):
         # e.g. Coming from s3_register callback
         form_vars = form
 
-    record_id = form_vars.id
+    record_id = form_vars.get("id")
     if not record_id:
         return
 
@@ -5730,10 +5734,10 @@ def hrm_human_resource_onaccept(form):
                 exists.update_record(main=True)
         else:
             # Insert record
-            ltable.insert(human_resource_id=record_id,
-                          job_title_id=job_title_id,
-                          main=True,
-                          start_date=request.utcnow,
+            ltable.insert(human_resource_id = record_id,
+                          job_title_id = job_title_id,
+                          main = True,
+                          start_date = request.utcnow,
                           )
 
     data = Storage()
@@ -5773,6 +5777,32 @@ def hrm_human_resource_onaccept(form):
         # Volunteer
         vol = True
         location_lookup = settings.get_hrm_location_vol()
+
+    # Add deploy_application when creating inside deploy module
+    if request.controller == "deploy":
+        user_organisation_id = auth.user.organisation_id
+        ltable = s3db.deploy_application
+        if user_organisation_id:
+            query = (ltable.human_resource_id == record_id) & \
+                    ((ltable.organisation_id == None) |
+                     (ltable.organisation_id == user_organisation_id))
+        else:
+            query = (ltable.human_resource_id == record_id)
+        exists = db(query).select(ltable.id,
+                                  limitby=(0, 1)).first()
+        if not exists:
+            # Is there a Deployable Team for this user_org?
+            dotable = s3db.deploy_organisation
+            exists = db(dotable.organisation_id == user_organisation_id)
+            if exists:
+                # Insert record in this Deployable Team
+                ltable.insert(human_resource_id = record_id,
+                              organisation_id = user_organisation_id,
+                              )
+            else:
+                # Insert record in the global Deployable Team
+                ltable.insert(human_resource_id = record_id,
+                              )
 
     # Determine how the HR is positioned
     address = None
@@ -5929,7 +5959,7 @@ def hrm_human_resource_onaccept(form):
                 # Insert new record
                 table.insert(person_id=person_id,
                              date = request.utcnow,
-                             programme_id=programme_id)
+                             programme_id = programme_id)
 
     # Add record owner (user)
     ltable = s3db.pr_person_user
@@ -6419,7 +6449,7 @@ def hrm_rheader(r, tabs=None, profile=False):
                     if activity_types == [NONE]:
                         activity_types = NONE
                     else:
-                        activity_types = activity_types.values()
+                        activity_types = list(activity_types.values())
                         activity_types.remove(NONE)
                         activity_types = ", ".join([s3_str(v) for v in activity_types])
                 else:
@@ -6979,7 +7009,7 @@ def hrm_competency_controller():
         return True
     s3.prep = prep
 
-    def postp(r,output):
+    def postp(r, output):
         if r.interactive:
             # Custom action button to add the member to a team
             S3CRUD.action_buttons(r)

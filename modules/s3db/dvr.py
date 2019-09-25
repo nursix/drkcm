@@ -56,6 +56,8 @@ __all__ = ("DVRCaseModel",
            "dvr_case_default_status",
            "dvr_case_activity_default_status",
            "dvr_case_status_filter_opts",
+           "dvr_set_response_action_defaults",
+           "dvr_response_default_type",
            "dvr_response_default_status",
            "dvr_response_status_colors",
            "dvr_case_household_size",
@@ -74,6 +76,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..s3 import *
+from s3compat import basestring
 from s3layouts import S3PopupLink
 
 # =============================================================================
@@ -587,7 +590,7 @@ class DVRCaseModel(S3Model):
                      person_id(empty = False,
                                ondelete = "CASCADE",
                                ),
-                     s3_language(list_from_settings = False),
+                     s3_language(select = None),
                      Field("quality",
                            default = "N",
                            label = T("Quality/Mode"),
@@ -1528,6 +1531,11 @@ class DVRResponseModel(S3Model):
                            readable = hierarchical_response_types,
                            writable = hierarchical_response_types,
                            ),
+                     Field("is_default", "boolean",
+                           label = T("Default?"),
+                           default = False,
+                           represent = s3_yes_no_represent,
+                           ),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1547,6 +1555,7 @@ class DVRResponseModel(S3Model):
                                             secondary = ("parent",),
                                             ),
                   hierarchy = hierarchy,
+                  onaccept = self.response_type_onaccept,
                   )
 
         # CRUD Strings
@@ -1794,8 +1803,8 @@ class DVRResponseModel(S3Model):
 
         crud_form = S3SQLCustomForm("person_id",
                                     "case_activity_id",
-                                    theme_field,
                                     type_field,
+                                    theme_field,
                                     details_field,
                                     "human_resource_id",
                                     due_field,
@@ -1908,6 +1917,33 @@ class DVRResponseModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def response_type_onaccept(form):
+        """
+            Onaccept routine for response types:
+            - only one type can be the default
+
+            @param form: the FORM
+        """
+
+        form_vars = form.vars
+        try:
+            record_id = form_vars.id
+        except AttributeError:
+            record_id = None
+        if not record_id:
+            return
+
+        table = current.s3db.dvr_response_type
+
+        # If this status is the default, then set is_default-flag
+        # for all other types to False:
+        if form_vars.get("is_default"):
+            query = (table.is_default == True) & \
+                    (table.id != record_id)
+            current.db(query).update(is_default = False)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def response_status_onaccept(form):
         """
             Onaccept routine for response statuses:
@@ -1930,13 +1966,17 @@ class DVRResponseModel(S3Model):
         # If this status is the default, then set is_default-flag
         # for all other statuses to False:
         if form_vars.get("is_default"):
-            db(table.id != record_id).update(is_default = False)
+            query = (table.is_default == True) & \
+                    (table.id != record_id)
+            db(query).update(is_default = False)
 
         # If this status is the default closure, then enforce is_closed,
         # and set is_default_closure for all other statuses to False
         if form_vars.get("is_default_closure"):
             db(table.id == record_id).update(is_closed = True)
-            db(table.id != record_id).update(is_default_closure = False)
+            query = (table.is_default_closure == True) & \
+                    (table.id != record_id)
+            db(query).update(is_default_closure = False)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -6013,6 +6053,47 @@ def dvr_case_activity_default_status():
     return default
 
 # =============================================================================
+def dvr_set_response_action_defaults():
+    """
+        DRY Helper to set defaults for response actions
+    """
+
+    if current.deployment_settings.get_dvr_response_types():
+        dvr_response_default_type()
+    dvr_response_default_status()
+
+# =============================================================================
+def dvr_response_default_type():
+    """
+        Helper to get/set the default type for response records
+
+        @return: the default response_type_id
+    """
+
+    s3db = current.s3db
+
+    rtable = s3db.dvr_response_action
+    field = rtable.response_type_id
+
+    default = field.default
+    if not default:
+
+        # Look up the default status
+        ttable = s3db.dvr_response_type
+        query = (ttable.is_default == True) & \
+                (ttable.deleted != True)
+        row = current.db(query).select(ttable.id,
+                                       cache = s3db.cache,
+                                       limitby = (0, 1),
+                                       ).first()
+
+        if row:
+            # Set as field default in responses table
+            default = field.default = row.id
+
+    return default
+
+# =============================================================================
 def dvr_response_default_status():
     """
         Helper to get/set the default status for response records
@@ -6095,7 +6176,7 @@ def dvr_case_household_size(group_id):
             (gtable.group_type == 7) & \
             (gtable.deleted != True)
     rows = db(query).select(ptable.id, join=join)
-    person_ids = set([row.id for row in rows])
+    person_ids = {row.id for row in rows}
 
     if person_ids:
         # Get case group members for each of these person_ids
@@ -6124,7 +6205,7 @@ def dvr_case_household_size(group_id):
             member_id = row[MEMBER]
             case_id = row[CASE]
             if case_id not in groups:
-                groups[case_id] = set([member_id])
+                groups[case_id] = {member_id}
             else:
                 groups[case_id].add(member_id)
 
@@ -6787,7 +6868,7 @@ class dvr_DocEntityRepresent(S3Represent):
             itable = s3db[instance_type]
 
             # Look up person and instance data
-            query = itable.doc_id.belongs(doc_entities.keys())
+            query = itable.doc_id.belongs(set(doc_entities.keys()))
             if instance_type == "pr_group":
                 mtable = s3db.pr_group_membership
                 left = [mtable.on((mtable.group_id == itable.id) & \
@@ -7351,7 +7432,7 @@ def dvr_get_household_size(person_id, dob=False, formatted=True):
                 children_u1 = 1
 
     # Household members which have already been counted
-    members = set([person_id])
+    members = {person_id}
     counted = members.add
 
     # Get all case groups this person belongs to

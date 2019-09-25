@@ -9,7 +9,7 @@ from gluon.storage import Storage
 
 from s3 import S3Represent
 
-from controllers import deploy_index
+from .controllers import deploy_index
 
 def config(settings):
     """
@@ -77,11 +77,13 @@ def config(settings):
 
         # Do not apply realms for Master Data
         # @ToDo: Restore Realms and add a role/functionality support for Master Data
-        if tablename in ("hrm_certificate",
+        if tablename in ("event_event_type",
+                         "hrm_certificate",
                          "hrm_department",
                          "hrm_job_title",
                          "hrm_course",
                          "hrm_programme",
+                         "hrm_skill",
                          "member_membership_type",
                          "vol_award",
                          ):
@@ -539,6 +541,10 @@ def config(settings):
     settings.dc.response_label = "Survey"
     settings.dc.unique_question_names_per_template = True
 
+    # Fill-out Assessments on Web-only
+    settings.dc.response_mobile = False
+    #settings.dc.response_web = False
+
     # -------------------------------------------------------------------------
     # Organisation Management
     # Enable the use of Organisation Branches
@@ -597,10 +603,10 @@ def config(settings):
     # Uncomment to do a search for duplicates in AddPersonWidget2
     settings.pr.lookup_duplicates = True
 
-    # RDRT
+    # Surge (RDRT)
     settings.hrm.job_title_deploy = True
     settings.deploy.hr_label = "Member"
-    settings.deploy.team_label = "RDRT"
+    settings.deploy.team_label = "Surge"
     # Responses only come in via Email
     settings.deploy.responses_via_web = False
     settings.customise_deploy_home = deploy_index
@@ -1158,14 +1164,100 @@ def config(settings):
 
     settings.auth.realm_entity_types = auth_realm_entity_types
 
-    def deploy_cc_groups(default):
-        """ Which Groups to cc: on Deployment Alerts """
+    #def deploy_alerts(default):
+    #    """ Whether the system is used to send Alerts """
+
+    #    if _is_asia_pacific():
+    #        return False
+    #    return default
+
+    #settings.deploy.alerts = deploy_alerts
+
+    #def deploy_cc_groups(default):
+    #    """ Which Groups to cc: on Deployment Alerts """
+
+    #    if _is_asia_pacific():
+    #        return ["RDRT Focal Points"]
+    #    return default
+
+    #settings.deploy.cc_groups = deploy_cc_groups
+
+    def deploy_member_filters_ap():
+        """
+            AP RDRT:
+            Unified Filter Widgets for 'Summary' & 'Select Recipients'
+        """
+
+        from s3 import S3DateFilter, S3HierarchyFilter, S3LocationFilter, S3OptionsFilter, S3TextFilter
+
+        s3db = current.s3db
+        stable = s3db.hrm_skill
+        sttable = s3db.hrm_skill_type
+        query = (stable.deleted == False) & \
+                (stable.skill_type_id == sttable.id) & \
+                (sttable.name == "RDRT_AP")
+        skills = current.db(query).select(stable.id,
+                                          stable.name,
+                                          )
+        aprdrt_skills = {skill.id:skill.name for skill in skills}
+
+        filter_widgets = [S3TextFilter(["person_id$first_name",
+                                        "person_id$middle_name",
+                                        "person_id$last_name",
+                                        "person_id$email.value",
+                                        ],
+                                       label = T("Search"),
+                                       ),
+                          S3HierarchyFilter("organisation_id",
+                                            leafonly = False,
+                                            ),
+                          S3LocationFilter("location_id",
+                                           label = T("Location"),
+                                           hidden = True,
+                                           ),
+                          S3OptionsFilter("person_id$competency.skill_id",
+                                           label = T("Skill"),
+                                           options = aprdrt_skills,
+                                           hidden = True,
+                                           ),
+                          S3OptionsFilter("person_id$language.language",
+                                           label = T("Language"),
+                                           hidden = True,
+                                           ),
+                          S3OptionsFilter("person_id$gender",
+                                           label = T("Gender"),
+                                           hidden = True,
+                                           ),
+                          S3DateFilter("available",
+                                       label = T("Available for Deployment"),
+                                       # Use custom selector to prevent automatic
+                                       # parsing (which would result in an error)
+                                       selector = "available",
+                                       hide_time = True,
+                                       hidden = True,
+                                       ),
+                          S3DateFilter("human_resource_id:deploy_assignment.start_date",
+                                       label = T("Deployed"),
+                                       hide_time = True,
+                                       hidden = True,
+                                       ),
+                          ]
+
+        return filter_widgets
+
+    def deploy_member_filters(default):
+        """
+            Custom set of filter_widgets for members (hrm_human_resource),
+            used in custom methods for member selection, e.g. deploy_apply
+            or deploy_alert_select_recipients
+        """
 
         if _is_asia_pacific():
-            return ["RDRT Focal Points"]
+            filter_widgets = deploy_member_filters_ap()
+            return filter_widgets
         return default
 
-    settings.deploy.cc_groups = deploy_cc_groups
+    settings.deploy.member_filters = deploy_member_filters
 
     def hide_third_gender(default):
         """ Whether to hide the third person gender """
@@ -2155,7 +2247,9 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_dc_response_resource(r, tablename):
         """
-            Only used by Bangkok CCST currently
+            Currently used by
+                * Bangkok CCST
+                * AP RDRT
         """
 
         from s3 import S3DateTime
@@ -2333,7 +2427,7 @@ def config(settings):
         click = "Please click this link to complete the survey"
         line4 = "Thank you for your participation."
         translations = {}
-        languages = list(set([p["auth_user.language"] for p in persons]))
+        languages = list({p["auth_user.language"] for p in persons})
         if default_language not in languages:
             languages.append(default_language)
         date_represent = S3DateTime.date_represent # We want Dates not datetime which etable.start_date uses
@@ -3184,7 +3278,8 @@ def config(settings):
 
 
         # CRUD Strings
-        current.response.s3.crud_strings["deploy_assignment"] = Storage(
+        s3 = current.response.s3
+        s3.crud_strings["deploy_assignment"] = Storage(
             label_create = T("Add Deployment"),
             title_display = T("Deployment Details"),
             title_list = T("Deployments"),
@@ -3202,6 +3297,11 @@ def config(settings):
         # Restrict Location to just Countries
         field = s3db.deploy_mission.location_id
         field.represent = S3Represent(lookup="gis_location", translate=True)
+
+        has_role = current.auth.s3_has_role
+        if has_role("AP_RDRT_ADMIN") and not has_role("ADMIN"):
+            from s3 import FS
+            s3.filter = FS("~.mission_id$organisation_id$name") == "Asia-Pacific Region"
 
         return attr
 
@@ -3309,7 +3409,7 @@ def config(settings):
         report_fact = [(T("Number of Missions"), "count(id)"),
                        (T("Number of Countries"), "count(location_id)"),
                        (T("Number of Disaster Types"), "count(event_type_id)"),
-                       (T("Number of Responses"), "sum(response_count)"),
+                       #(T("Number of Responses"), "sum(response_count)"),
                        (T("Number of Deployments"), "sum(hrquantity)"),
                       ]
         report_axis = ["code",
@@ -3332,7 +3432,7 @@ def config(settings):
                        "event_type_id",
                        (T("Country"), "location_id"),
                        "code",
-                       (T("Responses"), "response_count"),
+                       #(T("Responses"), "response_count"),
                        (T("Members Deployed"), "hrquantity"),
                        "status",
                        ]
@@ -3645,7 +3745,7 @@ def config(settings):
             from s3 import s3_comments_widget, IS_ONE_OF, S3Represent, S3SQLCustomForm#, S3MultiSelectWidget
             db = current.db
             s3db = current.s3db
-            
+
             # Limit Orgs to RC roots
             ttable = s3db.org_organisation_type
             try:
@@ -3665,6 +3765,7 @@ def config(settings):
             filter_opts = list(set(filter_opts) - set(row.branch_id for row in rows))
 
             table = s3db.hrm_experience
+            table.activity_type.default = "rdrt"
             table.organisation_id.requires = IS_ONE_OF(db, "org_organisation.id",
                                                        s3db.org_OrganisationRepresent(acronym = False,
                                                                                       parent = False),
@@ -4087,6 +4188,59 @@ def config(settings):
 
 
     settings.customise_hrm_human_resource_resource = customise_hrm_human_resource_resource
+
+    # -------------------------------------------------------------------------
+    def deploy_dynamic_list_layout(list_id, item_id, resource, rfields, record):
+        """
+            dataList item renderer for 'Other Information' on the Surge Member Profile
+
+            @param list_id: the HTML ID of the list
+            @param item_id: the HTML ID of the item
+            @param resource: the S3Resource to render
+            @param rfields: the S3ResourceFields to render
+            @param record: the record as dict
+        """
+
+        raw = record._row
+        tablename = resource.tablename
+
+        # Read the fields
+        db = current.db
+        s3db = current.s3db
+        ftable = s3db.s3_field
+        ttable = s3db.s3_table
+        query = (ftable.table_id == ttable.id) & \
+                (ttable.name == tablename)
+        fields = db(query).select(ftable.name,
+                                  ftable.label,
+                                  # Use the fact that each label starts with a number
+                                  orderby = ftable.label,
+                                  )
+
+        # Render the item
+        from gluon import B, DIV
+        contents = DIV(_class="media",
+                       )
+        cappend = contents.append
+        for field in fields:
+            if not field.label:
+                # response_id
+                continue
+            cappend(DIV(DIV(B("%s:" % field.label)),
+                        DIV(raw["%s.%s" % (tablename, field.name)] or "Not Answered"),
+                        )
+                    )
+
+        item = DIV(DIV(DIV(contents,
+                           _class="media-body",
+                           ),
+                       _class="media",
+                       ),
+                   _class="thumbnail",
+                   _id=item_id,
+                   )
+
+        return item
 
     # -------------------------------------------------------------------------
     def customise_hrm_human_resource_controller(**attr):
@@ -4643,7 +4797,7 @@ def config(settings):
                 AP = _is_asia_pacific()
 
                 if not AP:
-                    # Africa
+                    # Africa RDRT
                     # Exclude None-values for training course pivot axis
                     s3db.configure(tablename,
                                    report_exclude_empty = ("training.course_id",
@@ -4794,6 +4948,9 @@ def config(settings):
                                        profile_header = rdrt_member_profile_header,
                                        )
                 else:
+                    # AP RDRT
+
+                    # Old requirements:
                     #otable = s3db.org_organisation
                     #org = db(otable.name == AP_ZONE).select(otable.id,
                     #                                        limitby=(0, 1),
@@ -4837,6 +4994,46 @@ def config(settings):
                                                                    ).first()
                         #name = s3_fullname(person)
                         pe_id = person.pe_id
+
+                        def dt_row_actions(w_tablename, c, f, get_var=None):
+                            def row_actions(r, list_id):
+                                editable = get_config(w_tablename, "editable")
+                                if editable is None:
+                                    editable = True
+                                deletable = get_config(w_tablename, "deletable")
+                                if deletable is None:
+                                    deletable = True
+                                if editable:
+                                    get_vars = {"refresh": list_id}
+                                    if get_var:
+                                        get_vars[get_var] = 1
+                                    actions = [{"label": T("Open"),
+                                                "url": URL(c=c, f=f,
+                                                           args=["[id]", "update.popup"],
+                                                           vars=get_vars),
+                                                "_class": "action-btn edit s3_modal",
+                                                },
+                                               ]
+                                else:
+                                    get_vars = {"refresh": list_id}
+                                    if get_var:
+                                        get_vars[get_var] = 1
+                                    actions = [{"label": T("Open"),
+                                                "url": URL(c=c, f=f,
+                                                           args=["[id]", "read.popup"],
+                                                           vars=get_vars),
+                                                "_class": "action-btn edit s3_modal",
+                                                },
+                                               ]
+                                if deletable:
+                                    actions.append({"label": T("Delete"),
+                                                    "_ajaxurl": URL(c=c, f=f,
+                                                                    args=["[id]", "delete.json"],
+                                                                    ),
+                                                    "_class": "action-btn delete-btn-ajax dt-ajax-delete",
+                                                    })
+                                return actions
+                            return row_actions
 
                         details_widget = {"label": "Personal Details",
                                           "tablename": "pr_person",
@@ -4908,11 +5105,13 @@ def config(settings):
                                             "create_var": "rdrt_ap",
                                             }
 
+                        w_tablename = "hrm_experience"
                         job_widget = {"label": "Current Job Role",
                                       "label_create": "Add Job Role",
                                       "type": "datatable",
+                                      "actions": dt_row_actions(w_tablename, "deploy", "experience", "rdrt_ap_current"),
                                       "dt_searching": False,
-                                      "tablename": "hrm_experience",
+                                      "tablename": w_tablename,
                                       "filter": (FS("person_id") == person_id) & \
                                                 (FS("activity_type") == None),
                                       "icon": "wrench",
@@ -4930,11 +5129,13 @@ def config(settings):
                                       "pagesize": 1,
                                       }
 
+                        w_tablename = "hrm_experience"
                         experience_widget = {"label": "NDRT / other Deployments",
                                              "label_create": "Add Deployment",
                                              "type": "datatable",
+                                             "actions": dt_row_actions(w_tablename, "deploy", "experience", "rdrt_ap_deployment"),
                                              "dt_searching": False,
-                                             "tablename": "hrm_experience",
+                                             "tablename": w_tablename,
                                              "filter": (FS("person_id") == person_id) & \
                                                        (FS("activity_type") == "rdrt"),
                                              "icon": "truck",
@@ -4953,11 +5154,13 @@ def config(settings):
                                              "pagesize": 2,
                                              }
 
+                        w_tablename = "pr_language"
                         language_widget = {"label": "Languages",
                                            "label_create": "Add Language",
                                            "type": "datatable",
+                                           "actions": dt_row_actions(w_tablename, "pr", "language"),
                                            "dt_searching": False,
-                                           "tablename": "pr_language",
+                                           "tablename": w_tablename,
                                            "filter": (FS("person_id") == person_id),
                                            "icon": "comment-alt",
                                            #"create_controller": "deploy",
@@ -4966,13 +5169,17 @@ def config(settings):
                                            #"create_component": "language",
                                            }
 
+                        w_tablename = "hrm_competency"
                         skills_widget = {"label": "Areas of Expertise",
                                          "label_create": "Add Skill",
                                          "type": "datatable",
-                                         "tablename": "hrm_competency",
+                                         "actions": dt_row_actions(w_tablename, "deploy", "competency", "rdrt_ap"),
+                                         "dt_searching": False,
+                                         "tablename": w_tablename,
                                          "filter": FS("person_id") == person_id,
                                          "icon": "wrench",
                                          "list_fields": ["skill_id",
+                                                         "comments",
                                                          ],
                                          "create_controller": "deploy",
                                          # Can't do this as this is the HR perspective, not Person perspective
@@ -5015,11 +5222,107 @@ def config(settings):
                                            docs_widget,
                                            availability_widget,
                                            ]
+
+                        # All templates use the same component name for answers so need to add the right component manually
+                        dtable = s3db.s3_table
+                        ttable = s3db.dc_template
+                        query = (ttable.name == "Surge Member") & \
+                                (ttable.table_id == dtable.id)
+                        template = db(query).select(ttable.id,
+                                                    dtable.name,
+                                                    limitby=(0, 1),
+                                                    ).first()
+                        if template:
+                            template_id = template[ttable.id]
+                            dtablename = template[dtable.name]
+                            dtable = s3db[dtablename]
+                            components = {dtablename: {"name": "answer",
+                                                       "joinby": "response_id",
+                                                       "multiple": False,
+                                                       }
+                                          }
+                            s3db.add_components("dc_response", **components)
+
+                            rtable = s3db.dc_response
+                            query = (rtable.person_id == person_id) & \
+                                    (rtable.template_id == template_id)
+                            respnse = db(query).select(rtable.id,
+                                                       limitby=(0, 1),
+                                                       ).first()
+                            if respnse:
+                                response_id = respnse[rtable.id]
+                                answer = db(dtable.response_id == response_id).select(dtable.id,
+                                                                                      limitby = (0, 1)
+                                                                                      )
+                                if answer:
+                                    answer_id = answer.first().id
+                                else:
+                                    answer_id = dtable.insert(response_id = response_id)
+                                    putable = s3db.pr_person_user
+                                    user = db(putable.pe_id == pe_id).select(putable.user_id,
+                                                                             limitby = (0, 1)
+                                                                             ).first()
+                                    if user:
+                                        db(dtable.id == answer_id).update(owned_by_user = user.user_id)
+                            else:
+                                response_id = rtable.insert(template_id = template_id,
+                                                            person_id = person_id,
+                                                            )
+                                answer_id = dtable.insert(response_id = response_id)
+                                putable = s3db.pr_person_user
+                                user = db(putable.pe_id == pe_id).select(putable.user_id,
+                                                                         limitby = (0, 1)
+                                                                         ).first()
+                                if user:
+                                    user_id = user.user_id
+                                    db(rtable.id == response_id).update(owned_by_user = user_id)
+                                    db(dtable.id == answer_id).update(owned_by_user = user_id)
+
+                            dynamic_widget = {"label": "Other Information",
+                                              "label_create": "Update Information",
+                                              "type": "datalist",
+                                              "list_layout": deploy_dynamic_list_layout,
+                                              #"type": "datatable",
+                                              #"actions": dt_row_actions(dtablename, "dc", "respnse"),
+                                              #"dt_searching": False,
+                                              "tablename": dtablename,
+                                              "filter": FS("response_id") == response_id,
+                                              "icon": "comment-alt",
+                                              #"list_fields": ["question",
+                                              #                "answer",
+                                              #                ],
+                                              "create_controller": "dc",
+                                              "create_function": "respnse",
+                                              "create_args": [response_id, "answer", answer_id, "update.popup"],
+                                              }
+
+                            profile_widgets.insert(-2, dynamic_widget)
                     else:
                         profile_widgets = []
 
-                    resource.configure(#filter_widgets = filters,
-                                       #list_fields = list_fields,
+                    phone_label = settings.get_ui_label_mobile_phone()
+                    s3db.org_organisation.root_organisation.label = T("National Society")
+                    list_fields = ["person_id",
+                                   "organisation_id$root_organisation",
+                                   (T("Skills"), "person_id$competency.skill_id"),
+                                   (T("Languages"), "person_id$language.language"),
+                                   #(T("Status"), "application.active"),
+                                   (T("Email"), "email.value"),
+                                   (phone_label, "phone.value"),
+                                   #(T("Address"), "person_id$address.location_id"),
+                                   "person_id$gender",
+                                   "person_id$date_of_birth",
+                                   "person_id$person_details.nationality",
+                                   #(T("Passport Number"), "person_id$passport.value"),
+                                   #(T("Passport Issuer"), "person_id$passport.ia_name"),
+                                   #(T("Passport Date"), "person_id$passport.valid_from"),
+                                   #(T("Passport Expires"), "person_id$passport.valid_until"),
+                                   #"person_id$physical_description.blood_type",
+                                   #(T("Emergency Contacts"), "person_id$contact_emergency.id"),
+                                   ]
+
+                    resource.configure(filter_widgets = deploy_member_filters_ap(),
+                                       list_fields = list_fields,
                                        profile_widgets = profile_widgets,
                                        profile_header = rdrt_member_profile_header,
                                        )
@@ -5499,21 +5802,31 @@ def config(settings):
 
         if r.get_vars.get("rdrt_ap"):
             # Simplify for RDRT AP
+
             from s3 import IS_ONE_OF, S3Represent, S3SQLCustomForm
+
             db = current.db
             s3db = current.s3db
 
-            filter_opts = 
+            sttable = s3db.hrm_skill_type
+            RDRT_AP = db(sttable.name == "RDRT_AP").select(sttable.id,
+                                                           limitby = (0,1)
+                                                           ).first().id
 
-            s3db.hrm_competency.skill_id.requires = IS_ONE_OF(db, "hrm_skill.id",
-                                                              S3Represent(lookup = "hrm_skill",
-                                                                          translate = True),
-                                                              filterby = "skill_type_id",
-                                                              filter_opts = filter_opts,
-                                                              sort = True,
-                                                              )
+            table = s3db.hrm_competency
+            f = table.skill_id
+            f.comment = None
+            f.requires = IS_ONE_OF(db, "hrm_skill.id",
+                                   S3Represent(lookup = "hrm_skill",
+                                               translate = True),
+                                   filterby = "skill_type_id",
+                                   filter_opts = (RDRT_AP,),
+                                   sort = True,
+                                   )
+            table.comments.comment = None
             s3db.configure("hrm_competency",
                            crud_form = S3SQLCustomForm("skill_id",
+                                                       "comments",
                                                        ),
                            )
 
@@ -5747,7 +6060,7 @@ def config(settings):
                             responded = len([resp.date for resp in responses if resp.date is not None])
                             response_rate = "%s / %s" % (responded, total)
                             return response_rate
-                        etable.month6_resp = s3_fieldmethod("month12_resp", month12_resp)
+                        etable.month12_resp = s3_fieldmethod("month12_resp", month12_resp)
 
                         list_fields = ["name",
                                        ("EO", "created_by"),
@@ -6720,11 +7033,11 @@ def config(settings):
             # Use legacy field for cleaner options
             f = s3db.pr_education.level
             f.readable = f.writable = True
-            #from gluon import IS_IN_SET
-            #f.requires = IS_IN_SET(("High School",
-            #                        "University / College",
-            #                        "Post Graduate",
-            #                        ))
+            from gluon import IS_IN_SET
+            f.requires = IS_IN_SET(("High School",
+                                    "University / College",
+                                    "Post Graduate",
+                                    ))
             s3db.configure("pr_education",
                            crud_form = S3SQLCustomForm((T("Qualification"), "level"),
                                                        (T("Field of Expertise"), "major"),
@@ -7349,9 +7662,9 @@ def config(settings):
                         # Use default form (legacy)
                         s3db.clear_config("hrm_human_resource", "crud_form")
 
-            
+
             if controller == "deploy":
-                
+
                 AP = _is_asia_pacific()
                 if AP:
                     from s3 import S3SQLCustomForm, S3SQLInlineComponent

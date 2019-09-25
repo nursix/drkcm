@@ -23,6 +23,12 @@ import os
 import shutil
 import sys
 
+PY2 = sys.version_info[0] == 2
+
+# Open file in text mode, with Py3 to use encoding for unicode I/O
+def openf(fn, mode):
+    return open(fn, mode) if PY2 else open(fn, mode, encoding="utf-8")
+
 # For JS
 SCRIPTPATH = os.path.join(request.folder, "static", "scripts", "tools")
 os.chdir(SCRIPTPATH)
@@ -82,9 +88,9 @@ def move_to(filename, path):
 def mergeCSS(inputFilenames, outputFilename):
     """ Merge (=concatenate) CSS files """
 
-    with open(outputFilename, "w") as outFile:
+    with openf(outputFilename, "w") as outFile:
         for inputFilename in inputFilenames:
-            with open(inputFilename, "r") as inFile:
+            with openf(inputFilename, "r") as inFile:
                 outFile.write(inFile.read())
 
     return outputFilename
@@ -133,15 +139,15 @@ def cleanline(theLine):
 def compressCSS(inputFilename, outputFilename):
     """ Compress a CSS file """
 
-    with open(inputFilename, "r") as inFile:
+    with openf(inputFilename, "r") as inFile:
         output = ""
         for line in inFile:
             output = output + cleanline(line)
 
-    with open(outputFilename, "w") as outFile:
+    with openf(outputFilename, "w") as outFile:
         outFile.write(cleanline(output))
 
-def docss():
+def do_css():
     """ Compresses the  CSS files """
 
     # -------------------------------------------------------------------------
@@ -153,7 +159,7 @@ def docss():
     theme_config = settings.get_theme_config()
     css_cfg = os.path.join("..", "..", "..", "modules", "templates", theme_config, "css.cfg")
 
-    with open(css_cfg, "r") as f:
+    with openf(css_cfg, "r") as f:
         css_paths = f.readlines()
 
     p = re.compile("(\n|\r|\t|\f|\v)+")
@@ -169,17 +175,17 @@ def docss():
             path = path[5:]
 
             filename = path.split("/")[-1].split(".")[0]
-            sourcePath = os.path.join("..", "..", "..", "modules", "templates", theme_styles, "scss")
+            sourcePath = os.path.join("..", "..", "themes", theme_styles, "scss")
             sourceFilename = os.path.join(sourcePath, "%s.scss" % filename)
 
-            with open(sourceFilename, "r") as sourceFile:
+            with openf(sourceFilename, "r") as sourceFile:
                 source = sourceFile.read()
 
             os.chdir(sourcePath)
             outputText = sass.compile(source)
             os.chdir(SCRIPTPATH)
 
-            with open(path, "w") as outputFile:
+            with openf(path, "w") as outputFile:
                 outputFile.write(outputText)
 
         # Sanitize pathname
@@ -206,7 +212,7 @@ def docss():
     if "/" in theme_styles:
         # Theme in sub-folder
         info("Adjusting relative URLs in %s." % outputFilenameCSS)
-        with open(outputFilenameCSS, "r+") as outFile:
+        with openf(outputFilenameCSS, "r+") as outFile:
             css = outFile.readline()
             outFile.seek(0)
             outFile.write(css.replace("../../", "../../../"))
@@ -284,7 +290,7 @@ def docss():
 #
 def minify_from_cfg(minimize, name, source_dir, cfg_name, out_filename, extra_params=None):
     """
-        Merge+minify JS files from a JS config file (DRY helper for dojs)
+        Merge+minify JS files from a JS config file (DRY helper for do_js)
     """
 
     info("Compressing %s" % name)
@@ -302,18 +308,14 @@ def minify_from_cfg(minimize, name, source_dir, cfg_name, out_filename, extra_pa
         minimized = minimize(merged)
 
     # Write minified file
-    with open(out_filename, "w") as outFile:
+    with openf(out_filename, "w") as outFile:
         outFile.write(minimized)
 
     # Replace target file
     move_to(out_filename, "%s/S3" % source_dir)
 
-def dojs(dogis = False, warnings = True):
-    """ Minifies the JavaScript """
-
-    # -------------------------------------------------------------------------
-    # Determine which JS compressor to use
-    #
+def set_minimize(warnings):
+    """ Determine which JS compressor to use """
 
     # Do we have local version of the Closure Compiler available?
     use_compressor = "jsmin" # Fallback
@@ -321,7 +323,7 @@ def dojs(dogis = False, warnings = True):
         import closure
         use_compressor = "closure"
         info("using local Closure Compiler")
-    except Exception, E:
+    except Exception as E:
         info("No closure (%s)" % E)
         info("Download from http://dl.google.com/closure-compiler/compiler-latest.zip")
         try:
@@ -340,6 +342,11 @@ def dojs(dogis = False, warnings = True):
     elif use_compressor == "jsmin":
         minimize = jsmin.jsmin
 
+    return minimize
+
+def do_js(minimize, do_gis = False, warnings = True):
+    """ Minifies the JavaScript """
+
     # -------------------------------------------------------------------------
     # Build S3.min.js
     #
@@ -357,7 +364,7 @@ def dojs(dogis = False, warnings = True):
     minimized = open("license.txt").read() + minimized
 
     info("Writing to %s." % outputFilename)
-    with open(outputFilename, "w") as outFile:
+    with openf(outputFilename, "w") as outFile:
         outFile.write(minimized)
 
     # Remove old JS files
@@ -464,8 +471,8 @@ def dojs(dogis = False, warnings = True):
         info("Compressing s3.%s.js" % filename)
         inputFilename = os.path.join("..", "S3", "s3.%s.js" % filename)
         outputFilename = "s3.%s.min.js" % filename
-        with open(inputFilename, "r") as inFile:
-            with open(outputFilename, "w") as outFile:
+        with openf(inputFilename, "r") as inFile:
+            with openf(outputFilename, "w") as outFile:
                 outFile.write(minimize(inFile.read()))
         move_to(outputFilename, "../S3")
 
@@ -474,15 +481,32 @@ def dojs(dogis = False, warnings = True):
     # - enable at the top when desired
     #
     if JS_FULL:
-        for filename in ("spectrum",
+        # To do just 1 file:
+        # cd static/scripts
+        # java -jar tools/compiler.jar --js jquery.fileupload.js --js_output_file jquery.fileupload.min.js
+        for filename in ("jquery.fileupload", # Used by UCCE
+                         "jquery.fileupload-process", # Used by UCCE
+                         "jquery.fileupload-image", # Used by UCCE
+                         "jquery.iframe-transport", # Used by jquery.fileupload
+                         "spectrum",
                          "tag-it",
                          ):
             info("Compressing %s.js" % filename)
             in_f = os.path.join("..", filename + ".js")
             out_f = os.path.join("..", filename + ".min.js")
-            with open(in_f, "r") as inp:
-                with open(out_f, "w") as out:
+            with openf(in_f, "r") as inp:
+                with openf(out_f, "w") as out:
                     out.write(minimize(inp.read()))
+
+        info("Compressing Foundation")
+        # Merge + minify
+        merged = mergejs.run("..", None, "foundation.cfg")
+        minimized = minimize(merged)
+        # Write minified file
+        with openf("foundation.min.js", "w") as outFile:
+            outFile.write(minimized)
+        # Replace target file
+        move_to("foundation.min.js", "../foundation")
 
     if JS_VULNERABILITY:
         # Vulnerability
@@ -494,7 +518,7 @@ def dojs(dogis = False, warnings = True):
                              None,
                              configFilename)
         minimized = minimize(merged)
-        with open(outputFilename, "w") as outFile:
+        with openf(outputFilename, "w") as outFile:
             outFile.write(minimized)
         move_to(outputFilename, "../../themes/Vulnerability/js")
 
@@ -506,7 +530,7 @@ def dojs(dogis = False, warnings = True):
                              None,
                              configFilename)
         minimized = minimize(merged)
-        with open(outputFilename, "w") as outFile:
+        with openf(outputFilename, "w") as outFile:
             outFile.write(minimized)
         move_to(outputFilename, "../../themes/Vulnerability/js")
 
@@ -518,7 +542,7 @@ def dojs(dogis = False, warnings = True):
                              None,
                              configFilename)
         minimized = minimize(merged)
-        with open(outputFilename, "w") as outFile:
+        with openf(outputFilename, "w") as outFile:
             outFile.write(minimized)
         move_to(outputFilename, "../../themes/Vulnerability/js")
 
@@ -526,7 +550,7 @@ def dojs(dogis = False, warnings = True):
     # GIS
     # - enable with command line option DOGIS
     #
-    if dogis:
+    if do_gis:
         sourceDirectoryOpenLayers = "../gis/openlayers/lib"
         sourceDirectoryMGRS = "../gis"
         sourceDirectoryGeoExt = "../gis/GeoExt/lib"
@@ -596,8 +620,8 @@ def dojs(dogis = False, warnings = True):
             inputFilename = os.path.join("..", "gis", "%s.js" % filename)
             outputFilename = "%s.min.js" % filename
 
-            with open(inputFilename, "r") as inFile:
-                with open(outputFilename, "w") as outFile:
+            with openf(inputFilename, "r") as inFile:
+                with openf(outputFilename, "w") as outFile:
                     outFile.write(minimize_(inFile.read()))
             move_to(outputFilename, "../gis")
 
@@ -612,8 +636,8 @@ def dojs(dogis = False, warnings = True):
         # GeoNamesSearchCombo
         inputFilename = os.path.join("..", "gis", "GeoExt", "ux", "GeoNamesSearchCombo.js")
         outputFilename = "GeoNamesSearchCombo.min.js"
-        with open(inputFilename, "r") as inFile:
-            with open(outputFilename, "w") as outFile:
+        with openf(inputFilename, "r") as inFile:
+            with openf(outputFilename, "w") as outFile:
                 outFile.write(minimize_(inFile.read()))
         move_to(outputFilename, "../gis/GeoExt/ux")
 
@@ -625,8 +649,8 @@ def dojs(dogis = False, warnings = True):
                          ):
             inputFilename = os.path.join("..", "gis", "gxp", "plugins", "%s.js" % filename)
             outputFilename = "%s.min.js" % filename
-            with open(inputFilename, "r") as inFile:
-                with open(outputFilename, "w") as outFile:
+            with openf(inputFilename, "r") as inFile:
+                with openf(outputFilename, "w") as outFile:
                     outFile.write(minimize_(inFile.read()))
             move_to(outputFilename, "../gis/gxp/plugins")
 
@@ -635,8 +659,8 @@ def dojs(dogis = False, warnings = True):
                          ):
             inputFilename = os.path.join("..", "gis", "gxp", "widgets", "%s.js" % filename)
             outputFilename = "%s.min.js" % filename
-            with open(inputFilename, "r") as inFile:
-                with open(outputFilename, "w") as outFile:
+            with openf(inputFilename, "r") as inFile:
+                with openf(outputFilename, "w") as outFile:
                     outFile.write(minimize_(inFile.read()))
             move_to(outputFilename, "../gis/gxp/widgets")
 
@@ -645,52 +669,93 @@ def dojs(dogis = False, warnings = True):
 
         # Print to output files
         info("Writing to %s." % outputFilenameOpenLayers)
-        with open(outputFilenameOpenLayers, "w") as outFile:
+        with openf(outputFilenameOpenLayers, "w") as outFile:
             outFile.write(minimizedOpenLayers)
         info("Moving new OpenLayers JS files")
         move_to(outputFilenameOpenLayers, "../gis")
 
         info("Writing to %s." % outputFilenameMGRS)
-        with open(outputFilenameMGRS, "w") as outFile:
+        with openf(outputFilenameMGRS, "w") as outFile:
             outFile.write(minimizedMGRS)
         info("Moving new MGRS JS files")
         move_to(outputFilenameMGRS, "../gis")
 
         info("Writing to %s." % outputFilenameGeoExt)
-        with open(outputFilenameGeoExt, "w") as outFile:
+        with openf(outputFilenameGeoExt, "w") as outFile:
             outFile.write(minimizedGeoExt)
         info("Moving new GeoExt JS files")
         move_to(outputFilenameGeoExt, "../gis")
 
         info("Writing to %s." % outputFilenameGxp)
-        with open(outputFilenameGxp, "w") as outFile:
+        with openf(outputFilenameGxp, "w") as outFile:
             outFile.write(minimizedGxp)
         info("Moving new gxp JS files")
         move_to(outputFilenameGxp, "../gis")
 
         info("Writing to %s." % outputFilenameGxp2)
-        with open(outputFilenameGxp2, "w") as outFile:
+        with openf(outputFilenameGxp2, "w") as outFile:
             outFile.write(minimizedGxp2)
         info("Moving new gxp2 JS files")
         move_to(outputFilenameGxp2, "../gis")
+
+def do_template(minimize, warnings):
+
+    if theme == "UCCE":
+        for filename in ("confirm_popup",
+                         "projects",
+                         "report",
+                         # Need to use Terser for this as Closure doesn't like ES6 modules
+                         #"s3.ui.template",
+                         ):
+            info("Compressing %s.js" % filename)
+            inputFilename = os.path.join("..", "..", "themes", "UCCE", "js", "%s.js" % filename)
+            outputFilename = "%s.min.js" % filename
+            with openf(inputFilename, "r") as inFile:
+                with openf(outputFilename, "w") as outFile:
+                    outFile.write(minimize(inFile.read()))
+            move_to(outputFilename, "../../themes/UCCE/js")
+
+        cwd = os.getcwd()
+        # Assume ol5-rollup at same level as eden
+        rollup_dir = os.path.join("..", "..", "..", "..", "ol5-rollup")
+        os.chdir(rollup_dir)
+        os.system("npm run-script build")
+        os.system("terser ol5.js -c --source-map -o ol5.min.js")
+        theme_dir = os.path.join("..", request.application, "static", "themes", "UCCE", "JS")
+        move_to("ol5.min.js", theme_dir)
+        move_to("ol5.min.js.map", theme_dir)
+        os.chdir(theme_dir)
+        os.system("terser s3.ui.template.js -c  -o s3.ui.template.min.js")
+        os.system("terser s3.ui.heatmap.js -c  -o s3.ui.heatmap.min.js")
+        # Restore CWD
+        os.chdir(cwd)
 
 # =============================================================================
 # Main script
 #
 def main(argv):
 
-    # Rebuild GIS JS?
-    dogis = "DOGIS" in argv
-
-    # Suppress closure warnings?
-    warnings = "NOWARN" not in argv
-
-    if "CSS" in argv:
+    if "CSS" in argv or "css" in argv:
         # Build CSS only
-        docss()
+        do_css()
     else:
-        dojs(dogis=dogis, warnings=warnings)
-        docss()
+        # Suppress closure warnings?
+        warnings = "NOWARN" not in argv
+
+        # Determine which JS compressor to use
+        minimize = set_minimize(warnings)
+
+        if "template" in argv:
+            # Build Template only
+            pass
+        else:
+            # Do All
+            # Rebuild GIS JS?
+            do_gis = "DOGIS" in argv
+            do_js(minimize=minimize, do_gis=do_gis, warnings=warnings)
+
+        do_template(minimize=minimize, warnings=warnings)
+        do_css()
 
     info("Done.")
 

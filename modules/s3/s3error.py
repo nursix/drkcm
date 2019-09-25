@@ -28,7 +28,7 @@
 """
 
 # =============================================================================
-class S3PermissionError(StandardError):
+class S3PermissionError(Exception):
     """ Custom exception class for low-level permission checks """
 
     pass
