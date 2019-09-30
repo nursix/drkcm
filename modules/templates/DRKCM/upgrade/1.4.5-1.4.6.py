@@ -41,7 +41,10 @@ if not failed:
 
     query = (atable.response_type_id != None)
     try:
-        result = db(query).update(response_type_id = None)
+        result = db(query).update(response_type_id = None,
+                                  modified_on = atable.modified_on,
+                                  modified_by = atable.modified_by,
+                                  )
     except Exception as e:
         infoln("...failed")
         infoln(sys.exc_info()[1])
