@@ -34,6 +34,7 @@ __all__ = ("S3HRModel",
            #"S3HRJobModel",
            "S3HRContractModel",
            "S3HRSkillModel",
+           "S3HRTagModel",
            "S3HREventStrategyModel",
            "S3HREventProgrammeModel",
            "S3HREventProjectModel",
@@ -742,6 +743,10 @@ class S3HRModel(S3Model):
                         deploy_assignment = "human_resource_id",
                         # Hours
                         #hrm_hours = "human_resource_id",
+                        # Tags
+                        hrm_human_resource_tag = {"name": "tag",
+                                                  "joinby": "human_resource_id",
+                                                  },
                         )
 
         # Optional Components
@@ -2018,6 +2023,8 @@ class S3HRSkillModel(S3Model):
              "hrm_event_type",
              "hrm_training_event",
              "hrm_training_event_id",
+             "hrm_event_location",
+             "hrm_event_tag",
              "hrm_training_event_report",
              "hrm_certificate",
              "hrm_certification",
@@ -2044,6 +2051,7 @@ class S3HRSkillModel(S3Model):
         settings = current.deployment_settings
 
         job_title_id = self.hrm_job_title_id
+        location_id = self.gis_location_id
         organisation_id = self.org_organisation_id
         person_id = self.pr_person_id
 
@@ -2658,10 +2666,10 @@ class S3HRSkillModel(S3Model):
                            ),
                      course_id(empty = not course_mandatory),
                      organisation_id(label = T("Organized By")),
-                     self.gis_location_id(widget = S3LocationSelector(), # show_address = False
-                                          readable = not event_site,
-                                          writable = not event_site,
-                                          ),
+                     location_id(widget = S3LocationSelector(), # show_address = False
+                                 readable = not event_site,
+                                 writable = not event_site,
+                                 ),
                      # Component, not instance
                      super_link("site_id", "org_site",
                                 label = site_label,
@@ -2805,6 +2813,11 @@ class S3HRSkillModel(S3Model):
 
         # Components
         add_components(tablename,
+                       gis_location = {"link": "hrm_event_location",
+                                       "joinby": "training_event_id",
+                                       "key": "location_id",
+                                       "actuate": "hide",
+                                       },
                        pr_person = [# Instructors
                                     {"name": "instructor",
                                     #"joinby": "person_id",
@@ -2821,6 +2834,7 @@ class S3HRSkillModel(S3Model):
                                     "actuate": "hide",
                                     },
                                     ],
+                       hrm_event_tag = "training_event_id",
                        # Format for list_fields
                        hrm_training_event_instructor = "training_event_id",
 
@@ -2849,6 +2863,49 @@ class S3HRSkillModel(S3Model):
                                     "key": "target_id",
                                     "actuate": "replace",
                                     },
+                       )
+
+        # =====================================================================
+        # Training Event Locations
+        # - e.g. used for showing which Locations an Event is relevant for
+        #
+
+        tablename = "hrm_event_location"
+        define_table(tablename,
+                     training_event_id(empty = False,
+                                       ondelete = "CASCADE",
+                                       ),
+                     location_id(empty = False,
+                                 ondelete = "CASCADE",
+                                 widget = S3LocationSelector(#show_address = False,
+                                                             ),
+                                 ),
+                     #s3_comments(),
+                     *s3_meta_fields())
+
+        # =====================================================================
+        # Training Event Tags
+
+        tablename = "hrm_event_tag"
+        define_table(tablename,
+                     training_event_id(empty = False,
+                                       ondelete = "CASCADE",
+                                       ),
+                     # key is a reserved word in MySQL
+                     Field("tag",
+                           label = T("Key"),
+                           ),
+                     Field("value",
+                           label = T("Value"),
+                           ),
+                     #s3_comments(),
+                     *s3_meta_fields())
+
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("training_event_id",
+                                                            "tag",
+                                                            ),
+                                                 ),
                        )
 
         # =====================================================================
@@ -2917,6 +2974,9 @@ class S3HRSkillModel(S3Model):
 
         tablename = "hrm_training_event_instructor"
         define_table(tablename,
+                     training_event_id(empty = False,
+                                       ondelete = "CASCADE",
+                                       ),
                      person_id(comment = self.pr_person_comment(INSTRUCTOR,
                                                                 AUTOCOMPLETE_HELP,
                                                                 child="person_id"),
@@ -2924,9 +2984,6 @@ class S3HRSkillModel(S3Model):
                                label = INSTRUCTOR,
                                ondelete = "CASCADE",
                                ),
-                     training_event_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
                      #s3_comments(),
                      *s3_meta_fields())
 
@@ -4416,7 +4473,7 @@ class S3HRExperienceModel(S3Model):
 
         site_label = settings.get_org_site_label()
         if settings.get_org_site_autocomplete():
-            site_widget = S3SiteAutocompleteWidget(),
+            site_widget = S3SiteAutocompleteWidget()
             site_comment = DIV(_class="tooltip",
                                _title="%s|%s" % (site_label,
                                                  current.messages.AUTOCOMPLETE_HELP))
@@ -4708,6 +4765,47 @@ class S3HRDisciplinaryActionModel(S3Model):
                            ),
                      s3_comments(),
                      *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
+
+# =============================================================================
+class S3HRTagModel(S3Model):
+    """ Arbitrary Key:Value Tags for Human Resources """
+
+    names = ("hrm_human_resource_tag",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        # =====================================================================
+        # Human Resource Tags
+        #
+        tablename = "hrm_human_resource_tag"
+        self.define_table(tablename,
+                          self.hrm_human_resource_id(empty = False,
+                                                     ondelete = "CASCADE",
+                                                     ),
+                          # key is a reserved word in MySQL
+                          Field("tag",
+                                label = T("Key"),
+                                ),
+                          Field("value",
+                                label = T("Value"),
+                                ),
+                          s3_comments(),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("human_resource_id",
+                                                            "tag",
+                                                            ),
+                                                 ),
+                       )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -7723,7 +7821,7 @@ def hrm_human_resource_controller(extra_filter = None):
                     read_url = URL(args = ["[id]", "profile"])
                     update_url = URL(args = ["[id]", "profile"])
                 else:
-                    deletable = settings.get_hrm_deletable(),
+                    deletable = settings.get_hrm_deletable()
                     # Standard CRUD buttons
                     read_url = None
                     update_url = None

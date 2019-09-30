@@ -4527,6 +4527,7 @@ class S3LocationSelector(S3Selector):
                  error_message = None,
                  represent = None,
                  prevent_duplicate_addresses = False,
+                 outside = None,
                  ):
         """
             Constructor
@@ -6214,9 +6215,9 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
                         return (values, current.auth.messages.access_denied)
 
                     # Schedule for onvalidation
-                    feature = Storage(addr_street=address,
-                                      addr_postcode=postcode,
-                                      parent=parent,
+                    feature = Storage(addr_street = address,
+                                      addr_postcode = postcode,
+                                      parent = parent,
                                       )
                     if any(detail is not None for detail in (lat, lon, wkt, radius)):
                         feature.lat = lat
@@ -6250,10 +6251,10 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
                         return (values, current.T("Duplicate Address"))
 
                 # Schedule for onvalidation
-                feature = Storage(addr_street=address,
-                                  addr_postcode=postcode,
-                                  parent=parent,
-                                  inherited=True,
+                feature = Storage(addr_street = address,
+                                  addr_postcode = postcode,
+                                  parent = parent,
+                                  inherited = True,
                                   )
                 if any(detail is not None for detail in (lat, lon, wkt, radius)):
                     feature.lat = lat
@@ -6392,18 +6393,18 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
             else:
                 inherited = True
 
-            feature = Storage(lat=lat,
-                              lon=lon,
-                              lat_min=lat_min,
-                              lon_min=lon_min,
-                              lat_max=lat_max,
-                              lon_max=lon_max,
-                              wkt=wkt,
-                              radius=radius,
-                              inherited=inherited,
-                              addr_street=address,
-                              addr_postcode=postcode,
-                              parent=parent,
+            feature = Storage(lat = lat,
+                              lon = lon,
+                              lat_min = lat_min,
+                              lon_min = lon_min,
+                              lat_max = lat_max,
+                              lon_max = lon_max,
+                              wkt = wkt,
+                              radius = radius,
+                              inherited = inherited,
+                              addr_street = address,
+                              addr_postcode = postcode,
+                              parent = parent,
                               )
 
             # These could have been added during validate:
