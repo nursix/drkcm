@@ -2,10 +2,10 @@
 #
 # Database upgrade script
 #
-# DRKCM Template Version 1.4.5 => 1.4.6
+# DRKCM Template Version 1.4.6 => 1.4.7
 #
 # Execute in web2py folder after code upgrade like:
-# python web2py.py -S eden -M -R applications/eden/modules/templates/DRKCM/upgrade/1.4.5-1.4.6.py
+# python web2py.py -S eden -M -R applications/eden/modules/templates/DRKCM/upgrade/1.4.6-1.4.7.py
 #
 import datetime
 import sys
