@@ -243,10 +243,14 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
             # Actions sub-menu
             if ui_options.get("response_use_organizer"):
+                # In case collaboration, use HR filter widget with default
+                # rather than mine-parameter, so that the user can choose
+                # to see other team member's response actions
+                get_vars = {} if case_collaboration else {"mine": "a"}
                 my_actions = M("My Actions", c="dvr", f="response_action",
-                               t="dvr_response_action", vars={"mine": "a"})(
-                                M("Calendar", m="organize", vars={"mine": "a"}),
-                                )
+                               t="dvr_response_action", vars = get_vars)(
+                                M("Calendar", m="organize", vars = get_vars),
+                                    )
             else:
                 my_actions = M("Actions", c="dvr", f="response_action",
                                t="dvr_response_action", link=False)(
@@ -332,13 +336,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
                           ),
                         ),
                     M("Administration", restrict=(ADMIN, ORG_GROUP_ADMIN))(
-                        M("Flags", f="case_flag"),
-                        M("Case Status", f="case_status"),
+                        #M("Flags", f="case_flag"),
+                        #M("Case Status", f="case_status"),
                         M("Action Types", f="response_type"),
-                        M("Appointment Types", f="case_appointment_type"),
-                        M("Residence Status Types", f="residence_status_type"),
+                        #M("Appointment Types", f="case_appointment_type"),
+                        #M("Residence Status Types", f="residence_status_type"),
                         M("Residence Permit Types", f="residence_permit_type"),
-                        M("Service Contact Types", f="service_contact_type"),
+                        #M("Service Contact Types", f="service_contact_type"),
                         ),
                     )
 

@@ -2516,6 +2516,12 @@ class S3Config(Storage):
         """
         return self.__lazy("ui", "organizer_time_format", None)
 
+    def get_ui_organizer_snap_duration(self):
+        """
+            Snap raster width in organizer (hh:mm:ss), default 00:15:00
+        """
+        return self.__lazy("ui", "organizer_snap_duration", None)
+
     # =========================================================================
     # Messaging
     #
@@ -3760,6 +3766,12 @@ class S3Config(Storage):
         """
         return self.get_dvr_response_planning() and \
                self.__lazy("dvr", "response_due_date", default=False)
+
+    def get_dvr_response_use_time(self):
+        """
+            Use date+time for responses rather than just date
+        """
+        return self.__lazy("dvr", "response_use_time", default=False)
 
     def get_dvr_response_types(self):
         """
@@ -5022,6 +5034,14 @@ class S3Config(Storage):
             Whether to hide the third gender ("Other")
         """
         return self.__lazy("pr", "hide_third_gender", default=True)
+
+    def get_pr_nationality_explicit_unclear(self):
+        """
+            Have an explicit "unclear" option for nationality, useful
+            when the field shall be mandatory yet allow for cases
+            where the nationality of a person is unclear
+        """
+        return self.pr.get("nationality_explicit_unclear", False)
 
     def get_pr_import_update_requires_email(self):
         """
