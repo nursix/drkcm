@@ -31,6 +31,7 @@ UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
                "case_use_pe_label": False,
                "case_use_place_of_birth": False,
                "case_use_residence_status": True,
+               "case_use_referral": True,
                "case_use_service_contacts": False,
                "case_lodging": None, # "site"|"text"|None
                "case_lodging_dates": False,
@@ -41,6 +42,7 @@ UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
                "activity_need_details": True,
                "activity_follow_up": False,
                "activity_priority": False,
+               "activity_pss_vulnerability": True,
                "activity_use_need": False,
                #"activity_tab_label": "Counseling Reasons",
                "appointments_staff_link": False,
@@ -77,6 +79,7 @@ UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
                       "case_use_pe_label": True,
                       "case_use_place_of_birth": True,
                       "case_use_residence_status": False,
+                      "case_use_referral": False,
                       "case_use_service_contacts": False,
                       "case_lodging": "text",
                       "case_lodging_dates": False,
@@ -87,6 +90,7 @@ UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
                       "activity_need_details": False,
                       "activity_follow_up": False,
                       "activity_priority": True,
+                      "activity_pss_vulnerability": False,
                       "activity_use_need": True,
                       #"activity_tab_label": "Counseling Reasons",
                       "appointments_staff_link": True,
@@ -271,6 +275,7 @@ def config(settings):
                                      "AKN-Datum": "case_details.arrival_date",
                                      "Falldatum": "dvr_case.date",
                                      "BAMF-Az": "bamf.value",
+                                     "Benutzername": "current_user.name",
                                      }
 
     # -------------------------------------------------------------------------
@@ -486,6 +491,8 @@ def config(settings):
     settings.dvr.response_themes_needs = get_ui_option("response_themes_needs")
     # Auto-link responses to case activities
     settings.dvr.response_activity_autolink = get_ui_option("response_activity_autolink")
+    # Do not use hierarchical vulnerability types (default)
+    #settings.dvr.vulnerability_types_hierarchical = False
 
     # Expose flags to mark appointment types as mandatory
     settings.dvr.mandatory_appointments = False
@@ -1053,6 +1060,14 @@ def config(settings):
                         else:
                             bamf = None
 
+                        # Optional: referred by/to
+                        use_referral = ui_options_get("case_use_referral")
+                        if use_referral:
+                            referred_by = "case_details.referred_by"
+                            referred_to = "case_details.referred_to"
+                        else:
+                            referred_by = referred_to = None
+
                         # Make marital status mandatory, remove "other"
                         field = dtable.marital_status
                         options = dict(s3db.pr_marital_status_opts)
@@ -1165,6 +1180,8 @@ def config(settings):
                             "person_details.marital_status",
 
                             # Process Data ----------------------------
+                            referred_by,
+                            referred_to,
                             lodging,
                             on_site_from,
                             on_site_until,
@@ -1909,6 +1926,7 @@ def config(settings):
 
             from s3 import S3SQLCustomForm, \
                            S3SQLInlineComponent, \
+                           S3SQLInlineLink, \
                            S3SQLVerticalSubFormLayout
 
             # Represent person_id as link
@@ -2046,6 +2064,16 @@ def config(settings):
             field = table.need_details
             field.readable = field.writable = ui_options_get("activity_need_details")
 
+            # Embed vulnerability
+            if ui_options_get("activity_pss_vulnerability"):
+                vulnerability = S3SQLInlineLink("vulnerability_type",
+                                                label = T("Diagnosis / Suspected"),
+                                                field = "vulnerability_type_id",
+                                                multiple = False,
+                                                )
+            else:
+                vulnerability = None
+
             # Customise Priority
             field = table.priority
             priority_opts = [(0, T("Emergency")),
@@ -2175,6 +2203,7 @@ def config(settings):
                             "sector_id",
 
                             subject_field,
+                            vulnerability,
                             (T("Initial Situation Details"), ("need_details")),
 
                             "start_date",
@@ -3113,8 +3142,13 @@ def config(settings):
                                      ),
                         S3OptionsFilter("status_id",
                                         options = lambda: \
-                                                  s3_get_filter_opts("dvr_response_status"),
+                                                  s3_get_filter_opts("dvr_response_status",
+                                                                     orderby = "workflow_position",
+                                                                     ),
                                         cols = 3,
+                                        orientation = "rows",
+                                        sort = False,
+                                        size = None,
                                         translate = True,
                                         ),
                         S3DateFilter("start_date",
@@ -3348,6 +3382,31 @@ def config(settings):
         field.readable = field.writable = True
 
     settings.customise_dvr_service_contact_resource = customise_dvr_service_contact_resource
+
+    # -------------------------------------------------------------------------
+    def customise_dvr_vulnerability_type_resource(r, tablename):
+
+        table = current.s3db.dvr_vulnerability_type
+
+        # Adjust labels
+        field = table.name
+        field.label = T("Diagnosis")
+
+        # Custom CRUD Strings
+        current.response.s3.crud_strings["dvr_vulnerability_type"] = Storage(
+            label_create = T("Create Diagnosis"),
+            title_display = T("Diagnosis Details"),
+            title_list = T("Diagnoses"),
+            title_update = T("Edit Diagnosis"),
+            label_list_button = T("List Diagnoses"),
+            label_delete_button = T("Delete Diagnosis"),
+            msg_record_created = T("Diagnosis created"),
+            msg_record_modified = T("Diagnosis updated"),
+            msg_record_deleted = T("Diagnosis deleted"),
+            msg_list_empty = T("No Diagnoses currently defined"),
+            )
+
+    settings.customise_dvr_vulnerability_type_resource = customise_dvr_vulnerability_type_resource
 
     # -------------------------------------------------------------------------
     # Shelter Registry Settings
