@@ -78,7 +78,7 @@ class index(S3CustomController):
 
 # =============================================================================
 class donate(S3CustomController):
-    """ Custom Home Page """
+    """ Custom Page """
 
     def __call__(self):
 
@@ -92,7 +92,7 @@ class donate(S3CustomController):
         ltable = s3db.cms_post_module
         module = "default"
 
-        resource = "Donate1"
+        resource = "Donate"
         query = (ltable.module == module) & \
                 (ltable.resource == resource) & \
                 (ltable.post_id == table.id) & \
@@ -131,257 +131,24 @@ class donate(S3CustomController):
                       )
         else:
             item1 = ""
-        output["item1"] = item1
-
-        resource = "Donate2"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item2 = DIV(XML(item.body),
-                           BR(),
-                           A(current.T("Edit"),
-                             _href = URL(c="cms", f="post",
-                                         args = [item.id, "update"],
-                                         vars = {"module": module,
-                                                 "resource": resource,
-                                                 },
-                                         ),
-                             _class="action-btn",
-                             ),
-                           )
-            else:
-                item2 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item2 = A(current.T("Edit"),
-                     _href = URL(c="cms", f="post", args="create",
-                                 vars = {"module": module,
-                                         "resource": resource,
-                                         },
-                                 ),
-                     _class="%s cms-edit" % _class,
-                     )
-        else:
-            item2 = ""
-        output["item2"] = item2
-
-        resource = "Donate3"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item3 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item3 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item3 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item3 = ""
-        output["item3"] = item3
-
-        resource = "Donate4"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item4 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item4 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item4 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item4 = ""
-        output["item4"] = item4
-
-        resource = "Donate5"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item5 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item5 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item5 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item5 = ""
-        output["item5"] = item5
-
-        resource = "Donate6"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item6 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item6 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item6 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item6 = ""
-        output["item6"] = item6
-
-        resource = "Donate7"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item7 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item7 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item7 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item7 = ""
-        output["item7"] = item7
-
+        output["item"] = item1
 
         self._view(THEME, "donate.html")
         return output
+
+# =============================================================================
+class donate_redirect(S3CustomController):
+    """ Custom Page """
+
+    def __call__(self):
+        if current.auth.s3_logged_in():
+            url = URL(c="default", f="person")
+        else:
+            url = URL(c="default", f="index",
+                      args = "register",
+                      vars = {"donor": 1},
+                      )
+        redirect(url)
 
 # =============================================================================
 class donor(S3CustomController):
@@ -574,7 +341,7 @@ class personAdditional(S3Method):
                                    (T("Please indicate Faith support you can offer"), "faith_support.value"),
                                    (T("What help and support can you give those from other Faiths?"), "faith_support_other.value"),
                                    (T("Do you have any faith requirements that you would like help with if you are coming to Support Cumbria?"), "faith_requirements.value"),
-                                   (T("Please outline"), "faith_requirements_details.value"),
+                                   (T("If Yes please outline"), "faith_requirements_details.value"),
                                    )
 
             form = {"type": "form",
@@ -743,6 +510,18 @@ class register(S3CustomController):
                                 ),
                           Field("health_details",
                                 label = T("If you wish, you can give us some further information on any fitness, medical or mobility issues that might limit the kind of activities you are able to volunteer for; this will help us to suggest suitable opportunities for you"),
+                                ),
+                          Field("faith_requirements", "integer",
+                                label = T("Do you have any faith requirements that you would like help with if you are coming to Support Cumbria?"),
+                                requires = IS_IN_SET({0: T("No"),
+                                                      1: T("Yes"),
+                                                      }),
+                                widget = lambda f, v: \
+                                    SQLFORM.widgets.radio.widget(f, v,
+                                                                 style="divs"),
+                                ),
+                          Field("faith_requirements_details",
+                                label = T("If Yes please outline"),
                                 ),
                           Field("emergency_contact_name",
                                 label = T("Contact Name"),
@@ -995,6 +774,7 @@ class register(S3CustomController):
                                 label = T("Please specify details"),
                                 ),
                           Field("delivery", "integer",
+                                comment = T("Please indicate if you can deliver the item/s at no cost?"),
                                 label = T("Are you able to Deliver?"),
                                 requires = IS_IN_SET({0: T("No"),
                                                       1: T("Yes"),
@@ -1142,6 +922,18 @@ class register(S3CustomController):
                                 requires = IS_IN_SET(districts, multiple=True),
                                 widget = S3MultiSelectWidget(header="",
                                                              selectedList=3),
+                                ),
+                          Field("faith_requirements", "integer",
+                                label = T("Do you have any faith requirements that you would like help with if you are coming to Support Cumbria?"),
+                                requires = IS_IN_SET({0: T("No"),
+                                                      1: T("Yes"),
+                                                      }),
+                                widget = lambda f, v: \
+                                    SQLFORM.widgets.radio.widget(f, v,
+                                                                 style="divs"),
+                                ),
+                          Field("faith_requirements_details",
+                                label = T("If Yes please outline"),
                                 ),
                           Field("emergency_contact_name",
                                 label = T("Contact Name"),
@@ -1357,6 +1149,8 @@ class register(S3CustomController):
                           "home2": form_vars.home2,
                           "skill_id": form_vars.skill_id or [],
                           "skills_details": form_vars.skills_details,
+                          "faith_requirements": form_vars.faith_requirements,
+                          "faith_requirements_details": form_vars.faith_requirements_details,
                           "emergency_contact_name": form_vars.emergency_contact_name,
                           "emergency_contact_number": form_vars.emergency_contact_number,
                           }
@@ -1373,6 +1167,8 @@ class register(S3CustomController):
                           "some_physical": form_vars.some_physical,
                           "little_physical": form_vars.little_physical,
                           "health_details": form_vars.health_details,
+                          "faith_requirements": form_vars.faith_requirements,
+                          "faith_requirements_details": form_vars.faith_requirements_details,
                           "emergency_contact_name": form_vars.emergency_contact_name,
                           "emergency_contact_number": form_vars.emergency_contact_number,
                           "emergency_contact_relationship": form_vars.emergency_contact_relationship,
@@ -1384,7 +1180,7 @@ class register(S3CustomController):
 
             record["custom"] = json.dumps(custom)
 
-            temptable.update_or_insert(**record)
+            temptable.insert(**record)
 
             # Post-process the new user record
             users = db(utable.id > 0).select(utable.id, limitby=(0, 2))
@@ -1587,7 +1383,7 @@ class verify_email(S3CustomController):
 
 # =============================================================================
 class volunteer(S3CustomController):
-    """ Custom Home Page """
+    """ Custom Page """
 
     def __call__(self):
 
@@ -1601,7 +1397,7 @@ class volunteer(S3CustomController):
         ltable = s3db.cms_post_module
         module = "default"
 
-        resource = "Volunteer1"
+        resource = "Volunteer"
         query = (ltable.module == module) & \
                 (ltable.resource == resource) & \
                 (ltable.post_id == table.id) & \
@@ -1640,130 +1436,7 @@ class volunteer(S3CustomController):
                       )
         else:
             item1 = ""
-        output["item1"] = item1
-
-        resource = "Volunteer2"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item2 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item2 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item2 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item2 = ""
-        output["item2"] = item2
-
-        resource = "Volunteer3"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item3 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item3 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item3 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item3 = ""
-        output["item3"] = item3
-
-        resource = "Volunteer4"
-        query = (ltable.module == module) & \
-                (ltable.resource == resource) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = current.db(query).select(table.body,
-                                        table.id,
-                                        limitby=(0, 1)).first()
-        if item:
-            if ADMIN:
-                item4 = DIV(XML(item.body),
-                            BR(),
-                            A(current.T("Edit"),
-                              _href = URL(c="cms", f="post",
-                                          args = [item.id, "update"],
-                                          vars = {"module": module,
-                                                  "resource": resource,
-                                                  },
-                                          ),
-                              _class="action-btn",
-                              ),
-                            )
-            else:
-                item4 = DIV(XML(item.body))
-        elif ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
-            item4 = A(current.T("Edit"),
-                      _href = URL(c="cms", f="post", args="create",
-                                  vars = {"module": module,
-                                          "resource": resource,
-                                          },
-                                  ),
-                      _class="%s cms-edit" % _class,
-                      )
-        else:
-            item4 = ""
-        output["item4"] = item4
+        output["item"] = item1
 
         self._view(THEME, "volunteer.html")
         return output
@@ -2216,6 +1889,18 @@ def auth_user_register_onaccept(user_id):
                   }
         ttable.insert(**record)
 
+        # Faith Requirements
+        record = {"group_id": group_id,
+                  "tag": "faith_requirements",
+                  "value": custom["faith_requirements"],
+                  }
+        ttable.insert(**record)
+        record = {"group_id": group_id,
+                  "tag": "faith_requirements_details",
+                  "value": custom["faith_requirements_details"],
+                  }
+        ttable.insert(**record)
+
         # Emergency Contact
         record = {"group_id": group_id,
                   "tag": "contact_name",
@@ -2318,6 +2003,18 @@ def auth_user_register_onaccept(user_id):
         record = {"person_id": person_id,
                   "tag": "health_details",
                   "value": custom["health_details"],
+                  }
+        ttable.insert(**record)
+
+        record = {"person_id": person_id,
+                  "tag": "faith_requirements",
+                  "value": custom["faith_requirements"],
+                  }
+        ttable.insert(**record)
+
+        record = {"person_id": person_id,
+                  "tag": "faith_requirements_details",
+                  "value": custom["faith_requirements_details"],
                   }
         ttable.insert(**record)
 
