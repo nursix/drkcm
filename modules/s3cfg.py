@@ -708,8 +708,17 @@ class S3Config(Storage):
         return self.auth.get("always_notify_approver", True)
 
     def get_auth_login_next(self):
-        """ Which page to go to after login """
+        """
+            Which page to go to after login
+            - can be a callable
+        """
         return self.auth.get("login_next", URL(c="default", f="index"))
+
+    def get_auth_login_next_always(self):
+        """
+            Whether the login_next overrides the _next variable
+        """
+        return self.auth.get("login_next_always", False)
 
     def get_auth_show_link(self):
         return self.auth.get("show_link", True)
@@ -4424,12 +4433,24 @@ class S3Config(Storage):
 
     def get_hrm_vol_availability_tab(self):
         """
+            @ToDo: Deprecate
             Whether to use Availability Tab for Volunteers
             Options:
                 None
                 True
         """
         return self.__lazy("hrm", "vol_availability_tab", default=None)
+
+    def get_hrm_unavailability(self):
+        """
+            Whether to use Unavailability for Staff/Volunteers
+            - shows tab/profile widget
+            - adds filter
+            Options:
+                None
+                True
+        """
+        return self.__lazy("hrm", "unavailability", default=None)
 
     def get_hrm_vol_experience(self):
         """
@@ -4801,9 +4822,15 @@ class S3Config(Storage):
 
     def get_org_facilities_tab(self):
         """
-            Whether to show a Tab for Facilities
+            Whether to show a Tab for Facilities on Organisations
         """
         return self.org.get("facilities_tab", True)
+
+    def get_org_facility_shifts(self):
+        """
+            Whether to show a Tab for Shifts on Offices & Facilities
+        """
+        return self.org.get("facility_shifts", True)
 
     def get_org_groups(self):
         """

@@ -87,8 +87,6 @@ def user():
     #                    auth_membership = "user_id",
     #                    )
 
-    s3_str = s3base.s3_str
-
     list_fields = ["first_name",
                    "last_name",
                    "email",
@@ -110,9 +108,13 @@ def user():
         lappend("link_user_to")
         table.link_user_to.represent = lambda v: ", ".join([s3_str(link_user_to[opt]) for opt in v]) \
                                                  if v else current.messages["NONE"]
-    lappend((T("Registration"), "created_on"))
-    table.created_on.represent = s3base.S3DateTime.date_represent
-    lappend((T("Roles"), "membership.group_id"))
+    date_represent = s3base.S3DateTime.date_represent
+    table.created_on.represent = date_represent
+    table.timestmp.represent = date_represent
+    list_fields += [(T("Roles"), "membership.group_id"),
+                    (T("Registration"), "created_on"),
+                    (T("Last Login"), "timestmp"),
+                    ]
 
     s3db.configure("auth_user",
                    create_next = URL(c="admin", f="user", args=["[id]", "roles"]),
@@ -161,7 +163,7 @@ def user():
     set_method = s3db.set_method
     set_method("auth", "user",
                method = "roles",
-               action = s3base.S3RoleManager)
+               action = s3base.S3RoleManager)   # s3roles.py
 
     set_method("auth", "user",
                method = "disable",

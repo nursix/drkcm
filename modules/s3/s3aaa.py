@@ -32,6 +32,7 @@
 __all__ = ("AuthS3",
            "S3Permission",
            "S3Audit",
+           #"S3EntityRoleManager",
            "S3OrgRoleManager",
            "S3PersonRoleManager",
            )
@@ -63,7 +64,7 @@ from .s3fields import S3MetaFields, S3Represent, s3_comments
 from .s3rest import S3Method, S3Request
 from .s3track import S3Tracker
 from .s3utils import s3_addrow, s3_get_extension, s3_mark_required, s3_str
-from .s3validators import IS_ISO639_2_LANGUAGE_CODE, IS_JSONS3
+from .s3validators import IS_ISO639_2_LANGUAGE_CODE
 
 # =============================================================================
 class AuthS3(Auth):
@@ -333,30 +334,6 @@ Thank you"""
                          *utable_fields)
             utable = settings.table_user = db[uname]
 
-        # Fields configured in configure_user_fields
-
-        # Temporary User Table
-        # for storing User Data that will be used to create records for
-        # the user once they are approved
-        #
-        # @ToDo: Move to modules/s3db/auth.py, so that it doesn't need to be loaded every request
-        #
-        define_table("auth_user_temp",
-                     Field("user_id", utable),
-                     Field("home"),
-                     Field("mobile"),
-                     Field("image", "upload",
-                           length = current.MAX_FILENAME_LENGTH,
-                           ),
-                     Field("consent"),
-                     Field("custom", "json",
-                           requires = IS_EMPTY_OR(IS_JSONS3()),
-                           ),
-                     S3MetaFields.uuid(),
-                     S3MetaFields.created_on(),
-                     S3MetaFields.modified_on(),
-                     )
-
         # Group table (roles)
         gtable = settings.table_group
         gname = settings.table_group_name
@@ -448,30 +425,38 @@ Thank you"""
 
         # Event table (auth_event)
         # Records Logins & ?
-        # @ToDo: Deprecate? At least make it configurable?
+        # @ToDo: Move to s3db.auth to prevent it from being defined every request
+        #        (lazy tables means no big issue for Production but helps Devs)
+        # Deprecate?
+        # - date of most recent login is the most useful thing recorded, which we already record in the main auth_user table
         if not settings.table_event:
             request = current.request
             define_table(
                 settings.table_event_name,
                 Field("time_stamp", "datetime",
-                      default=request.utcnow,
-                      #label=messages.label_time_stamp
+                      default = request.utcnow,
+                      #label = messages.label_time_stamp
                       ),
                 Field("client_ip",
-                      default=request.client,
+                      default = request.client,
                       #label=messages.label_client_ip
                       ),
-                Field("user_id", utable, default=None,
+                Field("user_id", utable,
+                      default = None,
                       requires = IS_IN_DB(db, "%s.id" % uname,
                                           "%(id)s: %(first_name)s %(last_name)s"),
                       #label=messages.label_user_id
                       ),
-                Field("origin", default="auth", length=512,
-                      #label=messages.label_origin,
-                      requires = IS_NOT_EMPTY()),
-                Field("description", "text", default="",
-                      #label=messages.label_description,
-                      requires = IS_NOT_EMPTY()),
+                Field("origin", length=512,
+                      default = "auth",
+                      #label = messages.label_origin,
+                      requires = IS_NOT_EMPTY(),
+                      ),
+                Field("description", "text",
+                      default = "",
+                      #label = messages.label_description,
+                      requires = IS_NOT_EMPTY(),
+                      ),
                 migrate = migrate,
                 fake_migrate=fake_migrate,
                 *S3MetaFields.sync_meta_fields())
@@ -773,7 +758,7 @@ Thank you"""
             else:
                 # We need to pass through login again before going on
                 if next is DEFAULT:
-                    next = request.vars._next or settings.login_next
+                    next = request.vars._next or deployment_settings.get_auth_login_next()
                 next = "%s?_next=%s" % (URL(r=request), next)
                 redirect(cas.login_url(next))
 
@@ -786,7 +771,9 @@ Thank you"""
 
         # How to continue
         if next is DEFAULT:
-            if deployment_settings.has_module("setup") and deployment_settings.get_setup_wizard_questions() and self.s3_has_role("ADMIN"):
+            if deployment_settings.has_module("setup") and \
+               deployment_settings.get_setup_wizard_questions() and \
+               self.s3_has_role("ADMIN"):
                 itable = current.s3db.setup_instance
                 instance = db(itable.url == "https://%s" % request.env.HTTP_HOST).select(itable.id,
                                                                                          itable.deployment_id,
@@ -798,13 +785,22 @@ Thank you"""
                     next = URL(c="setup", f="deployment",
                                args = [instance.deployment_id, "instance", instance.id, "wizard"])
             if next is DEFAULT:
-                next = request.vars._next or settings.login_next
+                if deployment_settings.get_auth_login_next_always():
+                    next = deployment_settings.get_auth_login_next()
+                    if callable(next):
+                        next = next()
+                else:
+                    next = request.vars.get("_next")
+                    if not next:
+                        next = deployment_settings.get_auth_login_next()
+                        if callable(next):
+                            next = next()
         if settings.login_form == self:
             if accepted_form:
                 if onaccept:
                     onaccept(form)
                 if isinstance(next, (list, tuple)):
-                    # fix issue with 2.6
+                    # fix issue with 2.6/2.7
                     next = next[0]
                 if next and not next[0] == "/" and next[:4] != "http":
                     next = self.url(next.replace("[id]", str(form.vars.id)))
@@ -2315,7 +2311,8 @@ $.filterOptionsS3({
         self.s3_approve_user(user)
 
     # -------------------------------------------------------------------------
-    def s3_user_register_onaccept(self, form):
+    @staticmethod
+    def s3_user_register_onaccept(form):
         """
             S3 framework function
 
@@ -2329,8 +2326,7 @@ $.filterOptionsS3({
             @ToDo: If these fields are implemented with the InlineForms functionality,
             this function may become redundant
         """
-
-        temptable = current.db.auth_user_temp
+        temptable = current.s3db.auth_user_temp
 
         form_vars = form.vars
         user_id = form_vars.id
@@ -2726,7 +2722,7 @@ $.filterOptionsS3({
 
         utable = self.settings.table_user
 
-        ttable = db.auth_user_temp
+        ttable = s3db.auth_user_temp
         ptable = s3db.pr_person
         ctable = s3db.pr_contact
         ltable = s3db.pr_person_user
@@ -7967,7 +7963,7 @@ class S3EntityRoleManager(S3Method):
             import math
             pagination_pages = int(math.ceil(len(self.assigned_roles) / float(pagination_size)))
             # the list of objects to show on this page sorted by name
-            pagination_list = [(self.objects[id], id) for id in self.assigned_roles]
+            pagination_list = [(self.objects[gid], gid) for gid in self.assigned_roles]
             pagination_list = sorted(pagination_list)[pagination_offset * pagination_size:pagination_offset * pagination_size + pagination_size]
 
             context.update({"assigned_roles": self.assigned_roles,

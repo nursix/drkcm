@@ -654,21 +654,18 @@ class S3SetupModel(S3Model):
         join = p.join
         isdir = p.isdir
         listdir = os.listdir
-        templates = [basename(t) for t in listdir(path) \
-                        if basename(t) not in ("historic",
-                                               "locations",
-                                               "mobile",
-                                               "skeleton",
-                                               "skeletontheme",
-                                               "__init__.py",
-                                               "__init__.pyc",
-                                               "000_config.py",
-                                               )
-                     ]
+
+        # All subdirectories in the path that contain a config.py are
+        # templates - except skeleton/skeletontheme
+        dirs = next(os.walk(path))[1]
+        templates = [d for d in dirs
+                         if d[:8] != "skeleton" and
+                         os.path.isfile(os.path.join(path, d, "config.py"))
+                         ]
+
         subtemplates = []
         sappend = subtemplates.append
-        for i in range(0, len(templates)):
-            template = templates[i]
+        for template in templates:
             tpath = join(path, template)
             for d in listdir(tpath):
                 if isdir(join(tpath, d)):
@@ -1711,7 +1708,7 @@ class S3SetupMonitorModel(S3Model):
         """
 
         task_id = r.id
-        current.s3task.async("setup_monitor_task_run", args=[task_id])
+        current.s3task.run_async("setup_monitor_task_run", args=[task_id])
         current.session.confirmation = \
             current.T("The check request has been submitted, so results should appear shortly - refresh to see them")
 
@@ -1851,8 +1848,9 @@ def setup_monitor_server_check(r, **attr):
             (table.enabled == True) & \
             (table.deleted == False)
     tasks = current.db(query).select(table.id)
+    run_async = current.s3task.run_async
     for task in tasks:
-        current.s3task.async("setup_monitor_run_task", args=[task.id])
+        run_async("setup_monitor_run_task", args=[task.id])
     current.session.confirmation = \
         current.T("The check requests have been submitted, so results should appear shortly - refresh to see them")
 

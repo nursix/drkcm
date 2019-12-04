@@ -46,10 +46,14 @@ class S3MainMenu(default.S3MainMenu):
         if has_role("ADMIN"):
             menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     MM("All Documents", c="doc", f="document", m="datalist"),
-                    MM("Donors", c="pr", f="person", vars={"donors": 1})(MM("Update General Information", c="cms", f="post", vars={"~.name": "Donor"}, m="update")),
-                    MM("Volunteers", c="hrm", f="human_resource")(MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
-                                                                   MM("Groups", c="pr", f="group"),
-                                                                  ),
+                    MM("Donors", c="pr", f="person", vars={"donors": 1})(
+                        MM("Donations", c="supply", f="person_item"),                    
+                        MM("Update General Information", c="cms", f="post", vars={"~.name": "Donor"}, m="update"),
+                        ),
+                    MM("Volunteers", c="hrm", f="human_resource")(
+                        MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
+                        MM("Groups", c="pr", f="group"),
+                        ),
                     MM("Events", c="hrm", f="training_event"),
                     MM("Opportunities", c="req", f="need"),
                     MM("Messages", c="project", f="task"),
@@ -57,6 +61,9 @@ class S3MainMenu(default.S3MainMenu):
         elif has_role("AGENCY"):
             menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     MM("Documents", c="doc", f="document", m="datalist"),
+                    #MM("Donors", c="pr", f="person", vars={"donors": 1})(
+                    MM("Donations", c="supply", f="person_item"),                    
+                    #    ),
                     MM("Events", c="hrm", f="training_event"),
                     MM("Opportunities", c="req", f="need"),
                     MM("Contact Organisation Admins", c="project", f="task", m="create"),
@@ -71,7 +78,9 @@ class S3MainMenu(default.S3MainMenu):
         elif has_role("ORG_ADMIN"):
             menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     MM("Organisation Documents", c="doc", f="document", m="datalist"),
-                    MM("Donors", c="pr", f="person", vars={"donors": 1}),
+                    MM("Donors", c="pr", f="person", vars={"donors": 1})(
+                        MM("Donations", c="supply", f="person_item"),                    
+                        ),
                     MM("Volunteers", c="hrm", f="human_resource")(MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
                                                                   MM("Groups", c="pr", f="group"),
                                                                   ),
@@ -80,20 +89,20 @@ class S3MainMenu(default.S3MainMenu):
                     MM("Messages", c="project", f="task"),
                     ]
         elif has_role("GROUP_ADMIN"):
-            menu = [MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
-                    MM("Donate Items", c="default", f="index", args="donate"),
+            menu = [#MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
+                    #MM("Donate Items", c="default", f="index", args="donate"),
                     MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     MM("Group", c="pr", f="group", m="update"),
                     ]
         elif has_role("DONOR"):
-            menu = [MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
-                    MM("Donate Items", c="default", f="index", args="donate"),
+            menu = [#MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
+                    #MM("Donate Items", c="default", f="index", args="donate"),
                     MM("General Information", c="default", f="index", m="donor"),
                     ]
         else:
             # Reserve Volunteer
-            menu = [MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
-                    MM("Donate Items", c="default", f="index", args="donate"),
+            menu = [#MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
+                    #MM("Donate Items", c="default", f="index", args="donate"),
                     MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     ]
 
@@ -307,6 +316,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
     # -------------------------------------------------------------------------
     @staticmethod
     def req():
+        """ No Side Menu """
+
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def supply():
         """ No Side Menu """
 
         return None

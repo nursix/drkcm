@@ -51,10 +51,9 @@ from s3compat import HTMLParser, INTEGER_TYPES, PY2, STRING_TYPES, \
 from s3dal import Expression, Field, Row, S3DAL
 from .s3datetime import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime
 
+RCVARS = "rcvars"
 URLSCHEMA = re.compile(r"((?:(())(www\.([^/?#\s]*))|((http(s)?|ftp):)"
                        r"(//([^/?#\s]*)))([^?#\s]*)(\?([^#\s]*))?(#([^\s]*))?)")
-
-RCVARS = "rcvars"
 
 # =============================================================================
 def s3_get_last_record_id(tablename):
@@ -2709,12 +2708,12 @@ class StringTemplateParser(object):
         return parser._keys
 
 # =============================================================================
-class S3MarkupStripper(HTMLParser):
+class S3MarkupStripper(HTMLParser, object): # enforce new-style class in Py2
     """ Simple markup stripper """
 
     def __init__(self):
         super(S3MarkupStripper, self).__init__()
-        self.reset()
+        #self.reset() # Included in super-init
         self.result = []
 
     def handle_data(self, d):

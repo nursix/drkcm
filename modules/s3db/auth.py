@@ -32,7 +32,8 @@ __all__ = ("AuthDomainApproverModel",
            "AuthConsentModel",
            "AuthMasterKeyModel",
            "auth_Consent",
-           "auth_user_options_get_osm"
+           "auth_user_options_get_osm",
+           "AuthUserTempModel",
            )
 
 import datetime
@@ -1137,5 +1138,46 @@ def auth_user_options_get_osm(pe_id):
         return record.osm_oauth_consumer_key, record.osm_oauth_consumer_secret
     else:
         return None
+
+# =============================================================================
+class AuthUserTempModel(S3Model):
+    """
+        Model to store complementary data for pending user accounts
+        after self-registration
+    """
+
+    names = ("auth_user_temp",
+             )
+
+    def model(self):
+
+        utable = current.auth.settings.table_user
+
+        # ---------------------------------------------------------------------
+        # Temporary User Table
+        # - interim storage of registration data that can be used to
+        #   create complementary records about a user once their account
+        #   is approved
+        #
+        self.define_table("auth_user_temp",
+                          Field("user_id", utable),
+                          Field("home"),
+                          Field("mobile"),
+                          Field("image", "upload",
+                                length = current.MAX_FILENAME_LENGTH,
+                                ),
+                          Field("consent"),
+                          Field("custom", "json",
+                                requires = IS_EMPTY_OR(IS_JSONS3()),
+                                ),
+                          S3MetaFields.uuid(),
+                          S3MetaFields.created_on(),
+                          S3MetaFields.modified_on(),
+                          )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {}
 
 # END =========================================================================

@@ -4548,6 +4548,6 @@ if __name__ == "__main__":
         RealmEntityTests,
         LinkToPersonTests,
         EntityRoleManagerTests,
-    )
+        )
 
 # END ========================================================================

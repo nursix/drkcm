@@ -312,7 +312,6 @@ def alert():
                     rows = db(query).select(itable.sender_name,
                                             groupby=itable.sender_name)
                     sender_options = {}
-                    from s3 import s3_str
                     for row in rows:
                         sender_name = row.sender_name
                         sender_options[sender_name] = s3_str(T(sender_name))
@@ -1134,6 +1133,7 @@ def template():
         r.resource.add_filter(FS("is_template") == True)
 
         table = r.table
+        tablename = "cap_alert"
 
         if r.representation == "xls":
 
@@ -1490,7 +1490,6 @@ def set_priority_js():
                               orderby = wptable.name,
                               )
 
-    from s3 import s3_str
     priorities = [(s3_str(T(r.name)), r.urgency, r.severity, r.certainty, r.color_code)\
                   for r in rows]
 
@@ -1527,7 +1526,6 @@ def cap_AreaRowOptionsBuilder(alert_id, caller=None):
     values = [row.id for row in rows]
     count = len(values)
     if count:
-        from s3 import s3_str
         if count == 1:
             query_ = (atable.id == values[0])
         else:

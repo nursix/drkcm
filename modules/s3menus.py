@@ -1247,6 +1247,7 @@ class S3OptionsMenu(object):
         show_programmes = lambda i: settings.get_hrm_vol_experience() == "programme"
         skills = lambda i: settings.get_hrm_use_skills()
         certificates = lambda i: settings.get_hrm_use_certificates()
+        departments = lambda i: settings.get_hrm_vol_departments()
         teams = settings.get_hrm_teams()
         use_teams = lambda i: teams
         show_staff = lambda i: settings.get_hrm_show_staff()
@@ -1267,13 +1268,13 @@ class S3OptionsMenu(object):
                         M("Search Members", f="group_membership"),
                         M("Import", f="group_membership", m="import"),
                     ),
-                    M("Department Catalog", f="department")(
+                    M("Department Catalog", f="department", check=departments)(
                         M("Create", m="create"),
                     ),
                     M("Volunteer Role Catalog", f="job_title")(
                         M("Create", m="create"),
                     ),
-                    M("Skill Catalog", f="skill")(
+                    M("Skill Catalog", f="skill", check=skills)(
                         M("Create", m="create"),
                         #M("Skill Provisions", f="skill_provision"),
                     ),
@@ -1642,6 +1643,7 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                     ),
                     M("Resource Types", f="resource_type",
+                      check=stats,
                       restrict=[ADMIN])(
                         M("Create", m="create"),
                     ),

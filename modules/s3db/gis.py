@@ -468,9 +468,9 @@ class S3LocationModel(S3Model):
             feature = json.dumps({"id": location_id,
                                   "level": form_vars_get("level", False),
                                   })
-            current.s3task.async("gis_update_location_tree",
-                                 args = [feature],
-                                 )
+            current.s3task.run_async("gis_update_location_tree",
+                                     args = [feature],
+                                     )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2076,7 +2076,8 @@ class S3GISConfigModel(S3Model):
         field.label = T("Person or OU")
         field.readable = field.writable = True
         field.represent = current.s3db.pr_PersonEntityRepresent(show_label=False)
-        field.widget = S3AutocompleteWidget("pr", "pentity")
+        field.widget = S3PentityAutocompleteWidget(
+            types=("pr_person", "pr_group", "org_organisation"))
         label = T("Default?")
         table.pe_default.label = label
         table.pe_default.comment = DIV(

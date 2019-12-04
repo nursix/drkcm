@@ -207,6 +207,8 @@ class donor(S3CustomController):
             item = ""
         output["item"] = item
 
+        current.response.s3.scripts.append("https://platform.twitter.com/widgets.js")
+
         self._view(THEME, "donor.html")
         return output
 
@@ -716,15 +718,15 @@ class register(S3CustomController):
                           Field("organisation",
                                 label = T("Name of Organization"),
                                 ),
-                          Field("organisation_type",
-                                label = T("Type of Organization"),
-                                requires = IS_EMPTY_OR(
-                                            IS_IN_SET([T("Business Donor"),
-                                                       T("Individual Donor"),
-                                                       T("Public Sector Organization"),
-                                                       T("Voluntary Sector Organization"),
-                                                       ])),
-                                ),
+                          #Field("organisation_type",
+                          #      label = T("Type of Organization"),
+                          #      requires = IS_EMPTY_OR(
+                          #                  IS_IN_SET([T("Business Donor"),
+                          #                             T("Individual Donor"),
+                          #                             T("Public Sector Organization"),
+                          #                             T("Voluntary Sector Organization"),
+                          #                             ])),
+                          #      ),
                           Field("addr_L3", "reference gis_location",
                                 label = T("Location"),
                                 requires = IS_IN_SET(districts_and_uk),
@@ -790,7 +792,7 @@ class register(S3CustomController):
                                                              selectedList=3),
                                 ),
                           Field("availability",
-                                label = T("Please indicate if the offer is only available for a period of time (please state) or it is an open ended offer. Household items, such as furniture, are normally not required for some months but very gratefully received at the right time."),
+                                label = T("Please indicate if the offer is only available for a period of time (please state) or it is an open ended offer. Household items, such as furniture, are normally not required for some months but very gratefully received at the right time"),
                                 ),
                           # Consent (GDPR + FOC)
                           Field("consent",
@@ -1081,11 +1083,11 @@ class register(S3CustomController):
             user_id = utable.insert(**utable._filter_fields(form_vars, id=False))
             form_vars.id = user_id
 
-            # Save temporary user fields in db.auth_user_temp
+            # Save temporary user fields in s3db.auth_user_temp
             # Default just handles mobile, home, consent
             #auth.s3_user_register_onaccept(form)
 
-            temptable = db.auth_user_temp
+            temptable = s3db.auth_user_temp
             record  = {"user_id": user_id}
 
             # Store the mobile_phone ready to go to pr_contact
@@ -1265,6 +1267,7 @@ class verify_email(S3CustomController):
     def __call__(self):
 
         db = current.db
+        s3db = current.s3db
         auth = current.auth
         auth_settings = auth.settings
 
@@ -1283,7 +1286,7 @@ class verify_email(S3CustomController):
         user_id = user.id
 
         # Read custom fields to determine registration type
-        temptable = db.auth_user_temp
+        temptable = s3db.auth_user_temp
         record = db(temptable.user_id == user_id).select(temptable.custom,
                                                          limitby = (0, 1),
                                                          ).first()
@@ -1299,10 +1302,10 @@ class verify_email(S3CustomController):
         if not agency and not organisation_id:
             # Donor/Individual/Group, so doesn't need approval
             # Add hook to process custom fields
-            current.s3db.configure("auth_user",
-                                   register_onaccept = auth_user_register_onaccept,
-                                   )
-            # Calls s3_link_user() which calls s3_link_to_person() which applies 'normal' data from db.auth_user_temp (home_phone, mobile_phone, consent)
+            s3db.configure("auth_user",
+                           register_onaccept = auth_user_register_onaccept,
+                           )
+            # Calls s3_link_user() which calls s3_link_to_person() which applies 'normal' data from s3db.auth_user_temp (home_phone, mobile_phone, consent)
             # Calls s3_auth_user_register_onaccept() which calls our custom auth_user_register_onaccept
             auth.s3_approve_user(user)
 
@@ -1449,9 +1452,10 @@ def auth_user_register_onaccept(user_id):
     """
 
     db = current.db
+    s3db = current.s3db
 
     # Read custom fields & determine registration type
-    temptable = db.auth_user_temp
+    temptable = s3db.auth_user_temp
     record = db(temptable.user_id == user_id).select(temptable.custom,
                                                      limitby = (0, 1),
                                                      ).first()
@@ -1460,7 +1464,6 @@ def auth_user_register_onaccept(user_id):
         return
 
     auth = current.auth
-    s3db = current.s3db
     get_config = s3db.get_config
 
     custom = json.loads(record.custom)
@@ -1681,19 +1684,30 @@ def auth_user_register_onaccept(user_id):
         person_id = person.id
 
         # Create Items
+        items_details = custom["items_details"]
+        stable = s3db.supply_person_item_status
+        status = db(stable.name == "Available").select(stable.id,
+                                                       limitby = (0, 1)
+                                                       ).first()
+        if status:
+            status_id = status.id
+        else:
+            raise HTTP(500, "'Available' Status for Donations not found")
         itable = s3db.supply_person_item
         for item_id in custom["item_id"]:
             record = {"person_id": person_id,
                       "item_id": item_id,
+                      "comments": items_details,
+                      "status_id": status_id,
                       }
             itable.insert(**record)
 
         ttable = s3db.pr_person_tag
-        record = {"person_id": person_id,
-                  "tag": "items_details",
-                  "value": custom["items_details"],
-                  }
-        ttable.insert(**record)
+        #record = {"person_id": person_id,
+        #          "tag": "items_details",
+        #          "value": custom["items_details"],
+        #          }
+        #ttable.insert(**record)
 
         record = {"person_id": person_id,
                   "tag": "organisation",

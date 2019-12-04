@@ -176,6 +176,11 @@ def person():
     settings.hrm.use_skills = True
     settings.search.filter_manager = True
 
+    # Use Legacy table for unavailability
+    s3db.add_components("pr_person",
+                        deploy_unavailability = "person_id",
+                        )
+
     return s3db.hrm_person_controller(replace_option = None,
                                       csv_extra_fields = [
                                             # CSV column headers, so no T()
@@ -945,22 +950,24 @@ def twitter_channel():
             restrict_e = [str(row.id) for row in rows if not row.enabled]
             restrict_d = [str(row.id) for row in rows if row.enabled]
 
-            from s3 import s3_str
-            s3.actions += [dict(label=s3_str(T("Enable")),
-                                _class="action-btn",
-                                url=URL(args=["[id]", "enable"]),
-                                restrict = restrict_e),
-                           dict(label=s3_str(T("Disable")),
-                                _class="action-btn",
-                                url = URL(args = ["[id]", "disable"]),
-                                restrict = restrict_d),
+            s3.actions += [{"label": s3_str(T("Enable")),
+                            "_class": "action-btn",
+                            "url": URL(args=["[id]", "enable"]),
+                            "restrict": restrict_e,
+                            },
+                           {"label": s3_str(T("Disable")),
+                            "_class": "action-btn",
+                            "url": URL(args = ["[id]", "disable"]),
+                            "restrict": restrict_d,
+                            },
                            ]
             if not s3task._is_alive():
                 # No Scheduler Running
-                s3.actions += [dict(label=s3_str(T("Poll")),
-                                    _class="action-btn",
-                                    url = URL(args = ["[id]", "poll"]),
-                                    restrict = restrict_d)
+                s3.actions += [{"label": s3_str(T("Poll")),
+                                "_class": "action-btn",
+                                "url": URL(args = ["[id]", "poll"]),
+                                "restrict": restrict_d,
+                                },
                                ]
         return output
     s3.postp = postp

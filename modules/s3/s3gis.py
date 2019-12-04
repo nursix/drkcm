@@ -267,7 +267,7 @@ class GIS(object):
             Save the file to the /uploads folder
 
             Designed to be called asynchronously using:
-                current.s3task.async("download_kml", [record_id, filename])
+                current.s3task.run_async("download_kml", [record_id, filename])
 
             @param record_id: id of the record in db.gis_layer_kml
             @param filename: name to save the file as
@@ -6387,6 +6387,8 @@ class MAP(DIV):
         # We haven't yet run _setup()
         self.setup = False
         self.callback = None
+        self.error_message = None
+        self.components = []
 
         # Options for server-side processing
         self.opts = opts
@@ -6395,16 +6397,6 @@ class MAP(DIV):
 
         # Options for client-side processing
         self.options = {}
-
-        # Components
-        # Map (Embedded not Window)
-        components = [DIV(DIV(_class="map_loader"),
-                              _id="%s_panel" % map_id)
-                      ]
-
-        self.components = components
-        for c in components:
-            self._setnode(c)
 
         # Adapt CSS to size of Map
         _class = "map_wrapper"
@@ -6437,16 +6429,32 @@ class MAP(DIV):
               into scripts (callback or otherwise)
         """
 
+        # Fresh _setup() call, reset error message
+        self.error_message = None
+
+        auth = current.auth
+
         # Read configuration
         config = GIS.get_config()
         if not config:
             # No prepop - Bail
-            current.session.error = current.T("Map cannot display without prepop data!")
-            redirect(URL(c="default", f="index"))
+            if auth.s3_has_permission("create", "gis_hierarchy"):
+                error_message = DIV(_class="mapError")
+                # Deliberately not T() to save unneccessary load on translators
+                error_message.append("Map cannot display without GIS config!")
+                error_message.append(XML(" (You can can create one "))
+                error_message.append(A("here", _href=URL(c="gis", f="config")))
+                error_message.append(")")
+                self.error_message = error_message
+            else:
+                self.error_message = DIV(
+                    "Map cannot display without GIS config!",  # Deliberately not T() to save unneccessary load on translators
+                    _class="mapError"
+                    )
+            return None
 
         T = current.T
         db = current.db
-        auth = current.auth
         s3db = current.s3db
         request = current.request
         response = current.response
@@ -6480,6 +6488,12 @@ class MAP(DIV):
                 "gis_too_many_features": T("There are too many features, please Zoom In or Filter"),
                 "gis_zoomin": T("Zoom In"),
                 }
+
+        ##########
+        # Loader
+        ##########
+
+        self.append(DIV(DIV(_class="map_loader"), _id="%s_panel" % self.id))
 
         ##########
         # Viewport
@@ -7125,6 +7139,9 @@ class MAP(DIV):
         if not self.setup:
             result = self._setup()
             if result is None:
+                if self.error_message:
+                    self.append(self.error_message)
+                    return super(MAP, self).xml()
                 return ""
 
         # Add ExtJS
@@ -7275,6 +7292,13 @@ class MAP2(DIV):
             return None
 
         options = {}
+
+        # i18n
+        if current.session.s3.language != "en":
+            T = current.T
+            options["i18n"] = {"loading": s3_str(T("Loading")),
+                               "requires_login": s3_str(T("Requires Login")),
+                               }
 
         # Read options for this Map
         get_vars_get = current.request.get_vars.get
@@ -7579,9 +7603,22 @@ class MAP2(DIV):
 
         if options is None:
             # No Map Config: Just show error in the DIV
-            self.components = [DIV("Map cannot display without prepop data!", # Deliberately not T() to save unneccessary load on translators
-                                   _class="error"),
-                               ]
+            auth = current.auth
+
+            if auth.s3_has_permission("create", "gis_hierarchy"):
+                error_message = DIV(_class="mapError")
+                # Deliberately not T() to save unneccessary load on translators
+                error_message.append("Map cannot display without GIS config!")
+                error_message.append(XML(" (You can can create one "))
+                error_message.append(A("here", _href=URL(c="gis", f="config")))
+                error_message.append(")")
+            else:
+                error_message = DIV(
+                    "Map cannot display without GIS config!",  # Deliberately not T() to save unneccessary load on translators
+                    _class="mapError"
+                    )
+
+            self.components = [error_message]
             return super(MAP2, self).xml()
 
         map_id = self.opts.get("id", "default_map")
@@ -8861,8 +8898,12 @@ class LayerKML(Layer):
                     response = current.response
                     session_id_name = response.session_id_name
                     session_id = response.session_id
-                    current.s3task.async("gis_download_kml",
-                                         args=[self.id, filename, session_id_name, session_id])
+                    current.s3task.run_async("gis_download_kml",
+                                             args = [self.id,
+                                                     filename,
+                                                     session_id_name,
+                                                     session_id,
+                                                     ])
                     if cached:
                         db(query).update(modified_on=request.utcnow)
                     else:

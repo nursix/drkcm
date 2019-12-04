@@ -1238,16 +1238,17 @@ class IS_PROCESSED_IMAGE(Validator):
             return (value, None)
 
         r = current.request
-        post_vars = r.post_vars
 
         if r.env.request_method == "GET":
             return (value, None)
+
+        post_vars = r.post_vars
 
         # If there's a newly uploaded file, accept it. It'll be processed in
         # the update form.
         # NOTE: A FieldStorage with data evaluates as False (odd!)
         uploaded_image = post_vars.get(self.field_name)
-        if uploaded_image not in ("", None):
+        if uploaded_image not in (b"", None): # Py 3.x it's b"", which is equivalent to "" in Py 2.x
             return (uploaded_image, None)
 
         cropped_image = post_vars.get("imagecrop-data")
@@ -1283,8 +1284,9 @@ class IS_PROCESSED_IMAGE(Validator):
             else:
                 path = os.path.join(self.upload_path, uploaded_image)
 
-            current.s3task.async("crop_image",
-                args=[path] + points + [self.image_bounds[0]])
+            
+            current.s3task.run_async("crop_image",
+                            args = [path] + points + [self.image_bounds[0]])
 
         return (None, None)
 
