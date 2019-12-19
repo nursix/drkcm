@@ -210,6 +210,7 @@ def index():
     roles = session.s3.roles
     table = s3db.org_organisation
     has_permission = auth.s3_has_permission
+    AUTHENTICATED = auth.get_system_roles().AUTHENTICATED
     if AUTHENTICATED in roles and has_permission("read", table):
 
         org_items = organisation()
@@ -678,7 +679,7 @@ def person():
     """
 
     # Set to current user
-    user_person_id = str(s3_logged_in_person())
+    user_person_id = str(auth.s3_logged_in_person())
 
     # When request.args = [], set it as user_person_id.
     # When it is not an ajax request and the first argument is not user_person_id, set it.
@@ -1060,7 +1061,7 @@ def about():
 
     # Allow editing of page content from browser using CMS module
     if settings.has_module("cms"):
-        ADMIN = auth.get_system_roles().ADMIN in session.s3.roles
+        ADMIN = auth.s3_has_role("ADMIN")
         table = s3db.cms_post
         ltable = s3db.cms_post_module
         module = "default"
@@ -1288,7 +1289,7 @@ def help():
 
     # Allow editing of page content from browser using CMS module
     if settings.has_module("cms"):
-        ADMIN = auth.get_system_roles().ADMIN in session.s3.roles
+        ADMIN = auth.s3_has_role("ADMIN")
         table = s3db.cms_post
         ltable = s3db.cms_post_module
         module = "default"
@@ -1405,7 +1406,7 @@ def contact():
                 # Only Admins should be able to update ticket status
                 status = table.status
                 actions = table.actions
-                if not auth.s3_has_role(ADMIN):
+                if not auth.s3_has_role("ADMIN"):
                     status.writable = False
                     actions.writable = False
                 if r.method != "update":

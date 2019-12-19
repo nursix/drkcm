@@ -47,13 +47,33 @@ class S3MainMenu(default.S3MainMenu):
             menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     MM("All Documents", c="doc", f="document", m="datalist"),
                     MM("Donors", c="pr", f="person", vars={"donors": 1})(
-                        MM("Donations", c="supply", f="person_item"),                    
-                        MM("Update General Information", c="cms", f="post", vars={"~.name": "Donor"}, m="update"),
-                        ),
+                       MM("Donations", c="supply", f="person_item"),
+                       MM("Edit General Information", c="cms", f="post", vars={"~.name": "Donor"}, m="update"),
+                       ),
+                    MM("Organisations", c="org", f="organisation")(
+                       #MM("Message", c="org", f="organisation", args="message"),
+                       ),
                     MM("Volunteers", c="hrm", f="human_resource")(
-                        MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
-                        MM("Groups", c="pr", f="group"),
-                        ),
+                       MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
+                       MM("Reserve Groups", c="pr", f="group"),
+                       ),
+                    MM("Events", c="hrm", f="training_event"),
+                    MM("Opportunities", c="req", f="need"),
+                    MM("Messages", c="project", f="task"),
+                    ]
+        elif has_role("ORG_ADMIN"):
+            menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
+                    MM("Organisation Documents", c="doc", f="document", m="datalist"),
+                    MM("Donors", c="pr", f="person", vars={"donors": 1})(
+                       MM("Donations", c="supply", f="person_item"),
+                       ),
+                    MM("Organisations", c="org", f="organisation")(
+                       #MM("Message", c="org", f="organisation", args="message"),
+                       ),
+                    MM("Volunteers", c="hrm", f="human_resource")(
+                       MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
+                       MM("Reserve Groups", c="pr", f="group"),
+                       ),
                     MM("Events", c="hrm", f="training_event"),
                     MM("Opportunities", c="req", f="need"),
                     MM("Messages", c="project", f="task"),
@@ -61,9 +81,16 @@ class S3MainMenu(default.S3MainMenu):
         elif has_role("AGENCY"):
             menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
                     MM("Documents", c="doc", f="document", m="datalist"),
-                    #MM("Donors", c="pr", f="person", vars={"donors": 1})(
-                    MM("Donations", c="supply", f="person_item"),                    
-                    #    ),
+                    MM("Donors", c="pr", f="person", vars={"donors": 1})(
+                       MM("Donations", c="supply", f="person_item"),
+                       ),
+                    MM("Organisations", c="org", f="organisation")(
+                       #MM("Message", c="org", f="organisation", args="message"),
+                       ),
+                    MM("Volunteers", c="hrm", f="human_resource")(
+                       MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
+                       MM("Reserve Groups", c="pr", f="group"),
+                       ),
                     MM("Events", c="hrm", f="training_event"),
                     MM("Opportunities", c="req", f="need"),
                     MM("Contact Organisation Admins", c="project", f="task", m="create"),
@@ -74,19 +101,6 @@ class S3MainMenu(default.S3MainMenu):
                     MM("Events", c="hrm", f="training_event"),
                     MM("Opportunities", c="req", f="need"),
                     MM("Contact Organisation Admins", c="project", f="task", m="create"),
-                    ]
-        elif has_role("ORG_ADMIN"):
-            menu = [MM("General Information and Advice", c="cms", f="post", m="datalist"),
-                    MM("Organisation Documents", c="doc", f="document", m="datalist"),
-                    MM("Donors", c="pr", f="person", vars={"donors": 1})(
-                        MM("Donations", c="supply", f="person_item"),                    
-                        ),
-                    MM("Volunteers", c="hrm", f="human_resource")(MM("Reserves", c="pr", f="person", vars={"reserves": 1}),
-                                                                  MM("Groups", c="pr", f="group"),
-                                                                  ),
-                    MM("Events", c="hrm", f="training_event"),
-                    MM("Opportunities", c="req", f="need"),
-                    MM("Messages", c="project", f="task"),
                     ]
         elif has_role("GROUP_ADMIN"):
             menu = [#MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
@@ -104,6 +118,8 @@ class S3MainMenu(default.S3MainMenu):
             menu = [#MM("Volunteer Your Time", c="default", f="index", args="volunteer"),
                     #MM("Donate Items", c="default", f="index", args="donate"),
                     MM("General Information and Advice", c="cms", f="post", m="datalist"),
+                    MM("Events", c="hrm", f="training_event"), # They can only see ones they're invited to
+                    MM("Opportunities", c="req", f="need"),    # They can only see ones they're invited to
                     ]
 
         return menu
@@ -206,7 +222,10 @@ class S3OptionsMenu(default.S3OptionsMenu):
     def admin(self):
         """ ADMIN menu """
 
-        ADMIN = current.session.s3.system_roles.ADMIN
+        if not current.auth.s3_has_role("ADMIN"):
+            # OrgAdmin: No Side-menu
+            return None
+
         settings_messaging = self.settings_messaging()
 
         settings = current.deployment_settings
@@ -216,7 +235,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
-        return M(restrict=[ADMIN])(
+        return M()(
                     #M("Setup", c="setup", f="deployment")(
                     #    #M("Create", m="create"),
                     #    #M("Servers", f="server")(
@@ -295,6 +314,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
     # -------------------------------------------------------------------------
     @staticmethod
     def hrm():
+        """ No Side Menu """
+
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def org():
         """ No Side Menu """
 
         return None

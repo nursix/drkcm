@@ -2843,6 +2843,8 @@ class S3HRSkillModel(S3Model):
                                     },
                                     ],
                        hrm_event_tag = "training_event_id",
+                       # This format is better for permissions on the link table
+                       hrm_training = "training_event_id",
                        # Format for list_fields
                        hrm_training_event_instructor = "training_event_id",
 
@@ -3011,6 +3013,15 @@ class S3HRSkillModel(S3Model):
                      3: T("Observer"),
                      }
 
+        # @ToDo: configuration setting once-required
+        status_opts = {1: T("Applied"),
+                       2: T("Approved"),
+                       3: T("Rejected"),
+                       4: T("Invited"),
+                       5: T("Accepted"),
+                       6: T("Declined"),
+                       }
+
         tablename = "hrm_training"
         define_table(tablename,
                      # @ToDo: Create a way to add new people to training as staff/volunteers
@@ -3022,7 +3033,8 @@ class S3HRSkillModel(S3Model):
                                ondelete = "CASCADE",
                                ),
                      # Just used when created from participation in an Event
-                     training_event_id(readable = False,
+                     training_event_id(ondelete = "SET NULL",
+                                       readable = False,
                                        writable = False,
                                        ),
                      course_id(empty = not course_mandatory,
@@ -3048,6 +3060,16 @@ class S3HRSkillModel(S3Model):
                            requires = IS_EMPTY_OR(
                                         IS_INT_IN_RANGE(0, None)
                                         ),
+                           ),
+                     Field("status", "integer",
+                           default = 4, # Invited
+                           label = T("Status"),
+                           represent = S3Represent(options=status_opts),
+                           requires = IS_EMPTY_OR(
+                                       IS_IN_SET(status_opts)),
+                           # Enable in templates as-required
+                           readable = False,
+                           writable = False,
                            ),
                      # This field can only be filled-out by specific roles
                      # Once this has been filled-out then the other fields are locked
@@ -3888,7 +3910,10 @@ class S3HRSkillModel(S3Model):
     # -------------------------------------------------------------------------
     @staticmethod
     def hrm_training_event_realm_entity(table, record):
-        """ Set the training_event realm entity to the root Org of the Site """
+        """
+            Set the training_event realm entity
+            - to the root Org of the Site
+        """
 
         db = current.db
         stable = db.org_site
@@ -5074,7 +5099,7 @@ class S3HRShiftModel(S3Model):
         Shifts
     """
 
-    names = (#"hrm_shift_slot",
+    names = ("hrm_shift_template",
              "hrm_shift",
              "hrm_shift_id",
              "hrm_human_resource_shift",
@@ -5087,114 +5112,71 @@ class S3HRShiftModel(S3Model):
         T = current.T
 
         #configure = self.configure
+        crud_strings = current.response.s3.crud_strings
         define_table = self.define_table
         set_method = self.set_method
 
+        job_title_id = self.hrm_job_title_id
+        skill_id = self.hrm_skill_id
+
         db = current.db
 
-        # ---------------------------------------------------------------------
-        # Date Formula
-        #
-        #interval_opts = {1: T("Daily"),
-        #                 2: T("Weekly"),
-        #                 #3: T("Monthly"),
-        #                 #4: T("Yearly"),
-        #                 }
-
-        #days_of_week = {0: T("Sunday"),
-        #                1: T("Monday"),
-        #                2: T("Tuesday"),
-        #                3: T("Wednesday"),
-        #                4: T("Thursday"),
-        #                5: T("Friday"),
-        #                6: T("Sunday"),
-        #                }
-
-        #tablename = "hrm_date_formula"
-        #define_table(tablename,
-        #             Field("name",
-        #                   label = T("Name"),
-        #                   ),
-        #             # "interval" is a reserved word in MySQL
-        #             Field("date_interval", "integer",
-        #                   represent = S3Represent(options = interval_opts),
-        #                   #requires = IS_IN_SET(interval_opts),
-        #                   ),
-        #             Field("rate", "integer"), # Repeat Frequency
-        #             Field("days_of_week", "list:integer",
-        #                   represent = S3Represent(options = days_of_week),
-        #                   #requires = IS_IN_SET((0, 1, 2, 3, 4, 5, 6),
-        #                   #                     multiple = True,
-        #                   #                     ),
-        #                   ),
-        #             *s3_meta_fields())
-
-        #configure(tablename,
-        #          deduplicate = S3Duplicate(),
-        #          )
+        DAYS_OF_WEEK = {1: T("Monday"),
+                        2: T("Tuesday"),
+                        3: T("Wednesday"),
+                        4: T("Thursday"),
+                        5: T("Friday"),
+                        6: T("Saturday"),
+                        7: T("Sunday"),
+                        }
 
         # ---------------------------------------------------------------------
-        # Time Formula
+        # Shift Templates
         #
-        #tablename = "hrm_time_formula"
-        #define_table(tablename,
-        #             Field("name",
-        #                   label = T("Name"),
-        #                   ),
-        #             Field("all_day", "boolean",
-        #                   default = False,
-        #                   represent = s3_yes_no_represent,
-        #                   ),
-        #             Field("start_time", "time",
-        #                   # @ToDo: s3_time reusablefield?
-        #                   #widget =
-        #                   ),
-        #             Field("end_time", "time",
-        #                   #widget =
-        #                   ),
-        #             *s3_meta_fields())
+        tablename = "hrm_shift_template"
+        define_table(tablename,
+                     job_title_id(),
+                     skill_id(),
+                     Field("day_of_week", "integer",
+                           requires = IS_IN_SET(DAYS_OF_WEEK),
+                           represent = S3Represent(options = DAYS_OF_WEEK),
+                           ),
+                     s3_time("start_time",
+                             empty = False,
+                             label = T("Start Time"),
+                             # Could be the next day
+                             #set_min = "#hrm_shift_template_end_time",
+                             ),
+                     s3_time("end_time",
+                             empty = False,
+                             label = T("End Time"),
+                             # Could be the next day
+                             #set_max = "#hrm_shift_template_start_time",
+                             ),
+                     s3_comments(),
+                     *s3_meta_fields())
 
-        #configure(tablename,
-        #          deduplicate = S3Duplicate(),
-        #          )
-
-        # ---------------------------------------------------------------------
-        # Slots
-        #
-        #tablename = "hrm_shift_slot"
-        #define_table(tablename,
-        #             Field("name",
-        #                   label = T("Name"),
-        #                   ),
-        #             Field("date_formula_id", "reference hrm_date_formula"),
-        #             Field("time_formula_id", "reference hrm_time_formula"),
-        #             *s3_meta_fields())
-
-        #configure(tablename,
-        #          deduplicate = S3Duplicate(),
-        #          )
-
-        #represent = S3Represent(lookup=tablename, translate=True)
-        #slot_id = S3ReusableField("slot_id", "reference %s" % tablename,
-        #                          label = T("Slot"),
-        #                          ondelete = "RESTRICT",
-        #                          represent = represent,
-        #                          requires = IS_EMPTY_OR(
-        #                                        IS_ONE_OF(db, "hrm_shift_slot.id",
-        #                                                  represent)),
-        #                          #comment=S3PopupLink(c = "hrm",
-        #                          #                    f = "shift_slot",
-        #                          #                    label = ADD_SLOT,
-        #                          #                    ),
-        #                          )
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("New Shift"),
+            title_display = T("Shift Details"),
+            title_list = T("Shifts"),
+            title_update = T("Edit Shift"),
+            #title_upload = T("Import Shift data"),
+            label_list_button = T("List Shifts"),
+            msg_record_created = T("Shift added"),
+            msg_record_modified = T("Shift updated"),
+            msg_record_deleted = T("Shift deleted"),
+            msg_list_empty = T("No Shifts defined"),
+            )
 
         # ---------------------------------------------------------------------
         # Shifts
         #
         tablename = "hrm_shift"
         define_table(tablename,
-                     self.hrm_job_title_id(),
-                     self.hrm_skill_id(),
+                     job_title_id(),
+                     skill_id(),
                      s3_datetime("start_date",
                                  label = T("Start Date"),
                                  set_min = "#hrm_shift_end_date",
@@ -5325,7 +5307,7 @@ class S3HRShiftModel(S3Model):
                    action = facility_redirect)
 
         # CRUD Strings
-        current.response.s3.crud_strings[tablename] = Storage(
+        crud_strings[tablename] = Storage(
             label_create = T("New Shift"),
             title_display = T("Shift Details"),
             title_list = T("Shifts"),
@@ -5340,6 +5322,9 @@ class S3HRShiftModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Shifts <> Human Resources
+        #
+        # @ToDo: Replace with hrm_shift_person as it's the Person who should be
+        #        busy, not just the HR
         #
         tablename = "hrm_human_resource_shift"
         define_table(tablename,
@@ -8833,10 +8818,10 @@ def hrm_training_event_controller():
                 title_update = T("Edit Participant"),
                 title_upload = T("Import Participants"),
                 label_list_button = T("List Participants"),
-                label_delete_button = T("Delete Participant"),
+                label_delete_button = T("Remove Participant"),
                 msg_record_created = T("Participant added"),
                 msg_record_modified = T("Participant updated"),
-                msg_record_deleted = T("Participant deleted"),
+                msg_record_deleted = T("Participant removed"),
                 msg_no_match = T("No entries found"),
                 msg_list_empty = T("Currently no Participants registered"))
 
