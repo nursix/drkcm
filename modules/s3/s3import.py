@@ -55,7 +55,7 @@ from gluon import current, redirect, URL, \
 from gluon.storage import Storage, Messages
 from gluon.tools import callback, fetch
 
-from s3compat import pickle, StringIO, basestring, urllib2, urlopen, HTTPError, URLError
+from s3compat import basestring, pickle, urllib2, urlopen, BytesIO, StringIO, HTTPError, URLError
 from s3dal import Field
 from .s3datetime import s3_utc
 from .s3rest import S3Method, S3Request
@@ -325,11 +325,11 @@ class S3Importer(S3Method):
         output = None
         if self.ajax:
             sfilename = ofilename = r.post_vars["file"].filename
-            upload_id = table.insert(controller=self.controller,
-                                     function=self.function,
-                                     filename=ofilename,
+            upload_id = table.insert(controller = self.controller,
+                                     function = self.function,
+                                     filename = ofilename,
                                      file = sfilename,
-                                     user_id=current.session.auth.user.id
+                                     user_id = current.session.auth.user.id
                                      )
         else:
             title = self.uploadTitle
@@ -1200,9 +1200,9 @@ $('#import-items').on('click','.toggle-item',function(){$('.importItem.item-'+$(
         if timestmp != None:
             current.session.flash = messages.job_completed % \
                                         (self.date_represent(timestmp), msg)
-        elif totals[1] is not 0:
+        elif totals[1] != 0:
             current.session.error = msg
-        elif totals[2] is not 0:
+        elif totals[2] != 0:
             current.session.warning = msg
         else:
             current.session.flash = msg
@@ -4313,7 +4313,7 @@ class S3BulkImporter(object):
                     csv = f
             else:
                 try:
-                    csv = open(filename, "r")
+                    csv = open(filename, "rb")
                 except IOError:
                     self.errorList.append(error_string % filename)
                     return
@@ -4679,7 +4679,7 @@ class S3BulkImporter(object):
                 except IOError:
                     current.log.error("Unable to open image file %s" % image)
                     continue
-                image_source = StringIO(openFile.read())
+                image_source = BytesIO(openFile.read())
                 # Get the id of the resource
                 query = base_query & (idfield == row["id"])
                 record = db(query).select(limitby = (0, 1),
@@ -4717,7 +4717,8 @@ class S3BulkImporter(object):
                         current.log.error("error importing logo %s: %s %s" % (image, key, error))
 
     # -------------------------------------------------------------------------
-    def import_font(self, url):
+    @staticmethod
+    def import_font(url):
         """
             Install a Font
         """
@@ -4760,7 +4761,7 @@ class S3BulkImporter(object):
 
         if extension == "gz":
             import tarfile
-            tf = tarfile.open(fileobj=StringIO(_file))
+            tf = tarfile.open(fileobj = StringIO(_file))
             tf.extractall()
 
         elif extension == "zip":

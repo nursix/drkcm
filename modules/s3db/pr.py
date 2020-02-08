@@ -3864,6 +3864,7 @@ class PRContactModel(S3Model):
     """
 
     names = ("pr_contact",
+             #"pr_contact_id",
              "pr_contact_emergency",
              "pr_contact_represent",
              )
@@ -3959,10 +3960,10 @@ class PRContactModel(S3Model):
             msg_list_empty = T("No contact information available"))
 
         configure(tablename,
-                  deduplicate = S3Duplicate(primary=("pe_id",
-                                                     "contact_method",
-                                                     "value",
-                                                     ),
+                  deduplicate = S3Duplicate(primary = ("pe_id",
+                                                       "contact_method",
+                                                       "value",
+                                                       ),
                                             ignore_deleted = True,
                                             ),
                   list_fields = ["id",
@@ -3977,6 +3978,15 @@ class PRContactModel(S3Model):
                   )
 
         contact_represent = pr_ContactRepresent()
+
+        #contact_id = S3ReusableField("contact_id", "reference %s" % tablename,
+        #                             label = T("Contact"),
+        #                             ondelete = "CASCADE",
+        #                             represent = contact_represent,
+        #                             requires = IS_EMPTY_OR(
+        #                                            IS_ONE_OF(current.db, "pr_contact.id",
+        #                                                      contact_represent)),
+        #                             )
 
         # ---------------------------------------------------------------------
         # Emergency Contact Information
@@ -4030,7 +4040,8 @@ class PRContactModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {"pr_contact_represent": contact_represent,
+        return {#"pr_contact_id": contact_id,
+                "pr_contact_represent": contact_represent,
                 }
 
     # -------------------------------------------------------------------------
@@ -4393,11 +4404,11 @@ class PRPresenceModel(S3Model):
                           super_link("pe_id", "pr_pentity"),
                           super_link("sit_id", "sit_situation"),
                           self.pr_person_id("observer",
-                          label=T("Observer"),
-                          default = current.auth.s3_logged_in_person(),
-                          comment=pr_person_comment(title=T("Observer"),
-                                                    comment=T("Person who has actually seen the person/group."),
-                                                    child="observer")),
+                                            label=T("Observer"),
+                                            default = current.auth.s3_logged_in_person(),
+                                            comment=pr_person_comment(title=T("Observer"),
+                                                                      comment=T("Person who has actually seen the person/group."),
+                                                                      child="observer")),
                           Field("shelter_id", "integer",
                                 readable = False,
                                 writable = False),
@@ -4824,7 +4835,7 @@ class PRAvailabilityModel(S3Model):
                   # @todo: adapt deduplicator once we allow multiple
                   #        availability records per person (e.g. include
                   #        start/end dates and location_id)
-                  deduplicate = S3Duplicate(primary=("person_id",)),
+                  deduplicate = S3Duplicate(primary = ("person_id",)),
                   )
 
         self.add_components(tablename,
@@ -6026,7 +6037,7 @@ class PRPersonDetailsModel(S3Model):
             msg_list_empty = T("There are no details for this person yet. Add Person's Details."))
 
         self.configure(tablename,
-                       deduplicate = S3Duplicate(primary=("person_id",),
+                       deduplicate = S3Duplicate(primary = ("person_id",),
                                                  ignore_deleted = True,
                                                  ),
                        )
@@ -7492,7 +7503,8 @@ def pr_rheader(r, tabs=None):
                 query = (table.group_id == record.id) & \
                         (table.group_head == True)
                 leader = db(query).select(table.person_id,
-                                          limitby=(0, 1)).first()
+                                          limitby = (0, 1)
+                                          ).first()
                 if leader:
                     leader = s3_fullname(leader.person_id)
                 else:
@@ -7962,13 +7974,26 @@ class pr_AssignMethod(S3Method):
 def pr_compose():
     """
         Send message to people/teams/forums
+
+        @ToDo: Better rewritten as an S3Method
     """
 
-    #s3db = current.s3db
     get_vars = current.request.get_vars
     #pe_id = None
 
+    #if "person.id" in get_vars:
+    #    # CCC uses a custom version for messaging Donors re: Donations
+    #    fieldname = "person.id"
+    #    record_id = get_vars.get(fieldname)
+    #    table = current.s3db.pr_person
+    #    title = current.T("Message Person")
+    #    query = (table.id == record_id)
+    #    # URL to redirect to after message sent
+    #    url = URL(f="person", args=record_id)
+
+    #elif "forum.id" in get_vars:
     if "forum.id" in get_vars:
+        # Used by? WACOP?
         fieldname = "forum.id"
         record_id = get_vars.get(fieldname)
         pe_id = get_vars.pe_id
@@ -7992,11 +8017,11 @@ def pr_compose():
     #    db = current.db
     #    pe = db(query).select(table.pe_id,
     #                          limitby=(0, 1)).first()
-    #    if not pe:
+    #    try:
+    #        pe_id = pe.pe_id
+    #    except:
     #        current.session.error = current.T("Record not found")
     #        redirect(URL(f="index"))
-
-    #    pe_id = pe.pe_id
 
     # Create the form
     output = current.msg.compose(recipient = pe_id,
@@ -8565,7 +8590,7 @@ def pr_update_affiliations(table, record):
         if not isinstance(record, Row):
             record = current.db(htable.id == record).select(htable.deleted_fk,
                                                             htable.person_id,
-                                                            limitby=(0, 1)
+                                                            limitby = (0, 1)
                                                             ).first()
         if not record:
             return
@@ -8730,7 +8755,8 @@ def pr_human_resource_update_affiliations(person_id):
                             otable.pe_id,
                             stable.uuid,
                             stable.instance_type,
-                            left=left)
+                            left = left
+                            )
 
     # Extract all master PE's
     masters = {STAFF:[], VOLUNTEER:[]}

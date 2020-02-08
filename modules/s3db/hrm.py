@@ -1405,7 +1405,7 @@ class S3HRSiteModel(S3Model):
                                                  secondary = ("sector_id",),
                                                  ),
                        onaccept = self.hrm_human_resource_site_onaccept,
-                       ondelete = self.hrm_human_resource_site_onaccept,
+                       ondelete = self.hrm_human_resource_site_ondelete,
                        )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -1433,70 +1433,64 @@ class S3HRSiteModel(S3Model):
             Update the Human Resource record with the site_id
         """
 
-        # Deletion and update have a different format
-        try:
-            form_vars = form.vars
-        except AttributeError:
-            record_id = form.id
-            delete = True
-        else:
-            record_id = form_vars.id
-            delete = False
-
-        # Get the full record
         db = current.db
+
+        human_resource_id = form.vars.human_resource_id
+
+        # Remove any additional records for this HR
+        # (i.e. staff was assigned elsewhere previously)
+        # @ToDo: Allow one person to be the Site Contact for multiple sectors
         ltable = db.hrm_human_resource_site
+        rows = db(ltable.human_resource_id == human_resource_id).select(ltable.id,
+                                                                        ltable.site_id,
+                                                                        #ltable.sector_id,
+                                                                        ltable.human_resource_id,
+                                                                        ltable.site_contact,
+                                                                        orderby=~ltable.id)
+        first = True
+        for row in rows:
+            if first:
+                first = False
+                continue
+            db(ltable.id == row.id).delete()
+
+        record = rows.first()
+        site_id = record.site_id
         table = db.hrm_human_resource
-        if delete:
-            record = db(ltable.id == record_id).select(ltable.deleted_fk,
-                                                       limitby = (0, 1),
-                                                       ).first()
-            if record:
-                deleted_fks = json.loads(record.deleted_fk)
-                human_resource_id = deleted_fks.get("human_resource_id")
-                if human_resource_id:
-                    db(table.id == human_resource_id).update(location_id=None,
-                                                             site_id=None,
-                                                             site_contact=False,
-                                                             )
-                    # Update realm_entity of HR
-                    current.auth.set_realm_entity(table,
-                                                  human_resource_id,
-                                                  force_update = True,
-                                                  )
-        else:
-            human_resource_id = form_vars.human_resource_id
+        db(table.id == human_resource_id).update(site_id = site_id,
+                                                 site_contact = record.site_contact
+                                                 )
+        # Update realm_entity of HR
+        entity = current.s3db.pr_get_pe_id("org_site", site_id)
+        if entity:
+            current.auth.set_realm_entity(table, human_resource_id,
+                                          entity = entity,
+                                          force_update = True)
+        # Fire the normal onaccept
+        hrform = Storage(id = human_resource_id)
+        hrm_human_resource_onaccept(hrform)
 
-            # Remove any additional records for this HR
-            # (i.e. staff was assigned elsewhere previously)
-            # @ToDo: Allow one person to be the Site Contact for multiple sectors
-            rows = db(ltable.human_resource_id == human_resource_id).select(ltable.id,
-                                                                            ltable.site_id,
-                                                                            #ltable.sector_id,
-                                                                            ltable.human_resource_id,
-                                                                            ltable.site_contact,
-                                                                            orderby=~ltable.id)
-            first = True
-            for row in rows:
-                if first:
-                    first = False
-                    continue
-                db(ltable.id == row.id).delete()
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def hrm_human_resource_site_ondelete(row):
+        """
+            Update the Human Resource record with the site_id
+        """
 
-            record = rows.first()
-            site_id = record.site_id
-            db(table.id == human_resource_id).update(site_id = site_id,
-                                                     site_contact = record.site_contact
-                                                     )
-            # Update realm_entity of HR
-            entity = current.s3db.pr_get_pe_id("org_site", site_id)
-            if entity:
-                current.auth.set_realm_entity(table, human_resource_id,
-                                              entity = entity,
-                                              force_update = True)
-            # Fire the normal onaccept
-            hrform = Storage(id=human_resource_id)
-            hrm_human_resource_onaccept(hrform)
+        db = current.db
+        table = db.hrm_human_resource
+
+        human_resource_id = row.human_resource_id
+
+        db(table.id == human_resource_id).update(location_id = None,
+                                                 site_id = None,
+                                                 site_contact = False,
+                                                 )
+        # Update realm_entity of HR
+        current.auth.set_realm_entity(table,
+                                      human_resource_id,
+                                      force_update = True,
+                                      )
 
 # =============================================================================
 class S3HRSalaryModel(S3Model):
@@ -3757,38 +3751,32 @@ class S3HRSkillModel(S3Model):
         """
 
         # Deletion and update have a different format
+        delete = False
         try:
             record_id = form.vars.id
         except AttributeError:
             # Delete
             record_id = form.id
+            delete = True
 
         # Read the full record
         db = current.db
         table = db.hrm_certification
         record = db(table.id == record_id).select(table.person_id,
-                                                  table.deleted,
-                                                  table.deleted_fk,
                                                   table.training_id,
                                                   table.number,
                                                   limitby = (0, 1),
                                                   ).first()
-        if record.deleted:
-            try:
-                deleted_fk = json.loads(record.deleted_fk)
-            except JSONERRORS:
-                person_id = None
-            else:
-                person_id = deleted_fk.get("person_id")
-            if not person_id:
-                return
+        if delete:
+            person_id = form.person_id
+            training_id = form.training_id
         else:
             person_id = record.person_id
+            training_id = record.training_id
 
         if not person_id:
             # This record is being created as a direct component of the Training,
             # in order to set the Number (RMS Americas usecase).
-            training_id = record.training_id
             # Find the other record (created onaccept of training)
             query = (table.training_id == training_id) & \
                     (table.id != record_id)
@@ -3846,10 +3834,10 @@ class S3HRSkillModel(S3Model):
 
             if better:
                 ctable.update_or_insert(
-                    person_id=person_id,
-                    competency_id=cert.competency_id,
-                    skill_id=skill.id,
-                    comments="Added by certification",
+                    person_id = person_id,
+                    competency_id = cert.competency_id,
+                    skill_id = skill.id,
+                    comments = "Added by certification",
                     from_certification = True
                 )
 
@@ -4002,13 +3990,12 @@ def hrm_training_onaccept(form):
                                                 table.hours,
                                                 table.grade,
                                                 table.grade_details,
-                                                table.deleted_fk,
-                                                limitby=(0, 1)).first()
+                                                limitby = (0, 1)
+                                                ).first()
 
     if delete:
-        deleted_fks = json.loads(record.deleted_fk)
-        course_id = deleted_fks.get("course_id")
-        person_id = deleted_fks["person_id"]
+        course_id = form.course_id
+        person_id = form.person_id
     else:
         course_id = record.course_id
         person_id = record.person_id
@@ -5107,7 +5094,7 @@ class S3HRShiftModel(S3Model):
 
     def model(self):
 
-        
+
 
         T = current.T
 
@@ -5228,7 +5215,7 @@ class S3HRShiftModel(S3Model):
                        crud_form = crud_form,
                        list_fields = list_fields,
                        )
-        
+
         # Custom Method to Assign HRs
         STAFF = current.deployment_settings.get_hrm_staff_label()
         filter_widgets = [S3DateFilter("available",
@@ -5284,7 +5271,7 @@ class S3HRShiftModel(S3Model):
 
         def facility_redirect(r, **attr):
             """
-                Redirect to the Facility's Shifts tab 
+                Redirect to the Facility's Shifts tab
             """
 
             s3db = current.s3db
@@ -5398,18 +5385,16 @@ def hrm_programme_hours_onaccept(form):
         record_id = form.id
         delete = True
 
-    # Get the full record
     db = current.db
-    table = db.hrm_programme_hours
-    record = db(table.id == record_id).select(table.person_id,
-                                              table.deleted_fk,
-                                              limitby=(0, 1),
-                                              ).first()
 
     if delete:
-        deleted_fks = json.loads(record.deleted_fk)
-        person_id = deleted_fks["person_id"]
+        person_id = form.person_id
     else:
+        # Get the full record
+        table = db.hrm_programme_hours
+        record = db(table.id == record_id).select(table.person_id,
+                                                  limitby=(0, 1),
+                                                  ).first()
         person_id = record.person_id
 
     # Recalculate the Active Status for this Volunteer
@@ -5585,7 +5570,7 @@ class hrm_AssignMethod(S3Method):
                     if exists:
                         onaccept = component.get_config("update_onaccept",
                                                         component.get_config("onaccept", None))
-                        
+
                         exists.update_record(human_resource_id = human_resource_id)
                         if onaccept:
                             link = Storage(id = exists.id,
@@ -6483,6 +6468,8 @@ def hrm_human_resource_onaccept(form):
 def hrm_compose():
     """
         Send message to people/teams/participants
+
+        @ToDo: Better rewritten as an S3Method
     """
 
     s3db = current.s3db
@@ -7785,7 +7772,7 @@ def hrm_group_controller():
                         "url": URL(f="compose",
                                    vars = {"group_id": "[id]"}),
                         "_class": "action-btn send",
-                        "label": str(T("Send Message"))})
+                        "label": s3_str(T("Send Message"))})
 
         return output
     s3.postp = postp

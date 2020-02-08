@@ -29,7 +29,7 @@ class edentest_robot(object):
         logger.info("base_url %s" % (self.base_url))
 
         # Create the request_url for the get request
-        request_url = "%s/default/get_settings/deployment_settings" % (self.base_url)
+        request_url = "%s/default/get_settings" % (self.base_url)
 
         for key in asked:
             request_url = "%s/%s" % (request_url, key)
@@ -65,7 +65,7 @@ class edentest_robot(object):
                 m = "Check 000_config.py/config.py/server/internet settings. request %s" \
                 % request_url
 
-            BuiltIn().fail(msg=m)
+            BuiltIn().fail(msg = m)
 
         output = response.json()
 

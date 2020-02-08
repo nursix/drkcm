@@ -72,12 +72,14 @@ def maintenance(period = "daily"):
                 pass
             else:
                 break
+
     if maintenance is None:
         try:
             # Fallback to default maintenance routine
             from templates.default import maintenance
         except ImportError:
             pass
+
     if maintenance is not None:
         if period == "daily":
             result = maintenance.Daily()()
@@ -423,9 +425,9 @@ if has_module("req"):
 if has_module("setup"):
 
     def setup_run_playbook(playbook,
-                           hosts = ["127.0.0.1"],
+                           instance_id = None,
                            tags = None,
-                           private_key = None,
+                           hosts = None,
                            user_id = None,
                            ):
         """
@@ -437,8 +439,8 @@ if has_module("setup"):
             auth.s3_impersonate(user_id)
 
         # Run the Task & return the result
-        result = s3db.setup_run_playbook(playbook, hosts, tags, private_key)
-        #db.commit()
+        result = s3db.setup_run_playbook(playbook, instance_id, tags, hosts)
+        db.commit()
         return result
 
     tasks["setup_run_playbook"] = setup_run_playbook

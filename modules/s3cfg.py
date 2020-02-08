@@ -987,6 +987,7 @@ class S3Config(Storage):
             System Name - for the UI & Messaging
         """
         return self.base.get("system_name", current.T("Sahana Eden Humanitarian Management Platform"))
+
     def get_system_name_short(self):
         """
             System Name (Short Version) - for the UI & Messaging
@@ -1024,7 +1025,7 @@ class S3Config(Storage):
 
     def get_base_guided_tour(self):
         """ Whether the guided tours are enabled """
-        return self.base.get("guided_tour", False)
+        return self.base.get("guided_tour", self.has_module("tour"))
 
     def get_base_public_url(self):
         """
@@ -2618,6 +2619,12 @@ class S3Config(Storage):
 
     # -------------------------------------------------------------------------
     # Notifications
+    def get_msg_notify_check_subscriptions(self):
+        """
+            Whether to Check Subscriptions
+        """
+        return self.msg.get("notify_check_subscriptions", False)
+
     def get_msg_notify_subject(self):
         """
             Template for the subject line in update notifications.

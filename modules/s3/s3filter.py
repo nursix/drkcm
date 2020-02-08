@@ -54,8 +54,8 @@ import re
 from collections import OrderedDict
 
 from gluon import current, URL, A, DIV, FORM, INPUT, LABEL, OPTION, SELECT, \
-                  SPAN, TABLE, TAG, TBODY, IS_EMPTY_OR, IS_FLOAT_IN_RANGE, \
-                  IS_INT_IN_RANGE, IS_IN_SET
+                  SPAN, TABLE, TAG, TBODY, \
+                  IS_IN_SET
 from gluon.storage import Storage
 from gluon.tools import callback
 
@@ -542,7 +542,7 @@ class S3RangeFilter(S3FilterWidget):
         rfilter = resource.rfilter
         if rfilter:
             join = rfilter.get_joins()
-            left = rfilter.get_joins(left=True)
+            left = rfilter.get_joins(left = True)
         else:
             join = left = None
 
@@ -551,8 +551,8 @@ class S3RangeFilter(S3FilterWidget):
 
         row = current.db(query).select(field.min(),
                                        field.max(),
-                                       join=join,
-                                       left=left,
+                                       join = join,
+                                       left = left,
                                        ).first()
 
         minimum = row[field.min()]
@@ -592,10 +592,11 @@ class S3RangeFilter(S3FilterWidget):
 
             input_id = "%s-%s" % (_id, operator)
 
-            input_box = INPUT(_name=input_id,
-                              _id=input_id,
-                              _type="text",
-                              _class=input_class)
+            input_box = INPUT(_name = input_id,
+                              _id = input_id,
+                              _type = "text",
+                              _class = input_class,
+                              )
 
             variable = _variable(selector, operator)
 
@@ -738,7 +739,7 @@ class S3DateFilter(S3RangeFilter):
     # Class for visible input boxes.
     _input_class = "%s-%s" % (_class, "input")
 
-    operator = ["ge", "le"]
+    #operator = ["ge", "le"]
 
     # Untranslated labels for individual input boxes.
     input_labels = {"ge": "From", "le": "To"}
@@ -885,7 +886,7 @@ class S3DateFilter(S3RangeFilter):
         rfilter = resource.rfilter
         if rfilter:
             join = rfilter.get_joins()
-            left = rfilter.get_joins(left=True)
+            left = rfilter.get_joins(left = True)
         else:
             join = left = None
 
@@ -1214,13 +1215,66 @@ class S3SliderFilter(S3RangeFilter):
         @keyword label: label for the widget
         @keyword comment: comment for the widget
         @keyword hidden: render widget initially hidden (="advanced" option)
-
-        FIXME broken (multiple issues)
     """
 
-    _class = "slider-filter"
+    # -------------------------------------------------------------------------
+    def ajax_options(self, resource):
+        """
+            Method to Ajax-retrieve the current options of this widget
 
-    operator = ["ge", "le"]
+            @param resource: the S3Resource
+        """
+
+        minimum, maximum = self._options(resource)[:2]
+
+        attr = self._attr(resource)
+        options = {attr["_id"]: {"min": minimum,
+                                 "max": maximum,
+                                 }}
+        return options
+
+    # -------------------------------------------------------------------------
+    def _options(self, resource):
+        """
+            Helper function to retrieve the current options for this
+            filter widget
+
+            @param resource: the S3Resource
+        """
+
+        db = current.db
+
+        # Find only values linked to records the user is
+        # permitted to read, and apply any resource filters
+        # (= use the resource query)
+        query = resource.get_query()
+
+        # Must include rfilter joins when using the resource
+        # query (both inner and left):
+        rfilter = resource.rfilter
+        if rfilter:
+            join = rfilter.get_joins()
+            left = rfilter.get_joins(left = True)
+        else:
+            join = left = None
+
+        rfield = S3ResourceField(resource, self.field)
+        field = rfield.field
+
+        row = db(query).select(field.min(),
+                               field.max(),
+                               join = join,
+                               left = left,
+                               ).first()
+
+        minimum = row[field.min()]
+        maximum = row[field.max()]
+
+        empty = db(query & (field == None)).select(resource.table.id,
+                                                   limitby = (0, 1)
+                                                   ).first()
+
+        return minimum, maximum, empty
 
     # -------------------------------------------------------------------------
     def widget(self, resource, values):
@@ -1231,90 +1285,124 @@ class S3SliderFilter(S3RangeFilter):
             @param values: the search values from the URL query
         """
 
-        attr = self.attr
+        T = current.T
 
-        # CSS class and element ID
+        attr = self.attr
         _class = self._class
         if "_class" in attr and attr["_class"]:
             _class = "%s %s" % (attr["_class"], _class)
         else:
             _class = _class
         attr["_class"] = _class
+
         _id = attr["_id"]
-
-        # Determine the field type
-        if resource:
-            rfield = S3ResourceField(resource, self.field)
-            field = rfield.field
-        else:
-            field = None
-        if not field:
-            # Unresolvable selector
-            return ""
-
-        # Options
-        step = self.opts.get("step", 1)
-        _type = self.opts.get("type", "int")
-
-        # Generate the input elements
-        field = str(field)
-        fieldname = field.replace(".", "_")
-        selector = self.selector
+        field = self.field
+        input_class = self._input_class
+        input_labels = self.input_labels
         _variable = self._variable
+        selector = self.selector
+
+        input_elements = DIV()
+        ie_append = input_elements.append
+
+        slider_id = "%s_slider" % field
+        slider = DIV(_id = slider_id)
+        ie_append(slider)
+        input_ids = []
+        _values = []
+
+        opts_get = self.opts.get
+        step = opts_get("step", 1)
+        _type = opts_get("type", "int")
+
+        # Set min_value & max_value
+        #min_value = opts_get("minimum", None)
+        #max_value = opts_get("maximum", None)
+        #if min_value is None or max_value is None:
+        # Introspect from the data
+        min_value, max_value, empty = self._options(resource)
+        if min_value is None:
+            #min_value = "null"
+            min_value = 0
+        elif empty is not None and \
+             min_value > 0:
+            # Treat None as 0
+            min_value = 0
+        if max_value is None:
+            #max_value = "null"
+            max_value = 0
+
         for operator in self.operator:
+
             input_id = "%s-%s" % (_id, operator)
-            input = INPUT(_name = input_id,
-                          _disabled = True,
-                          _id = input_id,
-                          _style = "border:0",
-                          )
+            input_ids.append(input_id)
+
+            input_box = INPUT(_name = input_id,
+                              _id = input_id,
+                              _type = "text",
+                              _class = input_class,
+                              )
+
+            variable = _variable(selector, operator)
+
             # Populate with the value, if given
             # if user has not set any of the limits, we get [] in values.
-            variable = _variable(selector, operator)
             value = values.get(variable, None)
             if value not in [None, []]:
                 if type(value) is list:
                     value = value[0]
-                input["_value"] = value
-                input["value"] = value
+                input_box["_value"] = value
+                input_box["value"] = value
+                _values.append(value)
+            else:
+                if operator == "ge":
+                    _values.append(min_value)
+                else:
+                    _values.append(max_value)
 
-        slider = DIV(_id="%s_slider" % fieldname, **attributes)
+            ie_append(DIV(DIV(LABEL("%s:" % T(input_labels[operator]),
+                                    _for = input_id,
+                                    ),
+                              _class = "range-filter-label",
+                              ),
+                          DIV(input_box,
+                              _class = "range-filter-widget",
+                              ),
+                          _class = "range-filter-field",
+                          ))
 
         s3 = current.response.s3
 
-        validator = field.requires
-        if isinstance(validator, IS_EMPTY_OR):
-            validator = validator.other
-        _min = validator.minimum
-        # Max Value depends upon validator type
-        if isinstance(validator, IS_INT_IN_RANGE):
-            _max = validator.maximum - 1
-        elif isinstance(validator, IS_FLOAT_IN_RANGE):
-            _max = validator.maximum
-
-        if values is None:
-            # JSONify
-            value = "null"
-            script = '''i18n.slider_help="%s"''' % \
-                current.T("Click on the slider to choose a value")
-            s3.js_global.append(script)
+        script = '''i18n.slider_help="%s"''' % \
+            current.T("Click on the slider to choose a value")
+        s3.js_global.append(script)
 
         if _type == "int":
-            script = '''S3.range_slider('%s',%i,%i,%i,%s)''' % (fieldname,
-                                                                _min,
-                                                                _max,
-                                                                step,
-                                                                values)
+            script = '''S3.range_slider('%s','%s','%s',%i,%i,%i,[%i,%i])''' % \
+                        (slider_id,
+                         input_ids[0],
+                         input_ids[1],
+                         min_value,
+                         max_value,
+                         step,
+                         _values[0],
+                         _values[1],
+                         )
         else:
             # Float
-            script = '''S3.range_slider('%s',%f,%f,%f,%s)''' % (fieldname,
-                                                                _min,
-                                                                _max,
-                                                                step,
-                                                                values)
+            script = '''S3.range_slider('%s','%s','%s',%f,%f,%f,[%i,%i])''' % \
+                        (slider_id,
+                         input_ids[0],
+                         input_ids[1],
+                         min_value,
+                         max_value,
+                         step,
+                         _values[0],
+                         _values[1],
+                         )
         s3.jquery_ready.append(script)
 
-        return TAG[""](input1, input2, slider)
+        return input_elements
 
 # =============================================================================
 class S3LocationFilter(S3FilterWidget):
@@ -2965,9 +3053,10 @@ class S3FilterForm(object):
                 label = submit
 
             # Submit button
-            submit_button = INPUT(_type="button",
-                                  _value=label,
-                                  _class="filter-submit")
+            submit_button = INPUT(_type = "button",
+                                  _value = label,
+                                  _class = "filter-submit",
+                                  )
             if _class:
                 submit_button.add_class(_class)
 
@@ -2979,16 +3068,19 @@ class S3FilterForm(object):
 
             # Submit row elements
             submit = TAG[""](submit_button,
-                             INPUT(_type="hidden",
-                                   _class="filter-ajax-url",
-                                   _value=ajax_url),
-                             INPUT(_type="hidden",
-                                   _class="filter-submit-url",
-                                   _value=submit_url))
+                             INPUT(_type = "hidden",
+                                   _class = "filter-ajax-url",
+                                   _value = ajax_url,
+                                   ),
+                             INPUT(_type = "hidden",
+                                   _class = "filter-submit-url",
+                                   _value = submit_url,
+                                   ))
             if ajax and target:
-                submit.append(INPUT(_type="hidden",
-                                    _class="filter-submit-target",
-                                    _value=target))
+                submit.append(INPUT(_type = "hidden",
+                                    _class = "filter-submit-target",
+                                    _value = target,
+                                    ))
 
             # Append submit row
             submit_row = formstyle(None, "", submit, "")
@@ -3043,9 +3135,9 @@ class S3FilterForm(object):
             formstyle = current.deployment_settings.get_ui_filter_formstyle()
 
         rows = self._render_widgets(resource,
-                                    get_vars=get_vars,
-                                    alias=alias,
-                                    formstyle=formstyle)
+                                    get_vars = get_vars,
+                                    alias = alias,
+                                    formstyle = formstyle)
 
         controls = self._render_controls(resource)
         if controls:
@@ -3096,10 +3188,10 @@ class S3FilterForm(object):
                               data = {"on": label,
                                       "off": label_off,
                                       },
-                              _class="filter-advanced-label",
+                              _class = "filter-advanced-label",
                               ),
                          ICON("down"),
-                         ICON("up", _style="display:none"),
+                         ICON("up", _style = "display:none"),
                          _class=_class
                          )
             controls.append(advanced)
@@ -3181,8 +3273,8 @@ class S3FilterForm(object):
             rappend(formrow)
         if advanced:
             if resource:
-                self.opts["advanced"] = resource.get_config(
-                                            "filter_advanced", True)
+                self.opts["advanced"] = \
+                    resource.get_config("filter_advanced", True)
             else:
                 self.opts["advanced"] = True
         return rows
@@ -3218,12 +3310,14 @@ class S3FilterForm(object):
         rows = current.db(query).select(table._id,
                                         table.title,
                                         table.query,
-                                        orderby=table.title)
+                                        orderby = table.title
+                                        )
 
         options = [OPTION(SELECT_FILTER,
-                          _value="",
-                          _class="filter-manager-prompt",
-                          _disabled="disabled")]
+                          _value = "",
+                          _class = "filter-manager-prompt",
+                          _disabled = "disabled",
+                          )]
         add_option = options.append
         filters = {}
         for row in rows:
@@ -3235,9 +3329,11 @@ class S3FilterForm(object):
             filters[filter_id] = query
         widget_id = "%s-fm" % form_id
         widget = DIV(SELECT(options,
-                            _id=widget_id,
-                            _class="filter-manager-widget"),
-                     _class="filter-manager-container")
+                            _id = widget_id,
+                            _class = "filter-manager-widget",
+                            ),
+                     _class = "filter-manager-container",
+                     )
 
         # JSON-serializable translator
         T = current.T
@@ -3554,19 +3650,22 @@ class S3Filter(S3Method):
         record = None
         record_id = data.get("id")
         if record_id:
-            query = (table.id == record_id) & (table.pe_id == pe_id)
-            record = db(query).select(table.id, limitby=(0, 1)).first()
+            query = (table.id == record_id) & \
+                    (table.pe_id == pe_id)
+            record = db(query).select(table.id,
+                                      limitby = (0, 1)
+                                      ).first()
         if not record:
             r.error(404, current.ERROR.BAD_RECORD)
 
-        resource = s3db.resource("pr_filter", id=record_id)
-        success = resource.delete(format=r.representation)
+        resource = s3db.resource("pr_filter", id = record_id)
+        success = resource.delete(format = r.representation)
 
         if not success:
             r.error(400, resource.error)
 
         current.response.headers["Content-Type"] = "application/json"
-        return current.xml.json_message(deleted=record_id)
+        return current.xml.json_message(deleted = record_id)
 
     # -------------------------------------------------------------------------
     def _save(self, r, **attr):
@@ -3603,8 +3702,11 @@ class S3Filter(S3Method):
         record_id = data.get("id")
         record = None
         if record_id:
-            query = (table.id == record_id) & (table.pe_id == pe_id)
-            record = db(query).select(table.id, limitby=(0, 1)).first()
+            query = (table.id == record_id) & \
+                    (table.pe_id == pe_id)
+            record = db(query).select(table.id,
+                                      limitby = (0, 1)
+                                      ).first()
             if not record:
                 r.error(404, current.ERROR.BAD_RECORD)
 
@@ -3709,7 +3811,8 @@ class S3Filter(S3Method):
         rows = db(query).select(table.id,
                                 table.title,
                                 table.description,
-                                table.query)
+                                table.query,
+                                )
 
         # Pack filters
         filters = []

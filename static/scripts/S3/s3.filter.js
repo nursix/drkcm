@@ -299,8 +299,8 @@ S3.search = {};
             }
         });
 
-        // Clear range filters
-        form.find('.range-filter-input').val('');
+        // Clear range filters (& trigger any slider's change events)
+        form.find('.range-filter-input').val('').trigger('change.slider');
 
         // Clear date filters
         form.find('.date-filter-input').each(function() {
@@ -1969,6 +1969,7 @@ S3.search = {};
                            t.hasClass('gi-container') ||
                            t.hasClass('pt-container') ||
                            t.hasClass('tp-container') ||
+                           t.hasClass('s3-target') ||
                            t.hasClass('s3-organizer')) {
                     // These targets can be Ajax-reloaded
                     needs_reload = false;
@@ -2009,6 +2010,7 @@ S3.search = {};
                 } else if (t.hasClass('dl')) {
                     t.datalist('ajaxReload', queries);
                 } else if (t.hasClass('map_wrapper')) {
+                    // @ToDo: Restrict this to just this map
                     S3.gis.refreshLayer('search_results', queries);
                 } else if (t.hasClass('gi-container')) {
                     t.groupedItems('reload', null, queries);
@@ -2016,6 +2018,9 @@ S3.search = {};
                     t.pivottable('reload', null, queries);
                 } else if (t.hasClass('tp-container')) {
                     t.timeplot('reload', null, queries);
+                } else if (t.hasClass('s3-target')) {
+                    // Custom Target
+                    t.s3Target('reload', filterURL(url, queries));
                 } else if (t.hasClass('s3-organizer')) {
                     t.organizer('reload');
                 }
@@ -2160,10 +2165,10 @@ S3.search = {};
         });
 
         // Set filter widgets to fire optionChanged event
-        $('.text-filter, .range-filter-input').on('input.autosubmit', function () {
+        $('.text-filter, .range-filter-input').on('input.autosubmit', function() {
             $(this).closest('form').trigger('optionChanged');
         });
-        $('.options-filter, .location-filter, .date-filter-input, .age-filter-input, .map-filter, .value-filter').on('change.autosubmit', function () {
+        $('.options-filter, .location-filter, .date-filter-input, .age-filter-input, .map-filter, .value-filter').on('change.autosubmit', function() {
             $(this).closest('form').trigger('optionChanged');
         });
         $('.s3-options-filter-anyall input[type="radio"]').on('change.autosubmit', function() {

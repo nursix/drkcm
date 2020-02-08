@@ -1347,7 +1347,7 @@ class GIS(object):
                 # The requested config must be invalid, so just use site default
                 row = rows.first()
 
-        elif config_id is 0:
+        elif config_id == 0:
             # Use site default
             query = (ctable.uuid == "SITE_DEFAULT")
             # May well not be complete, so Left Join
@@ -1699,7 +1699,7 @@ class GIS(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_countries(key_type="id"):
+    def get_countries(key_type = "id"):
         """
             Returns country code or L0 location id versus name for all countries.
 
@@ -1730,7 +1730,8 @@ class GIS(object):
             countries = current.db(query).select(table.id,
                                                  table.name,
                                                  ttable.value,
-                                                 orderby=table.name)
+                                                 orderby = table.name
+                                                 )
             if not countries:
                 return []
 

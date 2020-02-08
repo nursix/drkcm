@@ -67,12 +67,14 @@ def config(settings):
     # http://www.loc.gov/standards/iso639-2/php/code_list.php
     settings.L10n.languages = OrderedDict([
         ("en-gb", "English"),
-        #("so", "Somali"),
+        ("es", "Spanish"),
+        ("so", "Somali"),
     ])
     # Default language for Language Toolbar (& GIS Locations in future)
     settings.L10n.default_language = "en-gb"
 
-    l10n_options = {"so": "Somali",
+    l10n_options = {"es": "Spanish",
+                    "so": "Somali",
                     }
     # Pass to controllers.py (not a real deployment_setting)
     settings.L10n.survey_languages = l10n_options
@@ -217,6 +219,41 @@ def config(settings):
     # Fill-out Assessments on EdenMobile-only
     #settings.dc.response_mobile = False
     settings.dc.response_web = False
+
+    # -------------------------------------------------------------------------
+    def ucce_realm_entity(table, row):
+        """
+            Assign a Realm Entity to records
+        """
+
+        if table._tablename in ("dc_target",
+                                "dc_template",
+                                ):
+            s3db = current.s3db
+            ltable = s3db.project_project_target
+            ptable = s3db.project_project
+            if table._tablename == "dc_target":
+                query = (ltable.target_id == row.id) & \
+                        (ltable.project_id == ptable.id)
+            else:
+                ttable = s3db.dc_target
+                query = (ttable.template_id == row.id) & \
+                        (ltable.target_id == ttable.id) & \
+                        (ltable.project_id == ptable.id)
+                
+            project = current.db(query).select(ptable.realm_entity,
+                                               limitby = (0, 1)
+                                               ).first()
+
+            try:
+                return project.realm_entity
+            except AttributeError:
+                pass
+
+        # Use default rules
+        return 0
+
+    settings.auth.realm_entity = ucce_realm_entity
 
     # -------------------------------------------------------------------------
     def ucce_rheader(r):
@@ -598,6 +635,7 @@ def config(settings):
         from templates.UCCE.controllers import dc_TargetName
         from templates.UCCE.controllers import dc_TargetL10n
         from templates.UCCE.controllers import dc_TargetReport
+        from templates.UCCE.controllers import dc_TargetReportFilters
 
         set_method = current.s3db.set_method
         set_method("dc", "target",
@@ -621,6 +659,9 @@ def config(settings):
         set_method("dc", "target",
                    method = "report_custom",
                    action = dc_TargetReport())
+        set_method("dc", "target",
+                   method = "report_filters",
+                   action = dc_TargetReportFilters())
 
         s3 = current.response.s3
 

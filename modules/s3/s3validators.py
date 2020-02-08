@@ -551,22 +551,22 @@ class IS_ONE_OF_EMPTY(Validator):
     def __init__(self,
                  dbset,
                  field,
-                 label=None,
-                 filterby=None,
-                 filter_opts=None,
-                 not_filterby=None,
-                 not_filter_opts=None,
-                 realms=None,
-                 updateable=False,
-                 instance_types=None,
-                 error_message="invalid value!",
-                 orderby=None,
-                 groupby=None,
-                 left=None,
-                 multiple=False,
-                 zero="",
-                 sort=True,
-                 _and=None,
+                 label = None,
+                 filterby = None,
+                 filter_opts = None,
+                 not_filterby = None,
+                 not_filter_opts = None,
+                 realms = None,
+                 updateable = False,
+                 instance_types = None,
+                 error_message = "invalid value!",
+                 orderby = None,
+                 groupby = None,
+                 left = None,
+                 multiple = False,
+                 zero = "",
+                 sort = True,
+                 _and = None,
                  ):
         """
             Validator for foreign keys.
@@ -1284,7 +1284,7 @@ class IS_PROCESSED_IMAGE(Validator):
             else:
                 path = os.path.join(self.upload_path, uploaded_image)
 
-            
+
             current.s3task.run_async("crop_image",
                             args = [path] + points + [self.image_bounds[0]])
 
@@ -1975,13 +1975,13 @@ class IS_PHONE_NUMBER(Validator):
         else:
             error = True
 
+        error_message = self.error_message
         if not error:
             if self.international and \
                current.deployment_settings \
                       .get_msg_require_international_phone_numbers():
 
                 # Configure alternative error message
-                error_message = self.error_message
                 if not error_message:
                     error_message = current.T("Enter phone number in international format like +46783754957")
 
@@ -1996,7 +1996,6 @@ class IS_PHONE_NUMBER(Validator):
             else:
                 return (number, None)
 
-        error_message = self.error_message
         if not error_message:
             error_message = current.T("Enter a valid phone number")
 

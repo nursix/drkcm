@@ -599,7 +599,7 @@ def do_js(minimize, do_gis = False, warnings = True):
         if use_compressor == "closure":
             # Suppress strict-mode errors
             minimize_ = lambda stream: minimize(stream,
-                                                extra_params="--strict_mode_input=false",
+                                                extra_params = "--strict_mode_input=false",
                                                 )
         else:
             minimize_ = minimize
@@ -726,7 +726,9 @@ def do_template(minimize, warnings):
         move_to("ol5.min.js", theme_dir)
         #move_to("ol5.min.js.map", theme_dir)
         os.chdir(theme_dir)
+        info("Compressing s3.ui.template.js")
         os.system("terser s3.ui.template.js -c  -o s3.ui.template.min.js")
+        info("Compressing s3.ui.heatmap.js")
         os.system("terser s3.ui.heatmap.js -c  -o s3.ui.heatmap.min.js")
         # Restore CWD
         os.chdir(cwd)
@@ -772,8 +774,14 @@ def main(argv):
 
     info("Done.")
 
+    return 0
+
 if __name__ == "__main__":
 
-    sys.exit(main(sys.argv[1:]))
+    if PY2:
+        sys.exit(main(sys.argv[1:]))
+    else:
+        # Don't end with a SystemExit Exception
+        main(sys.argv[1:])
 
 # END =========================================================================

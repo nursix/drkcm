@@ -143,35 +143,39 @@ if len(pop_list) > 0:
         # Send Messages from Outbox
         # SMS every minute
         s3task.schedule_task("msg_process_outbox",
-                             vars = {"contact_method":"SMS"},
+                             args = ["SMS"],
+                             vars = {},
                              period = 120,  # seconds
                              timeout = 120, # seconds
                              repeats = 0    # unlimited
                              )
         # Emails every 5 minutes
         s3task.schedule_task("msg_process_outbox",
-                             vars = {"contact_method":"EMAIL"},
+                             args = ["EMAIL"],
+                             vars = {},
                              period = 300,  # seconds
                              timeout = 300, # seconds
                              repeats = 0    # unlimited
                              )
         # Tweets every minute
         #s3task.schedule_task("msg_process_outbox",
-        #                     vars = {"contact_method":"TWITTER"},
+        #                     args = ["TWITTER"],
+        #                     vars = {},
         #                     period = 120,  # seconds
         #                     timeout = 120, # seconds
         #                     repeats = 0    # unlimited
         #                     )
 
-        # Subscription notifications
-        s3task.schedule_task("notify_check_subscriptions",
-                             period = 300,
-                             timeout = 300,
-                             repeats = 0)
+        if settings.get_msg_notify_check_subscriptions():
+            # Subscription notifications
+            s3task.schedule_task("notify_check_subscriptions",
+                                 period = 300,
+                                 timeout = 300,
+                                 repeats = 0)
 
     # Daily maintenance
     s3task.schedule_task("maintenance",
-                         vars = {"period":"daily"},
+                         vars = {"period": "daily"},
                          period = 86400, # seconds, so 1/day
                          timeout = 600,  # seconds
                          repeats = 0     # unlimited

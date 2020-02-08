@@ -7,7 +7,7 @@
         * Monitoring of a Deployment
         * Upgrading a Deployment (tbc)
 
-    @copyright: 2015-2019 (c) Sahana Software Foundation
+    @copyright: 2015-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -32,10 +32,15 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3SetupModel",
+__all__ = ("S3DNSModel",
+           "S3GandiDNSModel",
+           "S3CloudModel",
+           "S3AWSCloudModel",
+           "S3SetupModel",
            "S3SetupMonitorModel",
            #"Storage2",
            #"setup_DeploymentRepresent",
+           #"setup_MonitorTaskRepresent",
            "setup_monitor_run_task",
            "setup_monitor_check_email_reply",
            "setup_instance_settings_read",
@@ -48,6 +53,7 @@ import json
 import os
 import random
 import string
+import sys
 import time
 
 from gluon import *
@@ -60,6 +66,7 @@ MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
 
 WEB_SERVERS = {#1: "apache",
                2: "cherokee",
+               3: "nginx",
                }
 
 DB_SERVERS = {#1: "mysql",
@@ -72,6 +79,343 @@ INSTANCE_TYPES = {1: "prod",
                   3: "test",
                   4: "demo",
                   }
+
+# =============================================================================
+class S3DNSModel(S3Model):
+    """
+        Domain Name System (DNS) Providers
+        - super-entity
+    """
+
+    names = ("setup_dns",
+             "setup_dns_id",
+             )
+
+    def model(self):
+
+        T = current.T
+        db = current.db
+
+        #----------------------------------------------------------------------
+        # Super entity
+        #
+        dns_types = Storage(setup_gandi_dns = T("Gandi LiveDNS"),
+                            )
+
+        tablename = "setup_dns"
+        self.super_entity(tablename, "dns_id",
+                          dns_types,
+                          Field("name",
+                                #label = T("Name"),
+                                ),
+                          Field("description",
+                                #label = T("Description"),
+                                ),
+                          #Field("enabled", "boolean",
+                          #      default = True,
+                          #      #label = T("Enabled?")
+                          #      #represent = s3_yes_no_represent,
+                          #      ),
+                          #on_define = lambda table: \
+                          #  [table.instance_type.set_attributes(readable = True),
+                          #   ],
+                          )
+
+        # Reusable Field
+        represent = S3Represent(lookup = tablename)
+        dns_id = S3ReusableField("dns_id", "reference %s" % tablename,
+                                 label = T("DNS Provider"),
+                                 ondelete = "SET NULL",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
+                                    IS_ONE_OF(db, "setup_dns.dns_id",
+                                              represent,
+                                              sort = True
+                                              ),
+                                    ),
+                                 )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        return {"setup_dns_id": dns_id,
+                }
+
+# =============================================================================
+class S3GandiDNSModel(S3DNSModel):
+    """
+        Gandi LiveDNS
+        - DNS Provider Instance
+
+        https://doc.livedns.gandi.net/
+    """
+
+    names = ("setup_gandi_dns",)
+
+    def model(self):
+
+        #T = current.T
+
+        # ---------------------------------------------------------------------
+        tablename = "setup_gandi_dns"
+        self.define_table(tablename,
+                          self.super_link("dns_id", "setup_dns"),
+                          Field("name"),
+                          Field("description"),
+                          #Field("enabled", "boolean",
+                          #      default = True,
+                          #      #label = T("Enabled?"),
+                          #      represent = s3_yes_no_represent,
+                          #      ),
+                          Field("api_key", "password",
+                                readable = False,
+                                requires = IS_NOT_EMPTY(),
+                                widget = S3PasswordWidget(),
+                                ),
+                          # Currently only supports a single Domain per DNS configuration
+                          Field("domain", # Name
+                                requires = IS_NOT_EMPTY(),
+                                ),
+                          # Currently only supports a single Zone per DNS configuration
+                          Field("zone", # UUID
+                                requires = IS_NOT_EMPTY(),
+                                ),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       super_entity = "setup_dns",
+                       )
+
+        # ---------------------------------------------------------------------
+        return {}
+
+# =============================================================================
+class S3CloudModel(S3Model):
+    """
+        Clouds
+        - super-entity
+    """
+
+    names = ("setup_cloud",
+             "setup_cloud_id",
+             )
+
+    def model(self):
+
+        T = current.T
+        db = current.db
+
+        #----------------------------------------------------------------------
+        # Super entity
+        #
+        cloud_types = Storage(setup_aws_cloud = T("Amazon Web Services"),
+                              )
+
+        tablename = "setup_cloud"
+        self.super_entity(tablename, "cloud_id",
+                          cloud_types,
+                          Field("name",
+                                #label = T("Name"),
+                                ),
+                          Field("description",
+                                #label = T("Description"),
+                                ),
+                          #Field("enabled", "boolean",
+                          #      default = True,
+                          #      #label = T("Enabled?")
+                          #      #represent = s3_yes_no_represent,
+                          #      ),
+                          #on_define = lambda table: \
+                          #  [table.instance_type.set_attributes(readable = True),
+                          #   ],
+                          )
+
+        # Reusable Field
+        represent = S3Represent(lookup = tablename)
+        cloud_id = S3ReusableField("cloud_id", "reference %s" % tablename,
+                                   label = T("Cloud"),
+                                   ondelete = "SET NULL",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                    IS_ONE_OF(db, "setup_cloud.cloud_id",
+                                              represent,
+                                              sort = True
+                                              ),
+                                    ),
+                                   )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        return {"setup_cloud_id": cloud_id,
+                }
+
+# =============================================================================
+class S3AWSCloudModel(S3CloudModel):
+    """
+        Amazon Web Services
+        - Cloud Instance
+
+        https://docs.ansible.com/ansible/latest/scenario_guides/guide_aws.html
+        https://docs.ansible.com/ansible/latest/modules/ec2_module.html
+    """
+
+    names = ("setup_aws_cloud",
+             "setup_aws_server",
+             )
+
+    def model(self):
+
+        #T = current.T
+
+        configure = self.configure
+        define_table = self.define_table
+
+        # ---------------------------------------------------------------------
+        # AWS Cloud Configuration
+        #
+        tablename = "setup_aws_cloud"
+        define_table(tablename,
+                     # Instance of Super-Entity
+                     self.super_link("cloud_id", "setup_cloud"),
+                     Field("name"),
+                     Field("description"),
+                     #Field("enabled", "boolean",
+                     #      default = True,
+                     #      #label = T("Enabled?"),
+                     #      represent = s3_yes_no_represent,
+                     #      ),
+                     Field("secret_key", "password",
+                           readable = False,
+                           requires = IS_NOT_EMPTY(),
+                           widget = S3PasswordWidget(),
+                           ),
+                     Field("access_key", "password",
+                           readable = False,
+                           requires = IS_NOT_EMPTY(),
+                           widget = S3PasswordWidget(),
+                           ),
+                     *s3_meta_fields())
+
+        configure(tablename,
+                  super_entity = "setup_cloud",
+                  )
+
+        # ---------------------------------------------------------------------
+        # AWS Server Details
+        #
+        #aws_instance_types = ["t3.micro",
+        #                      ]
+        #aws_regions = {"eu-west-2": "Europe (London)",
+        #               }
+        tablename = "setup_aws_server"
+        define_table(tablename,
+                     self.setup_server_id(),
+                     Field("region",
+                           default = "eu-west-2", # Europe (London)
+                           #label = T("Region"),
+                           #requires = IS_IN_SET(aws_regions),
+                           #represent = S3Represent(options = aws_regions)
+                           ),
+                     Field("instance_type",
+                           default = "t3.micro",
+                           #label = T("Instance Type"),
+                           #requires = IS_IN_SET(aws_instance_types),
+                           ),
+                     Field("image",
+                           default = "ami-0ad916493173c5680", # Debian 9 in London
+                           #label = T("Image"), # AMI ID
+                           ),
+                     Field("security_group",
+                           default = "default",
+                           #label = T("Security Group"),
+                           ),
+                     Field("instance_id",
+                           #label = T("Instance ID"),
+                           # Normally populated automatically:
+                           writable = False,
+                           ),
+                     *s3_meta_fields())
+
+        configure(tablename,
+                  ondelete = self.setup_aws_server_ondelete,
+                  )
+
+        # ---------------------------------------------------------------------
+        return {}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def setup_aws_server_ondelete(row):
+        """
+            Cleanup Tasks when a Server is Deleted
+            - AWS Instance
+            - AWS Keypair
+        """
+
+        db = current.db
+        s3db = current.s3db
+        stable = s3db.setup_server
+        astable = s3db.setup_aws_server
+        dtable = s3db.setup_deployment
+        atable = s3db.setup_aws_cloud
+
+        # Only deleted_fks are in the row object
+        aws_server = db(astable.id == row.id).select(astable.region,
+                                                     astable.instance_id,
+                                                     limitby = (0, 1)
+                                                     ).first()
+        region = aws_server.region
+
+        query = (stable.id == row.server_id) & \
+                (dtable.id == stable.deployment_id) & \
+                (dtable.cloud_id == atable.id)
+        deployment = db(query).select(atable.access_key,
+                                      atable.secret_key,
+                                      stable.name,
+                                      limitby = (0, 1)
+                                      ).first()
+
+        server_name = deployment["setup_server.name"]
+        aws = deployment["setup_aws_cloud"]
+        access_key = aws.access_key
+        secret_key = aws.secret_key
+
+        playbook = [{"hosts": "localhost",
+                     "connection": "local",
+                     "gather_facts": "no",
+                     "tasks": [# Terminate AWS Instance
+                               {"ec2": {"aws_access_key": access_key,
+                                        "aws_secret_key": secret_key,
+                                        "region": region,
+                                        "instance_ids": aws_server.instance_id,
+                                        "state": "absent",
+                                        },
+                                    },
+                               # Delete Keypair
+                               {"ec2_key": {"aws_access_key": access_key,
+                                            "aws_secret_key": secret_key,
+                                            "region": region,
+                                            "name": server_name,
+                                            "state": "absent",
+                                            },
+                                },
+                               ],
+                     },
+                    ]
+
+        # Write Playbook
+        name = "aws_server_ondelete_%d" % int(time.time())
+        task_vars = setup_write_playbook("%s.yml" % name,
+                                         playbook,
+                                         )
+
+        # Run Playbook
+        current.s3task.schedule_task(name,
+                                     vars = task_vars,
+                                     function_name = "setup_run_playbook",
+                                     repeats = None,
+                                     timeout = 6000,
+                                     #sync_output = 300
+                                     )
 
 # =============================================================================
 class S3SetupModel(S3Model):
@@ -95,57 +439,64 @@ class S3SetupModel(S3Model):
         define_table = self.define_table
         set_method = self.set_method
 
-        folder = current.request.folder
-        path_join = os.path.join
-        template_path = path_join(folder, "modules", "templates")
+        uploadfolder = os.path.join(current.request.folder, "uploads")
 
         # ---------------------------------------------------------------------
         # Deployments
         #
         tablename = "setup_deployment"
         define_table(tablename,
-                     # @ToDo: Allow use of Custom repo
                      # @ToDo: Add ability to get a specific hash/tag
                      Field("repo_url",
+                           # @ToDo: Switch to Stable once it has a templates.json
+                           #default = "https://github.com/sahana/eden-stable",
                            default = "https://github.com/sahana/eden",
                            label = T("Eden Repository"),
                            requires = IS_URL(),
-                           readable = False,
-                           writable = False,
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Eden Repository"),
-                                                           T("If you wish to use your own Fork, then you can set this here")
+                                                           T("If you wish to switch to Trunk, or use your own Fork, then you can set this here")
                                                            )
                                          ),
                            ),
-                     Field("country",
+                     # @ToDo: Make this a multi-select (How to handle order?)
+                     Field("country", length=2,
                            label = T("Country"),
                            requires = IS_EMPTY_OR(
-                                        IS_IN_SET_LAZY(lambda: self.setup_get_countries(template_path),
+                                        # We provide a full list of countries here
+                                        # - we then check if there are appropriate locale or sub-templates to include when we deploy
+                                        IS_IN_SET_LAZY(lambda: current.gis.get_countries(key_type = "code"),
                                                        zero = current.messages.SELECT_LOCATION,
                                                        )),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Country"),
-                                                           T("Selecting your country means that the appropriate locale settings can be applied. If you need to support multiple countries then you may need to create a custom template.")
+                                                           T("Selecting your country means that the appropriate locale settings can be applied. If you need to support multiple countries then leave this blank.")
                                                            )
                                          ),
                            ),
-                     Field("template", "list:string",
-                           default = ["default"],
+                     Field("template",
+                           default = "default",
                            label = T("Template"),
-                           requires = IS_IN_SET_LAZY(lambda: self.setup_get_templates(template_path),
-                                                     multiple = True,
+                           requires = IS_IN_SET_LAZY(lambda: self.setup_get_templates(),
                                                      zero = None,
                                                      ),
                            ),
+                     Field("template_manual",
+                           label = T("...or enter manually"),
+                           comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("Template (Manual Entry)"),
+                                                           T("If you want to use different template(s) than the ones available in the dropdown, then you can enter the list here as e.g. 'Template,Template.SubTemplate' (locations.Country will be prepended automatically, if set and available).")
+                                                           )
+                                         ),
+                           ),
                      Field("webserver_type", "integer",
-                           default = 2,
+                           default = 3,
                            label = T("Web Server"),
                            represent = S3Represent(options = WEB_SERVERS),
                            requires = IS_IN_SET(WEB_SERVERS),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Web Server"),
-                                                           T("Currently only Cherokee is supported by this tool, although Apache should be possible with a little work.")
+                                                           T("Currently only Nginx and Cherokee is supported by this tool, although Apache should be possible with a little work.")
                                                            )
                                          ),
                            ),
@@ -165,31 +516,8 @@ class S3SetupModel(S3Model):
                            readable = False,
                            writable = False,
                            ),
-                     #Field("secret_key",
-                     #      label = T("AWS Secret Key"),
-                     #      comment = DIV(_class="tooltip",
-                     #                    _title="%s|%s" % (T("AWS Secret Key"),
-                     #                                      T("If you wish to add additional servers on AWS then you need this")
-                     #                                      )
-                     #                    ),
-                     #      ),
-                     #Field("access_key",
-                     #      label = T("AWS Access Key"),
-                     #      comment = DIV(_class="tooltip",
-                     #                    _title="%s|%s" % (T("AWS Access Key"),
-                     #                                      T("If you wish to add additional servers on AWS then you need this")
-                     #                                      )
-                     #                    ),
-                     #      ),
-                     #Field("refresh_lock", "integer",
-                     #      default = 0,
-                     #      readable = False,
-                     #      writable = False,
-                     #      ),
-                     #Field("last_refreshed", "datetime",
-                     #      readable = False,
-                     #      writable = False,
-                     #      ),
+                     self.setup_cloud_id(),
+                     self.setup_dns_id(),
                      *s3_meta_fields()
                      )
 
@@ -207,7 +535,7 @@ class S3SetupModel(S3Model):
 
         configure(tablename,
                   #editable = False,
-                  listadd = False,
+                  listadd = False, # Create method customises form
                   create_onaccept = self.setup_deployment_create_onaccept,
                   create_next = URL(c="setup", f="deployment",
                                     args = ["[id]", "instance"],
@@ -279,12 +607,26 @@ class S3SetupModel(S3Model):
                      # @ToDo: Server Groups
                      #group_id(),
                      deployment_id(),
-                     Field("host_ip", unique=True, length=24,
-                           default = "127.0.0.1",
-                           label = T("IP Address"),
-                           requires = IS_IPV4(),
-                           writable = False,
+                     Field("name",
+                           label = T("Name"),
+                           # Can do this in templates if-required
+                           #requires = IS_NOT_IN_DB(db, "setup_server.name"),
                            comment = DIV(_class="tooltip",
+                                         _title="%s|%s" % (T("Name"),
+                                                           # If not defined then can be automated by the Cloud integration, if-present
+                                                           T("Optional.")
+                                                           )
+                                         ),
+                           ),
+                     Field("host_ip", length=24,
+                           label = T("IP Address"),
+                           # required for non-cloud deployments (set in controller)
+                           requires = IS_EMPTY_OR(
+                                        IS_IPV4(),
+                                        ),
+                           #writable = False,
+                           comment = DIV(_class="tooltip",
+                                         # If not defined then can be automated by the Cloud integration, if-present
                                          _title="%s|%s" % (T("IP Address"),
                                                            T("Currently only 127.0.0.1 is supported by this tool, although others should be possible with a little work.")
                                                            )
@@ -302,27 +644,27 @@ class S3SetupModel(S3Model):
                                                            )
                                          ),
                            ),
-                     #Field("hostname",
-                     #      label = T("Hostname"),
-                     #      requires = IS_NOT_EMPTY(),
-                     #      ),
                      Field("remote_user",
                            default = "admin",
                            label = T("Remote User"),
                            ),
                      Field("private_key", "upload",
-                           label = T("Private Key"),
+                           label = T("SSH Private Key"),
                            length = current.MAX_FILENAME_LENGTH,
                            requires = IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
-                           uploadfolder = path_join(folder, "uploads"),
+                           uploadfolder = uploadfolder,
                            comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Private Key"),
-                                                           T("if you wish to configure servers other than the one hosting the co-app then you need to provide a PEM-encoded SSH private key")
+                                         _title="%s|%s" % (T("SSH Private Key"),
+                                                           T("if you wish to configure servers other than this one then you need to provide a PEM-encoded SSH private key")
                                                            )
                                          ),
                            ),
                      *s3_meta_fields()
                      )
+
+        configure(tablename,
+                  create_onaccept = self.setup_server_create_onaccept,
+                  )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Server"),
@@ -336,26 +678,10 @@ class S3SetupModel(S3Model):
             msg_record_deleted = T("Server deleted"),
             msg_list_empty = T("No Servers currently registered"))
 
-        crud_form = S3SQLCustomForm("deployment_id",
-                                    "host_ip",
-                                    "role",
-                                    "remote_user",
-                                    "private_key",
-                                    (T("Monitor"), "monitor_server.enabled"),
-                                    "monitor_server.status",
-                                    )
-
-        configure(tablename,
-                  crud_form = crud_form,
-                  list_fields = ["deployment_id",
-                                 "host_ip",
-                                 "role",
-                                 "monitor_server.enabled",
-                                 "monitor_server.status",
-                                 ],
-                  )
-
         add_components(tablename,
+                       setup_aws_server = {"joinby": "server_id",
+                                           "multiple": False,
+                                           },
                        setup_monitor_run = {"name": "monitor_log",
                                             "joinby": "server_id",
                                             },
@@ -366,7 +692,8 @@ class S3SetupModel(S3Model):
                        )
 
         # @ToDo: Add represented Deployment/Role
-        represent = S3Represent(lookup=tablename, fields=["host_ip"])
+        represent = S3Represent(lookup = tablename,
+                                fields = ["name", "host_ip"])
 
         server_id = S3ReusableField("server_id", "reference %s" % tablename,
                                     label = T("Server"),
@@ -377,7 +704,7 @@ class S3SetupModel(S3Model):
                                                           represent,
                                                           sort=True
                                                           )),
-                                    sortby = "host_ip",
+                                    sortby = "name",
                                     )
 
         set_method("setup", "server",
@@ -394,6 +721,9 @@ class S3SetupModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Instances
+        #
+        # @ToDo: Allow a Test instance to source Prod data from a different deployment
+        #        - to allow it to be run on different hosts (or even different cloud)
         #
         type_represent = S3Represent(options = INSTANCE_TYPES)
 
@@ -419,11 +749,12 @@ class S3SetupModel(S3Model):
                                                            )
                                          ),
                            ),
+                     # @ToDo: Allow upload of SSL as well as auto-generated Let's Encrypt
                      #Field("ssl_cert", "upload",
                      #      label = T("SSL Certificate"),
                      #      length = current.MAX_FILENAME_LENGTH,
                      #      requires = IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
-                     #      uploadfolder = path_join(folder, "uploads"),
+                     #      uploadfolder = uploadfolder,
                      #      comment = DIV(_class="tooltip",
                      #                    _title="%s|%s" % (T("SSL Certificate"),
                      #                                      T("If not using Let's Encrypt e.g. you wish to use an OV or EV certificate")
@@ -434,7 +765,7 @@ class S3SetupModel(S3Model):
                      #      label = T("SSL Key"),
                      #      length = current.MAX_FILENAME_LENGTH,
                      #      requires = IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
-                     #      uploadfolder = path_join(folder, "uploads"),
+                     #      uploadfolder = uploadfolder,
                      #      comment = DIV(_class="tooltip",
                      #                    _title="%s|%s" % (T("SSL Key"),
                      #                                      T("If not using Let's Encrypt e.g. you wish to use an OV or EV certificate")
@@ -451,7 +782,6 @@ class S3SetupModel(S3Model):
                                                            )
                                          ),
                            ),
-                     # @ToDo: Action post-deployment changes
                      Field("start", "boolean",
                            default = True, # default = False in Controller for additional instances
                            label = T("Start at Boot"),
@@ -464,6 +794,13 @@ class S3SetupModel(S3Model):
                               _href = URL(c="appadmin", f="update",
                                           args = ["db", "scheduler_task", opt]),
                               ) if opt else current.messages["NONE"],
+                           writable = False,
+                           ),
+                     Field("log_file", "upload",
+                           label = T("Log File"),
+                           length = current.MAX_FILENAME_LENGTH,
+                           requires = IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
+                           uploadfolder = uploadfolder,
                            writable = False,
                            ),
                      # Has the Configuration Wizard been run?
@@ -493,7 +830,10 @@ class S3SetupModel(S3Model):
                                  "url",
                                  "start",
                                  "task_id",
+                                 "log_file",
                                  ],
+                  ondelete = self.setup_instance_ondelete,
+                  update_onaccept = self.setup_instance_update_onaccept,
                   )
 
         set_method("setup", "deployment",
@@ -543,7 +883,7 @@ class S3SetupModel(S3Model):
                                       requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "setup_instance.id",
                                                               represent,
-                                                              sort=True
+                                                              sort = True
                                                               )),
                                       sortby = "name",
                                       )
@@ -584,9 +924,11 @@ class S3SetupModel(S3Model):
         set_method("setup", "deployment",
                    component_name = "setting",
                    method = "apply",
-                   action = self.setup_setting_apply,
+                   action = self.setup_setting_apply_interactive,
                    )
 
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
         return {"setup_deployment_id": deployment_id,
                 "setup_server_id": server_id,
                 }
@@ -595,16 +937,9 @@ class S3SetupModel(S3Model):
     @staticmethod
     def setup_deployment_create_onaccept(form):
         """
-            New deployments:
-                Assign a random DB password
-                Configure localhost to have all tiers (for 1st deployment)
+            New Deployment:
+            - Assign a random DB password
         """
-
-        db = current.db
-        s3db = current.s3db
-        table = s3db.setup_deployment
-
-        deployment_id = form.vars.id
 
         # Assign a random DB password
         chars = string.ascii_letters + string.digits + string.punctuation
@@ -614,72 +949,49 @@ class S3SetupModel(S3Model):
         chars = chars.replace("'", "")
         # Ensure that @ isn't included as Web2Py doesn't like this
         chars = chars.replace("@", "")
+        # Ensure that \ isn't included as control characters can cause the settings.database.password to not match pgpass (e.g. \a -> ^G)
+        chars = chars.replace("\\", "")
         password = "".join(random.choice(chars) for _ in range(12))
-        db(table.id == deployment_id).update(db_password = password)
+
+        current.db(current.s3db.setup_deployment.id == form.vars.id).update(db_password = password)
 
         current.session.information = current.T("Press 'Deploy' when you are ready")
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def setup_get_countries(path):
+    def setup_get_templates():
         """
-            Return a List of Countries for which we have Locale settings defined
+            Return a Dict of Templates for the user to select from
 
-            @ToDo: Read the list of templates from the custom repo URL!
-        """
-
-        p = os.path
-        basename = p.basename
-        isdir = p.isdir
-        join = p.join
-
-        path = join(path, "locations")
-        available_countries = [basename(c) for c in os.listdir(path) if isdir(join(path, c))]
-        all_countries = current.gis.get_countries(key_type="code")
-        countries = OrderedDict([(c, all_countries[c]) for c in all_countries if c in available_countries])
-
-        return countries
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def setup_get_templates(path):
-        """
-            Return a List of Templates for the user to select between
-
-            @ToDo: Read the list of templates from the custom repo URL!
+            NB Controller reads this from remote repo...this is a fallback in case offline
         """
 
-        p = os.path
-        basename = p.basename
-        join = p.join
-        isdir = p.isdir
-        listdir = os.listdir
+        file_path = os.path.join(current.request.folder, "modules", "templates", "templates.json")
+        with open(file_path, "r") as file:
+            templates = json.loads(file.read())
 
-        # All subdirectories in the path that contain a config.py are
-        # templates - except skeleton/skeletontheme
-        dirs = next(os.walk(path))[1]
-        templates = [d for d in dirs
-                         if d[:8] != "skeleton" and
-                         os.path.isfile(os.path.join(path, d, "config.py"))
-                         ]
-
-        subtemplates = []
-        sappend = subtemplates.append
-        for template in templates:
-            tpath = join(path, template)
-            for d in listdir(tpath):
-                if isdir(join(tpath, d)):
-                    for f in listdir(join(tpath, d)):
-                        if f == "config.py":
-                            sappend("%s.%s" % (template, d))
-                            continue
-
-        templates += subtemplates
-        templates.sort()
         return templates
 
     # -------------------------------------------------------------------------
-    def setup_server_wizard(self, r, **attr):
+    @staticmethod
+    def setup_server_create_onaccept(form):
+        """
+            New Server:
+            - Enable Monitoring
+        """
+
+        server_id = form.vars.id
+        table = current.s3db.setup_monitor_server
+
+        exists = current.db(table.server_id == server_id).select(table.id,
+                                                                 limitby = (0, 1)
+                                                                 ).first()
+        if exists is None:
+            table.insert(server_id = server_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def setup_server_wizard(r, **attr):
         """
             Custom S3Method to select an Instance to Configure
         """
@@ -768,8 +1080,10 @@ dropdown.change(function() {
 
         if form.accepts(r.post_vars, current.session):
             # Processs Form
-            result = self.setup_settings_apply(r.id, form.vars)
+            result = setup_settings_apply(r.id, form.vars)
             if result:
+                response.error = result
+            else:
                 response.confirmation = T("Settings Applied")
 
         current.response.view = "simple.html"
@@ -779,7 +1093,8 @@ dropdown.change(function() {
         return output
 
     # -------------------------------------------------------------------------
-    def setup_instance_deploy(self, r, **attr):
+    @staticmethod
+    def setup_instance_deploy(r, **attr):
         """
             Custom S3Method to Deploy an Instance
         """
@@ -813,28 +1128,64 @@ dropdown.change(function() {
                 sender = instance.sender
                 start = instance.start
                 instance_type = instance.type
+            if instance.type == 1:
+                sitename_prod = url
 
         # Default to SSL
         # (plain http requests will still work as automatically redirected to https)
         protocol = "https"
 
+        # Get Deployment details
+        dtable = s3db.setup_deployment
+        deployment = db(dtable.id == deployment_id).select(dtable.repo_url,
+                                                           dtable.webserver_type,
+                                                           dtable.db_type,
+                                                           dtable.db_password,
+                                                           dtable.country,
+                                                           dtable.template,
+                                                           dtable.template_manual,
+                                                           dtable.cloud_id,
+                                                           dtable.dns_id,
+                                                           limitby = (0, 1)
+                                                           ).first()
+
         # Get Server(s) details
         stable = s3db.setup_server
         query = (stable.deployment_id == deployment_id)
-        servers = db(query).select(stable.role,
-                                   stable.host_ip,
-                                   stable.remote_user,
-                                   stable.private_key,
-                                   )
+        cloud_id = deployment.cloud_id
+        if cloud_id:
+            # Get AWS details
+            # @ToDo: Will need extending when we support multiple Cloud Providers
+            atable = s3db.setup_aws_cloud
+            aws = db(atable.id == cloud_id).select(atable.access_key,
+                                                   atable.secret_key,
+                                                   limitby = (0, 1)
+                                                   ).first()
 
-        # Get Deployment details
-        dtable = s3db.setup_deployment
-        deployment = db(dtable.id == deployment_id).select(dtable.webserver_type,
-                                                           dtable.db_type,
-                                                           dtable.db_password,
-                                                           dtable.template,
-                                                           limitby=(0, 1)
-                                                           ).first()
+            # Get Server(s) details
+            astable = s3db.setup_aws_server
+            left = astable.on(astable.server_id == stable.id)
+            servers = db(query).select(stable.id,
+                                       stable.name,
+                                       stable.role,
+                                       stable.host_ip,
+                                       stable.remote_user,
+                                       stable.private_key,
+                                       astable.region,
+                                       astable.instance_type,
+                                       astable.image,
+                                       astable.security_group,
+                                       astable.instance_id,
+                                       left = left,
+                                       )
+        else:
+            # Get Server(s) details
+            servers = db(query).select(#stable.name,
+                                       stable.role,
+                                       stable.host_ip,
+                                       stable.remote_user,
+                                       stable.private_key,
+                                       )
 
         # Build Playbook data structure
         roles_path = os.path.join(r.folder, "private", "eden_deploy", "roles")
@@ -845,44 +1196,259 @@ dropdown.change(function() {
         web_server = WEB_SERVERS[deployment.webserver_type]
         db_type = DB_SERVERS[deployment.db_type]
         instance_type = INSTANCE_TYPES[instance_type]
-        template = deployment.template
+        parts = deployment.repo_url.split("/")
+        repo_owner = parts[3]
+        repo = parts[4]
+        repo_url = "git://github.com/%s/%s.git" % (repo_owner, repo)
+        template_manual = deployment.template_manual
+        if template_manual:
+            # Use this list
+            templates = template_manual.split(",")
+            template = []
+            for t in templates:
+                # Strip whitespace
+                template.append(t.strip())
+        else:
+            # Use the value from dropdown (& introspect the locale template(s))
+            template = deployment.template
 
         if len(servers) == 1:
             # All-in-one deployment
             server = servers.first()
-            host_ip = server.host_ip
-            hosts = [host_ip]
-            private_key = server.private_key
-            playbook = [{"hosts": host_ip,
-                         "connection": "local", # @ToDo: Don't assume this
-                         "remote_user": server.remote_user,
-                         "become_method": "sudo",
-                         "become_user": "root",
-                         "vars": {"appname": appname,
-                                  "all_sites": ",".join(all_sites),
-                                  "db_ip": host_ip,
-                                  "db_type": db_type,
-                                  "hostname": hostname,
-                                  "password": db_password,
-                                  "protocol": protocol,
-                                  "sender": sender,
-                                  "sitename": sitename,
-                                  "start": start,
-                                  "template": template,
-                                  "type": instance_type,
-                                  "web_server": web_server,
-                                  },
-                         "roles": [{ "role": "%s/common" % roles_path },
-                                   { "role": "%s/%s" % (roles_path, web_server) },
-                                   { "role": "%s/uwsgi" % roles_path },
-                                   { "role": "%s/%s" % (roles_path, db_type) },
-                                   { "role": "%s/final" % roles_path },
-                                   ]
-                         },
-                        ]
+            playbook = []
+            if cloud_id:
+                tasks = []
+                connection = "smart"
+                # @ToDo: Will need extending when we support multiple Cloud Providers
+                access_key = aws.access_key
+                secret_key = aws.secret_key
+                aws_server = server["setup_aws_server"]
+                region = aws_server.region
+                server = server["setup_server"]
+                remote_user = server.remote_user
+                server_name = server.name
+                private_key = "/tmp/%s" % server_name
+                public_key = "%s.pub" % private_key
+                provided_key = server.private_key
+                if provided_key:
+                    delete_ssh_key = False
+                    provided_key = os.path.join(r.folder, "uploads", provided_key)
+                    # Generate the Public Key
+                    command = "openssl rsa -in %(provided_key)s -pubout > %(public_key)s" % \
+                        {provided_key: provided_key,
+                         public_key: public_key,
+                         }
+                    tasks.append({"command": command,
+                                  })
+                else:
+                    delete_ssh_key = True
+                    # Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+                    tasks.append({"openssh_keypair": {"path": private_key,
+                                                      },
+                                  })
+                # Upload Public Key to AWS
+                tasks.append({"ec2_key": {"aws_access_key": access_key,
+                                          "aws_secret_key": secret_key,
+                                          "region": region,
+                                          "name": server_name,
+                                          "key_material": "{{ lookup('file', '%s') }}" % public_key,
+                                          },
+                              })
+                if aws_server.instance_id:
+                    # Terminate old AWS instance
+                    # @ToDo: Allow deployment on existing instances?
+                    tasks.append({"ec2": {"aws_access_key": access_key,
+                                          "aws_secret_key": secret_key,
+                                          "region": region,
+                                          "instance_ids": aws_server.instance_id,
+                                          "state": "absent",
+                                          },
+                                  })
+                # Launch AWS instance
+                request = current.request
+                command = "python web2py.py -S %(appname)s -M -R %(appname)s/private/eden_deploy/tools/update_server.py -A %(server_id)s {{ item.id }} {{ item.public_ip }} %(server_name)s" % \
+                            {"appname": request.application,
+                             "server_id": server.id,
+                             "server_name": server_name,
+                             }
+                tasks += [# Launch AWS Instance
+                          {"ec2": {"aws_access_key": access_key,
+                                   "aws_secret_key": secret_key,
+                                   "key_name": server_name,
+                                   "region": region,
+                                   "instance_type": aws_server.instance_type,
+                                   "image": aws_server.image,
+                                   "group": aws_server.security_group,
+                                   "wait": "yes",
+                                   "count": 1,
+                                   "instance_tags": {"Name": server_name,
+                                                     },
+                                   },
+                           "register": "ec2",
+                           },
+                          # Add new instance to host group (to associate private_key)
+                          {"add_host": {"hostname": "{{ item.public_ip }}",
+                                        "groupname": "launched",
+                                        "ansible_ssh_private_key_file": "/tmp/%s" % server_name,
+                                        },
+                           "loop": "{{ ec2.instances }}",
+                           },
+                          # Update Server record
+                          {"command": {"cmd": command,
+                                       "chdir": request.env.web2py_path,
+                                       },
+                           "become": "yes",
+                           "become_method": "sudo",
+                           "become_user": "web2py",
+                           "loop": "{{ ec2.instances }}",
+                           },
+                          ]
+                dns_id = deployment.dns_id
+                if dns_id:
+                    # @ToDo: Will need extending when we support multiple DNS Providers
+                    gtable = s3db.setup_gandi_dns
+                    gandi = db(gtable.id == dns_id).select(gtable.api_key,
+                                                           gtable.domain,
+                                                           gtable.zone,
+                                                           limitby = (0, 1)
+                                                           ).first()
+                    gandi_api_key = gandi.api_key
+                    url = "https://dns.api.gandi.net/api/v5/zones/%s/records" % gandi.zone
+                    dns_record = sitename.split(".%s" % gandi.domain, 1)[0]
+                    tasks += [# Delete any existing record
+                              {"uri": {"url": "%s/%s" % (url, dns_record),
+                                       "method": "DELETE",
+                                       "headers": {"X-Api-Key": gandi_api_key,
+                                                   },
+                                       },
+                               # Don't worry if it didn't exist
+                               "ignore_errors": "yes",
+                               },
+                              # Create new record
+                              {"uri": {"url": url,
+                                       "method": "POST",
+                                       "headers": {"X-Api-Key": gandi_api_key,
+                                                   },
+                                       "body_format": "json", # Content-Type: application/json
+                                       "body": '{"rrset_name": "%s", "rrset_type": "A", "rrset_ttl": 10800, "rrset_values": ["{{ item.public_ip }}"]}' % dns_record
+                                       },
+                               "loop": "{{ ec2.instances }}",
+                               },
+                              ]
+                else:
+                    current.session.warning = current.T("Deployment will not have SSL: No DNS Provider configured to link to new server IP Address")
+                    # @ToDo: Support Elastic IPs
+                    protocol = "http"
+                playbook.append({"hosts": "localhost",
+                                 "connection": "local",
+                                 "gather_facts": "no",
+                                 "tasks": tasks,
+                                 })
+                host_ip = "launched"
+                # Wait for Server to become available
+                playbook.append({"hosts": "launched",
+                                 "connection": "smart",
+                                 "remote_user": remote_user,
+                                 "gather_facts": "no",
+                                 "tasks": [{"wait_for_connection": {"timeout": 300, # seconds
+                                                                    },
+                                            },
+                                           ],
+                                 })
+            else:
+                # No Cloud
+                delete_ssh_key = False
+                remote_user = server.remote_user
+                host_ip = server.host_ip
+                # Check if DNS is already configured properly
+                import socket
+                try:
+                    ip_addr = socket.gethostbyname(sitename)
+                except socket.gaierror:
+                    current.session.warning = current.T("Deployment will not have SSL: URL doesn't resolve in DNS")
+                    protocol = "http"
+                # @ToDo Check that ip_addr is correct
+                #       - if host_ip == "127.0.0.1" then we can check the contents
+                if host_ip == "127.0.0.1":
+                    connection = "local"
+                else:
+                    # We may wish to administer via a private IP, so shouldn't do this:
+                    #if protocol == "https" and ip_addr != host_ip:
+                    #    current.session.warning = current.T("Deployment will not have SSL: URL doesn't match server IP Address")
+                    #    protocol = "http"
+                    # We will need the SSH key
+                    connection = "smart"
+                    private_key = server.private_key
+                    if not private_key:
+                        # Abort
+                        current.session.error = current.T("Deployment failed: SSH Key needed when deploying away from localhost")
+                        redirect(URL(c="setup", f="deployment",
+                                     args = [deployment_id, "instance"],
+                                     ))
+                    # Add instance to host group (to associate private_key)
+                    host_ip = "launched"
+                    private_key = os.path.join(r.folder, "uploads", private_key)
+                    playbook.append({"hosts": "localhost",
+                                     "connection": "local",
+                                     "gather_facts": "no",
+                                     "tasks": [{"add_host": {"hostname": host_ip,
+                                                             "groupname": "launched",
+                                                             "ansible_ssh_private_key_file": private_key,
+                                                             },
+                                                },
+                                               ],
+                                     })
+
+            # Deploy to Server
+            playbook.append({"hosts": host_ip,
+                             "connection": connection,
+                             "remote_user": remote_user,
+                             "become_method": "sudo",
+                             #"become_user": "root",
+                             "vars": {"appname": appname,
+                                      "all_sites": ",".join(all_sites),
+                                      "country": deployment.country,
+                                      "db_ip": "127.0.0.1",
+                                      "db_type": db_type,
+                                      "hostname": hostname,
+                                      "password": db_password,
+                                      "protocol": protocol,
+                                      "repo_url": repo_url,
+                                      "sender": sender,
+                                      "sitename": sitename,
+                                      "sitename_prod": sitename_prod,
+                                      "start": start,
+                                      "template": template,
+                                      "type": instance_type,
+                                      "web_server": web_server,
+                                      },
+                             "roles": [{"role": "%s/common" % roles_path },
+                                       {"role": "%s/exim" % roles_path },
+                                       {"role": "%s/%s" % (roles_path, db_type) },
+                                       {"role": "%s/uwsgi" % roles_path },
+                                       {"role": "%s/%s" % (roles_path, web_server) },
+                                       {"role": "%s/final" % roles_path },
+                                       ]
+                             })
+            if delete_ssh_key:
+                # Delete SSH private key from the filesystem
+                playbook.append({"hosts": "localhost",
+                                 "connection": "local",
+                                 "gather_facts": "no",
+                                 "tasks": [{"file": {"path": private_key,
+                                                     "state": "absent",
+                                                     },
+                                            },
+                                           ],
+                                 })
         else:
             # Separate Database
-            # @ToDo: Needs testing/completion
+            # @ToDo: Needs completing
+            # Abort
+            current.session.error = current.T("Deployment failed: Currently only All-in-one deployments supported with this tool")
+            redirect(URL(c="setup", f="deployment",
+                         args = [deployment_id, "instance"],
+                         ))
             for server in servers:
                 if server.role == 2:
                     db_ip = server.host_ip
@@ -890,11 +1456,10 @@ dropdown.change(function() {
                     remote_user = server.remote_user
                 else:
                     webserver_ip = server.host_ip
-            hosts = [db_ip, webserver_ip]
             playbook = [{"hosts": db_ip,
                          "remote_user": remote_user,
                          "become_method": "sudo",
-                         "become_user": "root",
+                         #"become_user": "root",
                          "vars": {"db_type": db_type,
                                   "password": db_password,
                                   "type": instance_type
@@ -905,25 +1470,29 @@ dropdown.change(function() {
                         {"hosts": webserver_ip,
                          #"remote_user": remote_user,
                          "become_method": "sudo",
-                         "become_user": "root",
+                         #"become_user": "root",
                          "vars": {"appname": appname,
                                   "all_sites": ",".join(all_sites),
+                                  "country": deployment.country,
                                   "db_ip": db_ip,
                                   "db_type": db_type,
                                   "hostname": hostname,
                                   "password": db_password,
                                   "protocol": protocol,
-                                  "sitename": sitename,
+                                  "repo_url": repo_url,
                                   "sender": sender,
+                                  "sitename": sitename,
+                                  "sitename_prod": sitename_prod,
                                   "start": start,
                                   "template": template,
                                   "type": instance_type,
                                   "web_server": web_server,
                                   },
-                         "roles": [{ "role": "%s/common" % roles_path },
-                                   { "role": "%s/%s" % (roles_path, web_server) },
-                                   { "role": "%s/uwsgi" % roles_path },
-                                   { "role": "%s/final" % roles_path },
+                         "roles": [{"role": "%s/common" % roles_path },
+                                   {"role": "%s/exim" % roles_path },
+                                   {"role": "%s/uwsgi" % roles_path },
+                                   {"role": "%s/%s" % (roles_path, web_server) },
+                                   {"role": "%s/final" % roles_path },
                                    ],
                          },
                         ]
@@ -936,12 +1505,11 @@ dropdown.change(function() {
             tags = [instance_type]
         task_vars = setup_write_playbook("%s.yml" % name,
                                          playbook,
-                                         hosts,
                                          tags,
-                                         private_key,
                                          )
 
         # Run Playbook
+        task_vars["instance_id"] = instance_id
         task_id = current.s3task.schedule_task(name,
                                                vars = task_vars,
                                                function_name = "setup_run_playbook",
@@ -1024,226 +1592,238 @@ dropdown.change(function() {
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def setup_setting_apply(r, **attr):
+    def setup_instance_ondelete(row):
+        """
+            Cleanup Tasks when an Instance is Deleted
+            - DNS
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        dtable = s3db.setup_deployment
+        deployment = db(dtable.id == row.deployment_id).select(dtable.dns_id,
+                                                               limitby = (0, 1)
+                                                               ).first()
+
+        dns_id = deployment.dns_id
+
+        if dns_id is None:
+            # Nothing to cleanup
+            return
+
+        # Read URL (only deleted_fks are in the row object)
+        itable = s3db.setup_instance
+        instance = db(itable.id == row.id).select(itable.url,
+                                                  limitby = (0, 1)
+                                                  ).first()
+
+        # @ToDo: Will need extending when we support multiple DNS Providers
+        # Get Gandi details
+        gtable = s3db.setup_gandi_dns
+        gandi = db(gtable.id == dns_id).select(gtable.api_key,
+                                               gtable.domain,
+                                               gtable.zone,
+                                               limitby = (0, 1)
+                                               ).first()
+        gandi_api_key = gandi.api_key
+        domain = gandi.domain
+        url = "https://dns.api.gandi.net/api/v5/zones/%s/records" % gandi.zone
+
+        # Delete DNS record
+        parts = instance.url.split("://")
+        if len(parts) == 1:
+            sitename = parts[0]
+        else:
+            sitename = parts[1]
+        dns_record = sitename.split(".%s" % domain, 1)[0]
+
+        playbook = [{"hosts": "localhost",
+                     "connection": "local",
+                     "gather_facts": "no",
+                     "tasks": [{"uri": {"url": "%s/%s" % (url, dns_record),
+                                        "method": "DELETE",
+                                        "headers": {"X-Api-Key": gandi_api_key,
+                                                    },
+                                        },
+                                # Don't worry if it didn't exist
+                                "ignore_errors": "yes",
+                                },
+                               ],
+                     },
+                    ]
+
+        # Write Playbook
+        name = "instance_ondelete_%d" % int(time.time())
+        task_vars = setup_write_playbook("%s.yml" % name,
+                                         playbook,
+                                         )
+
+        # Run Playbook
+        current.s3task.schedule_task(name,
+                                     vars = task_vars,
+                                     function_name = "setup_run_playbook",
+                                     repeats = None,
+                                     timeout = 6000,
+                                     #sync_output = 300
+                                     )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def setup_instance_update_onaccept(form):
+        """
+            Process changed fields on server
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        form_vars_get = form.vars.get
+        record = form.record
+        deployment_id = record.deployment_id
+        instance_id = form_vars_get("id")
+
+        sender = form_vars_get("sender")
+        if sender != record.sender:
+            # Adjust the Instance's Email Sender
+            stable = s3db.setup_setting
+            query = (stable.instance_id == instance_id) & \
+                    (stable.setting == "mail.sender")
+            setting = db(query).select(stable.id,
+                                       limitby = (0, 1)
+                                       ).first()
+            if setting:
+                setting_id = setting.id
+                setting.update_record(new_value = sender)
+            else:
+                setting_id = stable.insert(deployment_id = deployment_id,
+                                           instance_id = instance_id,
+                                           setting = "mail.sender",
+                                           new_value = sender,
+                                           )
+            setup_setting_apply(setting_id)
+
+        if form_vars_get("start") is True:
+            if record.start is False:
+                # Start Instance at Boot
+                command = "enable"
+            else:
+                # Nothing more to do
+                return
+        elif record.start is True:
+            # Stop Instance at Boot
+            command = "disable"
+        else:
+            # Nothing more to do
+            return
+
+        playbook = []
+
+        # Lookup Server Details
+        svtable = s3db.setup_server
+        query = (svtable.deployment_id == deployment_id) & \
+                (svtable.role.belongs((1, 4)))
+        server = db(query).select(svtable.host_ip,
+                                  svtable.remote_user,
+                                  svtable.private_key,
+                                  limitby = (0, 1)
+                                  ).first()
+        host_ip = server.host_ip
+        if host_ip == "127.0.0.1":
+            connection = "local"
+        else:
+            private_key = server.private_key
+            if not private_key:
+                # Abort
+                current.T("Apply failed: SSH Key needed when applying away from localhost")
+                return
+
+            connection = "smart"
+            # Add instance to host group (to associate private_key)
+            host_ip = "launched"
+            private_key = os.path.join(current.request.folder, "uploads", private_key)
+            playbook.append({"hosts": "localhost",
+                             "connection": "local",
+                             "gather_facts": "no",
+                             "tasks": [{"add_host": {"hostname": host_ip,
+                                                     "groupname": "launched",
+                                                     "ansible_ssh_private_key_file": private_key,
+                                                     },
+                                        },
+                                       ],
+                             })
+
+        appname = "eden" # @ToDo: Allow this to be configurable
+
+        itable = s3db.setup_instance
+        instance = db(itable.id == instance_id).select(itable.type,
+                                                       limitby = (0, 1)
+                                                       ).first()
+        instance_type = INSTANCE_TYPES[instance.type]
+
+        # @ToDo: Lookup webserver_type from deployment once we support Apache
+
+        # Build Playbook data structure:
+        playbook.append({"hosts": host_ip,
+                         "connection": connection,
+                         "remote_user": server.remote_user,
+                         "become_method": "sudo",
+                         #"become_user": "root",
+                         "tasks": [{"name": "Modify Startup",
+                                    "command": "update-rc.d uwsgi-%s {{item}}" % instance_type,
+                                    "become": "yes",
+                                    "loop": ["%s 2" % command,
+                                             "%s 3" % command,
+                                             "%s 4" % command,
+                                             "%s 5" % command,
+                                             ],
+                                    },
+                                   ],
+                         })
+
+        # Write Playbook
+        name = "boot_%d" % int(time.time())
+        task_vars = setup_write_playbook("%s.yml" % name,
+                                         playbook,
+                                         )
+
+        # Run the Playbook
+        task_vars["instance_id"] = instance_id
+        current.s3task.schedule_task(name,
+                                     vars = task_vars,
+                                     function_name = "setup_run_playbook",
+                                     repeats = None,
+                                     timeout = 6000,
+                                     #sync_output = 300
+                                     )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def setup_setting_apply_interactive(r, **attr):
         """
             Custom interactive S3Method to Apply a Setting to an instance
             via models/000_config.py
         """
 
-        db = current.db
-        s3db = current.s3db
+        result = setup_setting_apply(r.component_id)
 
-        deployment_id = r.id
-        setting_id = r.component_id
-
-        stable = s3db.setup_setting
-        setting = db(stable.id == setting_id).select(stable.id,
-                                                     stable.instance_id,
-                                                     stable.setting,
-                                                     stable.new_value,
-                                                     limitby = (0, 1)
-                                                     ).first()
-        new_value = setting.new_value
-
-        itable = s3db.setup_instance
-        instance = db(itable.id == setting.instance_id).select(itable.type,
-                                                               limitby = (0, 1)
-                                                               ).first()
-        instance_type = INSTANCE_TYPES[instance.type]
-
-        # Lookup Server Details
-        # @ToDo: Support multiple Eden servers used as Load-balancers
-        svtable = s3db.setup_server
-        query = (svtable.deployment_id == deployment_id) & \
-                (svtable.role.belongs((1, 4)))
-        server = db(query).select(svtable.host_ip,
-                                  svtable.remote_user,
-                                  svtable.private_key,
-                                  limitby = (0, 1)
-                                  ).first()
-        host = server.host_ip
-        remote_user = server.remote_user
-        private_key = server.private_key
-
-        # Build Playbook data structure:
-        the_setting = setting.setting
-        if new_value is True or new_value is False:
-            new_line = "settings.%s = %s" % (the_setting, new_value)
+        if result:
+            current.session.error = result
         else:
-            # @ToDo: Handle lists/dicts (load into JSONS3?)
-            new_line = 'settings.%s = "%s"' % (the_setting, new_value)
-
-        appname = r.application
-
-        playbook = [{"hosts": host,
-                     "connection": "local", # @ToDo: Don't assume this
-                     "remote_user": remote_user,
-                     "become_method": "sudo",
-                     "become_user": "root",
-                     "tasks": [{"name": "Edit 000_config.py",
-                                "lineinfile": {"dest": "/home/%s/applications/%s/models/000_config.py" % (instance_type, appname),
-                                               "regexp": "^settings.%s =" % the_setting,
-                                               "line": new_line,
-                                               "state": "present",
-                                               },
-                                },
-                               # @ToDo: Handle case where need to restart multiple webservers
-                               {"name": "Compile & Restart WebServer",
-                                #"command": "sudo -H -u web2py python web2py.py -S %(appname)s -M -R applications/%(appname)s/static/scripts/tools/compile.py" % {"appname": appname},
-                                #"args": {"chdir": "/home/%s" % instance_type,
-                                #         },
-                                # We don't want to restart the UWSGI process running the Task until after the Task has completed
-                                "command": 'echo "/usr/local/bin/compile %s" | at now + 1 minutes' % instance_type,
-                                "become": "yes",
-                                },
-                               ]
-                     },
-                    ]
-
-        # Write Playbook
-        name = "apply_%d" % int(time.time())
-        task_vars = setup_write_playbook("%s.yml" % name,
-                                         playbook,
-                                         [host],
-                                         tags = None,
-                                         private_key = private_key,
-                                         )
-
-        # Run the Playbook
-        current.s3task.schedule_task(name,
-                                     vars = task_vars,
-                                     function_name = "setup_run_playbook",
-                                     repeats = None,
-                                     timeout = 6000,
-                                     #sync_output = 300
-                                     )
-
-        # Update the DB to show that the setting has been applied
-        # @ToDo: Do this as a callback from the async task
-        setting.update_record(current_value = new_value,
-                              new_value = None,
-                              )
-
-        current.session.confirmation = current.T("Setting Applied")
+            current.session.confirmation = current.T("Setting Applied")
 
         redirect(URL(c="setup", f="deployment",
-                     args = [deployment_id, "setting"]),
+                     args = [r.id, "setting"]),
                      )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def setup_settings_apply(instance_id, settings):
-        """
-            Method to Apply Settings to an instance
-            via models/000_config.py
-        """
-
-        db = current.db
-        s3db = current.s3db
-        appname = current.request.application
-
-        itable = s3db.setup_instance
-        instance = db(itable.id == instance_id).select(itable.id,
-                                                       itable.deployment_id,
-                                                       itable.type,
-                                                       limitby = (0, 1)
-                                                       ).first()
-        deployment_id = instance.deployment_id
-        instance_type = INSTANCE_TYPES[instance.type]
-
-        # Lookup Server Details
-        # @ToDo: Support multiple Eden servers used as Load-balancers
-        svtable = s3db.setup_server
-        query = (svtable.deployment_id == deployment_id) & \
-                (svtable.role.belongs((1, 4)))
-        server = db(query).select(svtable.host_ip,
-                                  svtable.remote_user,
-                                  svtable.private_key,
-                                  limitby = (0, 1)
-                                  ).first()
-        host = server.host_ip
-        remote_user = server.remote_user
-        private_key = server.private_key
-
-        # Build Playbook data structure:
-        tasks = []
-        tappend = tasks.append
-        for setting in settings:
-            the_setting = setting.replace("_", ".", 1)
-            new_value = settings[setting]
-            if new_value == "True" or new_value == "False":
-                new_line = "settings.%s = %s" % (the_setting, new_value)
-            else:
-                # @ToDo: Handle lists/dicts (load into JSONS3?)
-                new_line = 'settings.%s = "%s"' % (the_setting, new_value)
-            tappend({"name": "Edit 000_config.py",
-                     "lineinfile": {"dest": "/home/%s/applications/%s/models/000_config.py" % (instance_type, appname),
-                                    "regexp": "^settings.%s =" % the_setting,
-                                    "line": new_line,
-                                    "state": "present",
-                                    },
-                     })
-
-        # @ToDo: Handle case where need to restart multiple webservers
-        tappend({"name": "Compile & Restart WebServer",
-                 #"command": "sudo -H -u web2py python web2py.py -S %(appname)s -M -R applications/%(appname)s/static/scripts/tools/compile.py" % {"appname": appname},
-                 #"args": {"chdir": "/home/%s" % instance_type,
-                 #         },
-                 # We don't want to restart the UWSGI process running the Task until after the Task has completed
-                 "command": 'echo "/usr/local/bin/compile %s" | at now + 1 minutes' % instance_type,
-                 "become": "yes",
-                 })
-
-        playbook = [{"hosts": host,
-                     "connection": "local", # @ToDo: Don't assume this
-                     "remote_user": remote_user,
-                     "become_method": "sudo",
-                     "become_user": "root",
-                     "tasks": tasks,
-                     },
-                    ]
-
-        # Write Playbook
-        name = "apply_%d" % int(time.time())
-        task_vars = setup_write_playbook("%s.yml" % name,
-                                         playbook,
-                                         [host],
-                                         tags = None,
-                                         private_key = private_key,
-                                         )
-
-        # Run the Playbook
-        current.s3task.schedule_task(name,
-                                     vars = task_vars,
-                                     function_name = "setup_run_playbook",
-                                     repeats = None,
-                                     timeout = 6000,
-                                     #sync_output = 300
-                                     )
-
-        # Update the DB to show that the settings have been applied
-        # @ToDo: Do this as a callback from the async task
-        instance.update_record(configured = True)
-        stable = s3db.setup_setting
-        q = (stable.instance_id == instance_id)
-        for setting in settings:
-            the_setting = setting.replace("_", ".", 1)
-            new_value = settings[setting]
-            db(q & (stable.setting == the_setting)).update(current_value = new_value,
-                                                           new_value = None)
-
-        return True
 
 # =============================================================================
 class S3SetupMonitorModel(S3Model):
 
     names = ("setup_monitor_server",
              "setup_monitor_check",
-             "setup_monitor_check_option",
              "setup_monitor_task",
-             "setup_monitor_task_option",
              "setup_monitor_run",
-             #"setup_monitor_alert",
+             "setup_monitor_alert",
              )
 
     def model(self):
@@ -1260,14 +1840,14 @@ class S3SetupMonitorModel(S3Model):
 
         UNKNOWN_OPT = current.messages.UNKNOWN_OPT
 
-        STATUS_OPTS = {1 : T("OK"),
+        STATUS_OPTS = {0 : T("Unknown"),
+                       1 : T("OK"),
                        2 : T("Warning"),
                        3 : T("Critical"),
-                       4 : T("Unknown"),
                        }
 
         status_id = S3ReusableField("status", "integer", notnull=True,
-                                    default = 4,
+                                    default = 0,
                                     label = T("Status"),
                                     represent = lambda opt: \
                                                     STATUS_OPTS.get(opt,
@@ -1279,7 +1859,9 @@ class S3SetupMonitorModel(S3Model):
 
         # =====================================================================
         # Servers
-        # - extensions for Monitoring
+        # - extensions for Monitoring:
+        #       Are checks Enabled?
+        #       Overall Server Status
         #
         tablename = "setup_monitor_server"
         define_table(tablename,
@@ -1302,14 +1884,25 @@ class S3SetupMonitorModel(S3Model):
 
         # =====================================================================
         # Checks
+        # - monitoring scripts available
         #
         tablename = "setup_monitor_check"
         define_table(tablename,
                      Field("name", unique=True, length=255,
                            label = T("Name"),
                            ),
+                     # Name of a function in modules.<settings.get_setup_monitor_template()>.monitor[.py]
+                     # List populated in controllers/setup/monitor_check()
                      Field("function_name",
-                           label = T("Script"),
+                           label = T("Function"),
+                           comment = T("Functions defined in <template>.monitor.py")
+                           ),
+                     # Default Options for this Check
+                     Field("options", "json",
+                           label = T("Options"),
+                           requires = IS_EMPTY_OR(
+                                        IS_JSONS3()
+                                        ),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -1327,39 +1920,18 @@ class S3SetupMonitorModel(S3Model):
                 msg_record_deleted = T("Check deleted"),
                 msg_list_empty = T("No Checks currently registered"))
 
-        represent = S3Represent(lookup=tablename)
+        represent = S3Represent(lookup = tablename)
         check_id = S3ReusableField("check_id", "reference %s" % tablename,
                                    label = T("Check"),
                                    ondelete = "CASCADE",
                                    represent = represent,
-                                   requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db, "setup_monitor_check.id",
-                                                          represent)),
+                                   requires = IS_ONE_OF(db, "setup_monitor_check.id",
+                                                        represent),
                                    )
 
         add_components(tablename,
-                       setup_monitor_check_option = {"name": "option",
-                                                     "joinby": "check_id",
-                                                     },
                        setup_monitor_task = "check_id",
                        )
-
-        # =====================================================================
-        # Check Options
-        # - default configuration of the Check
-        #
-        tablename = "setup_monitor_check_option"
-        define_table(tablename,
-                     check_id(),
-                     # option is a reserved word in MySQL
-                     Field("tag",
-                           label = T("Option"),
-                           ),
-                     Field("value",
-                           label = T("Value"),
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
 
         # =====================================================================
         # Tasks
@@ -1376,7 +1948,23 @@ class S3SetupMonitorModel(S3Model):
                            label = T("Enabled?"),
                            represent = s3_yes_no_represent,
                            ),
+                     # Options for this Check on this Server
+                     # - including any thresholds for non-Critical results
+                     Field("options", "json",
+                           label = T("Options"),
+                           requires = IS_EMPTY_OR(
+                                        IS_JSONS3()
+                                        ),
+                           ),
                      status_id(),
+                     Field("result", "text",
+                           label = T("Result"),
+                           represent = lambda v: v.split("\n")[0] if v else \
+                                                 current.messages["NONE"],
+                           ),
+                     s3_datetime(label = T("Last Checked"),
+                                 writable = False,
+                                 ),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1393,14 +1981,37 @@ class S3SetupMonitorModel(S3Model):
             msg_record_deleted = T("Task deleted"),
             msg_list_empty = T("No Tasks currently registered"))
 
+        crud_form = S3SQLCustomForm("server_id",
+                                    "check_id",
+                                    "enabled",
+                                    "options",
+                                    S3SQLInlineComponent("monitor_alert",
+                                                         label = T("Alerts"),
+                                                         fields = [("", "person_id"),
+                                                                   ],
+                                                         ),
+                                    "status",
+                                    "result",
+                                    "comments",
+                                    )
+
         configure(tablename,
-                  # Open the Options after creation
-                  create_next = URL(c="setup", f="monitor_task", args=["[id]", "option"]),
+                  # Open the Log after creation
+                  create_next = URL(c="setup", f="monitor_task",
+                                    args = ["[id]", "monitor_run"],
+                                    ),
+                  crud_form = crud_form,
+                  list_fields = ["deployment_id",
+                                 "server_id",
+                                 "check_id",
+                                 "status",
+                                 "result",
+                                 "date",
+                                 ],
                   onaccept = self.setup_monitor_task_onaccept,
                   )
 
-        # @ToDo: Fix represent
-        represent = S3Represent(lookup=tablename, fields=["server_id", "check_id"])
+        represent = setup_MonitorTaskRepresent()
         task_id = S3ReusableField("task_id", "reference %s" % tablename,
                                   label = T("Task"),
                                   ondelete = "CASCADE",
@@ -1413,39 +2024,19 @@ class S3SetupMonitorModel(S3Model):
         add_components(tablename,
                        setup_monitor_alert = "task_id",
                        setup_monitor_run = "task_id",
-                       setup_monitor_task_option = {"name": "option",
-                                                    "joinby": "task_id",
-                                                    },
                        )
 
-        set_method("monitor", "task",
+        set_method("setup", "monitor_task",
                    method = "enable",
-                   action = self.setup_monitor_task_enable_interactive)
+                   action = setup_monitor_task_enable_interactive)
 
-        set_method("monitor", "task",
+        set_method("setup", "monitor_task",
                    method = "disable",
-                   action = self.setup_monitor_task_disable_interactive)
+                   action = setup_monitor_task_disable_interactive)
 
-        set_method("monitor", "task",
+        set_method("setup", "monitor_task",
                    method = "check",
-                   action = self.setup_monitor_task_run)
-
-        # =====================================================================
-        # Task Options
-        # - configuration of the Task
-        #
-        tablename = "setup_monitor_task_option"
-        define_table(tablename,
-                     task_id(),
-                     # option is a reserved word in MySQL
-                     Field("tag",
-                           label = T("Option"),
-                           ),
-                     Field("value",
-                           label = T("Value"),
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                   action = setup_monitor_task_run)
 
         # =====================================================================
         # Runs
@@ -1455,6 +2046,11 @@ class S3SetupMonitorModel(S3Model):
                      server_id(writable = False),
                      task_id(writable = False),
                      status_id(),
+                     Field("result", "text",
+                           label = T("Result"),
+                           represent = lambda v: v.split("\n")[0] if v else \
+                                                 current.messages["NONE"],
+                           ),
                      s3_comments(),
                      *s3_meta_fields()#,
                      #on_define = lambda table: \
@@ -1483,24 +2079,28 @@ class S3SetupMonitorModel(S3Model):
                                  "server_id",
                                  "task_id",
                                  "status",
-                                 "comments",
+                                 "result",
                                  ],
                   orderby = "setup_monitor_run.created_on desc",
                   )
 
         # =============================================================================
         # Alerts
-        #  - what threshold to raise an alert on
+        #  - people to alert when status != OK
         #
-        # @ToDo: UI to wrap normal Subscription / Notifications
 
-        #tablename = "setup_monitor_alert"
-        #define_table(tablename,
-        #             task_id(),
-        #             self.pr_person_id(),
-        #             # @ToDo: Threshold
-        #             s3_comments(),
-        #             *s3_meta_fields())
+        tablename = "setup_monitor_alert"
+        define_table(tablename,
+                     task_id(),
+                     self.pr_person_id(comment = None,
+                                       empty = False,
+                                       ondelete = "CASCADE",
+                                       widget = None, # Dropdown, not Autocomplete
+                                       ),
+                     # Email-only for now
+                     #self.pr_contact_id(),
+                     s3_comments(),
+                     *s3_meta_fields())
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1530,112 +2130,6 @@ class S3SetupMonitorModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def setup_monitor_task_enable(task_id):
-        """
-            Enable a Task
-            - Schedule Check
-
-            CLI API for shell scripts & to be called by S3Method
-        """
-
-        db = current.db
-        table = current.s3db.setup_monitor_task
-
-        record = db(table.id == task_id).select(table.id,
-                                                table.enabled,
-                                                limitby=(0, 1),
-                                                ).first()
-
-        if not record.enabled:
-            # Flag it as enabled
-            record.update_record(enabled = True)
-
-        # Is the task already Scheduled?
-        ttable = db.scheduler_task
-        args = "[%s]" % task_id
-        query = ((ttable.function_name == "setup_monitor_run_task") & \
-                 (ttable.args == args) & \
-                 (ttable.status.belongs(["RUNNING", "QUEUED", "ALLOCATED"])))
-        exists = db(query).select(ttable.id,
-                                  limitby=(0, 1)).first()
-        if exists:
-            return "Task already enabled"
-        else:
-            current.s3task.schedule_task("setup_monitor_run_task",
-                                         args = [task_id],
-                                         period = 300,  # seconds
-                                         timeout = 300, # seconds
-                                         repeats = 0    # unlimited
-                                         )
-            return "Task enabled"
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def setup_monitor_task_enable_interactive(r, **attr):
-        """
-            Enable a Task
-            - Schedule Check
-
-            S3Method for interactive requests
-        """
-
-        result = S3SetupMonitorModel.setup_monitor_task_enable(r.id)
-        current.session.confirmation = result
-        redirect(URL(f="task"))
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def setup_monitor_task_disable(task_id):
-        """
-            Disable a Check
-            - Remove Schedule for Check
-
-            CLI API for shell scripts & to be called by S3Method
-        """
-
-        db = current.db
-        table = current.s3db.setup_monitor_task
-
-        record = db(table.id == task_id).select(table.id, # needed for update_record
-                                                table.enabled,
-                                                limitby=(0, 1),
-                                                ).first()
-
-        if record.enabled:
-            # Flag it as disabled
-            record.update_record(enabled = False)
-
-        # Is the task already Scheduled?
-        ttable = db.scheduler_task
-        args = "[%s]" % task_id
-        query = ((ttable.function_name == "setup_monitor_run_task") & \
-                 (ttable.args == args) & \
-                 (ttable.status.belongs(["RUNNING", "QUEUED", "ALLOCATED"])))
-        exists = db(query).select(ttable.id,
-                                  limitby=(0, 1)).first()
-        if exists:
-            # Disable all
-            db(query).update(status="STOPPED")
-            return "Task disabled"
-        else:
-            return "Task already disabled"
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def setup_monitor_task_disable_interactive(r, **attr):
-        """
-            Disable a Task
-            - Remove Schedule for Check
-
-            S3Method for interactive requests
-        """
-
-        result = S3SetupMonitorModel.setup_monitor_task_disable(r.id)
-        current.session.confirmation = result
-        redirect(URL(f="monitor_task"))
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def setup_monitor_task_onaccept(form):
         """
             Process the Enabled Flag
@@ -1647,20 +2141,26 @@ class S3SetupMonitorModel(S3Model):
         form_vars = form.vars
         if form.record:
             # Update form
-            # process if changed
+            # Process if changed
             if form.record.enabled and not form_vars.enabled:
-                S3SetupMonitorModel.setup_monitor_task_disable(form_vars.id)
+                setup_monitor_task_disable(form_vars.id)
             elif form_vars.enabled and not form.record.enabled:
-                S3SetupMonitorModel.setup_monitor_task_enable(form_vars.id)
+                setup_monitor_task_enable(form_vars.id)
         else:
             # Create form
             db = current.db
             record_id = form_vars.id
             if form_vars.enabled:
                 # Process only if enabled
-                S3SetupMonitorModel.setup_monitor_task_enable(record_id)
+                setup_monitor_task_enable(record_id)
 
-            # Set deployment_id
+            # Read default check options
+            ctable = db.setup_monitor_check
+            check = db(ctable.id == form_vars.check_id).select(ctable.options,
+                                                               limitby = (0, 1)
+                                                               ).first()
+
+            # Read deployment_id
             ttable = db.setup_monitor_task
             server_id = form_vars.server_id
             if server_id:
@@ -1677,47 +2177,19 @@ class S3SetupMonitorModel(S3Model):
                                                        limitby = (0, 1)
                                                        ).first()
             deployment_id = server.deployment_id
+
+            # Update record
             if task:
-                task.update_record(deployment_id = deployment_id)
+                task.update_record(deployment_id = deployment_id,
+                                   options = check.options,
+                                   )
             else:
-                db(ttable.id == record_id).update(deployment_id = deployment_id)
-
-            # Pre-populate task options
-            check_id = form_vars.check_id
-            cotable = db.setup_monitor_check_option
-            query = (cotable.check_id == check_id) & \
-                    (cotable.deleted == False)
-            options = db(query).select(cotable.tag,
-                                       cotable.value,
-                                       )
-            if not options:
-                return
-            totable = db.setup_monitor_task_option
-            for option in options:
-                totable.insert(tag = option.tag,
-                               value = option.value,
-                               )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def setup_monitor_task_run(r, **attr):
-        """
-            Run a Task
-
-            S3Method for interactive requests
-        """
-
-        task_id = r.id
-        current.s3task.run_async("setup_monitor_task_run", args=[task_id])
-        current.session.confirmation = \
-            current.T("The check request has been submitted, so results should appear shortly - refresh to see them")
-
-        redirect(URL(c="setup", f="monitor_task",
-                     args = [task_id, "log"],
-                     ))
+                db(ttable.id == record_id).update(deployment_id = deployment_id,
+                                                  options = check.options,
+                                                  )
 
 # =============================================================================
-def setup_monitor_server_enable(server_id):
+def setup_monitor_server_enable(monitor_server_id):
     """
         Enable Monitoring for a Server
         - Schedule all enabled Tasks
@@ -1727,18 +2199,19 @@ def setup_monitor_server_enable(server_id):
 
     db = current.db
 
-    stable = current.s3db.setup_monitor_server
-    record = db(stable.server_id == server_id).select(stable.id,
-                                                      stable.enabled,
-                                                      limitby=(0, 1),
-                                                      ).first()
+    mstable = current.s3db.setup_monitor_server
+    record = db(mstable.id == monitor_server_id).select(mstable.id,
+                                                        mstable.enabled,
+                                                        mstable.server_id,
+                                                        limitby = (0, 1)
+                                                        ).first()
 
     if not record.enabled:
         # Flag it as enabled
         record.update_record(enabled = True)
 
     table = db.setup_monitor_task
-    query = (table.server_id == server_id) & \
+    query = (table.server_id == record.server_id) & \
             (table.enabled == True) & \
             (table.deleted == False)
     tasks = db(query).select(table.id)
@@ -1750,7 +2223,9 @@ def setup_monitor_server_enable(server_id):
     ttable = db.scheduler_task
     query = ((ttable.function_name == "setup_monitor_run_task") & \
              (ttable.args.belongs(args)) & \
-             (ttable.status.belongs(["RUNNING", "QUEUED", "ALLOCATED"])))
+             (ttable.status.belongs(["RUNNING",
+                                     "QUEUED",
+                                     "ALLOCATED"])))
     exists = db(query).select(ttable.id)
     exists = [r.id for r in exists]
     for task in tasks:
@@ -1773,12 +2248,22 @@ def setup_monitor_server_enable_interactive(r, **attr):
         S3Method for interactive requests
     """
 
-    result = setup_monitor_server_enable(r.id)
+    server_id = r.id
+
+    table = current.s3db.setup_monitor_server
+    monitor_server = current.db(table.server_id == server_id).select(table.id,
+                                                                     limitby = (0, 1)
+                                                                     ).first()
+    if monitor_server:
+        monitor_server_id = monitor_server.id
+    else:
+        monitor_server_id = table.insert(server_id = server_id)
+    result = setup_monitor_server_enable(monitor_server_id)
     current.session.confirmation = result
-    redirect(URL(f="server"))
+    redirect(URL(f = "server"))
 
 # =============================================================================
-def setup_monitor_server_disable(server_id):
+def setup_monitor_server_disable(monitor_server_id):
     """
         Disable Monitoring for a Server
         - Remove all related Tasks
@@ -1788,18 +2273,19 @@ def setup_monitor_server_disable(server_id):
 
     db = current.db
 
-    stable = current.s3db.setup_monitor_server
-    record = db(stable.server_id == server_id).select(stable.id,
-                                                      stable.enabled,
-                                                      limitby=(0, 1),
-                                                      ).first()
+    mstable = current.s3db.setup_monitor_server
+    record = db(mstable.id == monitor_server_id).select(mstable.id,
+                                                        mstable.enabled,
+                                                        mstable.server_id,
+                                                        limitby = (0, 1)
+                                                        ).first()
 
     if record.enabled:
         # Flag it as disabled
         record.update_record(enabled = False)
 
     table = db.setup_monitor_task
-    query = (table.server_id == server_id) & \
+    query = (table.server_id == record.server_id) & \
             (table.enabled == True) & \
             (table.deleted == False)
     tasks = db(query).select(table.id)
@@ -1811,15 +2297,17 @@ def setup_monitor_server_disable(server_id):
     ttable = db.scheduler_task
     query = ((ttable.function_name == "setup_monitor_run_task") & \
              (ttable.args.belongs(args)) & \
-             (ttable.status.belongs(["RUNNING", "QUEUED", "ALLOCATED"])))
+             (ttable.status.belongs(["RUNNING",
+                                     "QUEUED",
+                                     "ALLOCATED"])))
     exists = db(query).select(ttable.id,
-                              limitby=(0, 1)).first()
+                              limitby = (0, 1)
+                              ).first()
     if exists:
         # Disable all
-        db(query).update(status="STOPPED")
-        return "Server Monitoring disabled"
-    else:
-        return "Server Monitoring already disabled"
+        db(query).update(status = "STOPPED")
+
+    return "Server Monitoring disabled"
 
 # =============================================================================
 def setup_monitor_server_disable_interactive(r, **attr):
@@ -1830,9 +2318,14 @@ def setup_monitor_server_disable_interactive(r, **attr):
         S3Method for interactive requests
     """
 
-    result = setup_monitor_server_disable(r.id)
+    table = current.s3db.setup_monitor_server
+    monitor_server = current.db(table.server_id == r.id).select(table.id,
+                                                                limitby = (0, 1)
+                                                                ).first()
+
+    result = setup_monitor_server_disable(monitor_server.id)
     current.session.confirmation = result
-    redirect(URL(f="server"))
+    redirect(URL(f = "server"))
 
 # =============================================================================
 def setup_monitor_server_check(r, **attr):
@@ -1850,7 +2343,8 @@ def setup_monitor_server_check(r, **attr):
     tasks = current.db(query).select(table.id)
     run_async = current.s3task.run_async
     for task in tasks:
-        run_async("setup_monitor_run_task", args=[task.id])
+        run_async("setup_monitor_run_task",
+                  args = [task.id])
     current.session.confirmation = \
         current.T("The check requests have been submitted, so results should appear shortly - refresh to see them")
 
@@ -1859,28 +2353,166 @@ def setup_monitor_server_check(r, **attr):
                  ))
 
 # =============================================================================
-def setup_monitor_run_task(task_id):
+def setup_monitor_task_enable(task_id):
     """
-        Check a Service
+        Enable a Task
+        - Schedule Check (if server enabled)
+
+        CLI API for shell scripts & to be called by S3Method
     """
 
     db = current.db
+    s3db = current.s3db
+
+    table = s3db.setup_monitor_task
+    record = db(table.id == task_id).select(table.id,
+                                            table.server_id,
+                                            table.enabled,
+                                            limitby = (0, 1),
+                                            ).first()
+
+    if not record.enabled:
+        # Flag it as enabled
+        record.update_record(enabled = True)
+
+    mstable = s3db.setup_monitor_server
+    monitor_server = db(mstable.server_id == record.server_id).select(mstable.enabled,
+                                                                      limitby = (0, 1),
+                                                                      ).first()
+
+    if monitor_server.enabled:
+        # Is the task already Scheduled?
+        ttable = db.scheduler_task
+        args = "[%s]" % task_id
+        query = ((ttable.function_name == "setup_monitor_run_task") & \
+                 (ttable.args == args) & \
+                 (ttable.status.belongs(["RUNNING",
+                                         "QUEUED",
+                                         "ALLOCATED"])))
+        exists = db(query).select(ttable.id,
+                                  limitby = (0, 1)
+                                  ).first()
+        if not exists:
+            current.s3task.schedule_task("setup_monitor_run_task",
+                                         args = [task_id],
+                                         period = 300,  # seconds
+                                         timeout = 300, # seconds
+                                         repeats = 0    # unlimited
+                                         )
+
+    return "Task enabled"
+
+# =============================================================================
+def setup_monitor_task_enable_interactive(r, **attr):
+    """
+        Enable a Task
+        - Schedule Check
+
+        S3Method for interactive requests
+    """
+
+    result = setup_monitor_task_enable(r.id)
+    current.session.confirmation = result
+    redirect(URL(f = "monitor_task"))
+
+# =============================================================================
+def setup_monitor_task_disable(task_id):
+    """
+        Disable a Check
+        - Remove Schedule for Check
+
+        CLI API for shell scripts & to be called by S3Method
+    """
+
+    db = current.db
+
     table = current.s3db.setup_monitor_task
+    record = db(table.id == task_id).select(table.id, # needed for update_record
+                                            table.enabled,
+                                            limitby = (0, 1),
+                                            ).first()
+
+    if record.enabled:
+        # Flag it as disabled
+        record.update_record(enabled = False)
+
+    # Is the task already Scheduled?
+    ttable = db.scheduler_task
+    args = "[%s]" % task_id
+    query = ((ttable.function_name == "setup_monitor_run_task") & \
+             (ttable.args == args) & \
+             (ttable.status.belongs(["RUNNING",
+                                     "QUEUED",
+                                     "ALLOCATED"])))
+    exists = db(query).select(ttable.id,
+                              limitby = (0, 1)
+                              ).first()
+    if exists:
+        # Disable all
+        db(query).update(status = "STOPPED")
+
+    return "Task disabled"
+
+# =============================================================================
+def setup_monitor_task_disable_interactive(r, **attr):
+    """
+        Disable a Task
+        - Remove Schedule for Check
+
+        S3Method for interactive requests
+    """
+
+    result = setup_monitor_task_disable(r.id)
+    current.session.confirmation = result
+    redirect(URL(f = "monitor_task"))
+
+# =============================================================================
+def setup_monitor_task_run(r, **attr):
+    """
+        Run a Task
+
+        S3Method for interactive requests
+    """
+
+    task_id = r.id
+    current.s3task.run_async("setup_monitor_task_run",
+                             args = [task_id])
+    current.session.confirmation = \
+        current.T("The check request has been submitted, so results should appear shortly - refresh to see them")
+
+    redirect(URL(c="setup", f="monitor_task",
+                 args = [task_id, "monitor_run"],
+                 ))
+
+# =============================================================================
+def setup_monitor_run_task(task_id):
+    """
+        Check a Service
+
+        Non-interactive function run by Scheduler
+    """
+
+    db = current.db
+    s3db = current.s3db
+    request = current.request
+    settings = current.deployment_settings
+
+    table = s3db.setup_monitor_task
     ctable = db.setup_monitor_check
 
     query = (table.id == task_id) & \
             (table.check_id == ctable.id)
     row = db(query).select(table.server_id,
                            ctable.function_name,
-                           limitby=(0, 1)
+                           limitby = (0, 1)
                            ).first()
     server_id = row["setup_monitor_task.server_id"]
     function_name = row["setup_monitor_check.function_name"]
 
     # Load the Monitor template for this deployment
-    template = current.deployment_settings.get_setup_monitor_template()
+    template = settings.get_setup_monitor_template()
     module_name = "applications.%s.modules.templates.%s.monitor" \
-        % (current.request.application, template)
+        % (request.application, template)
     __import__(module_name)
     mymodule = sys.modules[module_name]
     S3Monitor = mymodule.S3Monitor()
@@ -1897,23 +2529,87 @@ def setup_monitor_run_task(task_id):
     run_id = rtable.insert(server_id = server_id,
                            task_id = task_id,
                            )
-    # Ensure the entry is made even if the script crashes
-    db.commit()
 
-    # Run the script
-    result = fn(task_id, run_id)
-
-    # Update the entry with the result
-    if result:
-        status = result
+    try:
+        # Run the script
+        result = fn(task_id, run_id)
+    except Exception:
+        import traceback
+        tb_parts = sys.exc_info()
+        tb_text = "".join(traceback.format_exception(tb_parts[0],
+                                                     tb_parts[1],
+                                                     tb_parts[2]))
+        result = tb_text
+        status = 3 # Critical
     else:
-        # No result
-        status = 2 # Warning
+        try:
+            status = result.get("status")
+        except AttributeError:
+            status = 3 # Critical
+        try:
+            result = result.get("result")
+        except AttributeError:
+            result = ""
 
-    db(rtable.id == run_id).update(status=status)
+    # Store the Result & Status
+    # ... in Run
+    db(rtable.id == run_id).update(result = result,
+                                   status = status)
 
-    # @ToDo: Cascade status to Host
+    # ...in Task
+    db(table.id == task_id).update(result = result,
+                                   status = status,
+                                   date = request.utcnow,
+                                   )
 
+    # ...in Host
+    check_lower = None
+    stable = db.setup_monitor_server
+    if status == 3:
+        # Task at Critical => Server -> Critical
+        db(stable.server_id == server_id).update(status = status)
+    else:
+        server = db(stable.server_id == server_id).select(stable.id,
+                                                          stable.status,
+                                                          limitby = (0, 1),
+                                                          ).first()
+        if status == server.status:
+            pass
+        elif status > server.status:
+            # Increase Server Status to match Task Status
+            server.update_record(status = status)
+        else:
+            # status < server.status
+            # Check if we should Lower the Server Status to match Task Status
+            query = (table.id != task_id) & \
+                    (table.server_id == server_id) & \
+                    (table.status > status) & \
+                    (table.enabled == True) & \
+                    (table.deleted == False)
+            higher = db(query).select(table.id,
+                                      limitby = (0, 1)
+                                      ).first()
+            if higher is None:
+                server.update_record(status = status)
+
+    if status > 1:
+        # Send any Alerts
+        atable = db.setup_monitor_alert
+        ptable = s3db.pr_person
+        query = (atable.task_id == task_id) & \
+                (atable.person_id == ptable.id)
+        recipients = db(query).select(ptable.pe_id)
+        if len(recipients) > 0:
+            recipients = [p.pe_id for p in recipients]
+            subject = "%s: %s" % (settings.get_system_name_short(),
+                                  result.split("\n")[0],
+                                  )
+            current.msg.send_by_pe_id(recipients,
+                                      subject = subject,
+                                      message = result,
+                                      )
+
+    # Pass result back to scheduler_run
     return result
 
 # =============================================================================
@@ -1922,28 +2618,65 @@ def setup_monitor_check_email_reply(run_id):
         Check whether we have received a reply to an Email check
     """
 
-    rtable = current.s3db.setup_monitor_run
-    record = current.db(rtable.id == run_id).select(rtable.id,
-                                                    rtable.status,
-                                                    limitby=(0, 1)).first()
+    db = current.db
+    s3db = current.s3db
+
+    rtable = s3db.setup_monitor_run
+    run = db(rtable.id == run_id).select(rtable.id,
+                                         rtable.task_id,
+                                         rtable.status,
+                                         rtable.server_id,
+                                         limitby = (0, 1)
+                                         ).first()
     try:
-        status = record.status
+        status = run.status
     except:
-        # Can't find run record!
-        # @ToDo: Send Alert
-        pass
+        result = "Critical: Can't find run record"
+        current.debug.error(result)
+        # @ToDo: Send an Alert...however we can't find the details to do this
     else:
-        if status == 2:
-            # Still in Warning State: Make it go Critical
-            record.update_record(status=3)
-            # @ToDo: Send Alert
+        task_id = run.task_id
+        ttable = s3db.setup_monitor_task
+        task = db(ttable.id == task_id).select(ttable.id,
+                                               ttable.options,
+                                               limitby = (0, 1)
+                                               ).first()
+        result = "Critical: Reply not received after %s minutes" % task.options.get("wait", 60)
+        if status != 3:
+            # Make it go Critical
+            # ... in Run
+            record.update_record(result,
+                                 status = 3)
+
+            # ...in Task
+            task.update_record(result = result,
+                               status = 3)
+
+            # ...in Host
+            db(s3db.setup_monitor_server.server_id == server_id).update(status = 3)
+
+            # Send Alert(s)
+            atable = db.setup_monitor_alert
+            ptable = s3db.pr_person
+            query = (atable.task_id == task_id) & \
+                    (atable.person_id == ptable.id)
+            recipients = db(query).select(ptable.pe_id)
+            if len(recipients) > 0:
+                recipients = [p.pe_id for p in recipients]
+                subject = "%s: %s" % (current.deployment_settings.get_system_name_short(),
+                                      result,
+                                      )
+                current.msg.send_by_pe_id(recipients,
+                                          subject = subject,
+                                          message = result,
+                                          )
+
+    return result
 
 # =============================================================================
 def setup_write_playbook(playbook_name,
                          playbook_data,
-                         hosts,
                          tags = None,
-                         private_key = None,
                          ):
     """
         Write an Ansible Playbook file
@@ -1971,38 +2704,163 @@ def setup_write_playbook(playbook_name,
         yaml_file.write(yaml.dump(playbook_data, default_flow_style=False))
 
     task_vars = {"playbook": playbook_path,
-                 "hosts": hosts,
                  }
     if tags:
         # only_tags
         task_vars["tags"] = tags
-    if private_key:
-        task_vars["private_key"] = os_path_join(folder, "uploads", private_key)
 
     return task_vars
 
 # =============================================================================
-def setup_run_playbook(playbook, hosts, tags=None, private_key=None):
+def setup_run_playbook(playbook, instance_id=None, tags=None, hosts=None):
     """
         Run an Ansible Playbook & return the result
         - designed to be run as a Scheduled Task
-            - 'deploy' a deployment
-            - 'apply' a setting
-            - 'start' an instance
-            - 'stop' an instance
-            @ToDo: Clean an instance, Upgrade an Instance
 
         http://docs.ansible.com/ansible/latest/dev_guide/developing_api.html
         https://serversforhackers.com/c/running-ansible-2-programmatically
     """
 
     # No try/except here as we want ImportErrors to raise
+    import shutil
+    import yaml
+    from ansible.module_utils.common.collections import ImmutableDict
     from ansible.parsing.dataloader import DataLoader
     from ansible.vars.manager import VariableManager
     from ansible.inventory.manager import InventoryManager
     from ansible.playbook.play import Play
-    from ansible.executor.playbook_executor import PlaybookExecutor
-    #from ansible.plugins.callback import CallbackBase
+    from ansible.playbook.task_include import TaskInclude
+    from ansible.executor.task_queue_manager import TaskQueueManager
+    from ansible.plugins.callback import CallbackBase
+    from ansible import context
+    import ansible.constants as C
+
+    #W2P_TASK = current.W2P_TASK
+
+    if hosts is None:
+        # NB This is the only current usecase as we always start on localhost
+        #    - remote servers are then accessed once we have the SSH private_key available
+        hosts = ["127.0.0.1"]
+
+    # Logging
+    class PlayLogger:
+        """
+            Store log output in a single String object.
+            We create a new object per Ansible run
+        """
+        def __init__(self):
+            self.log = ""
+
+        def append(self, log_line):
+            """ Append to log """
+            self.log += log_line + "\n\n"
+
+    logger = PlayLogger()
+
+    class ResultCallback(CallbackBase):
+        CALLBACK_VERSION = 2.0
+        CALLBACK_TYPE = "stored"
+        CALLBACK_NAME = "database"
+
+        def __init__(self):
+
+            self._last_task_banner = None
+            self._last_task_name = None
+            self._task_type_cache = {}
+            super(ResultCallback, self).__init__()
+
+        @staticmethod
+        def _handle_exception(result):
+            # Catch an exception
+            # This may never be called because default handler deletes
+            # the exception, since Ansible thinks it knows better
+            traceback = result.get("exception")
+            if traceback:
+                # Extract the error message and log it
+                #error = traceback.strip().split("\n")[-1]
+                #logger.append(error)
+                # Log the whole Traceback
+                logger.append(traceback)
+                # Remove the exception from the result so it's not shown every time
+                del result["exception"]
+                #current.s3task.scheduler.stop_task(W2P_TASK.id)
+                # @ToDo: If this happens during a deploy from co-app and after nginx has replaced co-app on Port 80 then revert to co-app
+
+        def _print_task_banner(self, task):
+            args = u", ".join(u"%s=%s" % a for a in task.args.items())
+            prefix = self._task_type_cache.get(task._uuid, "TASK")
+
+            # Use cached task name
+            task_name = self._last_task_name
+            if task_name is None:
+                task_name = task.get_name().strip()
+
+            logger.append(u"%s: %s\n[%s]" % (prefix, task_name, args))
+
+        def v2_runner_on_failed(self, result, ignore_errors=False):
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+
+            self._handle_exception(result._result)
+
+            if result._task.loop and "results" in result._result:
+                self._process_items(result)
+            else:
+                logger.append("fatal: [%s]: FAILED!\n%s" % \
+                    (result._host.get_name(),
+                     self._dump_results(result._result, indent=4)))
+
+        def v2_runner_on_ok(self, result):
+            if isinstance(result._task, TaskInclude):
+                return
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+            if result._result.get("changed", False):
+                msg = "changed: [%s]" % result._host.get_name()
+            else:
+                msg = "ok: [%s]" % result._host.get_name()
+
+            if result._task.loop and "results" in result._result:
+                self._process_items(result)
+            else:
+                self._clean_results(result._result, result._task.action)
+                msg += "\n%s" % self._dump_results(result._result, indent=4)
+                logger.append(msg)
+
+        def v2_runner_on_unreachable(self, result):
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+            logger.append("fatal: [%s]: UNREACHABLE!\n%s" % \
+                (result._host.get_name(),
+                 self._dump_results(result._result, indent=4)))
+
+        def v2_runner_item_on_failed(self, result):
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+
+            self._handle_exception(result._result)
+
+            msg = "failed: [%s]" % (result._host.get_name())
+
+            logger.append(msg + " (item=%s)\n%s" % \
+                (self._get_item_label(result._result),
+                 self._dump_results(result._result, indent=4)))
+
+        def v2_runner_item_on_ok(self, result):
+            if isinstance(result._task, TaskInclude):
+                return
+            if self._last_task_banner != result._task._uuid:
+                self._print_task_banner(result._task)
+            if result._result.get("changed", False):
+                msg = "changed"
+            else:
+                msg = "ok"
+
+            msg += ": [%s] (item=%s)\n%s" % \
+                (result._host.get_name(),
+                 self._get_item_label(result._result),
+                 self._dump_results(result._result, indent=4))
+            logger.append(msg)
 
     # Copy the current working directory to revert back to later
     cwd = os.getcwd()
@@ -2011,23 +2869,24 @@ def setup_run_playbook(playbook, hosts, tags=None, private_key=None):
     roles_path = os.path.join(current.request.folder, "private", "eden_deploy")
     os.chdir(roles_path)
 
+    # Since the API is constructed for CLI, it expects certain options to always be set in the context object
+    if tags is None:
+        tags = [] # Needs to be an iterable
+    context.CLIARGS = ImmutableDict(module_path = [roles_path],
+                                    forks = 10,
+                                    become = None,
+                                    become_method = None,
+                                    become_user = None,
+                                    check = False,
+                                    diff = False,
+                                    tags = tags,
+                                    )
+
     # Initialize needed objects
-    loader = DataLoader()
-    options = Storage(connection = "local", # @ToDo: Will need changing when doing multi-host
-                      module_path = roles_path,
-                      forks = 100,
-                      become = None,
-                      become_method = None,
-                      become_user = None,
-                      check = False,
-                      diff = False,
-                      tags = tags or [],
-                      skip_tags = [], # Needs to be an iterable as hasattr(Storage()) is always True
-                      private_key_file = private_key, # @ToDo: Needs testing
-                      )
+    loader = DataLoader() # Takes care of finding and reading yaml, json and ini files
 
     # Instantiate Logging for handling results as they come in
-    #results_callback = CallbackModule() # custom subclass of CallbackBase
+    results_callback = ResultCallback()
 
     # Create Inventory and pass to Var manager
     if len(hosts) == 1:
@@ -2036,41 +2895,65 @@ def setup_run_playbook(playbook, hosts, tags=None, private_key=None):
     else:
         sources = ",".join(hosts)
 
-    inventory = InventoryManager(loader=loader, sources=sources)
-    variable_manager = VariableManager(loader=loader, inventory=inventory)
+    inventory = InventoryManager(loader = loader,
+                                 sources = sources)
+    variable_manager = VariableManager(loader = loader,
+                                       inventory = inventory)
 
-    # Broken with Ansible 2.8
-    # https://github.com/ansible/ansible/issues/21562
-    tmp_path = os.path.join("/", "tmp")
-    variable_manager.extra_vars = {"ansible_local_tmp": tmp_path,
-                                   "ansible_remote_tmp": tmp_path,
-                                   }
+    # Load Playbook
+    with open(playbook, "r") as yaml_file:
+        # https://msg.pyyaml.org/load
+        playbooks = yaml.full_load(yaml_file)
 
-    # Run Playbook
-    pbex = PlaybookExecutor(playbooks = [playbook],
-                            inventory = inventory,
-                            variable_manager = variable_manager,
-                            loader = loader,
-                            # Not supported in Ansible 2.8
-                            options = options,
-                            passwords = {},
-                            )
-    pbex.run()
+    for play_source in playbooks:
+        # Create play object, playbook objects use .load instead of init or new methods,
+        # this will also automatically create the task objects from the info provided in play_source
+        play = Play().load(play_source,
+                           variable_manager = variable_manager,
+                           loader = loader)
 
-    # Check for Failures
-    result = {}
-    stats = pbex._tqm._stats
-    hosts = sorted(stats.processed.keys())
-    for h in hosts:
-        t = stats.summarize(h)
-        if t["failures"] > 0:
-            raise Exception("One of the tasks failed")
-        elif t["unreachable"] > 0:
-            raise Exception("Host unreachable")
-        result[h] = t
+        # Run it - instantiate task queue manager, which takes care of forking and setting up all objects to iterate over host list and tasks
+        tqm = None
+        try:
+            tqm = TaskQueueManager(inventory = inventory,
+                                   variable_manager = variable_manager,
+                                   loader = loader,
+                                   passwords = None,
+                                   # Use our custom callback instead of the ``default`` callback plugin, which prints to stdout
+                                   stdout_callback = results_callback,
+                                   )
+            result = tqm.run(play) # Most interesting data for a play is actually sent to the callback's methods
+        finally:
+            # we always need to cleanup child procs and the structures we use to communicate with them
+            if tqm is not None:
+                tqm.cleanup()
+
+            # Remove ansible tmpdir
+            shutil.rmtree(C.DEFAULT_LOCAL_TMP, True)
 
     # Change working directory back
     os.chdir(cwd)
+
+    # Dump Logs to File
+    # Logs are in eden/uploads/playbook instead of /tmp, however it works
+    log_file_name = "%s.log" % playbook.split(".")[0]
+    log_path = os.path.join("/", "tmp", log_file_name)
+    with open(log_path, "w") as log_file:
+        log_file.write(logger.log)
+
+    # Dump Logs to Database
+    # This gets deleted:
+    #current.db(current.s3db.scheduler_run.id == W2P_TASK.run_id).update(run_output = logger.log)
+
+    if instance_id:
+        # Upload logs to Database
+        table = current.s3db.setup_instance
+        field = table.log_file
+        with open(log_path, "r") as log_file:
+            newfilename = field.store(log_file,
+                                      log_file_name,
+                                      field.uploadfolder)
+            current.db(table.id == instance_id).update(log_file = newfilename)
 
     return result
 
@@ -2167,9 +3050,13 @@ def setup_instance_method(instance_id, method="start"):
             - called by interactive method to start/stop
     """
 
-    # Read Data
     db = current.db
     s3db = current.s3db
+    folder = current.request.folder
+
+    playbook = []
+
+    # Get Instance details
     itable = s3db.setup_instance
     instance = db(itable.id == instance_id).select(itable.deployment_id,
                                                    itable.type,
@@ -2187,42 +3074,61 @@ def setup_instance_method(instance_id, method="start"):
                               stable.remote_user,
                               limitby = (0, 1)
                               ).first()
-    host = server.host_ip
+    host_ip = server.host_ip
+    if host_ip == "127.0.0.1":
+        connection = "local"
+    else:
+        private_key = server.private_key
+        if not private_key:
+            # Abort
+            return(current.T("Method failed: SSH Key needed when running away from localhost"))
+
+        connection = "smart"
+        # Add instance to host group (to associate private_key)
+        host_ip = "launched"
+        private_key = os.path.join(folder, "uploads", private_key)
+        playbook.append({"hosts": "localhost",
+                         "connection": "local",
+                         "gather_facts": "no",
+                         "tasks": [{"add_host": {"hostname": host_ip,
+                                                 "groupname": "launched",
+                                                 "ansible_ssh_private_key_file": private_key,
+                                                 },
+                                    },
+                                   ],
+                         })
 
     # Get Deployment details
     dtable = s3db.setup_deployment
     deployment = db(dtable.id == deployment_id).select(dtable.db_type,
                                                        dtable.webserver_type,
-                                                       limitby=(0, 1)
+                                                       limitby = (0, 1)
                                                        ).first()
 
     # Build Playbook data structure
-    roles_path = os.path.join(current.request.folder, "private", "eden_deploy", "roles")
+    roles_path = os.path.join(folder, "private", "eden_deploy", "roles")
 
-    playbook = [{"hosts": host,
-                 "connection": "local", # @ToDo: Don't assume this
-                 "remote_user": server.remote_user,
-                 "become_method": "sudo",
-                 "become_user": "root",
-                 "vars": {"db_type": DB_SERVERS[deployment.db_type],
-                          "web_server": WEB_SERVERS[deployment.webserver_type],
-                          "type": INSTANCE_TYPES[instance.type],
-                          },
-                 "roles": [{ "role": "%s/%s" % (roles_path, method) },
-                           ]
-                 },
-                ]
+    playbook.append({"hosts": host_ip,
+                     "connection": connection,
+                     "remote_user": server.remote_user,
+                     "become_method": "sudo",
+                     #"become_user": "root",
+                     "vars": {"db_type": DB_SERVERS[deployment.db_type],
+                              "web_server": WEB_SERVERS[deployment.webserver_type],
+                              "type": INSTANCE_TYPES[instance.type],
+                              },
+                     "roles": [{ "role": "%s/%s" % (roles_path, method) },
+                               ]
+                     })
 
     # Write Playbook
     name = "%s_%d" % (method, int(time.time()))
     task_vars = setup_write_playbook("%s.yml" % name,
                                      playbook,
-                                     [host],
-                                     tags = None,
-                                     private_key = server.private_key,
                                      )
 
     # Run the Playbook
+    task_vars["instance_id"] = instance_id
     current.s3task.schedule_task(name,
                                  vars = task_vars,
                                  function_name = "setup_run_playbook",
@@ -2230,6 +3136,276 @@ def setup_instance_method(instance_id, method="start"):
                                  timeout = 6000,
                                  #sync_output = 300
                                  )
+
+# =============================================================================
+def setup_setting_apply(setting_id):
+    """
+        Apply a Setting to an instance via models/000_config.py
+
+        CLI API for shell scripts & to be called by S3Method
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    playbook = []
+
+    # Lookup Setting Details
+    stable = s3db.setup_setting
+    setting = db(stable.id == setting_id).select(stable.id,
+                                                 stable.deployment_id,
+                                                 stable.instance_id,
+                                                 stable.setting,
+                                                 stable.new_value,
+                                                 limitby = (0, 1)
+                                                 ).first()
+
+    # Lookup Server Details
+    # @ToDo: Support multiple Eden servers used as Load-balancers
+    svtable = s3db.setup_server
+    query = (svtable.deployment_id == setting.deployment_id) & \
+            (svtable.role.belongs((1, 4)))
+    server = db(query).select(svtable.host_ip,
+                              svtable.remote_user,
+                              svtable.private_key,
+                              limitby = (0, 1)
+                              ).first()
+    host_ip = server.host_ip
+    if host_ip == "127.0.0.1":
+        connection = "local"
+    else:
+        private_key = server.private_key
+        if not private_key:
+            # Abort
+            return(current.T("Apply failed: SSH Key needed when applying away from localhost"))
+
+        connection = "smart"
+        # Add instance to host group (to associate private_key)
+        host_ip = "launched"
+        private_key = os.path.join(current.request.folder, "uploads", private_key)
+        playbook.append({"hosts": "localhost",
+                         "connection": "local",
+                         "gather_facts": "no",
+                         "tasks": [{"add_host": {"hostname": host_ip,
+                                                 "groupname": "launched",
+                                                 "ansible_ssh_private_key_file": private_key,
+                                                 },
+                                    },
+                                   ],
+                         })
+
+    appname = "eden" # @ToDo: Allow this to be configurable
+
+    new_value = setting.new_value
+    instance_id = setting.instance_id
+
+    itable = s3db.setup_instance
+    instance = db(itable.id == instance_id).select(itable.type,
+                                                   limitby = (0, 1)
+                                                   ).first()
+    instance_type = INSTANCE_TYPES[instance.type]
+
+    # @ToDo: Lookup webserver_type from deployment once we support Apache
+    #service_name = "apache2"
+    service_name = "uwsgi-%s" % instance_type
+
+    # Build Playbook data structure:
+    the_setting = setting.setting
+    if new_value is True or new_value is False:
+        new_line = "settings.%s = %s" % (the_setting, new_value)
+    else:
+        # @ToDo: Handle lists/dicts (load into JSONS3?)
+        new_line = 'settings.%s = "%s"' % (the_setting, new_value)
+
+    playbook.append({"hosts": host_ip,
+                     "connection": connection,
+                     "remote_user": server.remote_user,
+                     "become_method": "sudo",
+                     #"become_user": "root",
+                     "tasks": [{"name": "Edit 000_config.py",
+                                "become": "yes",
+                                "lineinfile": {"dest": "/home/%s/applications/%s/models/000_config.py" % \
+                                                        (instance_type, appname),
+                                               "regexp": "^settings.%s =" % the_setting,
+                                               "line": new_line,
+                                               "state": "present",
+                                               },
+                                },
+                               {"name": "Compile",
+                                "command": "python web2py.py -S %s -M -R applications/%s/static/scripts/tools/compile.py" % \
+                                                (appname, appname),
+                                "args": {"chdir": "/home/%s" % instance_type,
+                                         },
+                                "become": "yes",
+                                # Admin scripts do this as root, so we need to be able to over-write
+                                #"become_user": "web2py",
+                                },
+                               {"name": "Restart WebServer",
+                                # We don't want to restart the UWSGI process running the Task until after the Task has completed
+                                #"service": {"name": service_name,
+                                #            "state": "restarted",
+                                #            },
+                                "shell": 'echo "service %s restart" | at now + 1 minutes' % service_name,
+                                "become": "yes",
+                                },
+                               ]
+                     })
+
+    # Write Playbook
+    name = "apply_%d" % int(time.time())
+    task_vars = setup_write_playbook("%s.yml" % name,
+                                     playbook,
+                                     )
+
+    # Run the Playbook
+    task_vars["instance_id"] = instance_id
+    current.s3task.schedule_task(name,
+                                 vars = task_vars,
+                                 function_name = "setup_run_playbook",
+                                 repeats = None,
+                                 timeout = 6000,
+                                 #sync_output = 300
+                                 )
+
+    # Update the DB to show that the setting has been applied
+    # @ToDo: Do this as a callback from the async task
+    setting.update_record(current_value = new_value,
+                          new_value = None,
+                          )
+
+# =============================================================================
+def setup_settings_apply(instance_id, settings):
+    """
+        Method to Apply Settings to an instance
+        via models/000_config.py
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    playbook = []
+
+    # Lookup Instance details
+    itable = s3db.setup_instance
+    instance = db(itable.id == instance_id).select(itable.id,
+                                                   itable.deployment_id,
+                                                   itable.type,
+                                                   limitby = (0, 1)
+                                                   ).first()
+    deployment_id = instance.deployment_id
+
+    # Lookup Server Details
+    # @ToDo: Support multiple Eden servers used as Load-balancers
+    svtable = s3db.setup_server
+    query = (svtable.deployment_id == deployment_id) & \
+            (svtable.role.belongs((1, 4)))
+    server = db(query).select(svtable.host_ip,
+                              svtable.remote_user,
+                              svtable.private_key,
+                              limitby = (0, 1)
+                              ).first()
+    host_ip = server.host_ip
+    if host_ip == "127.0.0.1":
+        connection = "local"
+    else:
+        private_key = server.private_key
+        if not private_key:
+            # Abort
+            return(current.T("Apply failed: SSH Key needed when applying away from localhost"))
+
+        connection = "smart"
+        # Add instance to host group (to associate private_key)
+        host_ip = "launched"
+        private_key = os.path.join(current.request.folder, "uploads", private_key)
+        playbook.append({"hosts": "localhost",
+                         "connection": "local",
+                         "gather_facts": "no",
+                         "tasks": [{"add_host": {"hostname": host_ip,
+                                                 "groupname": "launched",
+                                                 "ansible_ssh_private_key_file": private_key,
+                                                 },
+                                    },
+                                   ],
+                         })
+
+    appname = "eden" # @ToDo: Allow this to be configurable
+
+    instance_type = INSTANCE_TYPES[instance.type]
+
+    # Build List of Tasks
+    tasks = []
+    tappend = tasks.append
+    for setting in settings:
+        the_setting = setting.replace("_", ".", 1)
+        new_value = settings[setting]
+        if new_value == "True" or new_value == "False":
+            new_line = "settings.%s = %s" % (the_setting, new_value)
+        else:
+            # @ToDo: Handle lists/dicts (load into JSONS3?)
+            new_line = 'settings.%s = "%s"' % (the_setting, new_value)
+        tappend({"name": "Edit 000_config.py",
+                 "become": "yes",
+                 "lineinfile": {"dest": "/home/%s/applications/%s/models/000_config.py" % (instance_type, appname),
+                                "regexp": "^settings.%s =" % the_setting,
+                                "line": new_line,
+                                "state": "present",
+                                },
+                 })
+
+    tasks += [{"name": "Compile",
+               "command": "python web2py.py -S %s -M -R applications/%s/static/scripts/tools/compile.py" % \
+                            (appname, appname),
+               "args": {"chdir": "/home/%s" % instance_type,
+                        },
+               "become": "yes",
+               # Admin scripts do this as root, so we need to be able to over-write
+               #"become_user": "web2py",
+               },
+              # @ToDo: Handle case where need to restart multiple webservers
+              {"name": "Restart WebServer",
+               # We don't want to restart the UWSGI process running the Task until after the Task has completed
+               #"service": {"name": service_name,
+               #            "state": "restarted",
+               #            },
+               "shell": 'echo "service %s restart" | at now + 1 minutes' % service_name,
+               "become": "yes",
+               },
+              ]
+
+    playbook.append({"hosts": host_ip,
+                     "connection": connection,
+                     "remote_user": server.remote_user,
+                     "become_method": "sudo",
+                     #"become_user": "root",
+                     "tasks": tasks,
+                     })
+
+    # Write Playbook
+    name = "apply_%d" % int(time.time())
+    task_vars = setup_write_playbook("%s.yml" % name,
+                                     playbook,
+                                     )
+
+    # Run the Playbook
+    task_vars["instance_id"] = instance_id
+    current.s3task.schedule_task(name,
+                                 vars = task_vars,
+                                 function_name = "setup_run_playbook",
+                                 repeats = None,
+                                 timeout = 6000,
+                                 #sync_output = 300
+                                 )
+
+    # Update the DB to show that the settings have been applied
+    # @ToDo: Do this as a callback from the async task
+    instance.update_record(configured = True)
+    stable = s3db.setup_setting
+    q = (stable.instance_id == instance_id)
+    for setting in settings:
+        the_setting = setting.replace("_", ".", 1)
+        new_value = settings[setting]
+        db(q & (stable.setting == the_setting)).update(current_value = new_value,
+                                                       new_value = None)
 
 # =============================================================================
 class Storage2(Storage):
@@ -2302,6 +3478,66 @@ class setup_DeploymentRepresent(S3Represent):
         return row.setup_instance.url
 
 # =============================================================================
+class setup_MonitorTaskRepresent(S3Represent):
+
+    def __init__(self):
+        """
+            Constructor
+        """
+
+        super(setup_MonitorTaskRepresent, self).__init__(lookup = "setup_monitor_task",
+                                                         )
+
+    # -------------------------------------------------------------------------
+    def lookup_rows(self, key, values, fields=None):
+        """
+            Custom look-up of rows
+
+            @param key: the key field
+            @param values: the values to look up
+            @param fields: unused (retained for API compatibility)
+        """
+
+        db = current.db
+
+        table = self.table
+        #stable = db.setup_server
+        ctable = db.setup_monitor_check
+
+        count = len(values)
+        if count == 1:
+            query = (table.id == values[0])
+        else:
+            query = (table.id.belongs(values))
+
+        left = [#stable.on(stable.id == table.server_id),
+                ctable.on(ctable.id == table.check_id),
+                ]
+        rows = db(query).select(table.id,
+                                #stable.name,
+                                #stable.host_ip,
+                                ctable.name,
+                                left = left,
+                                limitby = (0, count),
+                                )
+        self.queries += 1
+        return rows
+
+    # -------------------------------------------------------------------------
+    def represent_row(self, row):
+        """
+            Represent a row
+
+            @param row: the Row
+        """
+
+        #return "%s (%s): %s" % (row["setup_server.name"],
+        #                        row["setup_server.host_ip"],
+        #                        row["setup_monitor_check.name"],
+        #                        )
+        return row["setup_monitor_check.name"]
+
+# =============================================================================
 def setup_rheader(r, tabs=None):
     """ Resource component page header """
 
@@ -2324,7 +3560,7 @@ def setup_rheader(r, tabs=None):
             button = A(T("Configuration Wizard"),
                        _class="action-btn",
                        _href=URL(c="setup", f="deployment",
-                                 args=[r.id, "wizard"],
+                                 args = [r.id, "wizard"],
                                  ),
                        )
 
@@ -2344,27 +3580,25 @@ def setup_rheader(r, tabs=None):
             rheader = DIV(rheader_tabs)
 
         elif r_name == "monitor_check":
-            tabs = [(T("Check Details"), None),
-                    # @ToDo: Move Inline
-                    (T("Options"), "option"),
-                    ]
-            rheader_tabs = s3_rheader_tabs(r, tabs)
+            #tabs = [(T("Check Details"), None),
+            #        ]
+            #rheader_tabs = s3_rheader_tabs(r, tabs)
 
-            record = r.record
-            table = r.table
-            rheader = DIV(TABLE(TR(TH("%s: " % table.name.label),
-                                   record.name),
-                                TR(TH("%s: " % table.function_name.label),
-                                   record.function_name),
-                                TR(TH("%s: " % table.comments.label),
-                                   record.comments or ""),
-                                ), rheader_tabs)
+            #record = r.record
+            #table = r.table
+            #rheader = DIV(TABLE(TR(TH("%s: " % table.name.label),
+            #                       record.name),
+            #                    TR(TH("%s: " % table.function_name.label),
+            #                       record.function_name),
+            #                    TR(TH("%s: " % table.comments.label),
+            #                       record.comments or ""),
+            #                    ), rheader_tabs)
+            # No tabs => No need for rheader
+            rheader = None
 
         elif r_name == "monitor_task":
             tabs = [(T("Task Details"), None),
-                    # @ToDo: Move Inline
-                    (T("Options"), "option"),
-                    (T("Logs"), "log"),
+                    (T("Logs"), "monitor_run"),
                     ]
             rheader_tabs = s3_rheader_tabs(r, tabs)
 

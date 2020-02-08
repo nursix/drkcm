@@ -54,11 +54,11 @@ class S3MainMenu(object):
 
             # Service menus, align-right
             # Note: always define right-hand items in reverse order!
-            cls.menu_help(right=True),
-            cls.menu_lang(right=True),
-            cls.menu_gis(right=True),
-            cls.menu_auth(right=True),
-            cls.menu_admin(right=True),
+            cls.menu_help(right = True),
+            cls.menu_lang(right = True),
+            cls.menu_gis(right = True),
+            cls.menu_auth(right = True),
+            cls.menu_admin(right = True),
         )
 
         return main_menu
@@ -180,10 +180,10 @@ class S3MainMenu(object):
                 menu_help.append(SEP())
             for row in tours:
                 menu_help.append(MM(row.name,
-                                    c=row.controller,
-                                    f=row.function,
-                                    vars={"tour":row.id},
-                                    restrict=row.role
+                                    c = row.controller,
+                                    f = row.function,
+                                    vars = {"tour": row.id},
+                                    restrict = row.role
                                     )
                                  )
 
@@ -209,11 +209,11 @@ class S3MainMenu(object):
             self_registration = settings.get_security_registration_visible()
             if self_registration == "index":
                 register = MM("Register", c="default", f="index", m="register",
-                               vars=dict(_next=login_next),
+                               vars={"_next": login_next},
                                check=self_registration)
             else:
                 register = MM("Register", m="register",
-                               vars=dict(_next=login_next),
+                               vars={"_next": login_next},
                                check=self_registration)
 
             if settings.get_auth_password_changes() and \
@@ -224,9 +224,9 @@ class S3MainMenu(object):
 
             menu_auth = MM("Login", c="default", f="user", m="login",
                            _id="auth_menu_login",
-                           vars=dict(_next=login_next), **attr)(
+                           vars={"_next": login_next}, **attr)(
                                 MM("Login", m="login",
-                                   vars=dict(_next=login_next)),
+                                   vars={"_next": login_next}),
                                 register,
                                 lost_pw,
                                 )
@@ -456,11 +456,11 @@ class S3OptionsMenu(object):
         #     re-use of this menu by other controllers
         return M()(
                     M("Setup", c="setup", f="deployment")(
-                        #M("Create", m="create"),
-                        #M("Servers", f="server")(
-                        #),
-                        #M("Instances", f="instance")(
-                        #),
+                        M("AWS Clouds", f="aws_cloud")(),
+                        M("GANDI DNS", f="gandi_dns")(),
+                        M("Deployments", f="deployment")(
+                            M("Create", m="create"),
+                        ),
                     ),
                     M("Settings", c="admin", f="setting")(
                         settings_messaging,
@@ -1031,6 +1031,27 @@ class S3OptionsMenu(object):
                         #M("Import", m="import", p="create"),
                     ),
                 )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def fin():
+        """ FINANCES """
+
+        return M(c="fin")(
+                    # TODO activate via deployment setting:
+                    M("Payment Services", f="payment_service")(
+                        M("Create", m="create"),
+                        ),
+                    # TODO activate via deployment setting:
+                    M("Products", f="product")(
+                        M("Create", m="create"),
+                        ),
+                    # TODO activate via deployment setting:
+                    M("Subscriptions", link=False)(
+                        M("Plans", f="subscription_plan"),
+                        M("Subscriptions", f="subscription"),
+                        ),
+                    )
 
     # -------------------------------------------------------------------------
     @staticmethod
