@@ -404,10 +404,6 @@ class FinProductModel(S3Model):
                            label = T("Reference Number"),
                            writable = False,
                            ),
-                     Field("update_url", # TODO not required => remove
-                           readable = False,
-                           writable = False,
-                           ),
                      *s3_meta_fields())
 
         # TODO Limit service selector to services of product-org
@@ -530,6 +526,10 @@ class FinSubscriptionModel(S3Model):
                           "MONTH": T("Months"),
                           "YEAR": T("Year"),
                           }
+        price_represent = lambda v, row=None: IS_FLOAT_AMOUNT.represent(v,
+                                                                        precision = 2,
+                                                                        fixed = True,
+                                                                        )
 
         tablename = "fin_subscription_plan"
         define_table(tablename,
@@ -569,11 +569,11 @@ class FinSubscriptionModel(S3Model):
                            label = T("Total Cycles"),
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 999)),
                            ),
-                     # TODO represent
                      Field("price", "double",
                            label = T("Price"),
                            requires = IS_FLOAT_AMOUNT(minimum = 0.01,
                                                       ),
+                           represent = price_represent,
                            ),
                      s3_currency(),
                      Field("status",
@@ -595,6 +595,16 @@ class FinSubscriptionModel(S3Model):
 
         # Table Configuration
         self.configure(tablename,
+                       list_fields = ["product_id",
+                                      "name",
+                                      "interval_count",
+                                      "interval_unit",
+                                      "fixed",
+                                      "total_cycles",
+                                      "price",
+                                      "currency",
+                                      "status",
+                                      ],
                        onvalidation = self.subscription_plan_onvalidation,
                        )
 
@@ -610,11 +620,10 @@ class FinSubscriptionModel(S3Model):
             msg_record_modified = T("Subscription Plan updated"),
             msg_record_deleted = T("Subscription Plan deleted"),
             msg_list_empty = T("No Subscription Plans currently registered"),
-        )
+            )
 
         # Reusable field
-        # TODO represent to include product name
-        represent = S3Represent(lookup=tablename, show_link=True)
+        represent = fin_SubscriptionPlanRepresent(show_link=True)
         plan_id = S3ReusableField("plan_id", "reference %s" % tablename,
                                   label = T("Plan"),
                                   represent = represent,
@@ -658,6 +667,7 @@ class FinSubscriptionModel(S3Model):
         self.configure(tablename,
                        editable = False,
                        deletable = False,
+                       onvalidation = self.subscription_plan_service_onvalidation,
                        onaccept = self.subscription_plan_service_onaccept,
                        #ondelete = self.subscription_plan_service_ondelete, TODO
                        )
@@ -680,11 +690,24 @@ class FinSubscriptionModel(S3Model):
         # Subscription
         # - track subscriptions and their status
         #
+        subscription_statuses = {
+            "NEW":              T("Registration Pending"),
+            "APPROVAL_PENDING": T("Approval Pending"),
+            "APPROVED":         T("Approved"), # but not yet activated
+            "ACTIVE":           T("Active"),
+            "SUSPENDED":        T("Suspended"),
+            "CANCELLED":        T("Cancelled"),
+            "EXPIRED":          T("Expired"),
+            }
+
+        subscriber_represent = self.pr_PersonEntityRepresent(show_label=False)
+
         tablename = "fin_subscription"
         define_table(tablename,
                      self.super_link("pe_id", "pr_pentity",
                                      label = T("Subscriber"),
                                      ondelete = "RESTRICT",
+                                     represent = subscriber_represent,
                                      readable = True,
                                      writable = False,
                                      ),
@@ -694,8 +717,26 @@ class FinSubscriptionModel(S3Model):
                      self.fin_service_id(ondelete = "CASCADE",
                                          writable = False,
                                          ),
+                     Field("status",
+                           default = "NEW",
+                           requires = IS_IN_SET(subscription_statuses,
+                                                zero = None,
+                                                ),
+                           represent = S3Represent(options=subscription_statuses,
+                                                   ),
+                           writable = False,
+                           ),
+                     s3_datetime("status_date",
+                                 label = T("Status verified on"),
+                                 default = "now",
+                                 writable = False,
+                                 ),
                      Field("refno",
                            label = T("Reference Number"),
+                           writable = False,
+                           ),
+                     Field("approval_url",
+                           label = T("Approval URL"),
                            writable = False,
                            ),
                      *s3_meta_fields())
@@ -704,12 +745,37 @@ class FinSubscriptionModel(S3Model):
                        list_fields = ["pe_id",
                                       "plan_id",
                                       "service_id",
-                                      "refno",
+                                      "status",
                                       ],
                        insertable = False,
                        editable = False,
                        deletable = False,
                        )
+
+        # Configure payment service callback methods
+        from s3.s3payments import S3Payments
+        self.set_method("fin", "subscription",
+                        method = "confirm",
+                        action = S3Payments,
+                        )
+        self.set_method("fin", "subscription",
+                        method = "cancel",
+                        action = S3Payments,
+                        )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Subscription"),
+            title_display = T("Subscription Details"),
+            title_list = T("Subscriptions"),
+            title_update = T("Edit Subscription"),
+            label_list_button = T("List Subscriptions"),
+            label_delete_button = T("Delete Subscription"),
+            msg_record_created = T("Subscription created"),
+            msg_record_modified = T("Subscription updated"),
+            msg_record_deleted = T("Subscription deleted"),
+            msg_list_empty = T("No Subscriptions currently registered"),
+            )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -760,6 +826,46 @@ class FinSubscriptionModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def subscription_plan_service_onvalidation(form):
+        """
+            Form validation of subscription_plan<=>service link:
+            - make sure the same plan is linked to a service only once
+        """
+
+        table = current.s3db.fin_subscription_plan_service
+
+        form_vars = form.vars
+
+        if "id" in form_vars:
+            record_id = form_vars.id
+        elif hasattr(form, "record_id"):
+            record_id = form.record_id
+        else:
+            record_id = None
+
+        plan_id = form_vars.get("plan_id", table.plan_id.default)
+        if not plan_id:
+            return
+
+        try:
+            service_id = form_vars.service_id
+        except AttributeError:
+            pass
+        else:
+            query = (table.plan_id == plan_id) & \
+                    (table.service_id == service_id) & \
+                    (table.deleted == False)
+            if record_id:
+                query &= (table.id != record_id)
+            if current.db(query).count():
+                msg = current.T("Plan is already registered with this service")
+                if "service_id" in form_vars:
+                    form.errors.service_id = msg
+                else:
+                    form.errors.plan_id = msg
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def subscription_plan_service_onaccept(form):
         """
             Onaccept of subscription_plan<=>service link:
@@ -797,6 +903,75 @@ class FinSubscriptionModel(S3Model):
                 success = adapter.register_subscription_plan(row.plan_id)
                 if not success:
                     current.response.error = "Service registration failed"
+
+# =============================================================================
+class fin_SubscriptionPlanRepresent(S3Represent):
+    """ Representation of subscription plan IDs """
+
+    def __init__(self, show_link=False):
+        """
+            Constructor
+
+            @param show_link: show representation as clickable link
+        """
+
+        super(fin_SubscriptionPlanRepresent, self).__init__(
+                                                lookup = "fin_subscription_plan",
+                                                show_link = show_link,
+                                                )
+
+    # -------------------------------------------------------------------------
+    def lookup_rows(self, key, values, fields=None):
+        """
+            Custom rows lookup
+
+            @param key: the key Field
+            @param values: the values
+            @param fields: unused (retained for API compatibility)
+        """
+
+        table = self.table
+
+        count = len(values)
+        if count == 1:
+            query = (key == values[0])
+        else:
+            query = key.belongs(values)
+
+        ptable = current.s3db.fin_product
+        left = [ptable.on(ptable.id == table.product_id)]
+
+        rows = current.db(query).select(table.id,
+                                        table.name,
+                                        ptable.name,
+                                        left = left,
+                                        limitby = (0, count),
+                                        )
+        self.queries += 1
+
+        return rows
+
+    # -------------------------------------------------------------------------
+    def represent_row(self, row):
+        """
+            Represent a row
+
+            @param row: the Row
+        """
+
+        try:
+            plan = row.fin_subscription_plan
+            product = row.fin_product
+        except AttributeError:
+            plan = row
+            product = None
+
+        if product:
+            reprstr = "%s: %s" % (product.name, plan.name)
+        else:
+            reprstr = plan.name
+
+        return reprstr
 
 # =============================================================================
 def fin_rheader(r, tabs=None):

@@ -2075,8 +2075,6 @@ class S3HRSkillModel(S3Model):
         else:
             filter_opts = (None,)
 
-        group = request.get_vars.get("group", None)
-
         c = current.request.controller
         if c not in ("hrm", "vol"):
             c = "hrm"
@@ -2487,6 +2485,13 @@ class S3HRSkillModel(S3Model):
                                         ),
                            readable = course_pass_marks,
                            writable = course_pass_marks,
+                           ),
+                     Field("url",
+                           label = T("URL"),
+                           requires = IS_EMPTY_OR(
+                                        IS_URL()
+                                        ),
+                           represent = s3_url_represent,
                            ),
                      s3_comments(label = T("Description"),
                                  comment = None,

@@ -69,15 +69,15 @@ class S3MainMenu(object):
 
         # ---------------------------------------------------------------------
         # Modules Menu
+        #
+        # Show all enabled modules in a way where it is easy to move them around
+        # without having to redefine a full menu
+        #
         # @todo: this is very ugly - cleanup or make a better solution
         # @todo: probably define the menu explicitly?
         #
         menu_modules = []
         all_modules = current.deployment_settings.modules
-
-        # Home always 1st (commented because redundant/unnecessary)
-        #module = all_modules["default"]
-        #menu_modules.append(MM(module.name_nice, c="default", f="index"))
 
         # Modules to hide due to insufficient permissions
         hidden_modules = current.auth.permission.hidden_modules()
@@ -88,15 +88,20 @@ class S3MainMenu(object):
                 if module in hidden_modules:
                     continue
                 _module = all_modules[module]
-                if (_module.module_type == module_type):
-                    if not _module.access:
-                        menu_modules.append(MM(_module.name_nice, c=module, f="index"))
+                if _module.get("module_type") == module_type:
+                    access = _module.get("access")
+                    if access:
+                        groups = re.split(r"\|", access)[1:-1]
+                        menu_modules.append(MM(_module.get("name_nice"),
+                                               c = module,
+                                               f = "index",
+                                               restrict = groups,
+                                               ))
                     else:
-                        groups = re.split(r"\|", _module.access)[1:-1]
-                        menu_modules.append(MM(_module.name_nice,
-                                               c=module,
-                                               f="index",
-                                               restrict=groups))
+                        menu_modules.append(MM(_module.get("name_nice"),
+                                               c = module,
+                                               f = "index",
+                                               ))
 
         # Modules to display off the 'more' menu
         modules_submenu = []
@@ -104,15 +109,20 @@ class S3MainMenu(object):
             if module in hidden_modules:
                 continue
             _module = all_modules[module]
-            if (_module.module_type == 10):
-                if not _module.access:
-                    modules_submenu.append(MM(_module.name_nice, c=module, f="index"))
+            if _module.get("module_type") == 10:
+                access = _module.get("access")
+                if access:
+                    groups = re.split(r"\|", access)[1:-1]
+                    modules_submenu.append(MM(_module.get("name_nice"),
+                                              c = module,
+                                              f = "index",
+                                              restrict = groups,
+                                              ))
                 else:
-                    groups = re.split(r"\|", _module.access)[1:-1]
-                    modules_submenu.append(MM(_module.name_nice,
-                                              c=module,
-                                              f="index",
-                                              restrict=groups))
+                    modules_submenu.append(MM(_module.get("name_nice"),
+                                              c = module,
+                                              f = "index",
+                                              ))
 
         if modules_submenu:
             # Only show the 'more' menu if there are entries in the list
@@ -282,7 +292,7 @@ class S3MainMenu(object):
                                 MM("Synchronization", c="sync", f="index"),
                                 MM("Translation", c="admin", f="translate",
                                    check=translate),
-                                MM("Test Results", f="result"),
+                                #MM("Test Results", f="result"),
                             )
         elif has_role("ORG_ADMIN"):
             menu_admin = MM(name_nice, c="admin", f="user", **attr)()
@@ -457,7 +467,11 @@ class S3OptionsMenu(object):
         return M()(
                     M("Setup", c="setup", f="deployment")(
                         M("AWS Clouds", f="aws_cloud")(),
+                        M("OpenStack Clouds", f="openstack_cloud")(),
                         M("GANDI DNS", f="gandi_dns")(),
+                        M("GoDaddy DNS", f="godaddy_dns")(),
+                        M("Google Email", f="google_email")(),
+                        M("SMTP SmartHosts", f="smtp")(),
                         M("Deployments", f="deployment")(
                             M("Create", m="create"),
                         ),
@@ -508,8 +522,8 @@ class S3OptionsMenu(object):
                        M("Add strings manually", c="admin", f="translate",
                          m="create", vars=dict(opt="4"))
                     ),
-                    M("View Test Result Reports", c="admin", f="result"),
-                    M("Portable App", c="admin", f="portable")
+                    #M("View Test Result Reports", c="admin", f="result"),
+                    #M("Portable App", c="admin", f="portable")
                 )
 
     # -------------------------------------------------------------------------
@@ -1515,11 +1529,10 @@ class S3OptionsMenu(object):
         get_vars = Storage()
         try:
             series_id = int(current.request.args[0])
-        except:
+        except (IndexError, ValueError):
             try:
-                (dummy, series_id) = current.request.get_vars["viewing"].split(".")
-                series_id = int(series_id)
-            except:
+                series_id = int(current.request.get_vars["viewing"].split(".")[1])
+            except (AttributeError, IndexError, ValueError):
                 pass
         if series_id:
             get_vars.viewing = "survey_complete.%s" % series_id
@@ -2255,12 +2268,12 @@ class S3OptionsMenu(object):
         # the main menu?
         if controller != "default":
             try:
-                breadcrumbs(
-                    layout(all_modules[controller].name_nice, c=controller)
-                )
-            except:
+                name_nice = all_modules[controller].get("name_nice", controller)
+            except KeyError:
                 # Module not defined
                 pass
+            else:
+                breadcrumbs(layout(name_nice, c = controller))
 
         # This checks the path in the options menu, omitting the top-level item
         # (because that's the menu itself which doesn't have a linked label):
@@ -2273,14 +2286,15 @@ class S3OptionsMenu(object):
                     for item in path[1:]:
                         breadcrumbs(
                             layout(item.label,
-                                   c=item.get("controller"),
-                                   f=item.get("function"),
-                                   args=item.args,
+                                   c = item.get("controller"),
+                                   f = item.get("function"),
+                                   args = item.args,
                                    # Should we retain the request vars in case
                                    # the item has no vars? Or shall we merge them
                                    # in any case? Didn't see the use-case yet
                                    # anywhere...
-                                   vars=item.vars))
+                                   vars = item.vars,
+                                   ))
         return breadcrumbs
 
 # END =========================================================================

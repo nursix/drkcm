@@ -145,8 +145,8 @@ def config(settings):
     settings.base.system_name_short = "RefuScope"
 
     # PrePopulate data
-    settings.base.prepopulate += ("DRKCM",)
-    settings.base.prepopulate_demo += ("DRKCM/Demo",)
+    settings.base.prepopulate.append("DRKCM")
+    settings.base.prepopulate_demo.append("DRKCM/Demo")
 
     # Theme (folder to use for views/layout.html)
     settings.base.theme = "DRK"
@@ -943,6 +943,9 @@ def config(settings):
                     else:
                         pe_label = None
 
+                    # Optional: use address in case files
+                    use_address = ui_options_get("case_use_address")
+
                     # Alternatives: site_id or simple text field
                     lodging_opt = ui_options_get("case_lodging")
                     if lodging_opt == "site":
@@ -958,14 +961,16 @@ def config(settings):
                         facts = ((T("Number of Clients"), "count(id)"),
                                  (T("Number of Actions"), "count(case_activity.response_action.id)"),
                                  )
-                        axes = ("gender",
+                        axes = ["gender",
                                 "person_details.nationality",
                                 "person_details.marital_status",
                                 "dvr_case.status_id",
                                 "dvr_case.site_id",
                                 "residence_status.status_type_id",
                                 "residence_status.permit_type_id",
-                                )
+                                ]
+                        if use_address:
+                            axes.insert(-3, (T("Place of Residence"), "~.location_id$L3"))
 
                         report_options = {
                             "rows": axes,
@@ -1103,7 +1108,7 @@ def config(settings):
                             on_site_until = None
 
                         # Optional: Address
-                        if ui_options_get("case_use_address"):
+                        if use_address:
                             address = S3SQLInlineComponent(
                                             "address",
                                             label = T("Current Address"),
@@ -2069,15 +2074,24 @@ def config(settings):
             field = table.need_details
             field.readable = field.writable = ui_options_get("activity_need_details")
 
-            # Embed vulnerability
+            # Embed PSS vulnerability
+            # - separate suspected diagnosis / (confirmed) diagnosis
             if ui_options_get("activity_pss_vulnerability"):
                 vulnerability = S3SQLInlineLink("vulnerability_type",
-                                                label = T("Diagnosis / Suspected"),
+                                                label = T("Suspected Diagnosis"),
                                                 field = "vulnerability_type_id",
-                                                multiple = False,
+                                                selectedList = 5,
+                                                #multiple = False,
                                                 )
+                diagnosis = S3SQLInlineLink("diagnosis",
+                                            label = T("Diagnosis"),
+                                            field = "vulnerability_type_id",
+                                            selectedList = 5,
+                                            #multiple = False,
+                                            )
             else:
                 vulnerability = None
+                diagnosis = None
 
             # Customise Priority
             field = table.priority
@@ -2209,6 +2223,7 @@ def config(settings):
 
                             subject_field,
                             vulnerability,
+                            diagnosis,
                             (T("Initial Situation Details"), ("need_details")),
 
                             "start_date",
@@ -2912,11 +2927,14 @@ def config(settings):
 
             # Vulnerability Axis
             if ui_options_get("activity_pss_vulnerability"):
-                diagnosis = (T("Diagnosis / Suspected"),
-                             "case_activity_id$vulnerability_type__link.vulnerability_type_id",
+                vulnerability = (T("Suspected Diagnosis"),
+                                 "case_activity_id$vulnerability_type__link.vulnerability_type_id",
+                                 )
+                diagnosis = (T("Diagnosis"),
+                             "case_activity_id$diagnosis__link.vulnerability_type_id",
                              )
             else:
-                diagnosis = None
+                vulnerability = diagnosis = None
 
             # Custom Report Options
             facts = ((T("Number of Actions"), "count(id)"),
@@ -2924,20 +2942,23 @@ def config(settings):
                      (T("Hours (Total)"), "sum(hours)"),
                      (T("Hours (Average)"), "avg(hours)"),
                      )
-            axes = ("person_id$gender",
+            axes = ["person_id$gender",
                     "person_id$person_details.nationality",
                     "person_id$person_details.marital_status",
                     (T("Size of Family"), "person_id$dvr_case.household_size"),
+                    vulnerability,
                     diagnosis,
                     response_type,
                     (T("Theme"), "response_theme_ids"),
                     need,
                     sector,
                     "human_resource_id",
-                    )
+                    ]
+            if ui_options_get("case_use_address"):
+                axes.insert(3, (T("Place of Residence"), "person_id$location_id$L3"))
             if multiple_orgs:
                 # Add case organisation as report axis
-                axes = axes + (org_context,)
+                axes.append(org_context)
 
             report_options = {
                 "rows": axes,

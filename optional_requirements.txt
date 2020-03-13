@@ -10,9 +10,9 @@ GDAL>=1.9.0 #from osgeo import ogr
 geopy>=1.18.1 #from geopy import geocoders
 # Warning: S3PDF unresolved dependency: reportlab required for PDF export
 reportlab>=2.5
-# Warning: S3Msg unresolved dependency pyserial required for Serial port modem usage
+# Warning: S3Msg unresolved dependency: pyserial required for Serial port modem usage
 pyserial>=2.6
-# Warning: S3Msg unresolved dependency tweepy required for non-Tropo Twitter support
+# Warning: S3Msg unresolved dependency: tweepy required for non-Tropo Twitter support
 tweepy>=1.9
 # Warning: S3XLS unresolved dependency: xlrd required for XLS export
 xlrd>=0.7.1
@@ -37,20 +37,26 @@ requests>=2.3.0
 # Warning: Setup unresolved dependency: ansible required for Setup Module
 ansible>=2.9.3
 # Warning: Setup unresolved dependency: PyYAML required for Setup Module
-PyYAML>=3.12 #yaml
+PyYAML>=5.1 #yaml
 # Warning: Setup unresolved dependency: ruamel.yaml required for Setup Module
 #ruamel.yaml>=0.15.35
-# Warning: Setup unresolved dependency: arrow used for some HRM functionality (currently just by IFRC)
+# Warning: Setup unresolved dependency: arrow used for some HRM functionality for IFRC
 #arrow>=0.10.0
 # Warning: Setup unresolved dependency: boto required for Setup Module to be able to manage AWS EC2 instances
 boto>=2.49.0
 # Warning: Setup unresolved dependency: boto required for Setup Module to be able to manage AWS EC2 keypairs
 boto3>=1.11.4
+# Warning: Setup unresolved dependency: openstacksdk required for Setup Module to be able to manage OpenStack instances
+openstacksdk>=0.41.0
 # Warning: Setup unresolved dependency: dnspython required for Setup Module to be able to do DNS Lookups
 dnspython>=1.16.0
+# Warning: Setup unresolved dependency: google-api-python-client required to be able to manage Google Email Groups
+google-api-python-client>=1.7.11
 # Warning: S3 unresolved dependency: pyparsing required for Calendar Support and Advanced URL Queries
 pyparsing>=2.0.1
 # Warning: URL shortener unresolved dependency: pyshorteners required to shorten the url (currently used by SAMBRO)
 #pyshorteners>=0.6.1
 # Warning: S3Doc unresolved dependency: docx-mailmerge required to merge into docx templates (currently used by DRKCM)
 #docx-mailmerge>=0.4.0
+# Warning: S3Translate unresolved dependency: translate-toolkit required for Pootle support
+translate-toolkit>=1.0.1

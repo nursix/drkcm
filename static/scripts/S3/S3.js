@@ -213,16 +213,17 @@ S3.addModals = function() {
                 'src': '',
                 // Set initial 'loading' class to show spinner until contents loaded
                 'class': 'loading',
-                'load': function() {
-                    // Call popup_loaded only once we have a src
-                    if ($(this).attr('src')) {
-                        S3.popup_loaded(id);
-                    }
-                },
                 'marginWidth': '0',
                 'marginHeight': '0',
                 'frameBorder': '0'
             }).appendTo('body');
+
+        dialog.on('load', function() {
+            // Call popup_loaded only once we have a src
+            if ($(this).attr('src')) {
+                S3.popup_loaded(id);
+            }
+        });
 
         // Create jQuery UI dialog
         var self = this;
@@ -516,9 +517,13 @@ S3.maxLength = {
  */
 var S3SetNavigateAwayConfirm = function(event, trigger) {
     if (trigger !== 'implicit') {
-        window.onbeforeunload = function() {
-            return i18n.unsaved_changes;
-        };
+        // The pseudo element isn't added unless the form is visible (although the change event still fires)
+        //var $this = $(this);
+        //if (!$this.is(':-internal-autofill-selected') && !$this.is(':-webkit-autofill')) {
+            window.onbeforeunload = function() {
+                return i18n.unsaved_changes;
+            };
+        //}
     }
 };
 
@@ -534,8 +539,9 @@ var S3EnableNavigateAwayConfirm = function() {
         }
         var form = $('form:not(.filter-form,.pt-form)');
 
-        $('input, textarea', form).keypress(S3SetNavigateAwayConfirm)
-                                  .change(S3SetNavigateAwayConfirm);
+        $('input, textarea', form).on('keypress', S3SetNavigateAwayConfirm);
+                                  // This gets triggered by browsers' Autofill:
+                                  //.on('change', S3SetNavigateAwayConfirm);
         $('select', form).change(S3SetNavigateAwayConfirm);
         form.submit(S3ClearNavigateAwayConfirm);
     });

@@ -35,7 +35,7 @@ import datetime
 import json
 import sys
 
-from gluon import current
+from gluon import current, URL
 
 from s3compat import PY2, HTTPError, URLError, urlencode, urllib2
 from .s3rest import S3Method
@@ -46,9 +46,54 @@ from .s3validators import JSONERRORS
 class S3Payments(S3Method):
     """ REST Methods to interact with online payment services """
 
-    # TODO implement
+    # -------------------------------------------------------------------------
+    def apply_method(self, r, **attr):
+        """
+            Page-render entry point for REST interface.
 
-    pass
+            @param r: the S3Request instance
+            @param attr: controller attributes
+        """
+
+        output = {}
+        if r.http == "GET":
+            method = r.method
+            if method == "confirm":
+                output = self.confirm_subscription(r, **attr)
+            elif method == "cancel":
+                output = self.cancel_subscription(r, **attr)
+            else:
+                r.error(405, current.ERROR.BAD_METHOD)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def confirm_subscription(self, r, **attr):
+        """
+            Check subscription status and trigger automated fulfillment
+
+            @param r: the S3Request instance
+            @param attr: controller attributes
+        """
+
+        # TODO implement
+
+        return {}
+
+    # -------------------------------------------------------------------------
+    def cancel_subscription(self, r, **attr):
+        """
+            Check subscription status and trigger automated cancelation
+
+            @param r: the S3Request instance
+            @param attr: controller attributes
+        """
+
+        # TODO implement
+
+        return {}
 
 # =============================================================================
 class S3PaymentLog(object):
@@ -217,6 +262,30 @@ class S3PaymentService(object):
             @param plan_id: the fin_subscription_plan record ID
 
             @returns: True if successful, or False on error
+        """
+        raise NotImplementedError
+
+    # -------------------------------------------------------------------------
+    def register_subscription(self, plan_id, pe_id):
+        """
+            Register a subscription with this service
+
+            @param plan_id: the subscription plan ID
+            @param pe_id: the subscriber PE ID
+
+            @returns: the record ID of the newly created subscription
+        """
+        raise NotImplementedError
+
+    # -------------------------------------------------------------------------
+    def check_subscription(self, subscription_id):
+        """
+            Check the current status of a subscription (and update it
+            in the database)
+
+            @param subscription_id: the subscription record ID
+
+            @returns: the current status of the subscription, or None on error
         """
         raise NotImplementedError
 
@@ -440,6 +509,104 @@ class S3PaymentService(object):
         return row.is_registered if row else False
 
     # -------------------------------------------------------------------------
+    @staticmethod
+    def get_subscriber_info(pe_id):
+        """
+            Retrieve information about the subscriber from the DB
+
+            @param pe_id: the PE ID of the subscriber
+
+            @returns: a tuple (info, error), where info is a dict like:
+                        {"first_name": first or only name
+                         "last_name":  last name
+                         "email":      email address
+                         }
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        subscriber = {}
+
+        # Look up subscriber type
+        petable = s3db.pr_pentity
+        query = (petable.pe_id == pe_id) & \
+                (petable.deleted == False)
+        entity = db(query).select(petable.instance_type,
+                                  limitby = (0, 1),
+                                  ).first()
+        if not entity:
+            return None, "Unknown subscriber #%s" % pe_id
+
+        subscriber_type = entity.instance_type
+        etable = s3db.table(subscriber_type)
+        if not etable:
+            return None, "Unknown subscriber type"
+
+        # Look up subscriber name
+        query = (etable.pe_id == pe_id) & \
+                (etable.deleted == False)
+        if subscriber_type == "org_organisation":
+            row = db(query).select(etable.name,
+                                   limitby = (0, 1),
+                                   ).first()
+            subscriber["first_name"] = row.name
+        elif subscriber_type == "pr_person":
+            row = db(query).select(etable.first_name,
+                                   etable.last_name,
+                                   limitby = (0, 1),
+                                   ).first()
+            subscriber["first_name"] = row.first_name
+            subscriber["last_name"] = row.last_name
+        else:
+            return None, "Invalid subscriber type %s" % subscriber_type
+
+        # Look up subscriber email-address
+        ctable = s3db.pr_contact
+        query = (ctable.pe_id == pe_id) & \
+                (ctable.contact_method == "EMAIL") & \
+                (ctable.deleted == False)
+        # If the user can differentiate between public and private
+        # email addresses, then exclude the private ones
+        setting = current.deployment_settings.get_pr_contacts_tabs()
+        if "private" in setting:
+            query &= ((ctable.access == 2) | (ctable.access == None))
+
+        row = db(query).select(ctable.value,
+                               orderby = ctable.priority,
+                               limitby = (0, 1),
+                               ).first()
+        if row:
+            subscriber["email"] = row.value
+
+        return subscriber, None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_merchant_name(product_id):
+        """
+            Get the merchant name (org name) for a product
+
+            @param product_id: the product ID
+
+            @returns: the name as string, or None if not available
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ptable = s3db.fin_product
+        otable = s3db.org_organisation
+        query = (ptable.id == product_id) & \
+                (otable.id == ptable.organisation_id) & \
+                (ptable.deleted == False)
+        row = db(query).select(otable.name,
+                               limitby = (0, 1),
+                               ).first()
+
+        return row.name if row else None
+
+    # -------------------------------------------------------------------------
     # Factory Method
     # -------------------------------------------------------------------------
     @staticmethod
@@ -639,12 +806,6 @@ class PayPalAdapter(S3PaymentService):
 
                     # Extract registration details from response
                     refno = response["id"]
-                    update_url = None
-                    links = response["links"]
-                    for link in links:
-                        if link["rel"] == "edit":
-                            update_url = link["href"]
-                            break
 
                     # Create or update product<=>service link
                     # - no onaccept here (onaccept calls this)
@@ -656,7 +817,6 @@ class PayPalAdapter(S3PaymentService):
                         service_id = self.service_id,
                         is_registered = True,
                         refno = refno,
-                        update_url = update_url,
                         )
 
         return success
@@ -897,5 +1057,230 @@ class PayPalAdapter(S3PaymentService):
         self.log.info(action, "Not yet implemented")
 
         return True
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_subscriber_info(pe_id):
+        """
+            Retrieve information about the subscriber from the DB
+
+            @param pe_id: the PE ID of the subscriber
+
+            @returns: a tuple (info, error)
+        """
+
+        info, error = S3PaymentService.get_subscriber_info(pe_id)
+        if error:
+            return None, error
+        else:
+            # Map info to PayPal-specific structure
+            name = {"given_name": info["first_name"],
+                    }
+            if "last_name" in info:
+                name["surname"] = info["last_name"]
+            subscriber = {"name": name}
+            if "email" in info:
+                subscriber["email_address"] = info["email"]
+
+        return subscriber, None
+
+    # -------------------------------------------------------------------------
+    def register_subscription(self, plan_id, pe_id):
+        """
+            Register a subscription with this service
+
+            @param plan_id: the subscription plan ID
+            @param pe_id: the subscriber PE ID
+
+            @returns: the record ID of the newly created subscription
+        """
+
+        action = "Register subscription for subscriber #%s with plan #%s" % (pe_id, plan_id)
+
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup subscription plan
+        sptable = s3db.fin_subscription_plan
+        query = (sptable.id == plan_id) & \
+                (sptable.status != "INACTIVE") & \
+                (sptable.deleted == False)
+        plan = db(query).select(sptable.id,
+                                sptable.product_id,
+                                limitby = (0, 1),
+                                ).first()
+        if not plan:
+            self.log.fatal(action, "Subscription plan not found")
+            return None
+
+        # Make sure subscription plan is registered with this service
+        if not self.has_subscription_plan(plan_id) and \
+           not self.register_subscription_plan(plan_id):
+            self.log.fatal(action, "Could not register subscription plan #%s" % plan_id)
+            return None
+
+        # Look up subscription plan reference number
+        ltable = s3db.fin_subscription_plan_service
+        query = (ltable.plan_id == plan_id) & \
+                (ltable.service_id == self.service_id) & \
+                (ltable.deleted == False)
+        registration = db(query).select(ltable.refno,
+                                        limitby = (0, 1),
+                                        ).first()
+        refno = registration.refno
+
+        # Look up merchant
+        merchant = self.get_merchant_name(plan.product_id)
+        if not merchant:
+            self.log.warning(action, "Unknown merchant")
+            merchant = "Unknown"
+
+        # Look up subscriber
+        subscriber, error = self.get_subscriber_info(pe_id)
+        if error:
+            self.log.fatal(action, error)
+            return None
+
+        # Create the subscription record (registration pending),
+        stable = s3db.fin_subscription
+        subscription_id = stable.insert(plan_id = plan_id,
+                                        service_id = self.service_id,
+                                        pe_id = pe_id,
+                                        #status = "NEW",
+                                        )
+        if not subscription_id:
+            self.log.fatal(action, "Could not create subscription")
+            return None
+
+        # The URL to return to upon approval/cancel:
+        return_url = URL(c = "fin",
+                         f = "subscription",
+                         args = [subscription_id, "confirm"],
+                         host = True,
+                         )
+        cancel_url = URL(c = "fin",
+                         f = "subscription",
+                         args = [subscription_id, "cancel"],
+                         host = True,
+                         )
+
+        # Subscription application details
+        application = {"brand_name": merchant,
+                       "locale": "en-US",
+                       "shipping_preference": "NO_SHIPPING",
+                       # With user_action=="CONTINUE", a separate API request
+                       # is required to activate the subscription, whereas
+                       # "SUBSCRIBE_NOW" will auto-activate it after the
+                       # consensus dialog is completed
+                       "user_action": "SUBSCRIBE_NOW",
+
+                       "payment_method": {
+                           "payer_selected": "PAYPAL",
+                           "payee_preferred": "IMMEDIATE_PAYMENT_REQUIRED"
+                           },
+                       "return_url": return_url,
+                       "cancel_url": cancel_url,
+                       }
+
+        data = {"plan_id": refno,
+                "subscriber": subscriber,
+                "application_context": application,
+                }
+
+        response, status, error = self.http(method = "POST",
+                                            path = "/v1/billing/subscriptions",
+                                            data = data,
+                                            auth = "Token",
+                                            )
+
+        if error:
+            reason = ("%s %s" % (status, error)) if status else error
+            self.log.error(action, reason)
+            db(stable.id==subscription_id).delete()
+            subscription_id = None
+        else:
+            # Extract the subscription reference (ID)
+            ref = response["id"]
+            if not ref:
+                self.log.error(action, "No subscription reference received")
+                db(stable.id==subscription_id).delete()
+                return None
+
+            # Get the approval URL
+            links = response["links"]
+            for link in links:
+                if link["rel"] == "approve":
+                    approval_url = link["href"]
+                    break
+
+            # Store reference and approval URL
+            db(stable.id==subscription_id).update(refno = ref,
+                                                  approval_url = approval_url,
+                                                  )
+            self.log.success(action)
+
+        return subscription_id
+
+    # -------------------------------------------------------------------------
+    def check_subscription(self, subscription_id):
+        """
+            Check the current status of a subscription and update it
+            in the database; triggers onaccept callback(s) for the
+            subscription to prompt automated fulfillment/cancelation
+            actions
+
+            @param subscription_id: the subscription record ID
+
+            @returns: the current status of the subscription, or None on error
+        """
+
+        action = "Check subscription #%s" % subscription_id
+
+        db = current.db
+        s3db = current.s3db
+
+        stable = s3db.fin_subscription
+        row = db(stable.id == subscription_id).select(stable.refno,
+                                                      limitby = (0, 1),
+                                                      ).first()
+        if not row:
+            self.log.error(action, "Subscription not found")
+            return None
+
+        status_path = "/v1/billing/subscriptions/%s" % row.refno
+        response, status, error = self.http(method = "GET",
+                                            path = status_path,
+                                            auth = "Token",
+                                            )
+        if error:
+            if status == 404:
+                # Subscription does not exist
+                self.log.warning(action, "Subscription not found")
+                subscription_status = "CANCELLED"
+            else:
+                # Status-Check failed
+                reason = ("%s %s" % (status, error)) if status else error
+                self.log.error(action, reason)
+                return None
+        else:
+            # Read subscription status from response
+            subscription_status = response.get("status")
+            if subscription_status:
+                self.log.success(action)
+            else:
+                subscription_status = None
+                self.log.warning(action, "Unclear subscription status")
+
+        # Update status in any case (even if None), so callbacks
+        # can take appropriate action
+        data = {"status": subscription_status,
+                "status_date": datetime.datetime.utcnow()
+                }
+        db(stable.id==subscription_id).update(**data)
+        # Call onaccept to trigger automated fulfillment/cancelation actions
+        data["id"] = subscription_id
+        s3db.onaccept(stable, data, method="update")
+
+        return subscription_status
 
 # END =========================================================================
