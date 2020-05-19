@@ -1,0 +1,4 @@
+Name,All Day,Start,End
+8am-3pm,No,"08:00","15:00"
+3pm-10pm,No,"15:00","22:00"
+10pm-8am,No,"22:00","08:00"

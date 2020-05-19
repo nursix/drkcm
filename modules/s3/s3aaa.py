@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: (c) 2010-2019 Sahana Software Foundation
+    @copyright: (c) 2010-2020 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -162,11 +162,6 @@ class AuthS3(Auth):
         messages.lock_keys = False
 
         # @ToDo Move these to deployment_settings
-        messages.approve_user = \
-"""Your action is required to approve a New User for %(system_name)s:
-%(first_name)s %(last_name)s
-%(email)s
-Please go to %(url)s to approve this user."""
         messages.email_approver_failed = "Failed to send mail to Approver - see if you can notify them manually!"
         messages.email_sent = "Verification Email sent - please check your email to validate. If you do not receive this email please check your junk email or spam filters"
         messages.email_verification_failed = "Unable to send verification email - either your email is invalid or our email server is down"
@@ -567,9 +562,9 @@ Thank you"""
                     # Default Registration page
                     controller = "user"
                 register_link = A(T("Register for Account"),
-                                  _href=URL(f=controller, args="register"),
-                                  _id="register-btn",
-                                  _class="action-lnk",
+                                  _href = URL(f=controller, args="register"),
+                                  _id = "register-btn",
+                                  _class = "action-lnk",
                                   )
                 buttons.append(register_link)
 
@@ -579,8 +574,8 @@ Thank you"""
                     lost_pw_link = deployment_settings.get_auth_password_changes()
                 if lost_pw_link:
                     lost_pw_link = A(T("Lost Password"),
-                                     _href=URL(f="user", args="retrieve_password"),
-                                     _class="action-lnk",
+                                     _href = URL(f="user", args="retrieve_password"),
+                                     _class = "action-lnk",
                                      )
                     buttons.append(lost_pw_link)
 
@@ -591,7 +586,7 @@ Thank you"""
 
             form = SQLFORM(utable,
                            fields = [userfield, passfield],
-                           hidden = dict(_next=request.vars._next),
+                           hidden = {"_next": request.vars._next},
                            showid = settings.showid,
                            submit_button = T("Login"),
                            delete_label = messages.delete_label,
@@ -607,13 +602,13 @@ Thank you"""
                 # Add a new input checkbox "remember me for longer"
                 s3_addrow(form,
                           "",
-                          DIV(INPUT(_type="checkbox",
-                                    _class="checkbox",
-                                    _id="auth_user_remember",
-                                    _name="remember",
+                          DIV(INPUT(_type = "checkbox",
+                                    _class = "checkbox",
+                                    _id = "auth_user_remember",
+                                    _name = "remember",
                                     ),
                               LABEL(messages.label_remember_me,
-                                    _for="auth_user_remember",
+                                    _for = "auth_user_remember",
                                     ),
                               ),
                           "",
@@ -812,10 +807,10 @@ Thank you"""
 
     # -------------------------------------------------------------------------
     def change_password(self,
-                        next=DEFAULT,
-                        onvalidation=DEFAULT,
-                        onaccept=DEFAULT,
-                        log=DEFAULT,
+                        next = DEFAULT,
+                        onvalidation = DEFAULT,
+                        onaccept = DEFAULT,
+                        log = DEFAULT,
                         ):
         """
             Returns a form that lets the user change password
@@ -823,7 +818,7 @@ Thank you"""
 
         if not self.is_logged_in():
             redirect(self.settings.login_url,
-                     client_side=self.settings.client_side)
+                     client_side = self.settings.client_side)
 
         messages = self.messages
         settings = self.settings
@@ -843,29 +838,31 @@ Thank you"""
         passfield = settings.password_field
         form = SQLFORM.factory(
             Field("old_password", "password",
-                  label=messages.old_password,
-                  requires=utable[passfield].requires),
+                  label = messages.old_password,
+                  requires = utable[passfield].requires),
             Field("new_password", "password",
-                  label=messages.new_password,
-                  requires=utable[passfield].requires),
+                  label = messages.new_password,
+                  requires = utable[passfield].requires),
             Field("new_password2", "password",
-                  label=messages.verify_password,
-                  requires=[IS_EXPR(
+                  label = messages.verify_password,
+                  requires = [IS_EXPR(
                     "value==%s" % repr(request.vars.new_password),
                               messages.mismatched_password)]),
-            submit_button=messages.password_change_button,
-            hidden=dict(_next=next),
-            formstyle=current.deployment_settings.get_ui_formstyle(),
-            separator=settings.label_separator
+            submit_button = messages.password_change_button,
+            hidden = {"_next": next},
+            formstyle = current.deployment_settings.get_ui_formstyle(),
+            separator = settings.label_separator
         )
         form.add_class("auth_change_password")
 
         if form.accepts(request, session,
-                        formname="change_password",
-                        onvalidation=onvalidation,
-                        hideerror=settings.hideerror):
+                        formname = "change_password",
+                        onvalidation = onvalidation,
+                        hideerror = settings.hideerror):
 
-            if not form.vars["old_password"] == s.select(limitby=(0,1), orderby_on_limitby=False).first()[passfield]:
+            if not form.vars["old_password"] == s.select(limitby = (0, 1),
+                                                         orderby_on_limitby = False
+                                                         ).first()[passfield]:
                 form.errors["old_password"] = messages.invalid_password
             else:
                 d = {passfield: str(form.vars.new_password)}
@@ -874,7 +871,7 @@ Thank you"""
                 self.log_event(log, self.user)
                 callback(onaccept, form)
                 if not next:
-                    next = self.url(args=request.args)
+                    next = self.url(args = request.args)
                 else:
                     next = replace_id(next, form)
                 redirect(next, client_side=settings.client_side)
@@ -883,10 +880,10 @@ Thank you"""
 
     # -------------------------------------------------------------------------
     def reset_password(self,
-                       next=DEFAULT,
-                       onvalidation=DEFAULT,
-                       onaccept=DEFAULT,
-                       log=DEFAULT,
+                       next = DEFAULT,
+                       onvalidation = DEFAULT,
+                       onaccept = DEFAULT,
+                       log = DEFAULT,
                        ):
         """
             Returns a form to reset the user password, overrides web2py's
@@ -953,8 +950,9 @@ Thank you"""
             formstyle = settings.formstyle,
             separator = settings.label_separator
             )
-        if form.accepts(request, session, onvalidation=onvalidation,
-                        hideerror=settings.hideerror):
+        if form.accepts(request, session,
+                        onvalidation = onvalidation,
+                        hideerror = settings.hideerror):
             user.update_record(
                 **{passfield: str(form.vars.new_password),
                    "registration_key": "",
@@ -1016,7 +1014,7 @@ Thank you"""
                          error_message=messages.invalid_username)]
         form = SQLFORM(utable,
                        fields = [userfield],
-                       hidden = dict(_next=next),
+                       hidden = {"_next": next},
                        showid = settings.showid,
                        submit_button = messages.password_reset_button,
                        delete_label = messages.delete_label,
@@ -1133,11 +1131,11 @@ Thank you"""
                 closestpoint = current.s3db.gis_location.insert(**newpoint)
                 s3tracker(db.pr_person,
                           person_id).set_location(closestpoint,
-                                                  timestmp=request.utcnow)
+                                                  timestmp = request.utcnow)
             elif closestpoint != 0:
                 s3tracker(db.pr_person,
                           person_id).set_location(closestpoint,
-                                                  timestmp=request.utcnow)
+                                                  timestmp = request.utcnow)
 
     # -------------------------------------------------------------------------
     def register(self,
@@ -1181,7 +1179,7 @@ Thank you"""
         # S3: Don't allow registration if disabled
         if not deployment_settings.get_security_self_registration():
             session.error = messages.registration_disabled
-            redirect(URL(args=["login"]))
+            redirect(URL(args = ["login"]))
 
         if self.is_logged_in() and request.function != "index":
             redirect(settings.logged_url)
@@ -1201,16 +1199,18 @@ Thank you"""
 
         formstyle = deployment_settings.get_ui_formstyle()
         REGISTER = T("Register")
-        buttons = [INPUT(_type="submit", _value=REGISTER),
+        buttons = [INPUT(_type = "submit",
+                         _value = REGISTER,
+                         ),
                    A(T("Login"),
-                     _href=URL(f="user", args="login"),
-                     _id="login-btn",
-                     _class="action-lnk",
+                     _href = URL(f="user", args="login"),
+                     _id = "login-btn",
+                     _class = "action-lnk",
                      ),
                    ]
         current.response.form_label_separator = ""
         form = SQLFORM(utable,
-                       hidden = dict(_next=request.vars._next),
+                       hidden = {"_next": request.vars._next},
                        labels = labels,
                        separator = "",
                        showid = settings.showid,
@@ -1235,16 +1235,16 @@ Thank you"""
                 s3_addrow(form,
                           LABEL(DIV("%s:" % messages.verify_password,
                                     SPAN("*", _class="req"),
-                                    _for="password_two",
-                                    _id=field_id + SQLFORM.ID_LABEL_SUFFIX,
+                                    _for = "password_two",
+                                    _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                                     ),
                                 ),
-                          INPUT(_name="password_two",
-                                _id=field_id,
-                                _type="password",
-                                requires=IS_EXPR("value==%s" % \
+                          INPUT(_name = "password_two",
+                                _id = field_id,
+                                _type = "password",
+                                requires = IS_EXPR("value==%s" % \
                                     repr(request.vars.get(passfield, None)),
-                                error_message=messages.mismatched_password)
+                                error_message = messages.mismatched_password)
                                 ),
                           "",
                           formstyle,
@@ -1256,16 +1256,20 @@ Thank you"""
         # @ToDo: Replace with Consent Tracking
         if deployment_settings.get_auth_opt_in_to_email():
             field_id = "%s_opt_in" % utablename
-            comment = DIV(DIV(_class="tooltip",
-                              _title="%s|%s" % (T("Mailing list"),
-                                                T("By selecting this you agree that we may contact you."))))
+            comment = DIV(DIV(_class = "tooltip",
+                              _title = "%s|%s" % (T("Mailing list"),
+                                                  T("By selecting this you agree that we may contact you."))))
             checked = deployment_settings.get_auth_opt_in_default() and "selected"
             s3_addrow(form,
                       LABEL("%s:" % T("Receive updates"),
-                            _for="opt_in",
-                            _id=field_id + SQLFORM.ID_LABEL_SUFFIX,
+                            _for = "opt_in",
+                            _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                             ),
-                      INPUT(_name="opt_in", _id=field_id, _type="checkbox", _checked=checked),
+                      INPUT(_name = "opt_in",
+                            _id = field_id,
+                            _type = "checkbox",
+                            _checked = checked,
+                            ),
                       comment,
                       formstyle,
                       field_id + SQLFORM.ID_ROW_SUFFIX,
@@ -1279,10 +1283,12 @@ Thank you"""
                     field_id = "%s_home" % utablename
                     s3_addrow(form,
                               LABEL("%s:" % T("Home Phone"),
-                                    _for="home",
-                                    _id=field_id + SQLFORM.ID_LABEL_SUFFIX,
+                                    _for = "home",
+                                    _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                                     ),
-                              INPUT(_name="home", _id=field_id),
+                              INPUT(_name = "home",
+                                    _id = field_id,
+                                    ),
                               "",
                               formstyle,
                               field_id + SQLFORM.ID_ROW_SUFFIX,
@@ -1306,8 +1312,8 @@ Thank you"""
                     s3_addrow(form,
                               LABEL("%s:" % deployment_settings.get_ui_label_mobile_phone(),
                                     mandatory,
-                                    _for="mobile",
-                                    _id=field_id + SQLFORM.ID_LABEL_SUFFIX,
+                                    _for = "mobile",
+                                    _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                                     ),
                               INPUT(_name="mobile", _id=field_id),
                               comment,
@@ -1319,18 +1325,20 @@ Thank you"""
         # S3: Insert Photo widget into form
         if deployment_settings.get_auth_registration_requests_image():
             label = self.messages.label_image
-            comment = DIV(_class="stickytip",
-                          _title="%s|%s" % (label,
-                                            self.messages.help_image % \
-                                                dict(gravatar = A("Gravatar",
-                                                                  _target="top",
-                                                                  _href="http://gravatar.com"))))
+            comment = DIV(_class = "stickytip",
+                          _title = "%s|%s" % (label,
+                                              self.messages.help_image % \
+                                                {"gravatar": A("Gravatar",
+                                                               _target = "top",
+                                                               _href = "http://gravatar.com",
+                                                               )
+                                                 }))
             field_id = "%s_image" % utablename
             widget = SQLFORM.widgets["upload"].widget(current.s3db.pr_image.image, None)
             s3_addrow(form,
                       LABEL("%s:" % label,
-                            _for="image",
-                            _id=field_id + SQLFORM.ID_LABEL_SUFFIX,
+                            _for = "image",
+                            _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                             ),
                       widget,
                       comment,
@@ -1342,19 +1350,19 @@ Thank you"""
         if deployment_settings.get_auth_terms_of_service():
             field_id = "%s_tos" % utablename
             label = T("I agree to the %(terms_of_service)s") % \
-                dict(terms_of_service=A(T("Terms of Service"),
-                                        _href=URL(c="default", f="tos"),
-                                        _target="_blank",
-                                        ))
+                {"terms_of_service": A(T("Terms of Service"),
+                                       _href = URL(c="default", f="tos"),
+                                       _target = "_blank",
+                                       )}
             label = XML("%s:" % label)
             s3_addrow(form,
                       LABEL(label,
-                            _for="tos",
-                            _id=field_id + SQLFORM.ID_LABEL_SUFFIX,
+                            _for = "tos",
+                            _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                             ),
-                      INPUT(_name="tos",
-                            _id=field_id,
-                            _type="checkbox",
+                      INPUT(_name = "tos",
+                            _id = field_id,
+                            _type = "checkbox",
                             ),
                       "",
                       formstyle,
@@ -1373,7 +1381,7 @@ Thank you"""
             self.s3_user_register_onaccept(form)
 
             users = db(utable.id > 0).select(utable.id,
-                                             limitby=(0, 2))
+                                             limitby = (0, 2))
             if len(users) == 1:
                 # 1st user to register doesn't need verification/approval
                 self.s3_approve_user(form.vars)
@@ -1396,19 +1404,20 @@ Thank you"""
                 # Send the Verification email
                 if not settings.mailer or \
                    not settings.mailer.settings.server or \
-                   not settings.mailer.send(to=form.vars.email,
-                                            subject=messages.verify_email_subject % \
-    dict(system_name=deployment_settings.get_system_name()),
-                                            message=messages.verify_email % \
-            dict(url="%s/default/user/verify_email/%s" % \
-                (current.response.s3.base_url, key))):
+                   not settings.mailer.send(to = form.vars.email,
+                                            subject = messages.verify_email_subject % \
+    {"system_name": deployment_settings.get_system_name()},
+                                            message = messages.verify_email % \
+            {"url": "%s/default/user/verify_email/%s" % \
+                (current.response.s3.base_url, key)}):
                     current.response.error = messages.email_verification_failed
                     return form
                 # @ToDo: Deployment Setting?
                 #session.confirmation = messages.email_sent
                 next = URL(c="default", f="message",
                            args = ["verify_email_sent"],
-                           vars = {"email": form.vars.email})
+                           vars = {"email": form.vars.email},
+                           )
 
             else:
                 # Does the user need to be approved?
@@ -1457,7 +1466,7 @@ Thank you"""
         reset_password_url = "%s/default/user/reset_password?key=%s" % \
                              (current.response.s3.base_url, reset_password_key)
 
-        message = self.messages.reset_password % dict(url=reset_password_url)
+        message = self.messages.reset_password % {"url": reset_password_url}
         if mailer.send(to=user.email,
                        subject=self.messages.reset_password_subject,
                        message=message):
@@ -1648,7 +1657,7 @@ Thank you"""
                        self.user.id,
                        fields = settings.profile_fields,
                        labels = labels,
-                       hidden = dict(_next=next),
+                       hidden = {"_next": next},
                        showid = settings.showid,
                        submit_button = messages.profile_save_button,
                        delete_label = messages.delete_label,
@@ -1698,11 +1707,15 @@ Thank you"""
                     checked = None
                 s3_addrow(form,
                           LABEL(T("Receive %(opt_in)s updates:") % \
-                                                        dict(opt_in=opt_in),
-                                _for="opt_in",
-                                _id=field_id + SQLFORM.ID_LABEL_SUFFIX),
-                          INPUT(_name=opt_in, _id=field_id,
-                                           _type="checkbox", _checked=checked),
+                                                        {"opt_in": opt_in},
+                                _for = "opt_in",
+                                _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
+                                ),
+                          INPUT(_name = opt_in,
+                                _id = field_id,
+                                _type = "checkbox",
+                                _checked = checked,
+                                ),
                           "",
                           formstyle,
                           field_id + SQLFORM.ID_ROW_SUFFIX,
@@ -2419,6 +2432,49 @@ $.filterOptionsS3({
             temptable.update_or_insert(**record)
 
     # -------------------------------------------------------------------------
+    @staticmethod
+    def s3_approve_user_message(user, languages):
+        """
+            Default construction of Messages to (Org_)Admins to approve a new user
+        """
+
+        approve_user_message = \
+"""Your action is required to approve a New User for %(system_name)s:
+%(first_name)s %(last_name)s
+%(email)s
+Please go to %(url)s to approve this user."""
+
+        T = current.T
+        subjects = {}
+        messages = {}
+        first_name = user.first_name
+        last_name = user.last_name
+        email = user.email
+        user_id = user.id
+        base_url = current.response.s3.base_url
+        system_name = current.deployment_settings.get_system_name()
+        for language in languages:
+            T.force(language)
+            subjects[language] = \
+                s3_str(T("%(system_name)s - New User Registration Approval Pending") % \
+                        {"system_name": system_name})
+            messages[language] = s3_str(approve_user_message % \
+                        {"system_name": system_name,
+                         "first_name": first_name,
+                         "last_name": last_name,
+                         "email": email,
+                         "url": "%(base_url)s/admin/user/%(id)s" % \
+                                {"base_url": base_url,
+                                 "id": user_id,
+                                 },
+                         })
+
+        # Restore language for UI
+        T.force(current.session.s3.language)
+
+        return subjects, messages
+
+    # -------------------------------------------------------------------------
     def s3_verify_user(self, user):
         """"
             Designed to be called when a user is verified through:
@@ -2440,14 +2496,12 @@ $.filterOptionsS3({
         auth_messages = self.messages
         utable = self.settings.table_user
 
-        user_id = user.id
-
         # Lookup the Approver
         approver, organisation_id = self.s3_approver(user)
 
         if deployment_settings.get_auth_registration_requires_approval() and approver:
             approved = False
-            db(utable.id == user_id).update(registration_key = "pending")
+            db(utable.id == user.id).update(registration_key = "pending")
 
             if user.registration_key:
                 # User has just been verified
@@ -2462,7 +2516,7 @@ $.filterOptionsS3({
             if organisation_id and not user.get("organisation_id", None):
                 # Use the whitelist
                 user["organisation_id"] = organisation_id
-                db(utable.id == user_id).update(organisation_id = organisation_id)
+                db(utable.id == user.id).update(organisation_id = organisation_id)
                 link_user_to = deployment_settings.get_auth_registration_link_user_to_default()
                 if link_user_to and not user.get("link_user_to", None):
                     user["link_user_to"] = link_user_to
@@ -2480,7 +2534,7 @@ $.filterOptionsS3({
         if "@" in approver:
             # Look up language of the user
             record = db(utable.email == approver).select(utable.language,
-                                                         limitby=(0, 1)
+                                                         limitby = (0, 1)
                                                          ).first()
             if record:
                 language = record.language
@@ -2500,31 +2554,25 @@ $.filterOptionsS3({
                     languages.append(language)
                 aappend(each_approver)
 
-        T = current.T
-        subjects = {}
-        messages = {}
-        first_name = user.first_name
-        last_name = user.last_name
-        email = user.email
-        base_url = current.response.s3.base_url
-        system_name = deployment_settings.get_system_name()
-        for language in languages:
-            T.force(language)
-            if message == "approve_user":
-                subjects[language] = \
-                    s3_str(T("%(system_name)s - New User Registration Approval Pending") % \
-                            {"system_name": system_name})
-                messages[language] = s3_str(auth_messages.approve_user % \
-                            {"system_name": system_name,
-                             "first_name": first_name,
-                             "last_name": last_name,
-                             "email": email,
-                             "url": "%(base_url)s/admin/user/%(id)s" % \
-                                    {"base_url": base_url,
-                                     "id": user_id,
-                                     },
-                             })
-            elif message == "new_user":
+        if message == "approve_user":
+            # Customised Message construction?
+            approve_user_message = deployment_settings.get_auth_approve_user_message()
+            if callable(approve_user_message):
+                subjects, messages = approve_user_message(user, languages)
+            else:
+                # Default Message construction
+                subjects, messages = self.s3_approve_user_message(user, languages)
+        elif message == "new_user":
+            # @ToDo: Allow custom Message construction
+            T = current.T
+            subjects = {}
+            messages = {}
+            first_name = user.first_name
+            last_name = user.last_name
+            email = user.email
+            system_name = deployment_settings.get_system_name()
+            for language in languages:
+                T.force(language)
                 subjects[language] = \
                     s3_str(T("%(system_name)s - New User Registered") % \
                             {"system_name": system_name})
@@ -2535,19 +2583,22 @@ $.filterOptionsS3({
                                                      "email": email
                                                      })
 
-        # Restore language for UI
-        T.force(session.s3.language)
+            # Restore language for UI
+            T.force(session.s3.language)
 
         mailer = self.settings.mailer
         if mailer.settings.server:
+            send_email = mailer.send
             for approver in approvers:
                 language = approver["language"]
-                result = mailer.send(to = approver["email"],
-                                     subject = subjects[language],
-                                     message = messages[language])
+                result = send_email(to = approver["email"],
+                                    subject = subjects[language],
+                                    message = messages[language]
+                                    )
         else:
             # Email system not configured (yet)
             result = None
+
         if not result:
             # Don't prevent registration just because email not configured
             #db.rollback()
@@ -3972,7 +4023,7 @@ $.filterOptionsS3({
         role = db(query).select(table.id,
                                 table.uuid,
                                 table.protected,
-                                limitby=(0, 1),
+                                limitby = (0, 1),
                                 ).first()
 
         if role and not role.protected:
@@ -4058,11 +4109,13 @@ $.filterOptionsS3({
         sr = self.get_system_roles()
         unrestrictable = [str(sr.ADMIN),
                           str(sr.ANONYMOUS),
-                          str(sr.AUTHENTICATED)]
+                          str(sr.AUTHENTICATED),
+                          ]
         for group_id in group_ids:
             if group_id not in assigned_groups:
                 membership = {"user_id": user_id,
-                              "group_id": group_id}
+                              "group_id": group_id,
+                              }
                 if for_pe is not None and str(group_id) not in unrestrictable:
                     membership["pe_id"] = for_pe
                 #membership_id = mtable.insert(**membership)
@@ -5811,8 +5864,10 @@ class S3Permission(object):
         # Default landing pages
         _next = URL(args=request.args, vars=request.get_vars)
         self.homepage = URL(c="default", f="index")
-        self.loginpage = URL(c="default", f="user", args="login",
-                             vars=dict(_next=_next))
+        self.loginpage = URL(c="default", f="user",
+                             args = "login",
+                             vars = {"_next": _next},
+                             )
 
     # -------------------------------------------------------------------------
     def clear_cache(self):
@@ -5934,16 +5989,17 @@ class S3Permission(object):
         success = False
         if group:
             group_id = None
-            acl = dict(group_id=group_id,
-                       deleted=False,
-                       controller=c,
-                       function=f,
-                       tablename=t,
-                       record=record,
-                       oacl=oacl,
-                       uacl=uacl,
-                       unrestricted=unrestricted,
-                       entity=entity)
+            acl = {"group_id": group_id,
+                   "deleted": False,
+                   "controller": c,
+                   "function": f,
+                   "tablename": t,
+                   "record": record,
+                   "oacl": oacl,
+                   "uacl": uacl,
+                   "unrestricted": unrestricted,
+                   "entity": entity,
+                   }
 
             if isinstance(group, basestring) and not group.isdigit():
                 gtable = self.auth.settings.table_group
@@ -5964,11 +6020,10 @@ class S3Permission(object):
                                               limitby=(0, 1)).first()
             if record:
                 if delete:
-                    acl = dict(
-                        group_id = None,
-                        deleted = True,
-                        deleted_fk = '{"group_id": %d}' % record.group_id
-                    )
+                    acl = {"group_id": None,
+                           "deleted": True,
+                           "deleted_fk": '{"group_id": %d}' % record.group_id
+                           }
                 else:
                     acl["group_id"] = record.group_id
                 record.update_record(**acl)
@@ -7259,6 +7314,7 @@ class S3Permission(object):
                 result[key] = acl
 
         #for pe in result:
+        #    import sys
         #    sys.stderr.write("ACL for PE %s: %04X %04X\n" %
         #                        (pe, result[pe][0], result[pe][1]))
 
@@ -7337,7 +7393,7 @@ class S3Permission(object):
                 else:
                     query = query & (t.group_id == None)
                 rows = current.db(query).select()
-                acls = dict()
+                acls = {}
                 for acl in rows:
                     if acl.controller not in acls:
                         acls[acl.controller] = self.NONE
@@ -7392,7 +7448,7 @@ class S3Permission(object):
         # Get realms and delegations
         user = auth.user
         if not logged_in:
-            realms = Storage({sr.ANONYMOUS:None})
+            realms = Storage({sr.ANONYMOUS: None})
             delegations = Storage()
         else:
             realms = user.realms
@@ -7408,11 +7464,11 @@ class S3Permission(object):
 
         # Get the applicable ACLs
         acls = self.applicable_acls(racl,
-                                    realms=realms,
-                                    delegations=delegations,
-                                    c=c,
-                                    f=f,
-                                    t=table)
+                                    realms = realms,
+                                    delegations = delegations,
+                                    c = c,
+                                    f = f,
+                                    t = table)
         acls = [entity for entity in acls if acls[entity][0] & racl == racl]
 
         # If we have a UACL and it is not limited to any realm, then no
@@ -7774,7 +7830,7 @@ class S3GroupedOptionsWidget(OptionsWidget):
             @return: SELECT object
         """
 
-        default = dict(value=value)
+        default = {"value": value}
         attr = cls._attributes(field, default, **attributes)
         select_items = []
 

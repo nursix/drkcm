@@ -120,8 +120,11 @@ def user():
                     ]
 
     s3db.configure("auth_user",
-                   create_next = URL(c="admin", f="user", args=["[id]", "roles"]),
-                   create_onaccept = lambda form: auth.s3_approve_user(form.vars),
+                   create_next = URL(c="admin", f="user",
+                                     args = ["[id]", "roles"],
+                                     ),
+                   create_onaccept = lambda form: \
+                                        auth.s3_approve_user(form.vars),
                    list_fields = list_fields,
                    main = "first_name",
                    #update_onaccept = lambda form: auth.s3_link_user(form.vars),
@@ -145,7 +148,8 @@ def user():
             session.error = T("Can only approve 1 record at a time!")
             redirect(URL(args=[]))
 
-        user = db(table.id == r.id).select(limitby=(0, 1)).first()
+        user = db(table.id == r.id).select(limitby = (0, 1)
+                                           ).first()
         auth.s3_approve_user(user)
 
         session.confirmation = T("User Account has been Approved")
@@ -156,7 +160,8 @@ def user():
             session.error = T("Can only update 1 record at a time!")
             redirect(URL(args=[]))
 
-        user = db(table.id == r.id).select(limitby=(0, 1)).first()
+        user = db(table.id == r.id).select(limitby = (0, 1)
+                                           ).first()
         auth.s3_link_user(user)
 
         session.confirmation = T("User has been (re)linked to Person and Human Resource record")
@@ -207,21 +212,21 @@ def user():
             btn = A(T("Disable"),
                     _class = "action-btn",
                     _title = "Disable User",
-                    _href = URL(args=[id, "disable"])
+                    _href = URL(args = [id, "disable"])
                     )
             rheader.append(btn)
             if settings.get_auth_show_link():
                 btn = A(T("Link"),
                         _class = "action-btn",
                         _title = "Link (or refresh link) between User, Person & HR Record",
-                        _href = URL(args=[id, "link"])
+                        _href = URL(args = [id, "link"])
                         )
                 rheader.append(btn)
         #elif registration_key == "pending":
         #    btn = A(T("Approve"),
         #            _class = "action-btn",
         #            _title = "Approve User",
-        #            _href = URL(args=[id, "approve"])
+        #            _href = URL(args = [id, "approve"])
         #            )
         #    rheader.append(btn)
         else:
@@ -229,7 +234,7 @@ def user():
             btn = A(T("Approve"),
                     _class = "action-btn",
                     _title = "Approve User",
-                    _href = URL(args=[id, "approve"])
+                    _href = URL(args = [id, "approve"])
                     )
             rheader.append(btn)
 
@@ -282,28 +287,32 @@ def user():
             restrict = [str(row.id) for row in rows]
             s3.actions = [{"label": s3_str(UPDATE),
                            "url": URL(c="admin", f="user",
-                                      args=["[id]", "update"]),
+                                      args = ["[id]", "update"],
+                                      ),
                            "_class": "action-btn",
                            },
                           {"label": s3_str(T("Roles")),
                            "url": URL(c="admin", f="user",
-                                      args=["[id]", "roles"]),
+                                      args = ["[id]", "roles"],
+                                      ),
                            "_class": "action-btn",
                            },
                           {"label": s3_str(T("Disable")),
-                           "url": URL(c="admin", f="user",
-                                      args=["[id]", "disable"]),
-                           "_class": "action-btn",
                            "restrict": restrict,
+                           "url": URL(c="admin", f="user",
+                                      args = ["[id]", "disable"],
+                                      ),
+                           "_class": "action-btn",
                            },
                           ]
             if settings.get_auth_show_link():
                 s3.actions.insert(1, {"label": s3_str(T("Link")),
+                                      "restrict": restrict,
                                       "url": URL(c="admin", f="user",
-                                                 args=["[id]", "link"]),
+                                                 args = ["[id]", "link"],
+                                                 ),
                                       "_class": "action-btn",
                                       "_title": s3_str(T("Link (or refresh link) between User, Person & HR Record")),
-                                      "restrict": restrict,
                                       }
                                   )
             # Only show the approve button if the user is currently pending
@@ -313,14 +322,17 @@ def user():
             rows = db(query).select(table.id)
             restrict = [str(row.id) for row in rows]
             s3.actions.append({"label": str(T("Approve")),
-                               "url": URL(c="admin", f="user", args=["[id]", "approve"]),
                                "restrict": restrict,
+                               "url": URL(c="admin", f="user",
+                                          args = ["[id]", "approve"],
+                                          ),
                                "_class": "action-btn",
                                })
             # Add some highlighting to the rows
             query = (table.registration_key.belongs(["disabled", "pending"]))
             rows = db(query).select(table.id,
-                                    table.registration_key)
+                                    table.registration_key,
+                                    )
             s3.dataTableStyleDisabled = s3.dataTableStyleWarning = [str(row.id) for row in rows if row.registration_key == "disabled"]
             s3.dataTableStyleAlert = [str(row.id) for row in rows if row.registration_key == "pending"]
 
@@ -337,18 +349,20 @@ def user():
             if not form:
                 crud_button = s3base.S3CRUD.crud_button
                 output["showadd_btn"] = DIV(crud_button(T("Create User"),
-                                                        _href=URL(args=["create"])),
+                                                        _href = URL(args = ["create"])
+                                                        ),
                                             crud_button(T("Import Users"),
-                                                        _href=URL(args=["import"])),
+                                                        _href = URL(args = ["import"])
+                                                        ),
                                             )
                 return output
             # Assume formstyle callable
             id = "auth_user_password_two__row"
             label = "%s:" % T("Verify password")
-            widget = INPUT(_name="password_two",
-                           _id="password_two",
-                           _type="password",
-                           _disabled="disabled",
+            widget = INPUT(_name = "password_two",
+                           _id = "password_two",
+                           _type = "password",
+                           _disabled = "disabled",
                            )
             comment = ""
             row = s3_formstyle(id, label, widget, comment, hidden=True)
@@ -979,7 +993,8 @@ def translate():
 
             langlist = sorted(A.get_langcodes())
 
-            table = TABLE(_class="translation_module_table")
+            table = TABLE(_class = "translation_module_table",
+                          )
             table.append(BR())
 
             # Set number of columns in the form
@@ -1188,24 +1203,28 @@ def translate():
 
         elif opt == "4":
             # Add strings manually
-            if form.accepts(request.vars, session):
-                # Retrieve strings from the uploaded file
-                from s3.s3translate import TranslateReadFiles
-                f = request.vars.upload.file
-                strings = []
-                R = TranslateReadFiles()
-                for line in f:
-                    strings.append(line)
-                # Update the file containing user strings
-                R.merge_user_strings_file(strings)
-                response.confirmation = T("File uploaded")
-
             div = DIV(T("Upload a text file containing new-line separated strings:"),
                       INPUT(_type="file", _name="upload"),
                       BR(),
                       INPUT(_type="submit", _value=T("Upload")),
                       )
             form.append(div)
+
+            if form.accepts(request.vars, session):
+
+                # Retrieve strings from the uploaded file
+                strings = []
+                uploaded_file = request.vars.upload.file
+                lines = uploaded_file.read().decode("utf-8").splitlines()
+                for line in lines:
+                    strings.append(line)
+
+                # Update the file containing user strings
+                from s3.s3translate import TranslateReadFiles
+                TranslateReadFiles.merge_user_strings_file(strings)
+
+                response.confirmation = T("File uploaded")
+
             output["form"] = form
 
         return output

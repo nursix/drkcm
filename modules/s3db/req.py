@@ -2,7 +2,7 @@
 
 """ Sahana Eden Request Model
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -512,8 +512,8 @@ class RequestModel(S3Model):
             #              "req_id$name",
             #              "organisation_id$name"
             #              ],
-            #             label = T("Search")
-            #             comment=T("Search for a commitment by Committer name, Request ID, Site or Organization."),
+            #             label = T("Search"),
+            #             comment = T("Search for a Request by Committer name, Request ID, Site or Organization."),
             #             ),
             S3OptionsFilter("fulfil_status",
                             # Better to default (easier to customise/consistency)
@@ -699,6 +699,10 @@ class RequestModel(S3Model):
 
         # Components
         add_components(tablename,
+                       # Tags
+                       req_req_tag = {"alias": "tag",
+                                      "joinby": "req_id",
+                                      },
                        # Requested Items
                        req_req_item = {"joinby": "req_id",
                                        "multiple": multiple_req_items,
@@ -4557,11 +4561,10 @@ def req_update_commit_quantities_and_status(req):
         rstable = s3db.req_req_skill
         query = (rstable.req_id == req_id) & \
                 (rstable.deleted == False)
-        status = set()
 
         if not any(row.quantity for row in cskills):
             # Nothing has been committed for this request so far
-            status.add(REQ_STATUS_NONE)
+            commit_status = REQ_STATUS_NONE
             db(query).update(quantity_commit=0)
         else:
             # Get all requested skill(set)s for this request

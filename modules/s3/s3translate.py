@@ -2,7 +2,7 @@
 
 """ Translation API
 
-    @copyright: 2012-2019 (c) Sahana Software Foundation
+    @copyright: 2012-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -35,7 +35,7 @@ from gluon import current
 from gluon.languages import read_dict, write_dict
 from gluon.storage import Storage
 
-from s3compat import PY2, BytesIO, pickle
+from s3compat import PY2, BytesIO, STRING_TYPES, pickle
 from .s3fields import S3ReusableField
 
 """
@@ -733,10 +733,10 @@ class TranslateReadFiles(object):
 
         html_js_file = open(filename, "rb")
         try:
-            html_js = html_js_file.read().decode("utf-8")
+            html_js = html_js_file.read().decode("utf-8").splitlines()
         except UnicodeDecodeError:
             try:
-                html_js = html_js_file.read().decode("latin-1")
+                html_js = html_js_file.read().decode("latin-1").splitlines()
             except UnicodeDecodeError:
                 current.log.warning("%s is not in either UTF-8 or LATIN-1 encoding" % filename)
                 return []
@@ -781,10 +781,9 @@ class TranslateReadFiles(object):
 
         if os.path.exists(user_file):
             f = open(user_file, "rb")
-            user_data = f.read().decode("utf-8")
+            user_data = f.read().decode("utf-8").splitlines()
             f.close()
             for line in user_data:
-                line = line.replace("\n", "").replace("\r", "")
                 strings.append((COMMENT, line))
 
         return strings
@@ -805,7 +804,7 @@ class TranslateReadFiles(object):
 
         if os.path.exists(user_file):
             f = open(user_file, "rb")
-            user_data = f.read().decode("utf-8")
+            user_data = f.read().decode("utf-8").splitlines()
             f.close()
             for line in user_data:
                 oappend(line)
@@ -814,7 +813,7 @@ class TranslateReadFiles(object):
         f = open(user_file, "a")
         for s in newstrings:
             if s not in oldstrings:
-                f.write(s)
+                f.write("%s\n" % s)
 
         f.close()
 
@@ -828,26 +827,33 @@ class TranslateReadFiles(object):
 
         from .s3import import S3BulkImporter
 
+
+
         # List of database strings
         database_strings = []
         dappend = database_strings.append
-        template_list = []
         base_dir = current.request.folder
         path = os.path
-        # If all templates flag is set we look in all templates' tasks.cfg file
+        join = path.join
         if all_template_flag:
-            template_dir = path.join(base_dir, "modules", "templates")
+            # If all templates flag is set we look in all templates' tasks.cfg file
+            template_dir = join(base_dir, "modules", "templates")
             files = os.listdir(template_dir)
             # template_list will have the list of all templates
+            template_list = []
             tappend = template_list.append
             for f in files:
-                curFile = path.join(template_dir, f)
+                curFile = join(template_dir, f)
                 baseFile = path.basename(curFile)
                 if path.isdir(curFile):
                     tappend(baseFile)
         else:
-            # Set current template.
-            template_list.append(current.deployment_settings.base.template)
+            # Just use current template
+            template = current.deployment_settings.get_template()
+            if isinstance(template, STRING_TYPES):
+                template_list = [template]
+            else:
+                template_list = template
 
         # List of fields which don't have an S3ReusableField defined but we
         # know we wish to translate
@@ -856,13 +862,21 @@ class TranslateReadFiles(object):
                             "stats_demographic_id",
                             )
 
+        # List of fields which have an S3ReusableField defined but we
+        # know we don't wish to translate
+        never_translate = ("gis_location_id",
+                           )
+
         # Use bulk importer class to parse tasks.cfg in template folder
         bi = S3BulkImporter()
         S = Strings()
         read_csv = S.read_csv
         for template in template_list:
-            pth = path.join(base_dir, "modules", "templates", template)
-            if path.exists(path.join(pth, "tasks.cfg")) is False:
+            if "." in template:
+                template = template.split(".")
+                template = join(*template)
+            pth = join(base_dir, "modules", "templates", template)
+            if path.exists(join(pth, "tasks.cfg")) is False:
                 continue
             bi.load_descriptor(pth)
 
@@ -879,6 +893,8 @@ class TranslateReadFiles(object):
                 if fieldname in always_translate:
                     translate = True
                     represent = Storage(fields = ["name"])
+                elif fieldname in never_translate:
+                    continue
                 elif hasattr(s3db, fieldname) is False:
                     continue
                 else:
@@ -1040,6 +1056,9 @@ class Strings(object):
                 templates = (templates,)
             group_files = A.grp.group_files
             for template in templates:
+                if "." in template:
+                    template = template.split(".")
+                    template = join(*template)
                 template_folder = join(folder, "modules", "templates", template)
                 group_files(template_folder)
 
@@ -1113,7 +1132,7 @@ class Strings(object):
             return self.write_xls(Strings, langcode)
         elif filetype == "po":
             # Create pootle file
-            return self.write_po(Strings)
+            return self.write_po(Strings, langcode)
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -1177,25 +1196,30 @@ class Strings(object):
         f.close()
 
     # ---------------------------------------------------------------------
-    def write_po(self, data):
+    def write_po(self, data, langcode):
         """ Returns a ".po" file constructed from given strings """
 
-        from tempfile import NamedTemporaryFile
-        from gluon.contenttype import contenttype
-        from translate.convert.csv2po import main as csv2po
+        try:
+            from translate.convert.csv2po import main as csv2po
+        except ImportError:
+            message = "Need to install Translate Toolkit: pip install translate-toolkit"
+            return current.xml.json_message(False, 500, message=message)
 
-        f = NamedTemporaryFile(delete=False)
-        csvfilename = "%s.csv" % f.name
+        #from tempfile import NamedTemporaryFile
+
+        from gluon.contenttype import contenttype
+
+        #f = NamedTemporaryFile(delete = False)
+        csvfilename = "%s.csv" % langcode
         self.write_csv(csvfilename, data)
 
-        pofilename = "%s.po" % f.name
-        csv2po(['-i', csvfilename, '-o', pofilename])
+        pofilename = "%s.po" % langcode
+        csv2po(["-i", csvfilename, "-o", pofilename]) # "--pot",
 
         h = open(pofilename, "rb")
 
         # Modify headers to return the po file for download
-        filename = "trans.po"
-        disposition = "attachment; filename=\"%s\"" % filename
+        disposition = "attachment; filename=\"%s\"" % pofilename
         response = current.response
         response.headers["Content-Type"] = contenttype(".po")
         response.headers["Content-disposition"] = disposition
@@ -1500,8 +1524,13 @@ class Pootle(object):
         if not ret:
             return
 
+        try:
+            from translate.convert.csv2po import main as csv2po
+        except ImportError:
+            message = "Need to install Translate Toolkit: pip install translate-toolkit"
+            return current.xml.json_message(False, 500, message=message)
+
         from tempfile import NamedTemporaryFile
-        from translate.convert.csv2po import main as csv2po
 
         # returns pystrings if preference was True else returns postrings
         ret = self.merge_strings(ret[0], ret[1], preference)
@@ -1533,7 +1562,7 @@ class Pootle(object):
             S.write_csv(csvfilename, data)
 
             pofilename = "%s.po" % f.name
-            csv2po(['-i', csvfilename, '-o', pofilename])
+            csv2po(["-i", csvfilename, "-o", pofilename])
             self.upload(lang_code, pofilename)
 
             # Clean up extra created files

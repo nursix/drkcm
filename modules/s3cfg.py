@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -131,8 +131,8 @@ class S3Config(Storage):
     # fontset format -> [normal-version, bold-version]
     # defaults to ["Helvetica", "Helvetica-Bold"] if not-specified here
     # Requires installation of appropriate font - e.g. using import_font in tasks.cfg
-    # Unifont can be downloaded from http://unifoundry.com/pub/unifont-7.0.06/font-builds/unifont-7.0.06.ttf
-    fonts = {"ar": ["unifont", "unifont"],
+    # Unifont can be downloaded from http://unifoundry.com/unifont/index.html
+    fonts = {"ar": ["unifont", "unifont"], # Note that this isn't an ideal font for Arabic as it doesn't support reshaping. We use arabic_reshaper to improve this.
              #"dv": ["unifont", "unifont"],
              #"dz": ["unifont", "unifont"],
              "km": ["unifont", "unifont"],
@@ -140,10 +140,12 @@ class S3Config(Storage):
              "mn": ["unifont", "unifont"],
              "my": ["unifont", "unifont"],
              "ne": ["unifont", "unifont"],
+             "pl": ["unifont", "unifont"],
              "prs": ["unifont", "unifont"],
              "ps": ["unifont", "unifont"],
-             #"th": ["unifont", "unifont"],
+             "th": ["unifont", "unifont"],
              "tr": ["unifont", "unifont"],
+             "ur": ["unifont", "unifont"],
              "vi": ["unifont", "unifont"],
              "zh-cn": ["unifont", "unifont"],
              "zh-tw": ["unifont", "unifont"],
@@ -167,6 +169,7 @@ class S3Config(Storage):
         self.database = Storage()
         self.dc = Storage()
         self.deploy = Storage()
+        self.disease = Storage()
         self.doc = Storage()
         self.dvr = Storage()
         self.edu = Storage()
@@ -628,6 +631,22 @@ class S3Config(Storage):
         else:
             return None
 
+    def get_auth_add_role(self):
+        """
+            Custom Function to add a Role
+            - called by S3RoleManager UI
+            - useful for automatically adding subsidiary roles
+        """
+        return self.auth.get("add_role", None)
+
+    def get_auth_remove_role(self):
+        """
+            Custom Function to remove a Role
+            - called by S3RoleManager UI
+            - useful for automatically removing subsidiary roles
+        """
+        return self.auth.get("remove_role", None)
+
     def get_auth_masterkey(self):
         """
             Allow authentication with master key (= a single key instead of
@@ -900,6 +919,16 @@ class S3Config(Storage):
                    )
         return self.__lazy("auth", "realm_entity_types", default=default)
 
+    def get_auth_privileged_roles(self):
+        """
+            Roles a non-ADMIN user can only assign if they have
+            a certain required role themselves:
+            - a tuple|list of role UUIDs = user must have the roles
+              themselves in order to assign them
+            - a dict {assignable_role:required_role}
+        """
+        return self.__lazy("auth", "privileged_roles", default=[])
+
     def get_auth_realm_entity(self):
         """ Hook to determine the owner entity of a record """
         return self.auth.get("realm_entity")
@@ -954,6 +983,9 @@ class S3Config(Storage):
             ("editor", T("Editor")),
             ("super", T("Super Editor"))
         ]))
+
+    def get_auth_approve_user_message(self):
+        return self.auth.get("auth_approve_user_message", None)
 
     def get_auth_set_presence_on_login(self):
         return self.auth.get("set_presence_on_login", False)
@@ -1788,8 +1820,9 @@ class S3Config(Storage):
             fallback if the client timezone or UTC offset can not be
             determined (e.g. user not logged in, or not browser-based)
 
-            * A list of available timezones can be retrieved with:
-
+            * A list of available timezones can be viewed at:
+                https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+              or retrieved with:
               import os, tarfile, dateutil.zoneinfo
               path = os.path.abspath(os.path.dirname(dateutil.zoneinfo.__file__))
               zonesfile = tarfile.TarFile.open(os.path.join(path, 'dateutil-zoneinfo.tar.gz'))
@@ -3490,6 +3523,52 @@ class S3Config(Storage):
         """
         return self.dc.get("unique_question_names_per_template", False)
 
+    def get_dc_likert_options(self):
+        """
+            Likert Scales & Options
+        """
+        return self.dc.get("likert_options", {1: ["Very appropriate",
+                                                  "Somewhat appropriate",
+                                                  "Neither appropriate nor inappropriate",
+                                                  "Somewhat inappropriate",
+                                                  "Very inappropriate",
+                                                  ],
+                                              2: ["Extremely confident",
+                                                  "Very confident",
+                                                  "Moderately confident",
+                                                  "Slightly confident",
+                                                  "Not confident at all",
+                                                  ],
+                                              3: ["Always",
+                                                  "Often",
+                                                  "Occasionally",
+                                                  "Rarely",
+                                                  "Never",
+                                                  ],
+                                              4: ["Extremely safe",
+                                                  "Very safe",
+                                                  "Moderately safe",
+                                                  "Slightly safe",
+                                                  "Not safe at all",
+                                                  ],
+                                              5: ["Very satisfied",
+                                                  "Somewhat satisfied",
+                                                  "Neither satisfied nor dissatisfied",
+                                                  "Somewhat dissatisfied",
+                                                  "Very dissatisfied",
+                                                  ],
+                                              6: ["smiley-1",
+                                                  "smiley-2",
+                                                  "smiley-3",
+                                                  "smiley-4",
+                                                  "smiley-6",
+                                                  ],
+                                              7: ["smiley-3",
+                                                  "smiley-4",
+                                                  "smiley-5",
+                                                  ],
+                                              })
+
     # -------------------------------------------------------------------------
     # Deployments
     #
@@ -3554,6 +3633,27 @@ class S3Config(Storage):
             e.g. 'RDRT', 'RIT'
         """
         return self.deploy.get("team_label", "Deployable")
+
+    # -------------------------------------------------------------------------
+    # Disease Tracking and Monitoring
+    #
+    def get_disease_case_number(self):
+        """
+            Use case numbers in disease tracking
+        """
+        return self.disease.get("case_number", False)
+
+    def get_disease_case_id(self):
+        """
+            Use personal ID (pe_label) in disease tracking
+        """
+        return self.disease.get("case_id", True)
+
+    def get_disease_treatment(self):
+        """
+            Use a treatment notes journal for cases
+        """
+        return self.disease.get("treatment", False)
 
     # -------------------------------------------------------------------------
     # Doc Options
@@ -4492,6 +4592,14 @@ class S3Config(Storage):
         """
         return self.__lazy("hrm", "vol_service_record_manager",
                            default=current.T("Branch Coordinator"))
+
+    def get_hrm_delegation_workflow(self):
+        """
+            The type of workflow used for delegations:
+            - "Application": the person applies for the delegation
+            - "Request"    : the receiving org requests the delegation
+        """
+        return self.hrm.get("delegation_workflow", "Request")
 
     # -------------------------------------------------------------------------
     # Inventory Management Settings
@@ -5627,6 +5735,10 @@ class S3Config(Storage):
     def get_req_skill_quantities_writable(self):
         """ Whether People Quantities should be manually editable """
         return self.req.get("skill_quantities_writable", False)
+
+    def get_req_summary(self):
+        # Whether to use Summary page for Requests
+        return self.req.get("summary", False)
 
     def get_req_pack_values(self):
         """

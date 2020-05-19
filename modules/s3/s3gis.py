@@ -5,7 +5,7 @@
     @requires: U{B{I{gluon}} <http://web2py.com>}
     @requires: U{B{I{shapely}} <http://trac.gispython.org/lab/wiki/Shapely>}
 
-    @copyright: (c) 2010-2019 Sahana Software Foundation
+    @copyright: (c) 2010-2020 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -1325,40 +1325,52 @@ class GIS(object):
                   ptable.maxExtent,
                   ptable.units,
                   )
+        # May well not be complete, so Left Join
+        left = (ptable.on(ptable.id == ctable.projection_id),
+                stable.on((stable.config_id == ctable.id) & \
+                          (stable.layer_id == None)),
+                mtable.on(mtable.id == stable.marker_id),
+                )
 
         cache = Storage()
         row = None
         rows = None
         if config_id:
-            # Merge this one with the Site Default
-            query = (ctable.id == config_id) | \
-                    (ctable.uuid == "SITE_DEFAULT")
-            # May well not be complete, so Left Join
-            left = (ptable.on(ptable.id == ctable.projection_id),
-                    stable.on((stable.config_id == ctable.id) & \
-                              (stable.layer_id == None)),
-                    mtable.on(mtable.id == stable.marker_id),
-                    )
-            rows = db(query).select(*fields,
-                                    left=left,
-                                    orderby=ctable.pe_type,
-                                    limitby=(0, 2))
-            if len(rows) == 1:
+            # Does config exist?
+            # Should we merge it?
+            row = db(ctable.id == config_id).select(ctable.merge,
+                                                    ctable.uuid,
+                                                    limitby= (0, 1)
+                                                    ).first()
+            if row:
+                if row.merge and row.uuid != "SITE_DEFAULT":
+                    row = None
+                    # Merge this one with the Site Default
+                    query = (ctable.id == config_id) | \
+                            (ctable.uuid == "SITE_DEFAULT")
+                    rows = db(query).select(*fields,
+                                            left = left,
+                                            # We want SITE_DEFAULT to be last here (after urn:xxx)
+                                            orderby = ~ctable.uuid,
+                                            limitby = (0, 2)
+                                            )
+                else:
+                    # Just use this config
+                    row = db(ctable.id == config_id).select(*fields,
+                                                            left = left,
+                                                            limitby = (0, 1)
+                                                            ).first()
+                    
+            else:
                 # The requested config must be invalid, so just use site default
-                row = rows.first()
+                config_id = 0
 
-        elif config_id == 0:
+        if config_id == 0:
             # Use site default
-            query = (ctable.uuid == "SITE_DEFAULT")
-            # May well not be complete, so Left Join
-            left = (ptable.on(ptable.id == ctable.projection_id),
-                    stable.on((stable.config_id == ctable.id) & \
-                              (stable.layer_id == None)),
-                    mtable.on(mtable.id == stable.marker_id),
-                    )
-            row = db(query).select(*fields,
-                                   left=left,
-                                   limitby=(0, 1)).first()
+            row = db(ctable.uuid == "SITE_DEFAULT").select(*fields,
+                                                           left = left,
+                                                           limitby = (0, 1)
+                                                           ).first()
             if not row:
                 # No configs found at all
                 _gis.config = cache
@@ -1379,7 +1391,7 @@ class GIS(object):
                         # (Will take lower-priority than Personal)
                         otable = s3db.org_organisation
                         org = db(otable.id == user.organisation_id).select(otable.pe_id,
-                                                                           limitby=(0, 1)
+                                                                           limitby = (0, 1)
                                                                            ).first()
                         try:
                             pes.append(org.pe_id)
@@ -1402,7 +1414,7 @@ class GIS(object):
                         # (Will take lower-priority than Site/Org/Personal)
                         ogtable = s3db.org_group
                         ogroup = db(ogtable.id == user.org_group_id).select(ogtable.pe_id,
-                                                                            limitby=(0, 1)
+                                                                            limitby = (0, 1)
                                                                             ).first()
                         pes = list(pes)
                         try:
@@ -1417,18 +1429,13 @@ class GIS(object):
                         query |= (ctable.pe_id == pes[0])
                     else:
                         query |= (ctable.pe_id.belongs(pes))
-                    # Personal/OU may well not be complete, so Left Join
-                    left = (ptable.on(ptable.id == ctable.projection_id),
-                            stable.on((stable.config_id == ctable.id) & \
-                                      (stable.layer_id == None)),
-                            mtable.on(mtable.id == stable.marker_id),
-                            )
                     # Order by pe_type (defined in gis_config)
                     # @ToDo: Sort orgs from the hierarchy?
                     # (Currently we just have branch > non-branch in pe_type)
                     rows = db(query).select(*fields,
-                                            left=left,
-                                            orderby=ctable.pe_type)
+                                            left = left,
+                                            orderby = ctable.pe_type
+                                            )
                     if len(rows) == 1:
                         row = rows.first()
 
@@ -1470,13 +1477,10 @@ class GIS(object):
 
         if not row:
             # No personal config or not logged in. Use site default.
-            query = (ctable.uuid == "SITE_DEFAULT") & \
-                    (mtable.id == stable.marker_id) & \
-                    (stable.config_id == ctable.id) & \
-                    (stable.layer_id == None) & \
-                    (ptable.id == ctable.projection_id)
-            row = db(query).select(*fields,
-                                   limitby=(0, 1)).first()
+            row = db(ctable.uuid == "SITE_DEFAULT").select(*fields,
+                                                           left = left,
+                                                           limitby = (0, 1)
+                                                           ).first()
 
             if not row:
                 # No configs found at all
@@ -1593,10 +1597,8 @@ class GIS(object):
         T = current.T
         row = rows.first()
         if level:
-            try:
-                return T(row[level])
-            except:
-                return level
+            label = row[level]
+            return T(label) if label else level
         else:
             levels = OrderedDict()
             hierarchy_level_keys = self.hierarchy_level_keys
@@ -7016,10 +7018,10 @@ class MAP(DIV):
 
         layer_types = []
         lappend = layer_types.append
-        layers = db(query).select(join=join,
-                                  left=left,
-                                  limitby=limitby,
-                                  orderby=orderby,
+        layers = db(query).select(join = join,
+                                  left = left,
+                                  limitby = limitby,
+                                  orderby = orderby,
                                   *fields)
         if not layers:
             # Use Site Default base layer
@@ -7270,7 +7272,8 @@ class MAP2(DIV):
                            "_style": "height:%ipx;width:100%%" % height,
                            }
         # @ToDo: Add HTML Controls (Toolbar, LayerTree, etc)
-        self.components = [DIV(_class="s3-gis-tooltip"),
+        self.components = [DIV(_class = "s3-gis-tooltip",
+                               ),
                            ]
 
         # Load CSS now as too late in xml()
@@ -7512,10 +7515,10 @@ class MAP2(DIV):
 
         layer_types = []
         lappend = layer_types.append
-        layers = db(query).select(join=join,
-                                  left=left,
-                                  limitby=limitby,
-                                  orderby=orderby,
+        layers = db(query).select(join = join,
+                                  left = left,
+                                  limitby = limitby,
+                                  orderby = orderby,
                                   *fields)
         if not layers:
             # Use Site Default base layer
@@ -7526,7 +7529,8 @@ class MAP2(DIV):
                     (ltable.base == True) & \
                     (ltable.enabled == True)
             layers = db(query).select(*fields,
-                                      limitby=(0, 1))
+                                      limitby = (0, 1)
+                                      )
             if not layers:
                 # Just show EmptyLayer
                 layer_types = [LayerEmpty]
@@ -7610,7 +7614,7 @@ class MAP2(DIV):
             auth = current.auth
 
             if auth.s3_has_permission("create", "gis_hierarchy"):
-                error_message = DIV(_class="mapError")
+                error_message = DIV(_class = "mapError")
                 # Deliberately not T() to save unneccessary load on translators
                 error_message.append("Map cannot display without GIS config!")
                 error_message.append(XML(" (You can can create one "))
@@ -9257,6 +9261,7 @@ class LayerWMS(Layer):
                     "style": (self.style, (None, "")),
                     "bgcolor": (self.bgcolor, (None, "")),
                     "tiled": (self.tiled, (False,)),
+                    "singleTile": (self.single_tile, (False,)),
                     "legendURL": (legend_url, (None, "")),
                     "queryable": (self.queryable, (False,)),
                     "desc": (self.description, (None, "")),
@@ -9452,8 +9457,9 @@ class Projection(object):
             table = s3db.gis_projection
             query = (table.id == projection_id)
             projection = current.db(query).select(table.epsg,
-                                                  limitby=(0, 1),
-                                                  cache=s3db.cache).first()
+                                                  limitby = (0, 1),
+                                                  cache = s3db.cache
+                                                  ).first()
         else:
             # Default projection
             config = GIS.get_config()
@@ -9468,9 +9474,9 @@ class Style(object):
     """
 
     def __init__(self,
-                 style_id=None,
-                 layer_id=None,
-                 aggregate=None):
+                 style_id = None,
+                 layer_id = None,
+                 aggregate = None):
 
         db = current.db
         s3db = current.s3db
@@ -9544,7 +9550,7 @@ class Style(object):
                 ftable = s3db.gis_layer_feature
                 layer = db(ftable.layer_id == layer_id).select(ftable.controller,
                                                                ftable.function,
-                                                               limitby=(0, 1)
+                                                               limitby = (0, 1)
                                                                ).first()
                 if layer:
                     style.url_format = "%s/{id}.plain" % \

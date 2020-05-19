@@ -2,7 +2,7 @@
 
 """ Sahana Eden Hospital Management System Model
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -44,7 +44,6 @@ from s3layouts import S3PopupLink
 class HospitalDataModel(S3Model):
 
     names = ("hms_hospital",
-             "hms_hospital_tag",
              "hms_contact",
              "hms_bed_capacity",
              "hms_services",
@@ -107,6 +106,27 @@ class HospitalDataModel(S3Model):
             99: T("None"),
         } #: Power Supply Type Options
 
+        hms_bed_type_opts = {
+            1: T("Adult ICU"),
+            2: T("Pediatric ICU"),
+            3: T("Neonatal ICU"),
+            4: T("Emergency Department"),
+            5: T("Nursery Beds"),
+            6: T("General Medical/Surgical"),
+            7: T("Rehabilitation/Long Term Care"),
+            8: T("Burn ICU"),
+            9: T("Pediatrics"),
+            10: T("Adult Psychiatric"),
+            11: T("Pediatric Psychiatric"),
+            12: T("Negative Flow Isolation"),
+            13: T("Other Isolation"),
+            14: T("Operating Rooms"),
+            15: T("Cholera Treatment"),
+            16: T("Ebola Treatment"),
+            17: T("Respirator"),
+            99: T("Other")
+        } #: Bed Type Options
+
         tablename = "hms_hospital"
         define_table(tablename,
                      super_link("doc_id", "doc_entity"),
@@ -114,7 +134,7 @@ class HospitalDataModel(S3Model):
                      super_link("site_id", "org_site"),
                      # UID assigned by Local Government
                      # required for EDXL-HAVE
-                     # @ToDo: Move to a KV in hms_hospital_tag table?
+                     # @ToDo: Move to a KV in org_site_tag table?
                      Field("gov_uuid", unique=True, length=128,
                            label = T("Government UID"),
                            requires = IS_EMPTY_OR([
@@ -265,8 +285,8 @@ class HospitalDataModel(S3Model):
                               "location_id$L1",
                               "location_id$L2",
                               ],
-                             label=T("Name"),
-                             _class="filter-search",
+                             label = T("Name"),
+                             _class = "filter-search",
                              ),
                 S3OptionsFilter("facility_type",
                                 label = T("Type"),
@@ -286,6 +306,12 @@ class HospitalDataModel(S3Model):
                 S3OptionsFilter("status.power_supply_type",
                                 label = T("Power"),
                                 options = hms_power_supply_type_opts,
+                                #represent = "%(name)s",
+                                #hidden = True,
+                                ),
+                S3OptionsFilter("bed_capacity.bed_type",
+                                label = T("Bed Type"),
+                                options = hms_bed_type_opts,
                                 #represent = "%(name)s",
                                 #hidden = True,
                                 ),
@@ -366,57 +392,27 @@ class HospitalDataModel(S3Model):
         single = dict(joinby="hospital_id", multiple=False)
         multiple = "hospital_id"
         add_components(tablename,
-                       hms_status=single,
-                       hms_contact=multiple,
-                       hms_bed_capacity=multiple,
-                       hms_services=single,
-                       hms_resources=multiple,
+                       hms_status = single,
+                       hms_contact = multiple,
+                       hms_bed_capacity = multiple,
+                       hms_services = single,
+                       hms_resources = multiple,
                        )
 
         # Optional components
         if settings.get_hms_track_ctc():
-            add_components(tablename, hms_ctc=single)
+            add_components(tablename,
+                           hms_ctc = single,
+                           )
         if settings.get_hms_activity_reports():
-            add_components(tablename, hms_activity=multiple)
+            add_components(tablename,
+                           hms_activity = multiple,
+                           )
 
         # Custom Method to Assign HRs
         self.set_method("hms", "hospital",
                         method = "assign",
                         action = self.hrm_AssignMethod(component="human_resource_site"))
-
-        # ---------------------------------------------------------------------
-        # Hosptial Tags
-        # - Key-Value extensions
-        # - can be used to identify a Source (GPS, Imagery, Wikipedia, etc)
-        # - can link Hospitals to other Systems, such as:
-        #   * Government IDs
-        #   * PAHO
-        #   * OpenStreetMap (although their IDs can change over time)
-        #   * WHO
-        #   * Wikipedia URL
-        # - can be a Triple Store for Semantic Web support
-        #
-        tablename = "hms_hospital_tag"
-        self.define_table(tablename,
-                          hospital_id(empty = False,
-                                      ondelete = "CASCADE",
-                                      ),
-                          # key is a reserved word in MySQL
-                          Field("tag",
-                                label = T("Key"),
-                                ),
-                          Field("value",
-                                label = T("Value"),
-                                ),
-                          s3_comments(),
-                          *s3_meta_fields())
-
-        configure(tablename,
-                  deduplicate = S3Duplicate(primary = ("hospital_id",
-                                                       "tag",
-                                                       ),
-                                            ),
-                  )
 
         # ---------------------------------------------------------------------
         # Hospital status
@@ -712,25 +708,6 @@ class HospitalDataModel(S3Model):
         # ---------------------------------------------------------------------
         # Bed Capacity
         #
-        hms_bed_type_opts = {
-            1: T("Adult ICU"),
-            2: T("Pediatric ICU"),
-            3: T("Neonatal ICU"),
-            4: T("Emergency Department"),
-            5: T("Nursery Beds"),
-            6: T("General Medical/Surgical"),
-            7: T("Rehabilitation/Long Term Care"),
-            8: T("Burn ICU"),
-            9: T("Pediatrics"),
-            10: T("Adult Psychiatric"),
-            11: T("Pediatric Psychiatric"),
-            12: T("Negative Flow Isolation"),
-            13: T("Other Isolation"),
-            14: T("Operating Rooms"),
-            15: T("Cholera Treatment"),
-            16: T("Ebola Treatment"),
-            99: T("Other")
-        }
 
         tablename = "hms_bed_capacity"
         define_table(tablename,
@@ -1299,14 +1276,8 @@ def hms_hospital_rheader(r, tabs=None):
                        permit("create", "hrm_human_resource_site"):
                         tabs.append((T("Assign %(staff)s") % dict(staff=STAFF), "assign"))
 
-                try:
-                    tabs = tabs + s3db.req_tabs(r, match=False)
-                except:
-                    pass
-                try:
-                    tabs = tabs + s3db.inv_tabs(r)
-                except:
-                    pass
+                tabs.extend(s3db.req_tabs(r, match=False))
+                tabs.extend(s3db.inv_tabs(r))
 
                 tabs.append((T("User Roles"), "roles"))
 

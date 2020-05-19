@@ -2,7 +2,7 @@
 
 """ Finance Tables
 
-    @copyright: 2015-2019 (c) Sahana Software Foundation
+    @copyright: 2015-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -717,6 +717,14 @@ class FinSubscriptionModel(S3Model):
                      self.fin_service_id(ondelete = "CASCADE",
                                          writable = False,
                                          ),
+                     s3_datetime("start_date",
+                                 label = T("Start Date"),
+                                 writable = False,
+                                 ),
+                     s3_datetime("end_date",
+                                 label = T("End Date"),
+                                 writable = False,
+                                 ),
                      Field("status",
                            default = "NEW",
                            requires = IS_IN_SET(subscription_statuses,
@@ -731,6 +739,15 @@ class FinSubscriptionModel(S3Model):
                                  default = "now",
                                  writable = False,
                                  ),
+                     Field("deliverable", "boolean",
+                           label = T("Deliverable"),
+                           default = False,
+                           writable = False,
+                           ),
+                     Field("balance", "double",
+                           label = T("Payment Balance"),
+                           writable = False,
+                           ),
                      Field("refno",
                            label = T("Reference Number"),
                            writable = False,
@@ -742,10 +759,12 @@ class FinSubscriptionModel(S3Model):
                      *s3_meta_fields())
 
         self.configure(tablename,
-                       list_fields = ["pe_id",
+                       list_fields = ["created_on", # TODO replace by explicit start_date
+                                      "pe_id",
                                       "plan_id",
                                       "service_id",
                                       "status",
+                                      "status_date",
                                       ],
                        insertable = False,
                        editable = False,
@@ -755,11 +774,19 @@ class FinSubscriptionModel(S3Model):
         # Configure payment service callback methods
         from s3.s3payments import S3Payments
         self.set_method("fin", "subscription",
+                        method = "approve",
+                        action = S3Payments,
+                        )
+        self.set_method("fin", "subscription",
                         method = "confirm",
                         action = S3Payments,
                         )
         self.set_method("fin", "subscription",
                         method = "cancel",
+                        action = S3Payments,
+                        )
+        self.set_method("fin", "subscription",
+                        method = "status",
                         action = S3Payments,
                         )
 

@@ -2,7 +2,7 @@
 
 """ Sahana Eden Person Registry Model
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -281,6 +281,7 @@ class PRPersonEntityModel(S3Model):
                                       },
                                      ),
                        pr_contact_emergency = pe_id,
+                       pr_contact_person = pe_id,
                        pr_image = ({"name": "image",
                                     "joinby": "pe_id",
                                     },
@@ -361,6 +362,7 @@ class PRPersonEntityModel(S3Model):
                                 ),
                       # Role type
                       Field("role_type", "integer",
+                            default = 1,
                             requires = IS_IN_SET(role_types, zero=None),
                             represent = lambda opt: \
                                 role_types.get(opt, UNKNOWN_OPT),
@@ -1073,6 +1075,11 @@ class PRPersonModel(S3Model):
                        # Skills
                        pr_language = "person_id",
                        hrm_certification = "person_id",
+                       hrm_certificate = {"link": "hrm_certification",
+                                          "joinby": "person_id",
+                                          "key": "certificate_id",
+                                          "actuate": "hide",
+                                          },
                        hrm_skill = {"link": "hrm_competency",
                                     "joinby": "person_id",
                                     "key": "skill_id",
@@ -1096,6 +1103,12 @@ class PRPersonModel(S3Model):
                        hrm_appraisal = "person_id",
                        # Availability
                        pr_unavailability = "person_id",
+                       #pr_person_slot = "person_id",
+                       pr_slot = {"link": "pr_person_slot",
+                                  "joinby": "person_id",
+                                  "key": "slot_id",
+                                  "actuate": "hide",
+                                  },
                        pr_person_availability = {"name": "availability",
                                                  "joinby": "person_id",
                                                  # Will need tochange in future
@@ -1112,6 +1125,8 @@ class PRPersonModel(S3Model):
                        hrm_disciplinary_action = "person_id",
                        # Salary Information
                        hrm_salary = "person_id",
+                       # Delegations
+                       hrm_delegation = "person_id",
                        # Organisation Memberships
                        member_membership = "person_id",
                        # Organisation Group Association
@@ -2776,9 +2791,9 @@ class PRGroupModel(S3Model):
         configure(tablename,
                   context = {"person": "person_id",
                              },
-                  deduplicate = S3Duplicate(primary=("person_id",
-                                                     "group_id",
-                                                     ),
+                  deduplicate = S3Duplicate(primary = ("person_id",
+                                                       "group_id",
+                                                       ),
                                             ),
                   filter_widgets = filter_widgets,
                   list_fields = ["id",
@@ -2797,6 +2812,7 @@ class PRGroupModel(S3Model):
         # Pass names back to global scope (s3.*)
         #
         return {"pr_group_id": group_id,
+                "pr_group_types": pr_group_types,
                 "pr_mailing_list_crud_strings": mailing_list_crud_strings,
                 }
 
@@ -3235,7 +3251,7 @@ class PRForumModel(S3Model):
         Forums - similar to Groups, they are collections of People, however
                  these are restricted to those with User Accounts
         - used to share Information within Realms
-        - currently used just by WACOP
+        - currently used by CCC & WACOP
     """
 
     names = ("pr_forum",
@@ -3266,6 +3282,10 @@ class PRForumModel(S3Model):
         define_table(tablename,
                      # Instances
                      self.super_link("pe_id", "pr_pentity"),
+                     self.org_organisation_id(default = None,
+                                              ondelete = "CASCADE",
+                                              requires = self.org_organisation_requires(updateable = True),
+                                              ),
                      Field("name",
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
@@ -3294,7 +3314,7 @@ class PRForumModel(S3Model):
 
         # Resource configuration
         configure(tablename,
-                  deduplicate = S3Duplicate(ignore_deleted=True),
+                  deduplicate = S3Duplicate(ignore_deleted = True),
                   super_entity = ("pr_pentity"),
                   )
 
@@ -3409,9 +3429,9 @@ class PRForumModel(S3Model):
 
         # Table configuration
         configure(tablename,
-                  deduplicate = S3Duplicate(primary=("person_id",
-                                                     "forum_id",
-                                                     ),
+                  deduplicate = S3Duplicate(primary = ("person_id",
+                                                       "forum_id",
+                                                       ),
                                             ),
                   )
 
@@ -3866,6 +3886,7 @@ class PRContactModel(S3Model):
     names = ("pr_contact",
              #"pr_contact_id",
              "pr_contact_emergency",
+             "pr_contact_person",
              "pr_contact_represent",
              )
 
@@ -3994,6 +4015,7 @@ class PRContactModel(S3Model):
         #
         tablename = "pr_contact_emergency"
         define_table(tablename,
+                     # Component not instance
                      super_link("pe_id", "pr_pentity"),
                      Field("name",
                            label = T("Name"),
@@ -4036,6 +4058,52 @@ class PRContactModel(S3Model):
                                             ),
                   list_layout = pr_EmergencyContactListLayout(),
                   )
+
+        # ---------------------------------------------------------------------
+        # Contact Person Information
+        #
+        # e.g. Person Reporting, Report Input By
+        #
+        tablename = "pr_contact_person"
+        define_table(tablename,
+                     # Component not instance
+                     super_link("pe_id", "pr_pentity"),
+                     Field("name",
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     Field("type", length=8,
+                           label = T("Type"),
+                           requires = IS_EMPTY_OR(IS_LENGTH(8)),
+                           # Define in template as-required
+                           #represent = S3Represent(options = contact_person_types),
+                           #requires = IS_EMPTY_OR(IS_IN_SET(contact_person_types)),
+                           ),
+                     Field("phone",
+                           label = T("Phone"),
+                           represent = s3_phone_represent,
+                           requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
+                           widget = S3PhoneWidget(),
+                           ),
+                     Field("email",
+                           label = T("Email"),
+                           requires = IS_EMPTY_OR(IS_EMAIL()),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Add Contact Person"),
+            title_display = T("Contact Person Details"),
+            title_list = T("Contact Persons"),
+            title_update = T("Edit Contact Person"),
+            label_list_button = T("List Contact Persons"),
+            label_delete_button = T("Delete Contact Person"),
+            msg_record_created = T("Contact Person Added"),
+            msg_record_modified = T("Contact Person Updated"),
+            msg_record_deleted = T("Contact Person Deleted"),
+            msg_list_empty = T("No contact persons registered"))
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4683,6 +4751,7 @@ class PRAvailabilityModel(S3Model):
     names = ("pr_date_formula",
              "pr_time_formula",
              "pr_slot",
+             "pr_person_slot",
              "pr_person_availability",
              "pr_person_availability_slot",
              )
@@ -4690,11 +4759,12 @@ class PRAvailabilityModel(S3Model):
     def model(self):
 
         T = current.T
+        db = current.db
 
         configure = self.configure
         define_table = self.define_table
 
-        db = current.db
+        person_id = self.pr_person_id
 
         # ---------------------------------------------------------------------
         # Date Formula
@@ -4711,7 +4781,7 @@ class PRAvailabilityModel(S3Model):
                         3: T("Wednesday"),
                         4: T("Thursday"),
                         5: T("Friday"),
-                        6: T("Sunday"),
+                        6: T("Saturday"),
                         }
 
         tablename = "pr_date_formula"
@@ -4721,21 +4791,32 @@ class PRAvailabilityModel(S3Model):
                            ),
                      # "interval" is a reserved word in MySQL
                      Field("date_interval", "integer",
-                           represent = S3Represent(options=interval_opts),
-                           #requires = IS_IN_SET(interval_opts),
+                           default = 1,
+                           represent = S3Represent(options = interval_opts),
+                           requires = IS_IN_SET(interval_opts),
                            ),
                      Field("rate", "integer"), # Repeat Frequency
                      Field("days_of_week", "list:integer",
-                           represent = S3Represent(options=days_of_week),
-                           #requires = IS_IN_SET((0, 1, 2, 3, 4, 5, 6),
-                           #                     multiple = True,
-                           #                     ),
+                           represent = S3Represent(options = days_of_week),
+                           requires = IS_IN_SET((0, 1, 2, 3, 4, 5, 6),
+                                                multiple = True,
+                                                ),
                            ),
                      *s3_meta_fields())
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
                   )
+
+        represent = S3Represent(lookup=tablename, translate=True)
+        date_formula_id = S3ReusableField("date_formula_id", "reference %s" % tablename,
+                                          label = T("Date Formula"),
+                                          ondelete = "CASCADE",
+                                          represent = represent,
+                                          requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "pr_date_formula.id",
+                                                                  represent)),
+                                          )
 
         # ---------------------------------------------------------------------
         # Time Formula
@@ -4762,6 +4843,16 @@ class PRAvailabilityModel(S3Model):
                   deduplicate = S3Duplicate(),
                   )
 
+        represent = S3Represent(lookup=tablename, translate=True)
+        time_formula_id = S3ReusableField("time_formula_id", "reference %s" % tablename,
+                                          label = T("Time Formula"),
+                                          ondelete = "CASCADE",
+                                          represent = represent,
+                                          requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "pr_time_formula.id",
+                                                                  represent)),
+                                          )
+
         # ---------------------------------------------------------------------
         # Slots
         #
@@ -4770,8 +4861,8 @@ class PRAvailabilityModel(S3Model):
                      Field("name",
                            label = T("Name"),
                            ),
-                     Field("date_formula_id", "reference pr_date_formula"),
-                     Field("time_formula_id", "reference pr_time_formula"),
+                     date_formula_id(),
+                     time_formula_id(),
                      *s3_meta_fields())
 
         configure(tablename,
@@ -4781,7 +4872,7 @@ class PRAvailabilityModel(S3Model):
         represent = S3Represent(lookup=tablename, translate=True)
         slot_id = S3ReusableField("slot_id", "reference %s" % tablename,
                                   label = T("Slot"),
-                                  ondelete = "RESTRICT",
+                                  ondelete = "CASCADE",
                                   represent = represent,
                                   requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "pr_slot.id",
@@ -4791,6 +4882,24 @@ class PRAvailabilityModel(S3Model):
                                   #                    label = ADD_SLOT,
                                   #                    ),
                                   )
+
+        # ---------------------------------------------------------------------
+        # Persons <> Slots
+        #
+        # Simple availability without Start Date, End Date or Location
+        # - can be used directly in a Person Form
+        #
+        tablename = "pr_person_slot"
+        define_table(tablename,
+                     person_id(empty = False,
+                               ondelete = "CASCADE",
+                               ),
+                     slot_id(),
+                     *s3_meta_fields())
+
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary = ("person_id", "slot_id")),
+                  )
 
         # ---------------------------------------------------------------------
         # Person Availability
@@ -4809,9 +4918,15 @@ class PRAvailabilityModel(S3Model):
 
         tablename = "pr_person_availability"
         define_table(tablename,
-                     self.pr_person_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
+                     person_id(empty = False,
+                               ondelete = "CASCADE",
+                               ),
+                     Field("hours_per_week", "integer",
+                           label = T("Hours per Week"),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, 85)),
+                           readable = False,
+                           writable = False,
+                           ),
                      #s3_date("start_date",
                      #        label = T("Start Date"),
                      #        ),
@@ -4819,7 +4934,7 @@ class PRAvailabilityModel(S3Model):
                      #        label = T("End Date"),
                      #        ),
                      #self.gis_location_id(),
-                     # Dropdown of alternate options
+                     # Simple Dropdown of alternate options
                      # - cannot be used for Rostering, but can give additional
                      #   information to the slots or just be a simpler alternative
                      Field("options", "integer",
@@ -4858,7 +4973,7 @@ class PRAvailabilityModel(S3Model):
                      *s3_meta_fields())
 
         configure(tablename,
-                  deduplicate = S3Duplicate(primary=("availability_id", "slot_id")),
+                  deduplicate = S3Duplicate(primary = ("availability_id", "slot_id")),
                   )
 
         # ---------------------------------------------------------------------
@@ -5816,9 +5931,9 @@ class PROccupationModel(S3Model):
         #
         tablename = "pr_occupation_type_person"
         define_table(tablename,
-                     occupation_type_id(ondelete="RESTRICT",
+                     occupation_type_id(ondelete = "RESTRICT",
                                         ),
-                     self.pr_person_id(ondelete="CASCADE",
+                     self.pr_person_id(ondelete = "CASCADE",
                                        ),
                      *s3_meta_fields())
 
@@ -5958,6 +6073,12 @@ class PRPersonDetailsModel(S3Model):
                           # This field can either be used as a free-text version of religion, or to provide details of the 'other'
                           Field("religion_other",
                                 #label = T("Other Religion"),
+                                represent = lambda v: v or NONE,
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("alias",
+                                label = T("Alias"),
                                 represent = lambda v: v or NONE,
                                 readable = False,
                                 writable = False,
@@ -6817,12 +6938,13 @@ class pr_PersonEntityRepresent(S3Represent):
 
     def __init__(self,
                  # Bad default?
-                 show_label=True,
-                 default_label="[No ID Tag]",
-                 show_type=True,
-                 multiple=False,
-                 show_link=False,
-                 linkto=None,
+                 show_label = True,
+                 default_label = "[No ID Tag]",
+                 show_type = True,
+                 multiple = False,
+                 show_link = False,
+                 linkto = None,
+                 none = None,
                  ):
         """
             Constructor
@@ -6838,11 +6960,12 @@ class pr_PersonEntityRepresent(S3Represent):
         self.show_type = show_type
         self.training_event_represent = None
 
-        super(pr_PersonEntityRepresent, self).__init__(lookup="pr_pentity",
-                                                       key="pe_id",
-                                                       multiple=multiple,
-                                                       show_link=show_link,
-                                                       linkto=linkto,
+        super(pr_PersonEntityRepresent, self).__init__(lookup = "pr_pentity",
+                                                       key = "pe_id",
+                                                       multiple = multiple,
+                                                       show_link = show_link,
+                                                       linkto = linkto,
+                                                       none = none,
                                                        )
 
     # -------------------------------------------------------------------------
@@ -7402,7 +7525,8 @@ def pr_image_library_represent(image_name, format=None, size=None):
         query = query & (table.width == size[0]) & \
                         (table.height == size[1])
     image = current.db(query).select(table.new_name,
-                                     limitby=(0, 1)).first()
+                                     limitby = (0, 1)
+                                     ).first()
     if image:
         return image.new_name
     else:
@@ -7420,7 +7544,11 @@ def pr_url_represent(url):
     image = pr_image_library_represent(image, size=size)
     url_small = URL(c="default", f="download", args=image)
 
-    return DIV(A(IMG(_src=url_small, _height=60), _href=url))
+    return DIV(A(IMG(_src = url_small,
+                     _height = 60,
+                     ),
+                 _href = url,
+                 ))
 
 # =============================================================================
 def pr_person_comment(title=None, comment=None, caller=None, child=None):
@@ -7472,9 +7600,12 @@ def pr_rheader(r, tabs=None):
                 rheader = DIV(
                     A(s3_avatar_represent(record_id,
                                           "pr_person",
-                                          _class="rheader-avatar"),
-                      _href=URL(f="person", args=[record_id, "image"],
-                                vars = r.get_vars),
+                                          _class = "rheader-avatar",
+                                          ),
+                      _href = URL(f="person",
+                                  args = [record_id, "image"],
+                                  vars = r.get_vars,
+                                  ),
                       ),
                     TABLE(
                         TR(TH("%s: " % T("Name")),
@@ -7731,7 +7862,9 @@ class pr_AssignMethod(S3Method):
                     query = ~(FS("id").belongs(selected))
                     presource = s3db.resource("pr_person",
                                               alias = self.component,
-                                              filter=query, vars=filters)
+                                              filter = query,
+                                              vars = filters
+                                              )
                     rows = presource.select(["id"], as_rows=True)
                     selected = [str(row.id) for row in rows]
 
@@ -8089,13 +8222,13 @@ class pr_Contacts(S3Method):
                        )
         contacts = self.contacts(r,
                                  pe_id,
-                                 allow_create=allow_create,
-                                 method=r.method,
+                                 allow_create = allow_create,
+                                 method = r.method,
                                  )
         if contacts:
             contents.append(contacts)
         emergency = self.emergency(pe_id,
-                                   allow_create=allow_create,
+                                   allow_create = allow_create,
                                    )
         if emergency:
             contents.append(emergency)
@@ -8105,10 +8238,12 @@ class pr_Contacts(S3Method):
         s3 = response.s3
         if s3.debug:
             s3.scripts.append(URL(c="static", f="scripts",
-                                  args=["S3", "s3.ui.contacts.js"]))
+                                  args = ["S3", "s3.ui.contacts.js"],
+                                  ))
         else:
             s3.scripts.append(URL(c="static", f="scripts",
-                                  args=["S3", "s3.ui.contacts.min.js"]))
+                                  args = ["S3", "s3.ui.contacts.min.js"],
+                                  ))
 
         # Widget options
         T = current.T
@@ -8121,7 +8256,7 @@ class pr_Contacts(S3Method):
         widget_opts = {"controller": r.controller,
                        "personID": record.id,
                        "access": access,
-                       "cancelButtonText": str(T("Cancel")),
+                       "cancelButtonText": s3_str(T("Cancel")),
                        }
 
         # Apply widget
@@ -8134,7 +8269,9 @@ class pr_Contacts(S3Method):
 
         title = self.crud_string(r.tablename, "title_display")
 
-        return {"contents": contents, "title": title}
+        return {"contents": contents,
+                "title": title,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -8145,17 +8282,23 @@ class pr_Contacts(S3Method):
         has_permission = current.auth.s3_has_permission
 
         if has_permission("update", table, record_id=record_id):
-            edit_btn = A(T("Edit"), _class="edit-btn action-btn fright")
+            edit_btn = A(T("Edit"),
+                         _class = "edit-btn action-btn fright",
+                         )
         else:
             edit_btn = SPAN()
         if has_permission("delete", table, record_id=record_id):
-            delete_btn = A(T("Delete"), _class="delete-btn-ajax fright")
+            delete_btn = A(T("Delete"),
+                           _class = "delete-btn-ajax fright",
+                           )
         else:
             delete_btn = SPAN()
         return DIV(delete_btn,
                    edit_btn,
-                   DIV(_class="inline-throbber", _style="display:none"),
-                   _class="pr-contact-actions medium-3 columns",
+                   DIV(_class = "inline-throbber",
+                       _style = "display:none",
+                       ),
+                   _class = "pr-contact-actions medium-3 columns",
                    )
 
     # -------------------------------------------------------------------------
@@ -9138,9 +9281,9 @@ def pr_get_role_paths(pe_id, roles=None, role_types=None):
 
 # =============================================================================
 def pr_get_role_branches(pe_id,
-                         roles=None,
-                         role_types=None,
-                         entity_type=None):
+                         roles = None,
+                         role_types = None,
+                         entity_type = None):
     """
         Get all descendants of the immediate ancestors of the entity
         within these roles/role types
@@ -10140,11 +10283,11 @@ class pr_EmergencyContactListLayout(S3DataListLayout):
 
         update_url = URL(c="pr",
                          f="contact_emergency",
-                         args=[record_id, "update.popup"],
-                         vars={"refresh": list_id,
-                               "record": record_id,
-                               "profile": self.profile,
-                               },
+                         args = [record_id, "update.popup"],
+                         vars = {"refresh": list_id,
+                                 "record": record_id,
+                                 "profile": self.profile,
+                                 },
                          )
 
         has_permission = current.auth.s3_has_permission

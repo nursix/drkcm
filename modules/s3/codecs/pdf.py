@@ -3,7 +3,7 @@
 """
     S3 Adobe PDF codec
 
-    @copyright: 2011-2019 (c) Sahana Software Foundation
+    @copyright: 2011-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -40,9 +40,12 @@ from gluon.storage import Storage
 from gluon.contenttype import contenttype
 from gluon.languages import lazyT
 
-from s3compat import BytesIO, basestring, xrange
+from s3compat import PY2, BytesIO, basestring, xrange
 from ..s3codec import S3Codec
 from ..s3utils import s3_strip_markup, s3_unicode, s3_str
+        
+if not PY2:
+    import unicodedata
 
 try:
     from reportlab.graphics.shapes import Drawing, Line
@@ -243,12 +246,12 @@ class S3RL_PDF(S3Codec):
         if filename is None:
             if not isinstance(title, str):
                 # Must be str not unicode
-                title = title.encode("utf-8")
+                title = title.decode("utf-8")
             filename = "%s_%s.pdf" % (title, now)
         elif len(filename) < 5 or filename[-4:] != ".pdf":
             # Add extension
             filename = "%s.pdf" % filename
-        self.filename = filename
+        #self.filename = filename
 
         # Get the Doc Template
         size = attr_get("pdf_size")
@@ -337,7 +340,19 @@ class S3RL_PDF(S3Codec):
         # Return the generated PDF
         response = current.response
         if response:
-            disposition = "attachment; filename=\"%s\"" % self.filename
+            if "uwsgi_scheme" in current.request.env:
+                # Running uwsgi then we can't have unicode filenames
+                #if isinstance(filename, str):
+                #    filename = filename.encode("utf-8")
+                # Accent Folding
+                if PY2:
+                    def string_escape(s):
+                        return s.decode("string-escape").decode("utf-8")
+                else:
+                    def string_escape(s):
+                        return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("utf-8")
+                filename = string_escape(filename)
+            disposition = 'attachment; filename="%s"' % filename
             response.headers["Content-Type"] = contenttype(".pdf")
             response.headers["Content-disposition"] = disposition
 

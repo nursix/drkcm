@@ -2,7 +2,7 @@
 
 """ Sahana Eden Project Model
 
-    @copyright: 2011-2019 (c) Sahana Software Foundation
+    @copyright: 2011-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -64,6 +64,7 @@ __all__ = ("S3ProjectModel",
            "S3ProjectTaskModel",
            "S3ProjectTaskForumModel",
            "S3ProjectTaskHRMModel",
+           "S3ProjectTaskTagModel",
            "S3ProjectWindowModel",
            "project_ActivityRepresent",
            "project_activity_year_options",
@@ -93,7 +94,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..s3 import *
-from s3compat import StringIO, xrange
+from s3compat import BytesIO, xrange
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -320,19 +321,19 @@ class S3ProjectModel(S3Model):
             msg_list_empty = T("No Projects currently registered"))
 
         # Filter widgets
-        filter_widgets = project_project_filters(org_label=org_label)
+        filter_widgets = project_project_filters(org_label = org_label)
 
         # Resource Configuration
         if settings.get_project_theme_percentages():
             create_next = URL(c="project", f="project",
-                              args=["[id]", "theme"])
+                              args = ["[id]", "theme"])
         elif mode_task:
             if settings.get_project_milestones():
                 create_next = URL(c="project", f="project",
-                                  args=["[id]", "milestone"])
+                                  args = ["[id]", "milestone"])
             else:
                 create_next = URL(c="project", f="project",
-                                  args=["[id]", "task"])
+                                  args = ["[id]", "task"])
         else:
             # Default
             create_next = None
@@ -1047,30 +1048,31 @@ class S3ProjectModel(S3Model):
 
         if r.representation == "html" and r.name == "project":
 
-            appname = r.application
+            #appname = r.application
             response = current.response
             s3 = response.s3
 
             calendar = r.record.calendar
 
-            # Add core Simile Code
-            s3.scripts.append("/%s/static/scripts/simile/timeline/timeline-api.js" % appname)
-
             # Pass vars to our JS code
             s3.js_global.append('''S3.timeline.calendar="%s"''' % calendar)
 
-            # Add our control script
-            if s3.debug:
-                s3.scripts.append("/%s/static/scripts/S3/s3.timeline.js" % appname)
-            else:
-                s3.scripts.append("/%s/static/scripts/S3/s3.timeline.min.js" % appname)
+            # Add core Simile Code
+            #s3.scripts.append("/%s/static/scripts/simile/timeline/timeline-api.js" % appname)
+
+            # Add our controlled script
+            #if s3.debug:
+            #    s3.scripts.append("/%s/static/scripts/S3/s3.timeline.js" % appname)
+            #else:
+            #    s3.scripts.append("/%s/static/scripts/S3/s3.timeline.min.js" % appname)
+            s3_include_simile()
 
             # Create the DIV
-            item = DIV(_id="s3timeline",
-                       _class="s3-timeline",
+            item = DIV(_id = "s3timeline",
+                       _class = "s3-timeline",
                        )
 
-            output = dict(item=item)
+            output = {"item": item}
 
             output["title"] = current.T("Project Calendar")
 
@@ -4910,6 +4912,9 @@ class S3ProjectPlanningModel(S3Model):
 
         configure(tablename,
                   create_onaccept = self.project_indicator_create_onaccept,
+                  #deduplicate = S3Duplicate(primary = ("name",),
+                  #                          secondary = ("project_id",),
+                  #                          ),
                   deduplicate = self.project_indicator_deduplicate,
                   list_fields = list_fields,
                   onaccept = self.project_indicator_onaccept,
@@ -6373,7 +6378,7 @@ class S3ProjectPlanningModel(S3Model):
 
         # Update Statuses
         row = db(table.id == record_id).select(table.project_id,
-                                               limitby=(0, 1)
+                                               limitby = (0, 1)
                                                ).first()
         try:
             project_id = row.project_id
@@ -6385,7 +6390,10 @@ class S3ProjectPlanningModel(S3Model):
     # -------------------------------------------------------------------------
     @staticmethod
     def project_indicator_deduplicate(item):
-        """ Import item de-duplication """
+        """
+            Import item de-duplication
+            - not using S3Duplicate() so that can reuse Template Indicators acorss Projects
+        """
 
         data = item.data
         name = data.get("name")
@@ -6398,7 +6406,8 @@ class S3ProjectPlanningModel(S3Model):
                           (table.project_id == None))
 
             duplicate = current.db(query).select(table.id,
-                                                 limitby=(0, 1)).first()
+                                                 limitby = (0, 1)
+                                                 ).first()
             if duplicate:
                 item.id = duplicate.id
                 item.method = item.METHOD.UPDATE
@@ -7100,7 +7109,9 @@ def project_status_represent(value):
     if representation in ("pdf", "xls"):
         return represent
 
-    if value >= 80:
+    if value is None:
+        colour = "ff0000" # Red
+    elif value >= 80:
         colour = "00ff00" # Green
     elif value  >= 60:
         colour = "ffff00" # Yellow
@@ -8450,8 +8461,8 @@ class project_SummaryReport(S3Method):
                                          btable.value, # Beneficiaries Reached
                                          )
         if beneficiaries:
-            ben_represent = S3Represent(lookup="stats_parameter",
-                                        translate=True,
+            ben_represent = S3Represent(lookup = "stats_parameter",
+                                        translate = True,
                                         )
             benef_types = ben_represent.bulk(list({row.parameter_id for row in beneficiaries}))
             # Sum per Type
@@ -8499,7 +8510,7 @@ class project_SummaryReport(S3Method):
         nappend = narrative_rows.append
 
         nappend(TR(TD(T("Locations"),
-                      _colspan=2,
+                      _colspan = 2,
                       ),
                    ))
         for l in locations:
@@ -8508,7 +8519,7 @@ class project_SummaryReport(S3Method):
                        ))
 
         nappend(TR(TD(T("Donors"),
-                      _colspan=2,
+                      _colspan = 2,
                       ),
                    ))
         for d in donors:
@@ -8534,7 +8545,7 @@ class project_SummaryReport(S3Method):
                            )
 
         nappend(TR(TD(T("Beneficiaries Reached"),
-                      _colspan=2,
+                      _colspan = 2,
                       ),
                    ))
         for b in beneficiaries:
@@ -8543,7 +8554,7 @@ class project_SummaryReport(S3Method):
                        ))
 
         nappend(TR(TD(T("Partner Organizations"),
-                      _colspan=2,
+                      _colspan = 2,
                       ),
                    ))
         for p in partners:
@@ -8555,7 +8566,7 @@ class project_SummaryReport(S3Method):
 
         if status_from_activities:
             status_table = TABLE(TR(TD(T("Current Status of Project"),
-                                       _rowspan=2,
+                                       _rowspan = 2,
                                        ),
                                     TD(T("Actual")),
                                     TD(T("Planned")),
@@ -8567,7 +8578,7 @@ class project_SummaryReport(S3Method):
                                  )
         else:
             status_table = TABLE(TR(TD(T("Current Status of Project"),
-                                       _rowspan=2,
+                                       _rowspan = 2,
                                        ),
                                     TD(T("Current")),
                                     TD(T("Overall")),
@@ -8585,7 +8596,7 @@ class project_SummaryReport(S3Method):
                         ),
                      TD(project_status_represent(goal["actual_progress"] if status_from_activities else goal["current_status"])),
                      TD(project_status_represent(goal["planned_progress"] if status_from_activities else goal["overall_status"])),
-                     _class="project_goal",
+                     _class = "project_goal",
                      )
             sappend(row)
             outcomes = goal["outcomes"]
@@ -8595,7 +8606,7 @@ class project_SummaryReport(S3Method):
                             ),
                          TD(project_status_represent(outcome["actual_progress"] if status_from_activities else outcome["current_status"])),
                          TD(project_status_represent(outcome["planned_progress"] if status_from_activities else outcome["overall_status"])),
-                         _class="project_outcome",
+                         _class = "project_outcome",
                          )
                 sappend(row)
                 outputs = outcome["outputs"]
@@ -8605,7 +8616,7 @@ class project_SummaryReport(S3Method):
                                 ),
                              TD(project_status_represent(output["actual_progress"] if status_from_activities else output["current_status"])),
                              TD(project_status_represent(output["planned_progress"] if status_from_activities else output["overall_status"])),
-                             _class="project_output",
+                             _class = "project_output",
                              )
                     sappend(row)
                     indicators = output["indicators"]
@@ -8615,7 +8626,7 @@ class project_SummaryReport(S3Method):
                                     ),
                                  TD(project_status_represent(indicator["actual_progress"] if status_from_activities else indicator["current_status"])),
                                  TD(project_status_represent(indicator["planned_progress"] if status_from_activities else indicator["overall_status"])),
-                                 _class="project_indicator",
+                                 _class = "project_indicator",
                                  )
                         sappend(row)
                         if status_from_activities:
@@ -8626,7 +8637,7 @@ class project_SummaryReport(S3Method):
                                             ),
                                          TD(project_status_represent(activity["actual_progress"])),
                                          TD(project_status_represent(activity["planned_progress"])),
-                                         _class="project_activity",
+                                         _class = "project_activity",
                                          )
                                 sappend(row)
 
@@ -9357,7 +9368,7 @@ class project_IndicatorSummaryReport(S3Method):
         current_row.write(colspan + 1, status_represent(status), status_style(status))
 
         # Export to File
-        output = StringIO()
+        output = BytesIO()
         try:
             book.save(output)
         except:
@@ -11385,6 +11396,10 @@ class S3ProjectTaskModel(S3Model):
                                   "autocomplete": "request_number",
                                   "autodelete": False,
                                   },
+                       # Tags
+                       project_task_tag = {"name": "tag",
+                                           "joinby": "task_id",
+                                           },
                        # Time
                        project_time = "task_id",
                        # Comments (for imports))
@@ -11833,7 +11848,9 @@ class S3ProjectTaskModel(S3Model):
             ta = db.project_activity
             query = (lta.task_id == task_id) & \
                     (lta.activity_id == ta.id)
-            row = db(query).select(ta.project_id, limitby=(0, 1)).first()
+            row = db(query).select(ta.project_id,
+                                   limitby = (0, 1)
+                                   ).first()
             if row and row.project_id:
                 ltp.insert(task_id = task_id,
                            project_id = row.project_id,
@@ -11910,7 +11927,9 @@ class S3ProjectTaskModel(S3Model):
                 #link_id = link.update_link(master, record)
                 query = (ltable.task_id == task_id) & \
                         (ltable.project_id == project)
-                record = db(query).select(ltable.id, limitby=(0, 1)).first()
+                record = db(query).select(ltable.id,
+                                          limitby = (0, 1)
+                                          ).first()
                 if record:
                     link_id = record.id
                 else:
@@ -11936,7 +11955,9 @@ class S3ProjectTaskModel(S3Model):
                 #link_id = link.update_link(master, record)
                 query = (ltable.task_id == task_id) & \
                         (ltable.activity_id == activity)
-                record = db(query).select(ltable.id, limitby=(0, 1)).first()
+                record = db(query).select(ltable.id,
+                                          limitby = (0, 1)
+                                          ).first()
                 if record:
                     link_id = record.id
                 else:
@@ -11962,7 +11983,9 @@ class S3ProjectTaskModel(S3Model):
                 #link_id = link.update_link(master, record)
                 query = (ltable.task_id == task_id) & \
                         (ltable.milestone_id == milestone)
-                record = db(query).select(ltable.id, limitby=(0, 1)).first()
+                record = db(query).select(ltable.id,
+                                          limitby = (0, 1)
+                                          ).first()
                 if record:
                     link_id = record.id
                 else:
@@ -12018,7 +12041,7 @@ class S3ProjectTaskModel(S3Model):
         query = (ltable.task_id == task_id) & \
                 (ltable.forum_id == forum_id)
         exists = db(query).select(ltable.id,
-                                  limitby=(0, 1)
+                                  limitby = (0, 1)
                                   ).first()
         if not exists:
             ltable.insert(task_id = task_id,
@@ -12054,7 +12077,7 @@ class S3ProjectTaskModel(S3Model):
                 (ltable.forum_id == forum_id)
         exists = db(query).select(ltable.id,
                                   ltable.created_by,
-                                  limitby=(0, 1)
+                                  limitby = (0, 1)
                                   ).first()
         if exists:
             auth = current.auth
@@ -12090,21 +12113,21 @@ class S3ProjectTaskModel(S3Model):
             # Encode the message as an OpenGeoSMS
             msg = current.msg
             message = msg.prepare_opengeosms(record.location_id,
-                                             code="ST",
-                                             map="google",
-                                             text=text)
+                                             code = "ST",
+                                             map = "google",
+                                             text = text)
 
             # URL to redirect to after message sent
             url = URL(c="project",
                       f="task",
-                      args=r.id)
+                      args = r.id)
 
             # Create the form
             if record.pe_id:
-                opts = dict(recipient=record.pe_id)
+                opts = {"recipient": record.pe_id}
             else:
-                opts = dict(recipient_type="pr_person")
-            output = msg.compose(type="SMS",
+                opts = {"recipient_type": "pr_person"}
+            output = msg.compose(type = "SMS",
                                  message = message,
                                  url = url,
                                  **opts)
@@ -12139,7 +12162,8 @@ class S3ProjectTaskModel(S3Model):
             # Component Form
             query = (titable.id == form.vars.id)
             record = db(query).select(titable.task_id,
-                                      limitby=(0, 1)).first()
+                                      limitby = (0, 1)
+                                      ).first()
             if record:
                 task_id = record.task_id
 
@@ -12160,7 +12184,8 @@ class S3ProjectTaskModel(S3Model):
         query = (tatable.deleted == False) & \
                 (tatable.task_id == task_id)
         activity = db(query).select(tatable.activity_id,
-                                    limitby=(0, 1)).first()
+                                    limitby = (0, 1)
+                                    ).first()
         if activity:
             activity_id = activity.activity_id
 
@@ -12178,7 +12203,7 @@ class S3ProjectTaskModel(S3Model):
 
             # Update the Activity
             query = (atable.id == activity_id)
-            db(query).update(time_actual=hours)
+            db(query).update(time_actual = hours)
 
 # =============================================================================
 class S3ProjectTaskForumModel(S3Model):
@@ -12207,7 +12232,7 @@ class S3ProjectTaskForumModel(S3Model):
 
         #current.response.s3.crud_strings[tablename] = Storage(
         #    label_create = T("Share Task"), #
-        #    title_display = T(" Shared Task Details"),
+        #    title_display = T("Shared Task Details"),
         #    title_list = T("Shared Tasks"),
         #    title_update = T("Edit Shared Task"),
         #    label_list_button = T("List Shared Tasks"),
@@ -12267,6 +12292,48 @@ class S3ProjectTaskHRMModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
+        return {}
+
+# =============================================================================
+class S3ProjectTaskTagModel(S3Model):
+    """
+        Task Tags
+    """
+
+    names = ("project_task_tag",)
+
+    def model(self):
+
+        T = current.T
+
+        # ---------------------------------------------------------------------
+        # Task Tags
+        # - Key-Value extensions
+        # - can be used to provide conversions to external systems
+        # - can be a Triple Store for Semantic Web support
+        # - can be used to add custom fields
+        #
+        tablename = "project_task_tag"
+        self.define_table(tablename,
+                          self.project_task_id(empty = False),
+                          # key is a reserved word in MySQL
+                          Field("tag",
+                                label = T("Key"),
+                                ),
+                          Field("value",
+                                label = T("Value"),
+                                ),
+                          s3_comments(),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("task_id",
+                                                            "tag",
+                                                            ),
+                                                 ),
+                       )
+
+        # Pass names back to global scope (s3.*)
         return {}
 
 # =============================================================================
@@ -12975,7 +13042,7 @@ def project_rheader(r):
             append((T("Organizations"), "organisation"))
         if settings.get_project_community() and not details_tab:
             append((T("Communities"), "location"))
-        elif not mode_task and not details_tab:
+        elif mode_3w and not details_tab:
             append((T("Locations"), "location"))
         if settings.get_project_theme_percentages():
             append((T("Themes"), "theme"))
@@ -13024,7 +13091,8 @@ def project_rheader(r):
         #    rheader_fields.append(["budget.total_budget"])
         rheader = S3ResourceHeader(rheader_fields, tabs)(r)
 
-        if indicators:
+        if indicators and settings.get_project_goals():
+            # and settings.get_project_outcomes() and settings.get_project_ouputs() is True
             rfooter = DIV(A(ICON("print"),
                             " ",
                             T("Project Summary Report"),

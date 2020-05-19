@@ -35,12 +35,14 @@
          Website.................hms_hospital
          Fax.....................hms_hospital
          Comments................hms_hospital
-         KV:XXX..................hms_hospital_tag Key/Value (Key = XX in column name, value = cell in row. Multiple allowed)
+         KV:XXX..................org_site_tag Key/Value (Key = XX in column name, value = cell in row. Multiple allowed)
 
     *********************************************************************** -->
     <xsl:output method="xml"/>
     <xsl:include href="../../xml/commons.xsl"/>
     <xsl:include href="../../xml/countries.xsl"/>
+
+    <xsl:variable name="LocationPrefix" select="'Location:'"/>
 
     <!-- ****************************************************************** -->
     <!-- Indexes for faster processing -->
@@ -127,7 +129,7 @@
             <!-- Link to Location -->
             <reference field="location_id" resource="gis_location">
                 <xsl:attribute name="tuid">
-                    <xsl:value-of select="$HospitalName"/>
+                    <xsl:value-of select="concat($LocationPrefix, $HospitalName)"/>
                 </xsl:attribute>
             </reference>
 
@@ -283,7 +285,7 @@
         <xsl:variable name="Value" select="text()"/>
 
         <xsl:if test="$Value!=''">
-            <resource name="hms_hospital_tag">
+            <resource name="org_site_tag" alias="tag">
                 <data field="tag"><xsl:value-of select="$Key"/></data>
                 <data field="value"><xsl:value-of select="$Value"/></data>
             </resource>
@@ -542,7 +544,7 @@
         <!-- Hospital Location -->
         <resource name="gis_location">
             <xsl:attribute name="tuid">
-                <xsl:value-of select="$HospitalName"/>
+                <xsl:value-of select="concat($LocationPrefix, $HospitalName)"/>
             </xsl:attribute>
             <xsl:choose>
                 <xsl:when test="$l4!=''">

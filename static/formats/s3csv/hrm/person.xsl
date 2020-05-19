@@ -37,6 +37,7 @@
          Initials.......................optional.....person initials
          DOB............................optional.....person date of birth
          Nationality....................optional.....person_details nationality
+         Occupation Type................optional.....pr_occupation_type (catalog-based occupation)
          Occupation.....................optional.....person_details occupation
          Company........................optional.....person_details company
          Affiliations............ ......optional.....person_details affiliation
@@ -577,13 +578,14 @@
         </xsl:variable>
 
         <xsl:variable name="OrgName" select="col[@field='Organisation']/text()"/>
-        <xsl:variable name="BloodType" select="col[@field='Blood Type']"/>
-        <xsl:variable name="Ethnicity" select="col[@field='Ethnicity']"/>
-        <xsl:variable name="Teams" select="col[@field='Teams']"/>
-        <xsl:variable name="Trainings" select="col[@field='Trainings']"/>
-        <xsl:variable name="TrainingsExternal" select="col[@field='External Trainings']"/>
-        <xsl:variable name="Certificates" select="col[@field='Certificates']"/>
-        <xsl:variable name="DeployableRoles" select="col[@field='Deployable Roles']"/>
+        <xsl:variable name="BloodType" select="col[@field='Blood Type']/text()"/>
+        <xsl:variable name="Ethnicity" select="col[@field='Ethnicity']/text()"/>
+        <xsl:variable name="Teams" select="col[@field='Teams']/text()"/>
+        <xsl:variable name="OccupationTypes" select="col[@field='Occupation Type']/text()"/>
+        <xsl:variable name="Trainings" select="col[@field='Trainings']/text()"/>
+        <xsl:variable name="TrainingsExternal" select="col[@field='External Trainings']/text()"/>
+        <xsl:variable name="Certificates" select="col[@field='Certificates']/text()"/>
+        <xsl:variable name="DeployableRoles" select="col[@field='Deployable Roles']/text()"/>
 
         <xsl:variable name="gender">
             <xsl:call-template name="GetColumnValue">
@@ -863,6 +865,12 @@
                 <xsl:with-param name="arg">team</xsl:with-param>
             </xsl:call-template>
 
+            <!-- Occupation Types -->
+            <xsl:call-template name="splitList">
+                <xsl:with-param name="list" select="$OccupationTypes"/>
+                <xsl:with-param name="arg">occupation_types</xsl:with-param>
+            </xsl:call-template>
+
             <!-- Trainings -->
             <xsl:call-template name="splitList">
                 <xsl:with-param name="list" select="$Trainings"/>
@@ -1071,7 +1079,7 @@
                     <xsl:otherwise>org_office</xsl:otherwise>
                 </xsl:choose>
             </xsl:variable>
-            <xsl:if test="$type=1 or $type=''">
+            <xsl:if test="$type=1 or $type=2 or $type=''">
                 <reference field="site_id">
                     <xsl:attribute name="resource">
                         <xsl:value-of select="$resourcename"/>
@@ -1768,6 +1776,17 @@
                 </resource>
             </xsl:when>
 
+            <!-- Occupation Types -->
+            <xsl:when test="$arg='occupation_types'">
+                <resource name="pr_occupation_type_person">
+                    <reference field="occupation_type_id" resource="pr_occupation_type">
+                        <resource name="pr_occupation_type">
+                            <data field="name"><xsl:value-of select="$item"/></data>
+                        </resource>
+                    </reference>
+                </resource>
+            </xsl:when>
+
             <!-- Trainings -->
             <xsl:when test="$arg='training'">
                 <resource name="hrm_training">
@@ -1953,10 +1972,17 @@
 
     <!-- ****************************************************************** -->
     <xsl:template name="Availability">
-        <xsl:variable name="Options" select="col[@field='Availability']"/>
-        <xsl:variable name="Comments" select="col[@field='Availability Comments']"/>
+
+        <xsl:variable name="Options" select="col[@field='Availability']/text()"/>
+        <xsl:variable name="Comments" select="col[@field='Availability Comments']/text()"/>
+        <xsl:variable name="WeeklyHours" select="col[@field='Availability Weekly Hours']/text()"/>
 
         <resource name="pr_person_availability">
+            <xsl:if test="$WeeklyHours!=''">
+                <data field="hours_per_week">
+                    <xsl:value-of select="$WeeklyHours"/>
+                </data>
+            </xsl:if>
             <xsl:if test="$Options!=''">
                 <!-- @ToDo: A nicer way to handle options -->
                 <data field="options">

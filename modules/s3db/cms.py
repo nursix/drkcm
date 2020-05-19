@@ -2,7 +2,7 @@
 
 """ Sahana Eden Content Management System Model
 
-    @copyright: 2012-2019 (c) Sahana Software Foundation
+    @copyright: 2012-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -1265,7 +1265,7 @@ def cms_index(module,
     settings = current.deployment_settings
 
     if not page_name:
-        page_name = settings.modules[module].name_nice
+        page_name = settings.modules[module].get("name_nice", module)
 
     response.title = page_name
 

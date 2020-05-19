@@ -2,7 +2,7 @@
 
 """ Sahana Eden Event Model
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -698,7 +698,7 @@ class S3EventModel(S3Model):
     @staticmethod
     def event_add_tag(r, **attr):
         """
-            Add a Tag to an Event
+            Add a CMS Tag to an Event
 
             S3Method for interactive requests
             - designed to be called as an afterTagAdded callback to tag-it.js
@@ -758,7 +758,7 @@ class S3EventModel(S3Model):
     @staticmethod
     def event_remove_tag(r, **attr):
         """
-            Remove a Tag from an Event
+            Remove a CMS Tag from an Event
 
             S3Method for interactive requests
             - designed to be called as an afterTagRemoved callback to tag-it.js
@@ -1391,7 +1391,9 @@ class S3IncidentModel(S3Model):
                                            "autodelete": False,
                                            },
                             # Should be able to do everything via the link table
-                            #event_organisation = "incident_id",
+                            event_organisation = {"name": "event_organisation",
+                                                  "joinby": "incident_id",
+                                                  },
                             org_organisation = {"link": "event_organisation",
                                                 "joinby": "incident_id",
                                                 "key": "organisation_id",
@@ -1878,7 +1880,7 @@ class S3IncidentModel(S3Model):
     @staticmethod
     def incident_add_tag(r, **attr):
         """
-            Add a Tag to an Incident
+            Add a CMS Tag to an Incident
 
             S3Method for interactive requests
             - designed to be called as an afterTagAdded callback to tag-it.js
@@ -1937,7 +1939,7 @@ class S3IncidentModel(S3Model):
     @staticmethod
     def incident_remove_tag(r, **attr):
         """
-            Remove a Tag from an Incident
+            Remove a CMS Tag from an Incident
 
             S3Method for interactive requests
             - designed to be called as an afterTagRemoved callback to tag-it.js
@@ -2580,7 +2582,7 @@ class S3IncidentLogModel(S3Model):
         #
         tablename = "event_incident_log"
         self.define_table(tablename,
-                          self.event_incident_id(),
+                          self.event_incident_id(ondelete = "CASCADE"),
                           Field("name", notnull=True,
                                 label = T("Short Description"),
                                 ),
@@ -2766,6 +2768,12 @@ class S3IncidentTypeModel(S3Model):
                        deduplicate = S3Duplicate(),
                        hierarchy = hierarchy,
                        )
+
+        self.add_components(tablename,
+                            event_incident_type_tag = {"alias": "tag",
+                                                       "joinby": "incident_type_id",
+                                                       },
+                            )
 
         # Pass names back to global scope (s3.*)
         return {"event_incident_type_id": incident_type_id,
@@ -3469,7 +3477,7 @@ class S3EventForumModel(S3Model):
 
         #current.response.s3.crud_strings[tablename] = Storage(
         #    label_create = T("Share Incident"), # or Event
-        #    title_display = T(" Shared Incident Details"),
+        #    title_display = T("Shared Incident Details"),
         #    title_list = T("Shared Incidents"),
         #    title_update = T("Edit Shared Incident"),
         #    label_list_button = T("List Shared Incidents"),
@@ -5350,27 +5358,27 @@ class event_ActionPlan(S3Method):
                         deletable = True
                     if editable:
                         actions = [{"label": T("Open"),
-                                    "url": r.url(component=component,
-                                                 component_id="[id]",
-                                                 method="update.popup",
-                                                 vars={"refresh": list_id}),
+                                    "url": r.url(component = component,
+                                                 component_id = "[id]",
+                                                 method = "update.popup",
+                                                 vars = {"refresh": list_id}),
                                     "_class": "action-btn edit s3_modal",
                                     },
                                    ]
                     else:
                         actions = [{"label": T("Open"),
-                                    "url": r.url(component=component,
-                                                 component_id="[id]",
-                                                 method="read.popup",
-                                                 vars={"refresh": list_id}),
+                                    "url": r.url(component = component,
+                                                 component_id = "[id]",
+                                                 method = "read.popup",
+                                                 vars = {"refresh": list_id}),
                                     "_class": "action-btn edit s3_modal",
                                     },
                                    ]
                     if deletable:
-                        actions.append({"label": T("Delete"),
-                                        "_ajaxurl": r.url(component=component,
-                                                          component_id="[id]",
-                                                          method="delete.json",
+                        actions.append({"label": T("Remove"),
+                                        "_ajaxurl": r.url(component = component,
+                                                          component_id = "[id]",
+                                                          method = "delete.json",
                                                           ),
                                         "_class": "action-btn delete-btn-ajax dt-ajax-delete",
                                         })
@@ -5390,9 +5398,9 @@ class event_ActionPlan(S3Method):
                                     "url": URL(c="project",
                                                f="task",
                                                args="update.popup",
-                                               vars={"incident.id": "[id]",
-                                                     "refresh": list_id,
-                                                     },
+                                               vars = {"incident.id": "[id]",
+                                                       "refresh": list_id,
+                                                       },
                                                ),
                                     "_class": "action-btn edit s3_modal",
                                     },
@@ -5401,19 +5409,19 @@ class event_ActionPlan(S3Method):
                         actions = [{"label": T("Open"),
                                     "url": URL(c="project",
                                                f="task",
-                                               args="read.popup",
-                                               vars={"incident.id": "[id]",
-                                                     "refresh": list_id,
-                                                     },
+                                               args = "read.popup",
+                                               vars = {"incident.id": "[id]",
+                                                       "refresh": list_id,
+                                                       },
                                                ),
                                     "_class": "action-btn edit s3_modal",
                                     },
                                    ]
                     if deletable:
                         actions.append({"label": T("Delete"),
-                                        "_ajaxurl": r.url(component="incident_task",
-                                                          component_id="[id]",
-                                                          method="delete.json",
+                                        "_ajaxurl": r.url(component = "incident_task",
+                                                          component_id = "[id]",
+                                                          method = "delete.json",
                                                           ),
                                         "_class": "action-btn delete-btn-ajax dt-ajax-delete",
                                         })
@@ -5450,7 +5458,7 @@ class event_ActionPlan(S3Method):
                       #"label": "Organizations",
                       #"label_create": "Add Organization",
                       "type": "datatable",
-                      "actions": dt_row_actions("organisation", tablename),
+                      "actions": dt_row_actions("event_organisation", tablename),
                       "tablename": tablename,
                       "context": "incident",
                       "create_controller": "event",
@@ -6720,14 +6728,14 @@ def event_notification_dispatcher(r, **attr):
             record = r.record
             record_id = record.id
             event_name = record.start_name
-            startDate = record.date
+            start_date = record.date
             exercise = record.exercise
 
             text += "************************************************"
             text += "\n%s " % T("Automatic Message")
             text += "\n%s: %s, " % (T("Event ID"), record_id)
             text += " %s: %s" % (T("Event name"), event_name)
-            text += "\n%s: %s " % (T("Event started"), startDate)
+            text += "\n%s: %s " % (T("Event started"), start_date)
             text += "\n%s= %s, " % (T("Exercise"), exercise)
             text += "%s= %s" % (T("Status open"), exercise)
             text += "\n************************************************\n"

@@ -2,7 +2,7 @@
 
 """ S3 Pivot Table Reports Method
 
-    @copyright: 2011-2019 (c) Sahana Software Foundation
+    @copyright: 2011-2020 (c) Sahana Software Foundation
     @license: MIT
 
     @requires: U{B{I{Python 2.6}} <http://www.python.org>}
@@ -2458,6 +2458,7 @@ class S3PivotTable(object):
                   "string": "",
                   "date": datetime.date.min,
                   "datetime": datetime.datetime.min,
+                  "boolean": 1,
                   }
 
         # Sorting key function
@@ -2465,6 +2466,8 @@ class S3PivotTable(object):
             value = item[index][sortby]
             if value is None:
                 return "" if sortby == "text" else minval.get(ftype)
+            elif ftype == "boolean":
+                return -int(value)
             else:
                 return value
 

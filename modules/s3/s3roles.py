@@ -2,7 +2,7 @@
 
 """ S3 User Roles Management
 
-    @copyright: 2018-2019 (c) Sahana Software Foundation
+    @copyright: 2018-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -808,7 +808,9 @@ class S3RoleManager(S3Method):
             query = (utable.id == r.id) & \
                     (otable.id == utable.organisation_id) & \
                     (otable.pe_id.belongs(pe_ids))
-            row = current.db(query).select(utable.id, limitby=(0, 1)).first()
+            row = current.db(query).select(utable.id,
+                                           limitby = (0, 1)
+                                           ).first()
             if not row:
                 r.unauthorised()
 
@@ -907,11 +909,13 @@ class S3RoleManager(S3Method):
 
                 # Update role assignments
                 if added:
-                    add_role = auth.s3_assign_role
+                    add_role = current.deployment_settings.get_auth_add_role() or \
+                               auth.s3_assign_role
                     for group_id, pe_id in added:
                         add_role(user_id, group_id, for_pe=pe_id)
                 if removed:
-                    remove_role = auth.s3_withdraw_role
+                    remove_role = current.deployment_settings.get_auth_remove_role() or \
+                                  auth.s3_withdraw_role
                     for group_id, pe_id in removed:
                         remove_role(user_id, group_id, for_pe=pe_id)
 
@@ -1160,6 +1164,12 @@ class S3RoleManager(S3Method):
         ADMINS = (sr.ADMIN, sr.ORG_ADMIN, sr.ORG_GROUP_ADMIN)
         UNRESTRICTABLE = (sr.ADMIN, sr.AUTHENTICATED, sr.ANONYMOUS)
 
+        # Check whether certain roles require another role to be assignable
+        privileged_roles = current.deployment_settings.get_auth_privileged_roles()
+        if not privileged_roles:
+            privileged_roles = {}
+        elif isinstance(privileged_roles, (tuple, set, list)):
+            privileged_roles = {u:u for u in privileged_roles}
 
         table = auth.settings.table_group
         query = (table.hidden == False) & \
@@ -1174,12 +1184,15 @@ class S3RoleManager(S3Method):
         roles = {}
         for row in rows:
 
-            role = {"l": row.role or row.uuid}
-
             role_id = row.id
+            role_uuid = row.uuid
+
+            role = {"l": row.role or role_uuid}
 
             if role_id in ADMINS:
                 assignable = has_role(role_id)
+            elif role_uuid in privileged_roles:
+                assignable = has_role(privileged_roles[role_uuid])
             else:
                 assignable = role_id not in AUTO
 
@@ -1432,9 +1445,10 @@ class S3PermissionWidget(object):
 
         # Active modules
         modules = current.deployment_settings.modules
-        active= {k: (s3_str(modules[k].name_nice), modules[k].get("restricted", True))
-                 for k in modules if k not in exclude
-                 }
+        active = {k: (s3_str(modules[k].get("name_nice", modules[k])),
+                      modules[k].get("restricted", True))
+                  for k in modules if k not in exclude
+                  }
 
         # Special controllers for dynamic models
         if current.auth.permission.use_facls:
@@ -1945,6 +1959,7 @@ class S3RolesExport(object):
                                  rtable.uacl,
                                  rtable.oacl,
                                  rtable.entity,
+                                 rtable.unrestricted,
                                  )
         self.rules = rules
 
@@ -1952,7 +1967,9 @@ class S3RolesExport(object):
         entities = set()
         for rule in rules:
             entity = rule.entity
-            if entity is not None:
+            if rule.unrestricted:
+                self.col_entity = True
+            elif entity is not None:
                 self.col_entity = True
                 entities.add(entity)
 
@@ -1989,7 +2006,7 @@ class S3RolesExport(object):
         # Rule fields
         fieldnames.extend(["controller", "function", "table", "uacl", "oacl"])
         if col_entity:
-            fieldnames.extend("entity")
+            fieldnames.append("entity")
 
         # Helper to get the role UID for a rule
         role_dicts = self.roles
@@ -2024,15 +2041,14 @@ class S3RolesExport(object):
             # The entity column (optional)
             if col_entity:
                 entity = rule.entity
-                if entity is not None:
-                    if entity == 0:
-                        rule_dict["entity"] = "any"
+                if rule.unrestricted:
+                    rule_dict["entity"] = "any"
+                elif entity is not None:
+                    org = orgs.get(entity)
+                    if org:
+                        rule_dict["entity"] = org
                     else:
-                        org = orgs.get(entity)
-                        if org:
-                            rule_dict["entity"] = org
-                        else:
-                            continue
+                        continue
 
             # The target columns (controller, function, table)
             if rule.tablename:

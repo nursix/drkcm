@@ -2,7 +2,7 @@
 
 """ Sahana Eden Auth Model
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -1198,6 +1198,7 @@ class auth_UserRepresent(S3Represent):
                  show_name = True,
                  show_email = True,
                  show_phone = False,
+                 show_org = False,
                  access = None,
                  show_link = True,
                  ):
@@ -1235,6 +1236,7 @@ class auth_UserRepresent(S3Represent):
         self.show_name = show_name
         self.show_email = show_email
         self.show_phone = show_phone
+        self.show_org = show_org
         self.access = access
 
         self._phone = {}
@@ -1258,6 +1260,12 @@ class auth_UserRepresent(S3Represent):
                                                ))
         else:
             repr_str = ""
+
+        if self.show_org:
+            organisation_id = row.get("auth_user.organisation_id")
+            if organisation_id:
+                org = current.s3db.org_OrganisationRepresent()(organisation_id)
+                repr_str = "%s (%s)" % (repr_str, org)
 
         if self.show_email:
             email = row.get("auth_user.email")
@@ -1310,6 +1318,8 @@ class auth_UserRepresent(S3Represent):
             fields.append(table.email)
         if show_phone:
             fields.append(ptable.pe_id)
+        if self.show_org:
+            fields.append(table.organisation_id)
         if show_name:
             fields += [table.first_name,
                        table.last_name,

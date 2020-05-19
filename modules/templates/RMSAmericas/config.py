@@ -986,15 +986,15 @@ def config(settings):
             # Use hierarchy-widget
             from s3 import FS, S3HierarchyWidget
             # No need for parent in represent (it's a hierarchy view)
-            node_represent = organisation_represent(parent=False)
+            node_represent = organisation_represent(parent = False)
             # Filter by type
             # (no need to exclude branches - we wouldn't be here if we didn't use branches)
             selector = FS("organisation_organisation_type.organisation_type_id")
-            f.widget = S3HierarchyWidget(lookup="org_organisation",
-                                         filter=(selector == type_id),
-                                         represent=node_represent,
-                                         multiple=False,
-                                         leafonly=False,
+            f.widget = S3HierarchyWidget(lookup = "org_organisation",
+                                         filter = (selector == type_id),
+                                         represent = node_represent,
+                                         multiple = False,
+                                         leafonly = False,
                                          )
         else:
             # Dropdown not Autocomplete
@@ -3207,7 +3207,7 @@ Thank you"""
                                 # Add Region to list_fields
                                 list_fields.insert(-1, "region_id")
                                 # Region is required
-                                table.region_id.requires = table.region_id.requires[0].other
+                                table.region_id.requires = table.region_id.requires.other
 
                             else:
                                 table.region_id.readable = table.region_id.writable = False

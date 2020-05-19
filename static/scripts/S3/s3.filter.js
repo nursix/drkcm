@@ -541,25 +541,71 @@ S3.search = {};
                 };
             }
 
-            if (value) {
-                var end = false;
-                if (operator == 'le') {
-                    end = true;
-                }
-                var jsDate = $this.calendarWidget('getJSDate', end),
-                    urlValue = isoFormat(jsDate);
-                if (end && $this.hasClass('end_date')) {
-                    // end_date
-                    var selector = urlVar.replace(FILTEROP, '');
-                    // @ToDo: filterURL should AND multiple $filter into 1 (will be required when we have multiple $filter in a single page)
-                    queries.push(['$filter', '(' + selector + ' ' + operator + ' "' + urlValue + '") or (' + selector + ' eq None)']);
-                } else {
-                    // Single field or start_date
-                    queries.push([urlVar, urlValue]);
-                }
+            var jsDate,
+                end = false;
+            if (operator == 'le') {
+                end = true;
+            }
+            if ($this.hasClass('negative')) {
+                // Need to check both fields in order to craft the $filter
+                if (end) {
+                    var addQuery = false,
+                        baseId = id.slice(0, -3),
+                        endDate,
+                        endSelector,
+                        startDate,
+                        startField = $('#' + baseId + '-ge'),
+                        startValue = startField.val(),
+                        startVar,
+                        startSelector;
+                    if (startValue) {
+                        addQuery = true;
+                        jsDate = startField.calendarWidget('getJSDate', false);
+                        startDate = isoFormat(jsDate);
+                        startVar = $('#' + baseId + '-ge-data').val();
+                        startSelector = startVar.replace(FILTEROP, '');
+                    }
+                    if (value) {
+                        addQuery = true;
+                        jsDate = $this.calendarWidget('getJSDate', true);
+                        endDate = isoFormat(jsDate);
+                        endSelector = urlVar.replace(FILTEROP, '');
+                    }
+                    if (addQuery) {
+                        var negative = $('#' + baseId + '-negative').val();
+                        var query = '(' + negative + ' eq NONE)';
+                       // @ToDo: Nest not chain
+                        if (startValue) {
+                            query += ' or (' + startSelector + ' lt "' + startDate + '")';
+                        }
+                        if (value) {
+                            query += ' or (' + endSelector + ' gt "' + endDate + '")';
+                        }
+                        var filterby = $('#' + baseId + '-filterby');
+                        if (filterby.length) {
+                            filterby = filterby.val();
+                            var filterOpts = $('#' + baseId + '-filter_opts').val();
+                            query += ' or (' + filterby + ' belongs "' + filterOpts + '")';
+                        }
+                        queries.push(['$filter', query]);
+                    }
+                } // else ignore
             } else {
-                // Remove the filter (explicit null)
-                queries.push([urlVar, null]);
+                if (value) {
+                    jsDate = $this.calendarWidget('getJSDate', end);
+                    var urlValue = isoFormat(jsDate);
+                    if (end && $this.hasClass('end_date')) {
+                        // end_date
+                        var selector = urlVar.replace(FILTEROP, '');
+                        queries.push(['$filter', '(' + selector + ' ' + operator + ' "' + urlValue + '") or (' + selector + ' eq None)']);
+                    } else {
+                        // Single field or start_date
+                        queries.push([urlVar, urlValue]);
+                    }
+                } else {
+                    // Remove the filter (explicit null)
+                    queries.push([urlVar, null]);
+                }
             }
         });
 
@@ -1024,6 +1070,22 @@ S3.search = {};
             update = {},
             reset = {},
             i, len, q, k, v;
+
+        // Combine multiple $filter expressions (AND)
+        var $filters = [];
+        queries = queries.filter(function(q) {
+            if (q[0] == '$filter') {
+                $filters.push(q);
+                return false;
+            } else {
+                return true;
+            }
+        });
+        if ($filters.length) {
+            queries.push($filters.reduce(function(a, b) {
+                return ['$filter', '(' + a[1] + ') and (' + b[1] + ')'];
+            }));
+        }
 
         for (i=0, len=queries.length; i < len; i++) {
             q = queries[i];

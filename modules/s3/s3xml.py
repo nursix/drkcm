@@ -7,7 +7,7 @@
     @requires: U{B{I{gluon}} <http://web2py.com>}
     @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
 
-    @copyright: 2009-2019 (c) Sahana Software Foundation
+    @copyright: 2009-2020 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -353,13 +353,13 @@ class S3XML(S3Codec):
 
     # -------------------------------------------------------------------------
     def tree(self, elements,
-             root=None,
-             domain=None,
-             url=None,
-             start=None,
-             limit=None,
-             results=None,
-             maxbounds=False):
+             root = None,
+             domain = None,
+             url = None,
+             start = None,
+             limit = None,
+             results = None,
+             maxbounds = False):
         """
             Builds a S3XML tree from a list of elements
 
@@ -795,7 +795,7 @@ class S3XML(S3Codec):
                    resource,
                    record,
                    element,
-                   location_data=None,
+                   location_data = None,
                    ):
         """
             GIS-encodes the master resource so that it can be transformed into
@@ -1121,12 +1121,12 @@ class S3XML(S3Codec):
                  parent,
                  table,
                  record,
-                 alias=None,
-                 fields=None,
-                 url=None,
-                 lazy=None,
-                 llrepr=None,
-                 postprocess=None):
+                 alias = None,
+                 fields = None,
+                 url = None,
+                 lazy = None,
+                 llrepr = None,
+                 postprocess = None):
         """
             Creates a <resource> element from a record
 
@@ -1397,10 +1397,10 @@ class S3XML(S3Codec):
     def record(cls,
                table,
                element,
-               original=None,
-               files=None,
-               skip=None,
-               postprocess=None):
+               original = None,
+               files = None,
+               skip = None,
+               postprocess = None):
         """
             Creates a record (Storage) from a <resource> element and validates
             it
@@ -1555,9 +1555,19 @@ class S3XML(S3Codec):
                             continue
                     if not filename:
                         filename = download_url.split("?")[0] or "upload.bin"
+                    if download_url.find("://"):
+                        # Not a full URL, try prepending protocol
+                        download_url = "http://%s" % download_url
                     try:
                         upload = urlopen(download_url)
                     except IOError:
+                        continue
+                    except ValueError:
+                        # e.g. unknown url type
+                        error = sys.exc_info()[1]
+                        child.set(ERROR, s3_unicode("%s: %s" % (f, error)))
+                        child.set(VALUE, s3_unicode(v))
+                        valid = False
                         continue
 
                 if upload:
@@ -1673,9 +1683,9 @@ class S3XML(S3Codec):
     def get_field_options(cls,
                           table,
                           fieldname,
-                          parent=None,
-                          show_uids=False,
-                          hierarchy=False):
+                          parent = None,
+                          show_uids = False,
+                          hierarchy = False):
         """
             Get options of a field as <select>
 
@@ -1789,9 +1799,9 @@ class S3XML(S3Codec):
     # -------------------------------------------------------------------------
     def get_options(self,
                     table,
-                    fields=None,
-                    show_uids=False,
-                    hierarchy=False):
+                    fields = None,
+                    show_uids = False,
+                    hierarchy = False):
         """
             Get options of option fields in a table as <select>s
 
@@ -1810,8 +1820,8 @@ class S3XML(S3Codec):
                 # Single field: omit the outer <options> element
                 return self.get_field_options(table,
                                               fields[0],
-                                              show_uids=show_uids,
-                                              hierarchy=hierarchy,
+                                              show_uids = show_uids,
+                                              hierarchy = hierarchy,
                                               )
 
         options = etree.Element(self.TAG.options)
@@ -1822,19 +1832,19 @@ class S3XML(S3Codec):
             for f in table.fields:
                 if not fields or f in fields:
                     get_field_options(table, f,
-                                      parent=options,
-                                      show_uids=show_uids,
-                                      hierarchy=hierarchy,
+                                      parent = options,
+                                      show_uids = show_uids,
+                                      hierarchy = hierarchy,
                                       )
         return options
 
     # -------------------------------------------------------------------------
     def get_fields(self, prefix, name,
-                   parent=None,
-                   meta=False,
-                   options=False,
-                   references=False,
-                   labels=False):
+                   parent = None,
+                   meta = False,
+                   options = False,
+                   references = False,
+                   labels = False):
         """
             Get fields in a table as <fields> element
 
@@ -1908,11 +1918,11 @@ class S3XML(S3Codec):
 
     # -------------------------------------------------------------------------
     def get_struct(self, prefix, name,
-                   alias=None,
-                   parent=None,
-                   meta=False,
-                   options=True,
-                   references=False):
+                   alias = None,
+                   parent = None,
+                   meta = False,
+                   options = True,
+                   references = False):
         """
             Get the table structure as XML tree
 
@@ -1938,11 +1948,11 @@ class S3XML(S3Codec):
             if alias and alias != name:
                 e.set(self.ATTRIBUTE.alias, alias)
             self.get_fields(prefix, name,
-                            parent=e,
-                            meta=meta,
-                            options=options,
-                            references=references,
-                            labels=True)
+                            parent = e,
+                            meta = meta,
+                            options = options,
+                            references = references,
+                            labels = True)
             return e
         else:
             raise AttributeError("No table like %s" % tablename)
@@ -2334,14 +2344,14 @@ class S3XML(S3Codec):
     # -------------------------------------------------------------------------
     @classmethod
     def xls2tree(cls, source,
-                 resourcename=None,
-                 extra_data=None,
-                 hashtags=None,
-                 sheet=None,
-                 rows=None,
-                 cols=None,
-                 fields=None,
-                 header_row=True):
+                 resourcename = None,
+                 extra_data = None,
+                 hashtags = None,
+                 sheet = None,
+                 rows = None,
+                 cols = None,
+                 fields = None,
+                 header_row = True):
         """
             Convert a table in an XLS (MS Excel) sheet into an ElementTree,
             consisting of <table name="format">, <row> and
@@ -2574,11 +2584,11 @@ class S3XML(S3Codec):
     # -------------------------------------------------------------------------
     @classmethod
     def csv2tree(cls, source,
-                 resourcename=None,
-                 extra_data=None,
-                 hashtags=None,
-                 delimiter=",",
-                 quotechar='"'):
+                 resourcename = None,
+                 extra_data = None,
+                 hashtags = None,
+                 delimiter = ",",
+                 quotechar = '"'):
         """
             Convert a table-form CSV source into an element tree, consisting of
             <table name="format">, <row> and <col field="fieldname"> elements.
@@ -2711,7 +2721,8 @@ class S3XML(S3Codec):
             read_from_csv(source)
 
         # Use this to debug the source tree if needed:
-        #sys.stderr.write(cls.tostring(root, pretty_print=True))
+        #if source.name[-16:] == "organisation.csv":
+        #sys.stderr.write(cls.tostring(root, pretty_print=True).decode("utf-8"))
 
         return  etree.ElementTree(root)
 

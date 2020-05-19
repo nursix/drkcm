@@ -5,7 +5,7 @@
 """
 
 module = request.controller
-resourcename = request.function
+#resourcename = request.function
 
 if not settings.has_module(module):
     raise HTTP(404, body="Module disabled: %s" % module)
@@ -63,9 +63,9 @@ def capacity_assessment():
                                                "rating",
                                                "ranking",
                                                ),
-                                     filterby = dict(field = "indicator_id",
-                                                     options = row.id
-                                                     ),
+                                     filterby = {"field": "indicator_id",
+                                                 "options": row.id
+                                                 },
                                      multiple = False,
                                      ),
                 )
@@ -421,6 +421,12 @@ def donor():
 
     output = s3_rest_controller()
     return output
+
+# -----------------------------------------------------------------------------
+#def organisation_location():
+#    """ RESTful CRUD controller """
+
+#    return s3_rest_controller()
 
 # -----------------------------------------------------------------------------
 def resource():

@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: (c) 2010-2019 Sahana Software Foundation
+    @copyright: (c) 2010-2020 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -445,11 +445,7 @@ def s3_mark_required(fields,
         else:
             labels[fname] = "%s:" % flabel
 
-    # Callers expect an iterable
-    #if labels:
     return (labels, _required)
-    #else:
-    #    return None
 
 # =============================================================================
 def s3_addrow(form, label, widget, comment, formstyle, row_id, position=-1):
@@ -1047,7 +1043,7 @@ def s3_include_ext():
     if xtheme:
         xtheme = "%smin.css" % xtheme[:-3]
         xtheme = \
-    "<link href='/%s/static/themes/%s' rel='stylesheet' type='text/css' media='screen' charset='utf-8' />" % \
+    "<link href='/%s/static/themes/%s' rel='stylesheet' type='text/css' />" % \
         (appname, xtheme)
 
     if s3.cdn:
@@ -1061,19 +1057,19 @@ def s3_include_ext():
         adapter = "%s/adapter/jquery/ext-jquery-adapter-debug.js" % PATH
         main_js = "%s/ext-all-debug.js" % PATH
         main_css = \
-    "<link href='%s/resources/css/ext-all-notheme.css' rel='stylesheet' type='text/css' media='screen' charset='utf-8' />" % PATH
+    "<link href='%s/resources/css/ext-all-notheme.css' rel='stylesheet' type='text/css' />" % PATH
         if not xtheme:
             xtheme = \
-    "<link href='%s/resources/css/xtheme-gray.css' rel='stylesheet' type='text/css' media='screen' charset='utf-8' />" % PATH
+    "<link href='%s/resources/css/xtheme-gray.css' rel='stylesheet' type='text/css' />" % PATH
     else:
         adapter = "%s/adapter/jquery/ext-jquery-adapter.js" % PATH
         main_js = "%s/ext-all.js" % PATH
         if xtheme:
             main_css = \
-    "<link href='/%s/static/scripts/ext/resources/css/ext-notheme.min.css' rel='stylesheet' type='text/css' media='screen' charset='utf-8' />" % appname
+    "<link href='/%s/static/scripts/ext/resources/css/ext-notheme.min.css' rel='stylesheet' type='text/css' />" % appname
         else:
             main_css = \
-    "<link href='/%s/static/scripts/ext/resources/css/ext-gray.min.css' rel='stylesheet' type='text/css' media='screen' charset='utf-8' />" % appname
+    "<link href='/%s/static/scripts/ext/resources/css/ext-gray.min.css' rel='stylesheet' type='text/css' />" % appname
 
     scripts = s3.scripts
     scripts_append = scripts.append
@@ -1090,6 +1086,94 @@ def s3_include_ext():
     else:
         s3.jquery_ready.append('''$('link:first').after("%s")''' % main_css)
     s3.ext_included = True
+
+# =============================================================================
+def s3_include_simile():
+    """
+        Add Simile CSS & JS into a page for a Timeline
+    """
+
+    s3 = current.response.s3
+    if s3.simile_included:
+        # Simile already included
+        return
+    appname = current.request.application
+
+    scripts = s3.scripts
+
+    if s3.debug:
+        # Provide debug versions of CSS / JS
+        s3.scripts += ["/%s/static/scripts/S3/s3.simile.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/platform.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/debug.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/xmlhttp.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/json.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/dom.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/graphics.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/date-time.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/string.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/html.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/data-structure.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/units.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/ajax.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/history.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/window-manager.js" % appname,
+                       "/%s/static/scripts/simile/ajax/scripts/remoteLog.js" % appname,
+                       "/%s/static/scripts/S3/s3.timeline.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/timeline.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/band.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/themes.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/ethers.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/ether-painters.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/event-utils.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/labellers.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/sources.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/original-painter.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/detailed-painter.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/overview-painter.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/compact-painter.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/decorators.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/l10n/en/timeline.js" % appname,
+                       "/%s/static/scripts/simile/timeline/scripts/l10n/en/labellers.js" % appname,
+                       ]
+        css = "".join(["<link href='/%s/static/scripts/simile/ajax/styles/graphics.css' rel='stylesheet' type='text/css' />" % appname,
+                       "<link href='/%s/static/scripts/simile/timeline/styles/ethers.css' rel='stylesheet' type='text/css' />" % appname,
+                       "<link href='/%s/static/scripts/simile/timeline/styles/events.css' rel='stylesheet' type='text/css' />" % appname,
+                       "<link href='/%s/static/scripts/simile/timeline/styles/timeline.css' rel='stylesheet' type='text/css' />" % appname,
+                       ])
+    else:
+        s3.scripts.append("/%s/static/scripts/S3/s3.timeline.min.js" % appname)
+        css = "".join(["<link href='/%s/static/scripts/simile/ajax/styles/graphics.css' rel='stylesheet' type='text/css' />" % appname,
+                       "<link href='/%s/static/scripts/simile/timeline/timeline-bundle.css' rel='stylesheet' type='text/css' />" % appname,
+                       ])
+
+    s3.jquery_ready.append('''$('link:first').after("%s")''' % css)
+
+    supported_locales = [
+        "cs",       # Czech
+        "de",       # German
+        "en",       # English
+        "es",       # Spanish
+        "fr",       # French
+        "it",       # Italian
+        "nl",       # Dutch (The Netherlands)
+        "pl",       # Polish
+        "ru",       # Russian
+        "se",       # Swedish
+        "tr",       # Turkish
+        "vi",       # Vietnamese
+        "zh"        # Chinese
+        ]
+
+    if s3.language in supported_locales:
+        locale = s3.language
+    else:
+        locale = "en"
+    s3.scripts += ["/%s/static/scripts/simile/timeline/scripts/l10n/%s/timeline.js" % (appname, locale),
+                   "/%s/static/scripts/simile/timeline/scripts/l10n/%s/labellers.js" % (appname, locale),
+                   ]
+
+    s3.simile_included = True
 
 # =============================================================================
 def s3_include_underscore():

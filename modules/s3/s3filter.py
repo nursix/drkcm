@@ -2,7 +2,7 @@
 
 """ Framework for filtered REST requests
 
-    @copyright: 2013-2019 (c) Sahana Software Foundation
+    @copyright: 2013-2020 (c) Sahana Software Foundation
     @license: MIT
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
@@ -40,6 +40,7 @@ __all__ = ("S3FilterWidget",
            "S3SliderFilter",
            "S3TextFilter",
            "S3NotEmptyFilter",
+           "S3EmptyFilter",
            "S3FilterForm",
            "S3Filter",
            "S3FilterString",
@@ -144,10 +145,11 @@ class S3FilterWidget(object):
 
         if type(variable) is list:
             variable = "&".join(variable)
-        return INPUT(_type="hidden",
-                     _id="%s-data" % self.attr["_id"],
-                     _class="filter-widget-data %s-data" % self._class,
-                     _value=variable)
+        return INPUT(_type = "hidden",
+                     _id = "%s-data" % self.attr["_id"],
+                     _class = "filter-widget-data %s-data" % self._class,
+                     _value = variable,
+                     )
 
     # -------------------------------------------------------------------------
     # Helper methods
@@ -500,10 +502,11 @@ class S3RangeFilter(S3FilterWidget):
 
         for o, v in zip(operators, variables):
             elements.append(
-                INPUT(_type="hidden",
-                      _id="%s-%s-data" % (widget_id, o),
-                      _class="filter-widget-data %s-data" % self._class,
-                      _value=v))
+                INPUT(_type = "hidden",
+                      _id = "%s-%s-data" % (widget_id, o),
+                      _class = "filter-widget-data %s-data" % self._class,
+                      _value = v,
+                      ))
 
         return elements
 
@@ -732,6 +735,11 @@ class S3DateFilter(S3RangeFilter):
         @keyword fieldtype: explicit field type "date" or "datetime" to
                             use for context or virtual fields
         @keyword hide_time: don't show time selector
+
+        WIP: Incomplete:
+        @keyword filterby: field to filter records included by
+        @keyword filter_opts: options to filter records included by
+        @keyword negative: To Exclude matching records rather than Including them, provide the selector for the "selector=None"
     """
 
     _class = "date-filter"
@@ -835,7 +843,8 @@ class S3DateFilter(S3RangeFilter):
                 INPUT(_type = "hidden",
                       _id = "%s-%s-data" % (_id, operator),
                       _class = "filter-widget-data %s-data" % self._class,
-                      _value = variable))
+                      _value = variable,
+                      ))
 
         return elements
 
@@ -874,12 +883,25 @@ class S3DateFilter(S3RangeFilter):
 
             @param resource: the S3Resource
             @param as_str: return date as ISO-formatted string not raw DateTime
+
+            @ToDo: Update for negative
         """
 
         # Find only values linked to records the user is
         # permitted to read, and apply any resource filters
         # (= use the resource query)
         query = resource.get_query()
+
+        filterby = self.opts.get("filterby")
+        if filterby:
+            filter_opts = self.opts.get("filter_opts")
+            if filter_opts:
+                if not isinstance(filter_opts, (list, tuple)):
+                    query &= (FS(filterby) == filter_opts)
+                elif len(filter_opts) == 1:
+                    query &= (FS(filterby) == filter_opts[0])
+                else:
+                    query &= (FS(filterby).belongs(filter_opts))
 
         # Must include rfilter joins when using the resource
         # query (both inner and left):
@@ -901,6 +923,7 @@ class S3DateFilter(S3RangeFilter):
             # http://stackoverflow.com/questions/21286215/how-can-i-include-null-values-in-a-min-or-max
             # http://www.web2py.com/books/default/chapter/29/06/the-database-abstraction-layer#Default-values-with-coalesce-and-coalesce_zero
             # or can simply do a 2nd query to check for NULLs
+            # client-side JS does an OR end_field is None
             start_field = S3ResourceField(resource, fields[0]).field
             end_field = S3ResourceField(resource, fields[1]).field
             row = current.db(query).select(start_field.min(),
@@ -979,6 +1002,7 @@ class S3DateFilter(S3RangeFilter):
         """
 
         attr = self.attr
+        opts_get = self.opts.get
 
         # CSS class and element ID
         _class = self._class
@@ -988,13 +1012,7 @@ class S3DateFilter(S3RangeFilter):
             _class = _class
         _id = attr["_id"]
 
-        # Classes and labels for the individual date/time inputs
-        T = current.T
-        input_class = self._input_class
-        input_labels = self.input_labels
-
         # Picker options
-        opts_get = self.opts.get
         clear_text = opts_get("clear_text", None)
         hide_time = opts_get("hide_time", False)
 
@@ -1015,8 +1033,36 @@ class S3DateFilter(S3RangeFilter):
             minimum = maximum = None
 
         # Generate the input elements
-        filter_widget = DIV(_id=_id, _class=_class)
+        filter_widget = DIV(_id = _id,
+                            _class = _class,
+                            )
         append = filter_widget.append
+
+        # Classes and labels for the individual date/time inputs
+        T = current.T
+        input_class = self._input_class
+        negative = opts_get("negative", None)
+        if negative is not None:
+            input_class = "%s %s" % (input_class, "negative")
+            append(INPUT(_id = "%s-negative" % _id,
+                         _type = "hidden",
+                         _value = negative,
+                         ))
+        input_labels = self.input_labels
+
+        filterby = opts_get("filterby", None)
+        if filterby is not None:
+            filter_opts = opts_get("filter_opts", None)
+            if filter_opts is not None:
+                append(INPUT(_id = "%s-filterby" % _id,
+                             _type = "hidden",
+                             _value = filterby,
+                             ))
+                append(INPUT(_id = "%s-filter_opts" % _id,
+                             _type = "hidden",
+                             # @ToDo: Each option needs to be wrapped in ""
+                             _value = ",".join(filter_opts),
+                             ))
 
         if slider:
             # Load Moment & D3/NVD3 into Browser
@@ -1064,7 +1110,8 @@ class S3DateFilter(S3RangeFilter):
                 range_picker["_data-fmt"] = "MMM D YYYY HH:mm"
                 #range_picker["_data-fmt"] = "LLL" # Locale-aware version
             append(DIV(range_picker,
-                       _class="range-picker-wrapper"))
+                       _class = "range-picker-wrapper",
+                       ))
 
         get_variable = self._variable
 
@@ -1186,9 +1233,9 @@ class S3DateFilter(S3RangeFilter):
 
                 if operator in input_labels:
                     label = DIV(LABEL("%s:" % T(input_labels[operator]),
-                                      _for=input_id,
+                                      _for = input_id,
                                       ),
-                                _class="range-filter-label",
+                                _class = "range-filter-label",
                                 )
                 else:
                     label = ""
@@ -1196,9 +1243,9 @@ class S3DateFilter(S3RangeFilter):
                 # Append label and widget
                 append(DIV(label,
                            DIV(picker,
-                               _class="range-filter-widget",
+                               _class = "range-filter-widget",
                                ),
-                           _class="range-filter-field",
+                           _class = "range-filter-field",
                            ))
 
         return filter_widget
@@ -1558,15 +1605,15 @@ class S3LocationFilter(S3FilterWidget):
                                         header = header_opt,
                                         selectedList = opts.get("selectedList", 3),
                                         noneSelectedText = T("Select %(location)s") % \
-                                                             dict(location=levels[level]["label"]))
+                                                             {"location": levels[level]["label"]})
                 if first:
                     # Visible Multiselect Widget added to the page
                     attr["_class"] = _class
                     options = levels[level]["options"]
-                    dummy_field = Storage(name=name,
-                                          type=ftype,
-                                          requires=IS_IN_SET(options,
-                                                             multiple=True))
+                    dummy_field = Storage(name = name,
+                                          type = ftype,
+                                          requires = IS_IN_SET(options,
+                                                               multiple=True))
                     widget = w(dummy_field, _values, **attr)
                     first = False
                 else:
@@ -1579,10 +1626,10 @@ class S3LocationFilter(S3FilterWidget):
                     jquery_ready = s3.jquery_ready
                     # Build the widget with the MultiSelect activation script
                     s3.jquery_ready = []
-                    dummy_field = Storage(name=name,
-                                          type=ftype,
-                                          requires=IS_IN_SET([],
-                                                             multiple=True))
+                    dummy_field = Storage(name = name,
+                                          type = ftype,
+                                          requires = IS_IN_SET([],
+                                                               multiple=True))
                     widget = w(dummy_field, _values, **attr)
                     # Extract the MultiSelect activation script
                     script = s3.jquery_ready[0]
@@ -1613,10 +1660,11 @@ class S3LocationFilter(S3FilterWidget):
         oappend = output.append
         i = 0
         for level in self.levels:
-            widget = INPUT(_type="hidden",
-                           _id="%s-%s-data" % (self.attr["_id"], level),
-                           _class="filter-widget-data %s-data" % self._class,
-                           _value=variable[i])
+            widget = INPUT(_type = "hidden",
+                           _id = "%s-%s-data" % (self.attr["_id"], level),
+                           _class = "filter-widget-data %s-data" % self._class,
+                           _value = variable[i],
+                           )
             oappend(widget)
             i += 1
 
@@ -1766,7 +1814,7 @@ class S3LocationFilter(S3FilterWidget):
 
             # Add to result rows
             if lx:
-                rows = rows & lx if rows else lx
+                rows = (rows | lx) if rows else lx
 
             # Pick subset for parent lookup
             if lx and location_ids:
@@ -2000,10 +2048,10 @@ class S3LocationFilter(S3FilterWidget):
                 # Filter out old Locations
                 # @ToDo: Allow override
                 resource2.add_filter(gtable.end_date == None)
-                _rows = resource2.select(fields=fields,
-                                         limit=None,
-                                         virtual=False,
-                                         as_rows=True)
+                _rows = resource2.select(fields = fields,
+                                         limit = None,
+                                         virtual = False,
+                                         as_rows = True)
                 if rows2:
                     rows2 &= _rows
                 else:
@@ -2052,7 +2100,7 @@ class S3LocationFilter(S3FilterWidget):
                     (ntable.language == current.session.s3.language)
             nrows = current.db(query).select(gtable.name,
                                              ntable.name_l10n,
-                                             limitby=(0, len(ids)),
+                                             limitby = (0, len(ids)),
                                              )
             for row in nrows:
                 name_l10n[row["gis_location.name"]] = row["gis_location_name.name_l10n"]
@@ -2244,7 +2292,7 @@ class S3MapFilter(S3FilterWidget):
                                     height = opts_get("height", settings.get_gis_map_height()),
                                     width = opts_get("width", settings.get_gis_map_width()),
                                     collapsed = True,
-                                    callback='''S3.search.s3map('%s')''' % map_id,
+                                    callback = '''S3.search.s3map('%s')''' % map_id,
                                     feature_resources = feature_resources,
                                     toolbar = toolbar,
                                     add_polygon = True,
@@ -2413,15 +2461,16 @@ class S3OptionsFilter(S3FilterWidget):
         attr["_class"] = " ".join(set(classes)) if classes else None
 
         # Render the widget
-        dummy_field = Storage(name=name,
-                              type=ftype,
-                              requires=IS_IN_SET(options, multiple=True))
+        dummy_field = Storage(name = name,
+                              type = ftype,
+                              requires = IS_IN_SET(options, multiple=True),
+                              )
         widget = w(dummy_field, values, **attr)
 
         return TAG[""](any_all,
                        widget,
                        SPAN(noopt,
-                            _class="no-options-available%s" % hide_noopt,
+                            _class = "no-options-available%s" % hide_noopt,
                             ),
                        )
 
@@ -2957,6 +3006,39 @@ class S3NotEmptyFilter(S3FilterWidget):
         attr["_class"] = _class
         attr["_type"] = "checkbox"
         attr["value"] = True if "None" in values else False
+
+        return INPUT(**attr)
+
+# =============================================================================
+class S3EmptyFilter(S3FilterWidget):
+    """
+        Filter to check for No Component records of a type
+        - e.g. Filter out all those people who have a certain qualification already
+        - use with a Custom Filtered Component "custom.id"
+    """
+
+    _class = "value-filter"
+
+    operator = "eq"
+
+    # -------------------------------------------------------------------------
+    def widget(self, resource, values):
+        """
+            Render this widget as HTML helper object(s)
+
+            @param resource: the resource
+            @param values: the search values from the URL query
+        """
+
+        attr = self.attr
+        _class = self._class
+        if "_class" in attr and attr["_class"]:
+            _class = "%s %s" % (attr["_class"], _class)
+        else:
+            _class = _class
+        attr["_class"] = _class
+        attr["_type"] = "checkbox"
+        attr["value"] = True if None in values else False
 
         return INPUT(**attr)
 
