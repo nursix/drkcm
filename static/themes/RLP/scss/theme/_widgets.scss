@@ -153,9 +153,14 @@ input.date.hasDatepicker {
     float: none;
     margin-bottom: 0.3rem;
 }
-.s3-groupedopts-widget table {
-    margin-left: 0;
-    margin-bottom: 0.5rem;
+.s3-groupedopts-widget {
+    table {
+        margin-left: 0;
+        margin-bottom: 0.5rem;
+    }
+    label[title] {
+        border-bottom: dotted 1px #ccc;
+    }
 }
 table.s3-groupedopts-widget {
     td {
@@ -167,7 +172,6 @@ table.s3-groupedopts-widget {
             white-space: pre-wrap;
         }
     }
-/*     border: 0; TODO make configurable */
     margin-bottom: 0;
 }
 div.s3-groupedopts-widget {

@@ -65,6 +65,7 @@ __all__ = ("single_phone_number_pattern",
 import datetime
 import json
 import re
+from uuid import uuid4
 
 from gluon import current, IS_FLOAT_IN_RANGE, IS_INT_IN_RANGE, IS_IN_SET, \
                   IS_MATCH, IS_NOT_IN_DB
@@ -1261,14 +1262,13 @@ class IS_PROCESSED_IMAGE(Validator):
         # process if, that worked.
         if cropped_image:
             import base64
-            import uuid
 
             metadata, cropped_image = cropped_image.split(",")
             #filename, datatype, enctype = metadata.split(";")
             filename = metadata.split(";", 1)[0]
 
             f = Storage()
-            f.filename = uuid.uuid4().hex + filename
+            f.filename = uuid4().hex + filename
             f.file = BytesIO(base64.b64decode(cropped_image))
 
             return (f, None)
@@ -1890,32 +1890,6 @@ class IS_IN_SET_LAZY(Validator):
                 return (values, self.error_message)
             return (values, None)
         return (value, None)
-
-# =============================================================================
-class IS_TIME_INTERVAL_WIDGET(Validator):
-    """
-        Simple validator for the S3TimeIntervalWidget, returns
-        the selected time interval in seconds
-    """
-
-    def __init__(self, field):
-        self.field = field
-
-    # -------------------------------------------------------------------------
-    def __call__(self, value):
-
-        try:
-            val = int(value)
-        except ValueError:
-            return (0, None)
-        request = current.request
-        _vars = request.post_vars
-        try:
-            mul = int(_vars[("%s_multiplier" % self.field).replace(".", "_")])
-        except ValueError:
-            return (0, None)
-        seconds = val * mul
-        return (seconds, None)
 
 # =============================================================================
 class IS_PERSON_GENDER(IS_IN_SET):

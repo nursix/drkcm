@@ -82,7 +82,7 @@ UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
                       "case_use_residence_status": False,
                       "case_use_referral": False,
                       "case_use_service_contacts": False,
-                      "case_lodging": "text",
+                      "case_lodging": "site",
                       "case_lodging_dates": False,
                       "case_nationality_mandatory": True,
                       "case_show_total_consultations": False,
@@ -281,6 +281,9 @@ def config(settings):
                                      "Falldatum": "dvr_case.date",
                                      "BAMF-Az": "bamf.value",
                                      "Benutzername": "current_user.name",
+                                     "Adresse": "dvr_case.site_id$location_id$addr_street",
+                                     "PLZ": "dvr_case.site_id$location_id$addr_postcode",
+                                     "Wohnort": "dvr_case.site_id$location_id$L3",
                                      }
 
     # -------------------------------------------------------------------------
@@ -965,12 +968,14 @@ def config(settings):
                                 "person_details.nationality",
                                 "person_details.marital_status",
                                 "dvr_case.status_id",
-                                "dvr_case.site_id",
+                                #lodging,
                                 "residence_status.status_type_id",
                                 "residence_status.permit_type_id",
                                 ]
-                        if use_address:
-                            axes.insert(-3, (T("Place of Residence"), "~.location_id$L3"))
+                        if lodging:
+                            axes.insert(-2, lodging)
+                        elif use_address:
+                            axes.insert(-2, (T("Place of Residence"), "~.location_id$L3"))
 
                         report_options = {
                             "rows": axes,
@@ -4597,47 +4602,6 @@ def drk_org_rheader(r, tabs=None):
     return rheader
 
 # =============================================================================
-def drk_anonymous_address(record_id, field, value):
-    """
-        Helper to anonymize a pr_address location; removes street and
-        postcode details, but retains Lx ancestry for statistics
-
-        @param record_id: the pr_address record ID
-        @param field: the location_id Field
-        @param value: the location_id
-
-        @return: the location_id
-    """
-
-    s3db = current.s3db
-    db = current.db
-
-    # Get the location
-    if value:
-        ltable = s3db.gis_location
-        row = db(ltable.id == value).select(ltable.id,
-                                            ltable.level,
-                                            limitby = (0, 1),
-                                            ).first()
-        if not row.level:
-            # Specific location => remove address details
-            data = {"addr_street": None,
-                    "addr_postcode": None,
-                    "gis_feature_type": 0,
-                    "lat": None,
-                    "lon": None,
-                    "wkt": None,
-                    }
-            # Doesn't work - PyDAL doesn't detect the None value:
-            #if "the_geom" in ltable.fields:
-            #    data["the_geom"] = None
-            row.update_record(**data)
-            if "the_geom" in ltable.fields:
-                db.executesql("UPDATE gis_location SET the_geom=NULL WHERE id=%s" % row.id)
-
-    return value
-
-# -----------------------------------------------------------------------------
 def drk_obscure_dob(record_id, field, value):
     """
         Helper to obscure a date of birth; maps to the first day of
@@ -4731,7 +4695,7 @@ def drk_person_anonymize():
                                                     }),
                           ("pr_address", {"key": "pe_id",
                                           "match": "pe_id",
-                                          "fields": {"location_id": drk_anonymous_address,
+                                          "fields": {"location_id": current.s3db.pr_address_anonymise,
                                                      "comments": "remove",
                                                      },
                                           }),

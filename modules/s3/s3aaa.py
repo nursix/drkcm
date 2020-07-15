@@ -47,7 +47,7 @@ from uuid import uuid4
 
 #from gluon import *
 from gluon import current, redirect, CRYPT, DAL, HTTP, SQLFORM, URL, \
-                  A, DIV, INPUT, LABEL, OPTGROUP, OPTION, SELECT, SPAN, XML, \
+                  A, BUTTON, DIV, INPUT, LABEL, OPTGROUP, OPTION, SELECT, SPAN, XML, \
                   IS_EMAIL, IS_EMPTY_OR, IS_EXPR, IS_IN_DB, IS_IN_SET, \
                   IS_LOWER, IS_NOT_EMPTY, IS_NOT_IN_DB
 
@@ -100,6 +100,7 @@ class AuthS3(Auth):
             - s3_link_to_human_resource
             - s3_link_to_member
             - s3_approver
+            - s3_password
 
         - S3 custom authentication methods:
             - s3_impersonate
@@ -458,25 +459,48 @@ Thank you"""
             settings.table_event = db[settings.table_event_name]
 
     # -------------------------------------------------------------------------
+    def ignore_min_password_length(self):
+        """
+            Disable min_length validation for password, e.g. during login
+        """
+
+        settings = self.settings
+
+        utable = settings.table_user
+
+        requires = utable[settings.password_field].requires
+        if requires:
+            if isinstance(requires, (list, tuple)):
+                requires = requires[-1]
+            try:
+                requires.min_length = 0
+            except:
+                pass
+
+    # -------------------------------------------------------------------------
     def login_bare(self, username, password):
         """
             Logs user in
                 - extended to understand session.s3.roles
         """
 
+        self.ignore_min_password_length()
+
         settings = self.settings
+
         utable = settings.table_user
         userfield = settings.login_userfield
         passfield = settings.password_field
+
         query = (utable[userfield] == username)
         user = current.db(query).select(limitby=(0, 1)).first()
         password = utable[passfield].validate(password)[0]
         if user:
             if not user.registration_key and user[passfield] == password:
                 user = Storage(utable._filter_fields(user, id=True))
-                current.session.auth = Storage(user=user,
-                                               last_visit=current.request.now,
-                                               expiration=settings.expiration)
+                current.session.auth = Storage(user = user,
+                                               last_visit = current.request.now,
+                                               expiration = settings.expiration)
                 self.user = user
                 self.s3_set_roles()
                 return user
@@ -523,14 +547,16 @@ Thank you"""
         deployment_settings = current.deployment_settings
 
         utable = settings.table_user
+
+        # Username (email) is required for login, convert to lowercase
         userfield = settings.login_userfield
         old_requires = utable[userfield].requires
         utable[userfield].requires = [IS_NOT_EMPTY(), IS_LOWER()]
+
+        # Disable min_length for password during login
         passfield = settings.password_field
-        try:
-            utable[passfield].requires[-1].min_length = 0
-        except:
-            pass
+        self.ignore_min_password_length()
+
         if onvalidation is DEFAULT:
             onvalidation = settings.login_onvalidation
         if onaccept is DEFAULT:
@@ -839,15 +865,23 @@ Thank you"""
         form = SQLFORM.factory(
             Field("old_password", "password",
                   label = messages.old_password,
-                  requires = utable[passfield].requires),
+                  # No minimum length for old password
+                  #requires = utable[passfield].requires,
+                  requires = CRYPT(key = settings.hmac_key,
+                                   digest_alg = "sha512",
+                                   ),
+                  ),
             Field("new_password", "password",
                   label = messages.new_password,
-                  requires = utable[passfield].requires),
+                  requires = utable[passfield].requires,
+                  ),
             Field("new_password2", "password",
                   label = messages.verify_password,
-                  requires = [IS_EXPR(
-                    "value==%s" % repr(request.vars.new_password),
-                              messages.mismatched_password)]),
+                  requires = [IS_EXPR("value==%s" % repr(request.vars.new_password),
+                                      messages.mismatched_password,
+                                      ),
+                              ],
+                  ),
             submit_button = messages.password_change_button,
             hidden = {"_next": next},
             formstyle = current.deployment_settings.get_ui_formstyle(),
@@ -941,13 +975,13 @@ Thank you"""
                   ),
             Field("new_password2", "password",
                   label = messages.verify_password,
-                  requires = [IS_EXPR("value==%s" % repr(request.vars.new_password),
-                              messages.mismatched_password)
-                              ],
+                  requires = IS_EXPR("value==%s" % repr(request.vars.new_password),
+                                     messages.mismatched_password,
+                                     ),
                   ),
-            submit_button = messages.password_reset_button,
+            submit_button = messages.password_change_button,
             hidden = {"_next": next},
-            formstyle = settings.formstyle,
+            formstyle = current.deployment_settings.get_ui_formstyle(),
             separator = settings.label_separator
             )
         if form.accepts(request, session,
@@ -967,10 +1001,10 @@ Thank you"""
 
     # -------------------------------------------------------------------------
     def request_reset_password(self,
-                               next=DEFAULT,
-                               onvalidation=DEFAULT,
-                               onaccept=DEFAULT,
-                               log=DEFAULT,
+                               next = DEFAULT,
+                               onvalidation = DEFAULT,
+                               onaccept = DEFAULT,
+                               log = DEFAULT,
                                ):
         """
             Returns a form to reset the user password, overrides web2py's
@@ -1067,8 +1101,8 @@ Thank you"""
         req_vars = request.vars
 
         session.auth = Storage(
-            user=user,
-            last_visit=request.now,
+            user = user,
+            last_visit = request.now,
             expiration = req_vars.get("remember", False) and \
                 settings.long_expiration or settings.expiration,
             remember = "remember" in req_vars,
@@ -1229,12 +1263,16 @@ Thank you"""
 
         # Insert a Password-confirmation field
         for i, row in enumerate(form[0].components):
-            item = row.element("input", _name=passfield)
+            item = row.element("input",
+                               _name = passfield,
+                               )
             if item:
                 field_id = "%s_password_two" % utablename
                 s3_addrow(form,
                           LABEL(DIV("%s:" % messages.verify_password,
-                                    SPAN("*", _class="req"),
+                                    SPAN("*",
+                                         _class = "req",
+                                         ),
                                     _for = "password_two",
                                     _id = field_id + SQLFORM.ID_LABEL_SUFFIX,
                                     ),
@@ -1467,10 +1505,10 @@ Thank you"""
                              (current.response.s3.base_url, reset_password_key)
 
         message = self.messages.reset_password % {"url": reset_password_url}
-        if mailer.send(to=user.email,
-                       subject=self.messages.reset_password_subject,
-                       message=message):
-            user.update_record(reset_password_key=reset_password_key)
+        if mailer.send(to = user.email,
+                       subject = self.messages.reset_password_subject,
+                       message = message):
+            user.update_record(reset_password_key = reset_password_key)
             return True
 
         return False
@@ -3555,6 +3593,59 @@ Please go to %(url)s to approve this user."""
             current.response.error = messages.unable_send_email
 
     # -------------------------------------------------------------------------
+    def s3_password(self, length=32):
+        """
+            Generate a random password
+        """
+
+        if length == 32:
+            password = uuid4().hex
+        else:
+            import random
+            import string
+            password = "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(length))
+
+        crypted = CRYPT(key = self.settings.hmac_key,
+                        #min_length = current.deploymentsettings.get_auth_password_min_length(),
+                        digest_alg = "sha512",
+                        )(password)[0]
+
+        return password, crypted
+
+    # -------------------------------------------------------------------------
+    def s3_anonymise_password(self, record_id, field, value):
+        """
+            Anonymise the password
+
+            Arguments just for API:
+            @param record_id: the auth_user record ID
+            @param field: the password Field
+            @param value: the password hash
+
+            @return: the new random password hash
+        """
+
+        return self.s3_password()[1]
+
+    # -------------------------------------------------------------------------
+    def s3_anonymise_roles(self, record_id, field, value):
+        """
+            Remove all roles
+
+            Arguments just for API:
+            @param record_id: the auth_user record ID
+            @param field: the id Field
+            @param value: the id
+
+            @return: the record_id
+        """
+
+        roles = self.s3_get_roles(record_id)
+        if roles:
+            self.s3_withdraw_role(record_id, roles)
+        return record_id
+
+    # -------------------------------------------------------------------------
     # S3-specific authentication methods
     # -------------------------------------------------------------------------
     def s3_impersonate(self, user_id):
@@ -4773,7 +4864,7 @@ Please go to %(url)s to approve this user."""
                 pass
             else:
                 row = current.db(query).select(ptable.id,
-                                               limitby=(0, 1),
+                                               limitby = (0, 1),
                                                ).first()
 
         return row.id if row else None

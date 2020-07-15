@@ -7,13 +7,27 @@ from collections import OrderedDict
 
 from gluon import *
 from gluon.storage import Storage
-from s3 import FS, ICON, IS_ONE_OF, S3CustomController, S3Method, \
-               S3MultiSelectWidget, S3Profile, S3SQLCustomForm, \
+from s3 import FS, ICON, IS_ONE_OF, S3AnonymizeWidget, S3CustomController, S3Method, \
+               S3MultiSelectWidget, S3Profile, S3Request, S3SQLCustomForm, \
                s3_avatar_represent, s3_comments_widget, s3_fullname, \
                s3_mark_required, s3_phone_requires, s3_str, s3_truncate
 
 SEPARATORS = (",", ":")
 THEME = "CCC"
+
+ADMIN_CONSENT_OPTIONS = ("FOCV",
+                         "STOREPID",
+                         "EUA",
+                         )
+DONOR_CONSENT_OPTIONS = ("FOCD",
+                         "STOREPID",
+                         "EUA",
+                         )
+VOL_CONSENT_OPTIONS = ("18+",
+                       "FOCV",
+                       "STOREPID",
+                       "EUA",
+                       )
 
 # =============================================================================
 class index(S3CustomController):
@@ -213,6 +227,139 @@ class donor(S3CustomController):
 
         self._view(THEME, "donor.html")
         return output
+
+# =============================================================================
+class login_next(S3CustomController):
+    """ Custom Page """
+
+    def __call__(self):
+
+        db = current.db
+        auth = current.auth
+
+        #user = auth.user
+        #if user:
+        #    utable = auth.settings.table_user
+        #    account = db(utable.id == user.id).select(utable.deleted,
+        #                                              limitby = (0, 1),
+        #                                              ).first()
+        #    if not account or account.deleted:
+        #        # Logout after succesful Account Deletion
+        #        redirect(URL(c="default", f="user", args=["logout"]))
+
+        request = current.request
+        settings = current.deployment_settings
+
+        person_id = auth.s3_logged_in_person()
+
+        # Check if there are new/modified/expired consent options
+        if auth.s3_has_role("DONOR"):
+            # Page to redirect to
+            url = URL(c="default", f="index", args="donor")
+
+            options = DONOR_CONSENT_OPTIONS
+        else:
+            # Page to redirect to
+            url = URL(c="cms", f="post", args="datalist")
+
+            if auth.s3_has_roles(("ORG_ADMIN",
+                                  "GROUP_ADMIN",
+                                  )):
+                options = ADMIN_CONSENT_OPTIONS
+            else:
+                options = VOL_CONSENT_OPTIONS
+
+        s3db = current.s3db
+        ttable = s3db.auth_processing_type
+        otable = s3db.auth_consent_option
+        ctable = s3db.auth_consent
+        query = (ttable.code.belongs(options)) & \
+                (ttable.id == otable.type_id) & \
+                (otable.obsolete == False) & \
+                (otable.deleted == False)
+        possible_options = db(query).select(otable.id,
+                                            ttable.code,
+                                            )
+        options = {}
+        for o in possible_options:
+            options[o["auth_consent_option.id"]] = o["auth_processing_type.code"]
+        query = (ctable.person_id == person_id) & \
+                (ctable.option_id.belongs(options)) & \
+                (ctable.consenting == True) & \
+                ((ctable.expires_on == None) | \
+                 (ctable.expires_on < request.utcnow))
+        consented = db(query).select(ctable.option_id)
+
+        if len(consented) == len(options):
+            # All Consented already
+            redirect(url)
+
+        # Which are not consented?
+        for c in consented:
+            del options[c.option_id]
+
+        # Show form
+        T = current.T
+        auth_Consent = s3db.auth_Consent
+        consent = auth_Consent(processing_types = options.values())
+        formfields = [Field("consent",
+                            label = T("Consent"),
+                            widget = consent.widget,
+                            ),
+                      ]
+        # Generate labels (and mark required fields in the process)
+        labels = s3_mark_required(formfields, mark_required=[])[0]
+        form = SQLFORM.factory(#table_name = utable._tablename,
+                               record = None,
+                               #hidden = {"_next": request.vars._next},
+                               labels = labels,
+                               separator = "",
+                               showid = False,
+                               submit_button = T("Accept"),
+                               delete_label = auth.messages.delete_label,
+                               formstyle = settings.get_ui_formstyle(),
+                               #buttons = buttons,
+                               *formfields
+                               )
+
+        if form.accepts(request.vars,
+                        current.session,
+                        formname = "consent",
+                        ):
+            auth_Consent.track(person_id, form.vars.consent)
+            redirect(url)
+
+        response = current.response
+        response.view = "simple.html"
+        # Anonymise button
+        tablename = "pr_person"
+        s3db.configure(tablename,
+                       anonymize_next = URL(c = "default",
+                                            f = "user",
+                                            args = ["logout"],
+                                            ),
+                       )
+        r = S3Request(prefix = "pr",
+                      name = "person",
+                      c = "default",
+                      )
+        r.id = person_id
+        settings.customise_pr_person_resource(r, tablename)
+        anonymise_btn = S3AnonymizeWidget.widget(r,
+                                                 label = "Delete My Account",
+                                                 ajaxURL = URL(c="pr", f="person",
+                                                               args = [person_id, "anonymize.json"]
+                                                               ),
+                                                 _class = "action-btn anonymize-btn",
+                                                 )
+        response.s3.rfooter = DIV(P("If you do not accept the new terms, you should delete your account:"),
+                                  anonymise_btn,
+                                  _id = "login_next",
+                                  )
+        current.menu = Storage(about = current.menu.about)
+        return {"item": form,
+                "title": T("Consent Required"),
+                }
 
 # =============================================================================
 class organisationApply(S3Method):
@@ -1195,7 +1342,7 @@ class register(S3CustomController):
                 DRY Helper for individuals (whether with existing agency or not)
             """
             # Instantiate Consent Tracker
-            consent = s3db.auth_Consent(processing_types=["18+", "STOREPID", "FOCV"])
+            consent = s3db.auth_Consent(processing_types = VOL_CONSENT_OPTIONS)
 
             formfields = [utable.first_name,
                           utable.last_name,
@@ -1410,7 +1557,7 @@ class register(S3CustomController):
             #           )
 
             # Instantiate Consent Tracker
-            consent = s3db.auth_Consent(processing_types=["STOREPID", "FOCV"])
+            consent = s3db.auth_Consent(processing_types = ADMIN_CONSENT_OPTIONS)
 
             # Form Fields
             formfields = [Field("organisation",
@@ -1525,7 +1672,7 @@ class register(S3CustomController):
                          )
 
             # Instantiate Consent Tracker
-            consent = s3db.auth_Consent(processing_types=["STOREPID", "FOCD"])
+            consent = s3db.auth_Consent(processing_types = DONOR_CONSENT_OPTIONS)
 
             # Form Fields
             formfields = [utable.first_name,
@@ -1639,7 +1786,7 @@ class register(S3CustomController):
                          )
 
             # Instantiate Consent Tracker
-            consent = s3db.auth_Consent(processing_types=["STOREPID", "FOCV"])
+            consent = s3db.auth_Consent(processing_types = ADMIN_CONSENT_OPTIONS)
 
             # Form Fields
             formfields = [Field("group",

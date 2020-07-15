@@ -37,6 +37,8 @@ __all__ = ("S3DocumentLibrary",
 
 import os
 
+from uuid import uuid4
+
 from gluon import *
 from gluon.storage import Storage
 
@@ -260,6 +262,7 @@ class S3DocumentLibrary(S3Model):
 
         add_components(tablename,
                        doc_document_tag = document_id,
+                       msg_attachment = document_id,
                        )
 
         # ---------------------------------------------------------------------
@@ -435,12 +438,11 @@ class S3DocumentLibrary(S3Model):
             if encoded_file:
                 # S3ImageCropWidget
                 import base64
-                import uuid
                 metadata, encoded_file = encoded_file.split(",")
                 #filename, datatype, enctype = metadata.split(";")
                 filename = metadata.split(";", 1)[0]
                 f = Storage()
-                f.filename = uuid.uuid4().hex + filename
+                f.filename = uuid4().hex + filename
                 f.file = BytesIO(base64.b64decode(encoded_file))
                 doc = form_vars.file = f
                 if not form_vars.name:
@@ -601,8 +603,7 @@ def doc_image_represent(filename):
                                args=filename)))
 
     # @todo: implement/activate the JavaScript for this:
-    #import uuid
-    #anchor = "zoom-media-image-%s" % uuid.uuid4()
+    #anchor = "zoom-media-image-%s" % uuid4()
     #return DIV(A(IMG(_src=URL(c="default", f="download",
                               #args=filename),
                      #_height=40),

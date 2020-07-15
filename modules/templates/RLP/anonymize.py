@@ -1,48 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import uuid
+from uuid import uuid4
 
 from gluon import current
-
-def rlp_anonymous_address(record_id, field, value):
-    """
-        Helper to anonymize a pr_address location; removes street and
-        postcode details, but retains Lx ancestry for statistics
-
-        @param record_id: the pr_address record ID
-        @param field: the location_id Field
-        @param value: the location_id
-
-        @return: the location_id
-    """
-
-    s3db = current.s3db
-    db = current.db
-
-    # Get the location
-    if value:
-        ltable = s3db.gis_location
-        row = db(ltable.id == value).select(ltable.id,
-                                            ltable.level,
-                                            limitby = (0, 1),
-                                            ).first()
-        if not row.level:
-            # Specific location => remove address details
-            data = {"addr_street": None,
-                    "addr_postcode": None,
-                    "gis_feature_type": 0,
-                    "lat": None,
-                    "lon": None,
-                    "wkt": None,
-                    }
-            # Doesn't work - PyDAL doesn't detect the None value:
-            #if "the_geom" in ltable.fields:
-            #    data["the_geom"] = None
-            row.update_record(**data)
-            if "the_geom" in ltable.fields:
-                db.executesql("UPDATE gis_location SET the_geom=NULL WHERE id=%s" % row.id)
-
-    return value
 
 # -----------------------------------------------------------------------------
 def rlp_obscure_dob(record_id, field, value):
@@ -84,7 +44,8 @@ def rlp_volunteer_anonymize():
     ANONYMOUS = "-"
 
     # Helper to produce an anonymous ID (pe_label)
-    anonymous_id = lambda record_id, f, v: "NN%s" % uuid.uuid4().hex[-8:].upper()
+    anonymous_id = lambda record_id, f, v: "NN%s" % uuid4().hex[-8:].upper()
+    anonymous_code = lambda record_id, f, v: uuid4().hex
 
     # Rules for delegation messages
     notifications = ("hrm_delegation_message", {"key": "delegation_id",
@@ -103,6 +64,20 @@ def rlp_volunteer_anonymize():
                                                 },
                                      "delete": True,
                                      })
+
+    # Rules for user accounts
+    auth = current.auth
+    account = ("auth_user", {"key": "id",
+                             "match": "user_id",
+                             "fields": {"id": auth.s3_anonymise_roles,
+                                        "first_name": ("set", "-"),
+                                        "last_name": "remove",
+                                        "email": anonymous_code,
+                                        "organisation_id": "remove",
+                                        "password": auth.s3_anonymise_password,
+                                        "deleted": ("set", True),
+                                        },
+                             })
 
     rules = [# Remove identity of volunteer
              {"name": "default",
@@ -132,7 +107,7 @@ def rlp_volunteer_anonymize():
                                                     }),
                           ("pr_address", {"key": "pe_id",
                                           "match": "pe_id",
-                                          "fields": {"location_id": rlp_anonymous_address,
+                                          "fields": {"location_id": current.s3db.pr_address_anonymise,
                                                      "comments": "remove",
                                                      },
                                           }),
@@ -168,6 +143,18 @@ def rlp_volunteer_anonymize():
                                               "cascade": [notifications,
                                                           notes,
                                                           ],
+                                              }),
+                          ],
+              },
+
+             # Remove user account
+             {"name": "account",
+              "title": "User Account",
+              "cascade": [("pr_person_user", {"key": "pe_id",
+                                              "match": "pe_id",
+                                              "cascade": [account,
+                                                          ],
+                                              "delete": True,
                                               }),
                           ],
               },
