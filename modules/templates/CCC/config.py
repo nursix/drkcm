@@ -1062,6 +1062,71 @@ $('.copy-link').click(function(e){
     settings.auth.remove_role = auth_remove_role
 
     # -------------------------------------------------------------------------
+    def auth_user_ondisable(user_id):
+        """
+            If a Volunteer is disabled then:
+                - remove their Organisation affiliation (if-any)
+                - move them to Inactives
+        """
+
+        db = current.db
+
+        # Are they a Volunteer?
+        gtable = db.auth_group
+        mtable = db.auth_membership
+        query = (gtable.uuid.belongs(("RESERVE", "VOLUNTEER"))) & \
+                (gtable.id == mtable.group_id) & \
+                (mtable.user_id == user_id)
+        volunteer = db(query).select(mtable.id,
+                                     limitby = (0, 1)
+                                     ).first()
+        if not volunteer:
+            # Nothing to do
+            return
+
+        auth = current.auth
+        s3db = current.s3db
+
+        # Lookup person_id
+        ltable = s3db.pr_person_user
+        ptable = s3db.pr_person
+        query = (ltable.user_id == user_id) & \
+                (ltable.pe_id == ptable.pe_id)
+        person = db(query).select(ptable.id,
+                                  limitby = (0, 1)
+                                  ).first()
+        person_id = person.id
+
+        # Remove Organisation Affiliation if-any
+        htable = s3db.hrm_human_resource
+        query = (htable.person_id == person_id) & \
+                (htable.deleted == False)
+        hr = db(query).select(htable.id,
+                              limitby = (0, 1)
+                              ).first()
+        if hr:
+            resource = s3db.resource("hrm_human_resource", id = hr.id)
+            resource.delete()
+            db(db.auth_user.id == user_id).update(organisation_id = None)
+            auth.s3_withdraw_role(user_id, "VOLUNTEER", for_pe=[])
+
+        # Move to Inactives
+
+        # Update Tag
+        ttable = s3db.pr_person_tag
+        query = (ttable.person_id == person_id) & \
+                (ttable.tag == "reserve")
+        db(query).update(value = 0)
+
+        # Set Realm to Inactives Forum
+        ftable = s3db.pr_forum
+        forum = db(ftable.name == "Inactives").select(ftable.pe_id,
+                                                      limitby = (0, 1)
+                                                      ).first()
+        realm_entity = forum.pe_id
+        auth.set_realm_entity("pr_person", person_id, entity=realm_entity, force_update=True)
+
+    # -------------------------------------------------------------------------
     def customise_auth_user_resource(r, tablename):
         """
             Hook in custom auth_user_register_onaccept for use when Agency/Existing Users are Approved
@@ -1070,6 +1135,7 @@ $('.copy-link').click(function(e){
         from templates.CCC.controllers import auth_user_register_onaccept
 
         current.s3db.configure("auth_user",
+                               ondisable = auth_user_ondisable,
                                register_onaccept = auth_user_register_onaccept,
                                )
 
@@ -1098,7 +1164,7 @@ $('.copy-link').click(function(e){
                             method = "anonymize",
                             action = S3AnonymizeBulk,
                             )
-        
+
         args = current.request.args
         if not len(args):
             if not ADMIN:
@@ -2465,10 +2531,10 @@ $('.copy-link').click(function(e){
     def customise_hrm_training_event_resource(r, tablename):
 
         from gluon import IS_EMAIL, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, IS_URL
-        from s3 import IS_UTC_DATETIME, \
+        from s3 import IS_PHONE_NUMBER_MULTI, IS_UTC_DATETIME, \
                        S3SQLInlineLink, S3LocationSelector, \
-                       S3OptionsFilter, S3SQLCustomForm, S3TextFilter, \
-                       s3_phone_requires
+                       S3OptionsFilter, S3SQLCustomForm, S3TextFilter
+
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("New Event"),
@@ -2525,7 +2591,7 @@ $('.copy-link').click(function(e){
 
         contact_tel = components_get("contact_tel")
         f = contact_tel.table.value
-        f.requires = IS_EMPTY_OR(s3_phone_requires)
+        f.requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI())
 
         contact_email = components_get("contact_email")
         f = contact_email.table.value
@@ -3314,9 +3380,9 @@ $('.copy-link').click(function(e){
 
         from gluon import IS_EMPTY_OR, IS_IN_SET, IS_INT_IN_RANGE, IS_NOT_EMPTY, \
                           SQLFORM
-        from s3 import IS_INT_AMOUNT, S3OptionsFilter, S3Represent, \
-                       S3SQLCustomForm, S3SQLInlineLink, S3TextFilter, \
-                       s3_phone_requires#, S3LocationSelector
+        from s3 import IS_INT_AMOUNT, IS_PHONE_NUMBER_MULTI, \
+                       S3OptionsFilter, S3Represent, S3SQLCustomForm, \
+                       S3SQLInlineLink, S3TextFilter#, S3LocationSelector
 
         s3db = current.s3db
 
@@ -3391,7 +3457,7 @@ $('.copy-link').click(function(e){
 
         contact_number = components_get("contact_number")
         f = contact_number.table.value
-        f.requires = s3_phone_requires
+        f.requires = IS_PHONE_NUMBER_MULTI()
 
         f = s3db.pr_group_location.location_id
         f.represent = S3Represent(lookup = "gis_location")
@@ -4058,7 +4124,7 @@ $('.copy-link').click(function(e){
                                     (stable.deleted == False)
                             rows = db(query).select(stable.id)
                             nhs_skill_ids = [row.id for row in rows]
-                            
+
                             s3db.add_components("pr_person",
                                                 hrm_competency = {"name": "nhs_offer",
                                                                   "joinby": "person_id",
@@ -4210,7 +4276,7 @@ $('.copy-link').click(function(e){
                         #               ]
                         #r.component.configure(list_fields = list_fields)
 
-                    
+
                     elif r.component_name == "location":
                         from s3 import S3LocationSelector
                         s3db.pr_person_location.location_id.widget = S3LocationSelector(levels = ("L3", "L4"),
@@ -4268,7 +4334,7 @@ $('.copy-link').click(function(e){
                                      args = "create",
                                      vars = {"person_ids": 1},
                                      ))
-                    
+
                 if HRM or PROFILE:
                     # Organisation Volunteers
                     # (only used for hrm/person profile)
@@ -4734,7 +4800,7 @@ $('.copy-link').click(function(e){
             if len(person_ids) < 5:
                 # Track individuals in the To: field
                 from s3 import s3_fullname
-                
+
                 # Lookup Emails & Names
                 ptable = s3db.pr_person
                 ctable = s3db.pr_contact
@@ -4760,7 +4826,7 @@ $('.copy-link').click(function(e){
             else:
                 # Bulk label
                 to_label = "Reserve(s)"
-            
+
                 # Lookup Emails
                 ptable = s3db.pr_person
                 ctable = s3db.pr_contact
@@ -4841,7 +4907,7 @@ $('.copy-link').click(function(e){
             if len(hr_ids) < 5:
                 # Track individuals in the To: field
                 from s3 import s3_fullname
-                
+
                 # Lookup Emails & Names
                 htable = s3db.hrm_human_resource
                 ptable = s3db.pr_person
@@ -4869,7 +4935,7 @@ $('.copy-link').click(function(e){
             else:
                 # Bulk label
                 to_label = "Community Volunteer(s)"
-            
+
                 # Lookup Emails
                 htable = s3db.hrm_human_resource
                 ptable = s3db.pr_person
@@ -4940,7 +5006,7 @@ $('.copy-link').click(function(e){
                     (system_name,
                      fullname,
                      )
-        
+
         if organisation_ids is not None:
             # Sending to a list of Organisations from the Bulk Action
             tag_table = s3db.project_task_tag
@@ -5097,7 +5163,7 @@ $('.copy-link').click(function(e){
                                          )
 
             return
-            
+
         # Use the Organisation we request or fallback to the User's Organisation
         if organisation_id is None:
             organisation_id = user.organisation_id
@@ -5171,7 +5237,7 @@ $('.copy-link').click(function(e){
                 (mtable.user_id == utable.id) & \
                 (utable.organisation_id == organisation_id)
         org_admins = db(query).select(utable.email)
-        
+
         # Send message to each
         send_email = current.msg.send_email
         for admin in org_admins:

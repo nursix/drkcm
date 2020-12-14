@@ -117,30 +117,32 @@ def config(settings):
         PID = "person_id"
 
         # Owner Entity Foreign Key
-        realm_entity_fks = dict(pr_contact = [("org_organisation", EID),
-                                              #("po_household", EID),
-                                              ("pr_person", EID),
-                                              ],
-                                pr_contact_emergency = EID,
-                                pr_physical_description = EID,
-                                pr_address = [("org_organisation", EID),
-                                              ("pr_person", EID),
-                                              ],
-                                pr_image = EID,
-                                pr_identity = PID,
-                                pr_education = PID,
-                                pr_note = PID,
-                                hrm_human_resource = SID,
-                                hrm_training = PID,
-                                hrm_training_event = OID,
-                                inv_recv = SID,
-                                inv_send = SID,
-                                inv_track_item = "track_org_id",
-                                inv_adj_item = "adj_id",
-                                req_req_item = "req_id",
-                                #po_household = "area_id",
-                                #po_organisation_area = "area_id",
-                                )
+        realm_entity_fks = {"pr_contact": [("org_organisation", EID),
+                                          #("po_household", EID),
+                                          ("pr_person", EID),
+                                          ],
+                            "pr_contact_emergency": EID,
+                            "pr_physical_description": EID,
+                            "pr_address": [("org_organisation", EID),
+                                          ("pr_person", EID),
+                                          ],
+                            "pr_image": EID,
+                            "pr_identity": PID,
+                            "pr_education": PID,
+                            "pr_note": PID,
+                            "hrm_human_resource": SID,
+                            "hrm_training": PID,
+                            "hrm_training_event": OID,
+                            "inv_adj": SID,
+                            "inv_recv": SID,
+                            "inv_send": SID,
+                            "inv_inv_item": SID,
+                            "inv_track_item": "track_org_id",
+                            "inv_adj_item": "adj_id",
+                            "req_req_item": "req_id",
+                            #"po_household": "area_id",
+                            #"po_organisation_area": "area_id",
+                            }
 
         # Default Foreign Keys (ordered by priority)
         default_fks = (#"household_id",
@@ -150,11 +152,11 @@ def config(settings):
                        )
 
         # Link Tables
-        #realm_entity_link_table = dict(
-        #    project_task = Storage(tablename = "project_task_project",
-        #                           link_key = "task_id"
-        #                           )
-        #    )
+        #realm_entity_link_table = {
+        #    "project_task": Storage(tablename = "project_task_project",
+        #                            link_key = "task_id"
+        #                            )
+        #    }
         #if tablename in realm_entity_link_table:
         #    # Replace row with the record from the link table
         #    link_table = realm_entity_link_table[tablename]
@@ -190,10 +192,11 @@ def config(settings):
             else:
                 ftablename = table[fk].type[10:] # reference tablename
                 ftable = s3db[ftablename]
-                query = (table.id == row.id) & \
+                query = (table.id == row["id"]) & \
                         (table[fk] == ftable.id)
             record = db(query).select(ftable.realm_entity,
-                                        limitby=(0, 1)).first()
+                                      limitby = (0, 1)
+                                      ).first()
             if record:
                 realm_entity = record.realm_entity
                 break
@@ -207,10 +210,11 @@ def config(settings):
         if realm_entity == 0 and tablename == "org_organisation":
             ottable = s3db.org_organisation_type
             ltable = db.org_organisation_organisation_type
-            query = (ltable.organisation_id == row.id) & \
+            query = (ltable.organisation_id == row["id"]) & \
                     (ltable.organisation_type_id == ottable.id)
             otype = db(query).select(ottable.name,
-                                     limitby=(0, 1)).first()
+                                     limitby = (0, 1)
+                                     ).first()
             if not otype or otype.name != RED_CROSS:
                 use_user_organisation = True
 
@@ -221,23 +225,26 @@ def config(settings):
         elif tablename == "hrm_training":
             # Inherit realm entity from the related HR record
             htable = s3db.hrm_human_resource
-            query = (table.id == row.id) & \
+            query = (table.id == row["id"]) & \
                     (htable.person_id == table.person_id) & \
                     (htable.deleted != True)
-            rows = db(query).select(htable.realm_entity, limitby=(0, 2))
+            rows = db(query).select(htable.realm_entity,
+                                    limitby = (0, 2)
+                                    )
             if len(rows) == 1:
                 realm_entity = rows.first().realm_entity
             else:
                 # Ambiguous => try course organisation
                 ctable = s3db.hrm_course
                 otable = s3db.org_organisation
-                query = (table.id == row.id) & \
+                query = (table.id == row["id"]) & \
                         (ctable.id == table.course_id) & \
                         (otable.id == ctable.organisation_id)
-                row = db(query).select(otable.pe_id,
-                                       limitby=(0, 1)).first()
-                if row:
-                    realm_entity = row.pe_id
+                org = db(query).select(otable.pe_id,
+                                       limitby = (0, 1)
+                                       ).first()
+                if org:
+                    realm_entity = org.pe_id
                 # otherwise: inherit from the person record
 
         # Groups are owned by the user's organisation
@@ -449,11 +456,12 @@ def config(settings):
     # Uncomment to auto-create certificates for courses
     settings.hrm.create_certificates_from_courses = "organisation_id"
     settings.hrm.use_code = True
-    settings.hrm.use_description = "Medical Information"
+    settings.hrm.use_description = None # Replaced by Medical Information
     # Uncomment to enable the use of HR Education
     settings.hrm.use_education = True
     # Uncomment to hide Job Titles
     settings.hrm.use_job_titles = False
+    settings.hrm.use_medical = "Medical Information"
     settings.hrm.use_national_id = True
     settings.hrm.use_skills = True
     # Custom label for Organisations in HR module
@@ -676,7 +684,7 @@ def config(settings):
     # Should Requests ask whether Transportation is required?
     settings.req.ask_transport = True
     settings.req.pack_values = False
-    # Disable Request Matching as we don't wwant users making requests to see what stock is available
+    # Disable Request Matching as we don't want users making requests to see what stock is available
     settings.req.prompt_match = False
     # Uncomment to disable Recurring Request
     settings.req.recurring = False # HNRC
@@ -1607,6 +1615,72 @@ Thank you"""
         auth.s3_approve_user(user, password=password)
 
     # -------------------------------------------------------------------------
+    def customise_hrm_insurance_resource(r, tablename):
+
+        table = current.s3db.hrm_insurance
+
+        table.type.default = "HEALTH"
+        table.insurance_number.label = T("Affiliate Number")
+        table.phone.label = T("Emergency Number")
+        table.insurer.label = "%s / %s" % (T("Insurance Company"),
+                                           T("Social Work or Prepaid"),
+                                           )
+
+    settings.customise_hrm_insurance_resource = customise_hrm_insurance_resource
+
+    # -------------------------------------------------------------------------
+    def hrm_human_resource_onvalidation(form):
+        """
+            Check that the Organization ID is unique per NS
+        """
+
+        # Read Code
+        form_vars_get = form.vars.get
+        code = form_vars_get("code")
+
+        if code is None:
+            return
+
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup Root Org
+        organisation_id = form_vars_get("organisation_id")
+        otable = s3db.org_organisation
+        root_org = db(otable.id == organisation_id).select(otable.root_organisation,
+                                                           limitby = (0, 1)
+                                                           ).first()
+        root_organisation = root_org.root_organisation
+
+        # Check for another HR in the same NS with same code
+        htable = s3db.hrm_human_resource
+        query = (htable.code == code) & \
+                (htable.organisation_id == otable.id) & \
+                (otable.root_organisation == root_organisation)
+        human_resource_id = form_vars_get("id")
+        if human_resource_id:
+            # Update Form: Skip our own record
+            query &= (htable.id != human_resource_id)
+        match = db(query).select(htable.id,
+                                 limitby = (0, 1)
+                                 ).first()
+        if match:
+            # Error
+            form.errors["code"] = current.T("Organization ID already in use")
+
+        return
+
+    # -------------------------------------------------------------------------
+    def customise_hrm_human_resource_resource(r, tablename):
+
+        # Organization ID needs to be unique per NS
+        current.s3db.configure(tablename,
+                               onvalidation = hrm_human_resource_onvalidation,
+                               )
+
+    settings.customise_hrm_human_resource_resource = customise_hrm_human_resource_resource
+
+    # -------------------------------------------------------------------------
     def customise_hrm_human_resource_controller(**attr):
 
         #controller = current.request.controller
@@ -1636,11 +1710,11 @@ Thank you"""
                              ]
             s3_addrow(form,
                       LABEL("%s:" % T("Language"),
-                            _id="auth_user_language__label",
-                            _for="auth_user_language",
+                            _id = "auth_user_language__label",
+                            _for = "auth_user_language",
                             ),
-                      SELECT(_id="auth_user_language",
-                             _name="language",
+                      SELECT(_id = "auth_user_language",
+                             _name = "language",
                              *language_opts
                              ),
                       "",
@@ -1674,7 +1748,7 @@ Thank you"""
                 # Lookup organisation_type_id for Red Cross
                 ttable = s3db.org_organisation_type
                 type_ids = db(ttable.name.belongs((RED_CROSS, "Training Center"))).select(ttable.id,
-                                                                                          limitby=(0, 2),
+                                                                                          limitby = (0, 2),
                                                                                           cache = s3db.cache,
                                                                                           )
                 if type_ids:
@@ -1707,7 +1781,8 @@ Thank you"""
                         filter_widget.opts["filter"] = (~FS("id").belongs(not_filter_opts))
 
             else:
-                s3db.org_organisation.root_organisation.label = T("National Society")
+                otable = s3db.org_organisation
+                otable.root_organisation.label = T("National Society")
 
                 # Organisation needs to be an NS/Branch
                 ns_only("hrm_human_resource",
@@ -1718,6 +1793,27 @@ Thank you"""
                         )
 
                 export_formats = list(settings.get_ui_export_formats())
+
+                if r.method in ("create", "summary", None):
+                    # Provide a default Organization ID
+                    organisation_id = auth.user.organisation_id
+                    if organisation_id:
+                        org = db(otable.id == organisation_id).select(otable.root_organisation,
+                                                                      limitby = (0, 1)
+                                                                      ).first()
+                        root_organisation_id = org.root_organisation
+                        f = table.code
+                        query = (otable.root_organisation == root_organisation_id) & \
+                                (otable.id == table.organisation_id)
+                        last_code = db(query).select(f,
+                                                     limitby = (0, 1),
+                                                     orderby = ~f
+                                                     ).first()
+                        last_code = last_code.code
+                        if last_code:
+                            f.default = int(last_code) + 1
+                        else:
+                            f.default = 1
 
                 if not r.id:
                     # Filter to just RC people
@@ -1776,7 +1872,7 @@ Thank you"""
             query = (ltable.facility_type_id == ttable.id) & \
                     (ttable.name == "Venue")
             venues = db(query).select(ltable.site_id)
-            venues = [f.site_id for f in venues]
+            venues = [v.site_id for v in venues]
             stable = s3db.org_site
             dbset = db(~stable.site_id.belongs(venues))
 
@@ -2794,16 +2890,21 @@ Thank you"""
         from s3 import s3_redirect_default
 
         auth = current.auth
-        if auth.user and auth.user.site_id and \
-           not auth.s3_has_role(current.session.s3.system_roles.ORG_ADMIN):
-            # Redirect to this Warehouse
-            table = current.s3db.inv_warehouse
-            wh = current.db(table.site_id == auth.user.site_id).select(table.id,
-                                                                       limitby=(0, 1)
-                                                                       ).first()
-            if wh:
-                s3_redirect_default(URL(c="inv", f="warehouse",
-                                        args=[wh.id, "inv_item"]))
+        if auth.user and auth.user.site_id:
+            has_role = auth.s3_has_role
+            if has_role("national_wh_manager") or \
+               has_role(current.session.s3.system_roles.ORG_ADMIN):
+                pass
+            else:
+                # Redirect to this Warehouse
+                table = current.s3db.inv_warehouse
+                wh = current.db(table.site_id == auth.user.site_id).select(table.id,
+                                                                           limitby = (0, 1)
+                                                                           ).first()
+                if wh:
+                    s3_redirect_default(URL(c="inv", f="warehouse",
+                                            args = [wh.id, "inv_item"],
+                                            ))
 
         # Redirect to Warehouse Summary Page
         s3_redirect_default(URL(c="inv", f="warehouse", args="summary"))
@@ -2961,11 +3062,13 @@ Thank you"""
                             },
                          }
 
+        direct_stock_edits = settings.get_inv_direct_stock_edits()
+
         current.s3db.configure("inv_inv_item",
-                               create = False,
-                               deletable = False,
-                               editable = False,
-                               listadd = False,
+                               create = direct_stock_edits,
+                               deletable = direct_stock_edits,
+                               editable = direct_stock_edits,
+                               listadd = direct_stock_edits,
                                grouped = stock_reports,
                                )
 
@@ -3451,7 +3554,7 @@ Thank you"""
                 #               create_onaccept = hrm_human_resource_create_onaccept,
                 #               )
 
-            elif method =="record" or component_name == "human_resource":
+            elif method == "record" or component_name == "human_resource":
                 table = s3db.hrm_human_resource
                 if EXTERNAL:
                     db = current.db
@@ -3597,20 +3700,21 @@ Thank you"""
                                list_fields = list_fields,
                                )
 
-            elif component_name == "physical_description":
-                from gluon import DIV
-                dtable = r.component.table
-                dtable.medical_conditions.comment = DIV(_class="tooltip",
-                                                        _title="%s|%s" % (T("Medical Conditions"),
-                                                                          T("Chronic Illness, Disabilities, Mental/Psychological Condition etc.")))
-                dtable.allergic.writable = dtable.allergic.readable = True
-                dtable.allergies.writable = dtable.allergies.readable = True
-                dtable.ethnicity.writable = dtable.ethnicity.readable = False
-                dtable.other_details.writable = dtable.other_details.readable = False
-                import json
-                SEPARATORS = (",", ":")
-                s3.jquery_ready.append('''S3.showHidden('%s',%s,'%s')''' % \
-                    ("allergic", json.dumps(["allergies"], separators=SEPARATORS), "pr_physical_description"))
+            # Moved to MedicalTab
+            #elif component_name == "physical_description":
+            #    from gluon import DIV
+            #    dtable = r.component.table
+            #    dtable.medical_conditions.comment = DIV(_class="tooltip",
+            #                                            _title="%s|%s" % (T("Medical Conditions"),
+            #                                                              T("Chronic Illness, Disabilities, Mental/Psychological Condition etc.")))
+            #    dtable.allergic.writable = dtable.allergic.readable = True
+            #    dtable.allergies.writable = dtable.allergies.readable = True
+            #    dtable.ethnicity.writable = dtable.ethnicity.readable = False
+            #    dtable.other_details.writable = dtable.other_details.readable = False
+            #    import json
+            #    SEPARATORS = (",", ":")
+            #    s3.jquery_ready.append('''S3.showHidden('%s',%s,'%s')''' % \
+            #        ("allergic", json.dumps(["allergies"], separators=SEPARATORS), "pr_physical_description"))
 
             if not EXTERNAL and \
                auth.s3_has_roles(ID_CARD_EXPORT_ROLES):
@@ -3628,6 +3732,34 @@ Thank you"""
         return attr
 
     settings.customise_pr_person_controller = customise_pr_person_controller
+
+    # -------------------------------------------------------------------------
+    def customise_pr_physical_description_resource(r, tablename):
+
+        from gluon import DIV
+        from s3 import S3SQLCustomForm
+
+        s3db = current.s3db
+
+        #s3db.pr_physical_description.medical_conditions.comment = DIV(_class="tooltip",
+        #                                                              _title="%s|%s" % (T("Medical Conditions"),
+        #                                                                                T("Chronic Illness, Disabilities, Mental/Psychological Condition etc.")))
+
+        s3db.pr_physical_description.medical_conditions.comment = DIV(_class="tooltip",
+                                                                      _title="%s|%s" % (T("Medical Conditions"),
+                                                                                        T("It is important to include, if they exist: surgical history, medical restrictions, vaccines, etc.")))
+
+        s3db.configure(tablename,
+                       crud_form = S3SQLCustomForm("blood_type",
+                                                   "medical_conditions",
+                                                   "medication",
+                                                   "diseases",
+                                                   "allergic",
+                                                   "allergies",
+                                                   ),
+                       )
+
+    settings.customise_pr_physical_description_resource = customise_pr_physical_description_resource
 
     # -------------------------------------------------------------------------
     def customise_supply_item_category_resource(r, tablename):
@@ -4458,9 +4590,9 @@ Thank you"""
 
         # Custom Request Form
         s3db.set_method("req", "req",
-                       method = "form",
-                       action = PrintableShipmentForm,
-                       )
+                        method = "form",
+                        action = PrintableShipmentForm,
+                        )
 
     settings.customise_req_req_resource = customise_req_req_resource
 

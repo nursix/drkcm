@@ -45,7 +45,10 @@ from ..s3validators import JSONERRORS
 
 # =============================================================================
 class S3Payments(S3Method):
-    """ REST Methods to interact with online payment services """
+    """
+        REST Methods to interact with online payment services
+        - plugged into the fin_subscription resource
+    """
 
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
@@ -183,7 +186,7 @@ class S3Payments(S3Method):
                       Field("cancel", "boolean",
                             label = T("Yes, cancel this subscription"),
                             default = False,
-                            requires = lambda cb: (cb, (CONFIRM if not cb else None))
+                            requires = lambda cb, record_id=None: (cb, (CONFIRM if not cb else None))
                             ),
                       ]
 

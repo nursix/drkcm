@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from gluon import current
-from s3 import *
-from s3layouts import *
+from s3 import IS_ISO639_2_LANGUAGE_CODE
+from s3layouts import MM, M
 try:
     from .layouts import *
 except ImportError:
@@ -62,7 +62,7 @@ class S3MainMenu(default.S3MainMenu):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_lang(cls):
+    def menu_lang(cls, **attr):
         """ Language Selector """
 
         languages = current.deployment_settings.get_L10n_languages()
@@ -166,12 +166,8 @@ class S3OptionsMenu(default.S3OptionsMenu):
             # OrgAdmin: No Side-menu
             return None
 
-        settings_messaging = self.settings_messaging()
-
         settings = current.deployment_settings
         consent_tracking = lambda i: settings.get_auth_consent_tracking()
-        is_data_repository = lambda i: settings.get_sync_data_repository()
-        translate = settings.has_module("translate")
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
@@ -209,11 +205,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         #M("Hierarchy", m="hierarchy"),
                         M("Create", m="create", restrict=(ADMIN, ORG_GROUP_ADMIN)),
                         ),
-                    #M("Administration", restrict=(ADMIN, ORG_GROUP_ADMIN))(
-                    #    M("Facility Types", f="facility_type"),
+                    M("Administration", restrict=(ADMIN, ORG_GROUP_ADMIN))(
+                        M("Facility Types", f="facility_type"),
                     #    M("Organization Types", f="organisation_type"),
                     #    M("Sectors", f="sector"),
-                    #    )
+                        )
                     )
 
     # -------------------------------------------------------------------------
@@ -269,10 +265,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Archive",
                           vars = {"workflow": "o"},
                           ),
-                        M("Organizer", m="organize", restrict="HRMANAGER"),
+                        M("Organizer", m="organize", restrict=("HRMANAGER", "VCMANAGER")),
                         ),
                     M("Statistics", link=False)(
                         M("Deployments", c="hrm", f="delegation", m="report"),
+                        M("Volunteers", c="vol", f="person", m="report",
+                          restrict = "COORDINATOR",
+                          ),
                         ),
                     M("Administration", link=False, restrict="ADMIN")(
                         M("Occupation Types", c="pr", f="occupation_type"),

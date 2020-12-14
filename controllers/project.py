@@ -416,7 +416,7 @@ def project():
                 #    from s3 import S3SQLCustomForm, S3SQLInlineComponent
                 #    field = s3db.budget_allocation.budget_entity_id
                 #    field.readable = field.writable = True
-                #    field.requires = S3Represent(lookup="budget_budget", key="budget_entity_id")
+                #    field.represent = S3Represent(lookup="budget_budget", key="budget_entity_id")
                 #    field.requires = IS_ONE_OF()
                 #
                 #    crud_form = S3SQLCustomForm("project_id",
@@ -961,15 +961,12 @@ def partners():
         RESTful CRUD controller for Organisations filtered by Type
     """
 
-    # @ToDo: This could need to be a deployment setting
+    # @ToDo: This should be a deployment setting
     get_vars["organisation_type.name"] = \
         "Academic,Bilateral,Government,Intergovernmental,NGO,UN agency"
 
     # Load model
     table = s3db.org_organisation
-
-    # Type is Mandatory (otherwise they can disappear from view)
-    # @ToDo: How to achieve this in an S3SQLInlineLink?
 
     # Modify CRUD Strings
     s3.crud_strings.org_organisation = Storage(
@@ -986,6 +983,8 @@ def partners():
         msg_list_empty = T("No Partner Organizations currently registered")
         )
 
+    # NB Type gets defaulted in the Custom CRUD form
+    # - user needs create permissions for org_organisation_organisation_type
     return s3db.org_organisation_controller()
 
 # =============================================================================

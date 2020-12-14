@@ -151,15 +151,10 @@ class S3GroupedItemsReport(S3Method):
         labels = report_config.get("labels")
         represent = report_config.get("groupby_represent")
 
-        if representation in ("pdf", "xls"):
-            as_dict = True
-        else:
-            as_dict = False
-
         data = gi.json(fields = display_cols,
                        labels = labels,
                        represent = represent,
-                       as_dict = as_dict,
+                       as_dict = representation in ("pdf", "xls"),
                        )
 
         group_headers = report_config.get("group_headers", False)
@@ -187,12 +182,12 @@ class S3GroupedItemsReport(S3Method):
 
                 # Instantiate form
                 filter_form = S3FilterForm(filter_widgets,
-                                           formstyle=filter_formstyle,
-                                           submit=filter_submit,
-                                           clear=filter_clear,
-                                           ajax=True,
-                                           _class="filter-form",
-                                           _id="%s-filter-form" % widget_id,
+                                           formstyle = filter_formstyle,
+                                           submit = filter_submit,
+                                           clear = filter_clear,
+                                           ajax = True,
+                                           _class = "filter-form",
+                                           _id = "%s-filter-form" % widget_id,
                                            )
 
                 # Render against unfiltered resource
@@ -500,7 +495,7 @@ class S3GroupedItemsReport(S3Method):
                                                ),
                                   },
                           ),
-                      _class="gi-export-formats",
+                      _class = "gi-export-formats",
                       )
 
         return formats
@@ -639,7 +634,7 @@ class S3GroupedItemsTable(object):
 
         pdf_header = self.pdf_header
         if callable(pdf_header):
-            pdf_header = lambda r, title=title: self.pdf_header(r, title=title)
+            pdf_header = lambda r, t=title: self.pdf_header(r, title=t)
 
         pdf_footer = self.pdf_footer
 
@@ -903,7 +898,7 @@ class S3GroupedItemsTable(object):
         if not totals:
             return
 
-        footer_row = TR(_class="gi-column-totals")
+        footer_row = TR(_class = "gi-column-totals")
         if columns:
             label = None
             span = 0
@@ -973,7 +968,7 @@ class S3GroupedItemsTable(object):
                     )
 
         tbody.append(TR(header,
-                        _class="gi-group-header gi-level-%s" % level,
+                        _class = "gi-group-header gi-level-%s" % level,
                         ))
 
     # -------------------------------------------------------------------------
@@ -1288,7 +1283,7 @@ class S3GroupedItems(object):
             for group in self.groups:
                 value = group[key]
                 if group:
-                    group_repr = group.__represent(level = level+1)
+                    group_repr = group.__represent(level = level + 1)
                 else:
                     group_repr = "[empty group]"
                 output = "%s\n%s=> %s: %s\n%s" % \
@@ -1302,11 +1297,12 @@ class S3GroupedItems(object):
 
     # -------------------------------------------------------------------------
     def json(self,
-             fields=None,
-             labels=None,
-             represent=None,
-             as_dict=False,
-             master=True):
+             fields = None,
+             labels = None,
+             represent = None,
+             as_dict = False,
+             master = True
+             ):
         """
             Serialize this group as JSON
 
@@ -1450,9 +1446,8 @@ class S3GroupedItems(object):
         aggregates = self._aggregates
         totals = {}
         for k, a in aggregates.items():
-            method = k[0]
             # @todo: call represent for totals
-            totals[colname] = s3_str(a.result)
+            totals[k[1]] = s3_str(a.result)
         output["t"] = totals
 
         # Convert to JSON unless requested otherwise
@@ -1480,7 +1475,8 @@ class S3GroupAggregate(object):
         self.result = self.__compute(method, values)
 
     # -------------------------------------------------------------------------
-    def __compute(self, method, values):
+    @staticmethod
+    def __compute(method, values):
         """
             Compute the aggregated value
 
@@ -1490,43 +1486,45 @@ class S3GroupAggregate(object):
             @return: the aggregated value
         """
 
-        result = None
+        if values is None:
+            return None
 
-        if values is not None:
-            try:
-                values = [v for v in values if v is not None]
-            except TypeError:
-                result = None
-            else:
-                if method == "count":
-                    result = len(set(values))
+        try:
+            values = [v for v in values if v is not None]
+        except TypeError:
+            return None
+
+        result = None
+        if method == "count":
+            result = len(set(values))
+        else:
+            values = [v for v in values
+                        if isinstance(v, INTEGER_TYPES + (float,))]
+            if method == "sum":
+                try:
+                    result = round(math.fsum(values), 2)
+                except (TypeError, ValueError):
+                    result = None
+            elif method == "min":
+                try:
+                    result = min(values)
+                except (TypeError, ValueError):
+                    result = None
+            elif method == "max":
+                try:
+                    result = max(values)
+                except (TypeError, ValueError):
+                    result = None
+            elif method == "avg":
+                num = len(values)
+                if num:
+                    try:
+                        result = sum(values) / float(num)
+                    except (TypeError, ValueError):
+                        result = None
                 else:
-                    values = [v for v in values
-                              if isinstance(v, INTEGER_TYPES + (float,))]
-                if method == "sum":
-                    try:
-                        result = math.fsum(values)
-                    except (TypeError, ValueError):
-                        result = None
-                elif method == "min":
-                    try:
-                        result = min(values)
-                    except (TypeError, ValueError):
-                        result = None
-                elif method == "max":
-                    try:
-                        result = max(values)
-                    except (TypeError, ValueError):
-                        result = None
-                elif method == "avg":
-                    num = len(values)
-                    if num:
-                        try:
-                            result = sum(values) / float(num)
-                        except (TypeError, ValueError):
-                            result = None
-                    else:
-                        result = None
+                    result = None
+
         return result
 
     # -------------------------------------------------------------------------

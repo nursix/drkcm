@@ -114,7 +114,7 @@ class FinExpensesModel(S3Model):
                        super_entity = "doc_entity",
                        )
 
-        represent = S3Represent(lookup=tablename)
+        represent = S3Represent(lookup = tablename)
 
         expense_id = S3ReusableField("expense_id", "reference %s" % tablename,
                                      label = T("Expense"),
@@ -157,6 +157,7 @@ class FinPaymentServiceModel(S3Model):
     def model(self):
 
         T = current.T
+        define_table = self.define_table
 
         # -------------------------------------------------------------------------
         # Payments Service
@@ -165,60 +166,59 @@ class FinPaymentServiceModel(S3Model):
                      }
 
         tablename = "fin_payment_service"
-        self.define_table(tablename,
-                          Field("name",
-                                requires = IS_NOT_EMPTY(),
-                                ),
-                          self.org_organisation_id(empty=False),
-                          Field("api_type",
-                                default = "PAYPAL",
-                                label = T("API Type"),
-                                requires = IS_IN_SET(api_types,
-                                                     zero = None,
-                                                     ),
-                                represent = S3Represent(options = api_types,
-                                                        ),
-                                ),
-                          Field("base_url",
-                                label = T("Base URL"),
-                                requires = IS_EMPTY_OR(
-                                                IS_URL(mode = "generic",
-                                                       allowed_schemes = ["http", "https"],
-                                                       prepend_scheme = "https",
-                                                       )),
-                                ),
-                          Field("use_proxy", "boolean",
-                                default = False,
-                                label = T("Use Proxy"),
-                                represent = s3_yes_no_represent,
-                                ),
-                          Field("proxy",
-                                label = T("Proxy Server"),
-                                ),
-                          Field("username",
-                                label = T("Username (Client ID)"),
-                                ),
-                          Field("password",
-                                label = T("Password (Client Secret)"),
-                                # TODO password widget
-                                ),
-                          Field("token_type",
-                                label = T("Token Type"),
-                                readable = False,
-                                writable = False,
-                                ),
-                          Field("access_token",
-                                label = T("Access Token"),
-                                readable = False,
-                                writable = False,
-                                ),
-                          s3_datetime("token_expiry_date",
-                                      default = None,
-                                      label = T("Token expires on"),
-                                      #readable = False,
-                                      writable = False,
-                                      ),
-                          *s3_meta_fields())
+        define_table(tablename,
+                     Field("name",
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     self.org_organisation_id(empty=False),
+                     Field("api_type",
+                           default = "PAYPAL",
+                           label = T("API Type"),
+                           requires = IS_IN_SET(api_types,
+                                                zero = None,
+                                                ),
+                           represent = S3Represent(options = api_types),
+                           ),
+                     Field("base_url",
+                           label = T("Base URL"),
+                           requires = IS_EMPTY_OR(
+                                           IS_URL(mode = "generic",
+                                                  allowed_schemes = ["http", "https"],
+                                                  prepend_scheme = "https",
+                                                  )),
+                           ),
+                     Field("use_proxy", "boolean",
+                           default = False,
+                           label = T("Use Proxy"),
+                           represent = s3_yes_no_represent,
+                           ),
+                     Field("proxy",
+                           label = T("Proxy Server"),
+                           ),
+                     Field("username",
+                           label = T("Username (Client ID)"),
+                           ),
+                     Field("password", "password",
+                           label = T("Password (Client Secret)"),
+                           # TODO password widget
+                           ),
+                     Field("token_type",
+                           label = T("Token Type"),
+                           readable = False,
+                           writable = False,
+                           ),
+                     Field("access_token",
+                           label = T("Access Token"),
+                           readable = False,
+                           writable = False,
+                           ),
+                     s3_datetime("token_expiry_date",
+                                 default = None,
+                                 label = T("Token expires on"),
+                                 #readable = False,
+                                 writable = False,
+                                 ),
+                     *s3_meta_fields())
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Payment Service"),
@@ -261,16 +261,16 @@ class FinPaymentServiceModel(S3Model):
         # Payments Log
         #
         tablename = "fin_payment_log"
-        self.define_table(tablename,
-                          service_id(empty = False,
-                                     ondelete = "CASCADE",
-                                     ),
-                          s3_datetime(default="now",
-                                      ),
-                          Field("action"),
-                          Field("result"),
-                          Field("reason", "text"),
-                          *s3_meta_fields())
+        define_table(tablename,
+                     service_id(empty = False,
+                                ondelete = "CASCADE",
+                                ),
+                     s3_datetime(default="now",
+                                 ),
+                     Field("action"),
+                     Field("result"),
+                     Field("reason", "text"),
+                     *s3_meta_fields())
 
         # ---------------------------------------------------------------------
         # Return global names to s3.*
@@ -304,6 +304,7 @@ class FinProductModel(S3Model):
         db = current.db
         s3 = current.response.s3
 
+        configure = self.configure
         define_table = self.define_table
         crud_strings = s3.crud_strings
 
@@ -319,6 +320,7 @@ class FinProductModel(S3Model):
         tablename = "fin_product"
         define_table(tablename,
                      # The organisation offering the product/service
+                     # Merchant Name needed by PayPal
                      self.org_organisation_id(),
                      Field("name",
                            label = T("Name"),
@@ -336,6 +338,7 @@ class FinProductModel(S3Model):
                      # TODO move into link table w/service
                      # TODO template to override default
                      # TODO make lookup-table, provide mapping per service-type
+                     # https://developer.paypal.com/docs/api/catalog-products/v1/
                      Field("category",
                            label = T("Category"),
                            default = "GENERAL",
@@ -345,6 +348,11 @@ class FinProductModel(S3Model):
                      # TODO product homepage
                      s3_comments(),
                      *s3_meta_fields())
+
+        # Table configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary = ("name",)),
+                  )
 
         # Components
         self.add_components(tablename,
@@ -410,12 +418,12 @@ class FinProductModel(S3Model):
         #      => in product controller prep
 
         # Table configuration
-        self.configure(tablename,
-                       editable = False,
-                       deletable = False, # TODO must retire, not delete
-                       onaccept = self.product_service_onaccept,
-                       ondelete = self.product_service_ondelete,
-                       )
+        configure(tablename,
+                  editable = False,
+                  deletable = False, # TODO must retire, not delete
+                  onaccept = self.product_service_onaccept,
+                  ondelete = self.product_service_ondelete,
+                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -512,8 +520,10 @@ class FinSubscriptionModel(S3Model):
         db = current.db
         s3 = current.response.s3
 
-        define_table = self.define_table
+        configure = self.configure
         crud_strings = s3.crud_strings
+        define_table = self.define_table
+        set_method = self.set_method
 
         # ---------------------------------------------------------------------
         # Subscription Plans
@@ -581,8 +591,7 @@ class FinSubscriptionModel(S3Model):
                            requires = IS_IN_SET(plan_statuses,
                                                 zero = None,
                                                 ),
-                           represent = S3Represent(options=plan_statuses,
-                                                   ),
+                           represent = S3Represent(options = plan_statuses),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -594,19 +603,19 @@ class FinSubscriptionModel(S3Model):
                             )
 
         # Table Configuration
-        self.configure(tablename,
-                       list_fields = ["product_id",
-                                      "name",
-                                      "interval_count",
-                                      "interval_unit",
-                                      "fixed",
-                                      "total_cycles",
-                                      "price",
-                                      "currency",
-                                      "status",
-                                      ],
-                       onvalidation = self.subscription_plan_onvalidation,
-                       )
+        configure(tablename,
+                  list_fields = ["product_id",
+                                 "name",
+                                 "interval_count",
+                                 "interval_unit",
+                                 "fixed",
+                                 "total_cycles",
+                                 "price",
+                                 "currency",
+                                 "status",
+                                 ],
+                  onvalidation = self.subscription_plan_onvalidation,
+                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -664,13 +673,13 @@ class FinSubscriptionModel(S3Model):
                            ),
                      *s3_meta_fields())
 
-        self.configure(tablename,
-                       editable = False,
-                       deletable = False,
-                       onvalidation = self.subscription_plan_service_onvalidation,
-                       onaccept = self.subscription_plan_service_onaccept,
-                       #ondelete = self.subscription_plan_service_ondelete, TODO
-                       )
+        configure(tablename,
+                  editable = False,
+                  deletable = False,
+                  onvalidation = self.subscription_plan_service_onvalidation,
+                  onaccept = self.subscription_plan_service_onaccept,
+                  #ondelete = self.subscription_plan_service_ondelete, TODO
+                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -730,8 +739,7 @@ class FinSubscriptionModel(S3Model):
                            requires = IS_IN_SET(subscription_statuses,
                                                 zero = None,
                                                 ),
-                           represent = S3Represent(options=subscription_statuses,
-                                                   ),
+                           represent = S3Represent(options = subscription_statuses),
                            writable = False,
                            ),
                      s3_datetime("status_date",
@@ -758,37 +766,37 @@ class FinSubscriptionModel(S3Model):
                            ),
                      *s3_meta_fields())
 
-        self.configure(tablename,
-                       list_fields = ["created_on", # TODO replace by explicit start_date
-                                      "pe_id",
-                                      "plan_id",
-                                      "service_id",
-                                      "status",
-                                      "status_date",
-                                      ],
-                       insertable = False,
-                       editable = False,
-                       deletable = False,
-                       )
+        configure(tablename,
+                  list_fields = ["created_on", # TODO replace by explicit start_date
+                                 "pe_id",
+                                 "plan_id",
+                                 "service_id",
+                                 "status",
+                                 "status_date",
+                                 ],
+                  insertable = False,   # create via adapter.register_subscription(plan_id, pe_id)
+                  editable = False,
+                  deletable = False,
+                  )
 
         # Configure payment service callback methods
         from s3.s3payments import S3Payments
-        self.set_method("fin", "subscription",
-                        method = "approve",
-                        action = S3Payments,
-                        )
-        self.set_method("fin", "subscription",
-                        method = "confirm",
-                        action = S3Payments,
-                        )
-        self.set_method("fin", "subscription",
-                        method = "cancel",
-                        action = S3Payments,
-                        )
-        self.set_method("fin", "subscription",
-                        method = "status",
-                        action = S3Payments,
-                        )
+        set_method("fin", "subscription",
+                   method = "approve",
+                   action = S3Payments,
+                   )
+        set_method("fin", "subscription",
+                   method = "confirm",
+                   action = S3Payments,
+                   )
+        set_method("fin", "subscription",
+                   method = "cancel",
+                   action = S3Payments,
+                   )
+        set_method("fin", "subscription",
+                   method = "status",
+                   action = S3Payments,
+                   )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -844,11 +852,11 @@ class FinSubscriptionModel(S3Model):
         # Verify total cycles specified for fixed-term plan
         try:
             fixed = form_vars.fixed
-            cycles = form_vars.cycles
+            total_cycles = form_vars.total_cycles
         except AttributeError:
             pass
         else:
-            if fixed and not cycles:
+            if fixed and not total_cycles:
                 form.errors.total_cycles = T("Fixed-term plan must specify number of cycles")
 
     # -------------------------------------------------------------------------

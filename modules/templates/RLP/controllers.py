@@ -4,16 +4,19 @@ import json
 from uuid import uuid4
 
 from gluon import A, BR, CRYPT, DIV, Field, H3, INPUT, \
-                  IS_EMPTY_OR,  IS_EXPR, IS_INT_IN_RANGE, IS_NOT_EMPTY, \
+                  IS_EMPTY_OR, IS_EXPR, IS_INT_IN_RANGE, IS_IN_SET, \
+                  IS_LENGTH, IS_NOT_EMPTY, \
                   P, SQLFORM, URL, XML, current, redirect
 from gluon.storage import Storage
 
-from s3 import IS_ONE_OF, JSONERRORS, S3CustomController, \
-               S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
-               S3Represent, s3_comments_widget, s3_date, s3_mark_required, \
-               s3_phone_requires, s3_str
+from s3 import IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+               JSONERRORS, S3CustomController, S3GroupedOptionsWidget, \
+               S3LocationSelector, S3MultiSelectWidget, S3WeeklyHoursWidget, \
+               S3WithIntro, S3Represent, \
+               s3_comments_widget, s3_date, s3_mark_required, s3_str
 
 from .notifications import formatmap
+from .helpers import rlp_deployment_sites
 
 THEME = "RLP"
 
@@ -50,9 +53,9 @@ class index(S3CustomController):
         if AUTHENTICATED not in roles:
 
             login_buttons = DIV(A(T("Login"),
-                                  _id="show-login",
-                                  _class="tiny secondary button"),
-                                _id="login-buttons"
+                                  _id = "show-login",
+                                  _class = "tiny secondary button"),
+                                _id = "login-buttons"
                                 )
             script = '''
 $('#show-mailform').click(function(e){
@@ -78,9 +81,9 @@ $('#show-login').click(function(e){
             if self_registration is True:
                 # Provide a Registration box on front page
                 login_buttons.append(A(T("Register"),
-                                       _id="show-register",
-                                       _class="tiny secondary button",
-                                       _style="margin-left:5px"))
+                                       _id = "show-register",
+                                       _class = "tiny secondary button",
+                                       _style = "margin-left:5px"))
                 script = '''
 $('#show-register').click(function(e){
  e.preventDefault()
@@ -275,6 +278,26 @@ class register(S3CustomController):
         # Page title and intro text
         title = T("Volunteer Registration")
 
+        # Get intro text from CMS
+        db = current.db
+        s3db = current.s3db
+
+        ctable = s3db.cms_post
+        ltable = s3db.cms_post_module
+        join = ltable.on((ltable.post_id == ctable.id) & \
+                        (ltable.module == "auth") & \
+                        (ltable.resource == "user") & \
+                        (ltable.deleted == False))
+
+        query = (ctable.name == "SelfRegistrationIntro") & \
+                (ctable.deleted == False)
+        row = db(query).select(ctable.body,
+                                join = join,
+                                cache = s3db.cache,
+                                limitby = (0, 1),
+                                ).first()
+        intro = row.body if row else None
+
         # Form Fields
         formfields, required_fields, subheadings = self.formfields()
 
@@ -372,6 +395,9 @@ class register(S3CustomController):
                       #"start_date": formvars.start_date,
                       #"end_date": formvars.end_date,
                       "hours_per_week": formvars.hours_per_week,
+                      "schedule_json": formvars.schedule_json,
+                      "availability_sites": formvars.availability_sites,
+                      "availability_comments": formvars.availability_comments,
                       "skill_id": formvars.skill_id,
                       "comments": formvars.comments,
                       }
@@ -458,6 +484,7 @@ class register(S3CustomController):
         self._view(THEME, "register.html")
 
         return {"title": title,
+                "intro": intro,
                 "form": form,
                 }
 
@@ -504,7 +531,7 @@ class register(S3CustomController):
                       utable.last_name,
                       s3_date("date_of_birth",
                               label = T("Date of Birth"),
-                              future = -96,
+                              future = -156,
                               empty = False,
                               ),
                       # --------------------------------------------
@@ -527,19 +554,21 @@ class register(S3CustomController):
                       # --------------------------------------------
                       Field("home_phone",
                             label = T("Phone"),
-                            requires = IS_EMPTY_OR(s3_phone_requires),
+                            requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
                             ),
                       Field("mobile_phone",
                             label = T("Mobile Phone"),
-                            requires = IS_EMPTY_OR(s3_phone_requires),
+                            requires = IS_EMPTY_OR(IS_PHONE_NUMBER_SINGLE()),
                             ),
                       #Field("office_phone",
                       #      label = T("Office Phone"),
-                      #      requires = IS_EMPTY_OR(s3_phone_requires),
+                      #      requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
                       #      ),
                       # --------------------------------------------
                       s3db.gis_location_id("location_id",
                                            widget = S3LocationSelector(
+                                                       levels = ("L1", "L2", "L3"),
+                                                       required_levels = ("L1", "L2", "L3"),
                                                        show_address = False,
                                                        show_postcode = False,
                                                        show_map = False,
@@ -574,9 +603,10 @@ class register(S3CustomController):
                             label = T("Occupation / Speciality"),
                             comment = DIV(_class = "tooltip",
                                           _title = "%s|%s" % (T("Occupation / Speciality"),
-                                                              T("Specify your exact job designation"),
+                                                              T("Specify your exact job designation (max 128 characters)"),
                                                               ),
                                           ),
+                            requires = IS_EMPTY_OR(IS_LENGTH(128)),
                             ),
 
                       # --------------------------------------------
@@ -599,6 +629,41 @@ class register(S3CustomController):
                                                               T("Specify the maximum number of weekly hours"),
                                                               ),
                                           ),
+                            ),
+                      Field("schedule_json", "json",
+                            label = T("Availability Schedule"),
+                            widget = S3WithIntro(
+                                        S3WeeklyHoursWidget(),
+                                        # Widget intro from CMS
+                                        intro = ("pr",
+                                                 "person_availability",
+                                                 "HoursMatrixIntro",
+                                                 ),
+                                        ),
+                            ),
+                      Field("availability_sites", "list:integer",
+                            label = T("Possible Deployment Sites"),
+                            requires = IS_EMPTY_OR(IS_IN_SET(rlp_deployment_sites(),
+                                                             multiple = True,
+                                                             sort = False,
+                                                             )),
+                            widget = S3WithIntro(
+                                        S3MultiSelectWidget(),
+                                        # Widget intro from CMS
+                                        intro = ("pr",
+                                                 "person_availability_site",
+                                                 "AvailabilitySitesIntro",
+                                                 ),
+                                        ),
+                            ),
+                      Field("availability_comments", "text",
+                            label = T("Availability Comments"),
+                            widget = s3_comments_widget,
+                            comment = DIV(_class = "tooltip",
+                                          _title = "%s|%s" % (T("Availability Comments"),
+                                                              T("Use this field to indicate e.g. vacation dates or other information with regard to your availability to facilitate personnel planning"),
+                                                              ),
+                                         ),
                             ),
                       s3db.hrm_multi_skill_id(
                             label = T("Skills / Resources"),
@@ -633,9 +698,19 @@ class register(S3CustomController):
                        (8, T("Address")),
                        (11, T("Occupation")),
                        (13, T("Availability and Resources")),
-                       (17, T("Comments")),
-                       (18, T("Privacy")),
+                       (19, T("Comments")),
+                       (20, T("Privacy")),
                        )
+
+        # Geocoder
+        # @ToDo: Either move Address into LocationSelector or make a variant of geocoder.js to match these IDs
+        #s3 = current.response.s3
+        #s3.scripts.append("/%s/static/themes/RLP/js/geocoder.js" % r.application)
+        #s3.jquery_ready.append('''S3.rlp_GeoCoder("pr_address_location_id")''')
+        #s3.js_global.append('''i18n.location_found="%s"
+#i18n.location_not_found="%s"''' % (T("Location Found"),
+        #                           T("Location NOT Found"),
+        #                           ))
 
         return formfields, required_fields, subheadings
 
@@ -870,25 +945,46 @@ class register(S3CustomController):
 
         # Register availability
         hours_per_week = custom.get("hours_per_week")
-        if hours_per_week:
-            atable = s3db.pr_person_availability
-            query = (atable.person_id == person_id) & \
-                    (atable.deleted == False)
-            availability = db(query).select(atable.id,
-                                            atable.person_id,
-                                            atable.hours_per_week,
-                                            limitby = (0, 1),
-                                            ).first()
-            if availability:
-                availability.update_record(hours_per_week = hours_per_week)
-                s3db_onaccept(atable, availability, method="update")
-            else:
-                availability = {"person_id": person_id,
-                                "hours_per_week": hours_per_week,
-                                }
-                availability["id"] = atable.insert(**availability)
-                set_record_owner(atable, availability, owned_by_user=user_id)
-                s3db_onaccept(atable, availability, method="create")
+        schedule_json = custom.get("schedule_json")
+        availability_comments = custom.get("availability_comments")
+
+        atable = s3db.pr_person_availability
+        query = (atable.person_id == person_id) & \
+                (atable.deleted == False)
+        availability = db(query).select(atable.id,
+                                        limitby = (0, 1),
+                                        ).first()
+        if availability:
+            availability.update_record(hours_per_week = hours_per_week,
+                                       schedule_json = schedule_json,
+                                       comments = availability_comments,
+                                       )
+            s3db_onaccept(atable, availability, method="update")
+        else:
+            availability = {"person_id": person_id,
+                            "hours_per_week": hours_per_week,
+                            "schedule_json": schedule_json,
+                            "comments": availability_comments,
+                            }
+            availability["id"] = atable.insert(**availability)
+            set_record_owner(atable, availability, owned_by_user=user_id)
+            s3db_onaccept(atable, availability, method="create")
+
+        # Link to availability sites
+        sites = custom.get("availability_sites")
+        ltable = s3db.pr_person_availability_site
+        if isinstance(sites, list):
+            query = (ltable.person_id == person_id) & \
+                    (ltable.deleted == False)
+            for site_id in set(sites):
+                q = (ltable.site_id == site_id) & query
+                if not db(q).select(ltable.id, limitby = (0, 1)).first():
+                    data = {"person_id": person_id,
+                            "site_id": site_id,
+                            }
+                    data["id"] = ltable.insert(**data)
+                    set_record_owner(ltable, data, owned_by_user=user_id)
+                    s3db_onaccept(ltable, data, method="create")
 
         # Register skills
         skills = custom.get("skill_id")
@@ -1177,5 +1273,34 @@ class verify_email(S3CustomController):
                                          )
         if not success:
             current.response.error = auth_messages.unable_send_email
+
+# =============================================================================
+class geocode(S3CustomController):
+    """
+        Custom Geocoder
+        - looks up Lat/Lon from Postcode &/or Address
+        - looks up Lx from Lat/Lon
+    """
+
+    def __call__(self):
+
+        gis = current.gis
+
+        post_vars_get = current.request.post_vars.get
+        postcode = post_vars_get("postcode")
+        address = post_vars_get("address")
+        if address:
+            full_address = "%s %s" %(postcode, address)
+        else:
+            full_address = postcode
+
+        latlon = gis.geocode(full_address)
+        if not isinstance(latlon, dict):
+            return None
+
+        results = gis.geocode_r(latlon["lat"], latlon["lon"])
+
+        current.response.headers["Content-Type"] = "application/json"
+        return json.dumps(results)
 
 # END =========================================================================

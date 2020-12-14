@@ -74,6 +74,7 @@ __all__ = ("S3ACLWidget",
            "S3StringWidget",
            "S3TimeIntervalWidget",
            #"S3UploadWidget",
+           "S3WeeklyHoursWidget",
            "S3FixedOptionsWidget",
            "S3QuestionEditorWidget",
            "CheckboxesWidgetS3",
@@ -115,7 +116,6 @@ from .s3utils import *
 from .s3validators import *
 
 DEFAULT = lambda:None
-ogetattr = object.__getattribute__
 repr_select = lambda l: len(l.name) > 48 and "%s..." % l.name[:44] or l.name
 
 # Compact JSON encoding
@@ -1053,11 +1053,12 @@ class S3AddPersonWidget(FormWidget):
         current.response.s3.js_global.append("\n".join(strings))
 
     # -------------------------------------------------------------------------
-    def validate(self, value):
+    def validate(self, value, record_id=None):
         """
             Validate main input value
 
             @param value: the main input value (JSON)
+            @param record_id: the record ID (unused, for API compatibility)
 
             @return: tuple (id, error), where "id" is the record ID of the
                      selected or newly created record
@@ -1087,14 +1088,14 @@ class S3AddPersonWidget(FormWidget):
         # Validate phone numbers
         mobile = data.get("mobile_phone")
         if mobile:
-            validator = IS_PHONE_NUMBER(international=True)
+            validator = IS_PHONE_NUMBER_SINGLE(international=True)
             mobile, error = validator(mobile)
             if error:
                 return (None, error)
 
         home_phone = data.get("home_phone")
         if home_phone:
-            validator = IS_PHONE_NUMBER()
+            validator = IS_PHONE_NUMBER_MULTI()
             home_phone, error = validator(home_phone)
             if error:
                 return (None, error)
@@ -1390,7 +1391,7 @@ class S3AgeWidget(FormWidget):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def date_as_age(value, row=None):
+    def date_as_age(value, record_id=None):
         """
             Convert a date value into age in years, can be used as
             representation method
@@ -1465,7 +1466,7 @@ class S3AutocompleteWidget(FormWidget):
         settings = current.deployment_settings
 
         default = {"_type": "text",
-                   "value": (value is not None and str(value)) or "",
+                   "value": str(value) if value is not None else "",
                    }
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -1519,19 +1520,22 @@ class S3AutocompleteWidget(FormWidget):
             text = s3_unicode(field.represent(value))
             if "<" in text:
                 text = s3_strip_markup(text)
-            represent = text
+            represent = s3_str(text)
         else:
             represent = ""
 
         s3.js_global.append('''i18n.none_of_the_above="%s"''' % current.T("None of the above"))
 
-        return TAG[""](INPUT(_id=dummy_input,
-                             _class="string",
-                             _value=represent.encode("utf-8")),
-                       DIV(_id="%s_throbber" % dummy_input,
-                           _class="throbber input_throbber hide"),
+        return TAG[""](INPUT(_id = dummy_input,
+                             # Required to retain label on error:
+                             _name = dummy_input,
+                             _class = "string",
+                             value = represent,
+                             ),
+                       DIV(_id = "%s_throbber" % dummy_input,
+                           _class = "throbber input_throbber hide",
+                           ),
                        INPUT(**attr),
-                       requires = field.requires
                        )
 
 # =============================================================================
@@ -2715,6 +2719,194 @@ class S3HoursWidget(FormWidget):
         return round(hours, precision) if precision is not None else hours
 
 # =============================================================================
+class S3WeeklyHoursWidget(FormWidget):
+    """
+        Widget to enter weekly time rules (JSON) using a 24/7 hours
+        matrix, e.g. opening hours, times of availability, etc.
+    """
+
+    def __init__(self, daynames=None, hours=None, ticks=6):
+        """
+            Constructor
+
+            @param daynames: the weekdays to show and their (localized)
+                             names, as dict {daynumber: dayname}, with
+                             day number 0 meaning Sunday
+            @param hours: the hours to show (0..23) as tuple (first, last)
+            @param ticks: render tick marks every n hours (0/None=off)
+        """
+
+        if daynames:
+            self._daynames = daynames
+        else:
+            self._daynames = self.daynames()
+
+        if hours:
+            self.hours = hours
+        else:
+            self.hours = (0, 23)
+
+        self.ticks = ticks
+
+    # -------------------------------------------------------------------------
+    def __call__(self, field, value, **attributes):
+        """
+            Widget builder
+
+            @param field: the Field
+            @param value: the current field value
+            @param attributes: additional DOM attributes for the widget
+        """
+
+        default = {"value": value,
+                   }
+        attr = TextWidget._attributes(field, default, **attributes)
+
+        widget_id = attr.get("_id")
+        if not widget_id:
+            widget_id = attr["_id"] = str(field).replace(".", "_")
+
+        widget = TEXTAREA(**attr)
+        widget.add_class("hide")
+
+        options = {"weekdays": {k: s3_str(v) for k, v in self._daynames.items()},
+                   "hours": self.hours,
+                   "ticks": self.ticks,
+                   "firstDoW": current.calendar.first_dow,
+                   "icons": "fa",
+                   "iconSelected": "fa-check-square-o",
+                   "iconDeselected": "fa-square-o",
+                   }
+        self.inject_script(widget_id, options)
+
+        return widget
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def inject_script(selector, options):
+        """
+            Inject static JS and instantiate client-side UI widget
+
+            @param widget_id: the widget ID
+            @param options: JSON-serializable dict with UI widget options
+        """
+
+        s3 = current.response.s3
+        appname = current.request.application
+
+        # Global script
+        if s3.debug:
+            script = "/%s/static/scripts/S3/s3.ui.weeklyhours.js" % appname
+        else:
+            script = "/%s/static/scripts/S3/s3.ui.weeklyhours.min.js" % appname
+        if script not in s3.scripts:
+            s3.scripts.append(script)
+
+        # jQuery-ready script
+        script = '''$('#%(selector)s').weeklyHours(%(options)s);''' % \
+                 {"selector": selector, "options": json.dumps(options)}
+        s3.jquery_ready.append(script)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def daynames():
+        """
+            Default weekday names (abbreviations)
+
+            @returns: dict of {daynumber: dayname}
+        """
+
+        T = current.T
+
+        return {0: T("Sun##weekday"),
+                1: T("Mon##weekday"),
+                2: T("Tue##weekday"),
+                3: T("Wed##weekday"),
+                4: T("Thu##weekday"),
+                5: T("Fri##weekday"),
+                6: T("Sat##weekday"),
+                }
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def represent(cls, rules, daynames=None, html=True):
+        """
+            Represent a set of weekly time rules, as list of rules
+            per weekday (HTML)
+
+            @param rules: array of rules, or a JSON string encoding
+                          such an array
+            @param daynames: override for default daynames, as dict
+                             {daynumber: dayname}, with day number 0
+                             meaning Sunday
+            @param html: produce HTML rather than text (overridable for e.g. XLS export)
+
+            @returns: UL instance
+        """
+
+        if isinstance(rules, basestring) and rules:
+            try:
+                rules = json.loads(rules)
+            except JSONERRORS:
+                rules = []
+
+        dn = cls.daynames()
+        if daynames:
+            dn.update(daynames)
+
+        first_dow = 1
+
+        if not rules:
+            return ""
+
+        slots_by_day = {}
+        for rule in rules:
+
+            # Only include weekly rules
+            if rule.get("f") != "WEEKLY" or rule.get("i") != 1:
+                continue
+
+            days = rule.get("d")
+            if not isinstance(days, list):
+                continue
+
+            start = rule.get("s")
+            end = rule.get("e")
+            if not start or not end:
+                continue
+            slot = (start[0], end[0])
+
+            for day in days:
+                slots = slots_by_day.get(day)
+                if not slots:
+                    slots = [slot]
+                else:
+                    slots.append(slot)
+                slots_by_day[day] = slots
+
+        output = UL(_class="wh-schedule") if html else []
+
+        for index in range(first_dow, first_dow + 7):
+
+            day = index % 7
+            slots = slots_by_day.get(day)
+
+            if slots:
+                slots = sorted(slots, key=lambda s: s[0])
+                slotsrepr = ", ".join(["%02d-%02d" % (s[0], s[1]) for s in slots])
+            else:
+                slotsrepr = "-"
+
+            if html:
+                output.append(LI(SPAN(dn[day], _class="wh-dayname"),
+                                 slotsrepr,
+                                 ))
+            else:
+                output.append("%s: %s" % (dn[day], slotsrepr))
+
+        return output if html else "\n".join(output)
+
+# =============================================================================
 class S3EmbeddedComponentWidget(FormWidget):
     """
         Widget used by S3CRUD for link-table components with actuate="embed".
@@ -3013,7 +3205,7 @@ def S3GenericAutocompleteTemplate(post_process,
         text = s3_unicode(field.represent(value))
         if "<" in text:
             text = s3_strip_markup(text)
-        represent = text.encode("utf-8")
+        represent = s3_str(text)
     else:
         represent = ""
 
@@ -3037,13 +3229,15 @@ def S3GenericAutocompleteTemplate(post_process,
              "min_length": min_length,
              }
     current.response.s3.jquery_ready.append(script)
-    return TAG[""](INPUT(_id=dummy_input,
-                         _class="string",
-                         value=represent),
-                   DIV(_id="%s_throbber" % dummy_input,
-                       _class="throbber input_throbber hide"),
+    return TAG[""](INPUT(_id = dummy_input,
+                         # Required to retain label on error:
+                         _name = dummy_input,
+                         _class = "string",
+                         value = represent,
+                         ),
+                   DIV(_id = "%s_throbber" % dummy_input,
+                       _class = "throbber input_throbber hide"),
                    INPUT(**attr),
-                   requires = field.requires
                    )
 
 #==============================================================================
@@ -3591,7 +3785,7 @@ class S3HumanResourceAutocompleteWidget(FormWidget):
             group = "deploy"
 
         default = {"_type": "text",
-                   "value": (value is not None and str(value)) or "",
+                   "value": str(value) if value is not None else "",
                    }
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -3613,7 +3807,7 @@ class S3HumanResourceAutocompleteWidget(FormWidget):
             text = s3_unicode(field.represent(value))
             if "<" in text:
                 text = s3_strip_markup(text)
-            represent = text
+            represent = s3_str(text)
         else:
             represent = ""
 
@@ -3635,13 +3829,16 @@ class S3HumanResourceAutocompleteWidget(FormWidget):
 
         current.response.s3.jquery_ready.append(script)
 
-        return TAG[""](INPUT(_id=dummy_input,
-                             _class="string",
-                             _value=represent.encode("utf-8")),
-                       DIV(_id="%s_throbber" % dummy_input,
-                           _class="throbber input_throbber hide"),
+        return TAG[""](INPUT(_id = dummy_input,
+                             # Required to retain label on error:
+                             _name = dummy_input,
+                             _class = "string",
+                             _value = represent,
+                             ),
+                       DIV(_id = "%s_throbber" % dummy_input,
+                           _class = "throbber input_throbber hide",
+                           ),
                        INPUT(**attr),
-                       requires = field.requires
                        )
 
 # =============================================================================
@@ -4055,7 +4252,7 @@ class S3LocationAutocompleteWidget(FormWidget):
                 counter += 1
 
         default = {"_type": "text",
-                   "value": (value is not None and s3_unicode(value)) or "",
+                   "value": s3_str(value) if value is not None else "",
                    }
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -4078,7 +4275,7 @@ class S3LocationAutocompleteWidget(FormWidget):
             text = s3_unicode(field.represent(value))
             if "<" in text:
                 text = s3_strip_markup(text)
-            represent = text.encode("utf-8")
+            represent = s3_str(text)
         else:
             represent = ""
 
@@ -4100,13 +4297,16 @@ class S3LocationAutocompleteWidget(FormWidget):
         # Close
         script = "%s)" % script
         current.response.s3.jquery_ready.append(script)
-        return TAG[""](INPUT(_id=dummy_input,
-                             _class="string",
-                             value=represent),
-                       DIV(_id="%s_throbber" % dummy_input,
-                           _class="throbber input_throbber hide"),
+        return TAG[""](INPUT(_id = dummy_input,
+                             # Required to retain label on error:
+                             _name = dummy_input,
+                             _class = "string",
+                             value = represent,
+                             ),
+                       DIV(_id = "%s_throbber" % dummy_input,
+                           _class = "throbber input_throbber hide",
+                           ),
                        INPUT(**attr),
-                       requires = field.requires
                        )
 
 # =============================================================================
@@ -4366,7 +4566,7 @@ class S3Selector(FormWidget):
         return values, None
 
     # -------------------------------------------------------------------------
-    def postprocess(self, value):
+    def postprocess(self, value, record_id=None):
         """
             Post-process to create or update records. Called during POST
             before validation of the outer form.
@@ -4374,6 +4574,7 @@ class S3Selector(FormWidget):
             To be implemented in subclass.
 
             @param value: the value from the form (as JSON)
+            @param record_id: the record ID (unused, for API compatibility)
             @return: tuple (record_id, error)
         """
 
@@ -4517,6 +4718,7 @@ class S3LocationSelector(S3Selector):
                  reverse_lx = False,
                  show_address = False,
                  show_postcode = None,
+                 postcode_required = None,
                  show_latlon = None,
                  latlon_mode = "decimal",
                  latlon_mode_toggle = True,
@@ -4552,6 +4754,7 @@ class S3LocationSelector(S3Selector):
             @param show_address: show a field for street address.
                                  If the parameter is set to a string then this is used as the label.
             @param show_postcode: show a field for postcode
+            @param postcode_required: postcode field is mandatory
             @param show_latlon: show fields for manual Lat/Lon input
             @param latlon_mode: (initial) lat/lon input mode ("decimal" or "dms")
             @param latlon_mode_toggle: allow user to toggle lat/lon input mode
@@ -4586,6 +4789,7 @@ class S3LocationSelector(S3Selector):
         self.reverse_lx = reverse_lx
         self.show_address = show_address
         self.show_postcode = show_postcode
+        self.postcode_required = postcode_required
         self.prevent_duplicate_addresses = prevent_duplicate_addresses
 
         if show_latlon is None:
@@ -4725,6 +4929,8 @@ class S3LocationSelector(S3Selector):
         request = current.request
         s3 = current.response.s3
 
+        #self.field = field
+
         # Is the location input required?
         requires = field.requires
         if requires:
@@ -4751,7 +4957,8 @@ class S3LocationSelector(S3Selector):
 
         # Parse the current value
         values = self.parse(value)
-        location_id = values.get("id")
+        values_get = values.get
+        location_id = values_get("id")
 
         # Determine the default location and bounds
         gtable = s3db.gis_location
@@ -4775,8 +4982,9 @@ class S3LocationSelector(S3Selector):
                                            gtable.lon_min,
                                            gtable.lat_max,
                                            gtable.lon_max,
-                                           cache=s3db.cache,
-                                           limitby=(0, 1)).first()
+                                           cache = s3db.cache,
+                                           limitby = (0, 1)
+                                           ).first()
                 try:
                     default = country.id
                     default_bounds = [country.lon_min,
@@ -4801,7 +5009,7 @@ class S3LocationSelector(S3Selector):
         load_levels = self.load_levels
         lowest_lx = None
         for level in load_levels[::-1]:
-            if level not in levels and values.get(level):
+            if level not in levels and values_get(level):
                 lowest_lx = level
                 break
 
@@ -4812,7 +5020,7 @@ class S3LocationSelector(S3Selector):
 
         # Load initial Hierarchy Labels (for Lx dropdowns)
         labels, labels_compact = self._labels(levels,
-                                              country = values.get("L0"),
+                                              country = values_get("L0"),
                                               )
 
         # Load initial Hierarchy Locations (to populate Lx dropdowns)
@@ -4830,7 +5038,7 @@ class S3LocationSelector(S3Selector):
         # Street Address INPUT
         show_address = self.show_address
         if show_address:
-            address = values.get("address")
+            address = values_get("address")
             if show_address is True:
                 label = gtable.addr_street.label
             else:
@@ -4848,17 +5056,18 @@ class S3LocationSelector(S3Selector):
             # Use global setting
             show_postcode = settings.get_gis_postcode_selector()
         if show_postcode:
-            postcode = values.get("postcode")
+            postcode = values_get("postcode")
             components["postcode"] = manual_input(fieldname,
                                                   "postcode",
                                                   postcode,
                                                   settings.get_ui_label_postcode(),
                                                   hidden = not postcode,
+                                                  required = self.postcode_required,
                                                   )
 
         # Lat/Lon INPUTs
-        lat = values.get("lat")
-        lon = values.get("lon")
+        lat = values_get("lat")
+        lon = values_get("lon")
         if self.show_latlon:
             hidden = not lat and not lon
             components["lat"] = manual_input(fieldname,
@@ -4933,8 +5142,8 @@ class S3LocationSelector(S3Selector):
         # If we need to show the map since we have an existing lat/lon/wkt
         # then we need to launch the client-side JS as a callback to the
         # MapJS loader
-        wkt = values.get("wkt")
-        radius = values.get("radius")
+        wkt = values_get("wkt")
+        radius = values_get("radius")
         if lat is not None or lon is not None or wkt is not None:
             use_callback = True
         else:
@@ -5114,12 +5323,13 @@ class S3LocationSelector(S3Selector):
         s3db = current.s3db
         settings = current.deployment_settings
 
-        L0 = values.get("L0")
-        L1 = values.get("L1")
-        L2 = values.get("L2")
-        L3 = values.get("L3")
-        L4 = values.get("L4")
-        #L5 = values.get("L5")
+        values_get = values.get
+        L0 = values_get("L0")
+        L1 = values_get("L1")
+        L2 = values_get("L2")
+        L3 = values_get("L3")
+        L4 = values_get("L4")
+        #L5 = values_get("L5")
 
         # Read all visible levels
         # NB (level != None) is to handle Missing Levels
@@ -5247,7 +5457,7 @@ class S3LocationSelector(S3Selector):
 
         elif lowest_lx:
             # What is the lowest-level un-selectable Lx?
-            lx = values.get(lowest_lx)
+            lx = values_get(lowest_lx)
             record = db(gtable.id == lx).select(gtable.lat_min,
                                                 gtable.lon_min,
                                                 gtable.lat_max,
@@ -5504,6 +5714,7 @@ class S3LocationSelector(S3Selector):
                value,
                label,
                hidden = False,
+               required = False,
                _class = "string"):
         """
             Render a text input (e.g. address or postcode field)
@@ -5513,6 +5724,7 @@ class S3LocationSelector(S3Selector):
             @param value: the initial value for the input
             @param label: the label for the input
             @param hidden: render hidden
+            @param required: mark as required
 
             @return: a tuple (label, widget, id, hidden)
         """
@@ -5520,7 +5732,11 @@ class S3LocationSelector(S3Selector):
         input_id = "%s_%s" % (fieldname, name)
 
         if label and self.labels:
-            _label = LABEL("%s:" % label,
+            if required:
+                label = s3_required_label(label)
+            else:
+                label = "%s:" % label
+            _label = LABEL(label,
                            _for = input_id,
                            )
         else:
@@ -5859,12 +6075,13 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
 
         levels = self.load_levels
 
-        lat = values.get("lat")
-        lon = values.get("lon")
-        wkt = values.get("wkt")
-        radius = values.get("radius")
-        address = values.get("address")
-        postcode = values.get("postcode")
+        values_get = values.get
+        lat = values_get("lat")
+        lon = values_get("lon")
+        wkt = values_get("wkt")
+        radius = values_get("radius")
+        address = values_get("address")
+        postcode = values_get("postcode")
 
         # Load the record
         record = db(table.id == record_id).select(table.id,
@@ -6115,12 +6332,7 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
                 return values, current.T("Location data required")
             return values, None
 
-        table = current.s3db.gis_location
         errors = {}
-        feature = None
-        onvalidation = None
-
-        msg = self.error_message
 
         # Check for valid Lat/Lon/WKT/Radius (if any)
         lat = values_get("lat")
@@ -6160,9 +6372,27 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
         elif radius == "":
             radius = None
 
+        # Lx Required?
+        required_levels = self._required_levels or []
+        for level in required_levels:
+            l = values_get(level)
+            if not l:
+                errors[level] = current.T("Location Hierarchy is Required!")
+                break
+
+        # Postcode Required?
+        postcode = values_get("postcode")
+        if not postcode and self.postcode_required:
+            errors["postcode"] = current.T("Postcode is Required!")
+
         if errors:
             error = "\n".join(s3_str(errors[fn]) for fn in errors)
             return (values, error)
+
+        table = current.s3db.gis_location
+        feature = None
+        onvalidation = None
+        msg = self.error_message
 
         specific = values_get("specific")
         location_id = values_get("id")
@@ -6177,7 +6407,6 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
             # Read other details
             parent = values_get("parent")
             address = values_get("address")
-            postcode = values_get("postcode")
 
         if parent or address or postcode or \
            wkt is not None or \
@@ -6408,6 +6637,10 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
         # Skip if location_id is None
         if location_id is None:
             return location_id, None
+
+        # Skip if the field is JSON type (e.g. during Registration)
+        #if self.field.type == "json":
+        #    return location_id, None
 
         db = current.db
         table = current.s3db.gis_location
@@ -6967,11 +7200,12 @@ class S3CascadeSelectWidget(FormWidget):
             jquery_ready.append(script)
 
     # -------------------------------------------------------------------------
-    def parse(self, value):
+    def parse(self, value, record_id=None):
         """
             Value parser for the hidden input field of the widget
 
             @param value: the value received from the client, JSON string
+            @param record_id: the record ID (unused, for API compatibility)
 
             @return: a list (if multiple=True) or the value
         """
@@ -7223,11 +7457,12 @@ class S3HierarchyWidget(FormWidget):
         return widget
 
     # -------------------------------------------------------------------------
-    def parse(self, value):
+    def parse(self, value, record_id=None):
         """
             Value parser for the hidden input field of the widget
 
             @param value: the value received from the client, JSON string
+            @param record_id: the record ID (unused, for API compatibility)
 
             @return: a list (if multiple=True) or the value
         """
@@ -7444,7 +7679,7 @@ class S3PersonAutocompleteWidget(FormWidget):
     def __call__(self, field, value, **attributes):
 
         default = {"_type": "text",
-                   "value": (value is not None and str(value)) or "",
+                   "value": str(value) if value is not None else "",
                    }
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -7467,7 +7702,7 @@ class S3PersonAutocompleteWidget(FormWidget):
             text = s3_unicode(field.represent(value))
             if "<" in text:
                 text = s3_strip_markup(text)
-            represent = text.encode("utf-8")
+            represent = s3_str(text)
         else:
             represent = ""
 
@@ -7505,13 +7740,16 @@ class S3PersonAutocompleteWidget(FormWidget):
         script = '''%s%s)''' % (script, options)
         current.response.s3.jquery_ready.append(script)
 
-        return TAG[""](INPUT(_id=dummy_input,
-                             _class="string",
-                             _value=represent),
-                       DIV(_id="%s_throbber" % dummy_input,
-                           _class="throbber input_throbber hide"),
-                       INPUT(hideerror=self.hideerror, **attr),
-                       requires = field.requires
+        return TAG[""](INPUT(_id = dummy_input,
+                             # Required to retain label on error:
+                             _name = dummy_input,
+                             _class = "string",
+                             _value = represent,
+                             ),
+                       DIV(_id = "%s_throbber" % dummy_input,
+                           _class = "throbber input_throbber hide",
+                           ),
+                       INPUT(hideerror = self.hideerror, **attr),
                        )
 
 # =============================================================================
@@ -7539,7 +7777,7 @@ class S3PentityAutocompleteWidget(FormWidget):
     def __call__(self, field, value, **attributes):
 
         default = {"_type": "text",
-                   "value": (value is not None and str(value)) or "",
+                   "value": str(value) if value is not None else "",
                    }
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -7562,7 +7800,7 @@ class S3PentityAutocompleteWidget(FormWidget):
             text = s3_unicode(field.represent(value))
             if "<" in text:
                 text = s3_strip_markup(text)
-            represent = text.encode("utf-8")
+            represent = s3_str(text)
         else:
             represent = ""
 
@@ -7617,13 +7855,16 @@ class S3PentityAutocompleteWidget(FormWidget):
 
         script = '''%s%s)''' % (script, options)
         s3.jquery_ready.append(script)
-        return TAG[""](INPUT(_id=dummy_input,
-                             _class="string",
-                             _value=represent),
-                       DIV(_id="%s_throbber" % dummy_input,
-                           _class="throbber input_throbber hide"),
-                       INPUT(hideerror=self.hideerror, **attr),
-                       requires = field.requires
+        return TAG[""](INPUT(_id = dummy_input,
+                             # Required to retain label on error:
+                             _name = dummy_input,
+                             _class = "string",
+                             _value = represent,
+                             ),
+                       DIV(_id = "%s_throbber" % dummy_input,
+                           _class = "throbber input_throbber hide",
+                           ),
+                       INPUT(hideerror = self.hideerror, **attr),
                        )
 
 # =============================================================================
@@ -7675,7 +7916,7 @@ class S3SiteAutocompleteWidget(FormWidget):
     def __call__(self, field, value, **attributes):
 
         default = {"_type": "text",
-                   "value": (value is not None and str(value)) or "",
+                   "value": str(value) if value is not None else "",
                    }
         attr = StringWidget._attributes(field, default, **attributes)
 
@@ -7703,11 +7944,9 @@ class S3SiteAutocompleteWidget(FormWidget):
                 text = s3_unicode(represent(value))
                 if "<" in text:
                     text = s3_strip_markup(text)
-            represent = text.encode("utf-8")
+            represent = s3_str(text)
         else:
             represent = ""
-
-
 
         s3 = current.response.s3
         site_types = current.auth.org_site_types
@@ -7736,13 +7975,17 @@ class S3SiteAutocompleteWidget(FormWidget):
         script = "%s)" % script
 
         s3.jquery_ready.append(script)
-        return TAG[""](INPUT(_id=dummy_input,
-                             _class="string",
-                             _value=represent),
-                       DIV(_id="%s_throbber" % dummy_input,
-                           _class="throbber input_throbber hide"),
+
+        return TAG[""](INPUT(_id = dummy_input,
+                             # Required to retain label on error:
+                             _name = dummy_input,
+                             _class = "string",
+                             _value = represent,
+                             ),
+                       DIV(_id = "%s_throbber" % dummy_input,
+                           _class = "throbber input_throbber hide",
+                           ),
                        INPUT(**attr),
-                       requires = field.requires
                        )
 
 # =============================================================================
@@ -7940,7 +8183,7 @@ class S3TimeIntervalWidget(FormWidget):
             @returns: a validator function
         """
 
-        def requires(value):
+        def requires(value, record_id=None):
 
             if value is None or value == "":
                 return value, None

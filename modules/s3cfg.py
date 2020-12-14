@@ -1411,6 +1411,7 @@ class S3Config(Storage):
             Which Geocoder Service should be used?
             Supported options:
                 "nominatim" (default)
+                "geonames"
                 "google"
         """
         return self.gis.get("geocode_service", "nominatim")
@@ -4467,6 +4468,14 @@ class S3Config(Storage):
         """
         return self.hrm.get("use_job_titles", True)
 
+    def get_hrm_use_medical(self):
+        """
+            Whether Human Resources should use Medical Information tab
+            and what the name of the Tab should be.
+            Set to None to disable
+        """
+        return self.hrm.get("use_medical", None)
+
     def get_hrm_use_national_id(self):
         """
             Whether Human Resources should show National IDs in list_fields
@@ -5181,6 +5190,12 @@ class S3Config(Storage):
             Dict of integer-keyed options for Person Availability
         """
         return self.__lazy("pr", "person_availability_options", default=None)
+
+    def get_pr_availability_json_rules(self):
+        """
+            Generate availability rules from schedule_json
+        """
+        return self.pr.get("availability_json_rules", False)
 
     def get_pr_hide_third_gender(self):
         """

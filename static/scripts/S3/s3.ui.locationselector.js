@@ -169,31 +169,28 @@
             }
 
             // Propagate pre-selected values
-            var L0 = data.L0,
+            var self = this,
+                L0 = data.L0,
                 L1 = data.L1,
                 L2 = data.L2,
                 L3 = data.L3,
                 L4 = data.L4,
-                L5 = data.L5;
-            if (L0) {
-                this._lxSelect(0, L0, true);
-            }
+                L5 = data.L5,
+                pending;
+
+            // Select Lx in order
             // || is to support Missing levels
-            if (L1 || L2) {
-                this._lxSelect(1, L1 || L2, true);
-            }
-            if (L2 || L3) {
-                this._lxSelect(2, L2 || L3, true);
-            }
-            if (L3 || L4) {
-                this._lxSelect(3, L3 || L4, true);
-            }
-            if (L4 || L5) {
-                this._lxSelect(4, L4 || L5, true);
-            }
-            if (L5) {
-                this._lxSelect(5, L5, true);
-            }
+            [L0, L1 || L2, L2 || L3, L3 || L4, L4 || L5, L5].forEach(function(level, index) {
+                if (level) {
+                    if (pending) {
+                        pending = pending.then(function() {
+                            return self.lxSelect(index, level, true);
+                        });
+                    } else {
+                        pending = self.lxSelect(index, level, true);
+                    }
+                }
+            });
 
             // Store original Lx path
             this.lx = [L0, L1, L2, L3, L4, L5].join('|');
@@ -379,10 +376,12 @@
          * @param {bool} refresh - whether this is called before user input
          *                         (in which case we want to prevent geocoding)
          */
-        _lxSelect: function(level, id, refresh) {
+        lxSelect: function(level, id, refresh) {
 
-            var selector = '#' + this.fieldname,
-                opts = this.options,
+            var dfd = $.Deferred(),
+                self = this,
+                selector = '#' + self.fieldname,
+                opts = self.options,
                 dropdown = $(selector + '_L' + level),
                 s,
                 l;
@@ -403,7 +402,7 @@
             // Update hierarchy labels
             if (level === 0) {
 
-                var labelled = this._readLabels(id),
+                var labelled = self._readLabels(id),
                     defaultLabels = hierarchyLabels.d,
                     levels = ['1', '2', '3', '4', '5'],
                     label,
@@ -479,18 +478,18 @@
                 }
                 if (!dropdown_row.length) {
                     // No next level - we're at the bottom of the hierarchy
-                    if (this.useGeocoder && !refresh) {
-                        this._geocodeDecision();
+                    if (self.useGeocoder && !refresh) {
+                        self._geocodeDecision();
                     }
                     // Call DRY Helper
-                    this._lxSelectFinal(refresh);
+                    self._lxSelectFinal(refresh);
+                    dfd.resolve();
                 } else {
                     // Do we need to read hierarchy?
                     var locations,
                         location,
                         locationID,
-                        read = false,
-                        that = this;
+                        read = false;
                     if ($(selector + '_L' + level + ' option[value="' + id + '"]').hasClass('missing')) {
                         // An individual location with a Missing Level: we already have the data
                         location = hierarchyLocations[id];
@@ -508,7 +507,7 @@
                         }
                     }
 
-                    var reading = this._readHierarchy(read, id, next, missing);
+                    var reading = self._readHierarchy(read, id, next, missing);
 
                     reading.then(
                         function() {
@@ -591,26 +590,30 @@
                                 }
 
                                 // Automatic selection of next level location
-                                var previous = that.data['L' + next],
+                                var previous = self.data['L' + next],
                                     available = locations.map(function(l) {return l.i;});
                                 if (previous && available.indexOf('' + previous) != -1) {
                                     // Previously selected value is still available,
                                     // so select it again
-                                    that._lxSelect(next, previous, refresh);
+                                    self.lxSelect(next, previous, refresh);
                                 } else if (numLocations == 1 && locationID) {
                                     // Only one option available, so select this one
-                                    that._lxSelect(next, locationID, refresh);
+                                    self.lxSelect(next, locationID, refresh);
                                 }
                             }
                             // Call DRY Helper
-                            that._lxSelectFinal(refresh);
+                            self._lxSelectFinal(refresh);
+
+                            dfd.resolve();
                         }
                     );
                 }
             } else {
                 // Call DRY Helper
-                this._lxSelectFinal(refresh);
+                self._lxSelectFinal(refresh);
+                dfd.resolve();
             }
+            return dfd.promise();
         },
 
         /**
@@ -1070,25 +1073,31 @@
                 data: postData,
                 dataType: 'json',
                 success: function(result) {
-                    if (result.L0) {
+
+                    var L0 = result.L0,
+                        L1 = result.L1,
+                        L2 = result.L2,
+                        L3 = result.L3,
+                        L4 = result.L4,
+                        L5 = result.L5;
+
+                    if (L0) {
                         // Prevent forward geocoding
                         self.useGeocoder = false;
-                        self._lxSelect(0, result.L0);
-                        if (result.L1) {
-                            self._lxSelect(1, result.L1);
-                        }
-                        if (result.L2) {
-                            self._lxSelect(2, result.L2);
-                        }
-                        if (result.L3) {
-                            self._lxSelect(3, result.L3);
-                        }
-                        if (result.L4) {
-                            self._lxSelect(4, result.L4);
-                        }
-                        if (result.L5) {
-                            self._lxSelect(5, result.L5);
-                        }
+
+                        var pending;
+                        [L0, L1 || L2, L2 || L3, L3 || L4, L4 || L5, L5].forEach(function(level, index) {
+                            if (level) {
+                                if (pending) {
+                                    pending = pending.then(function() {
+                                        return self.lxSelect(index, level);
+                                    });
+                                } else {
+                                    pending = self.lxSelect(index, level);
+                                }
+                            }
+                        });
+
                         // Reset Geocoder-option
                         self.useGeocoder = true;
                         // Notify results
@@ -1663,27 +1672,27 @@
 
             $(selector + '_L0').bind('change' + ns, function() {
                 self._removeErrors(this);
-                self._lxSelect(0);
+                self.lxSelect(0);
             });
             $(selector + '_L1').bind('change' + ns, function() {
                 self._removeErrors(this);
-                self._lxSelect(1);
+                self.lxSelect(1);
             });
             $(selector + '_L2').bind('change' + ns, function() {
                 self._removeErrors(this);
-                self._lxSelect(2);
+                self.lxSelect(2);
             });
             $(selector + '_L3').bind('change' + ns, function() {
                 self._removeErrors(this);
-                self._lxSelect(3);
+                self.lxSelect(3);
             });
             $(selector + '_L4').bind('change' + ns, function() {
                 self._removeErrors(this);
-                self._lxSelect(4);
+                self.lxSelect(4);
             });
             $(selector + '_L5').bind('change' + ns, function() {
                 self._removeErrors(this);
-                self._lxSelect(5);
+                self.lxSelect(5);
             });
 
             $(selector + '_address,' +

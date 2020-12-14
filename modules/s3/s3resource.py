@@ -1653,9 +1653,11 @@ class S3Resource(object):
         # Sync filters
         tablename = self.tablename
         if filters and tablename in filters:
-            queries = S3URLQuery.parse(self, filters[tablename])
+            parsed_filters = S3URLQuery.parse(self, filters[tablename])
             add_filter = self.add_filter
-            [add_filter(q) for a in queries for q in queries[a]]
+            for alias, queries in parsed_filters.items():
+                for query in queries:
+                    add_filter(query)
 
         # Order by modified_on if msince is requested
         if msince is not None and "modified_on" in table.fields:
@@ -2064,8 +2066,11 @@ class S3Resource(object):
 
                     # Sync filters
                     if filters and ctablename in filters:
-                        queries = S3URLQuery.parse(self, filters[ctablename])
-                        [c.add_filter(q) for a in queries for q in queries[a]]
+                        parsed_filters = S3URLQuery.parse(self, filters[ctablename])
+                        add_filter = c.add_filter
+                        for alias, queries in parsed_filters.items():
+                            for query in queries:
+                                add_filter(query)
 
                     # Msince filter
                     if msince and (alias != hierarchy_link or add) and \
@@ -3745,7 +3750,16 @@ class S3Resource(object):
                 ftype = str(field.type)
 
                 represent = field.represent
-                if not hasattr(represent, "skip_dt_orderby") and \
+                if ftype == "json":
+                    # Can't sort by JSON fields
+                    # => try using corresponding id column to maintain some
+                    #    fake yet consistent sort order:
+                    tn = field.tablename
+                    try:
+                        orderby.append("%s%s" % (db[tn]._id, direction(i)))
+                    except AttributeError:
+                        continue
+                elif not hasattr(represent, "skip_dt_orderby") and \
                    hasattr(represent, "dt_orderby"):
                     # Custom orderby logic in field.represent
                     field.represent.dt_orderby(field,
@@ -4074,6 +4088,10 @@ class S3Components(object):
             self.__load((alias,))
             return components.get(alias, default)
         else:
+            db = current.db
+            table_alias = component._alias
+            if not getattr(db, table_alias, None):
+                setattr(db._aliased_tables, table_alias, component.table)
             return component
 
     # -------------------------------------------------------------------------
@@ -5382,6 +5400,11 @@ class S3ResourceData(object):
         self.resource = resource
         self.table = table = resource.table
 
+        # If postprocessing is required, always include raw data
+        postprocess = resource.get_config("postprocess_select")
+        if postprocess:
+            raw_data = True
+
         # Dict to collect accessible queries for differential
         # field authorization (each joined table is authorized
         # separately)
@@ -5468,12 +5491,7 @@ class S3ResourceData(object):
         pagination = limit is not None or start
 
         # Subselect?
-        if ljoins or ijoins or \
-           efilter or \
-           vfilter and pagination:
-            subselect = True
-        else:
-            subselect = False
+        subselect = bool(ljoins or ijoins or efilter or vfilter and pagination)
 
         # Do we need a filter query?
         fq = count_only = False
@@ -5825,6 +5843,21 @@ class S3ResourceData(object):
         if rname:
             # Restore referee name
             db._referee_name = rname
+
+        # Postprocess data (postprocess_select hook of the resource):
+        # Allow the callback to modify the selected data before
+        # returning them to the caller, callback receives:
+        # - a dict with the data {record_id: row}
+        # - the list of resource fields
+        # - the represent-flag to indicate represented data
+        # - the as_rows-flag to indicate bare Rows in the data dict
+        # NB the callback must not remove fields from the rows
+        if postprocess:
+            postprocess(dict(zip(page, self.rows)),
+                        rfields = dfields,
+                        represent = represent,
+                        as_rows = bool(as_rows or groupby),
+                        )
 
     # -------------------------------------------------------------------------
     def init_field_data(self, rfields):
@@ -6224,8 +6257,8 @@ class S3ResourceData(object):
                 sfields = fields[tname] = {}
                 left = rfield.left
                 joins = S3Joins(table)
-                if left:
-                    [joins.add(left[tn]) for tn in left]
+                for tn in left:
+                    joins.add(left[tn])
                 sfields["_left"] = joins
             else:
                 sfields = fields[tname]
@@ -6284,8 +6317,10 @@ class S3ResourceData(object):
         sfields.insert(0, table._id)
 
         # Retrieve the subtable rows
+        # - can't use distinct with native JSON fields
+        distinct = not any(f.type == "json" for f in sfields)
         rows = current.db(query).select(left = sjoins,
-                                        distinct = True,
+                                        distinct = distinct,
                                         cacheable = True,
                                         *sfields)
 
@@ -6329,9 +6364,12 @@ class S3ResourceData(object):
         def get(key):
             t, f = key.split(".", 1)
             if join:
-                return lambda row, t=t, f=f: ogetattr(ogetattr(row, t), f)
+                def getter(row):
+                    return ogetattr(ogetattr(row, t), f)
             else:
-                return lambda row, f=f: ogetattr(row, f)
+                def getter(row):
+                    return ogetattr(row, f)
+            return getter
 
         getkey = get(pkey)
         getval = [get(c) for c in columns]

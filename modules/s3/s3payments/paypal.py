@@ -38,7 +38,9 @@ from .base import S3PaymentService
 
 # =============================================================================
 class PayPalAdapter(S3PaymentService):
-    """ API Adapter for PayPal """
+    """
+        API Adapter for PayPal
+    """
 
     # -------------------------------------------------------------------------
     def get_access_token(self):
@@ -579,14 +581,14 @@ class PayPalAdapter(S3PaymentService):
         if error:
             reason = ("%s %s" % (status, error)) if status else error
             self.log.error(action, reason)
-            db(stable.id==subscription_id).delete()
+            db(stable.id == subscription_id).delete()
             subscription_id = None
         else:
             # Extract the subscription reference (ID)
             ref = response["id"]
             if not ref:
                 self.log.error(action, "No subscription reference received")
-                db(stable.id==subscription_id).delete()
+                db(stable.id == subscription_id).delete()
                 return None
 
             # Get the approval URL
@@ -597,9 +599,9 @@ class PayPalAdapter(S3PaymentService):
                     break
 
             # Store reference and approval URL
-            db(stable.id==subscription_id).update(refno = ref,
-                                                  approval_url = approval_url,
-                                                  )
+            db(stable.id == subscription_id).update(refno = ref,
+                                                    approval_url = approval_url,
+                                                    )
             self.log.success(action)
 
         return subscription_id
@@ -667,7 +669,7 @@ class PayPalAdapter(S3PaymentService):
         data = {"status": subscription_status,
                 "status_date": datetime.datetime.utcnow()
                 }
-        db(stable.id==subscription_id).update(**data)
+        db(stable.id == subscription_id).update(**data)
         # Call onaccept to trigger automated fulfillment/cancelation actions
         data["id"] = subscription_id
         s3db.onaccept(stable, data, method="update")
@@ -722,7 +724,7 @@ class PayPalAdapter(S3PaymentService):
         data = {"status": subscription_status,
                 "status_date": datetime.datetime.utcnow()
                 }
-        db(stable.id==subscription_id).update(**data)
+        db(stable.id == subscription_id).update(**data)
 
         # Call onaccept to trigger automated fulfillment actions
         data["id"] = subscription_id
@@ -783,7 +785,7 @@ class PayPalAdapter(S3PaymentService):
         data = {"status": subscription_status,
                 "status_date": datetime.datetime.utcnow()
                 }
-        db(stable.id==subscription_id).update(**data)
+        db(stable.id == subscription_id).update(**data)
 
         # Call onaccept to trigger automated cancellation actions
         data["id"] = subscription_id

@@ -1941,13 +1941,48 @@
 
         <xsl:param name="skill"/>
 
-        <xsl:if test="$skill and $skill!=''">
+        <!-- Append '##'+column name to a skill name in the "Skills" column
+             to add a comment to that particular competency (from that other
+             column), e.g.
+
+             Skills                       PCComment
+             PC Applications#PCComment    Word, Excel, PowerPoint
+        -->
+
+        <xsl:if test="$skill!=''">
+            <xsl:variable name="ccol" select="substring-after($skill, '##')"/>
+            <xsl:variable name="skillname">
+                <xsl:choose>
+                    <xsl:when test="$ccol!=''">
+                        <xsl:value-of select="substring-before($skill, '##')"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="normalize-space($skill)"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+            <xsl:variable name="comments">
+                <xsl:choose>
+                    <xsl:when test="$ccol!=''">
+                        <xsl:value-of select="col[@field=$ccol]/text()"/>
+                    </xsl:when>
+                    <xsl:otherwise></xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+
             <resource name="hrm_competency">
                 <reference field="skill_id" resource="hrm_skill">
                     <resource name="hrm_skill">
-                        <data field="name"><xsl:value-of select="$skill"/></data>
+                        <data field="name">
+                            <xsl:value-of select="$skillname"/>
+                        </data>
                     </resource>
                 </reference>
+                <xsl:if test="$comments!=''">
+                    <data field="comments">
+                        <xsl:value-of select="normalize-space($comments)"/>
+                    </data>
+                </xsl:if>
             </resource>
         </xsl:if>
 
@@ -1976,6 +2011,7 @@
         <xsl:variable name="Options" select="col[@field='Availability']/text()"/>
         <xsl:variable name="Comments" select="col[@field='Availability Comments']/text()"/>
         <xsl:variable name="WeeklyHours" select="col[@field='Availability Weekly Hours']/text()"/>
+        <xsl:variable name="Schedule" select="col[@field='Availability Schedule']/text()"/>
 
         <resource name="pr_person_availability">
             <xsl:if test="$WeeklyHours!=''">
@@ -1983,15 +2019,20 @@
                     <xsl:value-of select="$WeeklyHours"/>
                 </data>
             </xsl:if>
+            <xsl:if test="$Schedule!=''">
+                <data field="schedule">
+                    <xsl:value-of select="$Schedule"/>
+                </data>
+            </xsl:if>
             <xsl:if test="$Options!=''">
                 <!-- @ToDo: A nicer way to handle options -->
                 <data field="options">
-                    <xsl:value-of select="col[@field='Availability']"/>
+                    <xsl:value-of select="$Options"/>
                 </data>
             </xsl:if>
             <xsl:if test="$Comments!=''">
                 <data field="comments">
-                    <xsl:value-of select="col[@field='Availability Comments']"/>
+                    <xsl:value-of select="$Comments"/>
                 </data>
             </xsl:if>
             <xsl:for-each select="col[starts-with(@field, 'Slot')]">

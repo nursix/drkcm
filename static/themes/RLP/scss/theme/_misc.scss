@@ -239,6 +239,7 @@ body.rtl {
 }
 .ui-widget-content {
     max-width: 100%;
+    width: auto!important;
 }
 
 .dvr-response-action-theme {
@@ -301,6 +302,12 @@ body.rtl {
         padding: 0.5rem;
     }
 }
+.register-intro {
+    max-width: 60rem;
+    padding: 1rem;
+    border: 1px solid #EEE;
+    background-color: #ec9;
+}
 .auth_register {
     .subheading {
         background-color: #EEE;
@@ -308,20 +315,30 @@ body.rtl {
         border-top: solid 1px #ccc;
         border-left: solid 1px #ccc;
         margin: 0.7rem 0;
-        padding: 0.5rem 0 0.3rem 0.5rem;
+        padding: 0.5rem 0.3rem 0.3rem 0.5rem;
+    }
+    .subheading,
+    .consent-widget,
+    .controls {
         max-width: 48rem;
     }
-    .consent-widget {
-        max-width: 48rem;
-    }
+    padding: 1rem!important;
 }
-
+.registration-form {
+    position: relative;
+    max-width: 60rem;
+    margin: 1rem auto;
+}
 .sub-label {
     font-weight: normal;
     font-size: 0.8rem;
     font-style: italic;
     color: #7f7f7f;
     padding-top: 0.2rem;
+}
+
+.avcomments {
+    font-size: 0.7rem;
 }
 
 // END ========================================================================

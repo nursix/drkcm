@@ -191,6 +191,13 @@ div.s3-groupedopts-widget {
     padding: 0.3em;
 }
 
+/* Widget Intro-Wrapper */
+.s3-widget-intro {
+    max-width: 42rem;
+    padding: 0.5rem 0;
+    font-size: 0.8rem;
+}
+
 /* pr_Contacts widgets */
 .pr-contacts-wrapper h3 {
   margin-top: 0.5rem;
@@ -478,6 +485,74 @@ form.anonymize-form,
 }
 .prio-grey {
     background-color: silver;
+}
+
+/* Weekly Hours Widget */
+.wh-raster {
+    margin-top: 0.3rem;
+    tr {
+        border-bottom: 1px solid #ccc;
+    }
+    td {
+        border-left: 1px solid #ccc;
+        &.wh-tick {
+            border-left-width: 2px;
+        }
+    }
+    thead {
+        td {
+            min-width: 1.8rem;
+            padding-right: 0.6rem !important;
+            font-size: 0.6rem;
+            font-weight: normal;
+        }
+    }
+    tbody {
+        td {
+            &.wh-hour {
+                text-align: center;
+                font-weight: normal;
+                &.wh-on {
+                    color: darkgreen;
+                }
+            }
+            &.wh-day {
+                text-align: left;
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+        }
+    }
+    .wh-hour {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
+        &.wh-on {
+            background-color: lightgreen;
+        }
+        &.wh-off {
+            background-color: transparent;
+        }
+    }
+}
+
+/* Weekly Hours Representation */
+.wh-schedule {
+    list-style: none;
+    white-space: pre;
+    margin: 0;
+    font-size: 0.7rem;
+    .wh-dayname {
+        width: 1.5rem;
+        display: inline-block;
+    }
+    .wh-dayname::after {
+        content: ":";
+    }
 }
 
 // Overrides for right-to-left orientation

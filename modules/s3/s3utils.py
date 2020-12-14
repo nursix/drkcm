@@ -613,7 +613,7 @@ def s3_text_represent(text, truncate=True, lines=5, _class=None):
        current.auth.permission.format in ("html", "popup", "iframe"):
         s3_trunk8(selector = selector, lines = lines)
 
-    return DIV(text, _class="text-body")
+    return DIV(text, _class=_class)
 
 # =============================================================================
 def s3_format_fullname(fname=None, mname=None, lname=None, truncate=True):
@@ -1971,9 +1971,15 @@ class Traceback(object):
             for key in editable.keys():
                 check_extension = f_endswith("%s/%s" % (app, key))
                 if l_ext == editable[key] and check_extension:
+                    edit_url = URL(a = "admin",
+                                   c = "default",
+                                   f = "edit",
+                                   args = [app, key, filename],
+                                   )
                     return A('"' + tryFile + '"',
-                             _href=URL("edit/%s/%s/%s" % \
-                                           (app, key, filename))).xml()
+                             _href = edit_url,
+                             _target = "_blank",
+                             ).xml()
         return ""
 
     # -------------------------------------------------------------------------

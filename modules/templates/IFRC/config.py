@@ -100,35 +100,35 @@ def config(settings):
         PID = "person_id"
 
         # Owner Entity Foreign Key
-        realm_entity_fks = dict(hrm_competency = PID,
-                                hrm_credential = PID,
-                                hrm_experience = PID,
-                                hrm_human_resource = SID,
-                                hrm_training = PID, # Also see-below
-                                pr_contact = [("org_organisation", EID),
-                                              ("po_household", EID),
-                                              ("pr_person", EID),
-                                              ],
-                                pr_contact_emergency = EID,
-                                pr_physical_description = EID,
-                                pr_address = [("org_organisation", EID),
-                                              ("pr_person", EID),
-                                              ],
-                                pr_image = EID,
-                                pr_identity = PID,
-                                pr_education = PID,
-                                pr_group = OID,
-                                pr_note = PID,
-                                inv_recv = SID,
-                                inv_send = SID,
-                                inv_track_item = "track_org_id",
-                                inv_adj_item = "adj_id",
-                                org_capacity_assessment_data = "assessment_id",
-                                po_area = OID,
-                                po_household = "area_id",
-                                po_organisation_area = "area_id",
-                                req_req_item = "req_id",
-                                )
+        realm_entity_fks = {"hrm_competency": PID,
+                            "hrm_credential": PID,
+                            "hrm_experience": PID,
+                            "hrm_human_resource": SID,
+                            "hrm_training": PID, # Also see-below
+                            "pr_contact": [("org_organisation", EID),
+                                          ("po_household", EID),
+                                          ("pr_person", EID),
+                                          ],
+                            "pr_contact_emergency": EID,
+                            "pr_physical_description": EID,
+                            "pr_address": [("org_organisation", EID),
+                                          ("pr_person", EID),
+                                          ],
+                            "pr_image": EID,
+                            "pr_identity": PID,
+                            "pr_education":PID,
+                            "pr_group": OID,
+                            "pr_note": PID,
+                            "inv_recv": SID,
+                            "inv_send": SID,
+                            "inv_track_item": "track_org_id",
+                            "inv_adj_item": "adj_id",
+                            "org_capacity_assessment_data": "assessment_id",
+                            "po_area": OID,
+                            "po_household": "area_id",
+                            "po_organisation_area": "area_id",
+                            "req_req_item": "req_id",
+                            }
 
         # Default Foreign Keys (ordered by priority)
         default_fks = ("household_id",
@@ -138,11 +138,11 @@ def config(settings):
                        )
 
         # Link Tables
-        #realm_entity_link_table = dict(
-        #    project_task = Storage(tablename = "project_task_project",
+        #realm_entity_link_table = {
+        #    "project_task": Storage(tablename = "project_task_project",
         #                           link_key = "task_id"
         #                           )
-        #    )
+        #    }
         #if tablename in realm_entity_link_table:
         #    # Replace row with the record from the link table
         #    link_table = realm_entity_link_table[tablename]
@@ -179,7 +179,7 @@ def config(settings):
             else:
                 ftablename = table[fk].type[10:] # reference tablename
                 ftable = s3db[ftablename]
-                query = (table.id == row.id) & \
+                query = (table.id == row["id"]) & \
                         (table[fk] == ftable.id)
             record = db(query).select(ftable.realm_entity,
                                       limitby=(0, 1)).first()
@@ -212,7 +212,7 @@ def config(settings):
                     #        organisation change in order to be effective
                     ottable = s3db.org_organisation_type
                     ltable = db.org_organisation_organisation_type
-                    query = (ltable.organisation_id == row.id) & \
+                    query = (ltable.organisation_id == row["id"]) & \
                             (ottable.id == ltable.organisation_type_id) & \
                             (ottable.name == "Red Cross / Red Crescent")
                     rclink = db(query).select(ltable.id, limitby=(0, 1)).first()
@@ -222,7 +222,7 @@ def config(settings):
             elif tablename == "hrm_training":
                 # Inherit realm entity from the related HR record if none set on the person record
                 htable = s3db.hrm_human_resource
-                query = (table.id == row.id) & \
+                query = (table.id == row["id"]) & \
                         (htable.person_id == table.person_id) & \
                         (htable.deleted != True)
                 rows = db(query).select(htable.realm_entity, limitby=(0, 2))
@@ -232,13 +232,14 @@ def config(settings):
                     # Ambiguous => try course organisation
                     ctable = s3db.hrm_course
                     otable = s3db.org_organisation
-                    query = (table.id == row.id) & \
+                    query = (table.id == row["id"]) & \
                             (ctable.id == table.course_id) & \
                             (otable.id == ctable.organisation_id)
-                    row = db(query).select(otable.pe_id,
-                                           limitby=(0, 1)).first()
-                    if row:
-                        realm_entity = row.pe_id
+                    org = db(query).select(otable.pe_id,
+                                           limitby = (0, 1)
+                                           ).first()
+                    if org:
+                        realm_entity = org.pe_id
 
             elif tablename == "pr_group":
                 # Groups are in the user organisation's realm if not linked to an Organisation directly
@@ -3742,7 +3743,7 @@ def config(settings):
                            )
         elif get_vars_get("rdrt_ap_deployment"):
             from gluon import IS_EMPTY_OR
-            from s3 import s3_comments_widget, IS_ONE_OF, S3Represent, S3SQLCustomForm#, S3MultiSelectWidget
+            from s3 import s3_comments_widget, IS_ONE_OF, S3SQLCustomForm#, S3MultiSelectWidget
             db = current.db
             s3db = current.s3db
 
@@ -4155,7 +4156,7 @@ def config(settings):
                 hrm_status_opts = s3db.hrm_status_opts
                 hrm_status_opts[3] = T("End Service")
                 table.status.represent = lambda opt: \
-                                         hrm_status_opts.get(opt, current.messages.UNKNOWN_OPT),
+                                         hrm_status_opts.get(opt, current.messages.UNKNOWN_OPT)
                 from gluon.validators import IS_IN_SET
                 table.status.requires = IS_IN_SET(hrm_status_opts,
                                                   zero=None)
@@ -5803,7 +5804,7 @@ def config(settings):
         if r.get_vars.get("rdrt_ap"):
             # Simplify for RDRT AP
 
-            from s3 import IS_ONE_OF, S3Represent, S3SQLCustomForm
+            from s3 import IS_ONE_OF, S3SQLCustomForm
 
             db = current.db
             s3db = current.s3db
@@ -7387,13 +7388,15 @@ def config(settings):
                                      )
                                     )
 
-        current.s3db.configure("pr_person", crud_form=crud_form)
+        current.s3db.configure("pr_person",
+                               crud_form = crud_form,
+                               )
 
-        return dict(label = T("Other Education"),
-                    type = "form",
-                    tablename = "pr_person",
-                    context = ("id", "id"),
-                    )
+        return {"label": T("Other Education"),
+                "type": "form",
+                "tablename": "pr_person",
+                "context": ("id", "id"),
+                }
 
     # -------------------------------------------------------------------------
     def customise_pr_person_controller(**attr):
@@ -8335,7 +8338,7 @@ def config(settings):
             # Remove Tabs
             attr["rheader"] = None
         else:
-            attr["rheader"] = lambda r, vnrc=vnrc: pr_rheader(r, vnrc)
+            attr["rheader"] = lambda r, v=vnrc: pr_rheader(r, v)
 
         if vnrc:
             # Link to customised download Template
