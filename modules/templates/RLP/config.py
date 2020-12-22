@@ -161,6 +161,9 @@ def config(settings):
                   }
     pool_type_ids = list(pool_types.keys())
 
+    # Override in models/000_config.py with site-specific file name
+    settings.custom.poolrules = "poolrules.default.xml"
+
     # -------------------------------------------------------------------------
     # Realm Rules
     #
@@ -1570,42 +1573,55 @@ def config(settings):
             elif controller == "default":
                 # Personal profile (default/person)
                 if not r.component:
+
+                    # Check if volunteer
+                    volunteer_id = None
+                    if r.id:
+                        rows = r.resource.select(["volunteer_record.id"], limit = 1).rows
+                        if rows:
+                            volunteer_id = rows[0]["hrm_volunteer_record_human_resource.id"]
+
                     # Custom Form
                     from gluon import IS_IN_SET
                     from s3 import S3SQLInlineLink, S3WithIntro
                     from .helpers import rlp_deployment_sites
                     crud_fields = name_fields
-                    crud_fields.extend(["date_of_birth",
-                                        "gender",
-                                        S3SQLInlineLink("occupation_type",
-                                                       label = T("Occupation Type"),
-                                                       field = "occupation_type_id",
-                                                       ),
-                                        (T("Occupation / Speciality"), "person_details.occupation"),
-                                        "volunteer_record.start_date",
-                                        "volunteer_record.end_date",
-                                        "volunteer_record.status",
-                                        "availability.hours_per_week",
-                                        "availability.schedule_json",
-                                        S3WithIntro(
-                                            S3SQLInlineLink("availability_sites",
-                                                            field = "site_id",
-                                                            label = T("Possible Deployment Sites"),
-                                                            requires = IS_IN_SET(rlp_deployment_sites(),
-                                                                                 multiple = True,
-                                                                                 zero = None,
-                                                                                 sort = False,
-                                                                                 ),
-                                                            render_list = True,
-                                                            ),
-                                            # Widget intro text from CMS
-                                            intro = ("pr", "person_availability_site", "AvailabilitySitesIntro"),
-                                            ),
-                                        "availability.comments",
-                                        "volunteer_record.comments",
-                                        ])
+                    if volunteer_id:
+                        # Volunteer-specific fields
+                        crud_fields.extend(["date_of_birth",
+                                            "gender",
+                                            S3SQLInlineLink("occupation_type",
+                                                        label = T("Occupation Type"),
+                                                        field = "occupation_type_id",
+                                                        ),
+                                            (T("Occupation / Speciality"), "person_details.occupation"),
+                                            "volunteer_record.start_date",
+                                            "volunteer_record.end_date",
+                                            "volunteer_record.status",
+                                            "availability.hours_per_week",
+                                            "availability.schedule_json",
+                                            S3WithIntro(
+                                                S3SQLInlineLink("availability_sites",
+                                                        field = "site_id",
+                                                        label = T("Possible Deployment Sites"),
+                                                        requires = IS_IN_SET(rlp_deployment_sites(),
+                                                                            multiple = True,
+                                                                            zero = None,
+                                                                            sort = False,
+                                                                            ),
+                                                        render_list = True,
+                                                        ),
+                                                # Widget intro text from CMS
+                                                intro = ("pr", "person_availability_site", "AvailabilitySitesIntro"),
+                                                ),
+                                            "availability.comments",
+                                            "volunteer_record.comments",
+                                            ])
 
-                    resource.configure(crud_form = S3SQLCustomForm(*crud_fields),
+                    from .helpers import rlp_update_pool
+                    resource.configure(crud_form = S3SQLCustomForm(*crud_fields,
+                                                        postprocess = rlp_update_pool if volunteer_id else None,
+                                                        ),
                                        deletable = False,
                                        )
 
@@ -2468,6 +2484,32 @@ def config(settings):
     settings.customise_hrm_delegation_controller = customise_hrm_delegation_controller
 
     # -------------------------------------------------------------------------
+    # Custom callbacks for competency changes in user profile
+    #
+    def hrm_competency_onaccept(form):
+
+        try:
+            record_id = form.vars.id
+        except AttributeError:
+            return
+
+        table = current.s3db.hrm_competency
+        query = (table.id == record_id) & (table.person_id != None)
+        row = current.db(query).select(table.person_id,
+                                       limitby = (0, 1),
+                                       ).first()
+        if row:
+            from .helpers import rlp_update_pool
+            rlp_update_pool(Storage(vars = Storage(id=row.person_id)))
+
+    def hrm_competency_ondelete(row):
+
+        person_id = row.person_id
+        if person_id:
+            from .helpers import rlp_update_pool
+            rlp_update_pool(Storage(vars = Storage(id=person_id)))
+
+    # -------------------------------------------------------------------------
     def customise_hrm_competency_resource(r, tablename):
 
         s3db = current.s3db
@@ -2488,6 +2530,23 @@ def config(settings):
                                       "comments",
                                       ],
                        )
+
+        if r.controller == "default" and r.function == "person":
+            volunteer_id = None
+            if r.id:
+                rows = r.resource.select(["volunteer_record.id"], limit = 1).rows
+                if rows:
+                    volunteer_id = rows[0]["hrm_volunteer_record_human_resource.id"]
+
+            if volunteer_id:
+                # Add custom callbacks to change pool membership if required
+                # by pool rules
+                s3db.add_custom_callback("hrm_competency", "onaccept",
+                                         hrm_competency_onaccept,
+                                         )
+                s3db.add_custom_callback("hrm_competency", "ondelete",
+                                         hrm_competency_ondelete,
+                                         )
 
     settings.customise_hrm_competency_resource = customise_hrm_competency_resource
 

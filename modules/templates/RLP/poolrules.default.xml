@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pool-assignment>
+    <assign pool="ImpfärztInnen">
+        <all-of>
+            <occupation>Arzt/Ärztin</occupation>
+            <any-of>
+                <skill>Unterstützung im Impfzentrum</skill>
+            </any-of>
+            <none-of>
+                <!-- Do not switch pool when currently member of these -->
+                <pool>ÄrztInnen LÄK</pool>
+                <pool>Landesbedienstete</pool>
+                <pool>Freiwillige teamRLP</pool>
+            </none-of>
+        </all-of>
+    </assign>
+    <assign pool="Weitere Freiwillige">
+        <none-of>
+            <!-- Do not switch pool when currently member of these -->
+            <pool>ÄrztInnen LÄK</pool>
+            <pool>Landesbedienstete</pool>
+            <pool>Freiwillige teamRLP</pool>
+        </none-of>
+    </assign>
+</pool-assignment>

@@ -994,6 +994,7 @@ Thank you"""
                    })
             session.flash = messages.password_changed
             if settings.login_after_password_change:
+                user = Storage(table_user._filter_fields(user, id=True))
                 self.login_user(user)
             callback(onaccept, form)
             redirect(next, client_side=settings.client_side)
@@ -4998,13 +4999,13 @@ Please go to %(url)s to approve this user."""
             @note: This method does not work on GAE because it uses JOIN and IN
         """
 
+        if not hasattr(table, "_tablename"):
+            table = current.s3db[table]
+
         if self.override:
             return table.id > 0
 
         sr = self.get_system_roles()
-
-        if not hasattr(table, "_tablename"):
-            table = current.s3db[table]
 
         policy = current.deployment_settings.get_security_policy()
 

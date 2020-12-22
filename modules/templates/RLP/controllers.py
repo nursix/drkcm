@@ -698,8 +698,8 @@ class register(S3CustomController):
                        (8, T("Address")),
                        (11, T("Occupation")),
                        (13, T("Availability and Resources")),
-                       (19, T("Comments")),
-                       (20, T("Privacy")),
+                       (20, T("Comments")),
+                       (21, T("Privacy")),
                        )
 
         # Geocoder
@@ -1033,7 +1033,10 @@ class register(S3CustomController):
             s3db_onaccept(htable, volunteer_update, method="update")
 
             # Add to default pool
-            default_pool = cls.get_default_pool()
+            from .poolrules import PoolRules
+            default_pool = PoolRules()(person_id)
+            if not default_pool:
+                default_pool = cls.get_default_pool()
             if default_pool:
                 gtable = s3db.pr_group
                 mtable = s3db.pr_group_membership

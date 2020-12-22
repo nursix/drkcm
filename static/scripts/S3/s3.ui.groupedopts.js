@@ -155,10 +155,11 @@
             if (items.length) {
                 var group_label = $('<div class="s3-groupedopts-label">' + label + '</div>');
                 this.menu.append(group_label);
+                var group;
                 if (this.options.table) {
-                    var group = $('<table class="s3-groupedopts-widget">');
+                    group = $('<table class="s3-groupedopts-widget">');
                 } else {
-                    var group = $('<div class="s3-groupedopts-widget">');
+                    group = $('<div class="s3-groupedopts-widget">');
                 }
                 this._renderRows(items, group);
                 $(group).hide();
@@ -216,12 +217,13 @@
                 }
             }
             // Render the rows
-            var table = opts.table;
+            var table = opts.table,
+                tr;
             for (i = 0; i < rows.length; i++) {
                 if (table) {
-                    var tr = $('<tr/>');
+                    tr = $('<tr/>');
                 } else {
-                    var tr = $('<div class="s3-groupedopts-row"/>');
+                    tr = $('<div class="s3-groupedopts-row"/>');
                 }
                 for (j = 0; j < rows[i].length; j++) {
                     this._renderItem(rows[i][j], tr, table);
@@ -253,22 +255,23 @@
                 title = $item.attr('title'),
                 selected = this.selected;
 
-            var olabel = '<label for="' + id + '"';
+            // Generate the label
+            var $olabel = $('<label for="' + id + '">');
             if (title && title !== '') {
-                olabel += ' title="' + title + '"';
+                $olabel.attr('title', title);
             }
-            if ((!multiple) && (value != selected)) {
-                // Radio labels have a class for unselected items (to be able to make these appear as clickable hyperlinks)
-                olabel += ' class="inactive"';
+            if (!multiple && value != selected) {
+                $olabel.addClass('inactive');
             }
-            olabel += '>' + label + '</label>';
+            $olabel.append($('<span class="optlabel">' + label + '</span>'));
 
+            // Generate the input element (checkbox or radio)
             var oinput = $('<input '+
                            'type="' + type + '" ' +
                            'id="' + id + '" ' +
                            'name="' + this.name + '" ' +
                            'class="s3-groupedopts-option" ' +
-                           'value="' + value + '"/>'),
+                           'value="' + value + '"/>').prependTo($olabel),
                 pos;
 
             if (multiple) {
@@ -280,13 +283,14 @@
                 $(oinput).prop('checked', true);
             }
 
+            var widget;
             if (table) {
-                var widget = $('<td>').append(oinput).append($(olabel));
+                widget = $('<td>').append($olabel);
             } else {
-                var widget = $('<div class="s3-groupedopts-item">').append(oinput).append($(olabel));
+                widget = $('<div class="s3-groupedopts-item">').append($olabel);
             }
             if (comment) {
-                 _.templateSettings = {interpolate: /\{(.+?)\}/g};
+                _.templateSettings = {interpolate: /\{(.+?)\}/g};
                 var template = _.template(comment);
                 var ocomment = template({v: value});
                 widget.append($(ocomment));
