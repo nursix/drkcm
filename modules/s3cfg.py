@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -513,6 +513,13 @@ class S3Config(Storage):
         return module_name in self.modules
 
     # -------------------------------------------------------------------------
+    def get_facebook_pixel_id(self):
+        """
+            Facebook Pixel ID
+        """
+        return self.base.get("facebook_pixel_id")
+
+    # -------------------------------------------------------------------------
     def get_google_analytics_tracking_id(self):
         """
             Google Analytics Key
@@ -841,31 +848,29 @@ class S3Config(Storage):
 
     def get_auth_registration_pending(self):
         """ Message someone gets when they register & they need approving """
+        T = current.T
         message = self.auth.get("registration_pending")
         if message:
-            return current.T(message)
-
+            return T(message)
         approver = self.get_mail_approver()
         if "@" in approver:
-            m = "Registration is still pending approval from Approver (%s) - please wait until confirmation received." % \
-                approver
+            return T("Registration is still pending approval from Approver (%s) - please wait until confirmation received.") % \
+                   approver
         else:
-            m = "Registration is still pending approval from the system administrator - please wait until confirmation received."
-        return current.T(m)
+            return T("Registration is still pending approval from the system administrator - please wait until confirmation received.")
 
     def get_auth_registration_pending_approval(self):
         """ Message someone gets when they register & they need approving """
+        T = current.T
         message = self.auth.get("registration_pending_approval")
         if message:
-            return current.T(message)
-
+            return T(message)
         approver = self.get_mail_approver()
         if "@" in approver:
-            m = "Thank you for validating your email. Your user account is still pending for approval by the system administrator (%s). You will get a notification by email when your account is activated." % \
-                approver
+            return T("Thank you for validating your email. Your user account is still pending for approval by the system administrator (%s). You will get a notification by email when your account is activated.") % \
+                   approver
         else:
-            m = "Thank you for validating your email. Your user account is still pending for approval by the system administrator. You will get a notification by email when your account is activated."
-        return current.T(m)
+            return T("Thank you for validating your email. Your user account is still pending for approval by the system administrator. You will get a notification by email when your account is activated.")
 
     def get_auth_registration_roles(self):
         """
@@ -892,6 +897,14 @@ class S3Config(Storage):
     def get_auth_consent_tracking(self):
         """ Expose options to track user consent """
         return self.auth.get("consent_tracking", False)
+
+    def get_auth_consent_check(self):
+        """
+            Ask for consent renewal upon login
+            - a function that returns a list of processing type codes for
+              which the user shall renew their consent after login
+        """
+        return self.auth.get("consent_check", None)
 
     def get_auth_registration_volunteer(self):
         """ Redirect the newly-registered user to their volunteer details page """
@@ -1145,6 +1158,15 @@ class S3Config(Storage):
         """
         return self.base.get("solr_url", False)
 
+    def get_xml_formats(self):
+        """
+            Locations of custom export/import transformation stylesheets
+            - settings.base.xml_formats = {"<ext>": "<TMP>"}
+              => modules/templates/<TMP>/formats/<ext>/<method>.xsl
+        """
+        return self.base.get("xml_formats")
+
+
     def get_import_callback(self, tablename, callback):
         """
             Lookup callback to use for imports in the following order:
@@ -1299,6 +1321,36 @@ class S3Config(Storage):
         """
         return self.__lazy("fin", "currency_default", default="USD")
 
+    def get_fin_voucher_personalize(self):
+        """
+            Bearer identification feature to use for vouchers
+            - dob => bearer date of birth
+            - pin => PIN code
+        """
+        return self.fin.get("voucher_personalize")
+
+    def get_fin_voucher_eligibility_types(self):
+        """
+            Enable UI to manage eligibility types in voucher programs
+        """
+        return self.fin.get("voucher_eligibility_types")
+
+    def get_fin_voucher_invoice_status_labels(self):
+        """
+            Customise labels for invoice statuses
+            - dict {status: label}
+            - NEW, PAID, REJECTED are mandatory, can only change labels
+            - VERIFIED and APPROVED are optional, can be set to None to
+              disable completely
+        """
+        return self.fin.get("voucher_invoice_status_labels")
+
+    def get_fin_voucher_claim_paid_label(self):
+        """
+            Custom label for claim PAID-Status
+        """
+        return self.fin.get("voucher_claim_paid_label", "Paid")
+
     # -------------------------------------------------------------------------
     # GIS (Map) Settings
     #
@@ -1306,11 +1358,23 @@ class S3Config(Storage):
         """ API key for Bing """
         return self.gis.get("api_bing")
 
+    def get_gis_api_getaddress(self):
+        """
+            API key for GetAddress.io
+        """
+        return self.gis.get("api_getaddress")
+
     def get_gis_api_google(self):
         """
             API key for Google Maps
         """
         return self.gis.get("api_google", "")
+
+    def get_gis_api_openweathermap(self):
+        """
+            API key for Open Weather Map
+        """
+        return self.gis.get("api_openweathermap", "")
 
     def get_gis_bbox_min_size(self):
         """
@@ -1643,6 +1707,14 @@ class S3Config(Storage):
             Display Postcode form field when selecting Locations
         """
         return self.__lazy("gis", "postcode_selector", default=True)
+
+    def get_gis_postcode_to_address(self):
+        """
+            Service to use for Postcode to Address lookups in LocationSelector
+            Supported Options:
+            * getaddress (GetAddress.io)
+        """
+        return self.__lazy("gis", "postcode_to_address", default=None)
 
     def get_gis_print(self):
         """
@@ -5198,6 +5270,12 @@ class S3Config(Storage):
         """
         return self.pr.get("availability_json_rules", False)
 
+    def get_pr_editable_fields(self):
+        """
+            Fields which are editable in the AddPersonWidget
+        """
+        return self.pr.get("editable_fields", [])
+
     def get_pr_hide_third_gender(self):
         """
             Whether to hide the third gender ("Other")
@@ -5221,59 +5299,64 @@ class S3Config(Storage):
 
     def get_pr_label_fullname(self):
         """
-            Label for the AddPersonWidget2's 'Name' field
+            Label for the AddPersonWidget's 'Name' field
         """
         return self.__lazy("pr", "label_fullname", default="Name")
 
     def get_pr_lookup_duplicates(self):
         """
-            Whether the AddPersonWidget2 does a fuzzy search for duplicates
-
-            NB This setting has no effect with the old AddPersonWidget
+            Whether the AddPersonWidget does a fuzzy search for duplicates
         """
         return self.pr.get("lookup_duplicates", False)
 
     def get_pr_request_dob(self):
-        """ Include Date of Birth in the AddPersonWidget[2] """
+        """ Include Date of Birth in the AddPersonWidget """
         return self.__lazy("pr", "request_dob", default=True)
 
     def get_pr_dob_required(self):
-        """ Whether Date of Birth is Mandatory, including in the AddPersonWidget2 """
+        """ Whether Date of Birth is Mandatory, including in the AddPersonWidget """
         return self.__lazy("pr", "dob_required", default=False)
 
     def get_pr_request_email(self):
-        """ Include Email in the AddPersonWidget2 """
+        """ Include Email in the AddPersonWidget """
         return self.__lazy("pr", "request_email", default=True)
 
     def get_pr_request_father_name(self):
-        """ Include Father Name in the AddPersonWidget2 """
+        """ Include Father Name in the AddPersonWidget """
         return self.__lazy("pr", "request_father_name", default=False)
 
     def get_pr_request_grandfather_name(self):
-        """ Include GrandFather Name in the AddPersonWidget2 """
+        """ Include GrandFather Name in the AddPersonWidget """
         return self.__lazy("pr", "request_grandfather_name", default=False)
 
     def get_pr_request_gender(self):
-        """ Include Gender in the AddPersonWidget[2] """
+        """ Include Gender in the AddPersonWidget """
         return self.__lazy("pr", "request_gender", default=True)
 
     def get_pr_request_home_phone(self):
-        """ Include Home Phone in the AddPersonWidget2 """
+        """ Include Home Phone in the AddPersonWidget """
         return self.__lazy("pr", "request_home_phone", default=False)
 
     def get_pr_request_mobile_phone(self):
-        """ Include Mobile Phone in the AddPersonWidget2 """
+        """ Include Mobile Phone in the AddPersonWidget """
         return self.__lazy("pr", "request_mobile_phone", default=True)
 
+    def get_pr_request_tags(self):
+        """
+            Include Tags in the AddPersonWidget
+            List of Tuples: (label, tag)
+        """
+        return self.__lazy("pr", "request_tags", default=[])
+
     def get_pr_request_year_of_birth(self):
-        """ Include Year of Birth in the AddPersonWidget2 """
+        """ Include Year of Birth in the AddPersonWidget """
         return self.__lazy("pr", "request_year_of_birth", default=False)
 
     def get_pr_name_format(self):
         """
             Format with which to represent Person Names
 
-            Generally want an option in AddPersonWidget2 to handle the input like this too
+            Generally want an option in AddPersonWidget to handle the input like this too
         """
         return self.__lazy("pr", "name_format", default="%(first_name)s %(middle_name)s %(last_name)s")
 
@@ -5283,19 +5366,9 @@ class S3Config(Storage):
         """
         return self.pr.get("search_shows_hr_details", True)
 
-    def get_pr_select_existing(self):
-        """
-            Whether the AddPersonWidget allows selecting existing PRs
-            - set to True if Persons can be found in multiple contexts
-            - set to False if just a single context
-
-            NB This setting has no effect with the new AddPersonWidget2
-        """
-        return self.pr.get("select_existing", True)
-
     def get_pr_separate_name_fields(self):
         """
-            Whether the AddPersonWidget2 provides separate name fields or not
+            Whether the AddPersonWidget provides separate name fields or not
             Options:
                 False (single field)
                 2 (first/last)
@@ -5881,6 +5954,13 @@ class S3Config(Storage):
             Whether to allow Alternative Items to be defined
         """
         return self.supply.get("use_alt_name", True)
+
+    def get_supply_shipping_code(self):
+        """
+            Custom shipping code generator (REQ, WB, GRN etc)
+            - function(prefix, site_id, field)
+        """
+        return self.supply.get("shipping_code")
 
     # -------------------------------------------------------------------------
     # Vulnerability

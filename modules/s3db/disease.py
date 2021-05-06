@@ -4,7 +4,7 @@
 
     @ToDo Extend to Vector Tracking for Dengue/Malaria
 
-    @copyright: 2014-2020 (c) Sahana Software Foundation
+    @copyright: 2014-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -634,9 +634,27 @@ class CaseTrackingModel(S3Model):
                         "INVALID": T("Invalid"),
                         "LOST": T("Lost"),
                         }
+
+        project_id = self.project_project_id
+        project_represent = project_id.attr.represent
+
         tablename = "disease_case_diagnostics"
         define_table(tablename,
                      case_id(empty=False),
+                     # Alternative link to disease for anonymous reporting
+                     self.disease_disease_id(
+                            readable = False,
+                            writable = False,
+                            ),
+                     # Optional link to project funding this test
+                     self.project_project_id(
+                            requires = IS_EMPTY_OR(
+                                            IS_ONE_OF(db, "project_project.id",
+                                                      project_represent,
+                                                      )),
+                            readable = False,
+                            writable = False,
+                            ),
                      # @todo: make a lookup table in DiseaseDataModel:
                      Field("probe_type"),
                      Field("probe_number", length=64, unique=True,
@@ -652,8 +670,12 @@ class CaseTrackingModel(S3Model):
                            default = "PENDING",
                            ),
                      # @todo: make a lookup table in DiseaseDataModel:
-                     Field("test_type"),
-                     Field("result"),
+                     Field("test_type",
+                           label = T("Test Type"),
+                           ),
+                     Field("result",
+                           label = T("Result"),
+                           ),
                      s3_date("result_date",
                              label = T("Result Date"),
                              ),

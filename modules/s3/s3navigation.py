@@ -2,7 +2,7 @@
 
 """ S3 Navigation Module
 
-    @copyright: 2011-2020 (c) Sahana Software Foundation
+    @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -91,27 +91,27 @@ class S3NavigationItem(object):
     # Construction
     #
     def __init__(self,
-                 label=None,
-                 c=None,
-                 f=None,
-                 args=None,
-                 vars=None,
-                 extension=None,
-                 a=None,
-                 r=None,
-                 m=None,
-                 p=None,
-                 t=None,
-                 url=None,
-                 tags=None,
-                 parent=None,
-                 translate=True,
-                 layout=None,
-                 check=None,
-                 restrict=None,
-                 link=True,
-                 mandatory=False,
-                 ltr=False,
+                 label = None,
+                 c = None,
+                 f = None,
+                 args = None,
+                 vars = None,
+                 extension = None,
+                 a = None,
+                 r = None,
+                 m = None,
+                 p = None,
+                 t = None,
+                 url = None,
+                 tags = None,
+                 parent = None,
+                 translate = True,
+                 layout = None,
+                 check = None,
+                 restrict = None,
+                 link = True,
+                 mandatory = False,
+                 ltr = False,
                  **attributes):
         """
             Constructor
@@ -1388,7 +1388,9 @@ class S3ComponentTabs(object):
             Constructor
 
             @param tabs: the tabs configuration as list of names or tuples
-                         (label, name)
+                         (label, component or method or function/)
+                         (label, component or method, vars)
+                         (label, component, vars, method)
         """
 
         if not tabs:
@@ -1416,6 +1418,7 @@ class S3ComponentTabs(object):
             # Check whether there is a tab for the current URL method
             for t in tabs:
                 if t.component == r.method:
+                    # t.component is a method not a component
                     mtab = True
                     break
 
@@ -1585,14 +1588,15 @@ class S3ComponentTab(object):
         """
             Constructor
 
-            @param tab: the component tab configuration as tuple
-                        (label, component_alias, {get_vars}), where the
-                        get_vars dict is optional.
+            @param tab: the component tab configuration as tuple:
+                        (label, component or method or function/)
+                        (label, component or method, vars)
+                        (label, component, vars, method)
         """
 
         # @todo: use component hook label/plural as fallback for title
         #        (see S3Model.add_components)
-        title, component = tab[:2]
+        title, component = tab[:2] # 'component' can be method
 
         self.title = title
 
@@ -1607,6 +1611,7 @@ class S3ComponentTab(object):
             self.function = None
 
         if component:
+            # NB 'component' can be a method
             self.component = component
         else:
             self.component = None
@@ -1620,6 +1625,7 @@ class S3ComponentTab(object):
                 self.native = True if tab_vars["native"] else False
                 del tab_vars["native"]
             if len(tab) > 3:
+                # Component Method
                 self.method = tab[3]
         else:
             self.vars = None
@@ -1676,7 +1682,8 @@ class S3ComponentTab(object):
         return True
 
     # -------------------------------------------------------------------------
-    def authorised(self, hook):
+    @staticmethod
+    def authorised(hook):
         """
             Check permissions for component tabs (in order to deactivate
             tabs the user is not permitted to access)
@@ -1810,7 +1817,7 @@ class S3ResourceHeader(object):
         self.title = title
 
     # -------------------------------------------------------------------------
-    def __call__(self, r, tabs=None, table=None, record=None, as_div=True):
+    def __call__(self, r, tabs=None, table=None, record=None, actions=None, as_div=True):
         """
             Return the HTML representation of this rheader
 
@@ -1818,6 +1825,7 @@ class S3ResourceHeader(object):
             @param tabs: the tabs (overrides the original tabs definition)
             @param table: override r.table
             @param record: override r.record
+            @param actions: any action items for the view
             @param as_div: True: will return the rheader_fields and the
                            rheader_tabs together as a DIV
                            False will return the rheader_fields and the
@@ -1871,7 +1879,12 @@ class S3ResourceHeader(object):
             else:
                 content = TABLE(trs, _class="rheader-content")
 
-            rheader = (content, rheader_tabs)
+            if actions:
+                action_items = DIV(_class="rheader-actions", *actions)
+                rheader = (content, action_items, rheader_tabs)
+            else:
+                rheader = (content, rheader_tabs)
+
             if as_div:
                 rheader = DIV(*rheader)
 
@@ -1881,7 +1894,8 @@ class S3ResourceHeader(object):
         return rheader
 
     # -------------------------------------------------------------------------
-    def render_field(self, table, record, col):
+    @staticmethod
+    def render_field(table, record, col):
         """
             Render an rheader field
 

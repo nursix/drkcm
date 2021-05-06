@@ -2,7 +2,7 @@
 
 """ S3 Pivot Table Reports Method
 
-    @copyright: 2011-2020 (c) Sahana Software Foundation
+    @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
 
     @requires: U{B{I{Python 2.6}} <http://www.python.org>}
@@ -372,13 +372,13 @@ class S3Report(S3Method):
 
                 # Export as GeoJSON
                 current.xml.show_ids = True
-                output = resource.export_xml(fields=include,
-                                             mcomponents=None,
-                                             references=[],
-                                             stylesheet=stylesheet,
-                                             as_json=True,
-                                             location_data=location_data,
-                                             map_data=dict(style=style),
+                output = resource.export_xml(fields = include,
+                                             mcomponents = None,
+                                             references = [],
+                                             stylesheet = stylesheet,
+                                             as_json = True,
+                                             location_data = location_data,
+                                             map_data = {"style": style},
                                              )
                 # Transformation error?
                 if not output:
@@ -444,17 +444,18 @@ class S3Report(S3Method):
             # Export as GeoJSON
             current.xml.show_ids = True
             gresource = current.s3db.resource("gis_location", id=ids)
-            output = gresource.export_xml(fields=[],
-                                          mcomponents=None,
-                                          references=[],
-                                          stylesheet=stylesheet,
-                                          as_json=True,
-                                          location_data=location_data,
+            output = gresource.export_xml(fields = [],
+                                          mcomponents = None,
+                                          references = [],
+                                          stylesheet = stylesheet,
+                                          as_json = True,
+                                          location_data = location_data,
                                           # Tell the client that we are
                                           # displaying aggregated data and
                                           # the level it is aggregated at
-                                          map_data=dict(level=int(level[1:]),
-                                                        style=style),
+                                          map_data = {"level": int(level[1:]),
+                                                      "style": style,
+                                                      },
                                           )
             # Transformation error?
             if not output:
@@ -2459,6 +2460,7 @@ class S3PivotTable(object):
                   "date": datetime.date.min,
                   "datetime": datetime.datetime.min,
                   "boolean": 1,
+                  "id": minnum,
                   }
 
         # Sorting key function

@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2012-2020 (c) Sahana Software Foundation
+    @copyright: 2012-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -156,14 +156,14 @@ class S3Migration(object):
                       )
 
     # -------------------------------------------------------------------------
-    def prep(self, moves=None,
-                   news=None,
-                   ondeletes=None,
-                   strbools=None,
-                   strints=None,
-                   add_notnulls=None,
-                   remove_foreigns=None,
-                   remove_uniques=None,
+    def prep(self, moves = None,
+                   news = None,
+                   ondeletes = None,
+                   strbools = None,
+                   strints = None,
+                   add_notnulls = None,
+                   remove_foreigns = None,
+                   remove_uniques = None,
                    ):
         """
             Preparation before migration

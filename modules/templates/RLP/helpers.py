@@ -6,7 +6,7 @@
     @license: MIT
 """
 
-from gluon import current, A, URL
+from gluon import current, A, URL, XML
 
 from s3 import FS, S3DateFilter, S3OptionsFilter, S3Represent, s3_fullname
 
@@ -105,7 +105,7 @@ def rlp_delegation_read_multiple_orgs():
         otable = current.s3db.org_organisation
         query = (otable.pe_id.belongs(realms)) & \
                 (otable.deleted == False)
-        rows = current.db(query).select(otable.id)
+        rows = current.db(query).select(otable.id, limitby=(0, len(realms)))
         multiple_orgs = len(rows) > 1
         org_ids = [row.id for row in rows]
 
@@ -223,6 +223,42 @@ def rlp_update_pool(form, tablename=None):
             s3db.onaccept(mtable, data, method="create")
 
 # =============================================================================
+def get_cms_intro(module, resource, name, cmsxml=False):
+    """
+        Get intro from CMS
+
+        @param module: the module prefix
+        @param resource: the resource name
+        @param name: the post name
+        @param cmsxml: whether to XML-escape the contents or not
+
+        @returns: the post contents, or None if not available
+    """
+
+    # Get intro text from CMS
+    db = current.db
+    s3db = current.s3db
+
+    ctable = s3db.cms_post
+    ltable = s3db.cms_post_module
+    join = ltable.on((ltable.post_id == ctable.id) & \
+                        (ltable.module == module) & \
+                        (ltable.resource == resource) & \
+                        (ltable.deleted == False))
+
+    query = (ctable.name == name) & \
+            (ctable.deleted == False)
+    row = db(query).select(ctable.body,
+                            join = join,
+                            cache = s3db.cache,
+                            limitby = (0, 1),
+                            ).first()
+    if not row:
+        return None
+
+    return XML(row.body) if cmsxml else row.body
+
+# =============================================================================
 class RLPAvailabilityFilter(S3DateFilter):
     """
         Date-Range filter with custom variable
@@ -288,8 +324,43 @@ class RLPAvailabilitySiteFilter(S3OptionsFilter):
         if sites:
             sites = [int(site_id) for site_id in sites.split(",") if site_id.isdigit()]
         if sites:
-            query = FS("availability_sites.site_id").belongs(sites) | \
-                    (~(FS("availability_sites.site_id") != None))
+            query = FS("availability_sites.site_id").belongs(sites)
+            resource.add_filter(query)
+
+# =============================================================================
+class RLPWeeklyAvailabilityFilter(S3OptionsFilter):
+    """
+        Options filter with custom variable
+        - without this then we parse as a vfilter which clutters error console
+          & is inefficient (including preventing a bigtable optimisation)
+    """
+
+    @classmethod
+    def _variable(cls, selector, operator):
+
+        return super()._variable("$$weekly", operator)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def apply_filter(resource, get_vars):
+        """
+            Include volunteers who have marked themselves available on
+            the selected days of week, or have not chosen any days
+        """
+
+        days, matchall = get_vars.get("$$weekly__anyof"), False
+        if not days:
+            days, matchall = get_vars.get("$$weekly__contains"), True
+
+        if days:
+            days = [int(d) for d in days.split(",") if d.isdigit()]
+            weekly = sum(2**d for d in days) if days else 0b1111111
+            if matchall:
+                subset = [i for i in range(weekly, 128) if (i & weekly) == weekly]
+                query = FS("availability.weekly").belongs(subset)
+            else:
+                subset = [i for i in range(128) if not (i & weekly)]
+                query = ~(FS("availability.weekly").belongs(subset))
             resource.add_filter(query)
 
 # =============================================================================

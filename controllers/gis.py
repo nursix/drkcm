@@ -3234,26 +3234,42 @@ def geocode():
         @param postcode: Postcode
     """
 
+    vars_get = request.post_vars.get
+
+    # Validate the formkey
+    formkey = vars_get("k", None)
+    keyname = "_formkey[geocode]"
+    if not formkey or formkey not in session.get(keyname, []):
+        status = 403
+        message = current.ERROR.NOT_PERMITTED
+        headers = {"Content-Type":"application/json"}
+        current.log.error(message)
+        raise HTTP(status,
+                   body = current.xml.json_message(success = False,
+                                                   statuscode = status,
+                                                   message = message),
+                   web2py_error = message,
+                   **headers)
+
     # Read the request
-    vars = request.post_vars
-    street = vars.get("address", None)
-    postcode = vars.get("postcode", None)
-    L0 = vars.get("L0", None)
+    street = vars_get("address", None)
+    postcode = vars_get("postcode", None)
+    L0 = vars_get("L0", None)
     if L0:
         L0 = int(L0)
-    L1 = vars.get("L1", None)
+    L1 = vars_get("L1", None)
     if L1:
         L1 = int(L1)
-    L2 = vars.get("L2", None)
+    L2 = vars_get("L2", None)
     if L2:
         L2 = int(L2)
-    L3 = vars.get("L3", None)
+    L3 = vars_get("L3", None)
     if L3:
         L3 = int(L3)
-    L4 = vars.get("L4", None)
+    L4 = vars_get("L4", None)
     if L4:
         L4 = int(L4)
-    L5 = vars.get("L5", None)
+    L5 = vars_get("L5", None)
     if L5:
         L5 = int(L5)
     # Is this a Street or Lx?
@@ -3290,10 +3306,26 @@ def geocode_r():
         @param lon: float (as string)
     """
 
+    vars_get = request.post_vars.get
+
+    # Validate the formkey
+    formkey = vars_get("k", None)
+    keyname = "_formkey[geocode]"
+    if not formkey or formkey not in session.get(keyname, []):
+        status = 403
+        message = current.ERROR.NOT_PERMITTED
+        headers = {"Content-Type":"application/json"}
+        current.log.error(message)
+        raise HTTP(status,
+                   body = current.xml.json_message(success = False,
+                                                   statuscode = status,
+                                                   message = message),
+                   web2py_error = message,
+                   **headers)
+
     # Read the request
-    vars = request.post_vars
-    lat = vars.get("lat", None)
-    lon = vars.get("lon", None)
+    lat = vars_get("lat", None)
+    lon = vars_get("lon", None)
 
     # Reverse Geocode
     results = gis.geocode_r(lat, lon)
@@ -3413,6 +3445,123 @@ def geocode_manual():
         output.update(_map = _map)
 
     return output
+
+# -----------------------------------------------------------------------------
+def postcode_to_address():
+    """
+        Looks up a list of Addresses for a given Postcode
+        - helper for LocationSelector
+        - supports FindAddress.io
+    """
+
+    vars_get = request.post_vars.get
+
+    # Validate the formkey
+    formkey = vars_get("k")
+    keyname = "_formkey[geocode]"
+    if not formkey or formkey not in session.get(keyname, []):
+        status = 403
+        message = ERROR.NOT_PERMITTED
+        headers = {"Content-Type": "application/json"}
+        current.log.error(message)
+        raise HTTP(status,
+                   body = current.xml.json_message(success = False,
+                                                   statuscode = status,
+                                                   message = message),
+                   web2py_error = message,
+                   **headers)
+
+    postcode = vars_get("postcode")
+    if not postcode:
+        status = 400
+        message = ERROR.BAD_REQUEST
+        headers = {"Content-Type": "application/json"}
+        current.log.error(message)
+        raise HTTP(status,
+                   body = current.xml.json_message(success = False,
+                                                   statuscode = status,
+                                                   message = message),
+                   web2py_error = message,
+                   **headers)
+
+    service = settings.get_gis_postcode_to_address()
+
+    if service == "getaddress":
+        apikey = settings.get_gis_api_getaddress()
+        if not apikey:
+            status = 500
+            message = T("No GetAddress API Key defined")
+            headers = {"Content-Type": "application/json"}
+            current.log.error(message)
+            raise HTTP(status,
+                       body = current.xml.json_message(success = False,
+                                                       statuscode = status,
+                                                       message = message),
+                       web2py_error = message,
+                       **headers)
+
+        import requests
+
+        r = requests.get("https://api.getAddress.io/find/%s?api-key=%s&sort=true&expand=true" % (postcode, apikey))
+        results = r.json()
+
+        status = r.status_code
+        if status != 200:
+            message = r.json().get("Message")
+            headers = {"Content-Type": "application/json"}
+            current.log.error(message)
+            raise HTTP(status,
+                       body = current.xml.json_message(success = False,
+                                                       statuscode = status,
+                                                       message = message),
+                       web2py_error = message,
+                       **headers)
+
+        results_get = results.get
+        addresses = results_get("addresses")
+        if addresses == []:
+            output = "{}"
+        else:
+            lat = results_get("latitude")
+            lon = results_get("longitude")
+
+            results = current.gis.geocode_r(lat, lon)
+            results["lat"] = lat
+            results["lon"] = lon
+            cleaned_addresses = []
+            cappend = cleaned_addresses.append
+            for address in addresses:
+                address_get = address.get
+                cleaned_address = address_get("line_1")
+                line_2 = address_get("line_2")
+                if line_2:
+                    cleaned_address = "%s, %s" % (cleaned_address, line_2)
+                    line_3 = address_get("line_3")
+                    if line_3:
+                        cleaned_address = "%s, %s" % (cleaned_address, line_3)
+                        line_4 = address_get("line_4")
+                        if line_4:
+                            cleaned_address = "%s, %s" % (cleaned_address, line_4)
+                cappend(cleaned_address)
+            results["addresses"] = cleaned_addresses
+
+            from s3.s3xml import SEPARATORS
+            output = json.dumps(results, separators=SEPARATORS)
+
+        current.response.headers["Content-Type"] = "application/json"
+        return output
+
+    else:
+        status = 501
+        message = T("Postcode to Address service not supported")
+        headers = {"Content-Type": "application/json"}
+        current.log.error(message)
+        raise HTTP(status,
+                   body = current.xml.json_message(success = False,
+                                                   statuscode = status,
+                                                   message = message),
+                   web2py_error = message,
+                   **headers)
 
 # =============================================================================
 def geoexplorer():

@@ -2,7 +2,7 @@
 
 """ Sahana Eden Auth Model
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -200,6 +200,13 @@ class AuthConsentModel(S3Model):
                      s3_comments(),
                      *s3_meta_fields())
 
+        # Table configuration
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("code",),
+                                                 secondary = ("name",),
+                                                 ),
+                       )
+
         # Representation
         type_represent = S3Represent(lookup=tablename)
 
@@ -294,6 +301,7 @@ class AuthConsentModel(S3Model):
                      Field("obsolete", "boolean",
                            default = False,
                            label = T("Obsolete"),
+                           represent = s3_yes_no_represent,
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Obsolete"),
                                                              T("This description of the data processing is obsolete"),
@@ -316,6 +324,7 @@ class AuthConsentModel(S3Model):
 
         # Table Configuration
         self.configure(tablename,
+                       # NB must not deduplicate! (invalid operation + breaks vhash chain)
                        list_fields = list_fields,
                        onaccept = self.consent_option_onaccept,
                        )
@@ -344,6 +353,7 @@ class AuthConsentModel(S3Model):
                      Field("vhash", "text"),
                      Field("option_id", "reference auth_consent_option",
                            ondelete = "RESTRICT",
+                           represent = S3Represent(lookup="auth_consent_option"),
                            ),
                      Field("consenting", "boolean",
                            default = False,
@@ -1040,6 +1050,41 @@ class auth_Consent(object):
         row = current.db(query).select(ctable.id, limitby = (0, 1)).first()
 
         return row is not None
+
+    # -------------------------------------------------------------------------
+    def pending_responses(self, person_id):
+        """
+            Identify all processing types for which a person has not
+            responded to the updated consent questions, or where their
+            previously given consent has expired
+
+            @param person_id: the person ID
+            @returns: list of processing type codes
+        """
+
+        # Get all current consent options for the given processing types
+        options = self.extract()
+        option_ids = {spec["id"] for spec in options.values()}
+
+        # Find all responses of this person to these options
+        today = current.request.utcnow.date()
+        ctable = current.s3db.auth_consent
+        query = (ctable.person_id == person_id) & \
+                (ctable.option_id.belongs(option_ids)) & \
+                ((ctable.consenting == False) | \
+                 (ctable.expires_on == None) | \
+                 (ctable.expires_on > today)) & \
+                (ctable.deleted == False)
+        rows = current.db(query).select(ctable.option_id)
+
+        # Identify any pending responses
+        responded = {row.option_id for row in rows}
+        pending = []
+        for code, spec in options.items():
+            if spec["id"] not in responded:
+                pending.append(code)
+
+        return pending
 
     # -------------------------------------------------------------------------
     @classmethod

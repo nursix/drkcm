@@ -159,12 +159,18 @@ def user():
             session.error = T("Can only approve 1 record at a time!")
             redirect(URL(args=[]))
 
-        user = db(table.id == r.id).select(limitby = (0, 1)
-                                           ).first()
-        auth.s3_approve_user(user)
+        # Call Custom Hook, if present
+        approve_user = s3db.get_config("auth_user", "approve_user")
+        if callable(approve_user):
+            approve_user(r, **args)
+        else:
+            # Default Approval
+            user = db(table.id == r.id).select(limitby = (0, 1)
+                                               ).first()
+            auth.s3_approve_user(user)
 
-        session.confirmation = T("User Account has been Approved")
-        redirect(URL(args=[r.id, "roles"]))
+            session.confirmation = T("User Account has been Approved")
+            redirect(URL(args=[r.id, "roles"]))
 
     def link_user(r, **args):
         if not r.id:
@@ -400,14 +406,15 @@ def user():
                                               )
                 else:
                     switch_view = ""
-                output["showadd_btn"] = DIV(crud_button(T("Create User"),
-                                                        _href = URL(args = ["create"]),
-                                                        ),
-                                            crud_button(T("Import Users"),
-                                                        _href = URL(args = ["import"]),
-                                                        ),
-                                            switch_view,
-                                            )
+                if not s3db.get_config("auth_user", "insertable") == False:
+                    output["showadd_btn"] = DIV(crud_button(T("Create User"),
+                                                            _href = URL(args = ["create"]),
+                                                            ),
+                                                crud_button(T("Import Users"),
+                                                            _href = URL(args = ["import"]),
+                                                            ),
+                                                switch_view,
+                                                )
                 return output
 
             # Assume formstyle callable

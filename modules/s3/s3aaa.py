@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: (c) 2010-2020 Sahana Software Foundation
+    @copyright: (c) 2010-2021 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -47,7 +47,7 @@ from uuid import uuid4
 
 #from gluon import *
 from gluon import current, redirect, CRYPT, DAL, HTTP, SQLFORM, URL, \
-                  A, BUTTON, DIV, INPUT, LABEL, OPTGROUP, OPTION, SELECT, SPAN, XML, \
+                  A, DIV, INPUT, LABEL, OPTGROUP, OPTION, SELECT, SPAN, XML, \
                   IS_EMAIL, IS_EMPTY_OR, IS_EXPR, IS_IN_DB, IS_IN_SET, \
                   IS_LOWER, IS_NOT_EMPTY, IS_NOT_IN_DB
 
@@ -792,19 +792,30 @@ Thank you"""
 
         # How to continue
         if next is DEFAULT:
-            if deployment_settings.has_module("setup") and \
-               deployment_settings.get_setup_wizard_questions() and \
-               self.s3_has_role("ADMIN"):
-                itable = current.s3db.setup_instance
-                instance = db(itable.url == "https://%s" % request.env.HTTP_HOST).select(itable.id,
-                                                                                         itable.deployment_id,
-                                                                                         itable.configured,
-                                                                                         limitby = (0, 1)
-                                                                                         ).first()
-                if instance and not instance.configured:
-                    # Run Configuration Wizard
-                    next = URL(c="setup", f="deployment",
-                               args = [instance.deployment_id, "instance", instance.id, "wizard"])
+            is_admin = self.s3_has_role("ADMIN")
+            if is_admin:
+                # Setup
+                if deployment_settings.has_module("setup") and \
+                   deployment_settings.get_setup_wizard_questions():
+                    itable = current.s3db.setup_instance
+                    instance = db(itable.url == "https://%s" % request.env.HTTP_HOST).select(itable.id,
+                                                                                             itable.deployment_id,
+                                                                                             itable.configured,
+                                                                                             limitby = (0, 1)
+                                                                                             ).first()
+                    if instance and not instance.configured:
+                        # Run Configuration Wizard
+                        next = URL(c="setup", f="deployment",
+                                   args = [instance.deployment_id, "instance", instance.id, "wizard"])
+
+            elif accepted_form:
+                # Check for pending consent upon login?
+                pending_consent = deployment_settings.get_auth_consent_check()
+                if callable(pending_consent):
+                    pending_consent = pending_consent()
+                if pending_consent:
+                    next = URL(c="default", f="user", args=["consent"])
+
             if next is DEFAULT:
                 if deployment_settings.get_auth_login_next_always():
                     next = deployment_settings.get_auth_login_next()
@@ -816,6 +827,7 @@ Thank you"""
                         next = deployment_settings.get_auth_login_next()
                         if callable(next):
                             next = next()
+
         if settings.login_form == self:
             if accepted_form:
                 if onaccept:
@@ -1171,6 +1183,115 @@ Thank you"""
                 s3tracker(db.pr_person,
                           person_id).set_location(closestpoint,
                                                   timestmp = request.utcnow)
+
+    # -------------------------------------------------------------------------
+    def consent(self):
+        """
+            Consent question form, e.g.
+            - when consent requires renewal, or
+            - new consent questions need to be asked, or
+            - user has been added by ADMIN and shall give consent upon login
+            - ...
+
+            NB: this form cannot meaningfully prevent the user from simply
+                bypassing the question and navigating away. To prevent the
+                user from accessing functionality for which consent is
+                mandatory, the respective controllers must check for consent
+                using auth_Consent.has_consented, and refuse if not given
+                (though they can still redirect to this form where useful)
+        """
+
+        T = current.T
+
+        request = current.request
+        response = current.response
+        session = current.session
+        settings = current.deployment_settings
+
+        next_url = request.vars.get("_next")
+        if not next_url:
+            next_url = settings.get_auth_login_next()
+            if callable(next_url):
+                next_url = next_url()
+        if not next_url:
+            next_url = URL(c = "default", f = "index")
+
+        # Requires login
+        if not self.s3_logged_in():
+            session.error = T("Authentication required")
+            redirect(URL(c = "default", f = "user",
+                         args = ["login"],
+                         vars = {"_next": URL(args=current.request.args)},
+                         ))
+
+        # Requires person record
+        person_id = self.s3_logged_in_person()
+        if not person_id:
+            session.error = T("No person record for the current user")
+            redirect(next_url)
+
+        # Get all pending consent questions for the current user
+        pending_consent = settings.get_auth_consent_check()
+        if callable(pending_consent):
+            pending_consent = pending_consent()
+        if not pending_consent:
+            session.warning = T("No pending consent questions for the current user")
+            redirect(next_url)
+        else:
+            response.warning = T("Consent required")
+
+         # Instantiate Consent Tracker
+        consent = current.s3db.auth_Consent(processing_types=pending_consent)
+
+        # Form fields
+        formfields = [Field("consent",
+                            label = T("Consent"),
+                            widget = consent.widget,
+                            ),
+                      ]
+        # Generate labels (and mark required fields in the process)
+        labels, has_required = s3_mark_required(formfields)
+        response.s3.has_required = has_required
+
+        # Form buttons
+        SUBMIT = T("Submit")
+        buttons = [INPUT(_type = "submit",
+                         _value = SUBMIT,
+                         ),
+                   ]
+
+        # Construct the form
+        response.form_label_separator = ""
+        form = SQLFORM.factory(table_name = "auth_consent",
+                               record = None,
+                               hidden = {"_next": request.vars._next},
+                               labels = labels,
+                               separator = "",
+                               showid = False,
+                               submit_button = SUBMIT,
+                               delete_label = self.messages.delete_label,
+                               formstyle = settings.get_ui_formstyle(),
+                               buttons = buttons,
+                               *formfields)
+
+        # Identify form for CSS
+        form.add_class("auth_consent")
+
+        if form.accepts(current.request.vars,
+                        current.session,
+                        formname = "consent",
+                        ):
+
+            consent.track(person_id, form.vars.get("consent"))
+            session.confirmation = T("Consent registered")
+            redirect(next_url)
+
+        # Remind the user that form should be submitted even if they didn't
+        # enter anything:
+        response.s3.jquery_ready.append('''S3SetNavigateAwayConfirm();
+$('form.auth_consent').submit(S3ClearNavigateAwayConfirm);''')
+
+        return form
 
     # -------------------------------------------------------------------------
     def register(self,
@@ -2498,7 +2619,7 @@ Please go to %(url)s to approve this user."""
             subjects[language] = \
                 s3_str(T("%(system_name)s - New User Registration Approval Pending") % \
                         {"system_name": system_name})
-            messages[language] = s3_str(approve_user_message % \
+            messages[language] = s3_str(T(approve_user_message) % \
                         {"system_name": system_name,
                          "first_name": first_name,
                          "last_name": last_name,
@@ -4204,12 +4325,12 @@ Please go to %(url)s to approve this user."""
                           str(sr.ANONYMOUS),
                           str(sr.AUTHENTICATED),
                           ]
-        for group_id in group_ids:
-            if group_id not in assigned_groups:
+        for gid in group_ids:
+            if gid not in assigned_groups:
                 membership = {"user_id": user_id,
-                              "group_id": group_id,
+                              "group_id": gid,
                               }
-                if for_pe is not None and str(group_id) not in unrestrictable:
+                if for_pe is not None and str(gid) not in unrestrictable:
                     membership["pe_id"] = for_pe
                 #membership_id = mtable.insert(**membership)
                 mtable.insert(**membership)
@@ -4608,9 +4729,9 @@ Please go to %(url)s to approve this user."""
                         pr_rebuild_path(pe_id, clear=True)
                 roles.append(role_id)
 
-        for role_id in roles:
-            for group_id in group_ids:
-                dtable.insert(role_id=role_id, group_id=group_id)
+        for rid in roles:
+            for gid in group_ids:
+                dtable.insert(role_id=rid, group_id=gid)
 
         # Update roles for current user if required
         self.s3_set_roles()
@@ -5374,6 +5495,7 @@ Please go to %(url)s to approve this user."""
                   "pr_contact",
                   "pr_address",
                   "pr_contact_emergency",
+                  "pr_person_availability",
                   "pr_person_details",
                   "pr_physical_description",
                   "pr_group_membership",
@@ -5632,17 +5754,17 @@ Please go to %(url)s to approve this user."""
                 query = table._id == record
                 limitby = (0, 1)
             fields = [table[f] for f in tables]
-            records = db(query).select(limitby=limitby, *fields)
+            instance_records = db(query).select(limitby=limitby, *fields)
         else:
-            records = [record]
-        if not records:
+            instance_records = [record]
+        if not instance_records:
             return
 
-        for record in records:
+        for instance_record in instance_records:
             for skey in tables:
                 supertable = tables[skey]
-                if skey in record:
-                    query = (supertable[skey] == record[skey])
+                if skey in instance_record:
+                    query = (supertable[skey] == instance_record[skey])
                 else:
                     continue
                 updates = dict((f, data[f])
@@ -5943,8 +6065,9 @@ class S3Permission(object):
         self.record_approval = settings.get_auth_record_approval()
         self.strict_ownership = settings.get_security_strict_ownership()
 
-        # Clear cache
-        self.clear_cache()
+        # Initialize cache
+        self.permission_cache = {}
+        self.query_cache = {}
 
         # Pages which never require permission:
         # Make sure that any data access via these pages uses
@@ -6442,13 +6565,18 @@ class S3Permission(object):
         return query
 
     # -------------------------------------------------------------------------
-    def permitted_realms(self, tablename, method="read"):
+    def permitted_realms(self, tablename, method="read", c=None, f=None):
         """
             Returns a list of the realm entities which a user can access for
             the given table.
 
             @param tablename: the tablename
             @param method: the method
+            @param c: override request.controller to look up for
+                      a different controller context
+            @param f: override request.function to look up for
+                      a different controller context
+
             @return: a list of pe_ids or None (for no restriction)
         """
 
@@ -6472,11 +6600,12 @@ class S3Permission(object):
         racl = self.required_acl([method])
         request = current.request
         acls = self.applicable_acls(racl,
-                                    realms=realms,
-                                    delegations=delegations,
-                                    c=request.controller,
-                                    f=request.function,
-                                    t=tablename)
+                                    realms = realms,
+                                    delegations = delegations,
+                                    c = c if c else request.controller,
+                                    f = f if f else request.function,
+                                    t = tablename,
+                                    )
         if "ANY" in acls:
             # User is permitted access for all Realms
             return None

@@ -2,7 +2,7 @@
 
 """ S3 Data Model Extensions
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -1265,9 +1265,10 @@ class S3Model(object):
     # -------------------------------------------------------------------------
     @classmethod
     def set_method(cls, prefix, name,
-                   component_name=None,
-                   method=None,
-                   action=None):
+                   component_name = None,
+                   method = None,
+                   action = None,
+                   ):
         """
             Adds a custom method for a resource or component
 
@@ -1664,9 +1665,9 @@ class S3Model(object):
 
             # Delete the super record
             sresource = define_resource(sname, id=value)
-            sresource.delete(cascade=True, log_errors=True)
+            deleted = sresource.delete(cascade=True, log_errors=True)
 
-            if sresource.error:
+            if not deleted or sresource.error:
                 # Restore the super key
                 # @todo: is this really necessary? => caller must roll back
                 #        anyway in this case, which would automatically restore

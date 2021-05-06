@@ -3,7 +3,7 @@
 """
     S3Codec to produce printable data cards (e.g. ID cards)
 
-    @copyright: 2018-2020 (c) Sahana Software Foundation
+    @copyright: 2018-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -659,7 +659,7 @@ class S3PDFCardLayout(Flowable):
         return True
 
     # -------------------------------------------------------------------------
-    def draw_qrcode(self, value, x, y, size=40, halign=None, valign=None):
+    def draw_qrcode(self, value, x, y, size=40, level="M", halign=None, valign=None):
         """
             Helper function to draw a QR code
 
@@ -667,11 +667,12 @@ class S3PDFCardLayout(Flowable):
             @param x: drawing position
             @param y: drawing position
             @param size: the size (edge length) of the QR code
+            @param level: error correction level ("L", "M", "Q", "H")
             @param halign: horizontal alignment ("left"|"center"|"right"), default left
             @param valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
         """
 
-        qr_code = qr.QrCodeWidget(value)
+        qr_code = qr.QrCodeWidget(value, barLevel=level)
 
         try:
             bounds = qr_code.getBounds()

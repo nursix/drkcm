@@ -2,7 +2,7 @@
 
 """ Sahana Eden Stats Model
 
-    @copyright: 2012-2020 (c) Sahana Software Foundation
+    @copyright: 2012-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -228,12 +228,12 @@ class S3StatsModel(S3Model):
     def defaults(self):
         """ Safe defaults if module is disabled """
 
+        dummy = S3ReusableField.dummy
+
         return {# Needed for doc
-                "stats_source_superlink": S3ReusableField("source_id", "integer",
-                                                          readable = False,
-                                                          writable = False,
-                                                          ),
+                "stats_source_superlink": dummy("source_id"),
                 "stats_parameter_represent": lambda v: "",
+                "stats_source_id": dummy("source_id"),
                 }
 
 # =============================================================================

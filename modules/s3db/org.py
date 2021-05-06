@@ -2,7 +2,7 @@
 
 """ Sahana Eden Organisation Model
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -44,6 +44,8 @@ __all__ = ("S3OrganisationModel",
            "S3OrganisationTypeTagModel",
            "S3SiteModel",
            "S3SiteDetailsModel",
+           "S3SiteEventModel",
+           "S3SiteGroupModel",
            "S3SiteNameModel",
            "S3SiteShiftModel",
            "S3SiteTagModel",
@@ -2511,6 +2513,7 @@ class S3OrganisationServiceModel(S3Model):
     names = ("org_service",
              "org_service_id",
              "org_service_organisation",
+             "org_service_site",
              "org_service_location",
              #"org_service_location_service",
              )
@@ -2527,6 +2530,8 @@ class S3OrganisationServiceModel(S3Model):
         super_link = self.super_link
 
         organisation_id = self.org_organisation_id
+
+        SITE = settings.get_org_site_label()
 
         hierarchical_service_types = settings.get_org_services_hierarchical()
 
@@ -2660,6 +2665,29 @@ class S3OrganisationServiceModel(S3Model):
                   )
 
         # ---------------------------------------------------------------------
+        # Service <> Site Link Table
+        # - normally use org_service_location instead, but can use this simpler
+        #   variant if-required
+        #
+        tablename = "org_service_site"
+        define_table(tablename,
+                     service_id(),
+                     super_link("site_id", "org_site",
+                                label = SITE,
+                                readable = True,
+                                writable = True,
+                                represent = self.org_site_represent,
+                                ),
+                     *s3_meta_fields())
+
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary = ("site_id",
+                                                       "service_id",
+                                                       ),
+                                            ),
+                  )
+
+        # ---------------------------------------------------------------------
         # Service status options
         #
         service_status_opts = (("PLANNED", T("Planned")),
@@ -2671,8 +2699,6 @@ class S3OrganisationServiceModel(S3Model):
         # ---------------------------------------------------------------------
         # Organizations <> Services <> Locations Link Table
         #
-        SITE = settings.get_org_site_label()
-
         tablename = "org_service_location"
         define_table(tablename,
                      super_link("doc_id", "doc_entity"),
@@ -2990,7 +3016,9 @@ class S3OrganisationTagModel(S3Model):
         #
         tablename = "org_organisation_tag"
         self.define_table(tablename,
-                          self.org_organisation_id(empty = False),
+                          self.org_organisation_id(empty = False,
+                                                   ondelete = "CASCADE",
+                                                   ),
                           # key is a reserved word in MySQL
                           Field("tag",
                                 label = T("Key"),
@@ -3272,6 +3300,18 @@ class S3SiteModel(S3Model):
                                           "multiple": False,
                                           },
 
+                       # Services
+                       org_service = {"link": "org_service_site",
+                                      "joinby": "site_id",
+                                      "key": "service_id",
+                                      "actuate": "hide",
+                                      },
+
+                       # Events (Check-In/Check-Out)
+                       org_site_event = {"name": "event",
+                                         "joinby": "site_id",
+                                         },
+
                        # Tags
                        org_site_tag = {"name": "tag",
                                        "joinby": "site_id",
@@ -3334,8 +3374,8 @@ class S3SiteModel(S3Model):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def org_site_onaccept(form):
+    @classmethod
+    def org_site_onaccept(cls, form):
         """
             Create the code from the name
         """
@@ -3343,13 +3383,19 @@ class S3SiteModel(S3Model):
         name = form.vars.name
         if not name:
             return
-        code_len = current.deployment_settings.get_org_site_code_len()
-        temp_code = name[:code_len].upper()
+
+        # Normalize to ASCII-Alphanumeric
+        alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        pname = "".join(c for c in name.upper() if c in alnum)
+
+        # Apply length-setting (max 10 characters though, as per model)
+        code_len = min(current.deployment_settings.get_org_site_code_len(), 10)
+        temp_code = pname[:code_len]
+
         db = current.db
         site_table = db.org_site
         query = (site_table.code == temp_code)
-        row = db(query).select(site_table.id,
-                               limitby=(0, 1)).first()
+        row = db(query).select(site_table.id, limitby=(0, 1)).first()
         if row:
             code = temp_code
             temp_code = None
@@ -3362,9 +3408,8 @@ class S3SiteModel(S3Model):
                     if wildcard_bit & pow(2, w):
                         wildcard_posn.append(length - (1 + w))
                 wildcard_bit += 1
-                code_list = S3SiteModel.getCodeList(code, wildcard_posn)
-                temp_code = S3SiteModel.returnUniqueCode(code, wildcard_posn,
-                                                         code_list)
+                code_list = cls.get_code_list(code, wildcard_posn)
+                temp_code = cls.get_unique_code(code, wildcard_posn, code_list)
         if temp_code:
             db(site_table.site_id == form.vars.site_id).update(code=temp_code)
 
@@ -3388,10 +3433,13 @@ class S3SiteModel(S3Model):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def getCodeList(code, wildcard_posn=[]):
+    def get_code_list(code, wildcard_posn=None):
         """
             Called by org_site_onaccept
         """
+
+        if wildcard_posn is None:
+            wildcard_posn = []
 
         temp_code = ""
         # Inject the wildcard charater in the right positions
@@ -3407,17 +3455,23 @@ class S3SiteModel(S3Model):
         rows = db(query).select(site_table.id,
                                 site_table.code)
         # Extract the rows in the database to provide a list of used codes
-        codeList = []
+        code_list = []
         for record in rows:
-            codeList.append(record.code)
-        return codeList
+            code_list.append(record.code)
+
+        return code_list
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def returnUniqueCode(code, wildcard_posn=[], code_list=[]):
+    def get_unique_code(code, wildcard_posn=None, code_list=None):
         """
             Called by org_site_onaccept
         """
+
+        if wildcard_posn is None:
+            wildcard_posn = []
+        if code_list is None:
+            code_list = []
 
         # Select the replacement letters with numbers first and then
         # followed by the letters in least commonly used order
@@ -3586,6 +3640,7 @@ class S3SiteDetailsModel(S3Model):
     """ Extra optional details for Sites """
 
     names = ("org_site_status",
+             "org_site_status_opts",
              "org_site_org_group",
              )
 
@@ -3593,17 +3648,10 @@ class S3SiteDetailsModel(S3Model):
 
         T = current.T
 
-        define_table = self.define_table
-        super_link = self.super_link
-
         settings = current.deployment_settings
         last_contacted = settings.get_org_site_last_contacted()
 
-        messages = current.messages
-        NONE = messages["NONE"]
-        UNKNOWN_OPT = messages.UNKNOWN_OPT
-
-        facility_status_opts = {
+        site_status_opts = {
             1: T("Normal"),
             2: T("Compromised"),
             3: T("Evacuating"),
@@ -3622,37 +3670,33 @@ class S3SiteDetailsModel(S3Model):
         # Site Status
         #
         tablename = "org_site_status"
-        define_table(tablename,
-                     # Component not instance
-                     super_link("site_id", "org_site"),
-                     Field("facility_status", "integer",
-                           requires = IS_EMPTY_OR(
-                                      IS_IN_SET(facility_status_opts)),
-                           label = T("Facility Status"),
-                           represent = lambda opt: \
-                                       NONE if opt is None else \
-                                       facility_status_opts.get(opt,
-                                                                UNKNOWN_OPT)),
-                     s3_date("date_reopening",
-                             label = T("Estimated Reopening Date"),
-                             readable = False,
-                             writable = False,
-                             ),
-                     Field("power_supply_type", "integer",
-                           label = T("Power Supply Type"),
-                           requires = IS_EMPTY_OR(
-                                        IS_IN_SET(power_supply_type_opts,
-                                                  zero=None)),
-                           represent = lambda opt: \
-                                       NONE if opt is None else \
-                                       power_supply_type_opts.get(opt,
-                                                                  UNKNOWN_OPT)),
-                     s3_date("last_contacted",
-                             label = T("Last Contacted"),
-                             readable = last_contacted,
-                             writable = last_contacted,
-                             ),
-                     *s3_meta_fields())
+        self.define_table(tablename,
+                          # Component not instance
+                          self.super_link("site_id", "org_site"),
+                          Field("facility_status", "integer",
+                                requires = IS_EMPTY_OR(
+                                            IS_IN_SET(site_status_opts)),
+                                label = T("Facility Status"),
+                                represent = S3Represent(options = site_status_opts),
+                                ),
+                          s3_date("date_reopening",
+                                  label = T("Estimated Reopening Date"),
+                                  readable = False,
+                                  writable = False,
+                                  ),
+                          Field("power_supply_type", "integer",
+                                label = T("Power Supply Type"),
+                                requires = IS_EMPTY_OR(
+                                            IS_IN_SET(power_supply_type_opts,
+                                                      zero=None)),
+                                represent = S3Represent(options = power_supply_type_opts),
+                                ),
+                          s3_date("last_contacted",
+                                  label = T("Last Contacted"),
+                                  readable = last_contacted,
+                                   writable = last_contacted,
+                                  ),
+                          *s3_meta_fields())
 
         # CRUD Strings
         site_label = settings.get_org_site_label()
@@ -3668,17 +3712,88 @@ class S3SiteDetailsModel(S3Model):
             msg_list_empty = T("There is no status for this %(site_label)s yet. Add %(site_label)s Status.") % {"site_label": site_label},
             )
 
+        # Pass names back to global scope (s3.*)
+        return {"org_site_status_opts": site_status_opts,
+                }
+
+# =============================================================================
+class S3SiteEventModel(S3Model):
+    """
+        Events for Sites
+        - Check-In/Check-Out
+    """
+
+    names = ("org_site_event",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        event_opts = {1: T("Status Change"),
+                      2: T("Check-in"),
+                      3: T("Check-out"),
+                      4: T("Obsolete Change"),
+                      }
+
+        site_status_opts = self.org_site_status_opts
+
         # ---------------------------------------------------------------------
-        # Sites <> Coalitions link table
+        # Site Events
+        #   Status Change (e.g. Opened/Closed)
+        #   Check-In/Check-Out
+        #
+        # Possible @ToDo:
+        #    Staff Member who checks them in/out
+        #
+        tablename = "org_site_event"
+        self.define_table(tablename,
+                          # Component not instance
+                          self.super_link("site_id", "org_site"),
+                          s3_datetime(default = "now"),
+                          Field("event", "integer",
+                                label = T("Event"),
+                                requires = IS_IN_SET(event_opts),
+                                represent = S3Represent(options = event_opts),
+                                ),
+                          Field("status", "integer",
+                                label = T("Status"),
+                                requires = IS_EMPTY_OR(IS_IN_SET(site_status_opts)),
+                                represent = S3Represent(options = site_status_opts),
+                                ),
+                          self.pr_person_id(ondelete = "SET NULL"),
+                          s3_comments(),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       deletable = False,
+                       editable = False,
+                       insertable = False,
+                       )
+
+        # Pass names back to global scope (s3.*)
+        return {}
+
+# =============================================================================
+class S3SiteGroupModel(S3Model):
+    """ Link Sites to Org Groups """
+
+    names = ("org_site_org_group",
+             )
+
+    def model(self):
+
+        # ---------------------------------------------------------------------
+        # Sites <> Org Groups link table
         #
         tablename = "org_site_org_group"
-        define_table(tablename,
-                     # Component not instance
-                     super_link("site_id", "org_site"),
-                     self.org_group_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
-                     *s3_meta_fields())
+        self.define_table(tablename,
+                          # Component not instance
+                          self.super_link("site_id", "org_site"),
+                          self.org_group_id(empty = False,
+                                            ondelete = "CASCADE",
+                                            ),
+                          *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
         return {}
@@ -3732,7 +3847,7 @@ class S3SiteShiftModel(S3Model):
 
     def model(self):
 
-        T = current.T
+        #T = current.T
 
         # ---------------------------------------------------------------------
         # Shifts for a Site
@@ -5521,7 +5636,7 @@ class org_SiteRepresent(S3Represent):
         rows = db(query).select(limitby=limitby, *fields)
         self.queries += 1
 
-        if show_type:
+        if show_type or show_link:
 
             # Collect the site_ids
             site_ids = set(row.site_id for row in rows)
@@ -5550,7 +5665,8 @@ class org_SiteRepresent(S3Represent):
 
             # Bulk-represent all type IDs
             # (stores the representations in the S3Represent)
-            ltable.facility_type_id.represent.bulk(list(all_types))
+            if show_type:
+                ltable.facility_type_id.represent.bulk(list(all_types))
 
             # Add the list of corresponding type IDs to each row
             for row in rows:
@@ -5886,7 +6002,7 @@ class org_SiteCheckInMethod(S3Method):
         output = {}
         error = None
         alert = None
-        alert_type = 'success'
+        alert_type = "success"
 
         # Identify the person
         label = data.get("l")
@@ -6014,7 +6130,7 @@ class org_SiteCheckInMethod(S3Method):
 
         query = (FS("pe_label") == label)
         presource = s3db.resource("pr_person",
-                                  components=[],
+                                  components = [],
                                   filter = query,
                                   )
         rows = presource.select(fields,
@@ -6116,7 +6232,9 @@ class org_SiteCheckInMethod(S3Method):
         query = (table.pe_id == pe_id) & \
                 (table.profile == True) & \
                 (table.deleted != True)
-        row = current.db(query).select(table.image, limitby=(0, 1)).first()
+        row = current.db(query).select(table.image,
+                                       limitby = (0, 1)
+                                       ).first()
 
         if row:
             return URL(c="default", f="download", args=row.image)
@@ -6133,21 +6251,29 @@ class org_SiteCheckInMethod(S3Method):
             @param person: the person record
         """
 
-        s3db = current.s3db
-        ptable = s3db.pr_person
-
         from s3 import S3Trackable
-        person_id = person.id
+
+        s3db = current.s3db
+
         record = r.record
+        site_id = record.site_id
+        person_id = person.id
+
+        # Add an entry to the Site Event Log
+        s3db.org_site_event.insert(person_id = person_id,
+                                   site_id = site_id,
+                                   event = 3,
+                                   )
 
         # Update tracking location for the person
+        ptable = s3db.pr_person
         tracker = S3Trackable(ptable, record_id=person_id)
         tracker.set_location(record.location_id)
 
         # Callback
         site_check_in = s3db.get_config(r.tablename, "site_check_in")
         if site_check_in:
-            site_check_in(record.site_id, person_id)
+            site_check_in(site_id, person_id)
 
     # -------------------------------------------------------------------------
     def check_out(self, r, person):
@@ -6159,20 +6285,29 @@ class org_SiteCheckInMethod(S3Method):
             @param person: the person record
         """
 
-        s3db = current.s3db
-        ptable = s3db.pr_person
-
         from s3 import S3Trackable
-        person_id = person.id
+
+        s3db = current.s3db
 
         record = r.record
+        site_id = record.site_id
+        person_id = person.id
 
+        # Add an entry to the Site Event Log
+        s3db.org_site_event.insert(person_id = person_id,
+                                   site_id = site_id,
+                                   event = 4,
+                                   )
+
+        # Update tracking location for the person
+        ptable = s3db.pr_person
         tracker = S3Trackable(ptable, record_id=person_id)
         tracker.set_location(person.location_id)
 
+        # Callback
         site_check_out = s3db.get_config(r.tablename, "site_check_out")
         if site_check_out:
-            site_check_out(record.site_id, person_id)
+            site_check_out(site_id, person_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -7052,7 +7187,7 @@ def org_office_controller():
             marker_fn = s3db.get_config("org_office", "marker_fn")
             if marker_fn:
                 # Load these models now as they'll be needed when we encode
-                mtable = s3db.gis_marker
+                s3db.table("gis_marker")
 
         elif r.representation == "xls":
             list_fields = r.resource.get_config("list_fields")
@@ -7134,8 +7269,8 @@ def org_facility_controller():
                                     if e.selector == "facility_type":
                                         e.options.label = ""
 
+                table = r.table
                 if r.id:
-                    table = r.table
                     field = table.obsolete
                     field.readable = field.writable = True
                     if method == "update" and \
@@ -7148,7 +7283,6 @@ def org_facility_controller():
                         field.readable = False
 
                 elif method == "create":
-                    table = r.table
                     name = get_vars.get("name")
                     if name:
                         table.name.default = name
@@ -7209,7 +7343,7 @@ def org_facility_controller():
 
         elif r.representation == "geojson":
             # Load these models now as they'll be needed when we encode
-            mtable = s3db.gis_marker
+            s3db.table("gis_marker")
 
         return True
     s3.prep = prep

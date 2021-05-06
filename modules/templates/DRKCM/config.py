@@ -147,6 +147,16 @@ def config(settings):
 
     #settings.ui.organizer_snap_duration = "00:10:00"
 
+    settings.ui.custom_icons = {"eraser": "fa-remove",
+                                "file-pdf": "fa-file-pdf-o",
+                                "file-doc": "fa-file-word-o",
+                                "file-xls": "fa-file-excel-o",
+                                "file-text": "fa-file-text-o",
+                                "file-image": "fa-file-image-o",
+                                "file-generic": "fa-file-o",
+                                "_base": "fa",
+                                }
+
     # -------------------------------------------------------------------------
     # Document settings
     #
@@ -401,6 +411,30 @@ def config(settings):
     #settings.dvr.event_registration_checkin_warning = True
 
     # -------------------------------------------------------------------------
+    def document_onaccept(form):
+
+        try:
+            record_id = form.vars.id
+        except AttributeError:
+            return
+
+        db = current.db
+        s3db = current.s3db
+
+        table = db.doc_document
+        row = db(table.id == record_id).select(table.id,
+                                               table.name,
+                                               table.file,
+                                               limitby=(0, 1),
+                                               ).first()
+        if row and not row.name and row.file:
+            # Use the original file name as title
+            prop = table.file.retrieve_file_properties(row.file)
+            name = prop.get("filename")
+            if name:
+                row.update_record(name=name)
+
+    # -------------------------------------------------------------------------
     def customise_doc_document_resource(r, tablename):
 
         if r.controller == "dvr" or r.function == "organisation":
@@ -414,7 +448,7 @@ def config(settings):
 
             # Custom label for date-field
             field = table.date
-            field.label = T("Uploaded on")
+            field.label = T("Date") #T("Uploaded on")
             field.default = r.utcnow.date()
             field.writable = False
 
@@ -422,15 +456,27 @@ def config(settings):
             field = table.name
             field.label = T("Title")
 
+            # Custom Representation for file
+            if r.interactive or r.representation == "aadata":
+                from .helpers import file_represent
+                field = table.file
+                field.represent = file_represent
+
             # List fields
-            list_fields = ["name",
+            list_fields = ["date",
+                           "name",
                            "file",
-                           "date",
                            "comments",
                            ]
             s3db.configure("doc_document",
                            list_fields = list_fields,
                            )
+
+            # Custom onaccept to make sure the document has a title
+            s3db.add_custom_callback("doc_document",
+                                     "onaccept",
+                                     document_onaccept,
+                                     )
 
     settings.customise_doc_document_resource = customise_doc_document_resource
 
@@ -506,10 +552,20 @@ def config(settings):
                                            orderby = "instance_type",
                                            sort = False,
                                            )
+
+                r.resource.configure(list_fields = ["id",
+                                                    "date",
+                                                    (T("Attachment of"), "doc_id"),
+                                                    "name",
+                                                    "file",
+                                                    "comments",
+                                                    ],
+                                     orderby = "doc_document.date desc",
+                                     )
             return result
         s3.prep = custom_prep
 
-        attr["dtargs"] = {"dt_text_maximum_len": 40,
+        attr["dtargs"] = {"dt_text_maximum_len": 36,
                           "dt_text_condense_len": 36,
                           }
 
@@ -2085,6 +2141,13 @@ def config(settings):
             field = dtable.date
             field.default = r.utcnow.date()
 
+            # Custom onaccept to make sure each document has a title
+            # (doc_document_onvalidation does not apply here)
+            s3db.add_custom_callback("doc_document",
+                                     "onaccept",
+                                     document_onaccept,
+                                     )
+
             # Custom CRUD form
             crud_form = S3SQLCustomForm(
                             "person_id",
@@ -3416,28 +3479,6 @@ def config(settings):
 
         auth = current.auth
         s3db = current.s3db
-
-        s3 = current.response.s3
-
-        # Disable name-validation of cr_shelter_type
-        import_prep = s3.import_prep
-        def custom_import_prep(data):
-
-            # Call standard import_prep
-            if import_prep:
-                from gluon.tools import callback
-                callback(import_prep, data, tablename="cr_shelter")
-
-            # Disable uniqueness validation for shelter type names,
-            # otherwise imports will fail before reaching de-duplicate
-            ttable = s3db.cr_shelter_type
-            field = ttable.name
-            field.requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)]
-
-            # Reset to standard (no need to repeat it)
-            s3.import_prep = import_prep
-
-        s3.import_prep = custom_import_prep
 
         from s3 import S3LocationSelector, \
                        S3SQLCustomForm

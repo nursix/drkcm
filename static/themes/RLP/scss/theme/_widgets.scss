@@ -18,6 +18,13 @@ $anonymize_button_bgcolor_hover: $alert-button-bg-hover !default;
 // ============================================================================
 // STYLES
 
+/* Blinker configuration */
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
 /* jQuery UI widgets */
 .ui-widget-header {
     background: none;
@@ -289,6 +296,43 @@ div.s3-groupedopts-widget {
     vertical-align: super;
 }
 
+/* QR Input */
+.qrinput {
+    display: inline-block;
+    .qrscan-btn {
+        padding: 0.4rem 0.8rem;
+        text-align: center;
+        margin: 0 0.5rem;
+        vertical-align: top;
+        .fa {
+            font-size: 16px;
+            margin: 0 0.2rem;
+            vertical-align: middle;
+        }
+    }
+    .postfix.clear-btn {
+        cursor: pointer;
+        .fa {
+            color: #B0B0B0;
+        }
+        display: inline-block;
+        width: 1.2rem;
+        vertical-align: top;
+    }
+}
+.qrinput-success {
+    text-align: center;
+    font-size: 4rem;
+    padding: 1rem;
+    color: darkgreen;
+}
+
+/* Location Selector */
+.geocode_fail,
+.geocode_success {
+    margin: 0.2rem 0.7rem;
+}
+
 /* Anonymize-Widget */
 form.anonymize-form,
 .anonymize-success {
@@ -469,15 +513,27 @@ form.anonymize-form,
 
 /* Priority Representation */
 .prio {
-    padding: 0 4px;
-    border: 1px solid black;
+    padding: 0 0.4rem;
+    border: 1px solid #333;
     text-align: center;
     white-space: pre;
     font-weight: normal;
+    font-size: 0.8rem;
 }
 .prio-red {
-    color: white;
+    color: #E0E0E0;
     background-color: #d10000;
+}
+.prio-amber {
+    background-color: #ffaa00;
+}
+.prio-lightgreen {
+    color: #E0E0E0;
+    background-color: #009f00;
+}
+.prio-green {
+    color: #E0E0E0;
+    background-color: #006100;
 }
 .prio-blue {
     color: white;
@@ -488,6 +544,10 @@ form.anonymize-form,
 }
 .prio-grey {
     background-color: silver;
+}
+.prio-black {
+    color: #E0E0E0;
+    background-color: #1f1f1f;
 }
 
 /* Weekly Hours Widget */
@@ -558,6 +618,86 @@ form.anonymize-form,
     }
 }
 
+.announcements-title {
+    font-variant: all-small-caps;
+    font-weight: bold;
+}
+.announcements {
+    margin: 0;
+    padding: 0 0 0 1rem;
+    border-left: 1px solid $primary-color;
+    list-style: none outside none;
+    ul, ol {
+        padding-left: 20px;
+        list-style: none outside none;
+    }
+    li {
+        padding: 10px 0 0;
+    }
+    .announcement-box {
+        display: block;
+        background: #fff7d9;
+        border: 1px solid #aaa;
+        overflow: hidden;
+        padding: 0.7rem;
+        &.announcement-important {
+            .announcement-icon {
+                color: #0088ca;
+            }
+        }
+        &.announcement-critical {
+            border: 1px solid #ca0000;
+            background-color: #ffebea;
+            .announcement-icon {
+                color: #ca0000;
+                animation: blinker 0.7s step-start 4;
+            }
+        }
+        .announcement-header {
+            .announcement-icon {
+                display: inline-block;
+                font-size: 1.3rem;
+                padding: 0 0.7rem 0 0;
+            }
+            h4 {
+                display: inline-block;
+            }
+        }
+        .announcement-text {
+            font-size: 0.9rem;
+            line-height: 1.3;
+            h4 {
+                font-size: 1.2rem;
+            }
+            ul {
+                list-style: disc outside none;
+            }
+            ol {
+                list-style: decimal outside none;
+            }
+            li {
+                padding: 0;
+            }
+            div {
+                white-space: pre-line;
+            }
+            .announcement-header {
+                margin: 0 0 0.8rem 0;
+            }
+            announcement-body {
+                white-space: pre-line;
+                p {
+                    margin-left: 1rem;;
+                }
+            }
+        }
+        .announcement-date {
+            font-size: 0.7rem;
+            margin-top: 0.4rem;
+        }
+    }
+}
+
 // Overrides for right-to-left orientation
 body.rtl {
     .ui-multiselect-header {
@@ -604,6 +744,42 @@ body.rtl {
                     border-left: 1px solid red;
                 }
             }
+        }
+    }
+}
+
+.map-popup {
+    min-width: 20rem;
+    h4 {
+        font-size: 1rem;
+    }
+    .map-popup-details {
+        font-size: 0.8rem;
+        td {
+            padding: 0.1rem 0.3rem 0 0;
+            &.map-popup-label {
+                font-weight: bold;
+            }
+        }
+    }
+}
+.olPopupCloseBox {
+    margin-right: 20px;
+}
+
+.contact-repr {
+    background-color: #FFF0C1;
+    border: 1px solid #E0E0E0;
+    padding: 0.25rem 0.5rem;
+    .contact-name {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .contact-info {
+        font-size: 0.8rem;
+        .fa {
+            padding-right: 0.4rem;
         }
     }
 }

@@ -7,7 +7,7 @@
         * Monitoring of a Deployment
         * Upgrading a Deployment (tbc)
 
-    @copyright: 2015-2020 (c) Sahana Software Foundation
+    @copyright: 2015-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -48,7 +48,7 @@ __all__ = ("S3DNSModel",
            "setup_monitor_run_task",
            "setup_monitor_task_restart",
            "setup_monitor_check_email_reply",
-           #"setup_write_playbook",
+           "setup_write_playbook",
            "setup_run_playbook",
            #"setup_DeploymentRepresent",
            #"setup_MonitorTaskRepresent",

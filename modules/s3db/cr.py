@@ -2,7 +2,7 @@
 
 """ Shelter (Camp) Registry, model
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -28,6 +28,7 @@
 """
 
 __all__ = ("CRShelterModel",
+           "CRShelterServiceModel",
            "CRShelterInspectionModel",
            "CRShelterRegistrationModel",
            "cr_shelter_rheader",
@@ -53,7 +54,6 @@ DAY_AND_NIGHT = 2
 class CRShelterModel(S3Model):
 
     names = ("cr_shelter_type",
-             "cr_shelter_service",
              "cr_shelter",
              "cr_shelter_id",
              "cr_shelter_status",
@@ -93,10 +93,9 @@ class CRShelterModel(S3Model):
                      Field("name", notnull=True,
                            label = NAME,
                            requires = [IS_NOT_EMPTY(),
-                                       # @todo: add unique-constraint, otherwise
-                                       # IS_NOT_ONE_OF blocks reference imports
                                        IS_NOT_ONE_OF(db,
                                                      "%s.name" % tablename,
+                                                     skip_imports = True,
                                                      ),
                                        ],
                            ),
@@ -148,71 +147,6 @@ class CRShelterModel(S3Model):
                                                               label = ADD_SHELTER_TYPE,
                                                               ),
                                           )
-
-        # -------------------------------------------------------------------------
-        # Shelter services
-        # e.g. medical, housing, food, ...
-        tablename = "cr_shelter_service"
-        define_table(tablename,
-                     Field("name", notnull=True,
-                           label = NAME,
-                           requires = IS_NOT_EMPTY(),
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # CRUD strings
-        if settings.get_ui_label_camp():
-            ADD_SHELTER_SERVICE = T("Add Camp Service")
-            SHELTER_SERVICE_LABEL = T("Camp Service")
-            crud_strings[tablename] = Storage(
-                label_create = ADD_SHELTER_SERVICE,
-                title_display = T("Camp Service Details"),
-                title_list = T("Camp Services"),
-                title_update = T("Edit Camp Service"),
-                label_list_button = T("List Camp Services"),
-                msg_record_created = T("Camp Service added"),
-                msg_record_modified = T("Camp Service updated"),
-                msg_record_deleted = T("Camp Service deleted"),
-                msg_list_empty = T("No Camp Services currently registered"))
-        else:
-            ADD_SHELTER_SERVICE = T("Create Shelter Service")
-            SHELTER_SERVICE_LABEL = T("Shelter Service")
-            crud_strings[tablename] = Storage(
-                label_create = ADD_SHELTER_SERVICE,
-                title_display = T("Shelter Service Details"),
-                title_list = T("Shelter Services"),
-                title_update = T("Edit Shelter Service"),
-                label_list_button = T("List Shelter Services"),
-                msg_record_created = T("Shelter Service added"),
-                msg_record_modified = T("Shelter Service updated"),
-                msg_record_deleted = T("Shelter Service deleted"),
-                msg_list_empty = T("No Shelter Services currently registered"))
-
-        service_represent = S3Represent(lookup=tablename, translate=True)
-        service_multirepresent = S3Represent(lookup=tablename,
-                                             translate=True,
-                                             multiple=True
-                                             )
-
-        shelter_service_id = S3ReusableField("shelter_service_id",
-                                             "list:reference cr_shelter_service",
-                                             label = SHELTER_SERVICE_LABEL,
-                                             ondelete = "RESTRICT",
-                                             represent = service_multirepresent,
-                                             requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db,
-                                                                      "cr_shelter_service.id",
-                                                                      service_represent,
-                                                                      multiple=True)),
-                                             sortby = "name",
-                                             comment = S3PopupLink(c = "cr",
-                                                                   f = "shelter_service",
-                                                                   label = ADD_SHELTER_SERVICE,
-                                                                   ),
-                                             widget = S3MultiSelectWidget(header=False,
-                                                                          )
-                                             )
 
         # -------------------------------------------------------------------------
         # Shelter Environmental Characteristics
@@ -311,7 +245,6 @@ class CRShelterModel(S3Model):
                         requires = self.org_organisation_requires(updateable=True),
                      ),
                      shelter_type_id(),          # e.g. NGO-operated, Government evacuation center, School, Hospital -- see Agasti opt_camp_type.)
-                     shelter_service_id(),       # e.g. medical, housing, food, ...
                      shelter_environment_id(readable = False,
                                             writable = False,),# Enable in template if-required
                      location_id(),
@@ -398,8 +331,8 @@ class CRShelterModel(S3Model):
                            ),
                      Field("status", "integer",
                            label = T("Status"),
-                           represent = lambda opt: \
-                               cr_shelter_opts.get(opt, messages.UNKNOWN_OPT),
+                           default = 2, # Open
+                           represent = S3Represent(options = cr_shelter_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(cr_shelter_opts)
                                        ),
@@ -422,6 +355,11 @@ class CRShelterModel(S3Model):
                        cr_shelter_status = {"name": "status",
                                             "joinby": "shelter_id",
                                             },
+                       cr_shelter_service_shelter = "shelter_id",
+                       cr_shelter_service = {"link": "cr_shelter_service_shelter",
+                                             "joinby": "shelter_id",
+                                             "key": "service_id",
+                                             },
                        event_event_shelter = "shelter_id",
                        )
 
@@ -452,7 +390,7 @@ class CRShelterModel(S3Model):
         list_fields = ["name",
                        "status",
                        "shelter_type_id",
-                       #"shelter_service_id",
+                       #"shelter_service_shelter.service_id",
                        ]
         if dynamic:
             list_fields.append("capacity_day")
@@ -545,13 +483,14 @@ class CRShelterModel(S3Model):
                   list_fields = list_fields,
                   onaccept = self.cr_shelter_onaccept,
                   report_options = Storage(
-                        rows=report_fields,
-                        cols=report_fields,
-                        fact=report_fields,
-                        defaults=Storage(rows = lfield, # Lowest-level of hierarchy
-                                         cols="status",
-                                         fact="count(name)",
-                                         totals=True)
+                        rows = report_fields,
+                        cols = report_fields,
+                        fact = report_fields,
+                        defaults = Storage(rows = lfield, # Lowest-level of hierarchy
+                                           cols = "status",
+                                           fact = "count(name)",
+                                           totals = True,
+                                           )
                         ),
                   super_entity = ("org_site", "doc_entity", "pr_pentity"),
                   )
@@ -642,8 +581,7 @@ class CRShelterModel(S3Model):
                      s3_date(),
                      Field("status", "integer",
                            label = T("Status"),
-                           represent = lambda opt: \
-                               cr_shelter_opts.get(opt, messages.UNKNOWN_OPT),
+                           represent = S3Represent(options = cr_shelter_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(cr_shelter_opts)
                                        ),
@@ -936,8 +874,8 @@ class CRShelterModel(S3Model):
                                 readable = False,
                                 writable = False)
 
-        return dict(cr_shelter_id = lambda **attr: dummy("shelter_id"),
-                    )
+        return {"cr_shelter_id": lambda **attr: dummy("shelter_id"),
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -946,42 +884,50 @@ class CRShelterModel(S3Model):
             After DB I/O
         """
 
+        s3db = current.s3db
         form_vars = form.vars
+        shelter_id = form_vars.id
 
         # Update Affiliation, record ownership and component ownership
-        current.s3db.org_update_affiliations("cr_shelter", form_vars)
+        s3db.org_update_affiliations("cr_shelter", form_vars)
 
         if current.deployment_settings.get_cr_shelter_population_dynamic():
             # Update population and available capacity
-            cr_update_shelter_population(form_vars.id)
+            cr_update_shelter_population(shelter_id)
 
-        # @ToDo: Update/Create a cr_shelter_status record
+        # @ToDo: Create a cr_shelter_status record
+
+
+        # Create an org_site_event record
+        stable = s3db.cr_shelter
+        shelter = current.db(stable.id == shelter_id).select(stable.site_id,
+                                                             stable.status,
+                                                             stable.obsolete,
+                                                             limitby = (0, 1)
+                                                             ).first()
+        record = form.record
+        if record:
+            # Update form
+            obsolete = shelter.obsolete
+            if obsolete != record.obsolete:
+                s3db.org_site_event.insert(site_id = shelter.site_id,
+                                           event = 4, # Obsolete Change
+                                           comment = obsolete,
+                                           )
+            status = shelter.status
+            if status != record.status:
+                s3db.org_site_event.insert(site_id = shelter.site_id,
+                                           event = 1, # Status Change
+                                           status = status,
+                                           )
+        else:
+            # Create form
+            s3db.org_site_event.insert(site_id = shelter.site_id,
+                                       event = 1, # Status Change
+                                       status = shelter.status,
+                                       )
 
         return
-
-    # -----------------------------------------------------------------------------
-    @staticmethod
-    def cr_shelter_service_multirepresent(shelter_service_ids):
-        """
-        """
-
-        if not shelter_service_ids:
-            return current.messages["NONE"]
-
-        db = current.db
-        table = db.cr_shelter_service
-        if isinstance(shelter_service_ids, (list, tuple)):
-            query = (table.id.belongs(shelter_service_ids))
-            shelter_services = db(query).select(table.name)
-            return ", ".join([s.name for s in shelter_services])
-        else:
-            query = (table.id == shelter_service_ids)
-            shelter_service = db(query).select(table.name,
-                                               limitby=(0, 1)).first()
-            try:
-                return shelter_service.name
-            except:
-                return current.messages.UNKNOWN_OPT
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1063,6 +1009,112 @@ class CRShelterModel(S3Model):
                     return 1
 
         return current.messages["NONE"]
+
+# =============================================================================
+class CRShelterServiceModel(S3Model):
+    """ Model for Shelter Services """
+
+    names = ("cr_shelter_service",
+             "cr_shelter_service_shelter",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        define_table = self.define_table
+
+        # -------------------------------------------------------------------------
+        # Shelter services
+        # e.g. medical, housing, food, ...
+        tablename = "cr_shelter_service"
+        define_table(tablename,
+                     Field("name", notnull=True,
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD strings
+        if current.deployment_settings.get_ui_label_camp():
+            ADD_SHELTER_SERVICE = T("Add Camp Service")
+            SHELTER_SERVICE_LABEL = T("Camp Service")
+            current.response.s3.crud_strings[tablename] = Storage(
+                label_create = ADD_SHELTER_SERVICE,
+                title_display = T("Camp Service Details"),
+                title_list = T("Camp Services"),
+                title_update = T("Edit Camp Service"),
+                label_list_button = T("List Camp Services"),
+                msg_record_created = T("Camp Service added"),
+                msg_record_modified = T("Camp Service updated"),
+                msg_record_deleted = T("Camp Service deleted"),
+                msg_list_empty = T("No Camp Services currently registered"))
+        else:
+            ADD_SHELTER_SERVICE = T("Create Shelter Service")
+            SHELTER_SERVICE_LABEL = T("Shelter Service")
+            current.response.s3.crud_strings[tablename] = Storage(
+                label_create = ADD_SHELTER_SERVICE,
+                title_display = T("Shelter Service Details"),
+                title_list = T("Shelter Services"),
+                title_update = T("Edit Shelter Service"),
+                label_list_button = T("List Shelter Services"),
+                msg_record_created = T("Shelter Service added"),
+                msg_record_modified = T("Shelter Service updated"),
+                msg_record_deleted = T("Shelter Service deleted"),
+                msg_list_empty = T("No Shelter Services currently registered"))
+
+        service_represent = S3Represent(lookup=tablename, translate=True)
+
+        service_id = S3ReusableField("service_id", "reference %s" % tablename,
+                                     label = SHELTER_SERVICE_LABEL,
+                                     ondelete = "RESTRICT",
+                                     represent = service_represent,
+                                     requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(current.db,
+                                                              "cr_shelter_service.id",
+                                                              service_represent)),
+                                     sortby = "name",
+                                     comment = S3PopupLink(c = "cr",
+                                                           f = "shelter_service",
+                                                           label = ADD_SHELTER_SERVICE,
+                                                           ),
+                                     )
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(),
+                       )
+
+        # ---------------------------------------------------------------------
+        # Shelter Service <> Shelter link table
+        #
+        tablename = "cr_shelter_service_shelter"
+        define_table(tablename,
+                     self.cr_shelter_id(empty = False,
+                                        ondelete = "CASCADE",
+                                        ),
+                     service_id(empty = False,
+                                ondelete = "CASCADE",
+                                ),
+                     *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return {#"cr_shelter_service_id": service_id,
+                }
+
+    # -------------------------------------------------------------------------
+    #@staticmethod
+    #def defaults():
+    #    """ Safe defaults for names in case the module is disabled """
+
+    #    dummy = S3ReusableField("dummy_id", "integer",
+    #                            readable = False,
+    #                            writable = False,
+    #                            )
+
+    #    return {"cr_shelter_service_id":  lambda **attr: dummy("service_id"),
+    #            }
 
 # =============================================================================
 class CRShelterInspectionModel(S3Model):
@@ -1525,12 +1577,14 @@ class CRShelterInspectionModel(S3Model):
                 (ltable.deleted != True) & \
                 (ftable.id == ltable.inspection_flag_id) & \
                 ((ftable.resolved == False) | (ftable.resolved == None))
-        other = db(query).select(ltable.id, limitby=(0, 1)).first()
+        other = db(query).select(ltable.id,
+                                 limitby = (0, 1)
+                                 ).first()
         if not other:
             # Set task to completed status
             closed = current.deployment_settings \
                             .get_cr_shelter_inspection_task_completed_status()
-            db(ttable.id==task_id).update(status=closed)
+            db(ttable.id == task_id).update(status = closed)
 
             # Remove task_id (to allow deletion of the link)
             link.update_record(task_id = None)
@@ -1678,6 +1732,7 @@ class CRShelterRegistrationModel(S3Model):
         registration_onaccept = self.shelter_registration_onaccept
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("person_id",
+                                                       "shelter_id",
                                                        "shelter_unit_id",
                                                        ),
                                             ),
@@ -1726,9 +1781,9 @@ class CRShelterRegistrationModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Pass variables back to global scope (response.s3.*)
-        return dict(cr_shelter_population_onaccept = self.shelter_population_onaccept,
-                    cr_shelter_registration_status_opts = reg_status_opts,
-                    )
+        return {"cr_shelter_population_onaccept": self.shelter_population_onaccept,
+                "cr_shelter_registration_status_opts": reg_status_opts,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1808,7 +1863,7 @@ class CRShelterRegistrationModel(S3Model):
                                        rtable.check_out_date,
                                        rtable.modified_on,
                                        rtable.person_id,
-                                       limitby = (0, 1),
+                                       limitby = (0, 1)
                                        ).first()
 
                 if reg:
@@ -1825,7 +1880,7 @@ class CRShelterRegistrationModel(S3Model):
                     row = db(query).select(htable.status,
                                            htable.date,
                                            orderby = ~htable.created_on,
-                                           limitby = (0, 1),
+                                           limitby = (0, 1)
                                            ).first()
                     if row:
                         previous_status = row.status
@@ -1921,7 +1976,8 @@ class CRShelterRegistrationModel(S3Model):
                                                 table.shelter_id,
                                                 table.deleted,
                                                 table.deleted_fk,
-                                                limitby=(0, 1)).first()
+                                                limitby = (0, 1)
+                                                ).first()
 
         if row:
             if row.deleted:
@@ -1985,7 +2041,7 @@ def cr_shelter_rheader(r, tabs=None):
                 permit = current.auth.s3_has_permission
                 if permit("update", tablename, r.id) and \
                    permit("create", "hrm_human_resource_site"):
-                    tabs.append((T("Assign %(staff)s") % dict(staff=STAFF), "assign"))
+                    tabs.append((T("Assign %(staff)s") % {"staff": STAFF}, "assign"))
             if settings.get_cr_shelter_housing_unit_management():
                 tabs.append((T("Housing Units"), "shelter_unit"))
             #tabs.append((T("Events"), "event_shelter"))
@@ -2401,12 +2457,12 @@ def cr_notification_dispatcher(r, **attr):
         url = URL(c="cr", f="shelter", args=r.id)
 
         # Create the form
-        opts = dict(type="SMS",
-                    # @ToDo: deployment_setting
-                    subject = T("Deployment Request"),
-                    message = message + text,
-                    url = url,
-                    )
+        opts = {"type": "SMS",
+                # @ToDo: deployment_setting
+                "subject": T("Deployment Request"),
+                "message": message + text,
+                "url": url,
+                }
 
         output = msg.compose(**opts)
 

@@ -283,7 +283,7 @@ def config(settings):
     # Now using req_need, so unused:
     #settings.req.req_type = ("People",)
 
-    # -----------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def ccc_person_anonymize():
         """ Rules to anonymise a person """
 
@@ -408,7 +408,7 @@ def config(settings):
 
         return rules
 
-    # -----------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     def ccc_user_anonymize():
         """ Rules to anonymise a user """
 
@@ -693,7 +693,6 @@ def config(settings):
         T = current.T
 
         if tablename == "hrm_training_event":
-            T = current.T
             auth = current.auth
             has_role = auth.s3_has_role
             if has_role("ADMIN") or \
@@ -763,7 +762,6 @@ def config(settings):
                               rheader_tabs)
 
         elif tablename == "org_organisation":
-            T = current.T
             tabs = [(T("Basic Details"), None),
                     (T("Area Served"), "location"),
                     #(T("Offices"), "office"),
@@ -820,7 +818,6 @@ $('.copy-link').click(function(e){
                           rheader_tabs)
 
         elif tablename == "pr_group":
-            T = current.T
             tabs = [(T("Basic Details"), None),
                     # 'Person' allows native tab breakout
                     #(T("Members"), "group_membership"),
@@ -839,7 +836,6 @@ $('.copy-link').click(function(e){
                           rheader_tabs)
 
         elif tablename == "pr_person":
-            T = current.T
             controller = r.controller
             if controller == "br":
                 tabs = [(T("Basic Details"), None),
@@ -913,7 +909,6 @@ $('.copy-link').click(function(e){
                           rheader_tabs)
 
         elif tablename == "req_need":
-            T = current.T
             auth = current.auth
             db = current.db
             s3db = current.s3db
@@ -2609,8 +2604,11 @@ $('.copy-link').click(function(e){
         f = table.location_id
         f.readable = f.writable = True
         f.widget = S3LocationSelector(levels = ("L3", "L4"),
+                                      #levels = ("L2", "L3", "L4"),
                                       required_levels = ("L3",),
-                                      show_address = True)
+                                      show_address = True,
+                                      #show_map = False,
+                                      )
 
         list_fields = ["start_date",
                        "name",
@@ -4365,6 +4363,9 @@ $('.copy-link').click(function(e){
                     #districts = {d.id:d.name for d in districts}
                     districts = {d.name:d.name for d in districts}
 
+                    from s3 import S3DateTime
+                    s3db.pr_person.created_on.represent = lambda v: S3DateTime.date_represent(v, utc=True)
+
                     list_fields = ["first_name",
                                    "middle_name",
                                    "last_name",
@@ -4432,11 +4433,12 @@ $('.copy-link').click(function(e){
                             #f = convictions.table.value
                             #f.represent = S3Represent(options = yes_no_options)
                             #list_fields.append((T("Convictions"), "convictions.value"))
-                            # Registration Date
-                            from s3 import S3DateTime
-                            s3db.pr_person.created_on.represent = lambda dt: \
-                                      S3DateTime.datetime_represent(dt, utc=True)
-                            list_fields.append((T("Registration Date"), "created_on"))
+
+                    # Registration Date
+                    from s3 import S3DateTime
+                    s3db.pr_person.created_on.represent = lambda dt: \
+                              S3DateTime.datetime_represent(dt, utc=True)
+                    list_fields.append((T("Date Registered"), "created_on"))
 
                     from s3 import S3EmptyFilter, S3OptionsFilter, S3TextFilter
                     filter_widgets = [S3TextFilter(["first_name",

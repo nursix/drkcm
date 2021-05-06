@@ -483,7 +483,7 @@ def newsfeed():
         nappend((T("Organization"), org_field))
     if org_group_field:
         if isinstance(group_label, bool):
-           group_label = T("Organisation Group")
+           group_label = T("Organization Group")
         nappend((T(group_label), org_group_field))
     if contact_field:
         nappend((T("Contact"), contact_field))
@@ -950,7 +950,7 @@ def posts():
                 user = row[utable._tablename]
                 username = s3_fullname(person)
                 email = user.email.strip().lower()
-                hash = hashlib.md5(email).hexdigest()
+                hash = hashlib.md5(email.encode("utf-8")).hexdigest()
                 url = "http://www.gravatar.com/%s" % hash
                 author = B(A(username, _href=url, _target="top"))
         header = H4(post.name)

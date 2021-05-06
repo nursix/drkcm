@@ -7,7 +7,7 @@
     @requires: U{B{I{gluon}} <http://web2py.com>}
     @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -832,7 +832,16 @@ class S3CRUD(S3Method):
                                           pagesize = pagesize,
                                           )
 
-            disposition = "attachment; filename=\"%s_card.pdf\"" % resource.name
+            # Suffix for the filename
+            default = lambda: None
+            suffix = resource.get_config("pdf_card_suffix", default)
+            if suffix is default:
+                suffix = "%s" % r.record.id if r.record else None
+            elif callable(suffix):
+                suffix = suffix(r.record)
+            suffix = "_%s" % suffix if suffix is not None else ""
+
+            disposition = "attachment; filename=\"%s_card%s.pdf\"" % (resource.name, suffix)
             response.headers["Content-Type"] = contenttype(".pdf")
             response.headers["Content-disposition"] = disposition
 
@@ -2000,29 +2009,39 @@ class S3CRUD(S3Method):
 
             if self._permitted("approve"):
 
-                approve = FORM(INPUT(_value=T("Approve"),
-                                     _type="submit",
-                                     _name="approve-btn",
-                                     _id="approve-btn",
-                                     _class="action-btn"))
+                approve = FORM(INPUT(_value = T("Approve"),
+                                     _type = "submit",
+                                     _name = "approve-btn",
+                                     _id = "approve-btn",
+                                     _class = "action-btn",
+                                     ))
 
-                reject = FORM(INPUT(_value=T("Reject"),
-                                    _type="submit",
-                                    _name="reject-btn",
-                                    _id="reject-btn",
-                                    _class="action-btn"))
+                reject = FORM(INPUT(_value = T("Reject"),
+                                    _type = "submit",
+                                    _name = "reject-btn",
+                                    _id = "reject-btn",
+                                    _class = "action-btn",
+                                    ))
 
                 edit = A(T("Edit"),
-                         _href=r.url(id=r.id, method="update",
-                                     vars={"_next": r.url(id=r.id, method="review")}),
-                         _class="action-btn")
+                         _href = r.url(id = r.id, method = "update",
+                                       vars = {"_next": r.url(id=r.id, method="review")}),
+                         _class = "action-btn",
+                         )
 
                 cancel = A(T("Cancel"),
-                           _href=r.url(id=0),
-                           _class="action-lnk")
+                           _href = r.url(id=0),
+                           _class = "action-lnk",
+                           )
 
-                output["approve_form"] = DIV(TABLE(TR(approve, reject, edit, cancel)),
-                                             _id="approve_form")
+                output["approve_form"] = DIV(TABLE(TR(approve,
+                                                      reject,
+                                                      edit,
+                                                      cancel,
+                                                      ),
+                                                   ),
+                                             _id = "approve_form",
+                                             )
 
                 reviewing = False
                 if approve.accepts(r.post_vars, session, formname="approve"):
@@ -2423,6 +2442,9 @@ class S3CRUD(S3Method):
         """
 
         output = {}
+        if current.response.s3.hide_last_update:
+            return output
+
         record_id = self.record_id
         if record_id:
             record = None

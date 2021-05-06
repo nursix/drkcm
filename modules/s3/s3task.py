@@ -16,7 +16,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2011-2020 (c) Sahana Software Foundation
+    @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -107,7 +107,7 @@ class S3Task(object):
         table = current.db[tablename]
 
         # Configure start/stop time fields
-        for fn in ("start_time", "stop_time"):
+        for fn in ("start_time", "stop_time", "next_run_time"):
             field = table[fn]
             field.represent = lambda dt: \
                             S3DateTime.datetime_represent(dt, utc=True)
@@ -118,6 +118,8 @@ class S3Task(object):
             elif fn == "stop_time":
                 field.requires = IS_EMPTY_OR(IS_UTC_DATETIME())
                 set_max = "#scheduler_task_start_time"
+            else:
+                field.requires = IS_UTC_DATETIME()
             field.widget = S3CalendarWidget(past = 0,
                                             set_min = set_min,
                                             set_max = set_max,

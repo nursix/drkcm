@@ -2,7 +2,7 @@
 
 """ Sahana Eden Person Registry Model
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -30,6 +30,7 @@
 __all__ = (# PR Base Entities
            "PRPersonEntityModel",
            "PRPersonModel",
+           "PRPersonRelationModel",
            "PRGroupModel",
            "PRForumModel",
 
@@ -809,8 +810,9 @@ class PRPersonModel(S3Model):
             super_link("pe_id", "pr_pentity"),
             super_link("track_id", "sit_trackable"),
             # Base location
-            self.gis_location_id(readable=False,
-                                 writable=False),
+            self.gis_location_id(readable = False,
+                                 writable = False,
+                                 ),
             self.pr_pe_label(
                 comment = DIV(_class="tooltip",
                               _title="%s|%s" % (T("ID Tag Number"),
@@ -826,9 +828,9 @@ class PRPersonModel(S3Model):
             # - remove refs to writing this from this module
             # - update read refs in controllers/dvi.py & controllers/mpr.py
             Field("missing", "boolean",
-                  readable=False,
-                  writable=False,
-                  default=False,
+                  readable = False,
+                  writable = False,
+                  default = False,
                   represent = lambda missing: \
                               (missing and ["missing"] or [""])[0]),
             Field("first_name", notnull=True,
@@ -1055,6 +1057,7 @@ class PRPersonModel(S3Model):
                                                   "multiple": False,
                                                   },
                        cr_shelter_registration_history = "person_id",
+                       org_site_event = "person_id",
                        project_activity_person = "person_id",
                        supply_distribution_person = "person_id",
                        event_incident = {"link": "event_human_resource",
@@ -1152,6 +1155,13 @@ class PRPersonModel(S3Model):
                                              "actuate": "link",
                                              "autodelete": False,
                                              },
+
+                       pr_person_relation = "parent_id",
+                       #pr_person = {"link": "pr_person_relation",
+                       #             "joinby": "parent_id",
+                       #             "key": "person_id",
+                       #             "actuate": "replace",
+                       #             },
 
                        # Group Memberships
                        pr_group_membership = "person_id",
@@ -1861,6 +1871,7 @@ class PRPersonModel(S3Model):
         request_dob = settings.get_pr_request_dob()
         request_gender = settings.get_pr_request_gender()
         home_phone = settings.get_pr_request_home_phone()
+        tags = settings.get_pr_request_tags()
         get_pe_label = get_vars.get("label") == "1"
 
         ptable = db.pr_person
@@ -1889,6 +1900,8 @@ class PRPersonModel(S3Model):
             fields.append(ptable.date_of_birth)
         if request_gender:
             fields.append(ptable.gender)
+        if tags:
+            fields.append(ptable.id)
         if current.request.controller == "vol":
             dtable = s3db.pr_person_details
             fields.append(dtable.occupation)
@@ -1900,7 +1913,9 @@ class PRPersonModel(S3Model):
             left = dtable.on((dtable.person_id == ptable.id) & \
                              (accessible_query("read", dtable)))
 
-        row = db(ptable.id == record_id).select(left=left, *fields).first()
+        row = db(ptable.id == record_id).select(left=left,
+                                                *fields
+                                                ).first()
 
         if left:
             details = row.pr_person_details
@@ -1931,6 +1946,17 @@ class PRPersonModel(S3Model):
             gender = row.gender
         else:
             gender = None
+
+        # Tags
+        if tags:
+            tags = [t[1] for t in tags]
+            ttable = s3db.pr_person_tag
+            query = (ttable.person_id == row.id) & \
+                    (ttable.deleted == False) & \
+                    (ttable.tag.belongs(tags))
+            tags = db(query).select(ttable.tag,
+                                    ttable.value,
+                                    )
 
         # Lookup contacts separately as we can't limitby here
         if home_phone:
@@ -1997,6 +2023,8 @@ class PRPersonModel(S3Model):
             item["grandfather_name"] = grandfather_name
         if year_of_birth:
             item["year_of_birth"] = year_of_birth
+        for row in tags:
+            item[row.tag] = row.value
         output = json.dumps(item, separators=SEPARATORS)
 
         current.response.headers["Content-Type"] = "application/json"
@@ -2357,6 +2385,47 @@ class PRPersonModel(S3Model):
 
         current.response.headers["Content-Type"] = "application/json"
         return output
+
+# =============================================================================
+class PRPersonRelationModel(S3Model):
+    """
+        Link table between Persons & Persons
+        - can be used to provide non-hierarchical relationships
+        e.g. "Next of Kin" (as used by CumbriaEAC)
+    """
+
+    names = ("pr_person_relation",)
+
+    def model(self):
+
+        #T = current.T
+        person_id = self.pr_person_id
+
+        # ---------------------------------------------------------------------
+        # Link table between Persons & Persons
+        #
+        tablename = "pr_person_relation"
+        self.define_table(tablename,
+                          person_id("parent_id",
+                                    empty = False,
+                                    ondelete = "CASCADE",
+                                    ),
+                          person_id(empty = False,
+                                    ondelete = "CASCADE",
+                                    ),
+                          # Add this later if 2 or more usecases need to share this same table within a single template
+                          #role_id(),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("person_id",
+                                                            "parent_id",
+                                                            ),
+                                                 ),
+                       )
+
+        # Pass names back to global scope (s3.*)
+        return {}
 
 # =============================================================================
 class PRGroupModel(S3Model):
@@ -3542,10 +3611,11 @@ class PRForumModel(S3Model):
         if r.representation == "json":
             output = current.xml.json_message(True, 200, message)
             current.response.headers["Content-Type"] = "application/json"
-            return output
         else:
             current.session.confirmation = message
             redirect(URL(args=None))
+
+        return output
 
     # -----------------------------------------------------------------------------
     @staticmethod
@@ -5020,6 +5090,13 @@ class PRAvailabilityModel(S3Model):
                            readable = False,
                            writable = False,
                            ),
+                     # Bitmap alternative for the former
+                     # - better scalability with filters, but
+                     # - currently no standard widget or filter widget
+                     Field("weekly", "integer",
+                           readable = False,
+                           writable = False,
+                           ),
                      #s3_date("start_date",
                      #        label = T("Start Date"),
                      #        ),
@@ -5171,8 +5248,8 @@ class PRAvailabilityModel(S3Model):
                     missing.append(fn)
             if missing and record_id:
                 row = db(table.id == record_id).select(*missing,
-                                                    limitby=(0, 1),
-                                                    ).first()
+                                                       limitby=(0, 1),
+                                                       ).first()
                 if row:
                     for fn in missing:
                         availability[fn] = row[fn]
@@ -5228,7 +5305,16 @@ class PRAvailabilityModel(S3Model):
                 # Without rules, the person is available on all days
                 dow = all_week
 
-            db(table.id == record_id).update(days_of_week=sorted(list(dow)))
+            data = {"days_of_week": sorted(list(dow)),
+                    "weekly": sum(2**d for d in dow),
+                    }
+
+            # If the person has a user account, make that account the record owner
+            user_id = current.auth.s3_get_user_id(person_id = availability["person_id"])
+            if user_id:
+                data["owned_by_user"] = user_id
+
+            db(table.id == record_id).update(**data)
 
 # =============================================================================
 class PRUnavailabilityModel(S3Model):
@@ -6264,7 +6350,7 @@ class PRPersonDetailsModel(S3Model):
                                 represent = nationality_repr,
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET_LAZY(nationality_opts,
-                                                           zero = messages.SELECT_LOCATION,
+                                                           zero = T("Select Country"),
                                                            )),
                                 comment = DIV(_class="tooltip",
                                               _title="%s|%s" % (T("Nationality"),
@@ -8830,13 +8916,15 @@ class pr_Templates(S3Method):
             @param attr: controller options for this request
         """
 
+        output = {}
+
         if r.http == "GET":
             if r.representation == "html":
 
                 T = current.T
-                s3db = current.s3db
+                output["title"] = "" #"%s:" % T("Select Template")
 
-                person_id = r.id
+                s3db = current.s3db
 
                 root_org = s3db.org_root_organisation(current.auth.user.organisation_id)
                 table = s3db.doc_document
@@ -8850,6 +8938,7 @@ class pr_Templates(S3Method):
                 if not templates:
                     buttons = P(T("No document templates found."))
                 else:
+                    person_id = r.id
                     buttons = UL()
                     bappend = buttons.append
                     for t in templates:
@@ -8861,16 +8950,15 @@ class pr_Templates(S3Method):
                                      _target = "_top",
                                      )))
 
-                output = {"title": "", #"%s:" % current.T("Select Template"),
-                          "item": buttons,
-                          }
+                output["item"] = buttons
                 current.response.view = "plain.html"
-                return output
 
             else:
                 r.error(415, current.ERROR.BAD_FORMAT)
         else:
             r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
 
 # =============================================================================
 class pr_Template(S3Method):
@@ -9398,7 +9486,7 @@ def pr_define_role(pe_id,
     """
 
     if not pe_id:
-        return
+        return None
 
     s3db = current.s3db
     if role_type not in s3db.pr_role_types:
@@ -9761,11 +9849,11 @@ def pr_realm_users(realm, roles=None, role_types=OU):
                 role_types = [role_types]
             query &= (rtable.role_type.belongs(role_types))
         query &= (atable.deleted != True) & \
-                (atable.role_id == rtable.id) & \
-                (atable.pe_id == ltable.pe_id) & \
-                (ltable.deleted != True) & \
-                (ltable.user_id == utable.id) & \
-                (utable.deleted != True)
+                 (atable.role_id == rtable.id) & \
+                 (atable.pe_id == ltable.pe_id) & \
+                 (ltable.deleted != True) & \
+                 (ltable.user_id == utable.id) & \
+                 (utable.deleted != True)
     rows = current.db(query).select(utable.id, utable[userfield])
     if rows:
         return Storage([(row.id, row[userfield]) for row in rows])
@@ -10091,19 +10179,20 @@ def pr_image_modify(image_file,
     # Import the specialist libraries
     try:
         from PIL import Image
-        PILImported = True
+        pil_imported = True
     except ImportError:
         try:
             import Image
-            PILImported = True
+            pil_imported = True
         except ImportError:
-            PILImported = False
-    if PILImported:
+            pil_imported = False
+
+    if pil_imported:
         from tempfile import TemporaryFile
         s3db = current.s3db
         table = s3db.pr_image_library
 
-        fileName, fileExtension = os.path.splitext(original_name)
+        filename, extension = os.path.splitext(original_name)
 
         image_file.seek(0)
         im = Image.open(image_file)
@@ -10127,19 +10216,19 @@ def pr_image_modify(image_file,
             msg = sys.exc_info()[1]
             current.log.error(msg)
             current.session.error = msg
-            return
+            return False
 
         if not to_format:
-            to_format = fileExtension[1:]
+            to_format = extension[1:]
         if to_format.upper() == "JPG":
             to_format = "JPEG"
         elif to_format.upper() == "BMP":
             im = im.convert("RGB")
-        save_im_name = "%s.%s" % (fileName, to_format)
-        tempFile = TemporaryFile()
-        im.save(tempFile, to_format)
-        tempFile.seek(0)
-        newfile = table.new_name.store(tempFile,
+        save_im_name = "%s.%s" % (filename, to_format)
+        tempfile = TemporaryFile()
+        im.save(tempfile, to_format)
+        tempfile.seek(0)
+        newfile = table.new_name.store(tempfile,
                                        save_im_name,
                                        table.new_name.uploadfolder)
         # rewind the original file so it can be read, if required

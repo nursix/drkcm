@@ -1,7 +1,7 @@
 /**
  * jQuery UI InlineComponent Widget
  *
- * @copyright 2015-2020 (c) Sahana Software Foundation
+ * @copyright 2015-2021 (c) Sahana Software Foundation
  * @license MIT
  *
  * requires jQuery 1.9.1+
@@ -1642,6 +1642,10 @@
 
             // Button events
             el.on('click' + ns, '.read-row', function(e) {
+                var $this = $(this);
+                if ($this.closest('.inline-component').hasClass('readonly')) {
+                    return;
+                }
                 // Click into read-row opens the row for edit
                 // (unless the click-target is a link anchor)
                 var target = e.target;

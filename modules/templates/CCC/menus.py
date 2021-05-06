@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import current, URL
-from s3 import IS_ISO639_2_LANGUAGE_CODE
+#from s3 import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import M, MM
 try:
     from .layouts import *
@@ -25,7 +25,7 @@ class S3MainMenu(default.S3MainMenu):
 
         # Additional menus
         current.menu.personal = cls.menu_personal()
-        current.menu.lang = cls.menu_lang()
+        #current.menu.lang = cls.menu_lang()
         current.menu.about = cls.menu_about()
 
         return main_menu
@@ -146,26 +146,26 @@ class S3MainMenu(default.S3MainMenu):
         return menu
 
     # -------------------------------------------------------------------------
-    @classmethod
-    def menu_lang(cls):
-        """ Language Selector """
+    #@classmethod
+    #def menu_lang(cls):
+    #    """ Language Selector """
 
-        languages = current.deployment_settings.get_L10n_languages()
-        represent_local = IS_ISO639_2_LANGUAGE_CODE.represent_local
+    #    languages = current.deployment_settings.get_L10n_languages()
+    #    represent_local = IS_ISO639_2_LANGUAGE_CODE.represent_local
 
-        menu_lang = ML("Language", right=True)
+    #    menu_lang = ML("Language", right=True)
 
-        for code in languages:
-            # Show each language name in its own language
-            lang_name = represent_local(code)
-            menu_lang(ML(lang_name,
-                         translate = False,
-                         lang_code = code,
-                         lang_name = lang_name,
-                         )
-                      )
+    #    for code in languages:
+    #        # Show each language name in its own language
+    #        lang_name = represent_local(code)
+    #        menu_lang(ML(lang_name,
+    #                     translate = False,
+    #                     lang_code = code,
+    #                     lang_name = lang_name,
+    #                     )
+    #                  )
 
-        return menu_lang
+    #    return menu_lang
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -247,12 +247,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
             # OrgAdmin: No Side-menu
             return None
 
-        settings_messaging = self.settings_messaging()
+        #settings_messaging = self.settings_messaging()
 
-        settings = current.deployment_settings
-        consent_tracking = lambda i: settings.get_auth_consent_tracking()
-        is_data_repository = lambda i: settings.get_sync_data_repository()
-        translate = settings.has_module("translate")
+        #settings = current.deployment_settings
+        #consent_tracking = lambda i: settings.get_auth_consent_tracking()
+        #is_data_repository = lambda i: settings.get_sync_data_repository()
+        #translate = settings.has_module("translate")
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
@@ -276,18 +276,19 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         #M("Roles", f="group"),
                         #M("Membership", f="membership"),
                     ),
-                    M("Consent Tracking", c="admin", link=False, check=consent_tracking)(
+                    #M("Consent Tracking", c="admin", link=False, check=consent_tracking)(
+                    M("Consent Tracking", c="admin", link=False)(
                         M("Processing Types", f="processing_type"),
                         M("Consent Options", f="consent_option"),
                         ),
-                    M("Goods / Services", c="supply", f="item")(),
-                    M("Qualifications", c="hrm", f="certificate")(),
+                    #M("Goods / Services", c="supply", f="item")(),
+                    #M("Qualifications", c="hrm", f="certificate")(),
                     M("Organizations", c="org", f="organisation")(
                         M("Types", f="organisation_type"),
                         M("Job Titles", c="hrm", f="job_title"),
                         ),
-                    M("Time Slots", c="pr", f="slot")(),
-                    M("Volunteer Offers", c="hrm", f="skill")(),
+                    #M("Time Slots", c="pr", f="slot")(),
+                    #M("Volunteer Offers", c="hrm", f="skill")(),
                     #M("CMS", c="cms", f="post")(
                     #),
                     M("Database", c="appadmin", f="index")(

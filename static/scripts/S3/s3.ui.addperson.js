@@ -1,7 +1,7 @@
 /**
  * jQuery UI Widget for S3AddPersonWidget
  *
- * @copyright 2017-2020 (c) Sahana Software Foundation
+ * @copyright 2017-2021 (c) Sahana Software Foundation
  * @license MIT
  *
  * requires jQuery 1.9.1+
@@ -42,8 +42,9 @@
             }
         };
 
-        var urlParts = url.split('?');
-        urlParts = [urlParts[0]].concat(urlParts[1].split('#'));
+        var urlParts = url.split('?'),
+            postQuestion = urlParts[1] || '';
+        urlParts = [urlParts[0]].concat(postQuestion.split('#'));
 
         var query = urlParts[1],
             key,
@@ -137,6 +138,8 @@
          * @property {string} trigger - name of the autocomplete trigger field
          * @property {string} c - the autocomplete controller
          * @property {string} f - the autocomplete function
+         * @property {string} editableFields - a list of fields which are Editable
+         * @property {string} tags - a list of Tag fields
          * @property {number} chars - the minimum number of characters that
          *                            must be entered to trigger the autocomplete
          * @property {number} delay - the delay (in milliseconds) before the
@@ -157,6 +160,9 @@
 
             c: 'pr',
             f: 'person',
+
+            editableFields: [],
+            tags: [],
 
             chars: 2,
             delay: 800,
@@ -194,6 +200,8 @@
             this.selector = '#' + fieldName;
 
             this.data = {};
+
+            this.edited = false;
 
             // Determine form style
             var realRow = $(this.selector + '__row').hide();
@@ -237,7 +245,7 @@
             this.nameFields = nameFields;
 
             // All other fields (in order of appearance)
-            this.personFields = [
+            var personFields = [
                 'father_name',
                 'grandfather_name',
                 'year_of_birth',
@@ -248,6 +256,12 @@
                 'home_phone',
                 'email'
             ];
+            opts.tags.forEach(function(tag) {
+                if (personFields.indexOf(tag) == -1) {
+                    personFields.push(tag);
+                }
+            });
+            this.personFields = personFields;
 
             this._arrangeFormRows();
 
@@ -303,17 +317,17 @@
                 if (this.data.id) {
                     // Disable input if we have a valid ID
                     this._disableInputs();
-                    this._toggleActions({cancel: false});
+                    this._toggleActions({undo: false});
                 } else {
                     // We have some input data, but no ID
                     // => probably a validation error, so leave editable
                     this._enableAutocomplete();
-                    this._toggleActions({edit: false});
+                    this._toggleActions({edit: false, clear: false});
                 }
             } else {
                 this._serialize();
                 this._enableAutocomplete();
-                this._toggleActions({edit: false});
+                this._toggleActions({edit: false, clear: false});
             }
 
             // Show the edit bar
@@ -422,6 +436,12 @@
                 map.middle_name = 'middle_name';
                 map.last_name = 'last_name';
             }
+            this.options.tags.forEach(function(tag) {
+                if (!map.hasOwnProperty(tag)) {
+                    map[tag] = tag;
+                }
+            });
+
             return map;
         },
 
@@ -505,7 +525,7 @@
 
         // --------------------------------------------------------------------
         /**
-         * Toggle visibility of edit bar actions (=edit, cancel)
+         * Toggle visibility of edit bar actions (edit, clear, undo)
          *
          * @param {object} visibility - object with visibility flags:
          *                              {action: true|false}
@@ -514,7 +534,8 @@
 
             var selectors = {
                     edit: '.edit-action',
-                    cancel: '.cancel-action'
+                    clear: '.clear-action',
+                    undo: '.undo-action'
                 },
                 selector = this.selector,
                 action,
@@ -551,14 +572,21 @@
 
         // --------------------------------------------------------------------
         /**
-         * Enable all input fields
+         * Enable input fields
+         *
+         * @param {Bool} editable - only editable fields
          */
-        _enableInputs: function() {
+        _enableInputs: function(editable) {
 
-            var selector = this.selector,
-                allFields = this._allFields();
+            var enableFields,
+                selector = this.selector;
+            if (editable) {
+                enableFields = this.options.editableFields;
+            } else{
+                enableFields = this._allFields();
+            }
 
-            allFields.forEach(function(fieldName) {
+            enableFields.forEach(function(fieldName) {
                 $(selector + '_' + fieldName).prop('disabled', false);
             });
 
@@ -580,7 +608,7 @@
 
             this._toggleDatePickerTrigger(false);
 
-            this._toggleActions({edit: true, cancel: false});
+            this._toggleActions({edit: true, clear: true, undo: false});
         },
 
         // --------------------------------------------------------------------
@@ -617,10 +645,10 @@
 
         // --------------------------------------------------------------------
         /**
-         * Edit the current selection, or actually: cancel the selection and
-         * start selecting/entering a different person
+         * Clear the current selection and start selecting/entering a 
+         * different person
          */
-        _edit: function() {
+        _clear: function() {
 
             // Store previous selection so it can be reverted to
             this.previousSelection = $.extend({}, this.data);
@@ -628,14 +656,32 @@
             this._reset();
 
             this._enableAutocomplete();
-            this._toggleActions({edit: false, cancel: true});
+            this._toggleActions({edit: false, clear: false, undo: true});
         },
 
         // --------------------------------------------------------------------
         /**
-         * Cancel entering a new person, and revert to previous selection
+         * Edit details within the current selection
          */
-        _cancel: function() {
+        _edit: function() {
+
+            // Store previous selection so it can be reverted to
+            this.previousSelection = $.extend({}, this.data);
+
+            this._enableInputs(true);
+            this.trigger.autocomplete('destroy');
+
+            this.edited = true;
+
+            this._toggleActions({edit: false, clear: false, undo: true});
+        },
+
+        // --------------------------------------------------------------------
+        /**
+         * Cancel entering a new person, or editing existing and revert to
+         * previous selection
+         */
+        _undo: function() {
 
             var previous = this.previousSelection;
 
@@ -645,6 +691,8 @@
                 this.pendingAC = false;
                 this.throbber.hide();
             }
+
+            this.edited = false;
 
             if (previous && Object.values(previous).length) {
 
@@ -1235,7 +1283,15 @@
 
             //S3ClearNavigateAwayConfirm();
 
-            if (!this.data.id) {
+            if (this.edited) {
+                var self = this,
+                    personID = this.data.id;
+                this._readInputs();
+                this.data.id = personID;
+                this.nameFields.forEach(function(fieldName) {
+                    delete self.data[fieldName];
+                });
+            } else if (!this.data.id) {
                 this._readInputs();
             } else {
                 this.data = {'id': this.data.id};
@@ -1265,14 +1321,18 @@
                 return self._onFormSubmit(this);
             });
 
-            // Edit and cancel actions
+            // Edit, clear and undo actions
             $(selector + '_edit_bar .edit-action').on('click' + ns, function() {
                 self._clearError();
                 self._edit();
             });
-            $(selector + '_edit_bar .cancel-action').on('click' + ns, function() {
+            $(selector + '_edit_bar .clear-action').on('click' + ns, function() {
                 self._clearError();
-                self._cancel();
+                self._clear();
+            });
+            $(selector + '_edit_bar .undo-action').on('click' + ns, function() {
+                self._clearError();
+                self._undo();
             });
 
             // Filter Autocomplete-URL when selected organisation changes
@@ -1379,7 +1439,8 @@
             el.closest('form').off(ns);
 
             $(selector + '_edit_bar .edit-action').off(ns);
-            $(selector + '_edit_bar .cancel-action').off(ns);
+            $(selector + '_edit_bar .clear-action').off(ns);
+            $(selector + '_edit_bar .undo-action').off(ns);
 
             $(selector + '_duplicates').off(ns);
 

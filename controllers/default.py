@@ -939,6 +939,66 @@ def organisation():
     return items
 
 # -----------------------------------------------------------------------------
+def page():
+    """
+        Show a custom CMS page
+    """
+
+    try:
+        page = request.args[0]
+    except:
+        raise HTTP(400, "Page not specified")
+
+    # Find a post with the given page name that is linked to this controller:
+    ctable = s3db.cms_post
+    ltable = s3db.cms_post_module
+    join = ltable.on((ltable.post_id == ctable.id) & \
+                     (ltable.module == "default") & \
+                     (ltable.resource == "page") & \
+                     (ltable.deleted == False))
+
+    query = (ctable.name == page) & \
+            (ctable.deleted == False)
+    row = db(query).select(ctable.id,
+                           ctable.title,
+                           ctable.body,
+                           join = join,
+                           cache = s3db.cache,
+                           limitby = (0, 1),
+                           ).first()
+    try:
+        title = row.title
+    except:
+        raise HTTP(404, "Page not found in CMS")
+
+    if row.body:
+        from s3compat import StringIO
+        try:
+            body = current.response.render(StringIO(row.body), {})
+        except:
+            body = row.body
+    else:
+        body = ""
+    item = DIV(XML(body), _class="cms-item")
+
+    if auth.s3_has_role("ADMIN"):
+        # Add edit-action
+        item.append(BR())
+        item.append(A(current.T("Edit"),
+                    _href = URL(c="cms", f="post",
+                                args = [row.id, "update"],
+                                vars = {"page": page},
+                                ),
+                    _class = "action-btn",
+                    ))
+
+    response.title = title
+    _custom_view("page")
+
+    return {"item": item,
+            }
+
+# -----------------------------------------------------------------------------
 def person():
     """
         Profile to show:
@@ -948,16 +1008,26 @@ def person():
          - Map Config
     """
 
-    # Set to current user
-    user_person_id = str(auth.s3_logged_in_person())
+    # Get person_id of current user
+    if auth.s3_logged_in():
+        user_person_id = str(auth.s3_logged_in_person())
+    else:
+        user_person_id = None
 
-    # When request.args = [], set it as user_person_id.
-    # When it is not an ajax request and the first argument is not user_person_id, set it.
-    # If it is an json request, leave the arguments unmodified.
-    if not request.args or (request.args[0] != user_person_id and \
-                            request.args[-1] != "options.s3json" and \
-                            request.args[-1] != "validate.json"
-                            ):
+    # Fix request args:
+    # - leave as-is if this is an options/validate Ajax-request
+    # - otherwise, make sure user_person_id is the first argument
+    request_args = request.args
+    if not request_args or \
+       request_args[0] != user_person_id and \
+       request_args[-1] not in ("options.s3json", "validate.json"):
+        if not user_person_id:
+            # Call to profile before login (e.g. from link in welcome email)
+            # => redirect to login, then return here
+            redirect(URL(f = "user",
+                         args = ["login"],
+                         vars = {"_next": URL(f="person", args=request_args)},
+                         ))
         request.args = [user_person_id]
 
     set_method = s3db.set_method
@@ -984,10 +1054,10 @@ def person():
         form = auth.profile(next = next,
                             onaccept = onaccept)
 
-        return dict(title = s3.crud_strings["pr_person"]["title_display"],
-                    rheader = rheader,
-                    form = form,
-                    )
+        return {"title": s3.crud_strings["pr_person"]["title_display"],
+                "rheader": rheader,
+                "form": form,
+                }
 
     set_method("pr", "person",
                method = "user_profile",
@@ -1019,11 +1089,11 @@ def person():
                 title_update = T("Personal Profile"))
 
             # Organisation-dependent Fields
-            set_org_dependent_field = settings.set_org_dependent_field
-            set_org_dependent_field("pr_person_details", "father_name")
-            set_org_dependent_field("pr_person_details", "mother_name")
-            set_org_dependent_field("pr_person_details", "affiliations")
-            set_org_dependent_field("pr_person_details", "company")
+            #set_org_dependent_field = settings.set_org_dependent_field
+            #set_org_dependent_field("pr_person_details", "father_name")
+            #set_org_dependent_field("pr_person_details", "mother_name")
+            #set_org_dependent_field("pr_person_details", "affiliations")
+            #set_org_dependent_field("pr_person_details", "company")
 
             if r.component:
                 if r.component_name == "physical_description":
@@ -1421,6 +1491,10 @@ def user():
     elif arg == "profile":
         title = response.title = T("User Profile")
         form = auth.profile()
+
+    elif arg == "consent":
+        title = response.title = T("Consent")
+        form = auth.consent()
 
     elif arg == "options.s3json":
         # Used when adding organisations from registration form

@@ -2,7 +2,7 @@
 
 """ Sahana Eden GIS Model
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -3608,14 +3608,19 @@ class S3MapModel(S3Model):
         # ---------------------------------------------------------------------
         # OpenWeatherMap
         #
-        openweathermap_layer_types = ("station", "city")
+        openweathermap_layer_types = ("clouds_new",
+                                      "precipitation_new",
+                                      "pressure_new",
+                                      "temp_new",
+                                      "wind_new",
+                                      )
 
         tablename = "gis_layer_openweathermap"
         define_table(tablename,
                      layer_id(),
                      name_field()(),
                      desc_field()(),
-                     Field("type", length=16,
+                     Field("type", length=24,
                            label = TYPE,
                            requires = IS_IN_SET(openweathermap_layer_types),
                            ),

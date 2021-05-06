@@ -4,7 +4,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: (c) 2010-2020 Sahana Software Foundation
+    @copyright: (c) 2010-2021 Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -34,6 +34,7 @@ __all__ = ("IS_ACL",
            "IS_DYNAMIC_FIELDTYPE",
            "IS_FLOAT_AMOUNT",
            "IS_HTML_COLOUR",
+           "IS_IBAN",
            "IS_INT_AMOUNT",
            "IS_IN_SET_LAZY",
            "IS_ISO639_2_LANGUAGE_CODE",
@@ -79,6 +80,7 @@ SEPARATORS = (",", ":")
 
 LAT_SCHEMA = re.compile(r"^([0-9]{,3})[d:°]{,1}\s*([0-9]{,3})[m:']{,1}\s*([0-9]{,3}(\.[0-9]+){,1})[s\"]{,1}\s*([N|S]{,1})$")
 LON_SCHEMA = re.compile(r"^([0-9]{,3})[d:°]{,1}\s*([0-9]{,3})[m:']{,1}\s*([0-9]{,3}(\.[0-9]+){,1})[s\"]{,1}\s*([E|W]{,1})$")
+IBAN_SCHEMA = re.compile(r"([A-Z]{2})([0-9]{2})([0-9A-Z]{4,30})")
 
 def translate(text):
     if text is None:
@@ -1219,6 +1221,36 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
             - INPUT(_type="text", _name="name", requires=IS_NOT_ONE_OF(db, db.table))
     """
 
+    def __init__(self,
+                 dbset,
+                 field,
+                 error_message = "Value already in database or empty",
+                 allowed_override = None,
+                 ignore_common_filters = False,
+                 skip_imports = False,
+                 ):
+        """
+            Constructor
+
+            @param dbset: the DB set
+            @param field: the Field
+            @param error_message: the error message
+            @param allowed_override: permit duplicates of these values
+            @param ignore_common_filters: enforce uniqueness beyond global
+                                          table filters
+            @param skip_import: do not validate during imports
+                                (e.g. to let deduplicate take care of duplicates)
+        """
+
+        super(IS_NOT_ONE_OF, self).__init__(dbset,
+                                            field,
+                                            error_message = error_message,
+                                            allowed_override = allowed_override,
+                                            ignore_common_filters = ignore_common_filters,
+                                            )
+        self.skip_imports = skip_imports
+
+    # -------------------------------------------------------------------------
     def validate(self, value, record_id=None):
         """
             Validator
@@ -1234,7 +1266,8 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
             # Empty => error
             raise ValidationError(translate(self.error_message))
 
-        if value in self.allowed_override:
+        allowed_override = self.allowed_override
+        if allowed_override and value in allowed_override:
             # Uniqueness-requirement overridden
             return value
 
@@ -1243,6 +1276,11 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
         dbset = self.dbset
         table = dbset.db[tablename]
         field = table[fieldname]
+
+        if self.skip_imports and current.response.s3.bulk and not field.unique:
+            # Uniqueness-requirement to be enforced by deduplicate
+            # (which can't take effect if we reject the value here)
+            return value
 
         # Does the table allow archiving ("soft-delete")?
         archived = "deleted" in table
@@ -2243,6 +2281,9 @@ class IS_PHONE_NUMBER_MULTI(Validator):
         """
 
         value = value.strip()
+        if value == "":
+            # e.g. s3_mark_required test
+            raise ValidationError(translate(self.error_message))
         if value[0] == unichr(8206):
             # Strip the LRM character
             value = value[1:]
@@ -3188,5 +3229,92 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             lang += extra_codes
 
         return list(set(lang)) # Remove duplicates
+
+# =============================================================================
+class IS_IBAN(Validator):
+    """
+        Validate IBAN International Bank Account Numbers (ISO 13616:2007)
+    """
+
+    # Valid country codes
+    countries = {"AD", "AE", "AL", "AT", "AZ", "BA", "BE", "BG", "BH",
+                 "BR", "CH", "CR", "CY", "CZ", "DE", "DK", "DO", "EE",
+                 "ES", "FI", "FO", "FR", "GB", "GE", "GI", "GL", "GR",
+                 "GT", "HR", "HU", "IE", "IL", "IS", "IT", "JO", "KW",
+                 "KZ", "LB", "LC", "LI", "LT", "LU", "LV", "MC", "MD",
+                 "ME", "MK", "MR", "MT", "MU", "NL", "NO", "PK", "PL",
+                 "PS", "PT", "QA", "RO", "RS", "SA", "SC", "SE", "SI",
+                 "SK", "SM", "ST", "TL", "TN", "TR", "UA", "VG", "XK",
+                 }
+
+    def __init__(self, error_message="Invalid IBAN"):
+        """
+            Constructor
+
+            @param error_message: alternative error message
+        """
+
+        self.error_message = error_message
+
+    # -------------------------------------------------------------------------
+    def validate(self, value, record_id=None):
+        """
+            Validate an International Bank Account Number (IBAN)
+
+            @param value: the IBAN as string (may contain blanks)
+            @param record_id: the current record ID
+                              (unused, for API compatibility)
+
+            @returns: the sanitized IBAN (without blanks)
+        """
+
+        if value is None:
+            raise ValidationError(translate(self.error_message))
+
+        # Sanitize
+        iban = s3_str(value).strip().replace(" ", "").upper()
+
+        # Pattern check
+        m = IBAN_SCHEMA.match(iban)
+        if not m:
+            raise ValidationError(translate(self.error_message))
+
+        # Country code check
+        cc = m.group(1)
+        if cc not in self.countries:
+            raise ValidationError(translate(self.error_message))
+
+        # Re-arrange and convert to numeric
+        code = m.group(3) + cc + m.group(2)
+        items = [c if c.isdigit() else str(ord(c) - 55) for c in code]
+        iban_numeric = "".join(items)
+
+        # Mod-97 validation of numeric code
+        head, tail = iban_numeric[:2], iban_numeric[2:]
+        while tail:
+            head = "%02d" % (int(head + tail[:7]) % 97)
+            tail = tail[7:]
+        if int(head) != 1:
+            raise ValidationError(translate(self.error_message))
+
+        return iban
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def represent(value, row=None):
+        """
+            Format an IBAN as 4-character blocks, for better readability
+
+            @param value: the IBAN
+            @param row: unused, for API compatibility
+
+            @returns: the formatted IBAN
+        """
+
+        if not value:
+            reprstr = "-"
+        else:
+            iban = s3_str(value).strip().replace(" ", "").upper()
+            reprstr = " ".join(re.findall('..?.?.?', iban))
+        return reprstr
 
 # END =========================================================================

@@ -7,7 +7,7 @@
     @requires: U{B{I{gluon}} <http://web2py.com>}
     @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -507,192 +507,6 @@ class S3XML(S3Codec):
         return None
 
     # -------------------------------------------------------------------------
-    def rmap(self, table, record, fields):
-        """
-            Generates a reference map for a record
-
-            @param table: the database table
-            @param record: the record
-            @param fields: list of reference field names in this table
-        """
-
-        reference_map = []
-
-        DELETED = self.DELETED
-        REPLACEDBY = self.REPLACEDBY
-
-        if DELETED in record and record[DELETED] and \
-           REPLACEDBY in record and record[REPLACEDBY]:
-            fields = [REPLACEDBY]
-            #replace = True
-        else:
-            fields = [f for f in fields if f in record and record[f]]
-            #replace = False
-
-        if not fields:
-            return reference_map
-
-        db = current.db
-
-        UID = self.UID
-        MCI = self.MCI
-
-        export_uid = self.export_uid
-        represent = self.represent
-        filter_mci = self.filter_mci
-        tablename = table._tablename
-        gtablename = current.auth.settings.table_group_name
-        load_table = current.s3db.table
-
-        for f in fields:
-
-            if f == REPLACEDBY:
-                val = ogetattr(record, f)
-                if not val:
-                    continue
-                row = db(table._id == val).select(table[UID],
-                                                  limitby=(0, 1)).first()
-                if not row:
-                    continue
-                else:
-                    uids = [export_uid(row[UID])]
-                entry = {"field": f,
-                         "table": tablename,
-                         "multiple": False,
-                         "id": [val],
-                         "uid": uids,
-                         "text": None,
-                         "lazy": False,
-                         "value": None}
-                reference_map.append(Storage(entry))
-                continue
-
-            try:
-                dbfield = ogetattr(table, f)
-            except AttributeError:
-                continue
-
-            ktablename, pkey, multiple = s3_get_foreign_key(dbfield)
-            if not ktablename:
-                # Not a foreign key
-                continue
-
-            val = ids = ogetattr(record, f)
-
-            ktable = load_table(ktablename)
-            if not ktable:
-                # Referenced table doesn't exist
-                continue
-
-            ktable_fields = ktable.fields
-            k_id = ktable._id
-
-            uid = None
-            uids = None
-
-            if pkey is None:
-                pkey = k_id.name
-            if pkey != "id" and "instance_type" in ktable_fields:
-
-                # Super-link
-                if multiple:
-                    # @todo: Can't currently resolve multi-references to
-                    # super-entities
-                    continue
-                else:
-                    query = (k_id == ids)
-
-                # Get the super-record
-                srecord = db(query).select(ogetattr(ktable, UID),
-                                           ktable.instance_type,
-                                           limitby=(0, 1)).first()
-                if not srecord:
-                    continue
-
-                ktablename = srecord.instance_type
-                uid = ogetattr(srecord, UID)
-
-                if ktablename == tablename and \
-                   UID in record and ogetattr(record, UID) == uid and \
-                   not self.show_ids:
-                    # Super key in the main instance record, never export
-                    continue
-
-                ktable = load_table(ktablename)
-                if not ktable:
-                    continue
-
-                # Make sure the referenced record is accessible:
-                query = current.auth.s3_accessible_query("read", ktable) & \
-                        (ktable[UID] == uid)
-                krecord = db(query).select(ktable._id, limitby=(0, 1)).first()
-
-                if not krecord:
-                    continue
-
-                ids = [krecord[ktable._id]]
-                uids = [export_uid(uid)]
-
-            else:
-
-                # Make sure the referenced records are accessible:
-                query = current.auth.s3_accessible_query("read", ktable)
-                if multiple:
-                    query &= (k_id.belongs(ids))
-                    limitby = None
-                else:
-                    query &= (k_id == ids)
-                    limitby = (0, 1)
-
-                if DELETED in ktable_fields:
-                    query = (ktable.deleted != True) & query
-                if filter_mci and MCI in ktable_fields:
-                    query = (ktable.mci >= 0) & query
-
-                if UID in ktable_fields:
-
-                    krecords = db(query).select(ogetattr(ktable, UID),
-                                                limitby=limitby)
-                    if krecords:
-                        uids = [r[UID] for r in krecords if r[UID]]
-                        if ktablename != gtablename:
-                            uids = [export_uid(uid) for uid in uids]
-                    else:
-                        continue
-                else:
-
-                    krecord = db(query).select(k_id, limitby=(0, 1)).first()
-                    if not krecord:
-                        continue
-
-            value = s3_unicode(dbfield.formatter(val))
-
-            # Get the representation
-            lazy = None
-            renderer = dbfield.represent
-            if renderer is not None:
-                if hasattr(renderer, "bulk"):
-                    text = None
-                    lazy = S3RepresentLazy(val, renderer)
-                else:
-                    text = represent(table, f, val)
-            else:
-                text = value
-
-            # Add the entry to the reference map
-            entry = {"field":f,
-                     "table":ktablename,
-                     "multiple":multiple,
-                     "id":ids if type(ids) is list else [ids],
-                     "uid":uids,
-                     "text":text,
-                     "lazy":lazy,
-                     "value":value}
-            reference_map.append(Storage(entry))
-
-        return reference_map
-
-    # -------------------------------------------------------------------------
     def add_references(self, element, rmap, show_ids=False, lazy=None):
         """
             Adds <reference> elements to a <resource>
@@ -772,11 +586,13 @@ class S3XML(S3Codec):
                 else:
                     locations[location_id].append(reference)
         if locations:
+            location_ids = set(locations.keys())
             ltable = current.s3db.gis_location
-            rows = current.db(ltable._id.belongs(set(locations.keys()))) \
+            rows = current.db(ltable._id.belongs(location_ids)) \
                              .select(ltable.id,
                                      ltable.lat,
                                      ltable.lon,
+                                     limitby = (0, len(location_ids)),
                                      ).as_dict()
 
             for location_id, row in rows.items():

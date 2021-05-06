@@ -11,7 +11,7 @@
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
-    @copyright: 2009-2020 (c) Sahana Software Foundation
+    @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
 
     Permission is hereby granted, free of charge, to any person
@@ -53,6 +53,7 @@ from .s3datetime import *
 # Codecs for data export/import
 from .s3codec import *
 from .s3xml import *
+from .s3rtb import *
 
 # Common field definitions
 from .s3fields import *
