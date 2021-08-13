@@ -1621,6 +1621,9 @@ def config(settings):
             # Restrict data formats
             restrict_data_formats(r)
 
+            # Enable catalog layers in map views
+            settings.gis.widget_catalogue_layers = True
+
             # Hide last update except for own records
             record = r.record
             if not r.record or \
