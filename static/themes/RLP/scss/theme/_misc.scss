@@ -499,5 +499,16 @@ body.rtl {
     font-weight: bold;
     color: #406080;
 }
+.olFramedCloudPopupContent ul {
+    list-style-type: disc;
+    list-style-position: outside;
+    .mpinfo {
+        font-size: 0.8rem;
+    }
+    .mptitle {
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+}
 
 // END ========================================================================

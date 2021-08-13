@@ -5779,6 +5779,7 @@
 'There are insufficient items in the Inventory to send this shipment': 'Es sind nicht genügend Artikel im Bestand um diese Lieferung zu abzusenden.',
 'There are more than %(max)s results, please input more characters.': 'Mehr als %(max)s Treffer gefunden, bitte mehr Zeichen eingeben',
 'There are multiple records at this location': 'An dieser Stelle gibt es mehrere Datensätze',
+'There are too many features, please Zoom In or Filter': 'Zuviele Suchergebnisse - bitte wählen Sie einen kleineren Kartenausschnitt oder grenzen Sie die Suche durch weitere Filter ein',
 'There is no address for this person yet. Add new address.': 'Für diese Person gibt es noch keine Adresse. Fügen Sie eine neue Adresse hinzu.',
 'These are settings for Inbound Mail.': 'Dies sind Einstellungen für eingehende Mail.',
 'These are the Incident Categories visible to normal End-Users': 'Dies sind die für alle Endbenutzer sichtbaren Kategorien von Vorfällen',

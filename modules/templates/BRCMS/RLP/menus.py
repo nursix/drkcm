@@ -228,8 +228,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 # Relief Offers
                 menu = [M("Current Relief Offers", f="offers")(
                             M("Statistics", m="report"),
-                            # TODO enable when implemented
-                            #M("Map", m="map"),
+                            M("Map", m="map"),
                             ),
                         M("Approval", f="offers", link=False, restrict="EVENT_MANAGER")(
                             M("Pending Approvals", vars={"pending": "1"}),
@@ -251,8 +250,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                             ),
                         M("Current Relief Offers", f="offers", check=lambda i: not is_event_manager)(
                             M("Statistics", m="report"),
-                            # TODO enable when implemented
-                            #M("Map", m="map"),
+                            M("Map", m="map"),
                             ),
                         M("Archive", link=False)(
                             M(labels.CLOSED, f="person", vars={"closed": "1"}),
@@ -269,6 +267,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 # Needs
                 menu = [M("Current Needs", f="activities")(
                             M("Statistic", m="report"),
+                            M("Map", m="map"),
                             ),
                         M("Administration", link=False, restrict="ADMIN")(
                             M("Need Types", f="need"),
@@ -279,13 +278,16 @@ class S3OptionsMenu(default.S3OptionsMenu):
             menu = [M("My Needs", f="case_activity")(
                         M("Report Need", m="create"),
                         M("Matching Offers", f="offers", vars={"match": "1"}),
-                        M("All Relief Offers", f="offers"),
+                        ),
+                    M("All Relief Offers", f="offers")(
+                        M("Map", m="map"),
                         ),
                     M("My Relief Offers", f="assistance_offer")(
                         M("New Offer", m="create"),
                         ),
                     M("All Current Needs", f="activities")(
                         M("Statistic", m="report"),
+                        M("Map", m="map"),
                         ),
                     ]
 
