@@ -5038,6 +5038,7 @@
 'Search Requested Items': 'Angefragte Artikel suchen',
 'Search Requests': 'Anfragen suchen',
 'Search Resources': 'Ressourcen suchen',
+'Search Results': 'Suchergebnisse',
 'Search Rivers': 'Flüsse suchen',
 'Search Roles': 'Rollen suchen',
 'Search Rooms': 'Räume suchen',
