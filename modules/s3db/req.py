@@ -771,7 +771,7 @@ class RequestModel(S3Model):
         dummy = S3ReusableField.dummy
 
         return {"req_req_id": dummy("req_id"),
-                "req_req_ref": dummy("req_ref"),
+                "req_req_ref": dummy("req_ref", "string"),
                 }
 
     # -------------------------------------------------------------------------
