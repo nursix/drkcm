@@ -1,3 +1,3 @@
-Name,Description,Controller,Function,Marker,Popup Format,Attributes,Filter,Visible,Enabled,Folder,Config,Refresh,Default
-Anfragen,Anfragen nach Unterstützung,br,activities,marker_red,"<span class=""mpinfo"">{L3} / {date}</span><br><span class=""mptitle"">{subject}</span>","subject,date,~.location_id$L3",,False,True,Bedarfe,,0,True
-Angebote,Angebote von Untestützung,br,offers,marker_green,"<span class=""mpinfo"">{L3} / {date}</span><br><span class=""mptitle"">{name}</span>","name,date,~.location_id$L3",,False,True,Angebote,,0,True
+Name,Description,Controller,Function,Marker,Popup Format,Attributes,Points,Filter,Visible,Enabled,Folder,Config,Refresh,Default
+Anfragen,Anfragen nach Unterstützung,br,activities,marker_red,"<span class=""mpinfo"">{L3} / {date}</span><br><span class=""mptitle"">{subject}</span>","subject,date,~.location_id$L3",True,,False,True,Bedarfe,,0,True
+Angebote,Angebote von Untestützung,br,offers,marker_green,"<span class=""mpinfo"">{L3} / {date}</span><br><span class=""mptitle"">{name}</span>","name,date,~.location_id$L3",True,,False,True,Angebote,,0,True
