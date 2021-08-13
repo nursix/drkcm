@@ -287,7 +287,7 @@ class S3LocationModel(S3Model):
                  # privileges from generic Authenticated users for particular locations (like
                  # hierarchy or region locations) by changing the owner on those locations, e.g.
                  # to MapAdmin.
-                 table.owned_by_group.set_attributes(default = current.session.s3.system_roles.AUTHENTICATED),
+                 #table.owned_by_group.set_attributes(default = current.session.s3.system_roles.AUTHENTICATED),
 
                  # Can't be defined in-line as otherwise get a circular reference
                  table.parent.set_attributes(requires = IS_EMPTY_OR(
