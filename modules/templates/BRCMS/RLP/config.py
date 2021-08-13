@@ -659,6 +659,9 @@ def config(settings):
                 # Restrict data formats
                 restrict_data_formats(r)
 
+                # Enable catalog layers in map views
+                settings.gis.widget_catalogue_layers = True
+
                 # URL pre-filter options
                 match = not direct_offers and get_vars.get("match") == "1"
                 show_pending = show_blocked = show_all = False
@@ -1123,6 +1126,9 @@ def config(settings):
 
                 # Restrict data formats
                 restrict_data_formats(r)
+
+                # Enable catalog layers in map views
+                settings.gis.widget_catalogue_layers = True
 
                 # Limit to active activities
                 today = current.request.utcnow.date()
