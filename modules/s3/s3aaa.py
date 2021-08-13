@@ -6502,7 +6502,6 @@ class S3Permission(object):
                         query = None
 
             if not self.strict_ownership:
-
                 # Any authenticated user owns all records with no owner
                 public = None
                 if OUSR in table.fields:
@@ -6845,7 +6844,7 @@ class S3Permission(object):
         # Do we need to check the owner role (i.e. table+record given)?
         if t is not None and record is not None:
             owners = self.get_owners(t, record)
-            is_owner = self.is_owner(t, record, owners=owners)
+            is_owner = self.is_owner(t, record, owners=owners, strict=self.strict_ownership)
             entity = owners[0]
         else:
             owners = []

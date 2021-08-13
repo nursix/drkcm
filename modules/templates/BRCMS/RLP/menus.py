@@ -303,6 +303,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
         return M(c="cr")(
                     M("Shelters", f="shelter")(
                         M("Create", m="create"),
+                        M("Map", m="map"),
                         ),
                     M("Administration", link=False, restrict=(ADMIN,))(
                         M("Shelter Types", f="shelter_type"),
