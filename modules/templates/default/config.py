@@ -33,10 +33,6 @@ def config(settings):
     # Theme (folder to use for views/layout.html)
     #settings.base.theme = "default"
 
-    # Enable Guided Tours
-    # - defaults to module enabled or not
-    #settings.base.guided_tour = True
-
     # Authentication settings
     # These settings should be changed _after_ the 1st (admin) user is
     # registered in order to secure the deployment
@@ -1348,10 +1344,6 @@ def config(settings):
             access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
             module_type = None  # This item is handled separately for the menu
         )),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
-        #)),
         ("translate", Storage(
             name_nice = T("Translation"),
             #description = "Selective translation of strings based on module.",
@@ -1565,12 +1557,6 @@ def config(settings):
         #   name_nice = T("Missing Person Registry"),
         #   #description = "Helps to report and search for missing persons",
         #   module_type = 10,
-        #)),
-        # Requires RPy2 & PostgreSQL
-        #("climate", Storage(
-        #    name_nice = T("Climate"),
-        #    #description = "Climate data portal",
-        #    module_type = 10,
         #)),
         #("delphi", Storage(
         #    name_nice = T("Delphi Decision Maker"),

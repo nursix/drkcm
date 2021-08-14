@@ -1077,10 +1077,6 @@ class S3Config(Storage):
         """For demo sites, which additional options to add to the list """
         return self.base.get("prepopulate_demo", 0)
 
-    def get_base_guided_tour(self):
-        """ Whether the guided tours are enabled """
-        return self.base.get("guided_tour", self.has_module("tour"))
-
     def get_base_public_url(self):
         """
             The Public URL for the site - for use in email links, etc
@@ -2890,25 +2886,6 @@ class S3Config(Storage):
     # =========================================================================
     # Sync
     #
-    def get_sync_mcb_resource_identifiers(self):
-        """
-            Resource (=data type) identifiers for synchronization with
-            Mariner CommandBridge, a dict {tablename:id}
-        """
-
-        return self.sync.get("mcb_resource_identifiers", {})
-
-    def get_sync_mcb_domain_identifiers(self):
-        """
-            Domain (of origin) identifiers for synchronization with
-            Mariner CommandBridge, a dict {domain: id} where
-            "domain" means the domain prefix of the record UUID
-            (e.g. uuid "wrike/IKY0192834" => domain "wrike"),
-            default domain is "sahana"
-        """
-
-        return self.sync.get("mcb_domain_identifiers", {})
-
     def get_sync_upload_filename(self):
         """
             Filename for upload via FTP Sync

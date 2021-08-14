@@ -26,15 +26,6 @@
             };
 
         switch(apiType) {
-            case "adashi":
-                fields.username = false;
-                fields.password = false;
-                fields.proxy = false;
-                fields.keep_source = true;
-                break;
-            case "ccrm":
-                fields.site_key = true;
-                break;
             case "filesync":
                 fields.backend = true;
                 fields.url = false;
@@ -44,14 +35,6 @@
                 fields.proxy = false;
                 break;
             case "ftp":
-                break;
-            case "mcb":
-                fields.site_key = true;
-                break;
-            case "wrike":
-                fields.client_id = true;
-                fields.client_secret = true;
-                fields.site_key = true;
                 break;
             default: // Sahana Eden
                 break;

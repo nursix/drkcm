@@ -313,9 +313,6 @@ class PRPersonEntityModel(S3Model):
                        dvi_identification = {"joinby": pe_id,
                                              "multiple": False,
                                              },
-                       # Tenures
-                       stdm_tenure_relationship = pe_id,
-
                        # Map Configs 'Saved Maps'
                        #   - Personalised configurations
                        #   - OU configurations (Organisation/Branch/Facility/Team)

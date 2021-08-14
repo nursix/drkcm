@@ -338,9 +338,6 @@ google.setOnLoadCallback(LoadDynamicFeedControl)'''))
               "datatable_ajax_source": datatable_ajax_source,
               }
 
-    if get_vars.tour:
-        output = s3db.tour_builder(output)
-
     return output
 
 # -----------------------------------------------------------------------------

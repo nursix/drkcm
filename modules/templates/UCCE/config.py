@@ -158,10 +158,6 @@ def config(settings):
         #    access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
         #    module_type = None  # This item is handled separately for the menu
         #)),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
-        #)),
         #("translate", Storage(
         #    name_nice = T("Translation Functionality"),
         #    #description = "Selective translation of strings based on module.",
@@ -283,7 +279,7 @@ def config(settings):
                 query = (ttable.template_id == row.id) & \
                         (ltable.target_id == ttable.id) & \
                         (ltable.project_id == ptable.id)
-                
+
             project = current.db(query).select(ptable.realm_entity,
                                                limitby = (0, 1)
                                                ).first()
@@ -1201,7 +1197,7 @@ def config(settings):
                                                                     ).first()
                 if l10n:
                     s3db.dc_target_l10n.language.default = l10n.language
-            
+
             elif r.method == "datalist":
                 # Over-ride list_fields set in default prep
                 s3db.configure("project_project",

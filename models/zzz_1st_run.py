@@ -232,10 +232,6 @@ if len(pop_list) > 0:
     if has_module("budget"):
         db.budget_parameter.insert() # Defaults are fine
 
-    # Climate Module
-    if has_module("climate"):
-        s3db.climate_first_run()
-
     # Incident Reporting System
     if has_module("irs"):
         # Categories visible to end-users by default

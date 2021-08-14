@@ -64,23 +64,6 @@ def update_check(settings):
     optional_dep = {k: optional_dep[k] for k in optional_dep if k not in tr}
 
     errors, warnings = s3_check_python_lib(global_dep, template_dep, template_optional_dep, optional_dep)
-    # @ToDo: Move these to Template
-    # for now this is done in s3db.climate_first_run()
-    if settings.has_module("climate"):
-        if settings.get_database_type() != "postgres":
-            errors.append("Climate unresolved dependency: PostgreSQL required")
-        try:
-            import rpy2
-        except ImportError:
-            errors.append("Climate unresolved dependency: RPy2 required")
-        try:
-            from Scientific.IO import NetCDF
-        except ImportError:
-            warnings.append("Climate unresolved dependency: NetCDF required if you want to import readings")
-        try:
-            from scipy import stats
-        except ImportError:
-            warnings.append("Climate unresolved dependency: SciPy required if you want to generate graphs on the map")
 
     # -------------------------------------------------------------------------
     # Check Web2Py version

@@ -174,20 +174,15 @@ class SyncRepositoryModel(S3Model):
         # Repository Types
         #
         sync_repository_types = {
-            "adashi": "ADASHI",
-            "ccrm": "CiviCRM",
             "data": "Sahana Eden Data Repository",
             "eden": "Sahana Eden",
             "filesync": "Local Filesystem",
             "ftp": "FTP",
-            "mcb": "Mariner CommandBridge",
-            "wrike": "Wrike",
         }
 
         # Back-ends implementing passive methods (=send and/or receive)
         # so that they can be used for indirect, file-based synchronization
         sync_backend_types = {
-            "adashi": "ADASHI",
             "eden": "Sahana Eden",
         }
 

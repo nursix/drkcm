@@ -89,7 +89,6 @@ class S3StatsModel(S3Model):
                            vulnerability_indicator = T("Vulnerability Indicator"),
                            vulnerability_aggregated_indicator = T("Vulnerability Aggregated Indicator"),
                            #survey_question_type = T("Survey Question Type"),
-                           #climate_parameter = T("Climate Parameter"),
                            )
 
         tablename = "stats_parameter"
@@ -125,7 +124,6 @@ class S3StatsModel(S3Model):
                            supply_distribution = T("Distribution"),
                            vulnerability_data = T("Vulnerability Data"),
                            #survey_answer = T("Survey Answer"),
-                           #climate_data = T("Climate Data"),
                            )
 
         accuracy_opts = {1 : T("Official Measurement"),

@@ -10,9 +10,9 @@
          UUID............................sync_repository.uuid
          Name............................sync_repository.name
          Type............................sync_repository.apitype
-                                         eden|ccrm|wrike|mcb|adashi|filesync
+                                         eden|filesync
          Data Type.......................sync_repository.backend (for filesync)
-                                         eden|adashi
+                                         eden
          URL.............................sync_repository.url
          Path............................sync_repository.path (for filesync)
          Synchronize UUIDs...............sync_repository.synchronise_uuids

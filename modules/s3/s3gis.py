@@ -6430,7 +6430,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             @param callback: Code to run once the Map JavaScript has loaded
             @param plugins: an iterable of objects which support the following methods:
                                 .extend_gis_map(map)
-                            Client-side portion suppoprts the following methods:
+                            Client-side portion supports the following methods:
                                 .addToMapWindow(items)
                                 .setup(map)
 
@@ -7224,7 +7224,6 @@ class MAP(DIV):
         self.scripts = scripts
 
         # Set up map plugins
-        # - currently just used by Climate
         # @ToDo: Get these working with new loader
         # This, and any code it generates, is done last
         # However, map plugin should not assume this.

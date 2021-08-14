@@ -406,9 +406,6 @@ class S3LocationModel(S3Model):
 
                             # Sites
                             org_site = "location_id",
-
-                            # Tenures
-                            stdm_tenure = "location_id",
                             )
 
         # ---------------------------------------------------------------------

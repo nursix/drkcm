@@ -130,9 +130,6 @@ settings.frontpage.rss = [
 # Uncomment to restrict to specific country/countries
 #settings.gis.countries= ("LK",)
 
-# Uncomment to enable a guided tour
-#settings.base.guided_tour = True
-
 # Bing API Key (for Map layers)
 # http://www.microsoft.com/maps/create-a-bing-maps-key.aspx
 #settings.gis.api_bing = ""
