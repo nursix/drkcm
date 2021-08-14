@@ -4,11 +4,12 @@ from __future__ import division
 
 import os
 
+from io import StringIO
+
 from gluon import *
 from gluon.storage import Storage
 
 from s3 import json, s3_str, ICON, S3CustomController, S3DateTime, S3Method
-from s3compat import StringIO, xrange
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -91,7 +92,7 @@ def doc_document_list_layout(list_id, item_id, resource, rfields, record):
     else:
         # Should only happen for dummy prepop
         doc_url = ""
-        
+
     button = A(T("Download PDF"),
                _href = doc_url,
                _class = "button round",
@@ -818,7 +819,7 @@ class dc_TargetActivate(S3Method):
                                  "options": row.options,
                                  }
 
-        for posn in xrange(1, len(layout) + 1):
+        for posn in range(1, len(layout) + 1):
             item = layout[str(posn)]
             item_type = item["type"]
             if item_type == "question":
@@ -871,7 +872,7 @@ class dc_TargetActivate(S3Method):
                         displayLogic["field"] = dq["name"]
                         displayLogic.pop("id")
                         new_item["displayLogic"] = displayLogic
-                        
+
                 mappend(new_item)
 
             elif item_type == "break":
@@ -1295,7 +1296,7 @@ class dc_TargetL10n(S3Method):
                         ltable.insert(template_id = template_id,
                                       language = l10n,
                                       )
-                    
+
 
                     if l10n:
                         # Update Questions
@@ -1979,7 +1980,7 @@ class dc_TargetReport(S3Method):
                     selected_points = answer.get("selectedPoints", [])
                     for point in selected_points:
                         pappend(point)
-                    
+
                 data = {"p": points,
                         "i": question["file"],
                         }
@@ -2850,11 +2851,11 @@ class dc_TemplateExportL10n(S3Method):
                 # 1st row => Column Titles
                 current_row = sheet.row(0)
                 write = current_row.write
-                for i in xrange(6):
+                for i in range(6):
                     write(i, labels[i])
 
                 # Data rows
-                for i in xrange(len(sorted_instructions)):
+                for i in range(len(sorted_instructions)):
                     instructions = sorted_instructions[i]
                     current_row = sheet.row(i + 1)
                     write = current_row.write
@@ -2876,7 +2877,7 @@ class dc_TemplateExportL10n(S3Method):
                           "Other",
                           "Translated Other"
                           ]
-                for i in xrange(1, max_options + 1):
+                for i in range(1, max_options + 1):
                     labels += ["Option %s" % i,
                                "Translated Option %s" % i,
                                ]
@@ -2894,11 +2895,11 @@ class dc_TemplateExportL10n(S3Method):
                 # 1st row => Column Titles
                 current_row = sheet.row(0)
                 write = current_row.write
-                for i in xrange(len(labels)):
+                for i in range(len(labels)):
                     write(i, labels[i])
 
                 # Data rows
-                for i in xrange(len(sorted_questions)):
+                for i in range(len(sorted_questions)):
                     question = sorted_questions[i]
                     current_row = sheet.row(i + 1)
                     write = current_row.write
@@ -2911,7 +2912,7 @@ class dc_TemplateExportL10n(S3Method):
                     options = question["options"]
                     options_l10n = question["options_l10n"]
                     cell = 4
-                    for j in xrange(len(options)):
+                    for j in range(len(options)):
                         cell = cell + 2
                         write(cell, options[j])
                         try:
@@ -2941,7 +2942,7 @@ class dc_TemplateExportL10n(S3Method):
                 response.headers["Content-disposition"] = disposition
 
                 return output.read()
-                
+
             else:
                 r.error(415, current.ERROR.BAD_FORMAT)
         else:
@@ -2974,7 +2975,7 @@ class dc_TemplateImportL10n(S3Method):
                     r.unauthorised()
                 field_storage = r.post_vars.get("file")
                 if field_storage not in ("", None):
-                
+
                     # Set Response Headers now so that we can return feedback to users
                     current.response.headers["Content-Type"] = "application/json"
 
@@ -3014,7 +3015,7 @@ class dc_TemplateImportL10n(S3Method):
                                             on_demand = True)
 
                     sheet = wb.sheet_by_name("Instructions")
-                    for i in xrange(1, sheet.nrows):
+                    for i in range(1, sheet.nrows):
                         template = int(sheet.cell(i, 0).value)
                         if template != template_id:
                             message = current.T("Importing into wrong Template")
@@ -3042,7 +3043,7 @@ class dc_TemplateImportL10n(S3Method):
                     questions = {}
                     question_ids = []
                     qappend = question_ids.append
-                    for i in xrange(1, sheet.nrows):
+                    for i in range(1, sheet.nrows):
                         template = int(sheet.cell(i, 0).value)
                         if template != template_id:
                             # @ToDo: Message getting swallowed by fileupload
@@ -3057,7 +3058,7 @@ class dc_TemplateImportL10n(S3Method):
                         other_l10n = sheet.cell(i, 5).value
                         options = []
                         options_l10n = []
-                        for j in xrange(6, cols, 2):
+                        for j in range(6, cols, 2):
                             option = sheet.cell(i, j).value
                             if not option:
                                 break
@@ -3111,7 +3112,7 @@ class dc_TemplateImportL10n(S3Method):
                             qoptions_l10n = question["options_l10n"]
                             options_l10n = []
                             option_errors = 0
-                            for i in xrange(options_length):
+                            for i in range(options_length):
                                 if qoptions[i] == doptions[i]:
                                     options_l10n.append(qoptions_l10n[i])
                                 else:

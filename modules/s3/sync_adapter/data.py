@@ -31,6 +31,9 @@ import datetime
 import json
 import sys
 
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote as urllib_quote
+
 try:
     from lxml import etree
 except ImportError:
@@ -39,7 +42,6 @@ except ImportError:
 
 from gluon import current
 
-from s3compat import HTTPError, URLError, urllib_quote
 from ..s3datetime import s3_encode_iso_datetime
 from ..s3validators import JSONERRORS
 from .eden import S3SyncAdapter as S3SyncEdenAdapter

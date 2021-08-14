@@ -9,7 +9,7 @@ from gluon.html import *
 from gluon.storage import Storage
 from gluon.validators import IS_EMPTY_OR, IS_NOT_EMPTY
 
-from s3 import FS, IS_ONE_OF, S3DateTime, S3Represent, s3_auth_user_represent_name, s3_avatar_represent, s3_unicode
+from s3 import FS, IS_ONE_OF, S3DateTime, S3Represent, s3_auth_user_represent_name, s3_avatar_represent, s3_str
 
 datetime_represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
 
@@ -638,10 +638,10 @@ def config(settings):
         public_url = current.deployment_settings.get_base_public_url()
         if public_url.startswith("http://127.0.0.1"):
             # Assume Rocket
-            image = quote_unicode(s3_unicode(name))
+            image = quote_unicode(s3_str(name))
         else:
             # Assume Apache or Cherokee
-            image = s3_unicode(name)
+            image = s3_str(name)
 
         # Render the item
         item = DIV(DIV(A(IMG(_class="media-object",
@@ -2736,10 +2736,10 @@ def config(settings):
                     public_url = current.deployment_settings.get_base_public_url()
                     if public_url.startswith("http://127.0.0.1"):
                         # Assume Rocket
-                        image = quote_unicode(s3_unicode(name))
+                        image = quote_unicode(s3_str(name))
                     else:
                         # Assume Apache or Cherokee
-                        image = s3_unicode(name)
+                        image = s3_str(name)
                     s3db.configure("gis_location",
                                    list_fields = list_fields,
                                    profile_title = "%s : %s" % (s3.crud_strings["gis_location"].title_list,

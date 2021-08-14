@@ -49,12 +49,11 @@ from gluon.html import FORM, INPUT, TABLE, TAG, XML
 from gluon.validators import IS_IN_SET
 from gluon.sqlhtml import OptionsWidget
 
-from s3compat import basestring
 from .s3datetime import s3_decode_iso_datetime, s3_utc
 from .s3rest import S3Method
 from .s3query import FS
 from .s3report import S3Report, S3ReportForm
-from .s3utils import s3_flatlist, s3_represent_value, s3_unicode, S3MarkupStripper
+from .s3utils import s3_flatlist, s3_represent_value, s3_str, S3MarkupStripper
 
 tp_datetime = lambda *t: datetime.datetime(tzinfo=dateutil.tz.tzutc(), *t)
 
@@ -809,7 +808,7 @@ class S3TimeSeries(object):
 
             represent = rfield.represent
             if not represent:
-                represent = s3_unicode
+                represent = s3_str
 
             for value in values:
                 if value is None:
@@ -863,7 +862,7 @@ class S3TimeSeries(object):
                 def repr_method(val):
                     if val is None:
                         return "-"
-                    text = s3_unicode(val)
+                    text = s3_str(val)
                     if "<" in text:
                         stripper.feed(text)
                         return stripper.stripped() # = totally naked ;)
@@ -901,7 +900,7 @@ class S3TimeSeries(object):
         dtparse = self.dtparse
         start_dt = end_dt = None
         if start:
-            if isinstance(start, basestring):
+            if isinstance(start, str):
                 start_dt = dtparse(start, start=now)
             else:
                 if isinstance(start, datetime.datetime):
@@ -910,7 +909,7 @@ class S3TimeSeries(object):
                     # Date only => start at midnight
                     start_dt = tp_tzsafe(datetime.datetime.fromordinal(start.toordinal()))
         if end:
-            if isinstance(end, basestring):
+            if isinstance(end, str):
                 relative_to = start_dt if start_dt else now
                 end_dt = dtparse(end, start=relative_to)
             else:

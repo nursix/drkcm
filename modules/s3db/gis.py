@@ -52,13 +52,13 @@ import json
 import os
 
 from collections import OrderedDict
+from io import BytesIO
 from uuid import uuid4
 
 from gluon import *
 from gluon.storage import Storage
 
 from ..s3 import *
-from s3compat import BytesIO, basestring
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -521,7 +521,7 @@ class S3LocationModel(S3Model):
                 else:
                     Lx_ids = None
                 results = gis.geocode(addr_street, postcode, Lx_ids)
-                if isinstance(results, basestring):
+                if isinstance(results, str):
                     # Error
                     if settings.get_gis_ignore_geocode_errors():
                         # Just Warn
@@ -840,7 +840,7 @@ class S3LocationModel(S3Model):
             # PostgreSQL LOWER() on Windows doesn't convert it, although this seems to be a locale issue:
             # http://stackoverflow.com/questions/18507589/the-lower-function-on-international-characters-in-postgresql
             # Works fine on Debian servers if the locale is a .UTF-8 before the Postgres cluster is created
-            query = (table.name.lower() == s3_unicode(name).lower().encode("utf8")) & \
+            query = (table.name.lower() == s3_str(name).lower()) & \
                     (table.level == level)
         else :
             query = (table.name.lower() == name.lower()) & \
@@ -967,7 +967,7 @@ class S3LocationModel(S3Model):
 
         # We want to do case-insensitive searches
         # (default anyway on MySQL/SQLite, but not PostgreSQL)
-        value = s3_unicode(value).lower().strip()
+        value = s3_str(value).lower().strip()
 
         search_l10n = None
         translate = None
@@ -1198,10 +1198,10 @@ class S3LocationModel(S3Model):
 
                 _name_alt = row.get("gis_location_name_alt.name_alt", None)
                 _name_l10n = row.get("gis_location_name.name_l10n", None)
-                if isinstance(_name_alt, basestring):
+                if isinstance(_name_alt, str):
                     # Convert into list
                     _name_alt = [ _name_alt ]
-                if isinstance(_name_l10n, basestring):
+                if isinstance(_name_l10n, str):
                     _name_l10n = [ _name_l10n ]
 
                 alternate = dict(item)
@@ -5536,7 +5536,7 @@ class gis_LocationRepresent(S3Represent):
                     else:
                         # Already inside a link with onclick-script
                         script = None
-                    represent = SPAN(s3_unicode(represent),
+                    represent = SPAN(s3_str(represent),
                                      ICON("map-marker",
                                           _title=self.lat_lon_represent(row),
                                           _onclick=script,

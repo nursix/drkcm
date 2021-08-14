@@ -40,13 +40,15 @@ import datetime
 import re
 import sys
 
+from functools import reduce
+from urllib import parse as urlparse
+
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
 from gluon.storage import Storage
 
-from s3compat import basestring, long, reduce, urlparse
 from s3dal import Field, Row
 from .s3fields import S3RepresentLazy
-from .s3utils import s3_get_foreign_key, s3_str, s3_unicode, S3TypeConverter
+from .s3utils import s3_get_foreign_key, s3_str, S3TypeConverter
 
 ogetattr = object.__getattribute__
 
@@ -64,7 +66,7 @@ class S3FieldSelector(object):
     def __init__(self, name, type=None):
         """ Constructor """
 
-        if not isinstance(name, basestring) or not name:
+        if not isinstance(name, str) or not name:
             raise SyntaxError("name required")
         self.name = str(name)
         self.type = type
@@ -648,7 +650,7 @@ class S3ResourceField(object):
         self.field = lf.field
 
         self.virtual = False
-        self.represent = s3_unicode
+        self.represent = s3_str
         self.requires = None
 
         if self.field is not None:
@@ -803,7 +805,7 @@ class S3ResourceField(object):
                 else:
                     return renderer(value)
             else:
-                return s3_unicode(value)
+                return s3_str(value)
         else:
             return value
 
@@ -1511,7 +1513,7 @@ class S3ResourceQuery(object):
                 return query
 
         # Convert date(time) strings
-        if ftype in ("date", "datetime") and isinstance(rfield, basestring):
+        if ftype in ("date", "datetime") and isinstance(rfield, str):
             to_type = datetime.date if ftype == "date" else datetime.datetime
             rfield = S3TypeConverter.convert(to_type, rfield)
 
@@ -1519,7 +1521,7 @@ class S3ResourceQuery(object):
         if op == self.EQ and rfield is not None and \
            (ftype == "id" or ftype[:9] == "reference"):
             try:
-                rfield = long(rfield)
+                rfield = int(rfield)
             except (ValueError, TypeError):
                 # Right argument is an invalid key
                 # => treat as 0 to prevent crash in SQL expansion
@@ -1553,7 +1555,7 @@ class S3ResourceQuery(object):
             if current.deployment_settings.get_database_airegex():
                 q = S3AIRegex.like(l, r)
             else:
-                q = l.like(s3_unicode(r))
+                q = l.like(s3_str(r))
         elif op == self.INTERSECTS:
             q = self._query_intersects(l, r)
         elif op == self.LT:
@@ -1692,7 +1694,7 @@ class S3ResourceQuery(object):
                     none = True
                 else:
                     try:
-                        node_id = long(node)
+                        node_id = int(node)
                     except ValueError:
                         continue
                     nodes.add(node_id)
@@ -1736,7 +1738,7 @@ class S3ResourceQuery(object):
 
         if str(l.type) in ("string", "text"):
             for item in items:
-                if isinstance(item, basestring):
+                if isinstance(item, str):
                     if "*" in item and "%" not in item:
                         s = item.replace("*", "%")
                     else:
@@ -1789,7 +1791,7 @@ class S3ResourceQuery(object):
 
             if str(l.type)[:3] == "geo":
 
-                if isinstance(r, basestring):
+                if isinstance(r, str):
 
                     # Assume WKT => validate it before constructing the query
                     #from shapely.geos import ReadingError as GEOSReadingError
@@ -1953,7 +1955,7 @@ class S3ResourceQuery(object):
             if not isinstance(r, (list, tuple, set)):
                 r = [r]
             for v in r:
-                if isinstance(l, (list, tuple, set, basestring)):
+                if isinstance(l, (list, tuple, set, str)):
                     if self._probe_contains(l, v):
                         return True
                 elif l == v:
@@ -1998,7 +2000,7 @@ class S3ResourceQuery(object):
         if a is None:
             return False
 
-        if isinstance(a, basestring):
+        if isinstance(a, str):
             return s3_str(b) in s3_str(a)
 
         if isinstance(a, (list, tuple, set)):
@@ -2053,11 +2055,11 @@ class S3ResourceQuery(object):
         else:
             if isinstance(l, S3FieldSelector):
                 l = l.represent(resource)
-            elif isinstance(l, basestring):
+            elif isinstance(l, str):
                 l = '"%s"' % l
             if isinstance(r, S3FieldSelector):
                 r = r.represent(resource)
-            elif isinstance(r, basestring):
+            elif isinstance(r, str):
                 r = '"%s"' % r
             if op == self.CONTAINS:
                 return "(%s in %s)" % (r, l)
@@ -2383,7 +2385,7 @@ class S3URLQuery(object):
             w = ""
             quote = False
             ignore_quote = False
-            for c in s3_unicode(item):
+            for c in s3_str(item):
                 if c == '"' and not ignore_quote:
                     w += c
                     quote = not quote
@@ -2424,12 +2426,11 @@ class S3URLQuery(object):
         v = cls.parse_value(value)
 
         # Auto-lowercase, escape, and replace wildcards
-        like = lambda s: s3_str(s3_unicode(s).lower() \
-                                             .replace("%", "\\%") \
-                                             .replace("_", "\\_") \
-                                             .replace("?", "_") \
-                                             .replace("*", "%"))
-
+        like = lambda s: s3_str(s).lower() \
+                                  .replace("%", "\\%") \
+                                  .replace("_", "\\_") \
+                                  .replace("?", "_") \
+                                  .replace("*", "%")
         q = None
 
         # Don't repeat LIKE-escaping for multiple selectors
@@ -2440,7 +2441,7 @@ class S3URLQuery(object):
             if op == S3ResourceQuery.LIKE:
                 f = S3FieldSelector(fs).lower()
                 if not escaped:
-                    if isinstance(v, basestring):
+                    if isinstance(v, str):
                         v = like(v)
                     elif isinstance(v, list):
                         v = [like(s) for s in v if s is not None]
@@ -2548,7 +2549,7 @@ class S3AIRegex(object):
         ESCAPE = cls.ESCAPE
 
         escaped = False
-        for character in s3_unicode(string):
+        for character in s3_str(string):
 
             if character != u"\u0130": # "İ".lower() gives two characters!!
                 character = character.lower()
@@ -2819,7 +2820,7 @@ class S3URLQueryParser(object):
         value = S3URLQuery.parse_value(second.strip())
         if op == S3ResourceQuery.LIKE:
             selector.lower()
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 value = value.replace("*", "%").lower()
             elif isinstance(value, list):
                 value = [x.replace("*", "%").lower() for x in value if x is not None]

@@ -11,7 +11,6 @@ from gluon import current
 from s3.s3datetime import S3Calendar, S3DefaultTZ
 from s3.s3fields import *
 from s3.s3validators import *
-from s3compat import PY2
 
 from unit_tests import run_suite
 

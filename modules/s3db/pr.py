@@ -127,6 +127,8 @@ __all__ = (# PR Base Entities
 import json
 import os
 
+from urllib.parse import urlencode
+
 from gluon import current, redirect, URL, \
                   A, DIV, H2, H3, H5, IMG, LABEL, P, SPAN, TABLE, TAG, TH, TR, \
                   IS_LENGTH, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, IS_EMAIL, \
@@ -135,7 +137,6 @@ from gluon.storage import Storage
 from gluon.sqlhtml import RadioWidget
 
 from ..s3 import *
-from s3compat import INTEGER_TYPES, basestring, long, urlencode
 from s3dal import Field, Row
 from s3layouts import S3PopupLink
 
@@ -495,7 +496,7 @@ class PRPersonEntityModel(S3Model):
 
         # We want to do case-insensitive searches
         # (default anyway on MySQL/SQLite, but not PostgreSQL)
-        value = s3_unicode(value).lower()
+        value = s3_str(value).lower()
 
         limit = int(get_vars.limit or 0)
 
@@ -1437,14 +1438,14 @@ class PRPersonModel(S3Model):
         mname = data.get("middle_name")
         lname = data.get("last_name")
         if fname:
-            fname = s3_unicode(fname).lower()
+            fname = s3_str(fname).lower()
         if mname:
-            mname = s3_unicode(mname).lower()
+            mname = s3_str(mname).lower()
         if lname:
-            lname = s3_unicode(lname).lower()
+            lname = s3_str(lname).lower()
         initials = data.get("initials")
         if initials:
-            initials = s3_unicode(initials).lower()
+            initials = s3_str(initials).lower()
 
         # @ToDo: Allow each name to be split into words in a different order
         # - see pr_search_ac
@@ -1647,7 +1648,7 @@ class PRPersonModel(S3Model):
 
         # We want to do case-insensitive searches
         # (default anyway on MySQL/SQLite, but not PostgreSQL)
-        value = s3_unicode(value).lower()
+        value = s3_str(value).lower()
         value = value.strip()
 
         settings = current.deployment_settings
@@ -2089,13 +2090,13 @@ class PRPersonModel(S3Model):
 
             first_name = post_vars.get("first_name")
             if first_name:
-                first_name = s3_unicode(first_name).lower().strip()
+                first_name = s3_str(first_name).lower().strip()
             middle_name = post_vars.get("middle_name")
             if middle_name:
-                middle_name = s3_unicode(middle_name).lower().strip()
+                middle_name = s3_str(middle_name).lower().strip()
             last_name = post_vars.get("last_name")
             if last_name:
-                last_name = s3_unicode(last_name).lower().strip()
+                last_name = s3_str(last_name).lower().strip()
 
             # Names could be in the wrong order
             # @ToDo: Allow each name to be split into words in a different order
@@ -4781,7 +4782,7 @@ class PRPresenceModel(S3Model):
         table = db.pr_presence
         popts = current.s3db.pr_presence_opts
 
-        if isinstance(form, INTEGER_TYPES + (str,)):
+        if isinstance(form, (int, str)):
             record_id = form
         elif hasattr(form, "vars"):
             record_id = form.vars.id
@@ -5757,7 +5758,7 @@ class PRDescriptionModel(S3Model):
         ntable = db.pr_note
         ptable = s3db.pr_person
 
-        if isinstance(form, INTEGER_TYPES + (str,)):
+        if isinstance(form, (int, str)):
             record_id = form
         elif hasattr(form, "vars"):
             record_id = form.vars.id
@@ -7097,7 +7098,7 @@ def pr_get_entities(pe_ids=None,
         pe_ids = []
     elif not isinstance(pe_ids, (list, set, tuple)):
         pe_ids = [pe_ids]
-    pe_ids = [long(pe_id) for pe_id in set(pe_ids)]
+    pe_ids = [int(pe_id) for pe_id in set(pe_ids)]
     query = (pe_table.deleted != True)
     if types:
         if not isinstance(types, (list, tuple)):
@@ -7322,7 +7323,7 @@ class pr_PersonEntityRepresent(S3Represent):
 
         if self.linkto == URL(c="pr", f="pentity", args=["[id]"]):
             # Default linkto, so modify this to the instance type-specific URLs
-            k = s3_unicode(k)
+            k = s3_str(k)
             db = current.db
             petable = db.pr_pentity
             pe_record = db(petable._id == k).select(petable.instance_type,
@@ -7338,7 +7339,7 @@ class pr_PersonEntityRepresent(S3Represent):
             return A(v, _href=url)
         else:
             # Custom linkto
-            k = s3_unicode(k)
+            k = s3_str(k)
             return A(v, _href=self.linkto.replace("[id]", k) \
                                          .replace("%5Bid%5D", k))
 
@@ -8843,7 +8844,7 @@ class pr_Contacts(S3Method):
                 if fieldname in readable_fields:
                     value = row["pr_contact_emergency.%s" % fieldname]
                     if value:
-                        data[fieldname] = s3_unicode(value)
+                        data[fieldname] = s3_str(value)
                         editable = SPAN(value,
                                         _title = inline_edit_hint,
                                         _class = "pr-emergency-%s" % fieldname,
@@ -8860,7 +8861,7 @@ class pr_Contacts(S3Method):
             if "comments" in readable_fields:
                 comments = row["pr_contact_emergency.comments"] or ""
                 if comments:
-                    data["comments"] = s3_unicode(comments)
+                    data["comments"] = s3_str(comments)
             else:
                 comments = ""
 
@@ -9007,7 +9008,7 @@ class pr_Template(S3Method):
                 for key, selector in mailmerge_fields.items():
                     if callable(selector):
                         for k, v in selector(resource, record).items():
-                            doc_data["%s_%s" % (key, k)] = s3_unicode(v)
+                            doc_data["%s_%s" % (key, k)] = s3_str(v)
                     elif selector == "current_user.name":
                         user = current.auth.user
                         if user:
@@ -9016,12 +9017,12 @@ class pr_Template(S3Method):
                                                           )
                         else:
                             username = current.T("Unknown User")
-                        doc_data[key] = s3_unicode(username)
+                        doc_data[key] = s3_str(username)
                     else:
                         rfield = rfields.get(prefix(selector))
                         if rfield:
                             value = record[rfield.colname]
-                            doc_data[key] = s3_unicode(value)
+                            doc_data[key] = s3_str(value)
                         else:
                             doc_data[key] = NONE
 
@@ -9416,8 +9417,8 @@ def pr_get_pe_id(entity, record_id=None):
                 if isinstance(f, Row) and "pe_id" in f:
                     return f["pe_id"]
             return None
-    elif isinstance(entity, INTEGER_TYPES) or \
-         isinstance(entity, basestring) and entity.isdigit():
+    elif isinstance(entity, int) or \
+         isinstance(entity, str) and entity.isdigit():
         return entity
     else:
         return None
@@ -10943,7 +10944,7 @@ class pr_PersonSearchAutocomplete(S3Method):
         value = get_vars.term or get_vars.value or get_vars.q or None
         if not value:
             r.error(400, "No value provided!")
-        value = s3_unicode(value).lower().strip()
+        value = s3_str(value).lower().strip()
 
         # Limit to max 8 partials (prevent excessively long search queries)
         partials = value.split()[:8]

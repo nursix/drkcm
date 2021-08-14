@@ -35,9 +35,12 @@ import datetime
 import json
 import sys
 
+from urllib import request as urllib2
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+
 from gluon import current, redirect, A, Field, INPUT, SQLFORM
 
-from s3compat import PY2, HTTPError, URLError, urlencode, urllib2
 from ..s3datetime import S3DateTime
 from ..s3rest import S3Method
 from ..s3utils import s3_str
@@ -638,11 +641,7 @@ class S3PaymentService(object):
             url = "?".join((url, urlencode(args)))
 
         # Generate the Request
-        if PY2:
-            req = urllib2.Request(url)
-            req.get_method = lambda: method
-        else:
-            req = urllib2.Request(url = url, method = method)
+        req = urllib2.Request(url = url, method = method)
 
         # Request data
         if method == "GET":
@@ -727,7 +726,7 @@ class S3PaymentService(object):
         # Proxy handling
         proxy = self.proxy
         if proxy and self.use_proxy:
-            protocol = req.get_type() if PY2 else req.type
+            protocol = req.type
             proxy_handler = urllib2.ProxyHandler({protocol: proxy})
             handlers.append(proxy_handler)
 

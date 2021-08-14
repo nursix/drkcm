@@ -43,8 +43,6 @@ from gluon import CAT, DIV, FIELDSET, INPUT, LABEL, SELECT, \
                   TABLE, TAG, TD, TEXTAREA, TR
 from gluon.languages import lazyT
 
-from s3compat import basestring
-
 # =============================================================================
 class NAV(DIV):
     """ <nav> element """
@@ -389,7 +387,7 @@ def render_tooltip(label, comment, _class="tooltip"):
 
     if not comment:
         tooltip = ""
-    elif isinstance(comment, (lazyT, basestring)):
+    elif isinstance(comment, (lazyT, str)):
         if label is False:
             label = ""
         elif hasattr(label, "flatten"):

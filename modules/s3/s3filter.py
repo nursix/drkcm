@@ -60,13 +60,12 @@ from gluon import current, URL, A, DIV, FORM, INPUT, LABEL, OPTION, SELECT, \
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from s3compat import INTEGER_TYPES, PY2, basestring, long, unicodeT
 from s3dal import Field
 from .s3datetime import s3_decode_iso_datetime, S3DateTime
 from .s3query import FS, S3ResourceField, S3ResourceQuery, S3URLQuery
 from .s3rest import S3Method
 from .s3timeplot import S3TimeSeries
-from .s3utils import s3_get_foreign_key, s3_str, s3_unicode, S3TypeConverter
+from .s3utils import s3_get_foreign_key, s3_str, S3TypeConverter
 from .s3validators import IS_UTC_DATE
 from .s3widgets import ICON, S3CalendarWidget, S3CascadeSelectWidget, \
                        S3GroupedOptionsWidget, S3HierarchyWidget, \
@@ -1204,7 +1203,7 @@ class S3DateFilter(S3RangeFilter):
                     value = value[0]
 
                 # Widget expects a string in local calendar and format
-                if isinstance(value, basestring):
+                if isinstance(value, str):
                     # URL filter or filter default come as string in
                     # Gregorian calendar and ISO format => convert into
                     # a datetime
@@ -2532,7 +2531,7 @@ class S3OptionsFilter(S3FilterWidget):
             else:
                 # Multiselect
                 # Produce a simple list of tuples
-                options = {attr["_id"]: [(k, s3_unicode(v))
+                options = {attr["_id"]: [(k, s3_str(v))
                                          for k, v in options]}
 
         return options
@@ -2721,7 +2720,7 @@ class S3OptionsFilter(S3FilterWidget):
                 else:
                     val = _val
                 if val not in opt_keys and \
-                   (not isinstance(val, INTEGER_TYPES) or not str(val) in opt_keys):
+                   (not isinstance(val, int) or not str(val) in opt_keys):
                     opt_keys.append(val)
 
         # No options?
@@ -2741,7 +2740,7 @@ class S3OptionsFilter(S3FilterWidget):
             if opts.get("translate"):
                 # Translate the labels
                 opt_list = [(opt, T(label))
-                            if isinstance(label, basestring) else (opt, label)
+                            if isinstance(label, str) else (opt, label)
                             for opt, label in options.items()
                             ]
             else:
@@ -2766,10 +2765,7 @@ class S3OptionsFilter(S3FilterWidget):
 
             else:
                 # Simple represent function
-                if PY2:
-                    varnames = represent.func_code.co_varnames
-                else:
-                    varnames = represent.__code__.co_varnames
+                varnames = represent.__code__.co_varnames
                 args = {"show_link": False} if "show_link" in varnames else {}
                 if multiple:
                     repr_opt = lambda opt: opt in (None, "") and (opt, EMPTY) or \
@@ -2811,14 +2807,14 @@ class S3OptionsFilter(S3FilterWidget):
 
         else:
             # Straight string representations of the values (fallback)
-            opt_list = [(opt_value, s3_unicode(opt_value))
+            opt_list = [(opt_value, s3_str(opt_value))
                         for opt_value in opt_keys if opt_value]
 
         if opts.get("sort", True):
             try:
                 opt_list.sort(key=lambda item: item[1])
             except:
-                opt_list.sort(key=lambda item: s3_unicode(item[1]))
+                opt_list.sort(key=lambda item: s3_str(item[1]))
         options = []
         empty = False
         none = opts["none"]
@@ -2910,7 +2906,7 @@ class S3HierarchyFilter(S3FilterWidget):
         if not isinstance(values, (list, tuple, set)):
             values = [values]
         for v in values:
-            if isinstance(v, INTEGER_TYPES) or str(v).isdigit():
+            if isinstance(v, int) or str(v).isdigit():
                 append(v)
 
         # Resolve the field selector
@@ -3628,7 +3624,7 @@ class S3FilterForm(object):
                     default = [default]
                 filter_widget.values[variable] = [str(v) if v is None else v
                                                   for v in default]
-                default_filters[variable] = ",".join(s3_unicode(v)
+                default_filters[variable] = ",".join(s3_str(v)
                                                      for v in default)
 
             # Apply to resource
@@ -4106,7 +4102,7 @@ class S3FilterString(object):
                 list_type = rfield.ftype[:5] == "list:"
                 renderer = rfield.represent
                 if not callable(renderer):
-                    renderer = s3_unicode
+                    renderer = s3_str
                 if hasattr(renderer, "linkto"):
                     #linkto = renderer.linkto
                     renderer.linkto = None
@@ -4130,7 +4126,7 @@ class S3FilterString(object):
                         else:
                             values = renderer(values)
                 except:
-                    values = s3_unicode(values)
+                    values = s3_str(values)
 
             # Translate the query
             result = cls._translate_query(query, rfield, values, invert=invert)
@@ -4154,11 +4150,11 @@ class S3FilterString(object):
         ftype = rfield.ftype
         if ftype[:5] == "list:":
             if ftype[5:8] in ("int", "ref"):
-                ftype = long
+                ftype = int
             else:
-                ftype = unicodeT
+                ftype = str
         elif ftype == "id" or ftype [:9] == "reference":
-            ftype = long
+            ftype = int
         elif ftype == "integer":
             ftype = int
         elif ftype == "date":
@@ -4172,7 +4168,7 @@ class S3FilterString(object):
         elif ftype == "boolean":
             ftype = bool
         else:
-            ftype = unicodeT
+            ftype = str
 
         convert = S3TypeConverter.convert
         if type(value) is list:

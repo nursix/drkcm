@@ -50,12 +50,11 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from s3compat import basestring, long
 from .s3datetime import S3DateTime, s3_decode_iso_datetime
 from .s3export import S3Exporter
 from .s3forms import S3SQLDefaultForm
 from .s3rest import S3Method
-from .s3utils import s3_str, s3_unicode, s3_validate, s3_represent_value, s3_set_extension
+from .s3utils import s3_str, s3_validate, s3_represent_value, s3_set_extension
 from .s3widgets import S3EmbeddedComponentWidget, S3Selector, ICON
 
 # Compact JSON encoding
@@ -294,7 +293,7 @@ class S3CRUD(S3Method):
             link_to_parent = get_vars.get("link_to_parent")
             if link_to_parent:
                 try:
-                    parent = long(link_to_parent)
+                    parent = int(link_to_parent)
                 except ValueError:
                     r.error(400, "Invalid parent record ID: %s" % link_to_parent)
                 else:
@@ -327,7 +326,7 @@ class S3CRUD(S3Method):
                 else:
                     from_table = table
                 try:
-                    from_record = long(from_record)
+                    from_record = int(from_record)
                 except ValueError:
                     r.error(404, current.ERROR.BAD_RECORD)
                 authorised = current.auth.s3_has_permission("read",
@@ -2280,7 +2279,7 @@ class S3CRUD(S3Method):
                         skip_formatting = True
                     else:
                         import os
-                        skip_formatting = not isinstance(fullname, basestring) or \
+                        skip_formatting = not isinstance(fullname, str) or \
                                           not os.path.isfile(fullname)
 
                 # Validate and serialize the value
@@ -2311,20 +2310,20 @@ class S3CRUD(S3Method):
                 # Handle errors, update the validated item
                 if error:
                     has_errors = True
-                    validated["_error"] = s3_unicode(error)
+                    validated["_error"] = s3_str(error)
                 elif skip_formatting:
-                    validated["text"] = s3_unicode(value)
+                    validated["text"] = s3_str(value)
                 elif widget_represent:
                     try:
                         text = widget_represent(value)
                     except:
-                        text = s3_unicode(value)
+                        text = s3_str(value)
                     validated["text"] = text
                 else:
                     try:
                         text = s3_represent_value(field, value = value)
                     except:
-                        text = s3_unicode(value)
+                        text = s3_str(value)
                     validated["text"] = text
 
             # Form validation (=onvalidation)
@@ -2337,7 +2336,7 @@ class S3CRUD(S3Method):
                 if onvalidation is not None:
                     callback(onvalidation, form, tablename=tablename)
                 for fn in form.errors:
-                    msg = s3_unicode(form.errors[fn])
+                    msg = s3_str(form.errors[fn])
                     if fn in fields:
                         validated = fields[fn]
                         has_errors = True
@@ -2803,7 +2802,7 @@ class S3CRUD(S3Method):
         elif cancel is True or \
              current.deployment_settings.get_ui_default_cancel_button():
 
-            if isinstance(cancel, basestring):
+            if isinstance(cancel, str):
                 default_url = cancel
             else:
                 method = r.method
@@ -2903,7 +2902,7 @@ class S3CRUD(S3Method):
                 continue
             elif var in table.fields:
                 field = table[var]
-                value = s3_unicode(r.vars[var])
+                value = s3_str(r.vars[var])
                 if var in xml.FIELDS_TO_ATTRIBUTES:
                     element.set(var, value)
                 else:
@@ -3223,7 +3222,7 @@ class S3CRUD(S3Method):
         label = current.deployment_settings.get_ui_interim_save()
         if label:
             _class = "interim-save"
-            if isinstance(label, basestring):
+            if isinstance(label, str):
                 label = current.T(label)
             elif isinstance(label, (tuple, list)) and len(label) > 1:
                 label, _class = label[:2]
@@ -3348,7 +3347,7 @@ class S3CRUD(S3Method):
 
         if limit:
             # Ability to override default limit to "Show All"
-            if isinstance(limit, basestring) and limit.lower() == "none":
+            if isinstance(limit, str) and limit.lower() == "none":
                 #start = None # needed?
                 limit = None
             else:

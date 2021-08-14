@@ -1611,7 +1611,7 @@ def stdm_Certificate(r, **attr):
 
     from s3.s3export import S3Exporter
     exporter = S3Exporter().pdf
-    pdf_title = s3_unicode(T("Tenure Certificate")) + " - " + spatial_unit_code # %-string substitution doesn't work
+    pdf_title = s3_str(T("Tenure Certificate")) + " - " + spatial_unit_code # %-string substitution doesn't work
     return exporter(r.resource,
                     request = r,
                     method = "list",

@@ -6,11 +6,13 @@
 # python web2py.py -S eden -M -R applications/eden/modules/unit_tests/s3/s3rest.py
 #
 import unittest
+
+from io import BytesIO
+
 from gluon import *
 from gluon.storage import Storage
 
 from s3.s3rest import S3Request
-from s3compat import BytesIO
 
 from unit_tests import run_suite
 

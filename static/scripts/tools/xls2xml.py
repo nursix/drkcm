@@ -43,29 +43,20 @@ def parse(source):
     return result
 
 # -----------------------------------------------------------------------------
-def s3_unicode(s, encoding="utf-8"):
+def s3_str(s, encoding="utf-8"):
+    """
+        Convert an object into a str, for backwards-compatibility
 
-    if type(s) is unicode:
+        @param s: the object
+        @param encoding: the character encoding
+    """
+
+    if type(s) is str:
         return s
-    try:
-        if not isinstance(s, basestring):
-            if hasattr(s, "__unicode__"):
-                s = unicode(s)
-            else:
-                try:
-                    s = unicode(str(s), encoding, "strict")
-                except UnicodeEncodeError:
-                    if not isinstance(s, Exception):
-                        raise
-                    s = " ".join([s3_unicode(arg, encoding) for arg in s])
-        else:
-            s = s.decode(encoding)
-    except UnicodeDecodeError:
-        if not isinstance(s, Exception):
-            raise
-        else:
-            s = " ".join([s3_unicode(arg, encoding) for arg in s])
-    return s
+    elif type(s) is bytes:
+        return s.decode(encoding, "strict")
+    else:
+        return str(s)
 
 # -------------------------------------------------------------------------
 def encode_iso_datetime(dt):
@@ -175,7 +166,7 @@ def xls2tree(source,
             text = ""
             if v:
                 if t is None:
-                    text = s3_unicode(v).strip()
+                    text = s3_str(v).strip()
                 elif t == xlrd.XL_CELL_TEXT:
                     text = v.strip()
                 elif t == xlrd.XL_CELL_NUMBER:

@@ -353,7 +353,7 @@ def importxml(db, xmlinput):
         @todo: deprecate
     """
 
-    from s3compat import StringIO
+    from io import StringIO
     import xml.dom.minidom
 
     try:
@@ -417,7 +417,7 @@ def submission():
     if not auth.s3_logged_in():
         auth.permission.fail()
 
-    from s3compat import StringIO
+    from io import StringIO
     import cgi
     from lxml import etree
 
@@ -428,7 +428,7 @@ def submission():
         else:
             xmlinput = source.value
 
-        if isinstance(xmlinput, basestring):
+        if isinstance(xmlinput, str):
             xmlinput = StringIO(xmlinput)
     elif request.env.request_method == "HEAD":
         raise HTTP(204)

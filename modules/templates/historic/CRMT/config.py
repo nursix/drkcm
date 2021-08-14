@@ -6,7 +6,7 @@ from gluon import current
 from gluon.html import *
 from gluon.storage import Storage
 
-from s3 import ICON, S3DataListLayout, s3_unicode, S3SQLSubFormLayout
+from s3 import ICON, S3DataListLayout, s3_str, S3SQLSubFormLayout
 
 def config(settings):
     """
@@ -1893,7 +1893,7 @@ def config(settings):
                                          vars={"tag_post.tag_id__belongs": tag_id}),
                                ).xml())
                 index += 1
-            tags = H6(XML(s3_unicode(T("More about %(tags)s") % dict(tags=" | ".join(_tags)))))
+            tags = H6(XML(s3_str(T("More about %(tags)s") % dict(tags=" | ".join(_tags)))))
         else:
             tags = ""
 

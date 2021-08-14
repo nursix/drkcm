@@ -86,10 +86,11 @@ __all__ = ("OrgOrganisationModel",
 
 import json
 
+from io import BytesIO
+
 from gluon import *
 
 from ..s3 import *
-from s3compat import BytesIO
 from s3dal import Row
 from s3layouts import S3PopupLink
 
@@ -1029,7 +1030,7 @@ class OrgOrganisationModel(S3Model):
 
         # We want to do case-insensitive searches
         # (default anyway on MySQL/SQLite, but not PostgreSQL)
-        value = s3_unicode(value).lower().strip()
+        value = s3_str(value).lower().strip()
 
         if not value:
             r.error(400, "Missing option! Require value")
@@ -1117,9 +1118,9 @@ class OrgOrganisationModel(S3Model):
                 # the acronym, or neither (e.g. input matching the
                 # parent organisation)
                 value_len = len(value)
-                name_match = s3_unicode(name)[:value_len].lower() == value
+                name_match = s3_str(name)[:value_len].lower() == value
                 acronym_match = acronym and \
-                                s3_unicode(acronym)[:value_len].lower() == value
+                                s3_str(acronym)[:value_len].lower() == value
                 if name_match:
                     nextString = name[value_len:]
                     if nextString != "":
@@ -2430,9 +2431,9 @@ class OrgOrganisationSectorModel(S3Model):
         name = data.get("name")
         table = item.table
         if abrv:
-            query = (table.abrv.lower() == s3_unicode(abrv).lower())
+            query = (table.abrv.lower() == s3_str(abrv).lower())
         elif name:
-            query = (table.name.lower() == s3_unicode(name).lower())
+            query = (table.name.lower() == s3_str(name).lower())
         else:
             return
         duplicate = current.db(query).select(table.id,
@@ -3727,7 +3728,7 @@ class OrgSiteModel(S3Model):
 
         # We want to do case-insensitive searches
         # (default anyway on MySQL/SQLite, but not PostgreSQL)
-        value = s3_unicode(value).lower().strip()
+        value = s3_str(value).lower().strip()
 
         if not value:
             r.error(400, "Missing option! Require value")
@@ -4692,7 +4693,7 @@ class OrgFacilityModel(S3Model):
         #address = data.get("address")
 
         table = item.table
-        query = (table.name.lower() == s3_unicode(name).lower())
+        query = (table.name.lower() == s3_str(name).lower())
         if org:
             # Either same Org or no Org defined yet
             query = query & ((table.organisation_id == org) | \
@@ -7074,7 +7075,7 @@ def org_organisation_controller():
                                            )
 
                 if type_filter:
-                    type_names = [s3_unicode(name).lower().strip()
+                    type_names = [s3_str(name).lower().strip()
                                   for name in type_filter.split(",")]
                     field = s3db.org_organisation_organisation_type.organisation_type_id
                     field.comment = None # Don't want to create new types here
@@ -7591,7 +7592,7 @@ def org_facility_controller():
                 get_vars = r.get_vars
                 type_filter = get_vars.get("facility_type.name", None)
                 if type_filter:
-                    type_names = [s3_unicode(name).lower().strip()
+                    type_names = [s3_str(name).lower().strip()
                                   for name in type_filter.split(",")]
                     field = s3db.org_site_facility_type.facility_type_id
                     field.comment = None # Don't want to create new types here
@@ -8364,7 +8365,7 @@ class org_OrganisationDuplicate(object):
         table = item.table
 
         # Search by name
-        lower_name = s3_unicode(name).lower()
+        lower_name = s3_str(name).lower()
         query = (table.name.lower() == lower_name) & \
                 (table.deleted == False)
         rows = db(query).select(table.id, table.name)

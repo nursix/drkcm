@@ -307,7 +307,7 @@ class register():
         else:
             s3.scripts.append("/%s/static/scripts/jquery.pstrength.2.1.0.min.js" % appname)
             s3.scripts.append("/%s/static/scripts/jquery.validate.min.js" % appname)
-        # @ToDo: s3_unicode if site being used with i18n
+        # @ToDo: s3_str if site being used with i18n
         s3.jquery_ready.append("".join(('''
 $('.auth_register').validate({
  errorClass:'req',

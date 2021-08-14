@@ -44,8 +44,6 @@ import re
 import os
 import sys
 
-PY2 = sys.version_info[0] == 2
-
 SUFFIX_JAVASCRIPT = ".js"
 
 RE_REQUIRE = "@requires:? (.*)\n" # TODO: Ensure in comment?
@@ -181,12 +179,8 @@ def run (sourceDirectory, outputFilename = None, configFile = None):
     for filepath in allFiles:
         print("Importing: %s" % filepath)
         fullpath = os.path.join(sourceDirectory, filepath).strip()
-        if PY2:
-            with open(fullpath, "U") as infile:
-                content = infile.read()
-        else:
-            with open(fullpath, "rt", encoding="utf-8") as infile:
-                content = infile.read()
+        with open(fullpath, "rt", encoding="utf-8") as infile:
+            content = infile.read()
         #content = open(fullpath, "U").read() # TODO: Ensure end of line @ EOF?
         files[filepath] = SourceFile(filepath, content) # TODO: Chop path?
 
@@ -211,12 +205,8 @@ def run (sourceDirectory, outputFilename = None, configFile = None):
                     fullpath = os.path.join(sourceDirectory, path).strip()
                     if os.path.exists(fullpath):
                         print("Importing: %s" % path)
-                        if PY2:
-                            with open(fullpath, "U") as infile:
-                                content = infile.read()
-                        else:
-                            with open(fullpath, "rt", encoding="utf-8") as infile:
-                                content = infile.read()
+                        with open(fullpath, "rt", encoding="utf-8") as infile:
+                            content = infile.read()
                         #content = open(fullpath, "U").read() # TODO: Ensure end of line @ EOF?
                         files[path] = SourceFile(path, content) # TODO: Chop path?
                     else:

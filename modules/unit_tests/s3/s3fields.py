@@ -10,7 +10,6 @@ from gluon.languages import lazyT
 
 from s3 import S3ResourceTree
 from s3.s3fields import *
-from s3compat import basestring
 
 from unit_tests import run_suite
 
@@ -185,7 +184,7 @@ class S3RepresentTests(unittest.TestCase):
 
         # Test multiple
         result = r.multiple(None, rows=[org1, org2])
-        self.assertTrue(isinstance(result, basestring))
+        self.assertTrue(isinstance(result, str))
         self.assertTrue(", " in result)
         result = result.split(", ")
         self.assertEqual(len(result), 2)
@@ -193,7 +192,7 @@ class S3RepresentTests(unittest.TestCase):
         self.assertTrue(self.name2 in result)
 
         result = r.multiple([self.id1], rows=[org1, org2])
-        self.assertTrue(isinstance(result, basestring))
+        self.assertTrue(isinstance(result, str))
         self.assertTrue(", " in result)
         result = result.split(", ")
         self.assertEqual(len(result), 2)

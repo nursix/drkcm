@@ -31,13 +31,14 @@
 __all__ = ("S3XLS",
            )
 
+from io import BytesIO
+
 from gluon import HTTP, current
 from gluon.contenttype import contenttype
 from gluon.storage import Storage
 
-from s3compat import INTEGER_TYPES, BytesIO, xrange
 from ..s3codec import S3Codec
-from ..s3utils import s3_str, s3_strip_markup, s3_unicode, s3_get_foreign_key
+from ..s3utils import s3_str, s3_strip_markup, s3_get_foreign_key
 
 # =============================================================================
 class S3XLS(S3Codec):
@@ -369,7 +370,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
 
             # Group headers
             if report_groupby:
-                represent = s3_strip_markup(s3_unicode(row[report_groupby]))
+                represent = s3_strip_markup(s3_str(row[report_groupby]))
                 if subheading != represent:
                     # Start of new group - write group header
                     subheading = represent
@@ -398,7 +399,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
                 label = group_info.get("label")
                 totals = group_info.get("totals")
                 if label:
-                    label = s3_strip_markup(s3_unicode(label))
+                    label = s3_strip_markup(s3_str(label))
                     style = row_style or subheader_style
                     span = group_info.get("span")
                     if span == 0:
@@ -439,7 +440,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
                 if field not in row:
                     represent = ""
                 else:
-                    represent = s3_strip_markup(s3_unicode(row[field]))
+                    represent = s3_strip_markup(s3_str(row[field]))
 
                 coltype = types[col_index]
                 if coltype == "sort":
@@ -780,7 +781,7 @@ class S3PivotTableXLS(object):
 
         T = current.T
 
-        TOTAL = s3_str(s3_unicode(T("Total")).upper())
+        TOTAL = s3_str(T("Total")).upper()
 
         pt = self.pt
 
@@ -907,7 +908,7 @@ class S3PivotTableXLS(object):
         rowindex += 1
         if rows_dim:
             icell = pt.cell
-            for i in xrange(numrows):
+            for i in range(numrows):
 
                 row = rows[i]
 
@@ -918,7 +919,7 @@ class S3PivotTableXLS(object):
 
                 # Cell column values (if any)
                 if cols_dim:
-                    for j in xrange(numcols):
+                    for j in range(numcols):
                         cell = icell[row[0]][cols[j][0]]
                         if listrepr:
                             value = listrepr(cell, fact_rfield, fact_repr, fk=fk)
@@ -947,7 +948,7 @@ class S3PivotTableXLS(object):
 
         # Column totals
         if cols_dim:
-            for i in xrange(numcols):
+            for i in range(numcols):
                 write(sheet, rowindex, i + 1, cols[i][1],
                       style = "total",
                       numfmt = totfmt,
@@ -1212,7 +1213,7 @@ class S3PivotTableXLS(object):
         elif ftype == "virtual":
             # Probe the first value
             value = pt.cell[0][0][fact.layer]
-            if isinstance(value, INTEGER_TYPES):
+            if isinstance(value, int):
                 numfmt = "integer"
             elif isinstance(value, float):
                 numfmt = "double"
@@ -1253,7 +1254,7 @@ class S3PivotTableXLS(object):
         row_repr = pt._represent_method(rows_dim)
         irows = pt.row
         rows = []
-        for i in xrange(pt.numrows):
+        for i in range(pt.numrows):
             irow = irows[i]
             header = {"value": irow.value,
                       "text": irow.text if "text" in irow
@@ -1268,7 +1269,7 @@ class S3PivotTableXLS(object):
         col_repr = pt._represent_method(cols_dim)
         icols = pt.col
         cols = []
-        for i in xrange(pt.numcols):
+        for i in range(pt.numcols):
             icol = icols[i]
             header = {"value": icol.value,
                       "text": icol.text if "text" in icol

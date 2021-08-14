@@ -66,7 +66,6 @@ import time
 from gluon import *
 
 from ..s3 import *
-from s3compat import basestring
 
 TIME_FORMAT = "%b %d %Y %H:%M:%S"
 MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
@@ -1846,7 +1845,7 @@ dropdown.change(function() {
             module = page.get("module")
             if not module or has_module(module):
                 aappend(page)
-        
+
         current_page = int(r.get_vars.get("page", 1))
         last_page = len(active_pages)
 
@@ -3756,7 +3755,7 @@ def setup_instance_deploy(deployment_id, instance_id, folder):
                 access_key = cloud.access_key
                 secret_key = cloud.secret_key
                 cloud_server = server["setup_aws_server"]
-                
+
             elif cloud_type == "setup_openstack_cloud":
                 auth = {"auth_url": cloud.auth_url,
                         "username": cloud.username,
@@ -4310,7 +4309,7 @@ output = json""" % region)
     # Link scheduled task to current record
     # = allows us to monitor deployment progress
     db(itable.id == instance_id).update(task_id = task_id)
-    
+
 # =============================================================================
 def setup_instance_settings_read(instance_id, deployment_id):
     """
@@ -4371,7 +4370,7 @@ def setup_instance_settings_read(instance_id, deployment_id):
     from gluon.serializers import json as jsons # Need support for T()
     for setting in file_settings:
         current_value = file_settings[setting]
-        if not isinstance(current_value, basestring):
+        if not isinstance(current_value, str):
             # NB Storage & OrderedDict will come out as dict
             current_value = jsons(current_value)
         s = db_get(setting)

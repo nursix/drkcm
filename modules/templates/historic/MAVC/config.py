@@ -6,7 +6,7 @@ from gluon import current
 from gluon.html import A, DIV, LI, URL, TAG, TD, TR, UL
 from gluon.storage import Storage
 
-from s3 import S3SQLSubFormLayout, s3_unicode
+from s3 import S3SQLSubFormLayout, s3_str
 
 TRANSLATE = False
 
@@ -1770,7 +1770,7 @@ def mavc_rheader(r, tabs=None):
         items = []
         for fname in subtitle_fields:
             if raw[fname]:
-                items.append(s3_unicode(row[fname]))
+                items.append(s3_str(row[fname]))
         subtitle = ", ".join(items)
 
         # Website

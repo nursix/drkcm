@@ -8,8 +8,9 @@
 import os
 import unittest
 
+from io import StringIO
+
 from s3.s3anonymize import S3Anonymize
-from s3compat import StringIO
 
 from unit_tests import run_suite
 

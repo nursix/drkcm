@@ -7,7 +7,7 @@ from collections import OrderedDict
 from gluon import current, A, SPAN, URL
 from gluon.storage import Storage
 
-from s3 import FS, IS_ONE_OF, S3DateTime, S3Method, s3_str, s3_unicode
+from s3 import FS, IS_ONE_OF, S3DateTime, S3Method, s3_str
 
 # Limit after which a checked-out resident is reported overdue (days)
 ABSENCE_LIMIT = 5
@@ -3989,8 +3989,8 @@ class DRKSiteActivityReport(object):
 
             col_index = 3
             for label, value in output:
-                label_ = s3_unicode(T(label))
-                value_ = s3_unicode(value)
+                label_ = s3_str(T(label))
+                value_ = s3_str(value)
 
                 # Adjust column width
                 width = max(len(label_), len(value_))

@@ -14,7 +14,6 @@ from lxml import etree
 from unit_tests import run_suite
 
 from s3 import S3SyncDataArchive
-from s3compat import PY2
 
 # =============================================================================
 class ExportMergeTests(unittest.TestCase):

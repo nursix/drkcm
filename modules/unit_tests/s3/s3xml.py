@@ -9,12 +9,12 @@ import json
 import os
 import unittest
 
+from io import BytesIO, StringIO
 from lxml import etree
 
 from gluon import *
 
 from s3 import S3Hierarchy, s3_meta_fields, S3Represent, S3RepresentLazy, S3XMLFormat, IS_ONE_OF
-from s3compat import BytesIO, StringIO
 
 from unit_tests import run_suite
 

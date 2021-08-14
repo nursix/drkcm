@@ -46,6 +46,10 @@ import sys
 #import logging
 
 from collections import OrderedDict
+from http import cookies as Cookie
+from io import StringIO
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote as urllib_quote
 
 try:
     from lxml import etree # Needed to follow NetworkLinks
@@ -65,7 +69,6 @@ from gluon.languages import lazyT, regex_translate
 from gluon.settings import global_settings
 from gluon.storage import Storage
 
-from s3compat import Cookie, HTTPError, StringIO, URLError, basestring, urllib_quote
 from s3dal import Rows
 from .s3datetime import s3_format_datetime, s3_parse_datetime
 from .s3fields import s3_all_meta_field_names
@@ -8237,7 +8240,7 @@ class Layer(object):
                 style = row.get("gis_style", None)
                 if style:
                     style_dict = style.style
-                    if isinstance(style_dict, basestring):
+                    if isinstance(style_dict, str):
                         # Matryoshka (=double-serialized JSON)?
                         # - should no longer happen, but a (now-fixed) bug
                         #   regularly produced double-serialized JSON, so
@@ -9696,7 +9699,7 @@ class Style(object):
            cluster_threshold != CLUSTER_THRESHOLD:
             output.cluster_threshold = cluster_threshold
         if style.style:
-            if isinstance(style.style, basestring):
+            if isinstance(style.style, str):
                 # Native JSON
                 try:
                     style.style = json.loads(style.style)

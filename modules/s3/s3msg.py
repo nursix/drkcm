@@ -45,6 +45,12 @@ import re
 import string
 import sys
 
+from io import StringIO
+from urllib import request as urllib2
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+from urllib.parse import urlencode
+
 try:
     from lxml import etree
 except ImportError:
@@ -54,24 +60,16 @@ except ImportError:
 from gluon import current, redirect
 from gluon.html import *
 
-from s3compat import HTTPError, PY2, StringIO, urlencode, urllib2, urlopen, URLError
 #from .s3codec import S3Codec
 from .s3crud import S3CRUD
 from .s3datetime import s3_decode_iso_datetime
 from .s3forms import S3SQLDefaultForm
-from .s3utils import s3_str, s3_unicode
+from .s3utils import s3_str
 from .s3validators import IS_IN_SET, IS_ONE_OF
 from .s3widgets import S3PentityAutocompleteWidget
 
 PHONECHARS = string.digits
 TWITTERCHARS = "%s%s_" % (string.digits, string.ascii_letters)
-if PY2:
-    # Inverted permitted character sets for use with str.translate
-    # => faster, but not working for unicode and hence not supported in Py3
-    IDENTITYTRANS = ALLCHARS = string.maketrans("", "")
-    NOTPHONECHARS = ALLCHARS.translate(IDENTITYTRANS, PHONECHARS)
-    NOTTWITTERCHARS = ALLCHARS.translate(IDENTITYTRANS, TWITTERCHARS)
-
 TWITTER_MAX_CHARS = 140
 TWITTER_HAS_NEXT_SUFFIX = u' \u2026'
 TWITTER_HAS_PREV_PREFIX = u'\u2026 '
@@ -170,10 +168,7 @@ class S3Msg(object):
         else:
             default_country_code = settings.get_L10n_default_country_code()
 
-        if PY2:
-            clean = phone.translate(IDENTITYTRANS, NOTPHONECHARS)
-        else:
-            clean = "".join(c for c in phone if c in PHONECHARS)
+        clean = "".join(c for c in phone if c in PHONECHARS)
 
         # If number starts with a 0 then need to remove this & add the country code in
         if clean[0] == "0":
@@ -205,7 +200,7 @@ class S3Msg(object):
         decoded = decode_header(header)
 
         # Build string
-        return " ".join([s3_unicode(part[0], part[1] or "ASCII")
+        return " ".join([s3_str(part[0], part[1] or "ASCII")
                          for part in decoded])
 
     # =========================================================================
@@ -1180,9 +1175,7 @@ class S3Msg(object):
         # To be however able to send messages with at least special
         # European characters like á or ø,  we convert the UTF-8 to
         # the default ISO-8859-1 (latin-1) here:
-        text_latin1 = s3_unicode(text).encode("utf-8") \
-                                      .decode("utf-8") \
-                                      .encode("iso-8859-1")
+        text_latin1 = s3_str(text).encode("iso-8859-1")
 
         post_data[sms_api.message_variable] = text_latin1
         post_data[sms_api.to_variable] = str(mobile)
@@ -1375,10 +1368,7 @@ class S3Msg(object):
             letters, digits, and _
         """
 
-        if PY2:
-            return account.translate(IDENTITYTRANS, NOTTWITTERCHARS)
-        else:
-            return "".join(c for c in account if c in TWITTERCHARS)
+        return "".join(c for c in account if c in TWITTERCHARS)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1779,7 +1769,7 @@ class S3Msg(object):
                 # Linux ext2/3 max filename length = 255
                 # b16encode doubles length & need to leave room for doc_document.file.16charsuuid.
                 # store doesn't support unicode, so need an ascii string
-                filename = s3_unicode(a[0][:92]).encode("ascii", "ignore")
+                filename = s3_str(a[0][:92]).encode("ascii", "ignore")
                 fp = StringIO()
                 fp.write(a[1])
                 fp.seek(0)
@@ -2086,18 +2076,13 @@ class S3Msg(object):
             return "No Such RSS Channel: %s" % channel_id
 
         # http://pythonhosted.org/feedparser
-        if PY2:
-            # Use Stable v5.2.1
-            # - current known reason is to prevent SSL: CERTIFICATE_VERIFY_FAILED
-            import feedparser521 as feedparser
+        # Python 3.x: Requires pip install sgmllib3k
+        if sys.version_info[1] >= 7:
+            # Use 6.0.0b1 which is required for Python 3.7
+            import feedparser
         else:
-            # Python 3.x: Requires pip install sgmllib3k
-            if sys.version_info[1] >= 7:
-                # Use 6.0.0b1 which is required for Python 3.7
-                import feedparser
-            else:
-                # Python 3.6 requires 5.2.1 with 2to3 run on it to prevent SSL: CERTIFICATE_VERIFY_FAILED
-                import feedparser5213 as feedparser
+            # Python 3.6 requires 5.2.1 with 2to3 run on it to prevent SSL: CERTIFICATE_VERIFY_FAILED
+            import feedparser5213 as feedparser
 
         # Basic Authentication
         username = channel.username
@@ -2148,10 +2133,7 @@ class S3Msg(object):
                 return
         if d.bozo:
             # Something doesn't seem right
-            if PY2:
-                status = "ERROR: %s" % d.bozo_exception.message
-            else:
-                status = "ERROR: %s" % d.bozo_exception
+            status = "ERROR: %s" % d.bozo_exception
             S3Msg.update_channel_status(channel_id,
                                         status = status,
                                         period = (300, 3600),

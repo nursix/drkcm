@@ -902,7 +902,7 @@ def config(settings):
         crud_strings = current.response.s3.crud_strings
         T = current.T
         s3db = current.s3db
-        from s3 import s3_unicode
+        from s3 import s3_str
 
         crud_strings[tablename] = Storage(
             title_list = T("Task Comments")
@@ -928,7 +928,7 @@ def config(settings):
                     @param v: the representation of the key
                     @param row: the row with this key (unused in the base class)
                 """
-                k = s3_unicode(k)
+                k = s3_str(k)
                 public_url = settings.get_base_public_url()
                 if self.linkto:
                     task_url = self.linkto

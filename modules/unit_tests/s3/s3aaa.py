@@ -3612,7 +3612,7 @@ class RecordApprovalTests(unittest.TestCase):
             permitted = has_permission("read", otable, record_id=org_id, c="org", f="organisation")
             assertTrue(permitted)
             permitted = has_permission("update", otable, record_id=org_id, c="org", f="organisation")
-            assertTrue(permitted)
+            assertFalse(permitted)
             permitted = has_permission("delete", otable, record_id=org_id, c="org", f="organisation")
             assertFalse(permitted)
 
@@ -3681,12 +3681,12 @@ class RecordApprovalTests(unittest.TestCase):
                            uacl=acl.READ|acl.REVIEW|acl.APPROVE,
                            oacl=acl.READ|acl.UPDATE|acl.REVIEW|acl.APPROVE)
 
-            # Normal user read/update unapproved records now that he has review-permission
+            # Normal user read unapproved records now that he has review-permission
             auth.s3_impersonate("normaluser@example.com")
             permitted = has_permission("read", otable, record_id=org_id, c="org", f="organisation")
             assertTrue(permitted)
             permitted = has_permission("update", otable, record_id=org_id, c="org", f="organisation")
-            assertTrue(permitted)
+            assertFalse(permitted)
             permitted = has_permission("delete", otable, record_id=org_id, c="org", f="organisation")
             assertFalse(permitted) # not permitted per default permission rules
 
@@ -3737,7 +3737,7 @@ class RecordApprovalTests(unittest.TestCase):
             permitted = has_permission("read", otable, record_id=org_id, c="org", f="organisation")
             assertTrue(permitted)
             permitted = has_permission("update", otable, record_id=org_id, c="org", f="organisation")
-            assertTrue(permitted)
+            assertFalse(permitted)
             permitted = has_permission("delete", otable, record_id=org_id, c="org", f="organisation")
             assertFalse(permitted) # not allowed as per ACL!
 

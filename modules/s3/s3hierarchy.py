@@ -39,7 +39,6 @@ from gluon import DIV, FORM, LI, UL, current
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from s3compat import long, unicodeT, xrange
 from .s3utils import s3_str
 from .s3rest import S3Method
 from .s3widgets import SEPARATORS
@@ -194,7 +193,7 @@ class S3HierarchyCRUD(S3Method):
         node_id = r.get_vars["node"]
         if node_id:
             try:
-                node_id = long(node_id)
+                node_id = int(node_id)
             except ValueError:
                 pass
             else:
@@ -395,7 +394,7 @@ class S3HierarchyCRUD(S3Method):
         hcolumns = []
         colprefix = "HIERARCHY"
         htype = "string" if rfield.ftype == "virtual" else rfield.ftype
-        for level in xrange(depth+1):
+        for level in range(depth+1):
             col = "%s.%s" % (colprefix, level)
             if level == 0:
                 headers[col] = root
@@ -661,10 +660,10 @@ class S3Hierarchy(object):
             theset = self.__theset
             theset.clear()
             for node_id, item in data["nodes"].items():
-                theset[long(node_id)] = {"p": item["p"],
-                                         "c": item["c"],
-                                         "s": set(item["s"]) \
-                                              if item["s"] else set()}
+                theset[int(node_id)] = {"p": item["p"],
+                                        "c": item["c"],
+                                        "s": set(item["s"]) \
+                                             if item["s"] else set()}
             self.__status(dirty = False,
                           dbupdate = None,
                           dbstatus = True)
@@ -1463,7 +1462,7 @@ class S3Hierarchy(object):
                 self._represent(node_ids=[node_id], renderer=represent)
             if LABEL in node:
                 label = node[LABEL]
-            if type(label) is unicodeT:
+            if type(label) is str:
                 label = s3_str(label)
             return label
         return None
@@ -1706,7 +1705,7 @@ class S3Hierarchy(object):
         if path is None:
             if depth is None:
                 depth = self.depth(node_id)
-            path = dict(("%s.%s" % (prefix, l), "") for l in xrange(depth+1))
+            path = dict(("%s.%s" % (prefix, l), "") for l in range(depth+1))
 
         # Set the hierarchy column
         label = node_data.get(hcol) if hcol else node_id

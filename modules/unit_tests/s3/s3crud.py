@@ -7,10 +7,11 @@
 #
 import json
 import unittest
+
+from io import StringIO
+
 from gluon import current
 from gluon.storage import Storage
-
-from s3compat import StringIO, basestring
 
 from unit_tests import run_suite
 
@@ -47,7 +48,7 @@ class ValidateTests(unittest.TestCase):
 
         output = crud.validate(request)
 
-        self.assertTrue(isinstance(output, basestring))
+        self.assertTrue(isinstance(output, str))
         data = json.loads(output)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(len(data), 2)
@@ -56,14 +57,14 @@ class ValidateTests(unittest.TestCase):
         self.assertTrue(isinstance(name, dict))
         self.assertTrue("value" in name)
         self.assertTrue("text" in name)
-        self.assertTrue(isinstance(name["text"], basestring))
+        self.assertTrue(isinstance(name["text"], str))
         self.assertFalse("_error" in name)
 
         acronym = data["acronym"]
         self.assertTrue(isinstance(acronym, dict))
         self.assertTrue("value" in acronym)
         self.assertTrue("text" in acronym)
-        self.assertTrue(isinstance(acronym["text"], basestring))
+        self.assertTrue(isinstance(acronym["text"], str))
         self.assertFalse("_error" in acronym)
 
     # -------------------------------------------------------------------------
@@ -78,7 +79,7 @@ class ValidateTests(unittest.TestCase):
 
         output = crud.validate(request)
 
-        self.assertTrue(isinstance(output, basestring))
+        self.assertTrue(isinstance(output, str))
         data = json.loads(output)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(len(data), 2)
@@ -93,7 +94,7 @@ class ValidateTests(unittest.TestCase):
         self.assertTrue(isinstance(acronym, dict))
         self.assertTrue("value" in acronym)
         self.assertTrue("text" in acronym)
-        self.assertTrue(isinstance(acronym["text"], basestring))
+        self.assertTrue(isinstance(acronym["text"], str))
         self.assertFalse("_error" in acronym)
 
     # -------------------------------------------------------------------------
@@ -109,7 +110,7 @@ class ValidateTests(unittest.TestCase):
 
         output = crud.validate(request)
 
-        self.assertTrue(isinstance(output, basestring))
+        self.assertTrue(isinstance(output, str))
         data = json.loads(output)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(len(data), 1)
@@ -118,7 +119,7 @@ class ValidateTests(unittest.TestCase):
         self.assertTrue(isinstance(name, dict))
         self.assertTrue("value" in name)
         self.assertTrue("text" in name)
-        self.assertTrue(isinstance(name["text"], basestring))
+        self.assertTrue(isinstance(name["text"], str))
         self.assertFalse("_error" in name)
 
     # -------------------------------------------------------------------------
@@ -134,7 +135,7 @@ class ValidateTests(unittest.TestCase):
 
         output = crud.validate(request)
 
-        self.assertTrue(isinstance(output, basestring))
+        self.assertTrue(isinstance(output, str))
         data = json.loads(output)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(len(data), 2)
@@ -177,7 +178,7 @@ class ValidateTests(unittest.TestCase):
         request.body = StringIO(jsonstr)
 
         output = crud.validate(request)
-        self.assertTrue(isinstance(output, basestring))
+        self.assertTrue(isinstance(output, str))
         data = json.loads(output)
         self.assertTrue(isinstance(data, dict))
         self.assertEqual(len(data), 2)

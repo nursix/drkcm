@@ -36,11 +36,12 @@ __all__ = ("DataCollectionTemplateModel",
            "dc_rheader",
            )
 
+from io import BytesIO
+
 from gluon import *
 from gluon.languages import read_dict, write_dict
 
 from ..s3 import *
-from s3compat import BytesIO, xrange
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -966,7 +967,7 @@ class DataCollectionTemplateModel(S3Model):
             translations = {}
 
         # Add ours
-        for i in xrange(len_options):
+        for i in range(len_options):
             original = s3_str(options[i])
             translated = s3_str(options_l10n[i])
             if original != translated:
@@ -1365,7 +1366,7 @@ class DataCollectionModel(S3Model):
             #            raise ValueError("Code required for Grid Questions")
             #        rows = [s3_str(T(v)) for v in grid[0]]
             #        cols = [s3_str(T(v)) for v in grid[1]]
-            #        fields = [[0 for x in xrange(len(rows))] for y in xrange(len(cols))]
+            #        fields = [[0 for x in range(len(rows))] for y in range(len(cols))]
             #        grids[code] = {"r": rows,
             #                       "c": cols,
             #                       "f": fields,
@@ -1942,8 +1943,8 @@ class dc_TargetXLS(S3Method):
                       export_datetime.minute,
                       export_datetime.second)
         export_date_value = xldate_from_datetime_tuple(date_tuple, 0)
-        export_label = s3_unicode("%s:" % T("Date Exported"))
-        date_label = s3_unicode(T("Date Entered"))
+        export_label = s3_str("%s:" % T("Date Exported"))
+        date_label = s3_str(T("Date Entered"))
 
         # Create the workbook
         book = xlwt.Workbook(encoding = "utf-8")
@@ -2187,7 +2188,7 @@ class dc_TargetXLS(S3Method):
                         raw_answer = row.get(question["field"])
                         if raw_answer is None:
                             answer = None
-                        else:                        
+                        else:
                             answer = likert_options[scale][raw_answer]
                     else:
                         answer = row.get(question["field"])

@@ -79,6 +79,7 @@ if update_check_needed:
 # -----------------------------------------------------------------------------
 import os
 from collections import OrderedDict
+from functools import reduce
 from gluon import current
 from gluon.storage import Storage
 
@@ -96,9 +97,6 @@ current.cache = cache
 # https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits
 # NB This takes effect during the file renaming algorithm - the length of uploaded filenames is unaffected
 current.MAX_FILENAME_LENGTH = 255 # Defined early for use by S3Config.
-
-# Common compat imports (for controllers)
-from s3compat import basestring, long, reduce, xrange
 
 # Import S3Config
 import s3cfg

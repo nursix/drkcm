@@ -1237,7 +1237,7 @@ def recv_process():
     """ Receive a Shipment """
 
     try:
-        recv_id = long(request.args[0])
+        recv_id = int(request.args[0])
     except (IndexError, ValueError):
         # recv_id missing from URL or invalid
         redirect(URL(f="recv"))

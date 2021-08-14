@@ -23,11 +23,9 @@ import os
 import shutil
 import sys
 
-PY2 = sys.version_info[0] == 2
-
-# Open file in text mode, with Py3 to use encoding for unicode I/O
+# Open file in text mode, use encoding for unicode I/O
 def openf(fn, mode):
-    return open(fn, mode) if PY2 else open(fn, mode, encoding="utf-8")
+    return open(fn, mode, encoding="utf-8")
 
 # For JS
 SCRIPTPATH = os.path.join(request.folder, "static", "scripts", "tools")
@@ -793,10 +791,7 @@ def main(argv):
 
 if __name__ == "__main__":
 
-    if PY2:
-        sys.exit(main(sys.argv[1:]))
-    else:
-        # Don't end with a SystemExit Exception
-        main(sys.argv[1:])
+    # Don't end with a SystemExit Exception
+    main(sys.argv[1:])
 
 # END =========================================================================

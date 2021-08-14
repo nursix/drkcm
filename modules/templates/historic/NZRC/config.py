@@ -743,14 +743,14 @@ def config(settings):
         # Organisation
         comments = table.organisation_id.represent(record.organisation_id)
 
-        from s3 import s3_unicode
+        from s3 import s3_str
         from gluon.html import A, DIV, H2, LABEL, P, SPAN
 
         # Add job title if present
         job_title_id = record.job_title_id
         if job_title_id:
             comments = (SPAN("%s, " % \
-                             s3_unicode(table.job_title_id.represent(job_title_id))),
+                             s3_str(table.job_title_id.represent(job_title_id))),
                              comments)
 
         # Determine the current roster membership status (active/inactive)

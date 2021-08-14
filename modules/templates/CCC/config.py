@@ -1305,7 +1305,7 @@ $('.copy-link').click(function(e){
                     from s3 import s3_fieldmethod
                     utable.consent = s3_fieldmethod("consent",
                                                     consent,
-                                                    # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                                    # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                                     #represent = lambda v: v,
                                                     )
 
@@ -2299,9 +2299,8 @@ $('.copy-link').click(function(e){
         """
 
         from gluon import URL
-        from s3compat import basestring
 
-        if isinstance(selected, basestring):
+        if isinstance(selected, str):
             # Deserialize the vars from s3task
             import json
             record = json.loads(record)
@@ -2337,7 +2336,7 @@ $('.copy-link').click(function(e){
                              )
 
         date = record.get("start_date")
-        if isinstance(date, basestring):
+        if isinstance(date, str):
             from s3 import s3_parse_datetime
             date = s3_parse_datetime(date, "%Y-%m-%d %H:%M:%S")
 
@@ -5760,9 +5759,8 @@ $('.copy-link').click(function(e){
         """
 
         from gluon import URL
-        from s3compat import basestring
 
-        if isinstance(selected, basestring):
+        if isinstance(selected, str):
             # Deserialize the vars from s3task
             import json
             record = json.loads(record)
@@ -5823,7 +5821,7 @@ $('.copy-link').click(function(e){
                              )
 
         date = record.get("date")
-        if isinstance(date, basestring):
+        if isinstance(date, str):
             from s3 import s3_parse_datetime
             date = s3_parse_datetime(date, "%Y-%m-%d %H:%M:%S")
 

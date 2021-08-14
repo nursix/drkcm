@@ -89,12 +89,12 @@ import datetime
 import json
 
 from collections import OrderedDict
+from io import BytesIO
 
 from gluon import *
 from gluon.storage import Storage
 
 from ..s3 import *
-from s3compat import BytesIO, xrange
 from s3layouts import S3PopupLink
 
 from .req import req_timeframe
@@ -1616,7 +1616,7 @@ class S3ProjectActivityModel(S3Model):
         elif not start_date:
             return [end_date.year]
         else:
-            return list(xrange(start_date.year, end_date.year + 1))
+            return list(range(start_date.year, end_date.year + 1))
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -8399,7 +8399,7 @@ class project_SummaryReport(S3Method):
                 (ltable.hazard_id == htable.id)
         hazards = db(query).select(htable.name)
         if hazards:
-            hazards = ", ".join([s3_unicode(T(h.name)) for h in hazards])
+            hazards = ", ".join([s3_str(T(h.name)) for h in hazards])
         else:
             hazards = NONE
 
@@ -8409,7 +8409,7 @@ class project_SummaryReport(S3Method):
                 (ltable.sector_id == stable.id)
         sectors = db(query).select(stable.name)
         if sectors:
-            sectors = ", ".join([s3_unicode(T(s.name)) for s in sectors])
+            sectors = ", ".join([s3_str(T(s.name)) for s in sectors])
         else:
             sectors = NONE
 
@@ -8419,7 +8419,7 @@ class project_SummaryReport(S3Method):
                 (ltable.theme_id == ttable.id)
         themes = db(query).select(ttable.name)
         if themes:
-            themes = ", ".join([s3_unicode(T(t.name)) for t in themes])
+            themes = ", ".join([s3_str(T(t.name)) for t in themes])
         else:
             themes = NONE
 
@@ -9113,9 +9113,9 @@ class project_IndicatorSummaryReport(S3Method):
 
         date_represent = s3db.project_indicator_data.end_date.represent
 
-        labels11 = [s3_unicode(T("Number")),
-                    s3_unicode(T("Indicators")),
-                    s3_unicode(T("Total Target")),
+        labels11 = [s3_str(T("Number")),
+                    s3_str(T("Indicators")),
+                    s3_str(T("Total Target")),
                     ]
         labels12 = []
         lappend = labels12.append
@@ -9128,16 +9128,16 @@ class project_IndicatorSummaryReport(S3Method):
                 year = years[y]
             lappend(date_represent(d))
         lappend(str(year))
-        labels13 = [s3_unicode(T("Actual Total")),
-                    s3_unicode(T("% Achieved")),
+        labels13 = [s3_str(T("Actual Total")),
+                    s3_str(T("% Achieved")),
                     ]
 
         labels22 = []
         lappend = labels22.append
         y = 0
         year = years[y]
-        TARGET = s3_unicode(T("Target"))
-        ACTUAL = s3_unicode(T("Actual"))
+        TARGET = s3_str(T("Target"))
+        ACTUAL = s3_str(T("Actual"))
         for d in dates:
             if d.year != year:
                 lappend(TARGET)
@@ -9164,7 +9164,7 @@ class project_IndicatorSummaryReport(S3Method):
         book = xlwt.Workbook(encoding="utf-8")
 
         # Add sheet
-        sheet = book.add_sheet(s3_unicode(T("Report")))
+        sheet = book.add_sheet(s3_str(T("Report")))
 
         # Set column Widths
         col_index = 0
@@ -9177,7 +9177,7 @@ class project_IndicatorSummaryReport(S3Method):
             col_index += 1
 
         # 1st row => Report Title
-        title = s3_unicode(T("Summary of Progress Indicators for Outcomes and Indicators"))
+        title = s3_str(T("Summary of Progress Indicators for Outcomes and Indicators"))
         current_row = sheet.row(0)
         current_row.height = 500
         current_row.write(0, title, large_header_style)
@@ -9354,7 +9354,7 @@ class project_IndicatorSummaryReport(S3Method):
                         row_index += 1
 
         current_row = sheet.row(row_index)
-        label = s3_unicode(T(self.project_status_label))
+        label = s3_str(T(self.project_status_label))
         # Fix the size of the column to display the label
         if len(label) * COL_WIDTH_MULTIPLIER > sheet.col(colspan).width:
             sheet.col(colspan).width = len(label) * COL_WIDTH_MULTIPLIER
@@ -12833,7 +12833,7 @@ def project_activity_year_options():
     if not start_year or not end_year:
         return {start_year:start_year} or {end_year:end_year}
     years = {}
-    for year in xrange(start_year, end_year + 1):
+    for year in range(start_year, end_year + 1):
         years[year] = year
     return years
 

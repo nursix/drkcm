@@ -194,12 +194,12 @@ def define_map(height = None,
 
             # Prepare JSON data structure
             pois = []
-            s3_unicode = s3base.s3_unicode
+            from s3 import s3_str
             for res in poi_resources:
                 poi = {"c": res["c"],
                        "f": res["f"],
-                       "l": s3_unicode(res["label"]),
-                       #"t": s3_unicode(res["tooltip"]),
+                       "l": s3_str(res["label"]),
+                       #"t": s3_str(res["tooltip"]),
                        "i": layers_lookup.get(res["layer"], None),
                        "t": res.get("type", "point"),
                        }
@@ -3691,8 +3691,8 @@ def maps():
 
         # Get the data from the POST
         source = request.body.read()
-        if isinstance(source, basestring):
-            from s3compat import StringIO
+        if isinstance(source, str):
+            from io import StringIO
             source = StringIO(source)
 
         # Decode JSON
@@ -3776,8 +3776,8 @@ def maps():
 
         # Get the data from the PUT
         source = request.body.read()
-        if isinstance(source, basestring):
-            from s3compat import StringIO
+        if isinstance(source, str):
+            from io import StringIO
             source = StringIO(source)
 
         # Decode JSON
@@ -3927,7 +3927,9 @@ def proxy():
     """
 
     import socket
-    from s3compat import URLError, urllib2, urlopen
+    from urllib import request as urllib2
+    from urllib.error import URLError
+    from urllib.request import urlopen
     import cgi
 
     if auth.is_logged_in():

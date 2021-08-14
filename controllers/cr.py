@@ -161,7 +161,7 @@ def shelter():
             s3db.configure(tablename,
                            profile_header = profile_header,
                            profile_layers = (layer,),
-                           profile_title = "%s : %s" % (s3_unicode(s3.crud_strings["cr_shelter"].title_display),
+                           profile_title = "%s : %s" % (s3_str(s3.crud_strings["cr_shelter"].title_display),
                                                         name),
                            profile_widgets = profile_widgets,
                            )

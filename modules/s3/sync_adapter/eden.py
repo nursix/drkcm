@@ -32,6 +32,10 @@ import json
 import sys
 import traceback
 
+from urllib import request as urllib2
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote as urllib_quote
+
 try:
     from lxml import etree
 except ImportError:
@@ -40,7 +44,6 @@ except ImportError:
 
 from gluon import current
 
-from s3compat import HTTPError, URLError, urllib2, urllib_quote
 from ..s3datetime import s3_encode_iso_datetime
 from ..s3sync import S3SyncBaseAdapter, S3SyncDataArchive
 from ..s3validators import JSONERRORS

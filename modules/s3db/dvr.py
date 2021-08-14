@@ -76,7 +76,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..s3 import *
-from s3compat import basestring
 from s3layouts import S3PopupLink
 
 # =============================================================================
@@ -8516,12 +8515,12 @@ class DVRRegisterCaseEvent(S3Method):
 
             first_name, last_name = None, None
             if "first_name" in data:
-                first_name = s3_unicode(data["first_name"]).lower()
-                if s3_unicode(person.first_name).lower() != first_name:
+                first_name = s3_str(data["first_name"]).lower()
+                if s3_str(person.first_name).lower() != first_name:
                     data_match = False
             if "last_name" in data:
-                last_name = s3_unicode(data["last_name"]).lower()
-                if s3_unicode(person.last_name).lower() != last_name:
+                last_name = s3_str(data["last_name"]).lower()
+                if s3_str(person.last_name).lower() != last_name:
                     data_match = False
 
             if not data_match:
@@ -8571,8 +8570,8 @@ class DVRRegisterCaseEvent(S3Method):
 
         elif "first_name" in data and "last_name" in data:
 
-            first_name = s3_unicode(data["first_name"]).lower()
-            last_name = s3_unicode(data["last_name"]).lower()
+            first_name = s3_str(data["first_name"]).lower()
+            last_name = s3_str(data["last_name"]).lower()
 
             # Search by names
             query = (FS("pe_label") != None)
@@ -9178,7 +9177,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
             @return: tuple (updated, failed), number of records
         """
 
-        if isinstance(payments, basestring):
+        if isinstance(payments, str):
             try:
                 payments = json.loads(payments)
             except (ValueError, TypeError):

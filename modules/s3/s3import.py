@@ -38,11 +38,17 @@ __all__ = ("S3Importer",
 
 import datetime
 import json
+import pickle
 import os
 import sys
 import uuid
 
 from copy import deepcopy
+from io import StringIO, BytesIO
+from urllib import request as urllib2
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
+
 try:
     from lxml import etree
 except ImportError:
@@ -55,14 +61,12 @@ from gluon import current, redirect, URL, \
 from gluon.storage import Storage, Messages
 from gluon.tools import callback, fetch
 
-from s3compat import basestring, pickle, urllib2, urlopen, BytesIO, StringIO, HTTPError, URLError
 from s3dal import Field
 from .s3datetime import s3_utc
 from .s3fields import S3Represent
 from .s3rest import S3Method, S3Request
 from .s3resource import S3Resource
-from .s3utils import s3_get_foreign_key, s3_has_foreign_key, \
-                     s3_mark_required, s3_str, s3_unicode
+from .s3utils import s3_get_foreign_key, s3_has_foreign_key, s3_mark_required, s3_str
 from .s3validators import IS_JSONS3
 
 KNOWN_SPREADSHEET_EXTENSIONS = (".csv", ".xls", ".xlsx", ".xlsm")
@@ -709,7 +713,7 @@ class S3Importer(S3Method):
         template = attr.get(TEMPLATE, True)
         if template is True:
             args.extend([self.controller, "%s.csv" % self.function])
-        elif isinstance(template, basestring):
+        elif isinstance(template, str):
             # Standard location in static/formats/s3csv/<controller>/*
             if os.path.splitext(template)[1] not in KNOWN_SPREADSHEET_EXTENSIONS:
                 # Assume CSV if no known spreadsheet extension found
@@ -1464,7 +1468,7 @@ $('#import-items').on('click','.toggle-item',function(){$('.importItem.item-'+$(
             except (TypeError, ValueError):
                 pass
             if value:
-                value = s3_unicode(value)
+                value = s3_str(value)
             else:
                 value = ""
             if f != None and value != None:
@@ -1836,7 +1840,7 @@ class S3ImportItem(object):
             table = s3db.table(tablename)
             if table is None:
                 self.error = current.ERROR.BAD_RESOURCE
-                element.set(ERROR, s3_unicode(self.error))
+                element.set(ERROR, s3_str(self.error))
                 return False
         else:
             tablename = table._tablename
@@ -1849,7 +1853,7 @@ class S3ImportItem(object):
         if original is None:
             original = S3Resource.original(table, element,
                                            mandatory = self._mandatory_fields())
-        elif isinstance(original, basestring) and UID in table.fields:
+        elif isinstance(original, str) and UID in table.fields:
             # Single-component update in add-item => load the original now
             query = (table[UID] == original)
             pkeys = set(fname for fname in table.fields if table[fname].unique)
@@ -1869,7 +1873,7 @@ class S3ImportItem(object):
             self.error = current.ERROR.VALIDATION_ERROR
             self.accepted = False
             if not element.get(ERROR, False):
-                element.set(ERROR, s3_unicode(self.error))
+                element.set(ERROR, s3_str(self.error))
             return False
 
         self.data = data
@@ -2172,7 +2176,7 @@ class S3ImportItem(object):
                     form.errors[k] = "[%s] %s" % (k, form.errors[k])
                 else:
                     e = e[0]
-                e.set(ERROR, s3_unicode(form.errors[k]))
+                e.set(ERROR, s3_str(form.errors[k]))
             self.error = current.ERROR.VALIDATION_ERROR
             accepted = False
 
@@ -2243,7 +2247,7 @@ class S3ImportItem(object):
                 parent.error = VALIDATION_ERROR
                 element = parent.element
                 if not element.get(ATTRIBUTE.error, False):
-                    element.set(ATTRIBUTE.error, s3_unicode(parent.error))
+                    element.set(ATTRIBUTE.error, s3_str(parent.error))
 
             return ignore_errors
 
@@ -3680,7 +3684,7 @@ class S3ImportJob():
                 element = item.element
                 if element is not None:
                     if not element.get(ATTRIBUTE.error, False):
-                        element.set(ATTRIBUTE.error, s3_unicode(error))
+                        element.set(ATTRIBUTE.error, s3_str(error))
                     if not logged:
                         self.error_tree.append(deepcopy(element))
 
@@ -4160,7 +4164,7 @@ class S3Duplicate(object):
             #    http://stackoverflow.com/questions/18507589/the-lower-function-on-international-characters-in-postgresql
             # => works fine on Debian servers if the locale is a .UTF-8 before
             #    the Postgres cluster is created
-            query = (field.lower() == s3_str(s3_unicode(value).lower()))
+            query = (field.lower() == s3_str(value).lower())
         else:
             query = (field == value)
 
@@ -4708,12 +4712,8 @@ class S3BulkImporter(object):
         """
 
         # Check if the source file is accessible
-        from s3compat import PY2
         try:
-            if PY2:
-                openFile = open(filename, "r")
-            else:
-                openFile = open(filename, "r", encoding="utf-8")
+            openFile = open(filename, "r", encoding="utf-8")
         except IOError:
             return "Unable to open file %s" % filename
 

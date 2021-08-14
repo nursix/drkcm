@@ -10,9 +10,9 @@ import json
 import requests
 import sys
 
-from gluon import current
+from urllib.parse import quote as urllib_quote
 
-from s3compat import urllib_quote
+from gluon import current
 
 VSETURL = "https://distribution.dcc-rules.de/valuesets"
 VSETID = "covid-19-lab-test-manufacturer-and-name"

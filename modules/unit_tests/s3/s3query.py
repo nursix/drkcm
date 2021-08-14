@@ -16,7 +16,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from s3 import *
-from s3compat import basestring
 
 try:
     import pyparsing
@@ -1931,7 +1930,7 @@ class ResourceDataAccessTests(unittest.TestCase):
         assertEqual(len(rows), 1)
 
         office_names = rows[0]["org_office.name"]
-        assertTrue(isinstance(office_names, basestring))
+        assertTrue(isinstance(office_names, str))
 
         office_names = [s.strip() for s in office_names.split(",")]
         assertEqual(len(office_names), 2)

@@ -482,7 +482,7 @@ def config(settings):
 
             ctable.json_dump = s3_fieldmethod("json_dump",
                                               comment_as_json,
-                                              # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                              # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                               #represent = lambda v: v,
                                               )
 
@@ -714,7 +714,7 @@ def config(settings):
         #append(Field.Method("name_click", event_name))
         etable.name_click = s3_fieldmethod("name_click",
                                            event_name,
-                                           # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                           # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                            represent = lambda v: v,
                                            search_field = "name",
                                            )
@@ -986,7 +986,7 @@ def config(settings):
         #append(Field.Method("name_click", incident_name))
         itable.name_click = s3_fieldmethod("name_click",
                                            incident_name,
-                                           # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                           # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                            represent = lambda v: v,
                                            search_field = "name",
                                            )
@@ -1265,7 +1265,7 @@ def config(settings):
                      )
         ehrtable.name_click = s3_fieldmethod("name_click",
                                              person_name,
-                                             # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                             # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                              # @ToDo: Bulk lookups
                                              represent = lambda v: v,
                                              search_field = "person_id",
@@ -1314,7 +1314,7 @@ def config(settings):
                      )
         eotable.name_click = s3_fieldmethod("name_click",
                                             org_name,
-                                            # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                            # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                             # @ToDo: Bulk lookups
                                             represent = lambda v: v,
                                             search_field = "organisation_id",
@@ -1405,7 +1405,7 @@ def config(settings):
                          )
         ertable.name_click = s3_fieldmethod("name_click",
                                             team_name,
-                                            # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                            # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                             # @ToDo: Bulk lookups
                                             represent = lambda v: v,
                                             search_field = "group_id",
@@ -1608,7 +1608,7 @@ def config(settings):
                      )
         table.name_click = s3_fieldmethod("name_click",
                                           forum_name,
-                                          # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                          # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                           # @ToDo: Bulk lookups
                                           represent = lambda v: v,
                                           search_field = "name",
@@ -1855,7 +1855,7 @@ def config(settings):
                              )
                 table.name_click = s3_fieldmethod("name_click",
                                                   person_membership,
-                                                  # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                                  # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                                   # @ToDo: Bulk lookups
                                                   represent = lambda v: v,
                                                   search_field = "person_id",
@@ -1924,7 +1924,7 @@ def config(settings):
                      )
         table.name_click = s3_fieldmethod("name_click",
                                           team_name,
-                                          # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                          # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                           # @ToDo: Bulk lookups
                                           represent = lambda v: v,
                                           search_field = "name",
@@ -1948,7 +1948,7 @@ def config(settings):
                 return 0
         table.updates = s3_fieldmethod("updates",
                                        updates,
-                                       # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                       # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                        # @ToDo: Bulk lookups
                                        represent = lambda v: v,
                                        #search_field = "name",
@@ -2111,7 +2111,7 @@ def config(settings):
                      )
         table.name_click = s3_fieldmethod("name_click",
                                           task_name,
-                                          # over-ride the default represent of s3_unicode to prevent HTML being rendered too early
+                                          # over-ride the default represent of s3_str to prevent HTML being rendered too early
                                           represent = lambda v: v,
                                           search_field = "name",
                                           )
