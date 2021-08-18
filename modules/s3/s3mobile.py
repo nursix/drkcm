@@ -168,7 +168,7 @@ class S3MobileFormList(object):
             # Select all dynamic tables which have mobile_form=True
             ttable = s3db.s3_table
             query = (ttable.mobile_form == True) & \
-                    (ttable.deleted != True)
+                    (ttable.deleted == False)
             if masterkey_id is not None:
                 query = (ttable.masterkey_id == masterkey_id) & query
             rows = current.db(query).select(ttable.name,
@@ -755,7 +755,7 @@ class S3MobileSchema(object):
             ttable = current.s3db.s3_table
             query = (ttable.name == tablename) & \
                     (ttable.mobile_form == True) & \
-                    (ttable.deleted != True)
+                    (ttable.deleted == False)
             row = current.db(query).select(ttable.id,
                                            limitby = (0, 1),
                                            ).first()

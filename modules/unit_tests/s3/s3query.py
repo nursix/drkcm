@@ -221,7 +221,7 @@ class FieldSelectorResolutionTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
 
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
@@ -435,7 +435,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
         pr_identity = s3db.pr_identity
         expected = pr_identity.on(
                         (pr_identity.person_id == pr_person.id) &
-                        (pr_identity.deleted != True))
+                        (pr_identity.deleted == False))
 
         # Test left joins
         joins, distinct = q._joins(resource, left=True)
@@ -466,7 +466,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
         pr_contact = s3db.pr_contact
         expected = pr_contact.on(
                         (pr_person.pe_id == pr_contact.pe_id) &
-                        (pr_contact.deleted != True))
+                        (pr_contact.deleted == False))
 
         joins, distinct = q._joins(resource, left=True)
         assertEqual(list(joins.keys()), ["pr_contact"])
@@ -502,7 +502,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
 
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
@@ -544,7 +544,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
 
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
@@ -607,8 +607,8 @@ class ResourceFilterJoinTests(unittest.TestCase):
         # Test get_query
         resource.add_filter(q)
         query = resource.get_query()
-        expected = (((project_project.deleted != True) & \
-                     (project_project.id > 0)) & \
+        expected = (((project_project.id > 0) & \
+                     (project_project.deleted == False)) & \
                     ((org_organisation.name == "test") & \
                      (project_project.name == "test")))
         assertEqual(str(query), str(expected))
@@ -646,9 +646,9 @@ class ResourceFilterJoinTests(unittest.TestCase):
         # Test get_query
         resource.add_filter(q)
         query = resource.get_query()
-        expected =  (((project_project.deleted != True) & \
-                    (project_project.id > 0)) & \
-                    (project_project.name == "test"))
+        expected =  (((project_project.id > 0) & \
+                      (project_project.deleted == False)) & \
+                     (project_project.name == "test"))
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
@@ -676,7 +676,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
 
         expected2 = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
 
         expected3 = project_task.on(project_task_project.task_id == project_task.id)
 
@@ -715,8 +715,8 @@ class ResourceFilterQueryTests(unittest.TestCase):
         resource = s3db.resource("org_organisation", filter=q)
         query = resource.rfilter.get_query()
         org_organisation = resource.table
-        expected = (((org_organisation.deleted != True) &
-                     (org_organisation.id > 0)) &
+        expected = (((org_organisation.id > 0) &
+                     (org_organisation.deleted == False)) &
                     (org_organisation.id.like("%123%")))
         assertEqual(str(query), str(expected))
 
@@ -724,8 +724,8 @@ class ResourceFilterQueryTests(unittest.TestCase):
         resource = s3db.resource("org_organisation", filter=q)
         query = resource.rfilter.get_query()
         org_organisation = resource.table
-        expected = (((org_organisation.deleted != True) &
-                     (org_organisation.id > 0)) &
+        expected = (((org_organisation.id > 0) &
+                     (org_organisation.deleted == False)) &
                     (org_organisation.id.like("%12%3%")))
         assertEqual(str(query), str(expected))
 
@@ -733,8 +733,8 @@ class ResourceFilterQueryTests(unittest.TestCase):
         resource = s3db.resource("org_organisation", filter=q)
         query = resource.rfilter.get_query()
         org_organisation = resource.table
-        expected = (((org_organisation.deleted != True) &
-                     (org_organisation.id > 0)) &
+        expected = (((org_organisation.id > 0) &
+                     (org_organisation.deleted == False)) &
                     (org_organisation.id.like("%abc%")))
         assertEqual(str(query), str(expected))
 
@@ -763,13 +763,13 @@ class ResourceFilterQueryTests(unittest.TestCase):
         assertNotEqual(rfilter, None)
 
         # Check master query
-        expected = ((project_project.deleted != True) &
-                    (project_project.id > 0))
+        expected = ((project_project.id > 0) &
+                    (project_project.deleted == False))
         assertEqual(str(rfilter.mquery), str(expected))
 
         # Check effective query
-        expected = (((project_project.deleted != True) &
-                     (project_project.id > 0)) &
+        expected = (((project_project.id > 0) &
+                     (project_project.deleted == False)) &
                      ((org_organisation.name == "test") &
                       (project_task.description == "test")))
         query = rfilter.get_query()
@@ -785,7 +785,7 @@ class ResourceFilterQueryTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
 
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
@@ -825,10 +825,10 @@ class ResourceFilterQueryTests(unittest.TestCase):
         rfilter = component.rfilter
         query = rfilter.get_query()
 
-        expected = (((project_task.deleted != True) &
-                   (project_task.id > 0)) &
-                   (((project_project.deleted != True) &
-                   (project_project.id > 0)) &
+        expected = (((project_task.id > 0) &
+                     (project_task.deleted == False)) &
+                   (((project_project.id > 0) &
+                     (project_project.deleted == False)) &
                    ((org_organisation.name == "test") &
                    (project_task.description == "test"))))
 
@@ -856,7 +856,7 @@ class ResourceFilterQueryTests(unittest.TestCase):
         expected = project_task_project.on(project_task_project.task_id == project_task.id)
         assertEqual(str(left["project_project"][0]), str(expected))
         expected = project_project.on((project_task_project.project_id == project_project.id) &
-                                      (project_task_project.deleted != True))
+                                      (project_task_project.deleted == False))
         assertEqual(str(left["project_project"][1]), str(expected))
 
         # Try to select rows
@@ -888,10 +888,10 @@ class ResourceFilterQueryTests(unittest.TestCase):
         rfilter = component.rfilter
         query = rfilter.get_query()
 
-        expected = (((pr_identity.deleted != True) &
-                   (pr_identity.id > 0)) &
-                   (((pr_person.deleted != True) &
-                   (pr_person.id > 0)) &
+        expected = (((pr_identity.id > 0) &
+                     (pr_identity.deleted == False)) &
+                   (((pr_person.id > 0) &
+                     (pr_person.deleted == False)) &
                    ((org_organisation.name == "test") &
                    (pr_identity.value == "test"))))
 
@@ -904,7 +904,7 @@ class ResourceFilterQueryTests(unittest.TestCase):
         # Left joins for cross-component filters
         expected_h = hrm_human_resource.on(
                         (hrm_human_resource.person_id == pr_person.id) &
-                        (hrm_human_resource.deleted != True))
+                        (hrm_human_resource.deleted == False))
         expected_o = org_organisation.on(
                         hrm_human_resource.organisation_id == org_organisation.id)
         expected_p = pr_person.on(pr_identity.person_id == pr_person.id)
@@ -950,12 +950,11 @@ class ResourceFilterQueryTests(unittest.TestCase):
 
         # This will fail in 1st run as there is no ADMIN role yet
 
-        expected = (((project_activity.deleted != True) &
-                     (project_activity.id > 0)) &
-                    (((project_project.deleted != True) &
+        expected = (((project_activity.id > 0) &
+                     (project_activity.deleted == False)) &
+                    (((project_project.id == 1) &
                       (project_project.id > 0)) &
-                     (project_project.id == 1)))
-
+                     (project_project.deleted == False)))
         assertEqual(str(query), str(expected))
 
         join = rfilter.get_joins(left=False, as_list=False)
@@ -999,13 +998,12 @@ class ResourceFilterQueryTests(unittest.TestCase):
         component = resource.components["competency"]
         query = component.get_query()
 
-        expected = (((hrm_competency.deleted != True) &
-                     (hrm_competency.id > 0)) &
-                    ((((pr_person.deleted != True) &
+        expected = (((hrm_competency.id > 0) &
+                     (hrm_competency.deleted == False)) &
+                    ((((pr_person.id == 1) &
                        (pr_person.id > 0)) &
-                      (pr_person.id == 1)) &
+                      (pr_person.deleted == False)) &
                     (hrm_competency.id == 1)))
-
         assertEqual(str(query), str(expected))
 
         rfilter = component.rfilter
@@ -1700,11 +1698,11 @@ class ResourceFieldTests(unittest.TestCase):
         assertEqual(len(f.left["pr_identity"]), 1)
         expected = pr_identity.on(
                         (pr_identity.person_id == pr_person.id) &
-                        (pr_identity.deleted != True))
+                        (pr_identity.deleted == False))
         assertEqual(str(f.left["pr_identity"][0]), str(expected))
 
         expected = (pr_identity.person_id == pr_person.id) & \
-                   (pr_identity.deleted != True)
+                   (pr_identity.deleted == False)
         assertEqual(str(f.join["pr_identity"]), str(expected))
 
         # Check distinct
@@ -1744,7 +1742,7 @@ class ResourceFieldTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
 
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
@@ -1753,7 +1751,7 @@ class ResourceFieldTests(unittest.TestCase):
         assertEqual(str(f.left["project_task"][1]), str(expected_r))
 
         expected = (((project_task_project.project_id == project_project.id) &
-                     (project_task_project.deleted != True)) &
+                     (project_task_project.deleted == False)) &
                     (project_task_project.task_id == project_task.id))
 
         assertEqual(str(f.join["project_task"]), str(expected))
@@ -2179,7 +2177,7 @@ class URLQueryTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
         assertEqual(joins[1], str(expected_l))
@@ -2187,12 +2185,12 @@ class URLQueryTests(unittest.TestCase):
 
         # Check query
         query = rfilter.get_query()
-        expected1 = (((project_project.deleted != True) &
-                      (project_project.id > 0)) &
+        expected1 = (((project_project.id > 0) &
+                      (project_project.deleted == False)) &
                      ((org_organisation.name.lower().like("%test%")) &
                      (~(project_task.description.lower().like("%test%")))))
-        expected2 = (((project_project.deleted != True) &
-                      (project_project.id > 0)) &
+        expected2 = (((project_project.id > 0) &
+                      (project_project.deleted == False)) &
                      ((~(project_task.description.lower().like("%test%"))) &
                       (org_organisation.name.lower().like("%test%"))))
 
@@ -2227,8 +2225,8 @@ class URLQueryTests(unittest.TestCase):
 
         # Check query
         query = rfilter.get_query()
-        expected = (((project_project.deleted != True) &
-                     (project_project.id > 0)) &
+        expected = (((project_project.id > 0) &
+                     (project_project.deleted == False)) &
                     ((org_organisation.name.lower().like("test%")) |
                      (org_organisation.name.lower().like("other%"))))
         assertEqual(str(query), str(expected))
@@ -2262,8 +2260,8 @@ class URLQueryTests(unittest.TestCase):
 
         # Check query
         query = rfilter.get_query()
-        expected = (((project_project.deleted != True) &
-                     (project_project.id > 0)) &
+        expected = (((project_project.id > 0) &
+                     (project_project.deleted == False)) &
                     ((org_organisation.name.lower().like("other%")) &
                      (org_organisation.name.lower().like("test%"))))
         assertEqual(str(query), str(expected))
@@ -2298,7 +2296,7 @@ class URLQueryTests(unittest.TestCase):
 
         expected_l = project_task_project.on(
                         (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted != True))
+                        (project_task_project.deleted == False))
         expected_r = project_task.on(
                         project_task_project.task_id == project_task.id)
         assertEqual(joins[1], str(expected_l))
@@ -2306,8 +2304,8 @@ class URLQueryTests(unittest.TestCase):
 
         # Check the query
         query = rfilter.get_query()
-        expected = (((project_project.deleted != True) &
-                     (project_project.id > 0)) &
+        expected = (((project_project.id > 0) &
+                     (project_project.deleted == False)) &
                     ((org_organisation.name.lower().like("test%")) |
                      (project_task.description.lower().like("test%"))))
         assertEqual(str(query), str(expected))
@@ -2367,7 +2365,7 @@ class URLQueryTests(unittest.TestCase):
 
             # Check the query
             query = rfilter.get_query()
-            expected = (((org_office.deleted != True) & (org_office.id > 0)) & expected_bbox)
+            expected = (((org_office.id > 0) & (org_office.deleted == False)) & expected_bbox)
             assertEqual(str(query), str(expected))
 
         finally:
@@ -2441,13 +2439,13 @@ class URLQueryTests(unittest.TestCase):
             assertEqual(len(subjoins), 1)
             expected_join = org_organisation_location.on(
                                 (org_organisation_location.organisation_id == org_organisation.id) &
-                                (org_organisation_location.deleted != True)
+                                (org_organisation_location.deleted == False)
                             )
             assertEqual(str(subjoins[0]), str(expected_join))
 
             # Check the query
             query = rfilter.get_query()
-            expected = (((org_office.deleted != True) & (org_office.id > 0)) & expected_bbox)
+            expected = (((org_office.id > 0) & (org_office.deleted == False)) & expected_bbox)
             assertEqual(str(query), str(expected))
 
         finally:
