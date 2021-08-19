@@ -913,7 +913,7 @@ def config(settings):
         """
 
         from .dcc import DCC
-        DCC.poll()
+        return DCC.poll()
 
     settings.tasks.poll_dcc = poll_dcc
 
