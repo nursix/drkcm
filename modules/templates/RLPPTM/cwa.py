@@ -22,6 +22,7 @@ from s3 import IS_ONE_OF, S3CustomController, S3Method, \
                s3_date, s3_mark_required, s3_qrcode_represent, \
                JSONERRORS
 
+from .dcc import DCC
 from .vouchers import RLPCardLayout
 
 CWA = {"system": "RKI / Corona-Warn-App",
@@ -292,7 +293,6 @@ class TestResultRegistration(S3Method):
                     # Store DCC data
                     if dcc_option:
                         cwa_data = cwa_report.data
-                        from .dcc import DCC
                         try:
                             hcert = DCC.from_result(cwa_data.get("hash"),
                                                     record_id,
@@ -613,7 +613,7 @@ class CWAReport(object):
 
         # Determine the testid and timestamp
         testid = result.uuid
-        timestamp = int(result.probe_date.replace(microsecond=0).timestamp())
+        timestamp = int(DCC.utc_timestamp(result.probe_date))
 
         if not anonymous:
             if not all(value for value in (first_name, last_name, dob)):
@@ -906,7 +906,6 @@ class CWAReport(object):
         result_list = {"testResults": [testresult]}
         if self.dcc:
             # Look up the LabID
-            from .dcc import DCC
             lab_id = DCC.get_issuer_id(self.site_id)
             if not lab_id:
                 raise RuntimeError("Point-of-Care ID for test station not found")

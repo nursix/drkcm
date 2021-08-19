@@ -198,8 +198,8 @@ class DCC(object):
                          "disease": result.disease_id,
                          "site": facility.site_id,
                          "device": device.code,
-                         "timestamp": int(probe_date.replace(microsecond=0).timestamp()),
-                         "expires": int(expires.replace(microsecond=0).timestamp()),
+                         "timestamp": int(cls.utc_timestamp(probe_date)),
+                         "expires": int(cls.utc_timestamp(expires)),
                          "result": result.result,
                          }
 
@@ -434,7 +434,8 @@ class DCC(object):
         # Convert timestamp into datetime
         timestamp = data.get("timestamp")
         expires = data.get("expires")
-        sc = "%sZ" % datetime.datetime.fromtimestamp(timestamp).isoformat()
+        dt = datetime.datetime.fromtimestamp(timestamp, datetime.timezone.utc)
+        sc = "%sZ" %  dt.replace(tzinfo=None).isoformat()
 
         # Convert test result to code
         result_codes = {"NEG": "260415000",
@@ -775,6 +776,21 @@ class DCC(object):
             verify = True
 
         return cert, key, verify
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def utc_timestamp(dt):
+        """
+            Convert a tz-naive datetime instance into a UTC timestamp
+
+            @param dt: the datetime
+
+            @returns: timestamp (int)
+        """
+
+        return dt.replace(microsecond = 0,
+                          tzinfo = datetime.timezone.utc,
+                          ).timestamp()
 
     # -------------------------------------------------------------------------
     @staticmethod
