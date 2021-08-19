@@ -434,7 +434,7 @@ class TestResultRegistration(S3Method):
                                   first_name = cwadata.get("fn"),
                                   last_name = cwadata.get("ln"),
                                   dob = cwadata.get("dob"),
-                                  dcc = cwadata.get("dcc", False),
+                                  dcc = post_vars.get("dcc") == "1",
                                   salt = cwadata.get("salt"),
                                   dhash = cwadata.get("hash"),
                                   )
@@ -533,7 +533,7 @@ class TestResultRegistration(S3Method):
                                   first_name = cwadata.get("fn"),
                                   last_name = cwadata.get("ln"),
                                   dob = cwadata.get("dob"),
-                                  dcc = cwadata.get("dgc", False),
+                                  dcc = options.get("dcc") == "1",
                                   salt = cwadata.get("salt"),
                                   dhash = cwadata.get("hash"),
                                   )
@@ -651,7 +651,7 @@ class CWAReport(object):
 
             @returns: the token as str
         """
-        return secrets.token_hex(16)
+        return secrets.token_hex(16).upper()
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -829,6 +829,7 @@ class CWAReport(object):
                         ),
                     hidden = {"formurl": formurl,
                               "cwadata": json.dumps(self.data),
+                              "dcc": "1" if self.dcc else "0",
                               "_formkey": formkey,
                               },
                     )

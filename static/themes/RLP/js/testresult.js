@@ -142,6 +142,7 @@
         var retrySendToCWA = function(btn) {
 
             var certificate = btn.closest('form'),
+                dcc = $('input[name="dcc"]', certificate).val(),
                 cwadata = $('input[name="cwadata"]', certificate).val(),
                 formurl = $('input[name="formurl"]', certificate).val(),
                 formkey = $('input[name="_formkey"]', certificate).val();
@@ -153,8 +154,9 @@
 
             var throbber = $('<div class="inline-throbber">').insertAfter(btn.hide()),
                 ajaxData = {
+                    'dcc': dcc,
                     'cwadata': JSON.parse(cwadata),
-                    'formkey': formkey,
+                    'formkey': formkey
                 };
 
             $.ajaxS3({
@@ -187,6 +189,7 @@
         var downloadCertificatePDF = function(btn) {
 
             var certificate = btn.closest('form'),
+                dcc = $('input[name="dcc"]', certificate).val(),
                 cwadata = $('input[name="cwadata"]', certificate).val(),
                 formurl = $('input[name="formurl"]', certificate).val(),
                 formkey = $('input[name="_formkey"]', certificate).val();
@@ -202,6 +205,12 @@
             form.enctype = 'multipart/form-data';
 
             var input;
+
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'dcc';
+            input.value = dcc;
+            form.appendChild(input);
 
             input = document.createElement('input');
             input.type = 'hidden';
