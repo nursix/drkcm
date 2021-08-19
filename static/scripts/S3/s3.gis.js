@@ -2109,12 +2109,16 @@ S3.gis.yx = [
                                     break;
                                 }
                             }
-                            // Set an event to re-enable Clustering when the layer is reloaded
-                            layer.events.on({
-                                // This event fires before read is triggered
-                                // (it is fired by the initial load event)
-                                'loadend': search_layer_loadend
-                            });
+                            // Set an event to re-enable Clustering when the layer has been reloaded
+                            // - we do this only on loadstart, because if there is a previous
+                            //   response (e.g. from initial layer loading after switching to
+                            //   the map tab of summary), triggerRead will fire loadend first,
+                            //   thereby consuming our one-off loadend handler before the reload
+                            //   even starts
+                            var set_search_layer_loadend = function() {
+                                layer.events.on({'loadend': search_layer_loadend});
+                                layer.events.un({'loadstart': set_search_layer_loadend});
+                            };
                             // Close open popups before reloading
                             while (layer.map.popups.length) {
                                 layer.map.removePopup(layer.map.popups[0]);
@@ -2126,6 +2130,10 @@ S3.gis.yx = [
                                     strategy.CLASS_NAME == 'OpenLayers.Strategy.ZoomBBOX') {
                                     // Set bounds to maxExtent so that filter doesn't apply
                                     strategy.bounds = null;
+                                    // Trigger read to reload the layer
+                                    layer.events.on({
+                                        'loadstart': set_search_layer_loadend
+                                    });
                                     strategy.triggerRead();
                                     break;
                                 }
