@@ -1374,7 +1374,7 @@ class S3XML(S3Codec):
                             continue
                     if not filename:
                         filename = download_url.split("?")[0] or "upload.bin"
-                    if download_url.find("://"):
+                    if not download_url.find("://"):
                         # Not a full URL, try prepending protocol
                         download_url = "http://%s" % download_url
                     try:
