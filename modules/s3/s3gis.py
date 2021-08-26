@@ -76,6 +76,7 @@ from .s3rest import S3Method
 from .s3rtb import S3ResourceTree
 from .s3track import S3Trackable
 from .s3utils import s3_include_ext, s3_include_underscore, s3_str
+from .s3validators import JSONERRORS
 
 # Map WKT types to db types
 GEOM_TYPES = {"point": 1,
@@ -224,6 +225,8 @@ GPS_SYMBOLS = ("Airport",
                "White Dot",
                "Zoo"
                )
+
+DEFAULT = lambda: None
 
 # -----------------------------------------------------------------------------
 class GIS(object):
@@ -456,7 +459,7 @@ class GIS(object):
                         url = element.text
                 if url:
                     # Follow NetworkLink (synchronously)
-                    warning2 = self.fetch_kml(url, filepath)
+                    warning2 = self.fetch_kml(url, filepath, session_id_name, session_id)
                     warning += warning2
             except (etree.XMLSyntaxError,):
                 e = sys.exc_info()[1]
@@ -547,7 +550,7 @@ class GIS(object):
         else:
             raise NotImplementedError
 
-        geocode_ = lambda names, g=g, **kwargs: g.geocode(names, **kwargs)
+        geocode_ = lambda names, inst=g, **kwargs: inst.geocode(names, **kwargs)
 
         location = address
         if postcode:
@@ -620,7 +623,7 @@ class GIS(object):
                     if not results:
                         output = "Can't check that these results are specific enough"
                     for result in results:
-                        place2, (lat2, lon2) = result
+                        place2 = result[0]
                         if place == place2:
                             output = "We can only geocode to the Lx"
                             break
@@ -1076,18 +1079,19 @@ class GIS(object):
                                                               orderby=table.level)
                 row_list = rows.as_list()
                 row_list.reverse()
-                ok = False
+                ok, bounds = False, None
                 for row in row_list:
                     if row["lon_min"] is not None and row["lon_max"] is not None and \
                        row["lat_min"] is not None and row["lat_max"] is not None and \
                        row["lon"] != row["lon_min"] != row["lon_max"] and \
                        row["lat"] != row["lat_min"] != row["lat_max"]:
+                        bounds = row["lat_min"], row["lon_min"], row["lat_max"], row["lon_max"], row["name"]
                         ok = True
                         break
 
                 if ok:
                     # This level is suitable
-                    return row["lat_min"], row["lon_min"], row["lat_max"], row["lon_max"], row["name"]
+                    return bounds
 
         else:
             # This level is suitable
@@ -1390,6 +1394,8 @@ class GIS(object):
             @ToDo: Merge configs for Event
         """
 
+        cache = Storage()
+
         _gis = current.response.s3.gis
 
         # If an id has been supplied, try it first. If it matches what's in
@@ -1397,7 +1403,7 @@ class GIS(object):
         if config_id and not force_update_cache and \
            _gis.config and \
            _gis.config.id == config_id:
-            return
+            return cache
 
         db = current.db
         s3db = current.s3db
@@ -1436,7 +1442,6 @@ class GIS(object):
                 mtable.on(mtable.id == stable.marker_id),
                 )
 
-        cache = Storage()
         row = None
         rows = None
         if config_id:
@@ -4621,28 +4626,42 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
 
         # Parse File
         current_row = 0
+
+        def in_bbox(row, bbox):
+            return (row.lon_min < bbox[0]) & \
+                   (row.lon_max > bbox[1]) & \
+                   (row.lat_min < bbox[2]) & \
+                   (row.lat_max > bbox[3])
         for line in f:
             current_row += 1
             # Format of file: http://download.geonames.org/export/dump/readme.txt
-            geonameid, \
-            name, \
-            asciiname, \
-            alternatenames, \
-            lat, \
-            lon, \
-            feature_class, \
-            feature_code, \
-            country_code, \
-            cc2, \
-            admin1_code, \
-            admin2_code, \
-            admin3_code, \
-            admin4_code, \
-            population, \
-            elevation, \
-            gtopo30, \
-            timezone, \
-            modification_date = line.split("\t")
+            # - tab-limited values, columns:
+            # geonameid         : integer id of record in geonames database
+            # name              : name of geographical point (utf8)
+            # asciiname         : name of geographical point in plain ascii characters
+            # alternatenames    : alternatenames, comma separated
+            # latitude          : latitude in decimal degrees (wgs84)
+            # longitude         : longitude in decimal degrees (wgs84)
+            # feature class     : see http://www.geonames.org/export/codes.html
+            # feature code      : see http://www.geonames.org/export/codes.html
+            # country code      : ISO-3166 2-letter country code
+            # cc2               : alternate country codes, comma separated, ISO-3166 2-letter country code
+            # admin1 code       : fipscode (subject to change to iso code)
+            # admin2 code       : code for the second administrative division
+            # admin3 code       : code for third level administrative division
+            # admin4 code       : code for fourth level administrative division
+            # population        : bigint
+            # elevation         : in meters
+            # dem               : digital elevation model, srtm3 or gtopo30
+            # timezone          : the iana timezone id
+            # modification date : date of last modification in yyyy-MM-dd format
+            #
+            parsed = line.split("\t")
+            geonameid = parsed[0]
+            name = parsed[1]
+            lat = parsed[4]
+            lon = parsed[5]
+            feature_code = parsed[7]
 
             if feature_code == fc:
                 # Add WKT
@@ -4659,12 +4678,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                 # Locate Parent
                 parent = ""
                 # 1st check for Parents whose bounds include this location (faster)
-                def in_bbox(row):
-                    return (row.lon_min < lon_min) & \
-                           (row.lon_max > lon_max) & \
-                           (row.lat_min < lat_min) & \
-                           (row.lat_max > lat_max)
-                for row in all_parents.find(lambda row: in_bbox(row)):
+                for row in all_parents.find(lambda row: in_bbox(row, [lon_min, lon_max, lat_min, lat_max])):
                     # Search within this subset with a full geometry check
                     # Uses Shapely.
                     # @ToDo provide option to use PostGIS/Spatialite
@@ -4887,7 +4901,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                             feature["inherited"] = False
                         update_location_tree(feature)  # all_locations is False here
             # All Done!
-            return
+            return None
 
 
         # Single Feature
@@ -6294,11 +6308,11 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
         return output
 
     # -------------------------------------------------------------------------
-    def show_map(self,
-                 id = "default_map",
+    @staticmethod
+    def show_map(id = "default_map",
                  height = None,
                  width = None,
-                 bbox = {},
+                 bbox = DEFAULT,
                  lat = None,
                  lon = None,
                  zoom = None,
@@ -6314,7 +6328,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                  features = None,
                  feature_queries = None,
                  feature_resources = None,
-                 wms_browser = {},
+                 wms_browser = DEFAULT,
                  catalogue_layers = False,
                  legend = False,
                  toolbar = False,
@@ -6332,7 +6346,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                  scaleline = None,
                  zoomcontrol = None,
                  zoomWheelEnabled = True,
-                 mgrs = {},
+                 mgrs = DEFAULT,
                  window = False,
                  window_hide = False,
                  closable = True,
@@ -6436,6 +6450,13 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
 
         """
 
+        if bbox is DEFAULT:
+            bbox = {}
+        if wms_browser is DEFAULT:
+            wms_browser = {}
+        if mgrs is DEFAULT:
+            mgrs = {}
+
         return MAP(id = id,
                    height = height,
                    width = width,
@@ -6498,17 +6519,10 @@ class MAP(DIV):
 
         # We haven't yet run _setup()
         self.setup = False
-        self.callback = None
-        self.error_message = None
-        self.components = []
 
         # Options for server-side processing
         self.opts = opts
         opts_get = opts.get
-        self.id = map_id = opts_get("id", "default_map")
-
-        # Options for client-side processing
-        self.options = {}
 
         # Adapt CSS to size of Map
         _class = "map_wrapper"
@@ -6516,9 +6530,17 @@ class MAP(DIV):
             _class = "%s fullscreen" % _class
         if opts_get("print_mode"):
             _class = "%s print" % _class
-        self.attributes = {"_class": _class,
-                           "_id": map_id,
-                           }
+
+        # Set Map ID
+        self.id = map_id = opts_get("id", "default_map")
+
+        super(MAP, self).__init__(_class=_class, _id=map_id)
+
+        # Options for client-side processing
+        self.options = {}
+
+        self.callback = None
+        self.error_message = None
         self.parent = None
 
         # Show Color Picker?
@@ -6531,6 +6553,11 @@ class MAP(DIV):
                 style = "plugins/spectrum.min.css"
             if style not in s3.stylesheets:
                 s3.stylesheets.append(style)
+
+        self.globals = None
+        self.i18n = None
+        self.scripts = None
+        self.plugin_callbacks = None
 
     # -------------------------------------------------------------------------
     def _setup(self):
@@ -7368,18 +7395,17 @@ class MAP2(DIV):
         """
 
         self.opts = opts
+        opts_get = opts.get
 
         # Pass options to DIV()
-        opts_get = opts.get
         map_id = opts_get("id", "default_map")
-        height = opts_get("height", current.deployment_settings.get_gis_map_height())
-        self.attributes = {"_id": map_id,
-                           "_style": "height:%ipx;width:100%%" % height,
-                           }
-        # @ToDo: Add HTML Controls (Toolbar, LayerTree, etc)
-        self.components = [DIV(_class = "s3-gis-tooltip",
-                               ),
-                           ]
+        height = opts_get("height")
+        if height is None:
+            height = current.deployment_settings.get_gis_map_height()
+        super(MAP2, self).__init__(DIV(_class = "s3-gis-tooltip"),
+                                   _id = map_id,
+                                   _style = "height:%ipx;width:100%%" % height,
+                                   )
 
         # Load CSS now as too late in xml()
         stylesheets = current.response.s3.stylesheets
@@ -7686,15 +7712,15 @@ class MAP2(DIV):
         layer_types = set(layer_types)
         scripts = []
         scripts_append = scripts.append
-        for LayerType in layer_types:
+        for layer_type_class in layer_types:
             try:
                 # Instantiate the Class
-                layer = LayerType(layers)
+                layer = layer_type_class(layers)
                 layer.as_dict(options)
                 for script in layer.scripts:
                     scripts_append(script)
             except Exception as exception:
-                error = "%s not shown: %s" % (LayerType.__name__, exception)
+                error = "%s not shown: %s" % (layer_type_class.__name__, exception)
                 current.log.error(error)
                 response = current.response
                 if response.s3.debug:
@@ -7825,10 +7851,10 @@ def addFeatureQueries(feature_queries):
 
         # Lat/Lon via Join or direct?
         try:
-            layer["query"][0].gis_location.lat
-            join = True
-        except:
-            join = False
+            join = hasattr(layer["query"][0].gis_location, "lat")
+        except (AttributeError, KeyError):
+            # Invalid layer
+            continue
 
         # Push the Features into a temporary table in order to have them accessible via GeoJSON
         # @ToDo: Maintenance Script to clean out old entries (> 24 hours?)
@@ -8025,7 +8051,7 @@ def addFeatureResources(feature_resources):
                 try:
                     # JSON Object?
                     style = json.loads(style)
-                except:
+                except JSONERRORS:
                     current.log.error("Invalid Style: %s" % style)
                     style = None
             else:
@@ -8119,7 +8145,7 @@ def addFeatureResources(feature_resources):
                 try:
                     # JSON Object?
                     style = json.loads(style)
-                except:
+                except JSONERRORS:
                     current.log.error("Invalid Style: %s" % style)
                     style = None
             if not style:
@@ -8172,6 +8198,10 @@ class Layer(object):
         Abstract base class for Layers from Catalogue
     """
 
+    tablename = None
+    dictname = "layer_generic"
+    style = False
+
     def __init__(self, all_layers, openlayers=6):
 
         self.openlayers = openlayers
@@ -8193,7 +8223,6 @@ class Layer(object):
         query = (table.layer_id.belongs(set(layer_ids)))
         rows = current.db(query).select(*fields)
 
-        SubLayer = self.SubLayer
         # Flag to show whether we've set the default baselayer
         # (otherwise a config higher in the hierarchy can overrule one lower down)
         base = True
@@ -8210,12 +8239,16 @@ class Layer(object):
             layer_id = record.layer_id
 
             # Find the 1st row in all_layers which matches this
-            for row in all_layers:
-                if row["gis_layer_config.layer_id"] == layer_id:
-                    layer_config = row["gis_layer_config"]
+            row = None
+            for candidate in all_layers:
+                if candidate["gis_layer_config.layer_id"] == layer_id:
+                    row = candidate
                     break
+            if not row:
+                continue
 
             # Check if layer is enabled
+            layer_config = row["gis_layer_config"]
             if layer_config.enabled is False:
                 continue
 
@@ -8247,7 +8280,7 @@ class Layer(object):
                         #   databases:
                         try:
                             style_dict = json.loads(style_dict)
-                        except ValueError:
+                        except JSONERRORS:
                             pass
                     if style_dict:
                         record["style"] = style_dict
@@ -8285,7 +8318,7 @@ class Layer(object):
                 # SubLayers handled differently
                 append(record)
             else:
-                append(SubLayer(record, openlayers))
+                append(self.SubLayer(record, openlayers))
 
         # Alphasort layers
         # - client will only sort within their type: s3.gis.layers.js
@@ -8307,13 +8340,11 @@ class Layer(object):
                 # Add this layer to the list of layers for this layer type
                 append(sublayer_dict)
 
-        if sublayer_dicts:
-            if options:
-                # Used by Map._setup()
-                options[self.dictname] = sublayer_dicts
-            else:
-                # Used by as_json() and hence as_javascript()
-                return sublayer_dicts
+        if sublayer_dicts and options:
+            # Used by Map._setup()
+            options[self.dictname] = sublayer_dicts
+
+        return sublayer_dicts
 
     # -------------------------------------------------------------------------
     def as_json(self):
@@ -8323,8 +8354,9 @@ class Layer(object):
 
         result = self.as_dict()
         if result:
-            #return json.dumps(result, indent=4, separators=(",", ": "), sort_keys=True)
             return json.dumps(result, separators=SEPARATORS)
+        else:
+            return ""
 
     # -------------------------------------------------------------------------
     def as_javascript(self):
@@ -8336,6 +8368,8 @@ class Layer(object):
         result = self.as_json()
         if result:
             return '''S3.gis.%s=%s\n''' % (self.dictname, result)
+        else:
+            return ""
 
     # -------------------------------------------------------------------------
     class SubLayer(object):
@@ -8352,6 +8386,9 @@ class Layer(object):
 
             if hasattr(self, "projection_id"):
                 self.projection = Projection(self.projection_id)
+
+        def __getattr__(self, key):
+            return self.__dict__.__getattribute__(key)
 
         def setup_clustering(self, output):
             if hasattr(self, "cluster_attribute"):
@@ -8440,6 +8477,7 @@ class LayerBing(Layer):
 
     # -------------------------------------------------------------------------
     def as_dict(self, options=None):
+
         sublayers = self.sublayers
         if sublayers:
             if Projection().epsg != 900913:
@@ -8468,9 +8506,11 @@ class LayerBing(Layer):
             if options:
                 # Used by Map._setup()
                 options[self.dictname] = ldict
-            else:
-                # Used by as_json() and hence as_javascript()
-                return ldict
+        else:
+            ldict = None
+
+        # Used by as_json() and hence as_javascript()
+        return ldict
 
 # -----------------------------------------------------------------------------
 class LayerCoordinate(Layer):
@@ -8496,9 +8536,11 @@ class LayerCoordinate(Layer):
             if options:
                 # Used by Map._setup()
                 options[self.dictname] = ldict
-            else:
-                # Used by as_json() and hence as_javascript()
-                return ldict
+        else:
+            ldict = None
+
+        # Used by as_json() and hence as_javascript()
+        return ldict
 
 # -----------------------------------------------------------------------------
 class LayerEmpty(Layer):
@@ -8513,6 +8555,7 @@ class LayerEmpty(Layer):
 
     # -------------------------------------------------------------------------
     def as_dict(self, options=None):
+
         sublayers = self.sublayers
         if sublayers:
             sublayer = sublayers[0]
@@ -8526,9 +8569,11 @@ class LayerEmpty(Layer):
             if options:
                 # Used by Map._setup()
                 options[self.dictname] = ldict
-            else:
-                # Used by as_json() and hence as_javascript()
-                return ldict
+        else:
+            ldict = None
+
+        # Used by as_json() and hence as_javascript()
+        return ldict
 
 # -----------------------------------------------------------------------------
 class LayerFeature(Layer):
@@ -8563,7 +8608,7 @@ class LayerFeature(Layer):
         def as_dict(self):
             if self.skip:
                 # Skip layer
-                return
+                return None
             # @ToDo: Option to force all filters via POST?
             if self.aggregate:
                 # id is used for url_format
@@ -8795,7 +8840,9 @@ class LayerGoogle(Layer):
 
     # -------------------------------------------------------------------------
     def as_dict(self, options=None):
+
         sublayers = self.sublayers
+
         if sublayers:
             T = current.T
             spherical_mercator = (Projection().epsg == 900913)
@@ -8877,9 +8924,11 @@ class LayerGoogle(Layer):
             if options:
                 # Used by Map._setup()
                 options[self.dictname] = ldict
-            else:
-                # Used by as_json() and hence as_javascript()
-                return ldict
+        else:
+            ldict = None
+
+        # Used by as_json() and hence as_javascript()
+        return ldict
 
 # -----------------------------------------------------------------------------
 class LayerGPX(Layer):
@@ -8930,18 +8979,22 @@ class LayerJS(Layer):
 
     # -------------------------------------------------------------------------
     def as_dict(self, options=None):
+
+        sublayer_dicts = []
+
         sublayers = self.sublayers
         if sublayers:
-            sublayer_dicts = []
             append = sublayer_dicts.append
             for sublayer in sublayers:
                 append(sublayer.code)
             if options:
                 # Used by Map._setup()
                 options[self.dictname] = sublayer_dicts
-            else:
-                # Used by as_json() and hence as_javascript()
-                return sublayer_dicts
+        else:
+            sublayer_dicts = []
+
+        # Used by as_json() and hence as_javascript()
+        return sublayer_dicts
 
 # -----------------------------------------------------------------------------
 class LayerKML(Layer):
@@ -9138,6 +9191,7 @@ class LayerOpenWeatherMap(Layer):
 
     # -------------------------------------------------------------------------
     def as_dict(self, options=None):
+
         sublayers = self.sublayers
         if sublayers:
             apikey = current.deployment_settings.get_gis_api_openweathermap()
@@ -9158,9 +9212,11 @@ class LayerOpenWeatherMap(Layer):
             if options:
                 # Used by Map._setup()
                 options[self.dictname] = ldict
-            else:
-                # Used by as_json() and hence as_javascript()
-                return ldict
+        else:
+            ldict = None
+
+        # Used by as_json() and hence as_javascript()
+        return ldict
 
 # -----------------------------------------------------------------------------
 class LayerShapefile(Layer):
@@ -9702,7 +9758,7 @@ class Style(object):
                 # Native JSON
                 try:
                     style.style = json.loads(style.style)
-                except:
+                except JSONERRORS:
                     current.log.error("Unable to decode Style: %s" % style.style)
                     style.style = None
             output.style = style.style
@@ -9813,7 +9869,6 @@ class S3Map(S3Method):
                method = "map",
                widget_id = None,
                visible = True,
-               callback = None,
                **attr):
         """
             Render a Map widget suitable for use in an S3Filter-based page
@@ -9822,10 +9877,23 @@ class S3Map(S3Method):
             @param r: the S3Request
             @param method: the widget method
             @param widget_id: the widget ID
-            @param callback: None by default in case DIV is hidden
             @param visible: whether the widget is initially visible
             @param attr: controller attributes
+
+            @keyword callback: callback to show the map:
+                        - "DEFAULT".............call show_map as soon as all
+                                                components are loaded and ready
+                                                (= use default show_map callback)
+                        - custom JavaScript.....invoked as soon as all components
+                                                are loaded an ready
+                        - None..................only load the components, map
+                                                will be shown by a later explicit
+                                                call to show_map (this is the default
+                                                here since the map DIV would typically
+                                                be hidden initially, e.g. summary tab)
         """
+
+        callback = attr.get("callback")
 
         if not widget_id:
             widget_id = "default_map"
@@ -9959,8 +10027,6 @@ class S3ExportPOI(S3Method):
         if not current_lx: # or not current_lx.level:
             # Must have a location
             r.error(400, current.ERROR.BAD_REQUEST)
-        else:
-            self.lx = current_lx.id
 
         tables = []
         # Parse the ?resources= parameter
@@ -9971,7 +10037,9 @@ class S3ExportPOI(S3Method):
             resources = current.deployment_settings.get_gis_poi_export_resources()
         if not isinstance(resources, list):
             resources = [resources]
-        [tables.extend(t.split(",")) for t in resources]
+
+        for t in resources:
+            tables.extend(t.split(","))
 
         # Parse the ?update_feed= parameter
         update_feed = True
@@ -9991,8 +10059,10 @@ class S3ExportPOI(S3Method):
 
         # Export a combined tree
         tree = self.export_combined_tree(tables,
-                                         msince=msince,
-                                         update_feed=update_feed)
+                                         msince = msince,
+                                         update_feed = update_feed,
+                                         lx = current_lx.id,
+                                         )
 
         xml = current.xml
 
@@ -10026,7 +10096,7 @@ class S3ExportPOI(S3Method):
         return output
 
     # -------------------------------------------------------------------------
-    def export_combined_tree(self, tables, msince=None, update_feed=True):
+    def export_combined_tree(self, tables, msince=None, update_feed=True, lx=None):
         """
             Export a combined tree of all records in tables, which
             are in Lx, and have been updated since msince.
@@ -10035,13 +10105,12 @@ class S3ExportPOI(S3Method):
             @param msince: minimum modified_on datetime, "auto" for
                            automatic from feed data, None to turn it off
             @param update_feed: update the last_update datetime in the feed
+            @param lx: the id of the current Lx
         """
 
         db = current.db
         s3db = current.s3db
         ftable = s3db.gis_poi_feed
-
-        lx = self.lx
 
         elements = []
         for tablename in tables:
@@ -10184,7 +10253,7 @@ class S3ImportPOI(S3Method):
                 fields.insert(3, field)
 
             from .s3utils import s3_mark_required
-            labels, required = s3_mark_required(fields, ["file", "location_id"])
+            labels = s3_mark_required(fields, ["file", "location_id"])[0]
             s3.has_required = True
 
             form = SQLFORM.factory(*fields,
@@ -10203,7 +10272,7 @@ class S3ImportPOI(S3Method):
             if form.accepts(request.vars, current.session):
                 form_vars = form.vars
                 if form_vars.file != "":
-                    File = open(uploadpath + form_vars.file, "r")
+                    osm_file = open(uploadpath + form_vars.file, "r")
                 else:
                     # Create .poly file
                     if r.record:
@@ -10259,8 +10328,8 @@ class S3ImportPOI(S3Method):
                             current.session.error = T("OSM file generation failed!")
                             redirect(URL(args=r.id))
                     try:
-                        File = open(filename, "r")
-                    except:
+                        osm_file = open(filename, "r")
+                    except IOError:
                         current.session.error = T("Cannot open created OSM file!")
                         redirect(URL(args=r.id))
 
@@ -10268,7 +10337,7 @@ class S3ImportPOI(S3Method):
                                           "osm", "import.xsl")
                 ignore_errors = form_vars.get("ignore_errors", None)
                 xml = current.xml
-                tree = xml.parse(File)
+                tree = xml.parse(osm_file)
                 define_resource = s3db.resource
                 response.error = ""
                 import_count = 0
