@@ -1412,7 +1412,7 @@ class S3AddPersonWidget(FormWidget):
         # Create new person record
         person_id = ptable.insert(**person)
         person_record = {"id": person_id}
-        s3db.update_super(ptable, person_record)
+        update_super(ptable, person_record)
 
         if not person_id:
             return (None, T("Could not add person record"))
@@ -1426,7 +1426,7 @@ class S3AddPersonWidget(FormWidget):
             human_resource_id = htable.insert(person_id = person_id,
                                               organisation_id = data_get("organisation_id"),
                                               )
-            s3db.update_super(ptable, {"id": human_resource_id})
+            update_super(ptable, {"id": human_resource_id})
             set_record_owner(htable, human_resource_id)
 
         # Update ownership & realm
