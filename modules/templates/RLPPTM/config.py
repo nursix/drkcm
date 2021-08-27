@@ -26,8 +26,6 @@ GOVERNMENT = "Regierungsstellen"
 
 ISSUER_ORG_TYPE = "pe_id$pe_id:org_organisation.org_organisation_organisation_type.organisation_type_id"
 
-ALLOWED_FORMATS = ("html", "iframe", "popup", "aadata", "json")
-
 # =============================================================================
 def config(settings):
 
@@ -159,10 +157,11 @@ def config(settings):
     settings.pr.availability_json_rules = True
 
     # -------------------------------------------------------------------------
-    settings.hrm.record_tab = False
+    settings.hrm.record_tab = True
     settings.hrm.staff_experience = False
+    settings.hrm.staff_departments = False
     settings.hrm.teams = False
-    settings.hrm.use_address = False
+    settings.hrm.use_address = True
     settings.hrm.use_id = False
     settings.hrm.use_skills = False
     settings.hrm.use_certificates = False
@@ -244,14 +243,25 @@ def config(settings):
         #    # a OU hierarchy (default ok)
         #    realm_entity = 0
         #
-        #elif tablename == "pr_person":
-        #
-        #    # Persons are owned by the org employing them (default ok)
-        #    realm_entity = 0
-        #
-        if tablename in ("disease_case_diagnostics",
-                         "disease_testing_report",
-                         ):
+        if tablename == "pr_person":
+
+            # Human resources belong to their org's realm
+            htable = s3db.hrm_human_resource
+            otable = s3db.org_organisation
+
+            left = otable.on(otable.id == htable.organisation_id)
+            query = (htable.person_id == row.id) & \
+                    (htable.deleted == False)
+            org = db(query).select(otable.pe_id,
+                                   left = left,
+                                   limitby = (0, 1),
+                                   ).first()
+            if org:
+                realm_entity = org.pe_id
+
+        elif tablename in ("disease_case_diagnostics",
+                           "disease_testing_report",
+                           ):
             # Test results / daily reports inherit realm-entity
             # from the testing site
             table = s3db.table(tablename)
@@ -330,6 +340,37 @@ def config(settings):
                                        ).first()
             if program:
                 realm_entity = program.realm_entity
+
+        elif tablename in ("pr_person_details",
+                           "hrm_human_resource",
+                           ):
+
+            # Inherit from person via person_id
+            table = s3db.table(tablename)
+            ptable = s3db.pr_person
+            query = (table._id == row.id) & \
+                    (ptable.id == table.person_id)
+            person = db(query).select(ptable.realm_entity,
+                                      limitby = (0, 1),
+                                      ).first()
+            if person:
+                realm_entity = person.realm_entity
+
+        elif tablename in ("pr_address",
+                           "pr_contact",
+                           "pr_contact_emergency",
+                           ):
+
+            # Inherit from person via PE
+            table = s3db.table(tablename)
+            ptable = s3db.pr_person
+            query = (table._id == row.id) & \
+                    (ptable.pe_id == table.pe_id)
+            person = db(query).select(ptable.realm_entity,
+                                      limitby = (0, 1),
+                                      ).first()
+            if person:
+                realm_entity = person.realm_entity
 
         elif tablename in ("inv_send", "inv_recv"):
             # Shipments inherit realm-entity from the sending/receiving site
@@ -1111,6 +1152,7 @@ def config(settings):
             # Restrict data formats
             settings.ui.export_formats = None
             representation = r.representation
+            ALLOWED_FORMATS = ("html", "iframe", "popup", "aadata", "json")
             if representation not in ALLOWED_FORMATS and \
                not(r.record and representation == "card"):
                 r.error(403, current.ERROR.NOT_PERMITTED)
@@ -2140,6 +2182,107 @@ def config(settings):
     settings.customise_fin_voucher_invoice_controller = customise_fin_voucher_invoice_controller
 
     # -------------------------------------------------------------------------
+    def human_resource_onvalidation(form):
+
+        db = current.db
+        s3db = current.s3db
+
+        form_vars = form.vars
+
+        person_id = form_vars.get("person_id")
+        if person_id:
+            table = s3db.hrm_human_resource
+            query = (table.person_id == person_id) & \
+                    (table.deleted == False)
+            duplicate = db(query).select(table.id,
+                                         limitby = (0, 1),
+                                         ).first()
+            if duplicate:
+                form.errors.person_id = current.T("Person already has a staff record")
+
+    # -------------------------------------------------------------------------
+    def customise_hrm_human_resource_resource(r, tablename):
+
+        s3db = current.s3db
+
+        s3db.add_custom_callback("hrm_human_resource",
+                                 "onvalidation",
+                                 human_resource_onvalidation,
+                                 )
+
+    settings.customise_hrm_human_resource_resource = customise_hrm_human_resource_resource
+
+    # -------------------------------------------------------------------------
+    def customise_hrm_human_resource_controller(**attr):
+
+        s3 = current.response.s3
+
+        # Custom prep
+        standard_prep = s3.prep
+        def prep(r):
+            # Restrict data formats
+            from .helpers import restrict_data_formats
+            restrict_data_formats(r)
+
+            # Call standard prep
+            result = standard_prep(r) if callable(standard_prep) else True
+
+            resource = r.resource
+
+            is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
+
+            phone_label = settings.get_ui_label_mobile_phone()
+            list_fields = ["organisation_id",
+                           "person_id",
+                           "job_title_id",
+                           "site_id",
+                           (T("Email"), "person_id$email.value"),
+                           (phone_label, "person_id$phone.value"),
+                           "status",
+                           ]
+
+            from s3 import S3OptionsFilter, S3TextFilter, s3_get_filter_opts
+            filter_widgets = [
+                S3TextFilter(["person_id$first_name",
+                              "person_id$last_name",
+                              "organisation_id$name",
+                              "person_id$email.value",
+                              "person_id$phone.value",
+                              ],
+                             label = T("Search"),
+                             ),
+                S3OptionsFilter("job_title_id",
+                                options = lambda: s3_get_filter_opts("hrm_job_title"),
+                                hidden = True,
+                                ),
+                ]
+            if is_org_group_admin:
+                filter_widgets[1:1] = [
+                    S3OptionsFilter(
+                        "organisation_id$group__link.group_id",
+                        label = T("Organization Group"),
+                        options = lambda: s3_get_filter_opts("org_group"),
+                        ),
+                    S3OptionsFilter(
+                        "organisation_id$organisation_type__link.organisation_type_id",
+                        label = T("Organization Type"),
+                        options = lambda: s3_get_filter_opts("org_organisation_type"),
+                        hidden = True,
+                        ),
+                    ]
+
+            resource.configure(filter_widgets = filter_widgets,
+                               list_fields = list_fields,
+                               )
+
+            return result
+        s3.prep = prep
+
+        return attr
+
+    settings.customise_hrm_human_resource_controller = customise_hrm_human_resource_controller
+
+    # -------------------------------------------------------------------------
     def add_org_tags():
         """
             Add organisation tags as filtered components,
@@ -2397,6 +2540,21 @@ def config(settings):
                     ctable = r.component.table
                     field = ctable.obsolete
                     field.readable = field.writable = True
+
+            elif r.component_name == "human_resource":
+
+                phone_label = settings.get_ui_label_mobile_phone()
+                list_fields = ["organisation_id",
+                               "person_id",
+                               "job_title_id",
+                               "site_id",
+                               (T("Email"), "person_id$email.value"),
+                               (phone_label, "person_id$phone.value"),
+                               "status",
+                               ]
+
+                r.component.configure(list_fields = list_fields,
+                                      )
 
             return result
         s3.prep = prep
@@ -2990,12 +3148,8 @@ def config(settings):
         def prep(r):
 
             # Restrict data formats
-            allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
-            if r.method == "info":
-                allowed += ("json", )
-            settings.ui.export_formats = ("pdf", "xls")
-            if r.representation not in allowed:
-                r.error(403, current.ERROR.NOT_PERMITTED)
+            from .helpers import restrict_data_formats
+            restrict_data_formats(r)
 
             # Call standard prep
             result = standard_prep(r) if callable(standard_prep) else True
@@ -3232,6 +3386,22 @@ def config(settings):
     settings.customise_project_project_controller = customise_project_project_controller
 
     # -------------------------------------------------------------------------
+    def customise_pr_person_resource(r, tablename):
+
+        s3db = current.s3db
+
+        # Configure components to inherit realm_entity from person
+        s3db.configure("pr_person",
+                       realm_components = ("human_resource",
+                                           "person_details",
+                                           "contact",
+                                           "address",
+                                           ),
+                       )
+
+    settings.customise_pr_person_resource = customise_pr_person_resource
+
+    # -------------------------------------------------------------------------
     def customise_pr_person_controller(**attr):
 
         s3 = current.response.s3
@@ -3239,6 +3409,10 @@ def config(settings):
         # Custom prep
         standard_prep = s3.prep
         def prep(r):
+            # Restrict data formats
+            from .helpers import restrict_data_formats
+            restrict_data_formats(r)
+
             # Call standard prep
             result = standard_prep(r) if callable(standard_prep) else True
 
@@ -3250,26 +3424,58 @@ def config(settings):
             keys = StringTemplateParser.keys(settings.get_pr_name_format())
             name_fields = [fn for fn in keys if fn in NAMES]
 
-            if r.controller == "default":
-                # Personal profile (default/person)
-                if not r.component:
+            if r.controller in ("default", "hrm") and not r.component:
+                # Personal profile (default/person) or staff
 
-                    # Last name is required
-                    table = r.resource.table
-                    table.last_name.requires = IS_NOT_EMPTY()
+                # Last name is required
+                table = r.resource.table
+                table.last_name.requires = IS_NOT_EMPTY()
 
-                    # Custom Form
-                    crud_fields = name_fields
-                    r.resource.configure(crud_form = S3SQLCustomForm(*crud_fields),
-                                         deletable = False,
-                                         )
+                # Custom Form
+                crud_fields = name_fields + ["date_of_birth",
+                                             "gender",
+                                             ]
+                r.resource.configure(crud_form = S3SQLCustomForm(*crud_fields),
+                                     deletable = False,
+                                     )
+
+            if r.component_name == "address":
+                ctable = r.component.table
+
+                # Configure location selector and geocoder
+                from s3 import S3LocationSelector
+                field = ctable.location_id
+                field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                                  required_levels = ("L1", "L2", "L3"),
+                                                  show_address = True,
+                                                  show_postcode = True,
+                                                  show_map = True,
+                                                  )
+                s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
+
+            elif r.component_name == "human_resource":
+
+                phone_label = settings.get_ui_label_mobile_phone()
+                r.component.configure(list_fields= ["job_title_id",
+                                                    "site_id",
+                                                    (T("Email"), "person_id$email.value"),
+                                                    (phone_label, "person_id$phone.value"),
+                                                    "status",
+                                                    ],
+                                      deletable = False,
+                                      )
+                s3.crud_strings["hrm_human_resource"]["label_list_button"] = T("List Staff Records")
+
             return result
         s3.prep = prep
 
         # Custom rheader
-        if current.request.controller == "default":
-            from .rheaders import rlpptm_profile_rheader
+        from .rheaders import rlpptm_profile_rheader, rlpptm_hr_rheader
+        controller = current.request.controller
+        if controller == "default":
             attr["rheader"] = rlpptm_profile_rheader
+        elif controller == "hrm":
+            attr["rheader"] = rlpptm_hr_rheader
 
         return attr
 

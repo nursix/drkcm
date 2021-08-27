@@ -355,7 +355,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
             M("Create Organization", m="create", restrict="ORG_GROUP_ADMIN"),
             )
 
-        return M(c="org")(
+        return M(c=("org", "hrm"))(
                     org_menu,
                     M("Facilities", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
                         M("Test Stations to review",
@@ -370,13 +370,16 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Organizations", f="organisation", m="report"),
                         M("Facilities", f="facility", m="report"),
                         ),
-                    M("Staff", c="hrm", f="staff", restrict=("ORG_ADMIN", "ORG_GROUP_ADMIN")),
+                    M("Staff", c="hrm", f=("staff", "person"),
+                      restrict=("ORG_ADMIN", "ORG_GROUP_ADMIN"),
+                      ),
                     M("Administration", restrict=("ADMIN"))(
                         M("Facility Types", f="facility_type"),
                         M("Organization Types", f="organisation_type"),
                         M("Services", f="service"),
                         M("Service Modes", f="service_mode"),
                         M("Booking Modes", f="booking_mode"),
+                        M("Job Titles", c="hrm", f="job_title"),
                         ),
                     )
 

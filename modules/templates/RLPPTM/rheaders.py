@@ -8,7 +8,7 @@
 
 from gluon import current, A, URL
 
-from s3 import S3ResourceHeader, s3_rheader_resource
+from s3 import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
 # =============================================================================
 def rlpptm_fin_rheader(r, tabs=None):
@@ -505,6 +505,42 @@ def rlpptm_profile_rheader(r, tabs=None):
                                                          table = resource.table,
                                                          record = record,
                                                          )
+    return rheader
+
+# =============================================================================
+def rlpptm_hr_rheader(r, tabs=None):
+    """ Custom rheader for hrm/person """
+
+    if r.representation != "html":
+        # Resource headers only used in interactive views
+        return None
+
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
+
+    rheader = None
+    rheader_fields = []
+
+    if record:
+
+        T = current.T
+
+        if tablename == "pr_person":
+
+            tabs = [(T("Person Details"), None),
+                    (T("Contact Information"), "contacts"),
+                    (T("Address"), "address"),
+                    (T("Staff Record"), "human_resource"),
+                    ]
+            rheader_fields = []
+            rheader_title = s3_fullname
+
+            rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+            rheader = rheader(r, table=resource.table, record=record)
+
     return rheader
 
 # END =========================================================================

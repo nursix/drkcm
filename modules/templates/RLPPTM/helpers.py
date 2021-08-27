@@ -268,6 +268,26 @@ def get_role_hrs(role_uid, pe_id=None, organisation_id=None):
     return hr_ids if hr_ids else None
 
 # -----------------------------------------------------------------------------
+def restrict_data_formats(r):
+    """
+        Restrict data exports (prevent S3XML/S3JSON of records)
+
+        @param r: the S3Request
+    """
+
+    settings = current.deployment_settings
+    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
+    if r.record:
+        allowed += ("card",)
+    if r.method in ("report", "timeplot", "filter"):
+        allowed += ("json",)
+    if r.method == "options":
+        allowed += ("s3json",)
+    settings.ui.export_formats = ("pdf", "xls")
+    if r.representation not in allowed:
+        r.error(403, current.ERROR.NOT_PERMITTED)
+
+# -----------------------------------------------------------------------------
 def assign_pending_invoices(billing_id, organisation_id=None, invoice_id=None):
     """
         Auto-assign pending invoices in a billing to accountants,
