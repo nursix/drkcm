@@ -342,7 +342,6 @@ def config(settings):
                 realm_entity = program.realm_entity
 
         elif tablename in ("pr_person_details",
-                           "hrm_human_resource",
                            ):
 
             # Inherit from person via person_id
@@ -2215,6 +2214,8 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_hrm_human_resource_controller(**attr):
 
+        s3db = current.s3db
+
         s3 = current.response.s3
 
         # Custom prep
@@ -2230,6 +2231,14 @@ def config(settings):
             resource = r.resource
 
             is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
+
+            # Configure components to inherit realm_entity from person
+            s3db.configure("pr_person",
+                           realm_components = ("person_details",
+                                               "contact",
+                                               "address",
+                                               ),
+                           )
 
             phone_label = settings.get_ui_label_mobile_phone()
             list_fields = ["organisation_id",
@@ -3392,8 +3401,7 @@ def config(settings):
 
         # Configure components to inherit realm_entity from person
         s3db.configure("pr_person",
-                       realm_components = ("human_resource",
-                                           "person_details",
+                       realm_components = ("person_details",
                                            "contact",
                                            "address",
                                            ),

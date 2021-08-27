@@ -1406,8 +1406,13 @@ class S3AddPersonWidget(FormWidget):
 
         # Onvalidation? (doesn't currently exist)
 
+        set_record_owner = current.auth.s3_set_record_owner
+        update_super = s3db.update_super
+
         # Create new person record
         person_id = ptable.insert(**person)
+        person_record = {"id": person_id}
+        s3db.update_super(ptable, person_record)
 
         if not person_id:
             return (None, T("Could not add person record"))
@@ -1421,18 +1426,16 @@ class S3AddPersonWidget(FormWidget):
             human_resource_id = htable.insert(person_id = person_id,
                                               organisation_id = data_get("organisation_id"),
                                               )
-
-        # Update the super-entities
-        record = {"id": person_id}
-        s3db.update_super(ptable, record)
+            s3db.update_super(ptable, {"id": human_resource_id})
+            set_record_owner(htable, human_resource_id)
 
         # Update ownership & realm
-        current.auth.s3_set_record_owner(ptable, person_id)
+        set_record_owner(ptable, person_id)
 
         # Onaccept? (not relevant for this case)
 
         # Read the created pe_id
-        pe_id = record.get("pe_id")
+        pe_id = person_record.get("pe_id")
         if not pe_id:
             return (None, T("Could not add person details"))
 

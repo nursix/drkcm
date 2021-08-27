@@ -6505,7 +6505,11 @@ def hrm_human_resource_onaccept(form):
         if entity:
             auth.set_realm_entity(ptable, person,
                                   entity = entity,
-                                  force_update = True)
+                                  force_update = True,
+                                  )
+    else:
+        # Always update the person record's realm
+        auth.set_realm_entity(ptable, person, force_update=True)
 
     tracker = S3Tracker()
     if person_id:
