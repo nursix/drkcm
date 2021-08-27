@@ -965,7 +965,7 @@ class S3PDFTable(object):
         Class to build a table that can then be placed in a pdf document
 
         The table will be formatted so that is fits on the page. This class
-        doesn't need to be called directly. Rather see S3PDF.addTable()
+        doesn't need to be called directly. Rather see S3RL_PDF.get_resource_flowable
     """
 
     MIN_COL_WIDTH = 200

@@ -38,7 +38,6 @@ import s3db.inv
 import s3db.irs
 import s3db.member
 import s3db.msg
-import s3db.ocr
 import s3db.org
 import s3db.patient
 import s3db.po
@@ -91,10 +90,7 @@ s3db.configure("auth_membership",
                )
 
 # =============================================================================
-# Make available for S3Models
-# - legacy for backwards compatibility w docs & custom modules
-from s3.s3fields import S3ReusableField, s3_comments, s3_meta_fields
-s3.comments = s3_comments
-s3.meta_fields = s3_meta_fields
+# Make available for controllers
+from s3 import S3ReusableField, s3_comments, s3_meta_fields
 
 # END =========================================================================

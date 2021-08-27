@@ -216,9 +216,6 @@ class S3Importer(S3Method):
         except (KeyError, AttributeError):
             self.uploadTitle = T("Import")
 
-        # @todo: correct to switch this off for the whole session?
-        current.session.s3.ocr_enabled = False
-
         # Reset all errors/warnings
         self.error = None
         self.warning = None

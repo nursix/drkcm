@@ -481,11 +481,6 @@ class S3CRUD(S3Method):
             else:
                 session.confirmation = current.T("Data uploaded")
 
-        elif representation == "pdf":
-            from .s3pdf import S3PDF
-            exporter = S3PDF()
-            return exporter(r, **attr)
-
         elif representation == "url":
             results = self.import_url(r)
             return results

@@ -407,12 +407,6 @@ def config(settings):
         #    restricted = True,
         #    module_type = None,
         #)),
-        #("ocr", Storage(
-        #   name_nice = T("Optical Character Recognition"),
-        #   #description = "Optical Character Recognition for reading the scanned handwritten paper forms.",
-        #   restricted = False,
-        #   module_type = None,
-        #)),
         #("work", Storage(
         #   name_nice = T("Jobs"),
         #   #description = "Simple Volunteer Jobs Management",

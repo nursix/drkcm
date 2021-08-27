@@ -242,7 +242,7 @@ def post():
                     modules = {}
                     _modules = current.deployment_settings.modules
                     for module in _modules:
-                        if module in ("appadmin", "errors", "ocr"):
+                        if module in ("appadmin", "errors"):
                             continue
                         modules[module] = _modules[module].get("name_nice")
                     s3db.cms_post_module.field.requires = \

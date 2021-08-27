@@ -283,7 +283,6 @@ def kit_export_pdf():
     """
         Export a list of Kits in Adobe PDF format
         Uses Geraldo SubReport
-        @ToDo: Use S3PDF Method
     """
     try:
         from reportlab.lib.units import cm
@@ -452,7 +451,6 @@ def item_export_pdf():
     """
         Export a list of Items in Adobe PDF format
         Uses Geraldo Grouping Report
-        @ToDo: Use S3PDF Method
     """
     try:
         from reportlab.lib.units import cm

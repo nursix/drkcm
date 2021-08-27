@@ -2,7 +2,6 @@
 <div class='row'>
  <div class='small-12 columns'>
   {{try:}}{{if title:}}{{=H2(title)}}{{pass}}{{except:}}{{pass}}
-  {{#try:=s3db.ocr_buttons(r)except:pass}}
  </div>
 </div>
 {{try:}}{{rheader=rheader}}

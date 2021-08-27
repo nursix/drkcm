@@ -229,19 +229,14 @@ def s3_rest_controller(prefix=None, resourcename=None, **attr):
     set_handler("timeplot", s3base.S3TimePlot)
     set_handler("xform", s3base.S3XForms)
 
-    # Don't load S3PDF unless needed (very slow import with Reportlab)
-    method = r.method
-    if method == "import" and r.representation == "pdf":
-        from s3.s3pdf import S3PDF
-        set_handler("import", S3PDF(),
-                    http = ("GET", "POST"),
-                    representation = "pdf"
-                    )
-
     # Plugin OrgRoleManager when appropriate
     s3base.S3OrgRoleManager.set_method(r)
 
-    # List of methods which can have custom action buttons
+    # List of methods rendering datatables with default action buttons
+    dt_methods = (None, "datatable", "datatable_f", "summary")
+
+    # List of methods rendering datatables with custom action buttons,
+    # => for these, s3.actions must not be touched, see below
     # (defining here allows postp to add a custom method to the list)
     s3.action_methods = ("import",
                          "review",
@@ -253,14 +248,8 @@ def s3_rest_controller(prefix=None, resourcename=None, **attr):
     # Execute the request
     output = r(**attr)
 
-    if isinstance(output, dict) and \
-       method in (None,
-                  "report",
-                  "search",
-                  "datatable",
-                  "datatable_f",
-                  "summary",
-                  ):
+    method = r.method
+    if isinstance(output, dict) and method in dt_methods:
 
         if s3.actions is None:
 

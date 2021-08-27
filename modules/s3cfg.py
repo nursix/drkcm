@@ -2076,21 +2076,6 @@ class S3Config(Storage):
         language = current.session.s3.language
         return self.__lazy("L10n", "pdf_export_font", self.fonts.get(language))
 
-    def get_pdf_excluded_fields(self, resourcename):
-        """
-            Optical Character Recognition (OCR)
-        """
-
-        excluded_fields = self.pdf.get("excluded_fields")
-        if excluded_fields is None:
-            excluded_fields = {"hms_hospital": ["hrm_human_resource",
-                                                ],
-                               "pr_group": ["pr_group_membership",
-                                            ],
-                               }
-
-        return excluded_fields.get(resourcename, [])
-
     def get_pdf_max_rows(self):
         """
             Maximum number of records in a single PDF table/list export

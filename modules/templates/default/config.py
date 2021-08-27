@@ -1582,12 +1582,6 @@ def config(settings):
         #    #description = "Used by Assess",
         #    module_type = None,
         #)),
-        #("ocr", Storage(
-        #   name_nice = T("Optical Character Recognition"),
-        #   #description = "Optical Character Recognition for reading the scanned handwritten paper forms.",
-        #   restricted = False,
-        #   module_type = None,
-        #)),
     ])
 
 # END =========================================================================

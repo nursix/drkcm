@@ -116,9 +116,6 @@ from .s3import import *
 # De-duplication
 from .s3merge import S3Merge
 
-# Don't load S3PDF unless needed (very slow import with reportlab)
-#from .s3pdf import S3PDF
-
 # Advanced Framework ==========================================================
 #
 # Tracking System
