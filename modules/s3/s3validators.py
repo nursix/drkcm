@@ -1471,7 +1471,7 @@ class IS_PROCESSED_IMAGE(Validator):
         # the update form.
         # NOTE: A FieldStorage with data evaluates as False (odd!)
         uploaded_image = post_vars.get(self.field_name)
-        if uploaded_image not in (b"", None): # Py 3.x it's b"", which is equivalent to "" in Py 2.x
+        if uploaded_image not in (b"", None):
             return uploaded_image
 
         cropped_image = post_vars.get("imagecrop-data")
@@ -1485,9 +1485,9 @@ class IS_PROCESSED_IMAGE(Validator):
         if cropped_image:
             import base64
 
-            metadata, cropped_image = cropped_image.split(",")
+            metadata, cropped_image = cropped_image.rsplit(",", 1)
             #filename, datatype, enctype = metadata.split(";")
-            filename = metadata.split(";", 1)[0]
+            filename = metadata.rsplit(";", 2)[0]
 
             f = Storage()
             f.filename = uuid4().hex + filename
