@@ -242,6 +242,12 @@ class DCC(object):
             raise ValueError("Certificate data lacking issuer ID")
 
         data = row.payload
+        if data is None:
+            if row.status == "EXPIRED":
+                msg = "Certificate data have expired"
+            else:
+                msg = "Certificate data have been anonymized"
+            raise ValueError(msg)
 
         # Create the instance and fill it with data
         instance = cls(instance_id)
