@@ -2239,16 +2239,38 @@ def config(settings):
                                                "address",
                                                ),
                            )
-
             phone_label = settings.get_ui_label_mobile_phone()
-            list_fields = ["organisation_id",
-                           "person_id",
-                           "job_title_id",
-                           "site_id",
-                           (T("Email"), "person_id$email.value"),
-                           (phone_label, "person_id$phone.value"),
-                           "status",
-                           ]
+            if r.representation == "xls":
+                s3db.add_components("pr_pentity",
+                                    pr_address = ({"name": "home_address",
+                                                   "joinby": "pe_id",
+                                                   "filterby": {"type": 1},
+                                                   "multiple": False,
+                                                   }),
+                                    )
+                list_fields = ["organisation_id",
+                               "person_id",
+                               "job_title_id",
+                               "site_id",
+                               (T("Email"), "person_id$email.value"),
+                               (phone_label, "person_id$phone.value"),
+                               "person_id$home_address.location_id$addr_street",
+                               "person_id$home_address.location_id$L4",
+                               "person_id$home_address.location_id$L3",
+                               "person_id$home_address.location_id$addr_postcode",
+                               "person_id$home_address.location_id$L2",
+                               "person_id$home_address.location_id$L1",
+                               "status",
+                               ]
+            else:
+                list_fields = ["organisation_id",
+                               "person_id",
+                               "job_title_id",
+                               "site_id",
+                               (T("Email"), "person_id$email.value"),
+                               (phone_label, "person_id$phone.value"),
+                               "status",
+                               ]
 
             from s3 import S3OptionsFilter, S3TextFilter, s3_get_filter_opts
             filter_widgets = [
