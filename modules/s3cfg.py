@@ -1058,8 +1058,13 @@ class S3Config(Storage):
         """
             Allow testing of Eden using EdenTest
         """
-
         return self.base.get("allow_testing", True)
+
+    def get_base_models(self):
+        """
+            Import path(s) for extension models (str or list|tuple of str)
+        """
+        return self.base.get("models")
 
     def get_base_migrate(self):
         """ Whether to allow Web2Py to migrate the SQL database to the new structure """

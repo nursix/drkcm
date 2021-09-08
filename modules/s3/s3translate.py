@@ -1079,13 +1079,15 @@ class Strings(object):
             modlist.append("error")
 
         # Select dependent modules
-        models = current.models
-        for mod in modlist:
-            if hasattr(models, mod):
-                obj = getattr(models, mod)
+        mmap = current.s3db.module_map
+        for prefix in modlist:
+            modules = mmap.get(prefix)
+            if not modules:
+                continue
+            for module in modules:
                 # Currently only inv module has a depends list
-                if hasattr(obj, "depends"):
-                    for element in obj.depends:
+                if hasattr(module, "depends"):
+                    for element in module.depends:
                         if element not in modlist:
                             modlist.append(element)
 

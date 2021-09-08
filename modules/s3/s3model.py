@@ -31,6 +31,8 @@ __all__ = ("S3Model",
            #"S3DynamicModel",
            )
 
+import sys
+
 from collections import OrderedDict
 
 from gluon import current, IS_EMPTY_OR, IS_FLOAT_IN_RANGE, IS_INT_IN_RANGE, \
@@ -46,6 +48,7 @@ from .s3widgets import s3_comments_widget, s3_richtext_widget
 
 DYNAMIC_PREFIX = "s3dt"
 DEFAULT = lambda: None
+MODULE_TYPE = type(sys)
 
 # Table options that are always JSON-serializable objects,
 # and can thus be passed as-is from dynamic model "settings"
@@ -78,6 +81,7 @@ class S3Model(object):
 
         self.context = None
         self.classes = {}
+        self._module_map = None
 
         # Initialize current.model
         if not hasattr(current, "model"):
@@ -211,10 +215,56 @@ class S3Model(object):
         return None
 
     # -------------------------------------------------------------------------
+    @property
+    def module_map(self):
+        """
+            Map of modules by prefix, for faster access (lazy property)
+        """
+
+        mmap = self._module_map
+        if mmap is None:
+
+            mmap = self._module_map = {}
+
+            # Package locations
+            packages = ["s3db"]
+            models = current.deployment_settings.get_base_models()
+            if models:
+                if isinstance(models, str):
+                    models = [models]
+                if isinstance(models, (tuple, list)):
+                    for name in models:
+                        if isinstance(name, str) and name not in packages:
+                            packages.append(name)
+
+            # Map all modules
+            for package in packages:
+                try:
+                    p = __import__(package, fromlist=("DEFAULT",))
+                except ImportError:
+                    current.log.error("S3Model cannot import package %s" % package)
+                    continue
+
+                for k, v in p.__dict__.items():
+                    if type(v) is MODULE_TYPE:
+                        if k not in mmap:
+                            mmap[k] = [v]
+                        else:
+                            mmap[k].append(v)
+        return mmap
+
+    # -------------------------------------------------------------------------
     @classmethod
     def table(cls, tablename, default=None, db_only=False):
         """
-            Helper function to load a table definition by its name
+            Helper function to load a table or other named object from
+            models
+
+            @param tablename: the table name (or name of the object)
+            @param default: the default value to return if not found,
+                            - if default is an exception instance, it will
+                              be raised instead of returned
+            @param db_only: find only tables, not other objects
         """
 
         s3 = current.response.s3
@@ -222,14 +272,12 @@ class S3Model(object):
             s3 = current.response.s3 = Storage()
 
         s3db = current.s3db
-        models = current.models
 
         if not db_only:
             if tablename in s3:
                 return s3[tablename]
             elif s3db is not None and tablename in s3db.classes:
-                prefix, name = s3db.classes[tablename]
-                return models.__dict__[prefix].__dict__[name]
+                return s3db.classes[tablename].__dict__[tablename]
 
         db = current.db
 
@@ -241,40 +289,42 @@ class S3Model(object):
 
         found = None
 
-        prefix, name = tablename.split("_", 1)
+        prefix = tablename.split("_", 1)[0]
         if prefix == DYNAMIC_PREFIX:
             try:
                 found = S3DynamicModel(tablename).table
             except AttributeError:
                 pass
+        else:
+            modules = s3db.module_map.get(prefix)
+            if modules:
 
-        elif hasattr(models, prefix):
-            module = models.__dict__[prefix]
+                for module in modules:
 
-            names = module.__all__
-            s3models = module.__dict__
+                    names = module.__all__
+                    s3models = module.__dict__
 
-            if not db_only and tablename in names:
-                # A name defined at module level (e.g. a class)
-                s3db.classes[tablename] = (prefix, tablename)
-                found = s3models[tablename]
-            else:
-                # A name defined in an S3Model
-                generic = []
-                loaded = False
-                for n in names:
-                    model = s3models[n]
-                    if hasattr(model, "_s3model"):
-                        if hasattr(model, "names"):
-                            if tablename in model.names:
-                                model(prefix)
-                                loaded = True
-                                break
-                        else:
-                            generic.append(n)
-                if not loaded:
-                    for n in generic:
-                        s3models[n](prefix)
+                    if not db_only and tablename in names:
+                        # A name defined at module level (e.g. a class)
+                        s3db.classes[tablename] = module
+                        found = s3models[tablename]
+                    else:
+                        # A name defined in an S3Model
+                        generic = []
+                        loaded = False
+                        for n in names:
+                            model = s3models[n]
+                            if hasattr(model, "_s3model"):
+                                if hasattr(model, "names"):
+                                    if tablename in model.names:
+                                        model(prefix)
+                                        loaded = True
+                                        break
+                                else:
+                                    generic.append(n)
+                        if not loaded:
+                            for n in generic:
+                                s3models[n](prefix)
 
         if found:
             return found
@@ -293,71 +343,29 @@ class S3Model(object):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def get(cls, name, default=None):
+    def load(cls, prefix):
         """
-            Helper function to load a response.s3 variable from models
-        """
+            Helper function to load all S3Models in a module
 
-        s3 = current.response.s3
-        if s3 is None:
-            s3 = current.response.s3 = Storage()
-
-        if name in s3:
-            return s3[name]
-        elif "_" in name:
-            prefix = name.split("_", 1)[0]
-            models = current.models
-            if hasattr(models, prefix):
-                module = models.__dict__[prefix]
-                loaded = False
-                generic = []
-                for n in module.__all__:
-                    model = module.__dict__[n]
-                    if type(model).__name__ == "type":
-                        if loaded:
-                            continue
-                        if hasattr(model, "names"):
-                            if name in model.names:
-                                model(prefix)
-                                loaded = True
-                                generic = []
-                            else:
-                                continue
-                        else:
-                            generic.append(n)
-                    elif n.startswith("%s_" % prefix):
-                        s3[n] = model
-                for n in generic:
-                    module.__dict__[n](prefix)
-        if name in s3:
-            return s3[name]
-        elif isinstance(default, Exception):
-            raise default
-        else:
-            return default
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def load(cls, name):
-        """
-            Helper function to load a model by its name (=prefix)
+            @param prefix: the module prefix
         """
 
         s3 = current.response.s3
         if s3 is None:
             s3 = current.response.s3 = Storage()
-        models = current.models
 
-        if models is not None and hasattr(models, name):
-            module = models.__dict__[name]
+        modules = current.s3db.module_map.get(prefix)
+        if not modules:
+            return
+
+        for module in modules:
             for n in module.__all__:
                 model = module.__dict__[n]
                 if type(model).__name__ == "type" and \
                    issubclass(model, S3Model):
-                    model(name)
-                elif n.startswith("%s_" % name):
+                    model(prefix)
+                elif n.startswith("%s_" % prefix):
                     s3[n] = model
-        return
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -372,13 +380,9 @@ class S3Model(object):
             return
         s3.load_all_models = True
 
-        models = current.models
-
         # Load models
-        if models is not None:
-            for name in models.__dict__:
-                if type(models.__dict__[name]).__name__ == "module":
-                    cls.load(name)
+        for prefix in current.s3db.module_map:
+            cls.load(prefix)
 
         # Define importer tables
         from .s3import import S3Importer, S3ImportJob
