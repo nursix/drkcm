@@ -5,6 +5,26 @@
 """
 
 # -----------------------------------------------------------------------------
+def index():
+    """
+        Module homepage
+    """
+
+    # Restore controller/function
+    c, f = request.args[:2]
+    request.controller, request.function = c, f
+
+    # Restore arguments List
+    from gluon.storage import List
+    request.args = List(request.args[2:])
+
+    # Check module is enabled
+    if not settings.has_module(c):
+        raise HTTP(404, body="Module disabled: %s" % c)
+
+    return settings.customise_home(c)
+
+# -----------------------------------------------------------------------------
 def rest():
     """
         Vanilla RESTful CRUD controller

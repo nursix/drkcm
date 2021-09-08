@@ -484,7 +484,7 @@ class S3Config(Storage):
         else:
             return attr
 
-    def customise_home(self, module, alt_function):
+    def customise_home(self, module, alt_function=None):
         """
             Allow use of a Customised module Home page
             Fallback to cms_index if not configured
