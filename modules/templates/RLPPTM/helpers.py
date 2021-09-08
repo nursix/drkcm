@@ -279,7 +279,7 @@ def restrict_data_formats(r):
     allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
     if r.record:
         allowed += ("card",)
-    if r.method in ("report", "timeplot", "filter", "lookup"):
+    if r.method in ("report", "timeplot", "filter", "lookup", "info"):
         allowed += ("json",)
     elif r.method == "options":
         allowed += ("s3json",)
