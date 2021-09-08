@@ -13,9 +13,15 @@ def rest():
     c, f = request.args[:2]
     request.args = request.args[2:]
 
-    request.controller = c
-    request.function = f
+    request.controller, request.function = c, f
 
-    return s3_rest_controller()
+    rest_controllers = settings.get_base_rest_controllers()
+    resource = rest_controllers.get((c, f))
+    if isinstance(resource, tuple) and len(resource) == 2:
+        prefix, name = resource
+    else:
+        prefix, name = c, f
+
+    return s3_rest_controller(prefix, name)
 
 # END =========================================================================

@@ -53,7 +53,7 @@ if c == "custom":
     raise HTTP(404, 'invalid controller (%s/%s)' % (c, f))
 
 rest_controllers = settings.get_base_rest_controllers()
-if (c, f) in rest_controllers:
+if rest_controllers and (c, f) in rest_controllers:
     request.args = [c, f] + request.args
     request.controller = "custom"
     request.function = "rest"
