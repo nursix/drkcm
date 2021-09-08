@@ -55,8 +55,7 @@ if c == "custom":
 rest_controllers = settings.get_base_rest_controllers()
 if rest_controllers and (c, f) in rest_controllers:
     request.args = [c, f] + request.args
-    request.controller = "custom"
-    request.function = "rest"
+    request.controller, request.function = "custom", "rest"
 
 # Set up plugins
 #from plugins import PluginLoader
