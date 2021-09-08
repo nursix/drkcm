@@ -18,6 +18,10 @@ def rest():
     from gluon.storage import List
     request.args = List(request.args[2:])
 
+    # Check module is enabled
+    if not settings.has_module(c):
+        raise HTTP(404, body="Module disabled: %s" % c)
+
     # Lookup prefix/name for REST
     rest_controllers = settings.get_base_rest_controllers()
     resource = rest_controllers.get((c, f))
