@@ -1507,12 +1507,6 @@ def config(settings):
         #   #description = "Security Management System",
         #   module_type = 10,
         #)),
-        #("work", Storage(
-        #   name_nice = T("Jobs"),
-        #   #description = "Simple Volunteer Jobs Management",
-        #   restricted = False,
-        #   module_type = None,
-        #)),
         # Deprecated: Replaced by BR
         #("dvr", Storage(
         #    name_nice = T("Beneficiary Registry"),

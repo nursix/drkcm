@@ -395,12 +395,6 @@ def config(settings):
         #    restricted = True,
         #    module_type = None,
         #)),
-        #("work", Storage(
-        #   name_nice = T("Jobs"),
-        #   #description = "Simple Volunteer Jobs Management",
-        #   restricted = False,
-        #   module_type = None,
-        #)),
     ])
 
 # END =========================================================================

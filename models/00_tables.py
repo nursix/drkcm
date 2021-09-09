@@ -55,7 +55,6 @@ if s3.debug:
     import s3db.vehicle
     import s3db.vol
     import s3db.water
-    import s3db.work
 
 # Set up current.s3db
 from s3.s3model import S3Model

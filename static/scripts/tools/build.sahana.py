@@ -473,7 +473,6 @@ def do_js(minimize,
                      "ui.sitecheckin",
                      "ui.timeplot",
                      "ui.weeklyhours",
-                     "work",
                      ):
         info("Compressing s3.%s.js" % filename)
         inputFilename = os.path.join("..", "S3", "s3.%s.js" % filename)
