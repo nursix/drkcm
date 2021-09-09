@@ -223,8 +223,6 @@ Thank you"""
                                       hms_hospital = T("Hospital"),
                                       fire_station = T("Fire Station"),
                                       dvi_morgue = T("Morgue"),
-                                      police_station = T("Police Station"),
-                                      edu_school = T("School"),
                                       transport_seaport = T("Seaport"),
                                       inv_warehouse = T("Warehouse"),
                                       )
@@ -2885,18 +2883,6 @@ Please go to %(url)s to approve this user."""
                                       limitby=(0, 1))
             if not exists:
                 add_membership(ORG_ADMIN, user_id, entity=entity)
-
-        if deployment_settings.has_module("delphi"):
-            # Add user as a participant of the default problem group
-            table = s3db.delphi_group
-            group = db(table.uuid == "DEFAULT").select(table.id,
-                                                       limitby=(0, 1)).first()
-            if group:
-                table = s3db.delphi_membership
-                table.insert(group_id = group.id,
-                             user_id = user_id,
-                             status = 3,
-                             )
 
         self.s3_link_user(user)
 

@@ -101,7 +101,6 @@ class S3DocumentLibrary(S3Model):
                                inv_recv = T("Incoming Shipment"),
                                inv_send = T("Sent Shipment"),
                                inv_warehouse = T("Warehouse"),
-                               police_station = T("Police Station"),
                                pr_group = T("Team"),
                                project_project = T("Project"),
                                project_activity = T("Project Activity"),

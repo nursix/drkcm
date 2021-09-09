@@ -18,13 +18,11 @@ if s3.debug:
     import s3db.cms
     import s3db.cr
     import s3db.dc
-    import s3db.delphi
     import s3db.deploy
     import s3db.disease
     import s3db.doc
     import s3db.dvi
     import s3db.dvr
-    import s3db.edu
     import s3db.event
     import s3db.fin
     import s3db.fire
@@ -37,7 +35,6 @@ if s3.debug:
     import s3db.msg
     import s3db.org
     import s3db.patient
-    import s3db.police
     import s3db.pr
     import s3db.proc
     import s3db.project

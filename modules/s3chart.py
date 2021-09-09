@@ -150,7 +150,6 @@ class S3Chart(object):
     def draw(self, output="xml"):
         """
             Output the chart as a PNG embedded in an IMG tag
-                - used by the Delphi module
         """
 
         fig = self.fig

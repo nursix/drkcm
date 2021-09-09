@@ -239,11 +239,12 @@ settings.import_template()
 #settings.security.policy = 7 # Organisation-ACLs
 # Enable Additional Module(s)
 #from gluon.storage import Storage
-#settings.modules["delphi"] = Storage(
-#        name_nice = T("Delphi Decision Maker"),
-#        restricted = False,
-#        module_type = 10,
-#    )
+#settings.modules["budget"] = Storage(
+#    name_nice = T("Budgeting Module"),
+#    #description = "Allows a Budget to be drawn up",
+#    restricted = True,
+#    module_type = 10
+#)
 # Disable a module which is normally used by the template
 # - NB Only templates with adaptive menus will work nicely with this!
 #del settings.modules["irs"]

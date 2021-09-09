@@ -774,28 +774,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def delphi():
-        """ DELPHI / Delphi Decision Maker """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="delphi")(
-                    M("Active Problems", f="problem")(
-                        M("Create", m="create"),
-                    ),
-                    M("Groups", f="group")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Solutions", f="solution"),
-                    #M("Administration", restrict=[ADMIN])(
-                        #M("Groups", f="group"),
-                        #M("Group Memberships", f="membership"),
-                        #M("Problems", f="problem"),
-                    #)
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def deploy():
         """ Deployments """
 
@@ -951,22 +929,6 @@ class S3OptionsMenu(object):
                     ),
                     M("Beneficiary Types", f="beneficiary_type")(
                       M("Create", m="create"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def edu():
-        """ Education Module """
-
-        return M()(
-                    M("Schools", c="edu", f="school")(
-                        M("Create", m="create"),
-                        M("Import", m="import", p="create"),
-                    ),
-                    M("School Types", c="edu", f="school_type")(
-                        M("Create", m="create"),
-                        M("Import", m="import", p="create"),
                     ),
                 )
 
@@ -1668,20 +1630,6 @@ class S3OptionsMenu(object):
                     M("Patients", f="patient")(
                         M("Create", m="create"),
                     ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def police():
-        """ Police """
-
-        return M(c="police")(
-                    M("Police Stations", f="station")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Station Types", f="station_type")(
-                    #    M("Create", m="create"),
-                    #),
                 )
 
     # -------------------------------------------------------------------------

@@ -325,12 +325,6 @@ def config(settings):
         #   module_type = 10,
         #   #access = "|DVI|",      # Only users with the DVI role can see this module in the default menu & access the controller
         #)),
-        #("edu", Storage(
-        #    name_nice = T("Schools"),
-        #    #description = "Helps to monitor status of schools",
-        #    restricted = True,
-        #    module_type = 10
-        #)),
         #("mpr", Storage(
         #   name_nice = T("Missing Person Registry"),
         #   #description = "Helps to report and search for missing persons",
@@ -366,12 +360,6 @@ def config(settings):
         #    name_nice = T("CAP"),
         #    #description = "Create & broadcast CAP alerts",
         #    restricted = True,
-        #    module_type = 10,
-        #)),
-        #("delphi", Storage(
-        #    name_nice = T("Delphi Decision Maker"),
-        #    #description = "Supports the decision making of large groups of Crisis Management Experts by helping the groups create ranked list.",
-        #    restricted = False,
         #    module_type = 10,
         #)),
         # @ToDo: Port these Assessments to the Survey module

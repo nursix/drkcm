@@ -11,13 +11,11 @@ from . import cap
 from . import cms
 from . import cr
 from . import dc
-from . import delphi
 from . import deploy
 from . import disease
 from . import doc
 from . import dvi
 from . import dvr
-from . import edu
 from . import event
 from . import fin
 from . import fire
@@ -30,7 +28,6 @@ from . import member
 from . import msg
 from . import org
 from . import patient
-from . import police
 from . import pr
 from . import proc
 from . import project
