@@ -205,8 +205,6 @@ class PRPersonEntityModel(S3Model):
                            org_group = org_group_label,
                            org_facility = T("Facility"),
                            org_office = T("Office"),
-                           #po_area = T("Recovery Outreach Area"),
-                           po_household = T("Household"),
                            police_station = T("Police Station"),
                            pr_person = T("Person"),
                            pr_forum = T("Forum"),

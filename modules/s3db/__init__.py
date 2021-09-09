@@ -30,7 +30,6 @@ from . import member
 from . import msg
 from . import org
 from . import patient
-from . import po
 from . import police
 from . import pr
 from . import proc
@@ -48,6 +47,5 @@ from . import translate
 from . import transport
 from . import vehicle
 from . import vol
-from . import vulnerability
 from . import water
 from . import work

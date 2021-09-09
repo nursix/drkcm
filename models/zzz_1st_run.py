@@ -381,13 +381,6 @@ if len(pop_list) > 0:
         s3db.stats_demographic_rebuild_all_aggregates()
         duration("Demographic Data aggregation completed", start)
 
-    if has_module("vulnerability"):
-        # Populate vulnerability_aggregate (disabled during prepop)
-        # - needs to be done after locations
-        start = datetime.datetime.now()
-        s3db.vulnerability_rebuild_all_aggregates()
-        duration("Vulnerability data aggregation completed", start)
-
     duration("\nPre-populate complete", grandTotalStart)
 
     # =========================================================================

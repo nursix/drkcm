@@ -212,7 +212,6 @@ class S3Config(Storage):
         self.tasks = Storage()
         self.transport = Storage()
         self.ui = Storage()
-        self.vulnerability = Storage()
         self.xforms = Storage()
 
         # Lazy property
@@ -5998,12 +5997,6 @@ class S3Config(Storage):
             - function(prefix, site_id, field)
         """
         return self.supply.get("shipping_code")
-
-    # -------------------------------------------------------------------------
-    # Vulnerability
-    #
-    def get_vulnerability_indicator_hierarchical(self):
-        return self.vulnerability.get("indicator_hierarchical", False)
 
     # -------------------------------------------------------------------------
     # Transport

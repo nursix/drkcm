@@ -8157,7 +8157,6 @@ class S3EntityRoleManager(S3Method):
                     "org_office",
                     "inv_warehouse",
                     "hms_hospital",
-                    #"po_area",
                     "pr_group",
                     ]
 

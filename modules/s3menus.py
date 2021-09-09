@@ -1672,41 +1672,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def po():
-        """ PO / Population Outreach """
-
-        due_followups = current.s3db.po_due_followups()
-        DUE_FOLLOWUPS = current.T("Due Follow-ups")
-        if due_followups:
-            follow_up_label = "%s (%s)" % (DUE_FOLLOWUPS, due_followups)
-        else:
-            follow_up_label = DUE_FOLLOWUPS
-
-        return M(c="po")(
-                    M("Overview", f="index"),
-                    M("Households", f="household", m="summary")(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
-                    ),
-                    M(follow_up_label, f="due_followups",
-                      translate=False,
-                      ),
-                    M("Areas", f="area")(
-                        M("Create", m="create"),
-                    ),
-                    M("Referral Agencies", f="organisation")(
-                        M("Create", m="create"),
-                    ),
-                    M("Emotional Needs", f="emotional_need")(
-                        M("Create", m="create"),
-                    ),
-                    M("Practical Needs", f="practical_need")(
-                        M("Create", m="create"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def police():
         """ Police """
 
@@ -2048,21 +2013,6 @@ class S3OptionsMenu(object):
                     ),
                     M("Vehicle Types", f="vehicle_type")(
                         M("Create", m="create"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def vulnerability():
-        """ Vulnerability """
-
-        return M(c="vulnerability")(
-                    M("Indicators", f="indicator")(
-                        M("Create", m="create"),
-                    ),
-                    M("Data", f="data")(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
                     ),
                 )
 

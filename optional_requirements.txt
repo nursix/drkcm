@@ -20,8 +20,6 @@ xlrd>=0.7.1
 openpyxl>=3.0.7
 # Warning: S3MSG unresolved dependency: sgmllib3k required for Feed import on Python 3.x
 sgmllib3k>=1.0.0
-# Warning: Vulnerability unresolved dependency: numpy required for Vulnerability module support
-numpy>=1.6.2
 # Warning: S3GIS unresolved dependency: selenium required for Map printing support
 selenium>=2.23.0
 # Warning: S3Doc unresolved dependency: sunburnt required for Full-Text Search support

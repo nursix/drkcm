@@ -102,11 +102,6 @@
                     <xsl:call-template name="feed"/>
                 </xsl:when>
 
-                <!-- Hazards -->
-                <xsl:when test="$name='risk'">
-                    <xsl:call-template name="hazards"/>
-                </xsl:when>
-
                 <!-- Hospitals -->
                 <xsl:when test="$name='hospital'">
                     <xsl:call-template name="hospitals"/>
@@ -186,38 +181,6 @@
             <data field="source">
                 <xsl:value-of select="$source_url"/>
             </data>
-
-        </resource>
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="hazards">
-        <xsl:for-each select="//kml:Placemark">
-            <xsl:call-template name="hazard"/>
-       </xsl:for-each>
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="hazard">
-        <resource name="vulnerability_risk">
-            <xsl:variable name="comments">
-                <xsl:value-of select="./kml:description/text()"/>
-            </xsl:variable>
-
-            <data field="name">
-                <xsl:value-of select="./kml:name/text()"/>
-            </data>
-            <xsl:if test="$comments!=''">
-                <data field="comments">
-                    <!-- @ToDo: Cleanup HTML? -->
-                    <xsl:value-of select="$comments"/>
-                </data>
-            </xsl:if>
-
-            <!-- Location Info -->
-            <reference field="location_id" resource="gis_location">
-                <xsl:call-template name="location"/>
-            </reference>
 
         </resource>
     </xsl:template>

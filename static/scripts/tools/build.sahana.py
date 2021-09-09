@@ -49,9 +49,6 @@ CSS_FULL = False
 # Minify 3rd-party JS?
 JS_FULL = False
 
-# Minify Vulnerability JS?
-JS_VULNERABILITY = False
-
 # =============================================================================
 # Helper functions
 #
@@ -517,44 +514,6 @@ def do_js(minimize,
             outFile.write(minimized)
         # Replace target file
         move_to("foundation.min.js", "../foundation")
-
-    if JS_VULNERABILITY:
-        # Vulnerability
-        info("Compressing Vulnerability")
-        sourceDirectory = "../.."
-        configFilename = "sahana.js.vulnerability.cfg"
-        outputFilename = "s3.vulnerability.min.js"
-        merged = mergejs.run(sourceDirectory,
-                             None,
-                             configFilename)
-        minimized = minimize(merged)
-        with openf(outputFilename, "w") as outFile:
-            outFile.write(minimized)
-        move_to(outputFilename, "../../themes/Vulnerability/js")
-
-        info("Compressing Vulnerability GIS")
-        sourceDirectory = "../.."
-        configFilename = "sahana.js.vulnerability_gis.cfg"
-        outputFilename = "OpenLayers.js"
-        merged = mergejs.run(sourceDirectory,
-                             None,
-                             configFilename)
-        minimized = minimize(merged)
-        with openf(outputFilename, "w") as outFile:
-            outFile.write(minimized)
-        move_to(outputFilename, "../../themes/Vulnerability/js")
-
-        info("Compressing Vulnerability Datatables")
-        sourceDirectory = "../.."
-        configFilename = "sahana.js.vulnerability_datatables.cfg"
-        outputFilename = "s3.dataTables.min.js"
-        merged = mergejs.run(sourceDirectory,
-                             None,
-                             configFilename)
-        minimized = minimize(merged)
-        with openf(outputFilename, "w") as outFile:
-            outFile.write(minimized)
-        move_to(outputFilename, "../../themes/Vulnerability/js")
 
     # -------------------------------------------------------------------------
     # GIS

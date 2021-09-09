@@ -86,8 +86,6 @@ class S3StatsModel(S3Model):
                            # @ToDo; Deprecate
                            stats_people_type = T("Types of People"),
                            supply_distribution_item = T("Distribution Item"),
-                           vulnerability_indicator = T("Vulnerability Indicator"),
-                           vulnerability_aggregated_indicator = T("Vulnerability Aggregated Indicator"),
                            #survey_question_type = T("Survey Question Type"),
                            )
 
@@ -122,7 +120,6 @@ class S3StatsModel(S3Model):
                            # @ToDo: Deprecate
                            stats_people = T("People"),
                            supply_distribution = T("Distribution"),
-                           vulnerability_data = T("Vulnerability Data"),
                            #survey_answer = T("Survey Answer"),
                            )
 

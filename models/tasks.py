@@ -596,65 +596,6 @@ if has_module("stats"):
 
         tasks["disease_stats_update_location_aggregates"] = disease_stats_update_location_aggregates
 
-    # --------------------e----------------------------------------------------
-    # Vulnerability: Depends on Stats
-    # -------------------------------------------------------------------------
-    if has_module("vulnerability"):
-
-        def vulnerability_update_aggregates(records=None, user_id=None):
-            """
-                Update the vulnerability_aggregate table for the given
-                vulnerability_data record(s)
-
-                @param records: JSON of Rows of vulnerability_data records to update aggregates for
-                @param user_id: calling request's auth.user.id or None
-            """
-            if user_id:
-                # Authenticate
-                auth.s3_impersonate(user_id)
-
-            # Run the Task & return the result
-            result = s3db.vulnerability_update_aggregates(records)
-            db.commit()
-            return result
-
-        tasks["vulnerability_update_aggregates"] = vulnerability_update_aggregates
-
-        # ---------------------------------------------------------------------
-        def vulnerability_update_location_aggregate(#location_level,
-                                                    root_location_id,
-                                                    parameter_id,
-                                                    start_date,
-                                                    end_date,
-                                                    user_id = None,
-                                                    ):
-            """
-                Update the vulnerability_aggregate table for the given location and parameter
-                - called from within vulnerability_update_aggregates
-
-                @param location_level: gis level at which the data needs to be accumulated
-                @param root_location_id: id of the location
-                @param parameter_id: parameter for which the stats are being updated
-                @param start_date: start date of the period in question
-                @param end_date: end date of the period in question
-                @param user_id: calling request's auth.user.id or None
-            """
-            if user_id:
-                # Authenticate
-                auth.s3_impersonate(user_id)
-
-            # Run the Task & return the result
-            result = s3db.vulnerability_update_location_aggregate(#location_level,
-                                                                  root_location_id,
-                                                                  parameter_id,
-                                                                  start_date,
-                                                                  end_date,
-                                                                  )
-            db.commit()
-            return result
-
-        tasks["vulnerability_update_location_aggregate"] = vulnerability_update_location_aggregate
-
 # -----------------------------------------------------------------------------
 if has_module("sync"):
 

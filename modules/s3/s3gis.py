@@ -2591,7 +2591,6 @@ class GIS(object):
 
         else:
             # e.g. KML, GeoRSS or GPX export
-            # e.g. Volunteer Layer in Vulnerability module
             controller = request.controller
             function = request.function
             query = (ftable.controller == controller) & \

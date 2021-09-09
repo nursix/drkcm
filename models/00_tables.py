@@ -37,7 +37,6 @@ if s3.debug:
     import s3db.msg
     import s3db.org
     import s3db.patient
-    import s3db.po
     import s3db.police
     import s3db.pr
     import s3db.proc
@@ -55,7 +54,6 @@ if s3.debug:
     import s3db.transport
     import s3db.vehicle
     import s3db.vol
-    import s3db.vulnerability
     import s3db.water
     import s3db.work
 

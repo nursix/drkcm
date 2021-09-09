@@ -28,11 +28,6 @@
  *   - $.searchDownloadS3              - provided by s3.filter.js, used for exports
  *   - S3.Utf8.decode                  - provided by S3.js
  *   - S3.addModals                    - provided by S3.js
- *
- * - provides:
- *
- *   - S3.dataTables.initDataTable     - not implemented, used by vulnerability TODO
- *   - S3.dataTables.accordionRow      - not implemented, used by vulnerability TODO
  */
 (function($, undefined) {
 
@@ -1943,13 +1938,6 @@
 
         }, oSettings );
     };
-
-    // ------------------------------------------------------------------------
-    // GLOBAL FUNCTIONS
-
-    // TODO Make methods available for vulnerability/s3.report.js
-//     S3.dataTables.initDataTable = initDataTable;
-//     S3.dataTables.accordionRow = accordionRow;
 
     // ------------------------------------------------------------------------
     // DOCUMENT-READY

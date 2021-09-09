@@ -1502,21 +1502,11 @@ def config(settings):
         #    #description = "Tracking of Patients",
         #    module_type = 10
         #)),
-        #("po", Storage(
-        #    name_nice = T("Population Outreach"),
-        #    #description = "Population Outreach",
-        #    module_type = 10
-        #)),
         #("security", Storage(
         #   name_nice = T("Security"),
         #   #description = "Security Management System",
         #   module_type = 10,
         #)),
-        #("vulnerability", Storage(
-        #    name_nice = T("Vulnerability"),
-        #    #description = "Manages vulnerability indicators",
-        #    module_type = 10,
-        # )),
         #("work", Storage(
         #   name_nice = T("Jobs"),
         #   #description = "Simple Volunteer Jobs Management",
