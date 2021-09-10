@@ -17,7 +17,8 @@ from templates.RLPPTM.config import SCHOOLS, TESTSTATIONS
 
 org_group = TESTSTATIONS
 project = "COVID-19 Tests für Alle"
-tag = ("REQUESTER", "Y")
+tag = None # e.g. ("DELIVERY", "DIRECT")
+service = None # e.g. "PCR Tests"
 include = "ORG_ADMIN"
 exclude = None
 
@@ -50,6 +51,9 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
     ttable = s3db.org_organisation_tag
     ogtable = s3db.org_group
     gmtable = s3db.org_group_membership
+    ftable = s3db.org_facility
+    sltable = s3db.org_service_site
+    stable = s3db.org_service
 
     join = [gmtable.on((gmtable.organisation_id == otable.id) & \
                        (gmtable.deleted == False)),
@@ -68,6 +72,16 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
                                (ttable.value == tag[1]) & \
                                (ttable.deleted == False))
                      ])
+    if service:
+        join.extend([ftable.on((ftable.organisation_id == otable.id) & \
+                               (ftable.obsolete == False) & \
+                               (ftable.deleted == False)),
+                     sltable.on((sltable.site_id == ftable.site_id) & \
+                                (sltable.deleted == False)),
+                     stable.on((stable.id == sltable.service_id) & \
+                               (stable.name == service) & \
+                               (stable.deleted == False)),
+                     ])
     query = (otable.deleted == False)
     rows = db(query).select(otable.name,
                             otable.pe_id,
@@ -78,7 +92,6 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
     # Get all users with this realm as direct OU ancestor
     users = s3db.pr_realm_users(org_pe_ids) if org_pe_ids else None
     if users:
-
         # Look up those among the realm users who have
         # the include-role for either pe_id or for their default realm
         gtable = auth.settings.table_group
