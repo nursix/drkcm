@@ -2179,6 +2179,13 @@ class BRAssistanceOfferModel(S3Model):
                            label = T("Chargeable"),
                            represent = s3_yes_no_represent,
                            ),
+                     Field("website",
+                           label = T("Website"),
+                           represent = s3_url_represent,
+                           requires = IS_EMPTY_OR(IS_URL(allowed_schemes = ["http", "https", None],
+                                                         prepend_scheme = "http",
+                                                         )),
+                           ),
                      self.gis_location_id(), # Location of the offer (if housing)
                      Field("contact_name",
                            label = T("Contact Name"),
