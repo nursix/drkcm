@@ -42,7 +42,7 @@ __all__ = ("FinExpensesModel",
            )
 
 from gluon import *
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
@@ -2324,7 +2324,7 @@ class FinProductModel(S3Model):
             if not row:
                 return
 
-            from s3.s3payments import S3PaymentService
+            from core.tools.payments import S3PaymentService
             try:
                 adapter = S3PaymentService.adapter(row.service_id)
             except (KeyError, ValueError) as e:
@@ -2621,7 +2621,7 @@ class FinSubscriptionModel(S3Model):
                   )
 
         # Configure payment service callback methods
-        from s3.s3payments import S3Payments
+        from core.tools.payments import S3Payments
         set_method("fin", "subscription",
                    method = "approve",
                    action = S3Payments,
@@ -2770,7 +2770,7 @@ class FinSubscriptionModel(S3Model):
             if not row:
                 return
 
-            from s3.s3payments import S3PaymentService
+            from core.tools.payments import S3PaymentService
             try:
                 adapter = S3PaymentService.adapter(row.service_id)
             except (KeyError, ValueError) as e:
@@ -3909,7 +3909,7 @@ class fin_VoucherBilling(object):
         ctable = s3db.fin_voucher_claim
 
         # Customise claim resource
-        from s3 import S3Request
+        from core import S3Request
         r = S3Request("fin", "voucher_claim", args=[], get_vars={})
         r.customise_resource("fin_voucher_claim")
 
@@ -4064,7 +4064,7 @@ class fin_VoucherBilling(object):
         invoice_no = "B%s%02dC%04d" % (bprefix, claim.billing_id, claim.id)
 
         # Customise invoice resource
-        from s3 import S3Request
+        from core import S3Request
         r = S3Request("fin", "voucher_invoice", args=[], get_vars={})
         r.customise_resource("fin_voucher_invoice")
 
@@ -4255,7 +4255,7 @@ class fin_VoucherBilling(object):
                          )
 
         # Customise invoice resource
-        from s3 import S3Request
+        from core import S3Request
         r = S3Request("fin", "voucher_invoice", args=[], get_vars={})
         r.customise_resource("fin_voucher_invoice")
 

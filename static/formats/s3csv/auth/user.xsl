@@ -163,7 +163,7 @@
             </xsl:if>
 
             <!-- Master Key
-                 - component configured in s3import import_user()
+                 - component configured in core/methods/importer import_user()
             -->
             <xsl:if test="$MasterKey!=''">
                 <resource name="auth_masterkey">

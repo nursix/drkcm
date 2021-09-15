@@ -7,95 +7,21 @@
 module = request.controller
 
 # -----------------------------------------------------------------------------
-# Options Menu (available in all Functions' Views)
-def s3_menu_postp():
-    # Unused
-    # @todo: rewrite this for new framework?
-    menu_selected = []
-    group_id = s3base.s3_get_last_record_id("pr_group")
-    if group_id:
-        group = s3db.pr_group
-        query = (group.id == group_id)
-        record = db(query).select(group.id, group.name, limitby=(0, 1)).first()
-        if record:
-            name = record.name
-            menu_selected.append(["%s: %s" % (T("Group"), name), False,
-                                  URL(f="group",
-                                      args=[record.id])])
-    person_id = s3base.s3_get_last_record_id("pr_person")
-    if person_id:
-        person = s3db.pr_person
-        query = (person.id == person_id)
-        record = db(query).select(person.id, limitby=(0, 1)).first()
-        if record:
-            name = s3db.pr_person_id().represent(record.id)
-            menu_selected.append(["%s: %s" % (T("Person"), name), False,
-                                  URL(f="person",
-                                      args=[record.id])])
-    if menu_selected:
-        menu_selected = [T("Open recent"), True, None, menu_selected]
-        response.menu_options.append(menu_selected)
-
-# -----------------------------------------------------------------------------
 def index():
     """ Module's Home Page """
 
-    module_name = settings.modules[module].get("name_nice", T("Person Registry"))
+    return settings.customise_home(module, alt_function="index_alt")
 
-    # Load Model
-    s3db.table("pr_address")
+# -----------------------------------------------------------------------------
+def index_alt():
+    """ Default Module Homepage """
 
-    def prep(r):
-        if r.representation == "html":
-            if r.id or r.method:
-               redirect(URL(f="person", args=request.args))
-        return True
-    s3.prep = prep
+    from gluon import current
+    if current.auth.s3_has_permission("read", "pr_person", c="pr", f="person"):
+        # Just redirect to person list
+        s3_redirect_default(URL(f="person"))
 
-    def postp(r, output):
-        if isinstance(output, dict):
-            # Add information for Dashboard
-            pr_gender_opts = s3db.pr_gender_opts
-            table = db.pr_person
-            gender = []
-            for g_opt in pr_gender_opts:
-                query = (table.deleted == False) & \
-                        (table.gender == g_opt)
-                count = db(query).count()
-                gender.append([str(pr_gender_opts[g_opt]), int(count)])
-
-            pr_age_group_opts = s3db.pr_age_group_opts
-            dtable = db.pr_physical_description
-            age = []
-            for a_opt in pr_age_group_opts:
-                query = (table.deleted == False) & \
-                        (table.pe_id == dtable.pe_id) & \
-                        (dtable.age_group == a_opt)
-                count = db(query).count()
-                age.append([str(pr_age_group_opts[a_opt]), int(count)])
-
-            total = int(db(table.deleted == False).count())
-            output.update(module_name=module_name,
-                          gender=json.dumps(gender),
-                          age=json.dumps(age),
-                          total=total)
-        if r.interactive:
-            if not r.component:
-                label = READ
-            else:
-                label = UPDATE
-            linkto = r.resource.crud._linkto(r)("[id]")
-            s3.actions = [
-                dict(label=str(label), _class="action-btn", url=str(linkto))
-            ]
-        r.next = None
-        return output
-    s3.postp = postp
-
-    output = s3_rest_controller("pr", "person")
-    response.view = "pr/index.html"
-    response.title = module_name
-    return output
+    return {"module_name": settings.modules[module].get("name_nice")}
 
 # -----------------------------------------------------------------------------
 def person():
@@ -329,7 +255,7 @@ def contact():
                 # @ToDo: Document which workflow uses this?
                 field.label = T("Entity")
                 field.readable = field.writable = True
-                from s3 import S3TextFilter, S3OptionsFilter
+                from core import S3TextFilter, S3OptionsFilter
                 filter_widgets = [S3TextFilter(["value",
                                                 "comments",
                                                 ],
@@ -419,7 +345,7 @@ def forum():
             # No restrictions
             return True
 
-        from s3 import FS
+        from core import FS
         if r.id:
             if r.method == "join":
                 # Only possible for Public Groups

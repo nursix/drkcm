@@ -12,8 +12,8 @@ from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
-from s3 import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
-               S3Method, S3Represent, s3_fullname, s3_mark_required, s3_str
+from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
+                 S3Method, S3Represent, s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact, pr_default_realms
 
@@ -1417,7 +1417,7 @@ class InviteUserOrg(S3Method):
         if active or disabled:
             response.error = T("There are already user accounts registered for this organization")
 
-            from s3 import s3_format_fullname
+            from core import s3_format_fullname
 
             fullname = lambda user: s3_format_fullname(fname = user.first_name,
                                                     lname = user.last_name,
@@ -1624,7 +1624,7 @@ class InvoicePDF(S3Method):
         # Filename to include invoice number if available
         invoice_no = r.record.invoice_no
 
-        from s3.s3export import S3Exporter
+        from core import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(r.resource,
                         request = r,
@@ -1941,7 +1941,7 @@ class ClaimPDF(S3Method):
         # Filename to include invoice number if available
         invoice_no = self.invoice_number(r.record)
 
-        from s3.s3export import S3Exporter
+        from core import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(r.resource,
                         request = r,

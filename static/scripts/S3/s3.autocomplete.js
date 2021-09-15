@@ -1,5 +1,5 @@
 /**
- * Used by the Autocomplete Widgets (modules/s3/s3widgets.py)
+ * Used by the Autocomplete Widgets (core/ui/widgets)
  * This script is in Static to allow caching
  * Dynamic constants (e.g. Internationalised strings) are set in server-generated script
  */

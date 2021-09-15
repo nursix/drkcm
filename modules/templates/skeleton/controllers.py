@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import *
-from s3 import S3CustomController
+from core import S3CustomController
 
 THEME = "skeleton"
 

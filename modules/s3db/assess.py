@@ -35,7 +35,7 @@ __all__ = ("S3Assess24HModel",
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 
 # @ToDo: Shouldn't have T at module level
 T = current.T
@@ -992,7 +992,7 @@ class S3AssessBuildingModel(S3Model):
                     )
 
         WORK_ORDER = current.T("Work Order")
-        from s3 import S3Exporter
+        from core import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(r,
                         method = "read",

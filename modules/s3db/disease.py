@@ -46,7 +46,7 @@ from functools import reduce
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Monitoring upgrades {new_level:previous_levels}

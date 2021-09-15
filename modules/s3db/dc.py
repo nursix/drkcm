@@ -41,7 +41,7 @@ from io import BytesIO
 from gluon import *
 from gluon.languages import read_dict, write_dict
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -1837,7 +1837,7 @@ class dc_TargetReport(S3Method):
                    (original is project_SummaryReport)
         """
 
-        from s3.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         table = r.table
@@ -1888,7 +1888,7 @@ class dc_TargetXLS(S3Method):
 
     def apply_method(self, r, **attr):
 
-        from s3.codecs.xls import S3XLS
+        from core.io.codecs.xls import S3XLS
 
         try:
             import xlwt

@@ -11,7 +11,7 @@
 import os
 import sys
 
-from s3 import s3_format_datetime
+from core import s3_format_datetime
 
 from templates.RLPPTM.config import SCHOOLS, TESTSTATIONS
 

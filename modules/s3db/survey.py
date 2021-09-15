@@ -89,7 +89,7 @@ from gluon import *
 from gluon.storage import Storage
 from gluon.sqlhtml import *
 
-from ..s3 import *
+from ..core import *
 from s3chart import S3Chart
 
 DEBUG = False
@@ -687,7 +687,7 @@ def survey_build_template_summary(template_id):
                             the summary is to be built
     """
 
-    from s3.s3data import S3DataTable
+    from core import S3DataTable
     T = current.T
 
     table = TABLE(_id="template_summary",
@@ -1624,7 +1624,7 @@ class S3SurveySeriesModel(S3Model):
                             question_ids.append(str(question.question_id))
                 items = buildCompletedList(series_id, question_ids)
                 if r.representation == "xls":
-                    from ..s3.codecs.xls import S3XLS
+                    from core.io.codecs.xls import S3XLS
                     exporter = S3XLS()
                     return exporter.encode(items,
                                            title=crud_strings.title_selected,
@@ -2334,7 +2334,7 @@ def buildSeriesSummary(series_id, posn_offset):
         each question in the template
     """
 
-    from s3.s3data import S3DataTable
+    from core import S3DataTable
     T = current.T
 
     table = TABLE(_id="series_summary",
@@ -5258,7 +5258,7 @@ class S3QuestionTypeDateWidget(S3QuestionTypeAbstractWidget):
     def display(self, **attr):
 
         S3QuestionTypeAbstractWidget.initDisplay(self, **attr)
-        from s3.s3widgets import S3DateWidget
+        from core.ui.widgets import S3DateWidget
         widget = S3DateWidget()
         value = self.getAnswer()
         self.attr["_id"] = self.question.code

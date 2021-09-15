@@ -1,12 +1,12 @@
 # Warning: S3XLS unresolved dependency: xlwt required for XLS export
 xlwt>=0.7.2
-# Warning: S3GIS unresolved dependency: shapely required for GIS support
+# Warning: GIS unresolved dependency: shapely required for GIS support
 Shapely>=1.2.14 #shapely
 # Warning: S3PDF unresolved dependency: Python Imaging required for PDF export
 Pillow>=6.2.2 #from PIL import Image
-# Warning: S3GIS unresolved dependency: GDAL required for Shapefile support
+# Warning: GIS unresolved dependency: GDAL required for Shapefile support
 GDAL>=1.9.0 #from osgeo import ogr
-# Warning: S3GIS unresolved dependency: geopy required for Geocoder support
+# Warning: GIS unresolved dependency: geopy required for Geocoder support
 geopy>=1.18.1 #from geopy import geocoders
 # Warning: S3PDF unresolved dependency: reportlab required for PDF export
 reportlab>=2.5
@@ -20,7 +20,7 @@ xlrd>=0.7.1
 openpyxl>=3.0.7
 # Warning: S3MSG unresolved dependency: sgmllib3k required for Feed import on Python 3.x
 sgmllib3k>=1.0.0
-# Warning: S3GIS unresolved dependency: selenium required for Map printing support
+# Warning: GIS unresolved dependency: selenium required for Map printing support
 selenium>=2.23.0
 # Warning: S3Doc unresolved dependency: sunburnt required for Full-Text Search support
 sunburnt>=0.6

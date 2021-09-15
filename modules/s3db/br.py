@@ -66,7 +66,7 @@ from collections import OrderedDict
 from gluon import *
 from gluon.storage import Messages, Storage
 
-from ..s3 import *
+from ..core import *
 #from s3layouts import S3PopupLink
 
 CASE_GROUP = 7
@@ -4138,7 +4138,7 @@ def br_rheader(r, tabs=None):
                             )
 
             # Add profile picture
-            from s3 import s3_avatar_represent
+            from core import s3_avatar_represent
             rheader.insert(0, A(s3_avatar_represent(record_id,
                                                     "pr_person",
                                                     _class = "rheader-avatar",

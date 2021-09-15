@@ -54,7 +54,7 @@ def person():
                  ]
 
     # Filter widgets
-    from s3 import S3TextFilter, S3OptionsFilter
+    from core import S3TextFilter, S3OptionsFilter
     filter_widgets = [S3TextFilter(["first_name",
                                     "middle_name",
                                     "last_name",

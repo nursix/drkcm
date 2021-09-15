@@ -32,7 +32,7 @@ __all__ = ("S3TranslateModel",
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 
 # =============================================================================
 class S3TranslateModel(S3Model):
@@ -49,7 +49,7 @@ class S3TranslateModel(S3Model):
         #---------------------------------------------------------------------
         # Translated CSV files
         #
-        from ..s3.s3translate import TranslateAPI
+        from core.tools.translate import TranslateAPI
 
         langlist = sorted(TranslateAPI.get_langcodes())
 
@@ -129,7 +129,7 @@ class S3TranslateModel(S3Model):
         import csv
         import os
 
-        from ..s3.s3translate import Strings
+        from core.tools.translate import Strings
 
         form_vars = form.vars
         lang_code = form_vars.code

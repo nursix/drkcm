@@ -117,7 +117,7 @@ def project():
                         field.readable = field.writable = False
 
                 elif r.method == "details":
-                    # Until we can automate this inside s3profile
+                    # Until we can automate this inside methods/profile
                     # - remove the fkey from the list_fields
                     configure = s3db.configure
                     get_config = s3db.get_config
@@ -288,7 +288,7 @@ def project():
 
                 # Have a filter for indicator in indicator data report
                 #if r.method == "report":
-                #    from s3 import S3OptionsFilter
+                #    from core import S3OptionsFilter
                 #    filter_widgets = [S3OptionsFilter("indicator_id",
                 #                                      label = T("Indicator"),
                 #                                      ),
@@ -415,7 +415,7 @@ def project():
 
                 # @ToDo:
                 #if settings.has_module("budget"):
-                #    from s3 import S3SQLCustomForm, S3SQLInlineComponent
+                #    from core import S3SQLCustomForm, S3SQLInlineComponent
                 #    field = s3db.budget_allocation.budget_entity_id
                 #    field.readable = field.writable = True
                 #    field.represent = S3Represent(lookup="budget_budget", key="budget_entity_id")

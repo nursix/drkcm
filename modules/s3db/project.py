@@ -94,7 +94,7 @@ from io import BytesIO
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 from .req import req_timeframe
@@ -8338,7 +8338,7 @@ class project_SummaryReport(S3Method):
             -the actual report
         """
 
-        from s3.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         db = current.db
@@ -9091,7 +9091,7 @@ class project_IndicatorSummaryReport(S3Method):
             XLS Representation
         """
 
-        from s3.codecs.xls import S3XLS
+        from core.io.codecs.xls import S3XLS
 
         try:
             import xlwt

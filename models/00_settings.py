@@ -256,7 +256,7 @@ session.warning = []
 #ORG_GROUP_ADMIN = system_roles.ORG_GROUP_ADMIN
 
 if s3.debug:
-    # Add the developer toolbar from modules/s3/s3utils.py
+    # Add the developer toolbar from core/tools
     s3.toolbar = s3base.s3_dev_toolbar
 
 # -----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 /**
 /**
- * Used by the Map (modules/s3/s3gis.py)
+ * Used by the Map (modules/core/gis)
  * This script is in Static to allow caching
  * Dynamic constants (e.g. Internationalised strings) are set in server-generated script
  */
@@ -194,14 +194,14 @@ S3.gis.yx = [
         proj4326 = S3.gis.proj4326;
 
     // Default values if not set by the layer
-    // Also in modules/s3/s3gis.py
+    // Also in modules/core/gis
     // http://dev.openlayers.org/docs/files/OpenLayers/Strategy/Cluster-js.html
     //var cluster_attribute_default = 'colour';
     var cluster_distance_default = 20,   // pixels
         cluster_threshold_default = 2;   // minimum # of features to form a cluster
 
     // Default values if not set by the map
-    // Also in modules/s3/s3gis.py
+    // Also in modules/core/gis
     var fill_default = '#f5902e',          // fill colour for unclustered Point
         cluster_fill_default = '8087ff',   // fill colour for clustered Point
         cluster_stroke_default = '2b2f76', // stroke colour for clustered Point
@@ -4600,7 +4600,7 @@ S3.gis.yx = [
                 }
                 if (menu_items.length > 0) {
                     toolbar.add({
-                        text: i18n.gis_add_resources, // @ToDo: Add this to s3gis.py
+                        text: i18n.gis_add_resources, // @ToDo: Add this to core/gis
                         menu: new Ext.menu.Menu({ items: menu_items })
                     });
                 }
@@ -6620,7 +6620,7 @@ S3.gis.yx = [
         /* Disabled as causing problems with variable markers
         var scaleImage = function() {
             var image = this;
-            // Keep these in sync with MAP._setup() in s3gis.py
+            // Keep these in sync with MAP._setup() in core/gis
             var max_h = options.max_h || 35;
             var max_w = options.max_w || 30;
             var scaleRatio = image.height / image.width;

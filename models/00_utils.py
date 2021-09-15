@@ -13,7 +13,7 @@ if request.is_local:
     f = get_vars.get("format", None)
     auth_token = get_vars.get("subscription", None)
     if auth_token and f == "msg":
-        # Subscription lookup request (see S3Notify.notify())
+        # Subscription lookup request (see S3Notifications.notify())
         rtable = s3db.pr_subscription_resource
         stable = s3db.pr_subscription
         utable = s3db.pr_person_user
@@ -185,7 +185,7 @@ def s3_rest_controller(prefix=None, resourcename=None, **attr):
         c = request.controller
         f = request.function
         attr = settings.customise_controller("%s_%s" % (c, f), **attr)
-        from s3 import DYNAMIC_PREFIX, s3_get_extension
+        from core import DYNAMIC_PREFIX, s3_get_extension
         r = s3_request(DYNAMIC_PREFIX,
                        dynamic,
                        f = "%s/%s" % (f, dynamic),
@@ -228,9 +228,6 @@ def s3_rest_controller(prefix=None, resourcename=None, **attr):
     set_handler("summary", s3base.S3Summary)
     set_handler("timeplot", s3base.S3TimePlot)
     set_handler("xform", s3base.S3XForms)
-
-    # Plugin OrgRoleManager when appropriate
-    s3base.S3OrgRoleManager.set_method(r)
 
     # List of methods rendering datatables with default action buttons
     dt_methods = (None, "datatable", "datatable_f", "summary")

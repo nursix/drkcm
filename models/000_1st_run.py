@@ -48,7 +48,7 @@ if update_check_needed:
     # NB This does not satisfy the goal of calling out all the setup errors
     #    at once - it will die on the first fatal error encountered.
     try:
-        import s3 as s3base
+        import core as s3base
     except Exception as e:
         errors.append(e.message)
 

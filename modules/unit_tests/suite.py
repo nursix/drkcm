@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     run_suite(
         "modules",
-        "s3",
+        "core",
         "s3db",
     )
 

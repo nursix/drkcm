@@ -8,7 +8,7 @@
 
 from gluon import current, A, URL
 
-from s3 import S3ResourceHeader, s3_fullname, s3_rheader_resource
+from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
 # =============================================================================
 def rlpptm_fin_rheader(r, tabs=None):
@@ -56,7 +56,7 @@ def rlpptm_fin_rheader(r, tabs=None):
                 except ImportError:
                     pass
                 else:
-                    from s3 import s3_qrcode_represent
+                    from core import s3_qrcode_represent
                     img = s3_qrcode_represent(signature, show_value=False)
                     img.add_class("rheader-qrcode")
 

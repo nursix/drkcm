@@ -9,7 +9,7 @@ from io import StringIO
 from gluon import *
 from gluon.storage import Storage
 
-from s3 import json, s3_str, ICON, S3CustomController, S3DateTime, S3Method
+from core import json, s3_str, ICON, S3CustomController, S3DateTime, S3Method
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -1664,7 +1664,7 @@ class dc_TargetReport(S3Method):
         if report_filters is None:
             ff = ""
         else:
-            from s3 import S3FilterForm, S3OptionsFilter, S3SliderFilter
+            from core import S3FilterForm, S3OptionsFilter, S3SliderFilter
 
             questions_lookup = {}
             for q in data["questions"]:
@@ -2075,7 +2075,7 @@ class dc_TargetReport(S3Method):
 
         raise NotImplementedError
 
-        from s3.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         # etc, etc
 
@@ -2700,7 +2700,7 @@ class dc_TemplateExportL10n(S3Method):
 
                 # No need to check for 'read' permission within single-record methods, as that has already been checked
 
-                from s3.codecs.xls import S3XLS
+                from core.io.codecs.xls import S3XLS
 
                 try:
                     import xlwt

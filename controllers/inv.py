@@ -43,7 +43,6 @@ def index2():
     if s3.debug:
         # Start of TEST CODE for multiple dataTables,
         #this also required views/inv/index.html to be modified
-        from s3.s3data import S3DataTable
         representation = request.extension
         if representation == "html" or get_vars.id == "warehouse_list_1":
             resource = s3db.resource("inv_warehouse")
@@ -70,7 +69,7 @@ def index2():
                 totalrows = filteredrows
             rfields = data["rfields"]
             rows = data["rows"]
-            dt = S3DataTable(rfields, rows)
+            dt = s3base.S3DataTable(rfields, rows)
             dt.defaultActionButtons(resource)
             if representation == "html":
                 warehouses = dt.html(totalrows,
@@ -146,10 +145,7 @@ def index2():
                                        represent = True)
                 rfields = data["rfields"]
                 rows = data["rows"]
-                dt = S3DataTable(rfields,
-                                 rows,
-                                 orderby = orderby,
-                                 )
+                dt = s3base.S3DataTable(rfields, rows, orderby = orderby)
                 custom_actions = [{"label": s3_str(T("Warehouse")),
                                    "_class": "action-icon",
                                    "img": "/%s/static/img/markers/gis_marker.image.Agri_Commercial_Food_Distribution_Center_S1.png" % appname,
@@ -244,7 +240,7 @@ def index2():
             rows = data["rows"]
             rfields = data["rfields"]
             numrows = data["numrows"]
-            dt = S3DataTable(rfields, rows)
+            dt = s3base.S3DataTable(rfields, rows)
             dt.defaultActionButtons(resource)
             if representation == "html":
                 supply_items = dt.html(numrows,

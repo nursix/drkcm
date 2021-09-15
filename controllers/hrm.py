@@ -801,7 +801,7 @@ def shift():
             s3db.hrm_human_resource_shift.human_resource_id.label = T("Currently Assigned")
 
             # Default Filters
-            from s3 import s3_set_default_filter
+            from core import s3_set_default_filter
             tablename = "hrm_human_resource"
             record = r.record
             job_title_id = record.job_title_id

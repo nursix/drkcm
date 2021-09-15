@@ -36,7 +36,7 @@ import re
 from gluon import current, URL
 from gluon.storage import Storage
 
-from s3 import IS_ISO639_2_LANGUAGE_CODE
+from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import M, MM, MOA, S3BreadcrumbsLayout, SEP
 
 # =============================================================================

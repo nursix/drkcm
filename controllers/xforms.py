@@ -10,7 +10,7 @@ module = request.controller
 def forms():
     """ Controller to download form list and individual forms """
 
-    from s3 import S3XForms
+    from core import S3XForms
 
     if request.env.request_method != "GET":
         raise HTTP(405, current.ERROR.BAD_METHOD)

@@ -194,7 +194,7 @@ def define_map(height = None,
 
             # Prepare JSON data structure
             pois = []
-            from s3 import s3_str
+            from core import s3_str
             for res in poi_resources:
                 poi = {"c": res["c"],
                        "f": res["f"],
@@ -246,7 +246,7 @@ def define_map(height = None,
             lon = None
             feature_resources = None
     else:
-        # get_vars checks happen inside s3gis.py
+        # get_vars checks happen inside gis/base.py
         lat = None
         lon = None
         feature_resources = None
@@ -282,7 +282,7 @@ def map2():
         Work-in-Progress update of map_viewing_client to OpenLayers 6
     """
 
-    from s3.s3gis import MAP2
+    from core.gis.base import MAP2
 
     return {"map": MAP2(catalogue_layers = True)}
 
@@ -295,11 +295,11 @@ def location():
 
     # Custom Methods
     set_method = s3db.set_method
-    from s3 import S3ExportPOI
+    from core import S3ExportPOI
     set_method("gis", "location",
                method = "export_poi",
                action = S3ExportPOI())
-    from s3 import S3ImportPOI
+    from core import S3ImportPOI
     set_method("gis", "location",
                method = "import_poi",
                action = S3ImportPOI())
@@ -308,7 +308,7 @@ def location():
                action = s3_gis_location_parents)
 
     location_hierarchy = gis.get_location_hierarchy()
-    from s3 import S3TextFilter, S3OptionsFilter#, S3LocationFilter
+    from core import S3TextFilter, S3OptionsFilter#, S3LocationFilter
     search_fields = ["name",
                      "comments",
                      "tag.value",
@@ -449,7 +449,7 @@ def location():
                 if r.method in ("create", "update"):
                     if get_vars.get("~.level") == "None":
                         # Specific Locations
-                        from s3 import S3SQLCustomForm
+                        from core import S3SQLCustomForm
                         crud_fields = ["name",
                                        "parent",
                                        "gis_feature_type",
@@ -469,7 +469,7 @@ def location():
 
                     elif get_vars.get("~.level__ne") == "None":
                         # Administrative Units
-                        from s3 import S3SQLCustomForm
+                        from core import S3SQLCustomForm
                         crud_form = S3SQLCustomForm("name",
                                                     "level",
                                                     "parent",
@@ -1153,7 +1153,7 @@ def config():
                                                                     )
                     if auth.is_logged_in():
                         settings.search.filter_manager = False
-                        from s3.s3filter import S3OptionsFilter
+                        from core import S3OptionsFilter
                         filter_widgets = [
                             S3OptionsFilter("pe_id",
                                             label = "",
@@ -3545,7 +3545,7 @@ def postcode_to_address():
                 cappend(cleaned_address)
             results["addresses"] = cleaned_addresses
 
-            from s3.s3xml import SEPARATORS
+            from core import SEPARATORS
             output = json.dumps(results, separators=SEPARATORS)
 
         current.response.headers["Content-Type"] = "application/json"

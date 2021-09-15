@@ -34,11 +34,11 @@ __all__ = ("SkeletonDataModel",
 
 # The following import statements are needed in almost every model
 # (you may need more than this in your particular case). To
-# import classes from s3, use from + relative path like below
+# import classes from core, use from + relative path like below
 #
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================

@@ -42,7 +42,7 @@ from gluon import *
 from gluon.html import *
 from gluon.tools import callback
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
@@ -2483,7 +2483,7 @@ def deploy_response_select_mission(r, **attr):
         action_vars = {"mission_id": "[id]"}
 
         # Can we identify the Member?
-        from ..s3.s3parser import S3Parsing
+        from core.msg.parser import S3Parsing
         from_address = record.from_address
         hr_id = S3Parsing().lookup_human_resource(from_address)
         if hr_id:

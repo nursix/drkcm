@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from gluon import current, redirect, URL, A, B
 
-from s3 import S3Method, S3Represent, s3_str
+from core import S3Method, S3Represent, s3_str
 
 # =============================================================================
 def delivery_tag_opts():
@@ -34,11 +34,11 @@ def req_filter_widgets():
 
     T = current.T
 
-    from s3 import S3DateFilter, \
-                   S3LocationFilter, \
-                   S3OptionsFilter, \
-                   S3TextFilter, \
-                   s3_get_filter_opts
+    from core import S3DateFilter, \
+                     S3LocationFilter, \
+                     S3OptionsFilter, \
+                     S3TextFilter, \
+                     s3_get_filter_opts
 
     from s3db.req import req_status_opts
 
@@ -99,11 +99,11 @@ def send_filter_widgets():
 
     T = current.T
 
-    from s3 import S3DateFilter, \
-                   S3LocationFilter, \
-                   S3OptionsFilter, \
-                   S3TextFilter, \
-                   s3_get_filter_opts
+    from core import S3DateFilter, \
+                     S3LocationFilter, \
+                     S3OptionsFilter, \
+                     S3TextFilter, \
+                     s3_get_filter_opts
     from s3db.inv import SHIP_STATUS_CANCEL, \
                          SHIP_STATUS_RETURNING, \
                          inv_shipment_status_labels
@@ -168,10 +168,10 @@ def recv_filter_widgets():
 
     T = current.T
 
-    from s3 import S3DateFilter, \
-                   S3OptionsFilter, \
-                   S3TextFilter, \
-                   s3_get_filter_opts
+    from core import S3DateFilter, \
+                     S3OptionsFilter, \
+                     S3TextFilter, \
+                     s3_get_filter_opts
     from s3db.inv import SHIP_STATUS_CANCEL, \
                          SHIP_STATUS_RETURNING, \
                          inv_shipment_status_labels

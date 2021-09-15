@@ -43,7 +43,7 @@ from uuid import uuid4
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 
 # =============================================================================
 class S3DocumentLibrary(S3Model):

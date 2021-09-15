@@ -529,7 +529,7 @@ def alert():
 
             elif r.component_name == "recipient":
                 settings.search.filter_manager = False
-                from s3 import S3TextFilter, S3OptionsFilter
+                from core import S3TextFilter, S3OptionsFilter
                 recipient_filters = [
                     S3TextFilter([
                             "human_resource_id$person_id$first_name",
@@ -704,11 +704,11 @@ def email_inbox():
     table.channel_id.readable = False
     table.to_address.readable = False
 
-    from s3.s3query import FS
+    from core import FS
     s3.filter = (FS("response.id") == None) & \
                 (FS("inbound") == True)
 
-    from s3.s3forms import S3SQLCustomForm, S3SQLInlineComponent
+    from core import S3SQLCustomForm, S3SQLInlineComponent
     crud_form = S3SQLCustomForm("date",
                                 "subject",
                                 "from_address",

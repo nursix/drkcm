@@ -122,7 +122,7 @@ def person():
         s3.crud_strings["pr_person"] = crud_strings
 
         # Configure Anonymizer
-        from s3 import S3Anonymize
+        from core import S3Anonymize
         s3db.set_method("pr", "person",
                         method = "anonymize",
                         action = S3Anonymize,
@@ -152,7 +152,7 @@ def person():
         if not r.component:
 
             # Module-specific field and form configuration
-            from s3 import S3SQLInlineComponent
+            from core import S3SQLInlineComponent
 
             # Adapt fields to module context
             table = resource.table
@@ -287,7 +287,7 @@ def person():
 
             # Filter Widgets
             if not record:
-                from s3 import S3TextFilter, S3DateFilter, S3OptionsFilter
+                from core import S3TextFilter, S3DateFilter, S3OptionsFilter
                 filter_widgets = [
                     S3TextFilter(name_fields + ["pe_label", "case.comments"],
                                  label = T("Search"),
@@ -456,7 +456,7 @@ def person():
                 buttons = output["buttons"]
 
             # Anonymize-button
-            from s3 import S3AnonymizeWidget
+            from core import S3AnonymizeWidget
             anonymize = S3AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
 
             # ID-Card button
@@ -574,7 +574,7 @@ def group_membership():
                 group_ids = set()
 
             # Add-Person widget to use BR controller and expose pe_label
-            from s3 import S3AddPersonWidget
+            from core import S3AddPersonWidget
             field = table.person_id
             field.represent = s3db.pr_PersonRepresent(show_link=True)
             field.widget = S3AddPersonWidget(controller = "br",
@@ -886,10 +886,10 @@ def case_activity():
                 s3db.br_case_activity_default_status()
 
             # Filter widgets
-            from s3 import S3DateFilter, \
-                           S3OptionsFilter, \
-                           S3TextFilter, \
-                           s3_get_filter_opts
+            from core import S3DateFilter, \
+                             S3OptionsFilter, \
+                             S3TextFilter, \
+                             s3_get_filter_opts
 
             text_filter_fields = ["person_id$pe_label",
                                   "person_id$first_name",
@@ -1057,10 +1057,10 @@ def activities():
                 s3db.br_case_activity_default_status()
 
             # Filter widgets
-            from s3 import S3DateFilter, \
-                           S3OptionsFilter, \
-                           S3TextFilter, \
-                           s3_get_filter_opts
+            from core import S3DateFilter, \
+                             S3OptionsFilter, \
+                             S3TextFilter, \
+                             s3_get_filter_opts
 
             filter_widgets = []
 

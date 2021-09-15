@@ -389,7 +389,7 @@ def newsfeed():
 
     hidden = not settings.get_cms_filter_open()
 
-    from s3.s3filter import S3TextFilter, S3OptionsFilter, S3LocationFilter, S3DateFilter
+    from core import S3TextFilter, S3OptionsFilter, S3LocationFilter, S3DateFilter
     filter_widgets = [S3TextFilter(["body"],
                                    label = T("Search"),
                                    _class = "filter-search",
@@ -567,7 +567,7 @@ def newsfeed():
             field = table.body
             field.label = T("Description")
             # Plain text not Rich
-            from s3.s3widgets import s3_comments_widget
+            from core import s3_comments_widget
             field.widget = s3_comments_widget
             #table.comments.readable = table.comments.writable = False
 
@@ -575,7 +575,7 @@ def newsfeed():
             #    # Don't override card layout for News Feed/Homepage
             #    return True
 
-            from s3.s3forms import S3SQLCustomForm, S3SQLInlineComponent
+            from core import S3SQLCustomForm, S3SQLInlineComponent
 
             # Filter from a Profile page?
             # If so, then default the fields we know

@@ -39,7 +39,7 @@ __all__ = ("S3BudgetModel",
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3dal import Row
 from s3layouts import S3PopupLink
 

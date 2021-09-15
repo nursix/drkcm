@@ -23,7 +23,7 @@ def index():
 def template():
     """ RESTful CRUD controller """
 
-    from s3 import FS
+    from core import FS
     s3.filter = FS("master") == "dc_response"
 
     def prep(r):

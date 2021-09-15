@@ -581,13 +581,12 @@ $.filterOptionsS3({
  'fncRepresent':S3.supply.fncRepresentItem
 })''')
                         # Custom Form
-                        s3forms = s3base.s3forms
-                        crud_form = s3forms.S3SQLCustomForm(
+                        crud_form = s3base.S3SQLCustomForm(
                                 "site_id",
                                 "date",
                                 "date_available",
                                 "committer_id",
-                                s3forms.S3SQLInlineComponent(
+                                s3base.S3SQLInlineComponent(
                                     "commit_item",
                                     label = T("Items"),
                                     fields = ["req_item_id",
@@ -623,13 +622,12 @@ $.filterOptionsS3({
                         skills_filter(record_id)
 
                         # Custom Form
-                        s3forms = s3base.s3forms
-                        crud_form = s3forms.S3SQLCustomForm(
+                        crud_form = s3base.S3SQLCustomForm(
                             "site_id",
                             "date",
                             "date_available",
                             "committer_id",
-                            s3forms.S3SQLInlineComponent(
+                            s3base.S3SQLInlineComponent(
                                 "commit_skill",
                                 label = T("Skills"),
                                 fields = ["quantity",
@@ -1358,13 +1356,12 @@ $.filterOptionsS3({
 'fncRepresent':S3.supply.fncRepresentItem
 })''')
                     # Custom Form
-                    s3forms = s3base.s3forms
-                    crud_form = s3forms.S3SQLCustomForm(
+                    crud_form = s3base.S3SQLCustomForm(
                             "site_id",
                             "date",
                             "date_available",
                             "committer_id",
-                            s3forms.S3SQLInlineComponent(
+                            s3base.S3SQLInlineComponent(
                                 "commit_item",
                                 label = T("Items"),
                                 fields = ["req_item_id",
@@ -1399,14 +1396,13 @@ $.filterOptionsS3({
                     skills_filter(r.record.req_id)
 
                     # Custom Form
-                    s3forms = s3base.s3forms
-                    crud_form = s3forms.S3SQLCustomForm(
+                    crud_form = s3base.S3SQLCustomForm(
                             #"organisation_id",
                             "site_id",
                             "date",
                             "date_available",
                             "committer_id",
-                            s3forms.S3SQLInlineComponent(
+                            s3base.S3SQLInlineComponent(
                                 "commit_skill",
                                 label = T("People"),
                                 fields = ["quantity",

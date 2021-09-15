@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import current
-from s3 import IS_ISO639_2_LANGUAGE_CODE
+from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import MM, M
 try:
     from ..RLP.layouts import *

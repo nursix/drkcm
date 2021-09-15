@@ -13,11 +13,11 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 
 from gluon.storage import Storage
 
-from s3 import FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
-               JSONERRORS, S3CRUD, S3CustomController, S3LocationSelector, \
-               S3Represent, S3Report, S3Request, S3WithIntro, \
-               s3_comments_widget, s3_get_extension, s3_mark_required, \
-               s3_str, s3_text_represent, s3_truncate
+from core import FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+                 JSONERRORS, S3CRUD, S3CustomController, S3LocationSelector, \
+                 S3Represent, S3Report, S3Request, S3WithIntro, \
+                 s3_comments_widget, s3_get_extension, s3_mark_required, \
+                 s3_str, s3_text_represent, s3_truncate
 
 from templates.RLPPTM.notifications import formatmap
 
@@ -51,7 +51,7 @@ class index(S3CustomController):
             # Logged-in user
             # => display announcements
 
-            from s3 import S3DateTime
+            from core import S3DateTime
             dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
 
             filter_roles = roles if sr.ADMIN not in roles else None
@@ -1060,7 +1060,7 @@ class geocode(S3CustomController):
             results["lat"] = lat
             results["lon"] = lon
 
-            from s3.s3xml import SEPARATORS
+            from core import SEPARATORS
             output = json.dumps(results, separators=SEPARATORS)
 
         current.response.headers["Content-Type"] = "application/json"

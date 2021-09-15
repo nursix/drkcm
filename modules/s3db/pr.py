@@ -136,7 +136,7 @@ from gluon import current, redirect, URL, \
 from gluon.storage import Storage
 from gluon.sqlhtml import RadioWidget
 
-from ..s3 import *
+from ..core import *
 from s3dal import Field, Row
 from s3layouts import S3PopupLink
 
@@ -3649,7 +3649,7 @@ class PRForumModel(S3Model):
             message = current.T("Already a Member")
         else:
             # Send Notification to the Forum Admin(s)
-            from s3 import s3_str
+            from core import s3_str
 
             T = current.T
 

@@ -43,7 +43,7 @@ import json
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 
 ASSET_TYPE_VEHICLE   = 1   # => Extra Tab(s) for Registration Documents, Fuel Efficiency
 #ASSET_TYPE_RADIO     = 2   # => Extra Tab(s) for Radio Channels/Frequencies

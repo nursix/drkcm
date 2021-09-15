@@ -188,7 +188,7 @@ def user():
     set_method = s3db.set_method
     set_method("auth", "user",
                method = "roles",
-               action = s3base.S3RoleManager)   # s3roles.py
+               action = s3base.S3RoleManager)
 
     set_method("auth", "user",
                method = "disable",
@@ -544,7 +544,7 @@ def audit():
 
     # Ensure table is visible
     settings.security.audit_write = True
-    from s3 import S3Audit
+    from core import S3Audit
     S3Audit().__init__()
 
     # Represent the user_id column
@@ -1028,7 +1028,7 @@ def translate():
         if opt == "1":
             # Select modules for Translation
             from math import ceil
-            from s3.s3translate import TranslateAPI, Strings
+            from core.tools.translate import TranslateAPI, Strings
             if form.accepts(request.vars, session):
                 modlist = []
                 form_request_vars_get = form.request_vars.get
@@ -1217,7 +1217,7 @@ def translate():
             if form.accepts(request.vars, session):
                 # Retrieve the translation percentage for each module
                 from math import ceil
-                from s3.s3translate import TranslateReportStatus
+                from core.tools.translate import TranslateReportStatus
                 code = form.request_vars.code
                 S = TranslateReportStatus()
 
@@ -1265,7 +1265,7 @@ def translate():
 
             else:
                 # Display the form to view translated percentage
-                from s3.s3translate import TranslateAPI
+                from core.tools.translate import TranslateAPI
                 A = TranslateAPI()
                 langlist = sorted(A.get_langcodes())
                 # Drop-down for selecting language codes
@@ -1309,7 +1309,7 @@ def translate():
                     strings.append(line)
 
                 # Update the file containing user strings
-                from s3.s3translate import TranslateReadFiles
+                from core.tools.translate import TranslateReadFiles
                 TranslateReadFiles.merge_user_strings_file(strings)
 
                 response.confirmation = T("File uploaded")
@@ -1341,7 +1341,7 @@ def task():
             ctable = component.table
 
             field = ctable.traceback
-            from s3 import s3_text_represent
+            from core import s3_text_represent
             field.represent = s3_text_represent
 
             component.configure(insertable = False,

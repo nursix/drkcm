@@ -128,7 +128,7 @@ def person():
                 name_fields = [fn for fn in keys if fn in NAMES]
 
                 # Fields in form
-                from s3 import S3SQLInlineComponent
+                from core import S3SQLInlineComponent
                 crud_fields = name_fields + \
                               ["gender",
                                "date_of_birth",

@@ -1,5 +1,5 @@
 /**
- * Used by S3ImageCropWidget (modules/s3widgets.py)
+ * Used by S3ImageCropWidget (core/ui/widgets)
  *
  * @ToDo: Doesn't currently work with Inline Component Forms
  */
@@ -23,9 +23,9 @@
 
     if (widthLimit == 0 || heightLimit == 0) {
         toScale = false;
-        // set default Value        
+        // set default Value
         widthLimit = heightLimit = 600;
-    }    
+    }
 
     var isValidImage = function(file) {
         var info = file.type.split('/');
@@ -48,12 +48,12 @@
         scaleFactor;
 
     var saveEvent = function(e) {
-        userEvent = e;        
+        userEvent = e;
     };
 
     var calculateScale = function(canvas_size, image_size) {
 
-        if (image_size[0] > canvas_size[0]) {   
+        if (image_size[0] > canvas_size[0]) {
             scaleFactor = canvas_size[0] / image_size[0];
             image_size[0] *= scaleFactor;
             image_size[1] *= scaleFactor;
@@ -80,8 +80,8 @@
         }
     };
 
-    var jCropAPI,   
-        scale, 
+    var jCropAPI,
+        scale,
         fileName,
         image = new Image;
 
@@ -124,7 +124,7 @@
     $uploadTitle.bind('click', function(e) {
         $uploadContainer.slideDown('fast', function() {
             $uploadTitle.html(i18n.upload_image);
-        });    
+        });
     });
 
     var FileSelectHandler = function(e) {
@@ -134,7 +134,7 @@
         }
 
         // Hide Upload Div
-        setTimeout(function() { 
+        setTimeout(function() {
             $uploadContainer.slideUp('fast', function() {
                 $uploadTitle.html('<a>' + i18n.upload_new_image + '</a>');
             });
@@ -162,7 +162,7 @@
         }
 
         reader.onload = function(e) {
-            loadImage(e.target.result); 
+            loadImage(e.target.result);
         };
 
         reader.readAsDataURL(file);
@@ -224,7 +224,7 @@
         canvas.getContext('2d')
               .drawImage(image, Math.round(x1 * scaleX), Math.round(y1 * scaleX), width, height, 0, 0, width, height);
         var data = canvas.toDataURL('image/' + extension);
-        loadImage(data);    
+        loadImage(data);
     };
 
     var disableCrop = function(e) {
@@ -249,16 +249,16 @@
 
     var UpdateCropPoints = function(coords) {
         var points = coords.x + ',' + coords.y + ',' + coords.x2 + ',' + coords.y2;
-        $points.val(points); 
+        $points.val(points);
     };
 
     var bounds;
 
     var EnableCrop = function(e) {
-        
+
         var $this = $(this);
 
-        if (jCropAPI) { 
+        if (jCropAPI) {
             jCropAPI.destroy();
             disableCrop(userEvent);
         }
@@ -270,7 +270,7 @@
                      bgFade: true,
                      bgColor: 'black',
                      addClass: 'jcrop-light'
-                     }, 
+                     },
                      function() {
                         jCropAPI = this;
                         bounds = jCropAPI.getBounds();
@@ -312,6 +312,6 @@
     $('.imagecrop-drag').bind('dragover', FileHoverHandler)
                         .bind('dragleave', FileHoverHandler)
                         .bind('drop', FileSelectHandler);
-    $('.imagecrop-upload').bind('change', FileSelectHandler); 
+    $('.imagecrop-upload').bind('change', FileSelectHandler);
 
  });

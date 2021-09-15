@@ -12,7 +12,7 @@ import os
 
 from gluon import current, A, DIV, LI, SPAN, UL
 
-from s3 import FS, ICON, S3DateFilter, S3Represent, s3_str, s3_yes_no_represent
+from core import FS, ICON, S3DateFilter, S3Represent, s3_str, s3_yes_no_represent
 from s3db.pr import pr_PersonEntityRepresent
 
 # =============================================================================
@@ -113,7 +113,7 @@ def get_current_location(person_id=None):
     if not person_id:
         person_id = current.auth.s3_logged_in_person()
 
-    from s3 import S3Trackable
+    from core import S3Trackable
     trackable = S3Trackable(tablename="pr_person", record_id=person_id)
 
     # Look up the location

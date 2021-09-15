@@ -1,8 +1,8 @@
 /**
- * Used by the S3OrganisationHierarchyWidget (modules/s3/s3widgets.py)
+ * Used by the S3OrganisationHierarchyWidget (core/ui/widgets)
  * This script is in Static to allow caching
  * Dynamic constants (e.g. Internationalised strings) are set in server-generated script
- * 
+ *
  * @ToDo: rewrite to minimise use of global scope
  * @ToDo: minified version
  */

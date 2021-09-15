@@ -62,7 +62,7 @@ def adjust_pools(rules):
     s3db = current.s3db
 
     # Customise Resources (doesn't happen automatically when running from CLI)
-    from s3 import s3_request
+    from core import s3_request
     r = s3_request("pr", "person")
     r.customise_resource("pr_person")
     r.customise_resource("pr_group_membership")

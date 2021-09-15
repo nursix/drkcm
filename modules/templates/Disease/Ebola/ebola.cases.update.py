@@ -262,7 +262,7 @@ import csv
 import os
 split = os.path.split
 
-from s3 import s3_str
+from core import s3_str
 
 with open(OUTPUT_CSV, "w", newline="") as new_file:
     new_csv = csv.writer(new_file, delimiter=",", quotechar='"')

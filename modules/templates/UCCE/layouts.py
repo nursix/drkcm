@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import current, A, DIV, FORM, OPTION, SELECT, TAG
-from s3 import ICON, S3NavigationItem
+from core import ICON, S3NavigationItem
 #from s3theme import NAV
 
 # =============================================================================
@@ -82,7 +82,7 @@ class S3OptionsMenuLayout(S3NavigationItem):
                 items = item.render_components()
                 return DIV(items, _id="main-sub-menu", _class="icon-bar vertical three-up")
 
-            else:   
+            else:
                 # Menu item
                 if item.enabled and item.authorized:
 

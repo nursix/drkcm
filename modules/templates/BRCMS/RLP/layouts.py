@@ -12,7 +12,7 @@ __all__ = ("S3MainMenuLayout",
            )
 from gluon import current, URL, \
                   A, FORM, IMG, INPUT, LI, OPTION, SELECT, SPAN, TAG, UL
-from s3 import S3NavigationItem
+from core import S3NavigationItem
 from s3theme import NAV, SECTION
 
 # =============================================================================

@@ -18,9 +18,9 @@ import uuid
 from gluon import current, Field, IS_EMPTY_OR, IS_IN_SET, SQLFORM, URL, \
                   BUTTON, DIV, FORM, H5, INPUT, TABLE, TD, TR
 
-from s3 import IS_ONE_OF, S3CustomController, S3Method, \
-               s3_date, s3_mark_required, s3_qrcode_represent, \
-               JSONERRORS
+from core import IS_ONE_OF, S3CustomController, S3Method, \
+                 s3_date, s3_mark_required, s3_qrcode_represent, \
+                 JSONERRORS
 
 from .dcc import DCC
 from .vouchers import RLPCardLayout
@@ -473,7 +473,7 @@ class TestResultRegistration(S3Method):
             title = T("Test Result")
         item["title"] = pdf_title = title
 
-        from s3.s3export import S3Exporter
+        from core import S3Exporter
         from gluon.contenttype import contenttype
 
         # Export PDF
@@ -690,7 +690,7 @@ class CWAReport(object):
             data["dgc"] = True
 
         # Convert data to JSON
-        from s3.s3xml import SEPARATORS
+        from core import SEPARATORS
         data_json = json.dumps(data, separators=SEPARATORS)
 
         # Base64-encode the data JSON

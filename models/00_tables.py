@@ -54,7 +54,7 @@ if s3.debug:
     import s3db.water
 
 # Set up current.s3db
-from s3.s3model import S3Model
+from core import S3Model
 s3db = current.s3db = S3Model()
 
 # =============================================================================
@@ -84,6 +84,6 @@ s3db.configure("auth_membership",
 
 # =============================================================================
 # Make available for controllers
-from s3 import S3ReusableField, s3_comments, s3_meta_fields
+from core import S3ReusableField, s3_comments, s3_meta_fields
 
 # END =========================================================================

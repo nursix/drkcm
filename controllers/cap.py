@@ -105,7 +105,7 @@ def alert():
     tablename = "cap_alert"
 
     def prep(r):
-        from s3 import S3OptionsFilter
+        from core import S3OptionsFilter
         resource = r.resource
         table = r.table
         itable = s3db.cap_info
@@ -225,7 +225,7 @@ def alert():
                              vars = request.vars))
 
             if record.external != True:
-                from s3 import S3Represent
+                from core import S3Represent
                 table.addresses.represent = S3Represent(lookup = "pr_group",
                                                         fields = ["name"],
                                                         multiple = True,
@@ -724,7 +724,7 @@ def alert():
                             translate = False
                         if translate:
                             # Represent each row with local name if available
-                            from s3 import S3Represent
+                            from core import S3Represent
                             atable = s3db.cap_area
                             cap_area_options = cap_AreaRowOptionsBuilder(r.id,
                                                                          caller=r.method)
@@ -815,7 +815,7 @@ def alert():
                         translate = False
                     if translate:
                         # Represent each row with local name if available
-                        from s3 import S3Represent
+                        from core import S3Represent
                         cap_area_options = cap_AreaRowOptionsBuilder(r.id)
                         atable.name.represent = S3Represent(options=cap_area_options)
 

@@ -4,7 +4,7 @@ import re
 
 from gluon import current
 
-from s3 import s3_str
+from core import s3_str
 
 PLACEHOLDER = re.compile(r"\{([^{}]+)\}")
 # =============================================================================

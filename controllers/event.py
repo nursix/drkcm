@@ -402,7 +402,7 @@ def sitrep():
 def template():
     """ RESTful CRUD controller """
 
-    from s3 import FS
+    from core import FS
     s3.filter = FS("master") == "event_sitrep"
 
     s3db.dc_template.master.default = "event_sitrep"
@@ -478,7 +478,7 @@ def group():
                            ]
             resource.configure(list_fields = list_fields)
         if r.interactive:
-            from s3 import S3SQLCustomForm, S3SQLInlineComponent
+            from core import S3SQLCustomForm, S3SQLInlineComponent
             crud_fields = ["name",
                            "description",
                            S3SQLInlineComponent("team_status_team",

@@ -5,7 +5,7 @@ from collections import OrderedDict
 from gluon import current, URL
 from gluon.storage import Storage
 
-from s3 import S3ReportRepresent
+from core import S3ReportRepresent
 
 def config(settings):
     """
@@ -336,9 +336,9 @@ def config(settings):
 
         import json
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent, \
-                       S3DateFilter, S3OptionsFilter, S3TextFilter, \
-                       s3_fieldmethod
+        from core import S3SQLCustomForm, S3SQLInlineComponent, \
+                         S3DateFilter, S3OptionsFilter, S3TextFilter, \
+                         s3_fieldmethod
 
         s3db = current.s3db
 
@@ -462,7 +462,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_event_sitrep_resource(r, tablename):
 
-        from s3 import s3_comments_widget
+        from core import s3_comments_widget
 
         table = current.s3db.event_sitrep
 
@@ -552,7 +552,7 @@ def config(settings):
                 get_vars = r.get_vars
                 adm = get_vars.get("adm")
                 if adm:
-                    from s3 import FS
+                    from core import FS
                     resource = r.resource
 
                     # Filter for children of adm
@@ -632,7 +632,7 @@ def config(settings):
                                                     ),
                             )
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink, s3_comments_widget
+        from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink, s3_comments_widget
 
         # Individual settings for specific tag components
         components_get = s3db.resource(tablename).components.get
@@ -703,7 +703,7 @@ def config(settings):
                                                        },
                             )
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent
+        from core import S3SQLCustomForm, S3SQLInlineComponent
         crud_form = S3SQLCustomForm("name",
                                     "abrv",
                                     "comments",
@@ -1208,10 +1208,10 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
 
         from gluon import IS_EMPTY_OR, IS_IN_SET
 
-        from s3 import s3_comments_widget, \
-                       S3LocationSelector, S3LocationDropdownWidget, \
-                       S3Represent, \
-                       S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
+        from core import s3_comments_widget, \
+                         S3LocationSelector, S3LocationDropdownWidget, \
+                         S3Represent, \
+                         S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
 
         db = current.db
         s3db = current.s3db
@@ -1316,7 +1316,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
         f = verified.table.value
         f.requires = IS_EMPTY_OR(IS_IN_SET(("Y", "N")))
         f.represent = lambda v: T("yes") if v == "Y" else T("no")
-        from s3 import S3TagCheckboxWidget
+        from core import S3TagCheckboxWidget
         f.widget = S3TagCheckboxWidget(on="Y", off="N")
         f.default = "N"
 
@@ -1555,7 +1555,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
                     #(T("Tags"), "tag"),
                     ]
 
-            from s3 import s3_rheader_tabs
+            from core import s3_rheader_tabs
             rheader_tabs = s3_rheader_tabs(r, tabs)
 
             location_id = r.table.location_id
@@ -1672,7 +1672,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
 
         from gluon import IS_EMPTY_OR, IS_IN_SET, SPAN
 
-        from s3 import S3Represent
+        from core import S3Represent
 
         s3db = current.s3db
 
@@ -1723,7 +1723,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
     # -------------------------------------------------------------------------
     def customise_req_need_line_controller(**attr):
 
-        from s3 import S3OptionsFilter, S3TextFilter #, S3DateFilter, S3LocationFilter
+        from core import S3OptionsFilter, S3TextFilter #, S3DateFilter, S3LocationFilter
 
         s3db = current.s3db
 
@@ -1898,7 +1898,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
             if r.interactive and r.method == "summary":
 
                 from gluon import A, DIV
-                from s3 import s3_str#, S3CRUD
+                from core import s3_str#, S3CRUD
 
                 auth = current.auth
 
@@ -1993,10 +1993,10 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
     # -------------------------------------------------------------------------
     def customise_req_need_response_resource(r, tablename):
 
-        from s3 import s3_comments_widget, \
-                       S3LocationDropdownWidget, S3LocationSelector, \
-                       S3Represent, \
-                       S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
+        from core import s3_comments_widget, \
+                         S3LocationDropdownWidget, S3LocationSelector, \
+                         S3Represent, \
+                         S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
 
         #db = current.db
         s3db = current.s3db
@@ -2239,7 +2239,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
     # -------------------------------------------------------------------------
     def customise_req_need_response_line_resource(r, tablename):
 
-        from s3 import S3Represent
+        from core import S3Represent
 
         s3db = current.s3db
         table = s3db.req_need_response_line
@@ -2269,7 +2269,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
     # -------------------------------------------------------------------------
     def customise_req_need_response_line_controller(**attr):
 
-        from s3 import S3OptionsFilter #, S3DateFilter, S3LocationFilter, S3TextFilter
+        from core import S3OptionsFilter #, S3DateFilter, S3LocationFilter, S3TextFilter
 
         s3db = current.s3db
         table = s3db.req_need_response_line
@@ -2414,7 +2414,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
             #    # => Needs to be a VF as we can't read the record from within represents
             #    #table.quantity_delivered.represent =
             #
-            #    from s3 import S3Represent, s3_fieldmethod
+            #    from core import S3Represent, s3_fieldmethod
             #
             #    # @ToDo: Option for gis_LocationRepresent which doesn't show level/parent, but supports translation
             #    gis_represent = S3Represent(lookup = "gis_location")
@@ -2461,8 +2461,8 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
 
             if r.interactive and r.method == "summary":
                 from gluon import A, DIV
-                from s3 import s3_str
-                #from s3 import S3CRUD, s3_str
+                from core import s3_str
+                #from core import S3CRUD, s3_str
                 # Normal Action Buttons
                 #S3CRUD.action_buttons(r)
                 # Custom Action Buttons

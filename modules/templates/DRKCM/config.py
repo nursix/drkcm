@@ -7,7 +7,7 @@ from collections import OrderedDict
 from gluon import current, A, DIV, IS_EMPTY_OR, IS_IN_SET, IS_LENGTH, IS_NOT_EMPTY, TAG, URL
 from gluon.storage import Storage
 
-from s3 import FS, IS_ONE_OF
+from core import FS, IS_ONE_OF
 from s3dal import original_tablename
 
 from .helpers import user_mailmerge_fields, case_read_multiple_orgs
@@ -705,7 +705,7 @@ def config(settings):
 
             # Configure anonymize-method
             # TODO make standard via setting
-            from s3 import S3Anonymize
+            from core import S3Anonymize
             s3db.set_method("pr", "person",
                             method = "anonymize",
                             action = S3Anonymize,
@@ -901,14 +901,14 @@ def config(settings):
 
                     if r.interactive and r.method != "import":
 
-                        from s3 import S3SQLCustomForm, \
-                                       S3SQLInlineComponent, \
-                                       S3SQLInlineLink, \
-                                       S3TextFilter, \
-                                       S3DateFilter, \
-                                       S3OptionsFilter, \
-                                       s3_get_filter_opts, \
-                                       IS_PERSON_GENDER
+                        from core import S3SQLCustomForm, \
+                                         S3SQLInlineComponent, \
+                                         S3SQLInlineLink, \
+                                         S3TextFilter, \
+                                         S3DateFilter, \
+                                         S3OptionsFilter, \
+                                         s3_get_filter_opts, \
+                                         IS_PERSON_GENDER
 
                         # Default organisation
                         from .helpers import case_default_org
@@ -1256,7 +1256,7 @@ def config(settings):
 
                     if response_tab_need_filter:
                         # Configure filter widgets for response tab
-                        from s3 import S3DateFilter, S3OptionsFilter, S3TextFilter
+                        from core import S3DateFilter, S3OptionsFilter, S3TextFilter
                         r.component.configure(
                             filter_widgets = [
                                S3TextFilter(["response_action_theme.theme_id$name",
@@ -1318,7 +1318,7 @@ def config(settings):
                     buttons = output["buttons"]
 
                 # Anonymize-button
-                from s3 import S3AnonymizeWidget
+                from core import S3AnonymizeWidget
                 anonymize = S3AnonymizeWidget.widget(r,
                                          _class="action-btn anonymize-btn")
 
@@ -1382,8 +1382,8 @@ def config(settings):
                     field.comment = None
 
                     # Organisation is required
-                    from s3 import S3SQLCustomForm, \
-                                   S3SQLInlineComponent
+                    from core import S3SQLCustomForm, \
+                                     S3SQLInlineComponent
                     crud_form = S3SQLCustomForm(
                                     "name",
                                     "description",
@@ -1399,7 +1399,7 @@ def config(settings):
 
                 elif r.component_name == "group_membership":
 
-                    from s3 import S3PersonAutocompleteWidget
+                    from core import S3PersonAutocompleteWidget
 
                     # Make sure only HRs can be added to teams
                     mtable = s3db.pr_group_membership
@@ -1455,7 +1455,7 @@ def config(settings):
                 if r.interactive:
                     table = resource.table
 
-                    from s3 import S3AddPersonWidget
+                    from core import S3AddPersonWidget
 
                     field = table.person_id
                     field.represent = s3db.pr_PersonRepresent(show_link=True)
@@ -1854,10 +1854,10 @@ def config(settings):
 
         if r.interactive or r.representation in ("aadata", "json"):
 
-            from s3 import S3SQLCustomForm, \
-                           S3SQLInlineComponent, \
-                           S3SQLInlineLink, \
-                           S3SQLVerticalSubFormLayout
+            from core import S3SQLCustomForm, \
+                             S3SQLInlineComponent, \
+                             S3SQLInlineLink, \
+                             S3SQLVerticalSubFormLayout
 
             # Represent person_id as link
             field = table.person_id
@@ -2096,7 +2096,7 @@ def config(settings):
                 field.widget = field.comment = None
 
                 # Require explicit unit in hours-widget above 4 hours
-                from s3 import S3HoursWidget
+                from core import S3HoursWidget
                 field = rtable.hours
                 field.widget = S3HoursWidget(precision = 2,
                                              explicit_above = 4,
@@ -2286,8 +2286,8 @@ def config(settings):
 
             if not r.component and not r.record:
 
-                from s3 import S3TextFilter, \
-                               S3OptionsFilter
+                from core import S3TextFilter, \
+                                 S3OptionsFilter
 
                 db = current.db
 
@@ -2504,7 +2504,7 @@ def config(settings):
                 if r.interactive and not r.id:
 
                     # Custom filter widgets
-                    from s3 import S3TextFilter, S3OptionsFilter, S3DateFilter, s3_get_filter_opts
+                    from core import S3TextFilter, S3OptionsFilter, S3DateFilter, s3_get_filter_opts
                     filter_widgets = [
                         S3TextFilter(["person_id$pe_label",
                                       "person_id$first_name",
@@ -2547,7 +2547,7 @@ def config(settings):
                     resource.configure(filter_widgets = filter_widgets)
 
                 # Default filter today's and tomorrow's appointments
-                from s3 import s3_set_default_filter
+                from core import s3_set_default_filter
                 now = r.utcnow
                 today = now.replace(hour=0, minute=0, second=0, microsecond=0)
                 tomorrow = today + datetime.timedelta(days=1)
@@ -2935,7 +2935,7 @@ def config(settings):
                     hr_filter_default = human_resource_id
 
             # Require explicit unit in hours-widget above 4 hours
-            from s3 import S3HoursWidget
+            from core import S3HoursWidget
             field = table.hours
             field.widget = S3HoursWidget(precision = 2,
                                          explicit_above = 4,
@@ -3094,12 +3094,12 @@ def config(settings):
 
                 # Custom Filter Options
                 if r.interactive:
-                    from s3 import S3AgeFilter, \
-                                   S3DateFilter, \
-                                   S3HierarchyFilter, \
-                                   S3OptionsFilter, \
-                                   S3TextFilter, \
-                                   s3_get_filter_opts
+                    from core import S3AgeFilter, \
+                                     S3DateFilter, \
+                                     S3HierarchyFilter, \
+                                     S3OptionsFilter, \
+                                     S3TextFilter, \
+                                     s3_get_filter_opts
 
                     filter_widgets = [
                         S3TextFilter(["person_id$pe_label",
@@ -3480,8 +3480,8 @@ def config(settings):
         auth = current.auth
         s3db = current.s3db
 
-        from s3 import S3LocationSelector, \
-                       S3SQLCustomForm
+        from core import S3LocationSelector, \
+                         S3SQLCustomForm
 
         # Field configurations
         table = s3db.cr_shelter
@@ -3560,7 +3560,7 @@ def config(settings):
                 filter_widgets = resource.get_config("filter_widgets")
                 if filter_widgets:
 
-                    from s3 import S3TextFilter
+                    from core import S3TextFilter
 
                     custom_filters = []
                     for fw in filter_widgets:
@@ -3657,7 +3657,7 @@ def config(settings):
         field.readable = field.writable = False
 
         # Location selector just needs country + address
-        from s3 import S3LocationSelector
+        from core import S3LocationSelector
         field = table.location_id
         field.widget = S3LocationSelector(levels = ["L0"],
                                           show_address=True,
@@ -3683,7 +3683,7 @@ def config(settings):
                        ]
 
         # Custom filter widgets
-        from s3 import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
+        from core import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
         filter_widgets = [S3TextFilter(["name",
                                         "organisation_id$name",
                                         "organisation_id$acronym",
@@ -3769,7 +3769,7 @@ def config(settings):
     #def customise_project_home():
     #    """ Always go to task list """
     #
-    #    from s3 import s3_redirect_default
+    #    from core import s3_redirect_default
     #    s3_redirect_default(URL(f="task"))
     #
     #settings.customise_project_home = customise_project_home
@@ -3784,7 +3784,7 @@ def config(settings):
         s3db = current.s3db
 
         # Configure custom form for tasks
-        from s3 import S3SQLCustomForm
+        from core import S3SQLCustomForm
         crud_form = S3SQLCustomForm("name",
                                     "status",
                                     "priority",

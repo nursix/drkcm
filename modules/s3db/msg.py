@@ -50,7 +50,7 @@ __all__ = ("S3ChannelModel",
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")

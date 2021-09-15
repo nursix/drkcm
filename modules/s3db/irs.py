@@ -37,7 +37,7 @@ import json
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding

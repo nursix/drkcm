@@ -81,7 +81,7 @@ from gluon import *
 from gluon.sqlhtml import RadioWidget
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -7539,10 +7539,6 @@ def hrm_rheader(r, tabs=None, profile=False):
                      unavailability_tab,
                      (T("Assets"), "asset"),
                      ]
-            # Add role manager tab if a user record exists
-            user_id = current.auth.s3_get_user_id(record_id)
-            if user_id:
-                tabs.append((T("Roles"), "roles"))
         rheader_tabs = s3_rheader_tabs(r, tabs)
         rheader_btns = DIV(service_record, card_button,
                            # @ToDo: Move to CSS
@@ -8528,7 +8524,7 @@ def hrm_human_resource_controller(extra_filter = None):
                 # Don't redirect
                 pass
 
-            # Now done in s3merge
+            # Now done in core/methods/merge
             #elif method == "deduplicate":
             #    # Don't use AddPersonWidget here
             #    from gluon.sqlhtml import OptionsWidget
@@ -8800,9 +8796,6 @@ def hrm_person_controller(**attr):
 
         # Filter to just those people with an active HR record
         r.resource.add_filter(FS("human_resource.id") != None)
-
-        # Plug-in role matrix for Admins/OrgAdmins
-        S3PersonRoleManager.set_method(r, entity="pr_person")
 
         if s3.rtl:
             # Ensure that + appears at the beginning of the number

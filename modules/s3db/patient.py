@@ -32,7 +32,7 @@ __all__ = ("S3PatientModel",)
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 
 # =============================================================================
 class S3PatientModel(S3Model):

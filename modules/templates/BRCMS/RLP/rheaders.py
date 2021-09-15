@@ -8,7 +8,7 @@
 
 from gluon import current, URL, A, SPAN
 
-from s3 import S3ResourceHeader, s3_rheader_resource, s3_fullname
+from core import S3ResourceHeader, s3_rheader_resource, s3_fullname
 
 # =============================================================================
 def rlpcm_br_rheader(r, tabs=None):
@@ -133,7 +133,7 @@ def rlpcm_br_rheader(r, tabs=None):
                             )
 
             # Add profile picture
-            from s3 import s3_avatar_represent
+            from core import s3_avatar_represent
             rheader.insert(0, A(s3_avatar_represent(record_id,
                                                     "pr_person",
                                                     _class = "rheader-avatar",

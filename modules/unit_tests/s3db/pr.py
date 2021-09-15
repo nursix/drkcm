@@ -11,7 +11,7 @@ import datetime
 from gluon import *
 from gluon.storage import Storage
 
-from s3 import s3_phone_represent, s3_fullname
+from core import s3_phone_represent, s3_fullname
 
 from lxml import etree
 
@@ -199,7 +199,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def testMatchNames(self):
 
         s3db = current.s3db
-        from s3.s3import import S3ImportItem
+        from core import S3ImportItem
 
         deduplicate = s3db.get_config("pr_person", "deduplicate")
 
@@ -225,7 +225,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def testMatchEmail(self):
 
         s3db = current.s3db
-        from s3.s3import import S3ImportItem
+        from core import S3ImportItem
 
         deduplicate = s3db.get_config("pr_person", "deduplicate")
 
@@ -326,7 +326,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def testMatchInitials(self):
 
         s3db = current.s3db
-        from s3.s3import import S3ImportItem
+        from core import S3ImportItem
 
         deduplicate = s3db.get_config("pr_person", "deduplicate")
 
@@ -417,7 +417,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def import_item(self, person, email=None, sms=None):
         """ Construct a fake import item """
 
-        from s3.s3import import S3ImportItem
+        from core import S3ImportItem
         def item(tablename, data):
             return Storage(id = None,
                            method = None,

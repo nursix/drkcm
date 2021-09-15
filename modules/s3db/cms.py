@@ -52,7 +52,7 @@ import re
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -1441,11 +1441,11 @@ def cms_documentation(r, default_page, default_url):
         else:
             # No CMS contents for module homepage found at all
             # => redirect to default page (preserving all errors)
-            from s3 import s3_redirect_default
+            from core import s3_redirect_default
             s3_redirect_default(default_url)
 
     # Render the page
-    from s3 import S3XMLContents
+    from core import S3XMLContents
     return {"bypass": True,
             "output": {"title": row.title,
                        "contents": S3XMLContents(row.body),

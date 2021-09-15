@@ -433,7 +433,7 @@ def email_inbox():
 
     s3.filter = (FS("inbound") == True)
 
-    from s3 import S3SQLCustomForm, S3SQLInlineComponent
+    from core import S3SQLCustomForm, S3SQLInlineComponent
     crud_form = S3SQLCustomForm("date",
                                 "subject",
                                 "from_address",
@@ -1640,7 +1640,7 @@ def twitter_result():
         msg_list_empty = T("No Tweets Available."),
         )
 
-    from s3.s3filter import S3DateFilter, S3TextFilter
+    from core import S3DateFilter, S3TextFilter
 
     filter_widgets = [
         S3DateFilter("date",

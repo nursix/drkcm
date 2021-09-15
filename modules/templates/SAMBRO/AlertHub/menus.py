@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import *
-from s3 import *
+from core import *
 from s3layouts import *
 try:
     from .layouts import *
@@ -76,7 +76,7 @@ class S3MainMenu(default.S3MainMenu):
                         MM("Organizations", c="org", f="organisation"),
                         MM("Persons", c="pr", f="person"),
                         recipient_menu,
-                        mapping_menu, 
+                        mapping_menu,
                         ]
             else:
                 # Publisher sees minimal options
@@ -114,7 +114,7 @@ class S3MainMenu(default.S3MainMenu):
                         )
         else:
             # Logged-in
-            user_id = auth.s3_logged_in_person()                
+            user_id = auth.s3_logged_in_person()
             menu_auth = MM(auth.user.email, link=False, right=True)(
                            MM("Subscription", c="pr", f="subscription"),
                            MM("Edit Profile", c="pr", f="person", args=[user_id]),

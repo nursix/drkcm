@@ -7,7 +7,7 @@
 """
 
 if settings.get_L10n_languages_readonly():
-    # Make the Language files read-only for improved performance
+    # Make the Language files read-only for improved performance (default)
     T.is_writable = False
 
 get_vars = request.get_vars
@@ -73,18 +73,14 @@ elif settings.get_base_session_memcache():
 ####################################################################
 
 from gluon.tools import Mail
-mail = Mail()
-current.mail = mail
+mail = current.mail = Mail()
 
 from gluon.storage import Messages
-messages = Messages(T)
-current.messages = messages
+messages = current.messages = Messages(T)
+ERROR = current.ERROR = Messages(T)
 
-ERROR = Messages(T)
-current.ERROR = ERROR
-
-# Import the S3 Framework
-import s3 as s3base
+# Import the Core Framework
+import core as s3base
 
 # Set up logger (before any module attempts to use it!)
 import s3log
@@ -109,13 +105,6 @@ auth.define_tables(migrate=migrate, fake_migrate=fake_migrate)
 
 current.audit = audit = s3base.S3Audit(migrate=migrate, fake_migrate=fake_migrate)
 
-# Shortcuts for models/controllers/views
-# - removed to reduce per-request overheads & harmonise the environment in
-#   models/controllers with that of Template controllers.py & customise() functions
-#s3_has_role = auth.s3_has_role
-#s3_has_permission = auth.s3_has_permission
-#s3_logged_in_person = auth.s3_logged_in_person
-
 # Calendar
 current.calendar = s3base.S3Calendar()
 
@@ -130,14 +119,12 @@ s3_action_buttons = s3base.S3CRUD.action_buttons
 s3_fullname = s3base.s3_fullname
 s3_redirect_default = s3base.s3_redirect_default
 S3ResourceHeader = s3base.S3ResourceHeader
-from s3.s3navigation import s3_rheader_tabs
-from s3.s3validators import *
-from s3.s3widgets import *
-from s3.s3data import *
+from core.tools.validators import *
+from core.ui.navigation import s3_rheader_tabs
+from core.ui.widgets import *
 
 # GIS Module
-gis = s3base.GIS()
-current.gis = gis
+gis = current.gis = s3base.GIS()
 
 # s3_request
 s3_request = s3base.s3_request
@@ -146,16 +133,13 @@ s3_request = s3base.s3_request
 FS = s3base.FS
 
 # S3XML
-s3xml = s3base.S3XML()
-current.xml = s3xml
+s3xml = current.xml = s3base.S3XML()
 
 # Messaging
-msg = s3base.S3Msg()
-current.msg = msg
+msg = current.msg = s3base.S3Msg()
 
 # Sync
-sync = s3base.S3Sync()
-current.sync = sync
+sync = current.sync = s3base.S3Sync()
 
 # -----------------------------------------------------------------------------
 def s3_clear_session():

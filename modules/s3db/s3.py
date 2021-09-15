@@ -37,7 +37,7 @@ __all__ = ("S3HierarchyModel",
 import random
 
 from gluon import *
-from ..s3 import *
+from ..core import *
 
 # =============================================================================
 class S3HierarchyModel(S3Model):
@@ -679,7 +679,7 @@ def s3_scheduler_rheader(r, tabs=None):
         # Resource headers only used in interactive views
         return None
 
-    from s3 import s3_rheader_resource, S3ResourceHeader
+    from core import s3_rheader_resource, S3ResourceHeader
 
     tablename, record = s3_rheader_resource(r)
     if tablename != r.tablename:

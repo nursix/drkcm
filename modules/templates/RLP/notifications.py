@@ -7,8 +7,8 @@ import sys
 from gluon import current, Field, SQLFORM, URL, \
                   A, DIV, FIELDSET, H6, INPUT, LABEL, LEGEND, P, TEXTAREA
 
-from s3 import s3_fullname, s3_str, S3Method, JSONERRORS
-from s3.s3forms import S3SQLSubForm
+from core import s3_fullname, s3_str, S3Method, JSONERRORS
+from core.ui.forms import S3SQLSubForm
 
 PLACEHOLDER = re.compile(r"\{([^{}]+)\}")
 

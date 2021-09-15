@@ -43,7 +43,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from s3dal import Row
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
@@ -479,7 +479,7 @@ class SyncRepositoryModel(S3Model):
 
             if repository and repository.url:
 
-                from s3 import S3SyncRepository
+                from core import S3SyncRepository
                 connector = S3SyncRepository(repository)
                 success = connector.register()
 

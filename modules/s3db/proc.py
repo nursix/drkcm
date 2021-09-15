@@ -45,7 +45,7 @@ __all__ = ("S3ProcurementPlansModel",
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 
 # =============================================================================
 class S3ProcurementPlansModel(S3Model):

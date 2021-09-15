@@ -11,7 +11,7 @@ from gluon.html import *
 from gluon.storage import Storage
 from gluon.languages import lazyT
 
-from s3 import FS, s3_str, s3_truncate, s3_utc
+from core import FS, s3_str, s3_truncate, s3_utc
 
 def config(settings):
     """
@@ -336,7 +336,7 @@ def config(settings):
         if r.method == "hierarchy":
             s3.crud_strings[tablename] = crud_strings_branch
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
+        from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
         crud_form = S3SQLCustomForm("name",
                                     "acronym",
                                     S3SQLInlineLink("organisation_type",
@@ -657,7 +657,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_pr_subscription_controller(**attr):
 
-        from s3 import S3CRUD
+        from core import S3CRUD
         s3 = current.response.s3
         s3db = current.s3db
         auth = current.auth
@@ -686,7 +686,7 @@ def config(settings):
         # Custom prep
         standard_prep = s3.prep
         def custom_prep(r):
-            from s3 import S3Represent
+            from core import S3Represent
             table = r.table
             # Call standard prep
             if callable(standard_prep):
@@ -880,7 +880,7 @@ def config(settings):
     # -----------------------------------------------------------------------------
     def custom_msg_notify_send_data(resource, data, meta_data):
         """
-            Custom Method to send data containing alert_id to the s3msg.send_by_pe_id
+            Custom Method to send data containing alert_id to the S3Msg.send_by_pe_id
             @param resource: the S3Resource
             @param data: the data returned from S3Resource.select
             @param meta_data: the meta data for the notification
@@ -1055,7 +1055,7 @@ def config(settings):
             T = current.T
             etable = s3db.event_event_type
             ptable = s3db.cap_warning_priority
-            from s3 import IS_ISO639_2_LANGUAGE_CODE
+            from core import IS_ISO639_2_LANGUAGE_CODE
             languages_dict = dict(IS_ISO639_2_LANGUAGE_CODE.language_codes())
             for row in rows:
                 event_type = None

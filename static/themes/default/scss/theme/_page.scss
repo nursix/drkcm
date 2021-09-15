@@ -181,6 +181,8 @@ body.rtl {
 #poweredby {
     margin-right: 0.5rem;
     text-align: right;
+    color: $footer_fgcolor;
+    font-size: 0.8rem;
     a {
         color: $footer_fgcolor;
         text-decoration: none;

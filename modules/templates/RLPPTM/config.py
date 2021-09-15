@@ -14,7 +14,7 @@ from gluon import current, URL, A, DIV, TAG, \
 
 from gluon.storage import Storage
 
-from s3 import FS, IS_FLOAT_AMOUNT, ICON, IS_ONE_OF, S3Represent, s3_str
+from core import FS, IS_FLOAT_AMOUNT, ICON, IS_ONE_OF, S3Represent, s3_str
 from s3dal import original_tablename
 
 from .rlpgeonames import rlp_GeoNames
@@ -462,10 +462,10 @@ def config(settings):
 
         table = s3db.cms_post
 
-        from s3 import S3SQLCustomForm, \
-                       S3SQLInlineComponent, \
-                       S3SQLInlineLink, \
-                       s3_text_represent
+        from core import S3SQLCustomForm, \
+                         S3SQLInlineComponent, \
+                         S3SQLInlineLink, \
+                         s3_text_represent
 
         field = table.body
         field.represent = lambda v, row=None: \
@@ -797,7 +797,7 @@ def config(settings):
                        ]
 
         # Custom form (for read)
-        from s3 import S3SQLCustomForm
+        from core import S3SQLCustomForm
         crud_form = S3SQLCustomForm(disease_id,
                                     site_id,
                                     "probe_date",
@@ -806,7 +806,7 @@ def config(settings):
                                     )
 
         # Filters
-        from s3 import S3DateFilter, S3OptionsFilter
+        from core import S3DateFilter, S3OptionsFilter
         filter_widgets = [S3DateFilter("probe_date",
                                        label = T("Date"),
                                        hide_time = True,
@@ -1038,7 +1038,7 @@ def config(settings):
         field = table.pe_id
         field.label = T("Issuer##fin")
 
-        from s3 import S3WithIntro
+        from core import S3WithIntro
         field = table.bearer_dob
         if group_voucher:
             label = T("Group Representative Date of Birth")
@@ -1250,7 +1250,7 @@ def config(settings):
                     field.readable = True
 
                 # Filter Widgets
-                from s3 import S3DateFilter, S3TextFilter
+                from core import S3DateFilter, S3TextFilter
                 text_fields = ["signature", "comments", "program_id$name"]
                 if is_program_manager:
                     text_fields.append("pe_id$pe_id:org_organisation.name")
@@ -1262,7 +1262,7 @@ def config(settings):
                                  ),
                     ]
                 if is_program_manager:
-                    from s3 import S3OptionsFilter, s3_get_filter_opts
+                    from core import S3OptionsFilter, s3_get_filter_opts
                     filter_widgets.extend([
                         S3OptionsFilter("eligibility_type_id",
                                         hidden = True,
@@ -1391,7 +1391,7 @@ def config(settings):
 
         # Filters
         if r.interactive:
-            from s3 import S3DateFilter, S3TextFilter
+            from core import S3DateFilter, S3TextFilter
             filter_widgets = [S3TextFilter(["program_id$name",
                                             "signature",
                                             ],
@@ -1657,7 +1657,7 @@ def config(settings):
         table = current.s3db.fin_voucher_billing
 
         # Color-coded representation of billing process status
-        from s3 import S3PriorityRepresent
+        from core import S3PriorityRepresent
         field = table.status
         try:
             status_opts = field.represent.options
@@ -1791,7 +1791,7 @@ def config(settings):
             field.readable = field.writable = False
 
         # Color-coded representation of claim status
-        from s3 import S3PriorityRepresent
+        from core import S3PriorityRepresent
         field = table.status
         try:
             status_opts = field.represent.options
@@ -1827,7 +1827,7 @@ def config(settings):
                            ]
 
         # Filter widgets
-        from s3 import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
+        from core import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
         filter_widgets = [S3TextFilter(text_fields,
                                        label = T("Search"),
                                        ),
@@ -2047,7 +2047,7 @@ def config(settings):
         table = s3db.fin_voucher_invoice
 
         # Color-coded representation of invoice status
-        from s3 import S3PriorityRepresent
+        from core import S3PriorityRepresent
         field = table.status
         try:
             status_opts = field.requires.options()
@@ -2084,7 +2084,7 @@ def config(settings):
             hr_filter_opts = None
 
         # Filter widgets
-        from s3 import S3DateFilter, S3OptionsFilter, S3TextFilter
+        from core import S3DateFilter, S3OptionsFilter, S3TextFilter
         if r.interactive:
             filter_widgets = [S3TextFilter(["invoice_no",
                                             "refno",
@@ -2272,7 +2272,7 @@ def config(settings):
                                "status",
                                ]
 
-            from s3 import S3OptionsFilter, S3TextFilter, s3_get_filter_opts
+            from core import S3OptionsFilter, S3TextFilter, s3_get_filter_opts
             filter_widgets = [
                 S3TextFilter(["person_id$first_name",
                               "person_id$last_name",
@@ -2459,12 +2459,12 @@ def config(settings):
                     field = ltable.project_id
                     field.represent = S3Represent(lookup="project_project")
 
-                    from s3 import S3SQLCustomForm, \
-                                   S3SQLInlineComponent, \
-                                   S3SQLInlineLink, \
-                                   S3OptionsFilter, \
-                                   S3TextFilter, \
-                                   s3_get_filter_opts
+                    from core import S3SQLCustomForm, \
+                                     S3SQLInlineComponent, \
+                                     S3SQLInlineLink, \
+                                     S3OptionsFilter, \
+                                     S3TextFilter, \
+                                     s3_get_filter_opts
 
                     # Custom form
                     if is_org_group_admin:
@@ -2651,7 +2651,7 @@ def config(settings):
                                           )
 
             # Custom form
-            from s3 import S3SQLCustomForm, S3SQLInlineLink
+            from core import S3SQLCustomForm, S3SQLInlineLink
             crud_form = S3SQLCustomForm("name",
                                         "group.value",
                                         (T("Commercial Providers"), "commercial.value"),
@@ -2776,17 +2776,17 @@ def config(settings):
 
         # Configure fields
         in_org_controller = r.tablename == "org_organisation"
-        from s3 import (S3SQLCustomForm,
-                        S3SQLInlineLink,
-                        S3SQLInlineComponent,
-                        S3LocationFilter,
-                        S3LocationSelector,
-                        S3OptionsFilter,
-                        S3TextFilter,
-                        S3WithIntro,
-                        s3_get_filter_opts,
-                        s3_text_represent,
-                        )
+        from core import (S3SQLCustomForm,
+                          S3SQLInlineLink,
+                          S3SQLInlineComponent,
+                          S3LocationFilter,
+                          S3LocationSelector,
+                          S3OptionsFilter,
+                          S3TextFilter,
+                          S3WithIntro,
+                          s3_get_filter_opts,
+                          s3_text_represent,
+                          )
 
         table = s3db.org_facility
 
@@ -3300,7 +3300,7 @@ def config(settings):
                 # Override list-button to go to summary
                 buttons = output.get("buttons")
                 if isinstance(buttons, dict) and "list_btn" in buttons:
-                    from s3 import S3CRUD
+                    from core import S3CRUD
                     summary = r.url(method="summary", id="", component="")
                     buttons["list_btn"] = S3CRUD.crud_button(label = T("List Facilities"),
                                                              _href = summary,
@@ -3340,9 +3340,9 @@ def config(settings):
                                                    ),
                             )
 
-        from s3 import S3SQLCustomForm, \
-                       S3TextFilter, \
-                       S3OptionsFilter
+        from core import S3SQLCustomForm, \
+                         S3TextFilter, \
+                         S3OptionsFilter
 
         # Custom CRUD Form
         crud_fields = ["organisation_id",
@@ -3446,8 +3446,8 @@ def config(settings):
             # Call standard prep
             result = standard_prep(r) if callable(standard_prep) else True
 
-            from s3 import S3SQLCustomForm, \
-                           StringTemplateParser
+            from core import S3SQLCustomForm, \
+                             StringTemplateParser
 
             # Determine order of name fields
             NAMES = ("first_name", "middle_name", "last_name")
@@ -3473,7 +3473,7 @@ def config(settings):
                 ctable = r.component.table
 
                 # Configure location selector and geocoder
-                from s3 import S3LocationSelector
+                from core import S3LocationSelector
                 field = ctable.location_id
                 field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
                                                   required_levels = ("L1", "L2", "L3"),
@@ -3544,7 +3544,7 @@ def config(settings):
                                                  )
 
         # Color-coded status representation
-        from s3 import S3PriorityRepresent
+        from core import S3PriorityRepresent
         field = table.status
         status_opts = s3db.inv_ship_status
         from s3db.inv import inv_shipment_status_labels
@@ -3559,7 +3559,7 @@ def config(settings):
 
         if r.tablename == "inv_recv" and not r.component:
             if r.interactive:
-                from s3 import S3SQLCustomForm
+                from core import S3SQLCustomForm
                 crud_fields = ["req_ref",
                                #"send_ref",
                                "site_id",
@@ -3646,7 +3646,7 @@ def config(settings):
                 field.writable = False
 
                 # Use custom form
-                from s3 import S3SQLCustomForm
+                from core import S3SQLCustomForm
                 crud_fields = ["item_id",
                                "item_pack_id",
                                "quantity",
@@ -3717,7 +3717,7 @@ def config(settings):
                                                  )
 
         # Color-coded status representation
-        from s3 import S3PriorityRepresent
+        from core import S3PriorityRepresent
         field = table.status
         status_opts = s3db.inv_ship_status
         from s3db.inv import inv_shipment_status_labels
@@ -3893,7 +3893,7 @@ def config(settings):
                     field.requires = IS_FLOAT_AMOUNT(0)
 
                 # Use custom form
-                from s3 import S3SQLCustomForm
+                from core import S3SQLCustomForm
                 crud_fields = ["item_id",
                                "item_pack_id",
                                "quantity",
@@ -4093,7 +4093,7 @@ def config(settings):
             # Custom form for record view (read-only)
             field = table.recv_quantity
             field.readable = True
-            from s3 import S3SQLCustomForm
+            from core import S3SQLCustomForm
             crud_form = S3SQLCustomForm("item_id",
                                         "send_id",
                                         "item_pack_id",
@@ -4210,7 +4210,7 @@ def config(settings):
         if r.interactive:
 
             # Configure location selector and geocoder
-            from s3 import S3LocationSelector
+            from core import S3LocationSelector
             field = table.location_id
             field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
                                               required_levels = ("L1", "L2", "L3"),
@@ -4221,7 +4221,7 @@ def config(settings):
             current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 
             # Custom CRUD-Form
-            from s3 import S3SQLCustomForm
+            from core import S3SQLCustomForm
             crud_fields = ["organisation_id",
                            "name",
                            "code",
@@ -4316,7 +4316,7 @@ def config(settings):
         s3db = current.s3db
 
         import json
-        from s3 import JSONERRORS
+        from core import JSONERRORS
 
         if "site_id" in form_vars: # if site is selectable
             site_id = form_vars.site_id
@@ -4685,7 +4685,7 @@ def config(settings):
                     stable = s3db.org_site
 
                     # Default action buttons (except delete)
-                    from s3 import S3CRUD
+                    from core import S3CRUD
                     S3CRUD.action_buttons(r, deletable =False)
 
                     if has_role("SUPPLY_COORDINATOR"):
@@ -4915,7 +4915,7 @@ def config(settings):
         field.represent = lambda v, row=None: ICON("remove") if v else ""
 
         # Filter widgets
-        from s3 import S3TextFilter
+        from core import S3TextFilter
         filter_widgets = [S3TextFilter(["name",
                                         "code",
                                         "comments",

@@ -36,7 +36,7 @@ __all__ = ("HospitalDataModel",
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3dal import Row
 from s3layouts import S3PopupLink
 
@@ -1276,8 +1276,6 @@ def hms_hospital_rheader(r, tabs=None):
 
                 tabs.extend(s3db.req_tabs(r, match=False))
                 tabs.extend(s3db.inv_tabs(r))
-
-                tabs.append((T("User Roles"), "roles"))
 
             rheader_tabs = s3_rheader_tabs(r, tabs)
 

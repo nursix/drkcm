@@ -14,7 +14,7 @@ from gluon import current, redirect, URL, DIV, I, SPAN, TAG, \
 
 from gluon.storage import Storage
 
-from s3 import FS, IS_ONE_OF
+from core import FS, IS_ONE_OF
 from s3dal import original_tablename
 
 from templates.RLPPTM.rlpgeonames import rlp_GeoNames
@@ -297,10 +297,10 @@ def config(settings):
 
         table = s3db.cms_post
 
-        from s3 import S3SQLCustomForm, \
-                       S3SQLInlineComponent, \
-                       S3SQLInlineLink, \
-                       s3_text_represent
+        from core import S3SQLCustomForm, \
+                         S3SQLInlineComponent, \
+                         S3SQLInlineLink, \
+                         s3_text_represent
 
         field = table.body
         field.represent = lambda v, row=None: \
@@ -478,14 +478,14 @@ def config(settings):
 
         # Configure fields
         from .helpers import ProviderRepresent
-        from s3 import S3PriorityRepresent
+        from core import S3PriorityRepresent
 
         field = table.pe_id
         field.label = T("Provider")
         field.represent = ProviderRepresent()
 
         if r.function == "assistance_offer":
-            from s3 import S3WithIntro
+            from core import S3WithIntro
             field = table.description
             field.widget = S3WithIntro(field.widget,
                                        intro = ("br",
@@ -558,7 +558,7 @@ def config(settings):
 
         s3db = current.s3db
 
-        from s3 import s3_fieldmethod
+        from core import s3_fieldmethod
         from .helpers import OfferDetails
 
         table.place = s3_fieldmethod("place",
@@ -687,11 +687,11 @@ def config(settings):
 
             s3.crud_strings["br_assistance_offer"]["title_list"] = title_list
 
-            from s3 import S3LocationFilter, \
-                           S3LocationSelector, \
-                           S3OptionsFilter, \
-                           S3TextFilter, \
-                           s3_get_filter_opts
+            from core import S3LocationFilter, \
+                             S3LocationSelector, \
+                             S3OptionsFilter, \
+                             S3TextFilter, \
+                             s3_get_filter_opts
 
             if not r.component:
 
@@ -996,7 +996,7 @@ def config(settings):
 
         # Location is visible
         from .helpers import get_current_location
-        from s3 import S3LocationSelector
+        from core import S3LocationSelector
 
         field = table.location_id
         field.readable = field.writable = True
@@ -1017,7 +1017,7 @@ def config(settings):
 
         if case_file or ours:
             # Custom form to change field order
-            from s3 import S3SQLCustomForm
+            from core import S3SQLCustomForm
             crud_fields = ["person_id",
                            "priority",
                            "date",
@@ -1176,7 +1176,11 @@ def config(settings):
                         field.represent = s3db.pr_PersonRepresent(show_link=True)
 
                 # Filters
-                from s3 import S3DateFilter, S3TextFilter, S3LocationFilter, S3OptionsFilter, s3_get_filter_opts
+                from core import S3DateFilter, \
+                                 S3TextFilter, \
+                                 S3LocationFilter, \
+                                 S3OptionsFilter, \
+                                 s3_get_filter_opts
                 filter_widgets = [
                     S3TextFilter(["subject",
                                   "need_details",
@@ -1394,7 +1398,7 @@ def config(settings):
         table = s3db.br_direct_offer
 
         field = table.offer_id
-        from s3 import S3WithIntro
+        from core import S3WithIntro
         from gluon.sqlhtml import OptionsWidget
         field.widget = S3WithIntro(OptionsWidget.widget,
                                    intro = ("br",
@@ -1450,15 +1454,15 @@ def config(settings):
                                            (1, T("Closed")),
                                            ))
 
-        from s3 import S3LocationFilter, \
-                       S3LocationSelector, \
-                       S3OptionsFilter, \
-                       S3PriorityRepresent, \
-                       S3SQLCustomForm, \
-                       S3SQLInlineLink, \
-                       S3TextFilter, \
-                       s3_fieldmethod, \
-                       s3_get_filter_opts
+        from core import S3LocationFilter, \
+                         S3LocationSelector, \
+                         S3OptionsFilter, \
+                         S3PriorityRepresent, \
+                         S3SQLCustomForm, \
+                         S3SQLInlineLink, \
+                         S3TextFilter, \
+                         s3_fieldmethod, \
+                         s3_get_filter_opts
 
         from .helpers import ShelterDetails, ServiceListRepresent
 
@@ -1684,12 +1688,12 @@ def config(settings):
             if not r.component:
                 if r.interactive:
 
-                    from s3 import S3SQLCustomForm, \
-                                   S3SQLInlineComponent, \
-                                   S3SQLInlineLink, \
-                                   S3OptionsFilter, \
-                                   S3TextFilter, \
-                                   s3_get_filter_opts
+                    from core import S3SQLCustomForm, \
+                                     S3SQLInlineComponent, \
+                                     S3SQLInlineLink, \
+                                     S3OptionsFilter, \
+                                     S3TextFilter, \
+                                     s3_get_filter_opts
 
                     # Custom form
                     if is_org_group_admin:
@@ -1884,9 +1888,9 @@ def config(settings):
             resource = r.resource
             table = resource.table
 
-            from s3 import S3SQLCustomForm, \
-                           S3SQLInlineComponent, \
-                           StringTemplateParser
+            from core import S3SQLCustomForm, \
+                             S3SQLInlineComponent, \
+                             StringTemplateParser
 
             # Determine order of name fields
             NAMES = ("first_name", "middle_name", "last_name")
@@ -1983,10 +1987,10 @@ def config(settings):
                                    ]
 
                     # Filters
-                    from s3 import S3LocationFilter, \
-                                   S3OptionsFilter, \
-                                   S3TextFilter, \
-                                   s3_get_filter_opts
+                    from core import S3LocationFilter, \
+                                     S3OptionsFilter, \
+                                     S3TextFilter, \
+                                     s3_get_filter_opts
                     filter_widgets = [S3TextFilter(["pe_label",
                                                     "last_name",
                                                     "first_name",
@@ -2029,7 +2033,7 @@ def config(settings):
                 # Personal profile (default/person)
 
                 # Configure Anonymizer
-                from s3 import S3Anonymize
+                from core import S3Anonymize
                 s3db.set_method("pr", "person",
                                 method = "anonymize",
                                 action = S3Anonymize,
@@ -2088,7 +2092,7 @@ def config(settings):
                         buttons = output["buttons"]
 
                     # Anonymize-button
-                    from s3 import S3AnonymizeWidget
+                    from core import S3AnonymizeWidget
                     anonymize = S3AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
 
                     # Render in place of the delete-button

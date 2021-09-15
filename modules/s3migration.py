@@ -518,7 +518,7 @@ class S3Migration(object):
         current.response.s3.crud_strings = Storage()
 
         # Import the new ACLs
-        from s3 import S3BulkImporter
+        from core import S3BulkImporter
         bi = S3BulkImporter()
         templates = current.deployment_settings.get_template()
         if not isinstance(templates, (tuple, list)):

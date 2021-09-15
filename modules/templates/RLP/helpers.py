@@ -8,7 +8,7 @@
 
 from gluon import current, A, URL, XML
 
-from s3 import FS, S3DateFilter, S3OptionsFilter, S3Represent, s3_fullname
+from core import FS, S3DateFilter, S3OptionsFilter, S3Represent, s3_fullname
 
 # =============================================================================
 def rlp_active_deployments(ctable, from_date=None, to_date=None):

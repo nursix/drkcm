@@ -45,9 +45,8 @@ except:
 from gluon import current
 from gluon.tools import fetch
 
-from s3.s3fields import S3Represent
-from s3.s3parser import S3Parsing
-from s3.s3utils import soundex
+from core import S3Represent, soundex
+from core.msg.parser import S3Parsing
 
 # =============================================================================
 class S3Parser(object):

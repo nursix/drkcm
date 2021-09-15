@@ -5,7 +5,7 @@
  * This script is in Static to allow caching
  * Dynamic constants (e.g. Internationalised strings) are set in server-generated script
  *
- *  Used by modules/s3/s3gis.py
+ *  Used by modules/core/gis
  *
  *  based on /static/scripts/gis/openlayers/lib/OpenLayers.js
  */

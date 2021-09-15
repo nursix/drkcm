@@ -8,7 +8,7 @@ from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from s3 import FS, S3CustomController
+from core import FS, S3CustomController
 from s3theme import formstyle_foundation_inline
 
 THEME = "DRK"
@@ -64,7 +64,7 @@ class index(S3CustomController):
                             requires=IS_NOT_EMPTY(),
                             ),
                       ]
-            from s3 import s3_mark_required
+            from core import s3_mark_required
             labels, required = s3_mark_required(fields)
             s3.has_required = required
 
@@ -266,7 +266,7 @@ class userstats(S3CustomController):
         if not auth.s3_has_role("ORG_GROUP_ADMIN"):
             auth.permission.fail()
 
-        from s3 import S3CRUD, s3_get_extension, s3_request
+        from core import S3CRUD, s3_get_extension, s3_request
 
         request = current.request
         args = request.args
@@ -308,7 +308,7 @@ class userstats(S3CustomController):
                        )
 
         # Configure form
-        from s3 import S3SQLCustomForm, S3SQLVirtualField
+        from core import S3SQLCustomForm, S3SQLVirtualField
         crud_form = S3SQLCustomForm("name",
                                     S3SQLVirtualField("total_accounts",
                                                       label = TOTAL,
@@ -362,7 +362,7 @@ class userstats(S3CustomController):
             @returns: the page header (rheader)
         """
 
-        from s3 import S3DateTime
+        from core import S3DateTime
         today = S3DateTime.datetime_represent(r.utcnow, utc=True)
 
         return P("%s: %s" % (current.T("Date"), today))

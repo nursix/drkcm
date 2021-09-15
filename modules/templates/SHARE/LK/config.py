@@ -63,7 +63,7 @@ def config(settings):
                                                 ),
                             )
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent
+        from core import S3SQLCustomForm, S3SQLInlineComponent
 
         crud_form = S3SQLCustomForm("name",
                                     S3SQLInlineComponent("name_si",

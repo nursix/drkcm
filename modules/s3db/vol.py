@@ -44,7 +44,7 @@ from collections import OrderedDict
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -1292,7 +1292,7 @@ def vol_service_record(r, **attr):
 
         return output
 
-    from s3.s3export import S3Exporter
+    from core import S3Exporter
     exporter = S3Exporter().pdf
     pdf_title = "%s - %s" % (s3_str(vol_name),
                              s3_str(T("Volunteer Service Record")),
@@ -1640,9 +1640,6 @@ def vol_person_controller():
 
     # CRUD pre-process
     def prep(r):
-
-        # Plug-in role matrix for Admins/OrgAdmins
-        S3PersonRoleManager.set_method(r, entity="pr_person")
 
         method = r.method
         if r.representation == "s3json":

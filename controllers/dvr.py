@@ -166,11 +166,11 @@ def person():
             component = r.component
             if not component:
 
-                from s3 import S3SQLCustomForm, \
-                               S3SQLInlineComponent, \
-                               S3TextFilter, \
-                               S3OptionsFilter, \
-                               s3_get_filter_opts
+                from core import S3SQLCustomForm, \
+                                 S3SQLInlineComponent, \
+                                 S3TextFilter, \
+                                 S3OptionsFilter, \
+                                 s3_get_filter_opts
 
                 # Expose the "archived"-flag? (update forms only)
                 if r.record and r.method != "read":
@@ -320,7 +320,7 @@ def person():
 
             elif r.component_name == "evaluation":
 
-                from s3 import S3SQLInlineComponent
+                from core import S3SQLInlineComponent
 
                 crud_fields = [#"person_id",
                                #"case_id",
@@ -1039,7 +1039,7 @@ def allowance():
 
             # Provide some meaningful details of the failing
             # person record to facilitate correction of the source:
-            from s3 import s3_str
+            from core import s3_str
             person_details = []
             append = person_details.append
             data = item.data
@@ -1183,7 +1183,7 @@ def need():
 
         tablename = "dvr_need"
 
-        from s3 import S3Represent
+        from core import S3Represent
         represent = S3Represent(lookup = tablename,
                                 hierarchy = True,
                                 translate = True,

@@ -2570,7 +2570,7 @@ class S3Config(Storage):
 
         layout = self.ui.get("inline_component_layout")
         if not layout:
-            from s3 import S3SQLSubFormLayout
+            from core import S3SQLSubFormLayout
             layout = S3SQLSubFormLayout()
         elif isinstance(layout, type):
             # Instantiate only now when it's actually requested
@@ -2678,7 +2678,7 @@ class S3Config(Storage):
             link alert_id in cap module to message_id in message module
             The function can be of form msg_send_postprocess(message_id, **data),
             where message_id is the msg_message_id and
-            **data is the additional arguments to pass to s3msg.send_by_pe_id
+            **data is the additional arguments to pass to S3Msg.send_by_pe_id
         """
 
         return self.msg.get("send_postprocess")
@@ -2786,7 +2786,7 @@ class S3Config(Storage):
             custom_msg_notify_attachment(resource, data, meta_data), where
             resource is the S3Resource, data: the data returned from
             S3Resource.select and meta_data: the meta data for the notification
-            (see s3notify for the metadata)
+            (see S3Notifications for the metadata)
         """
 
         return self.msg.get("notify_attachment")
@@ -2794,13 +2794,13 @@ class S3Config(Storage):
     def get_msg_notify_send_data(self):
         """
             Custom function that returns additional arguments to pass to
-            s3msg.send_by_pe_id
+            S3Msg.send_by_pe_id
 
             The function should be of the form:
             custom_msg_notify_send_data(resource, data, meta_data), where
             resource is the S3Resource, data: the data returned from
             S3Resource.select and meta_data: the meta data for the notification
-            (see s3notify for the metadata)
+            (see S3Notifications for the metadata)
         """
 
         return self.msg.get("notify_send_data")

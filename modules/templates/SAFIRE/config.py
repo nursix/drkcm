@@ -256,7 +256,7 @@ def config(settings):
         if record and r.representation == "html":
 
             from gluon import A, DIV, TABLE, TR, TH
-            from s3 import s3_rheader_tabs
+            from core import s3_rheader_tabs
 
             name = r.name
             if name == "incident":
@@ -378,7 +378,7 @@ def config(settings):
                                                 limitby = (0, 1)
                                                 ).first()
                 if link:
-                    from s3 import S3Represent
+                    from core import S3Represent
                     represent = S3Represent(lookup="event_incident", show_link=True)
                     rheader = DIV(TABLE(TR(TH("%s: " % ltable.incident_id.label),
                                            represent(link.incident_id),
@@ -510,7 +510,7 @@ def config(settings):
             method = r.method
             if method in (None, "create"):
                 current.s3db.gis_location.addr_street.label = T("Street Address or Location Details")
-                from s3 import S3SQLCustomForm
+                from core import S3SQLCustomForm
                 crud_form = S3SQLCustomForm((T("What is it?"), "name"),
                                             "incident_type_id",
                                             (T("Who am I speaking with?"), "reported_by"),
@@ -594,7 +594,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_event_incident_resource(r, tablename):
 
-        from s3 import S3LocationSelector
+        from core import S3LocationSelector
 
         s3db = current.s3db
 
@@ -655,7 +655,7 @@ def config(settings):
                     # - copy incident type and location from report
                     # - onaccept: link the incident report to the incident
                     if r.http == "GET":
-                        from s3 import s3_truncate
+                        from core import s3_truncate
                         rtable = s3db.event_incident_report
                         incident_report = current.db(rtable.id == incident_report_id).select(rtable.name,
                                                                                              rtable.incident_type_id,
@@ -704,7 +704,7 @@ def config(settings):
         table.asset_id.label = T("Specific Item")
         # DateTime
         from gluon import IS_EMPTY_OR
-        from s3 import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
+        from core import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
         for f in (table.start_date, table.end_date):
             f.requires = IS_EMPTY_OR(IS_UTC_DATETIME())
             f.represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
@@ -853,7 +853,7 @@ def config(settings):
         table = s3db.event_human_resource
         # DateTime
         from gluon import IS_EMPTY_OR
-        from s3 import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
+        from core import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
         for f in (table.start_date, table.end_date):
             f.requires = IS_EMPTY_OR(IS_UTC_DATETIME())
             f.represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
@@ -1018,8 +1018,8 @@ def config(settings):
                                                     ),
                             )
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink, \
-                       IS_EMPTY_OR, IS_PHONE_NUMBER_MULTI, S3PhoneWidget, s3_phone_represent
+        from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink, \
+                         IS_EMPTY_OR, IS_PHONE_NUMBER_MULTI, S3PhoneWidget, s3_phone_represent
 
         # Individual settings for specific tag components
         components_get = s3db.resource(tablename).components.get

@@ -2,7 +2,7 @@
 
 from gluon import *
 from gluon.storage import Storage
-from s3 import *
+from core import *
 #from s3theme import NAV, SECTION
 
 # Below is an example which you can base your own template's layout.py on

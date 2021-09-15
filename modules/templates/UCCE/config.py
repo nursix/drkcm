@@ -306,7 +306,7 @@ def config(settings):
 
         # Need to use this format as otherwise req_match?viewing=org_office.x
         # doesn't have an rheader
-        from s3 import s3_rheader_resource, s3_rheader_tabs
+        from core import s3_rheader_resource, s3_rheader_tabs
         tablename, record = s3_rheader_resource(r)
 
         if record is None:
@@ -420,7 +420,7 @@ def config(settings):
             languages = []
 
             # Use translated language names
-            from s3 import IS_ISO639_2_LANGUAGE_CODE, s3_str
+            from core import IS_ISO639_2_LANGUAGE_CODE, s3_str
             represent = IS_ISO639_2_LANGUAGE_CODE.represent_local
 
             # Look up the languages
@@ -450,7 +450,7 @@ def config(settings):
     def customise_dc_question_resource(r, tablename):
 
         from gluon import IS_IN_SET
-        from s3 import S3Represent, S3SQLCustomForm
+        from core import S3Represent, S3SQLCustomForm
 
         crud_form = S3SQLCustomForm((T("Type"), "field_type"),
                                     (T("Question"), "name"),
@@ -601,7 +601,7 @@ def config(settings):
     def customise_dc_target_resource(r, tablename):
 
         from gluon import IS_EMPTY_OR, URL
-        from s3 import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
+        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
 
         from templates.UCCE.controllers import dc_target_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -715,7 +715,7 @@ def config(settings):
 
             if r.method == "datalist":
                 # Filter out Draft Surveys
-                from s3 import FS
+                from core import FS
                 r.resource.add_filter(FS("status") != 1)
 
             return result
@@ -896,7 +896,7 @@ def config(settings):
     def customise_doc_document_resource(r, tablename):
 
         from gluon import URL
-        from s3 import S3SQLCustomForm, S3TextFilter
+        from core import S3SQLCustomForm, S3TextFilter
 
         from templates.UCCE.controllers import doc_document_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -958,7 +958,7 @@ def config(settings):
             if r.method == "datalist":
                 if "showadd_btn" in output:
                     from gluon import A, SPAN, URL
-                    from s3 import ICON
+                    from core import ICON
                     output["showadd_btn"] = A(ICON("plus"),
                                               SPAN(T("New guide")),
                                               _class = "add-btn no-link s3_modal",
@@ -1088,7 +1088,7 @@ def config(settings):
     def customise_project_project_resource(r, tablename):
 
         from gluon import IS_EMPTY_OR, URL
-        from s3 import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
+        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
 
         from templates.UCCE.controllers import project_project_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -1225,7 +1225,7 @@ def config(settings):
             if r.method == "datalist":
                 if "showadd_btn" in output:
                     from gluon import A, SPAN, URL
-                    from s3 import ICON
+                    from core import ICON
                     output["showadd_btn"] = A(ICON("plus"),
                                               SPAN(T("New project")),
                                               _class = "add-btn no-link s3_modal",

@@ -4,11 +4,11 @@ import dateutil
 import json
 
 from gluon import current, A, BR, DIV, H3, H4, HR, LI, P, SPAN, TAG, TEXTAREA, UL, URL, XML
-from s3 import ICON, \
-               s3_str, \
-               S3CustomController, \
-               S3FilterForm, S3LocationFilter, S3OptionsFilter, S3TextFilter, \
-               S3Represent
+from core import ICON, \
+                 s3_str, \
+                 S3CustomController, \
+                 S3FilterForm, S3LocationFilter, S3OptionsFilter, S3TextFilter, \
+                 S3Represent
 
 THEME = "SHARE"
 
@@ -58,7 +58,7 @@ class index(S3CustomController):
                                    )
         len_sitreps = len(sitreps)
         if len_sitreps == 0:
-            from s3 import S3CRUD
+            from core import S3CRUD
             recent_updates = DIV(S3CRUD.crud_string("event_sitrep",
                                                     "msg_list_empty"),
                                  _class="empty")
@@ -162,7 +162,7 @@ class index(S3CustomController):
         output["item"] = item
 
         # Inject D3 scripts
-        from s3 import S3Report
+        from core import S3Report
         S3Report.inject_d3()
 
         # Inject charts-script
@@ -1066,7 +1066,7 @@ class HomepageStatistics(object):
         """
 
         import datetime, os
-        from s3 import S3DateTime
+        from core import S3DateTime
 
         # Probe file (probing one is good enough since update_data
         # writes them all at the same time)

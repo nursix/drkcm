@@ -277,7 +277,7 @@ if has_module("msg"):
             Process Outbox
             - will normally be done Asynchronously if there is a worker alive
 
-            @param contact_method: one from s3msg.MSG_CONTACT_OPTS
+            @param contact_method: one from S3Msg.MSG_CONTACT_OPTS
             @param user_id: calling request's auth.user.id or None
         """
         if user_id:

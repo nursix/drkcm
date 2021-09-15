@@ -58,7 +58,7 @@ from uuid import uuid4
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
@@ -1083,7 +1083,7 @@ class S3LocationModel(S3Model):
         elif loc_select:
             # LocationSelector
             # @ToDo: Deprecate
-            from s3.s3export import S3Exporter
+            from core import S3Exporter
             output = S3Exporter().json(resource,
                                        start=0,
                                        limit=limit,
@@ -2530,7 +2530,7 @@ class S3LayerEntityModel(S3Model):
                           name_field()(),
                           desc_field()(),
                           #role_required(),       # Single Role
-                          ##roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                          ##roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                           )
 
         crud_strings[tablename] = Storage(
@@ -2980,7 +2980,7 @@ class S3FeatureLayerModel(S3Model):
                           gis_refresh()(),
                           cluster_attribute()(),
                           s3_role_required(),    # Single Role
-                          #s3_roles_permitted(), # Multiple Roles (needs implementing in modules/s3gis.py)
+                          #s3_roles_permitted(), # Multiple Roles (needs implementing in modules/core/gis)
                           *s3_meta_fields())
 
         # CRUD Strings
@@ -3230,7 +3230,7 @@ class S3MapModel(S3Model):
                            requires = IS_EMPTY_OR(IS_IN_SET(arc_img_formats)),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3253,7 +3253,7 @@ class S3MapModel(S3Model):
                            requires = IS_IN_SET(bing_layer_types),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3270,7 +3270,7 @@ class S3MapModel(S3Model):
                      name_field()(),
                      desc_field()(),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3287,7 +3287,7 @@ class S3MapModel(S3Model):
                      name_field()(),
                      desc_field()(),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3334,7 +3334,7 @@ class S3MapModel(S3Model):
                      gis_refresh()(),
                      cluster_attribute()(),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3374,7 +3374,7 @@ class S3MapModel(S3Model):
                            ),
                      gis_refresh()(),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3402,7 +3402,7 @@ class S3MapModel(S3Model):
                            requires = IS_IN_SET(google_layer_types),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3449,7 +3449,7 @@ class S3MapModel(S3Model):
                            represent = s3_yes_no_represent,
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3472,7 +3472,7 @@ class S3MapModel(S3Model):
                            label = T("Code"),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3527,7 +3527,7 @@ class S3MapModel(S3Model):
                            ),
                      gis_refresh()(),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3554,7 +3554,7 @@ class S3MapModel(S3Model):
                                                            T("The URL to access the service."))),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3601,7 +3601,7 @@ class S3MapModel(S3Model):
                            requires = IS_INT_IN_RANGE(1, 30),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3632,7 +3632,7 @@ class S3MapModel(S3Model):
                            requires = IS_IN_SET(openweathermap_layer_types),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3748,7 +3748,7 @@ class S3MapModel(S3Model):
                            requires = IS_INT_IN_RANGE(1, 30),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3834,7 +3834,7 @@ class S3MapModel(S3Model):
                       cluster_attribute()(),
                      #Field("editable", "boolean", default=False, label=T("Editable?")),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -3972,7 +3972,7 @@ class S3MapModel(S3Model):
                      #      requires = IS_EMPTY_OR(IS_IN_SET(gis_layer_wms_img_formats)),
                      #      ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -4016,7 +4016,7 @@ class S3MapModel(S3Model):
                            requires = IS_INT_IN_RANGE(1, 30),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         configure(tablename,
@@ -4468,7 +4468,7 @@ class S3GISThemeModel(S3Model):
                            label = T("Date"),
                            ),
                      s3_role_required(),       # Single Role
-                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/s3gis.py)
+                     #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
                      *s3_meta_fields())
 
         self.configure(tablename,

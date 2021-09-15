@@ -65,7 +65,7 @@ import time
 
 from gluon import *
 
-from ..s3 import *
+from ..core import *
 
 TIME_FORMAT = "%b %d %Y %H:%M:%S"
 MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
@@ -1827,7 +1827,7 @@ dropdown.change(function() {
 
         from gluon import DIV, IS_IN_SET, SQLFORM
         from gluon.sqlhtml import RadioWidget
-        from s3 import s3_mark_required
+        from core import s3_mark_required
         from s3dal import Field
 
         T = current.T

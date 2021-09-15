@@ -3,7 +3,7 @@
 from gluon import current
 from gluon.html import A, DIV, H3, P, XML
 
-from s3 import S3CustomController
+from core import S3CustomController
 
 THEME = "BRCMS"
 
@@ -58,7 +58,7 @@ class index(S3CustomController):
                             requires=IS_NOT_EMPTY(),
                             ),
                       ]
-            from s3 import s3_mark_required
+            from core import s3_mark_required
             labels, required = s3_mark_required(fields)
             s3.has_required = required
 

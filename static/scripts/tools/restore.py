@@ -36,7 +36,7 @@ import sys
 import json
 
 from gluon import current
-from s3 import s3_get_foreign_key
+from core import s3_get_foreign_key
 
 # =============================================================================
 class S3Deleted(object):

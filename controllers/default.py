@@ -371,7 +371,7 @@ def about():
                     }
 
         if item:
-            from s3 import S3XMLContents
+            from core import S3XMLContents
             contents = S3XMLContents(item.body)
             if ADMIN:
                 item = DIV(contents,
@@ -851,7 +851,7 @@ def masterkey():
 
     # If successfully logged-in, provide context information for
     # the master key (e.g. project UUID + title, master key UUID)
-    from s3.s3masterkey import S3MasterKey
+    from core.auth.masterkey import S3MasterKey
     return S3MasterKey.context()
 
 # -----------------------------------------------------------------------------
@@ -905,7 +905,7 @@ def organisation():
     rfields = data["rfields"]
     data = data["rows"]
 
-    dt = S3DataTable(rfields, data)
+    dt = s3base.S3DataTable(rfields, data)
     dt.defaultActionButtons(resource)
     s3.no_formats = True
 

@@ -10,11 +10,11 @@ from gluon import Field, SQLFORM, URL, XML, current, redirect, \
 
 from gluon.storage import Storage
 
-from s3 import IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
-               JSONERRORS, S3CustomController, S3GroupedOptionsWidget, \
-               S3LocationSelector, S3MultiSelectWidget, S3WeeklyHoursWidget, \
-               S3WithIntro, S3Represent, \
-               s3_comments_widget, s3_date, s3_mark_required, s3_str
+from core import IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+                 JSONERRORS, S3CustomController, S3GroupedOptionsWidget, \
+                 S3LocationSelector, S3MultiSelectWidget, S3WeeklyHoursWidget, \
+                 S3WithIntro, S3Represent, \
+                 s3_comments_widget, s3_date, s3_mark_required, s3_str
 
 from .notifications import formatmap
 from .helpers import rlp_deployment_sites
@@ -50,7 +50,7 @@ class index(S3CustomController):
             # Logged-in user
             # => display announcements
 
-            from s3 import S3DateTime
+            from core import S3DateTime
             dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
 
             filter_roles = roles if sr.ADMIN not in roles else None
@@ -807,7 +807,7 @@ class register(S3CustomController):
             return
 
         # Customise resources
-        from s3 import S3Request
+        from core import S3Request
         r = S3Request("auth", "user", args=[], get_vars={})
         customise_resource = current.deployment_settings.customise_resource
         for tablename in ("pr_person", "pr_group", "pr_group_membership"):

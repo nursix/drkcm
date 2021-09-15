@@ -7,10 +7,10 @@ from collections import OrderedDict
 from gluon import current #, A, DIV,IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, SPAN, TAG, URL
 from gluon.storage import Storage
 
-#from s3 import FS, IS_ONE_OF
+#from core import FS, IS_ONE_OF
 from s3dal import original_tablename
 
-from templates.BRCMS.idcards import IDCardLayout
+#from templates.BRCMS.idcards import IDCardLayout
 
 # =============================================================================
 def config(settings):
@@ -154,7 +154,7 @@ def config(settings):
     #settings.br.assistance_terminology = "Counseling"
 
     # ID Card Layout
-    settings.br.id_card_layout = IDCardLayout
+    #settings.br.id_card_layout = IDCardLayout
 
     # Roles with permission to generate beneficiary ID cards
     settings.br.id_card_export_roles = ["CASE_MANAGEMENT"]
