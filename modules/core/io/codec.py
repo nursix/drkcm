@@ -68,7 +68,6 @@ class S3Codec(object):
         name = cls.CODECS.get(fmt)
         if name:
             package = "core.io.codecs.%s" % fmt
-            print(package)
             try:
                 codec = getattr(__import__(package, fromlist=[name]), name)
             except (ImportError, AttributeError):
