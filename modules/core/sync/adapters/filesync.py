@@ -109,7 +109,7 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             backend = repository.backend
             if not backend:
                 backend = "eden"
-            backend = "s3.sync_adapter.%s" % backend
+            backend = "core.sync.adapters.%s" % backend
             try:
                 name = "S3SyncAdapter"
                 api = getattr(__import__(backend, fromlist=[name]), name)
@@ -252,7 +252,7 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             backend = repository.backend
             if not backend:
                 backend = "eden"
-            backend = "s3.sync_adapter.%s" % backend
+            backend = "core.sync.adapters.%s" % backend
             try:
                 name = "S3SyncAdapter"
                 api = getattr(__import__(backend, fromlist=[name]), name)
