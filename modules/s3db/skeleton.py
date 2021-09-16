@@ -49,7 +49,7 @@ from s3layouts import S3PopupLink
 # => remember to list all model classes in __all__, otherwise they won't ever
 #    be loaded.
 #
-class S3SkeletonDataModel(S3Model):
+class SkeletonDataModel(S3Model):
 
     # Declare all the names this model can auto-load, i.e. all tablenames
     # and all response.s3 names which are defined here. If you omit the "names"

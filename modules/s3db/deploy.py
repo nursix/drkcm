@@ -1501,10 +1501,10 @@ def deploy_rheader(r, tabs=None, profile=False):
                                            _href = r.url(method="update"),
                                            )
 
-                label = lambda f, table=table, record=record, **attr: \
-                               TH("%s: " % table[f].label, **attr)
-                value = lambda f, table=table, record=record, **attr: \
-                               TD(table[f].represent(record[f]), **attr)
+                label = lambda f, t=table, r=record, **attr: \
+                               TH("%s: " % t[f].label, **attr)
+                value = lambda f, t=table, r=record, **attr: \
+                               TD(t[f].represent(r[f]), **attr)
                 if settings.has_module("event"):
                     row1 = TR(label("event_type_id"),
                               value("event_type_id"),

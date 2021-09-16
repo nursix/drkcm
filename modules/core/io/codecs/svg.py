@@ -39,7 +39,7 @@ from gluon.contenttype import contenttype
 from gluon.storage import Storage
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from ..code import S3Codec
+from ..codec import S3Codec
 
 # =============================================================================
 class S3SVG(S3Codec):
