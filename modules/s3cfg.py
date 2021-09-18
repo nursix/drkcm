@@ -180,7 +180,6 @@ class S3Config(Storage):
         self.fire = Storage()
         # @ToDo: Move to self.ui
         self.frontpage = Storage()
-        self.frontpage.rss = []
         self.gis = Storage()
         # Allow templates to append rather than replace
         self.gis.countries = []
