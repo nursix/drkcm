@@ -1037,13 +1037,13 @@ class S3Config(Storage):
         """
             System Name - for the UI & Messaging
         """
-        return self.base.get("system_name", current.T("Sahana Eden Humanitarian Management Platform"))
+        return self.base.get("system_name", current.T("Eden ASP"))
 
     def get_system_name_short(self):
         """
             System Name (Short Version) - for the UI & Messaging
         """
-        return self.base.get("system_name_short", "Sahana")
+        return self.base.get("system_name_short", "Eden ASP")
 
     def get_base_debug(self):
         """
