@@ -37,7 +37,7 @@ from gluon import current, URL
 from gluon.storage import Storage
 
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import M, MM, MOA, S3BreadcrumbsLayout, SEP
+from s3layouts import M, MM, MP, ML, MA, OM, MOA, S3BreadcrumbsLayout, SEP
 
 # =============================================================================
 class S3MainMenu(object):
@@ -48,18 +48,14 @@ class S3MainMenu(object):
     def menu(cls):
 
         main_menu = MM()(
-
-            # Modules-menu, align-left
             cls.menu_modules(),
-
-            # Service menus, align-right
-            # Note: always define right-hand items in reverse order!
-            cls.menu_help(right = True),
-            cls.menu_lang(right = True),
-            cls.menu_gis(right = True),
-            cls.menu_auth(right = True),
-            cls.menu_admin(right = True),
         )
+
+        # Additional menus
+        current.menu.personal = cls.menu_personal()
+        current.menu.lang = cls.menu_lang()
+        current.menu.about = cls.menu_about()
+        current.menu.org = cls.menu_org()
 
         return main_menu
 
@@ -133,51 +129,46 @@ class S3MainMenu(object):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def menu_org(cls):
+        """ Organisation Logo and Name """
+
+        return OM()
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def menu_lang(cls, **attr):
-        """ Language menu """
+        """ Language Selector """
 
-        settings = current.deployment_settings
-        if not settings.get_L10n_display_toolbar():
-            return None
-
-        request = current.request
-        languages = settings.get_L10n_languages()
+        languages = current.deployment_settings.get_L10n_languages()
         represent_local = IS_ISO639_2_LANGUAGE_CODE.represent_local
 
-        menu_lang = MM("Language", **attr)
-        for language in languages:
-            # Show Language in it's own Language
-            menu_lang.append(MM(represent_local(language),
-                                r = request,
-                                translate = False,
-                                selectable = False,
-                                vars = {"_language": language},
-                                ltr = True
-                                ))
+        menu_lang = ML("Language", right=True)
+
+        for code in languages:
+            # Show each language name in its own language
+            lang_name = represent_local(code)
+            menu_lang(
+                ML(lang_name,
+                   translate = False,
+                   lang_code = code,
+                   lang_name = lang_name,
+                   )
+            )
+
         return menu_lang
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_help(cls, **attr):
-        """ Help Menu """
-
-        menu_help = MM("Help", c="default", f="help", **attr)(
-            MM("Contact us", f="contact"),
-            MM("About", f="about")
-        )
-
-        return menu_help
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def menu_auth(cls, **attr):
-        """ Auth Menu """
+    def menu_personal(cls):
+        """ Personal Menu """
 
         auth = current.auth
-        logged_in = auth.is_logged_in()
+        #s3 = current.response.s3
         settings = current.deployment_settings
 
-        if not logged_in:
+        ADMIN = current.auth.get_system_roles().ADMIN
+
+        if not auth.is_logged_in():
             request = current.request
             login_next = URL(args=request.args, vars=request.vars)
             if request.controller == "default" and \
@@ -185,176 +176,279 @@ class S3MainMenu(object):
                "_next" in request.get_vars:
                 login_next = request.get_vars["_next"]
 
-            self_registration = settings.get_security_registration_visible()
-            if self_registration == "index":
-                register = MM("Register", c="default", f="index", m="register",
-                               vars={"_next": login_next},
-                               check=self_registration)
-            else:
-                register = MM("Register", m="register",
-                               vars={"_next": login_next},
-                               check=self_registration)
-
-            if settings.get_auth_password_changes() and \
-               settings.get_auth_password_retrieval():
-                lost_pw = MM("Lost Password", m="retrieve_password")
-            else:
-                lost_pw = None
-
-            menu_auth = MM("Login", c="default", f="user", m="login",
-                           _id="auth_menu_login",
-                           vars={"_next": login_next}, **attr)(
-                                MM("Login", m="login",
-                                   vars={"_next": login_next}),
-                                register,
-                                lost_pw,
-                                )
-        else:
-            # Logged-in
-
-            if settings.get_auth_password_changes():
-                change_pw = MM("Change Password", m="change_password")
-            else:
-                change_pw = None
-
-            menu_auth = MM(auth.user.email, c="default", f="user",
-                           translate=False, link=False, _id="auth_menu_email",
-                           **attr)(
-                            MM("Logout", m="logout", _id="auth_menu_logout"),
-                            MM("User Profile", m="profile"),
-                            MM("Personal Data", c="default", f="person", m="update"),
-                            MM("Contact Details", c="pr", f="person",
-                                args="contact",
-                                vars={"person.pe_id" : auth.user.pe_id}),
-                            #MM("Subscriptions", c="pr", f="person",
-                            #    args="pe_subscription",
-                            #    vars={"person.pe_id" : auth.user.pe_id}),
-                            change_pw,
-                            SEP(),
-                            MM({"name": current.T("Rapid Data Entry"),
-                               "id": "rapid_toggle",
-                               "value": current.session.s3.rapid_data_entry is True},
-                               f="rapid"),
+            self_registration = settings.get_security_self_registration()
+            menu_personal = MP()(
+                        MP("Register", c="default", f="user",
+                           m = "register",
+                           check = self_registration,
+                           ),
+                        MP("Login", c="default", f="user",
+                           m = "login",
+                           vars = {"_next": login_next},
+                           ),
                         )
-
-        return menu_auth
+            if settings.get_auth_password_retrieval():
+                menu_personal(MP("Lost Password", c="default", f="user",
+                                 m = "retrieve_password",
+                                 ),
+                              )
+        else:
+            s3_has_role = auth.s3_has_role
+            is_org_admin = lambda i: s3_has_role("ORG_ADMIN", include_admin=False)
+            menu_personal = MP()(
+                        MP("Administration", c="admin", f="index",
+                           restrict = ADMIN,
+                           ),
+                        MP("Administration", c="admin", f="user",
+                           check = is_org_admin,
+                           ),
+                        MP("Profile", c="default", f="person"),
+                        MP("Change Password", c="default", f="user",
+                           m = "change_password",
+                           ),
+                        MP("Logout", c="default", f="user",
+                           m = "logout",
+                           ),
+            )
+        return menu_personal
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_admin(cls, **attr):
-        """ Administrator Menu """
+    def menu_about(cls):
 
-        has_role = current.auth.s3_has_role
-        settings = current.deployment_settings
-        name_nice = settings.modules["admin"].name_nice
+        menu_about = MA(c="default")(
+            MA("Help", f="help"),
+            MA("Contact", f="contact"),
+            MA("Privacy", f="index", args=["privacy"]),
+            MA("Legal Notice", f="index", args=["legal"]),
+            MA("Version", f="about", restrict = ("ORG_GROUP_ADMIN")),
+        )
+        return menu_about
 
-        if has_role("ADMIN"):
-            translate = settings.has_module("translate")
-            menu_admin = MM(name_nice, c="admin", **attr)(
-                                MM("Setup", c="setup"),
-                                MM("Settings", f="setting"),
-                                MM("Users", f="user"),
-                                MM("Person Registry", c="pr"),
-                                MM("CMS", c="cms", f="post"),
-                                MM("Database", c="appadmin", f="index"),
-                                MM("Error Tickets", f="errors"),
-                                MM("Synchronization", c="sync", f="index"),
-                                MM("Translation", c="admin", f="translate",
-                                   check=translate),
-                                #MM("Test Results", f="result"),
-                            )
-        elif has_role("ORG_ADMIN"):
-            menu_admin = MM(name_nice, c="admin", f="user", **attr)()
-        else:
-            menu_admin = None
+    ## -------------------------------------------------------------------------
+    #@classmethod
+    #def menu_lang(cls, **attr):
+        #""" Language menu """
 
-        return menu_admin
+        #settings = current.deployment_settings
+        #if not settings.get_L10n_display_toolbar():
+            #return None
 
-    # -------------------------------------------------------------------------
-    @classmethod
-    def menu_gis(cls, **attr):
-        """ GIS Config Menu """
+        #request = current.request
+        #languages = settings.get_L10n_languages()
+        #represent_local = IS_ISO639_2_LANGUAGE_CODE.represent_local
 
-        settings = current.deployment_settings
-        if not settings.get_gis_menu():
-            return None
+        #menu_lang = MM("Language", **attr)
+        #for language in languages:
+            ## Show Language in it's own Language
+            #menu_lang.append(MM(represent_local(language),
+                                #r = request,
+                                #translate = False,
+                                #selectable = False,
+                                #vars = {"_language": language},
+                                #ltr = True
+                                #))
+        #return menu_lang
 
-        T = current.T
-        db = current.db
-        auth = current.auth
-        s3db = current.s3db
-        request = current.request
-        s3 = current.session.s3
-        _config = s3.gis_config_id
+    ## -------------------------------------------------------------------------
+    #@classmethod
+    #def menu_help(cls, **attr):
+        #""" Help Menu """
 
-        # See if we need to switch config before we decide which
-        # config item to mark as active:
-        if "_config" in request.get_vars:
-            # The user has just selected a config from the GIS menu
-            try:
-                config = int(request.get_vars._config)
-            except ValueError:
-                # Manually-crafted URL?
-                pass
-            else:
-                if _config is None or _config != config:
-                    # Set this as the current config
-                    s3.gis_config_id = config
-                    cfg = current.gis.get_config()
-                    s3.location_filter = cfg.region_location_id
-                    if settings.has_module("event"):
-                        # See if this config is associated with an Incident
-                        table = s3db.event_config
-                        query = (table.config_id == config)
-                        incident = db(query).select(table.incident_id,
-                                                    limitby=(0, 1)).first()
-                        if incident:
-                            s3.incident = incident.incident_id
-                        else:
-                            s3.incident = None
-            # Don't use the outdated cache for this call
-            cache = None
-        else:
-            cache = s3db.cache
+        #menu_help = MM("Help", c="default", f="help", **attr)(
+            #MM("Contact us", f="contact"),
+            #MM("About", f="about")
+        #)
 
-        # Check if there are multiple GIS Configs for the user to switch between
-        table = s3db.gis_menu
-        ctable = s3db.gis_config
-        query = (table.pe_id == None)
-        if auth.is_logged_in():
-            # @ToDo: Search for OUs too (API call)
-            query |= (table.pe_id == auth.user.pe_id)
-        query &= (table.config_id == ctable.id)
-        configs = db(query).select(ctable.id, ctable.name, cache=cache)
+        #return menu_help
 
-        gis_menu = MM(settings.get_gis_menu(),
-                      c=request.controller,
-                      f=request.function,
-                      **attr)
-        args = request.args
-        if len(configs):
-            # Use short names for the site and personal configs else they'll wrap.
-            # Provide checkboxes to select between pages
-            gis_menu(
-                    MM({"name": T("Default"),
-                        "id": "gis_menu_id_0",
-                        # @ToDo: Show when default item is selected without having
-                        # to do a DB query to read the value
-                        #"value": _config is 0,
-                        "request_type": "load"
-                       }, args=args, vars={"_config": 0}
-                    )
-                )
-            for config in configs:
-                gis_menu(
-                    MM({"name": config.name,
-                        "id": "gis_menu_id_%s" % config.id,
-                        "value": _config == config.id,
-                        "request_type": "load"
-                       }, args=args, vars={"_config": config.id}
-                    )
-                )
-        return gis_menu
+    ## -------------------------------------------------------------------------
+    #@classmethod
+    #def menu_auth(cls, **attr):
+        #""" Auth Menu """
+
+        #auth = current.auth
+        #logged_in = auth.is_logged_in()
+        #settings = current.deployment_settings
+
+        #if not logged_in:
+            #request = current.request
+            #login_next = URL(args=request.args, vars=request.vars)
+            #if request.controller == "default" and \
+               #request.function == "user" and \
+               #"_next" in request.get_vars:
+                #login_next = request.get_vars["_next"]
+
+            #self_registration = settings.get_security_registration_visible()
+            #if self_registration == "index":
+                #register = MM("Register", c="default", f="index", m="register",
+                               #vars={"_next": login_next},
+                               #check=self_registration)
+            #else:
+                #register = MM("Register", m="register",
+                               #vars={"_next": login_next},
+                               #check=self_registration)
+
+            #if settings.get_auth_password_changes() and \
+               #settings.get_auth_password_retrieval():
+                #lost_pw = MM("Lost Password", m="retrieve_password")
+            #else:
+                #lost_pw = None
+
+            #menu_auth = MM("Login", c="default", f="user", m="login",
+                           #_id="auth_menu_login",
+                           #vars={"_next": login_next}, **attr)(
+                                #MM("Login", m="login",
+                                   #vars={"_next": login_next}),
+                                #register,
+                                #lost_pw,
+                                #)
+        #else:
+            ## Logged-in
+
+            #if settings.get_auth_password_changes():
+                #change_pw = MM("Change Password", m="change_password")
+            #else:
+                #change_pw = None
+
+            #menu_auth = MM(auth.user.email, c="default", f="user",
+                           #translate=False, link=False, _id="auth_menu_email",
+                           #**attr)(
+                            #MM("Logout", m="logout", _id="auth_menu_logout"),
+                            #MM("User Profile", m="profile"),
+                            #MM("Personal Data", c="default", f="person", m="update"),
+                            #MM("Contact Details", c="pr", f="person",
+                                #args="contact",
+                                #vars={"person.pe_id" : auth.user.pe_id}),
+                            ##MM("Subscriptions", c="pr", f="person",
+                            ##    args="pe_subscription",
+                            ##    vars={"person.pe_id" : auth.user.pe_id}),
+                            #change_pw,
+                            #SEP(),
+                            #MM({"name": current.T("Rapid Data Entry"),
+                               #"id": "rapid_toggle",
+                               #"value": current.session.s3.rapid_data_entry is True},
+                               #f="rapid"),
+                        #)
+
+        #return menu_auth
+
+    ## -------------------------------------------------------------------------
+    #@classmethod
+    #def menu_admin(cls, **attr):
+        #""" Administrator Menu """
+
+        #has_role = current.auth.s3_has_role
+        #settings = current.deployment_settings
+        #name_nice = settings.modules["admin"].name_nice
+
+        #if has_role("ADMIN"):
+            #translate = settings.has_module("translate")
+            #menu_admin = MM(name_nice, c="admin", **attr)(
+                                #MM("Setup", c="setup"),
+                                #MM("Settings", f="setting"),
+                                #MM("Users", f="user"),
+                                #MM("Person Registry", c="pr"),
+                                #MM("CMS", c="cms", f="post"),
+                                #MM("Database", c="appadmin", f="index"),
+                                #MM("Error Tickets", f="errors"),
+                                #MM("Synchronization", c="sync", f="index"),
+                                #MM("Translation", c="admin", f="translate",
+                                   #check=translate),
+                                ##MM("Test Results", f="result"),
+                            #)
+        #elif has_role("ORG_ADMIN"):
+            #menu_admin = MM(name_nice, c="admin", f="user", **attr)()
+        #else:
+            #menu_admin = None
+
+        #return menu_admin
+
+    ## -------------------------------------------------------------------------
+    #@classmethod
+    #def menu_gis(cls, **attr):
+        #""" GIS Config Menu """
+
+        #settings = current.deployment_settings
+        #if not settings.get_gis_menu():
+            #return None
+
+        #T = current.T
+        #db = current.db
+        #auth = current.auth
+        #s3db = current.s3db
+        #request = current.request
+        #s3 = current.session.s3
+        #_config = s3.gis_config_id
+
+        ## See if we need to switch config before we decide which
+        ## config item to mark as active:
+        #if "_config" in request.get_vars:
+            ## The user has just selected a config from the GIS menu
+            #try:
+                #config = int(request.get_vars._config)
+            #except ValueError:
+                ## Manually-crafted URL?
+                #pass
+            #else:
+                #if _config is None or _config != config:
+                    ## Set this as the current config
+                    #s3.gis_config_id = config
+                    #cfg = current.gis.get_config()
+                    #s3.location_filter = cfg.region_location_id
+                    #if settings.has_module("event"):
+                        ## See if this config is associated with an Incident
+                        #table = s3db.event_config
+                        #query = (table.config_id == config)
+                        #incident = db(query).select(table.incident_id,
+                                                    #limitby=(0, 1)).first()
+                        #if incident:
+                            #s3.incident = incident.incident_id
+                        #else:
+                            #s3.incident = None
+            ## Don't use the outdated cache for this call
+            #cache = None
+        #else:
+            #cache = s3db.cache
+
+        ## Check if there are multiple GIS Configs for the user to switch between
+        #table = s3db.gis_menu
+        #ctable = s3db.gis_config
+        #query = (table.pe_id == None)
+        #if auth.is_logged_in():
+            ## @ToDo: Search for OUs too (API call)
+            #query |= (table.pe_id == auth.user.pe_id)
+        #query &= (table.config_id == ctable.id)
+        #configs = db(query).select(ctable.id, ctable.name, cache=cache)
+
+        #gis_menu = MM(settings.get_gis_menu(),
+                      #c=request.controller,
+                      #f=request.function,
+                      #**attr)
+        #args = request.args
+        #if len(configs):
+            ## Use short names for the site and personal configs else they'll wrap.
+            ## Provide checkboxes to select between pages
+            #gis_menu(
+                    #MM({"name": T("Default"),
+                        #"id": "gis_menu_id_0",
+                        ## @ToDo: Show when default item is selected without having
+                        ## to do a DB query to read the value
+                        ##"value": _config is 0,
+                        #"request_type": "load"
+                       #}, args=args, vars={"_config": 0}
+                    #)
+                #)
+            #for config in configs:
+                #gis_menu(
+                    #MM({"name": config.name,
+                        #"id": "gis_menu_id_%s" % config.id,
+                        #"value": _config == config.id,
+                        #"request_type": "load"
+                       #}, args=args, vars={"_config": config.id}
+                    #)
+                #)
+        #return gis_menu
 
     # -------------------------------------------------------------------------
     @classmethod

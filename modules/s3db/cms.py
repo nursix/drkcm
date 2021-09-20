@@ -36,6 +36,7 @@ __all__ = ("CMSContentModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
            "cms_index",
+           "cms_announcements",
            "cms_documentation",
            "cms_rheader",
            "cms_configure_newsfeed_post_fields",
@@ -1451,6 +1452,52 @@ def cms_documentation(r, default_page, default_url):
                        "contents": S3XMLContents(row.body),
                        },
             }
+
+# =============================================================================
+def cms_announcements(roles=None):
+    """
+        Get current announcements
+
+        @param roles: filter announcement by these roles
+
+        @returns: any announcements (Rows)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Look up all announcements
+    ptable = s3db.cms_post
+    stable = s3db.cms_series
+    join = stable.on((stable.id == ptable.series_id) & \
+                     (stable.name == "Announcements") & \
+                     (stable.deleted == False))
+    query = (ptable.date <= current.request.utcnow) & \
+            (ptable.expired == False) & \
+            (ptable.deleted == False)
+
+    if roles:
+        # Filter posts by roles
+        ltable = s3db.cms_post_role
+        q = (ltable.group_id.belongs(roles)) & \
+            (ltable.deleted == False)
+        rows = db(q).select(ltable.post_id,
+                            cache = s3db.cache,
+                            groupby = ltable.post_id,
+                            )
+        post_ids = {row.post_id for row in rows}
+        query = (ptable.id.belongs(post_ids)) & query
+
+    posts = db(query).select(ptable.name,
+                             ptable.body,
+                             ptable.date,
+                             ptable.priority,
+                             join = join,
+                             orderby = (~ptable.priority, ~ptable.date),
+                             limitby = (0, 5),
+                             )
+
+    return posts
 
 # =============================================================================
 class S3CMS(S3Method):
