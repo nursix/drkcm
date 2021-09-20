@@ -2248,18 +2248,25 @@ def config(settings):
                                                    "multiple": False,
                                                    }),
                                     )
+
+                # Site obsolete-flag representation
+                stable = s3db.org_site
+                field = stable.obsolete
+                field.label = T("Closed")
+                field.represent = lambda v, row=None: T("yes") if v else "-"
+
                 list_fields = ["organisation_id",
+                               "site_id",
+                               "site_id$obsolete",
+                               "site_id$location_id$addr_street",
+                               "site_id$location_id$L4",
+                               "site_id$location_id$L3",
+                               "site_id$location_id$addr_postcode",
                                "person_id",
                                "job_title_id",
-                               "site_id",
                                (T("Email"), "person_id$email.value"),
                                (phone_label, "person_id$phone.value"),
-                               "person_id$home_address.location_id$addr_street",
-                               "person_id$home_address.location_id$L4",
-                               "person_id$home_address.location_id$L3",
-                               "person_id$home_address.location_id$addr_postcode",
-                               "person_id$home_address.location_id$L2",
-                               "person_id$home_address.location_id$L1",
+                               (T("Home Address"), "person_id$home_address.location_id"),
                                "status",
                                ]
             else:
