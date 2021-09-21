@@ -295,11 +295,10 @@ def location():
 
     # Custom Methods
     set_method = s3db.set_method
-    from core import S3ExportPOI
+    from core import S3ExportPOI, S3ImportPOI
     set_method("gis", "location",
                method = "export_poi",
                action = S3ExportPOI())
-    from core import S3ImportPOI
     set_method("gis", "location",
                method = "import_poi",
                action = S3ImportPOI())
