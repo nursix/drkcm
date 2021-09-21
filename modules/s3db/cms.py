@@ -91,7 +91,6 @@ class CMSContentModel(S3Model):
         # Series
         # - lists of Posts displaying in recent-first mode
         #
-
         tablename = "cms_series"
         define_table(tablename,
                      Field("name", length=255, notnull=True, unique=True,
@@ -114,7 +113,7 @@ class CMSContentModel(S3Model):
                            represent = s3_yes_no_represent,
                            ),
                      Field("richtext", "boolean",
-                           default = True,
+                           default = False,
                            label = T("Rich Text?"),
                            represent = s3_yes_no_represent,
                            ),

@@ -2003,8 +2003,8 @@ form.anonymize-form,
 
 /* line 578, ../scss/theme/_widgets.scss */
 .announcements-title {
-  font-variant: all-small-caps;
-  font-weight: bold;
+  font-variant: petite-caps;
+  font-weight: normal;
 }
 
 /* line 582, ../scss/theme/_widgets.scss */

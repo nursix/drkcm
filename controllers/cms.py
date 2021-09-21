@@ -34,29 +34,71 @@ def series():
 
     # Pre-process
     def prep(r):
-        if r.component:
-            # Settings are defined at the series level
-            table = s3db.cms_post
-            _avatar = table.avatar
-            _avatar.readable = _avatar.writable = False
-            _avatar.default = r.record.avatar
-            _location = table.location_id
-            if not r.record.location:
-                _location.readable = _location.writable = False
-            _replies = table.replies
-            _replies.readable = _replies.writable = False
-            _replies.default = r.record.replies
-            _roles_permitted = table.roles_permitted
-            _roles_permitted.readable = _roles_permitted.writable = False
-            _roles_permitted.default = r.record.roles_permitted
-            if r.record.richtext:
-                table.body.represent = lambda body: XML(body)
-                table.body.widget = s3_richtext_widget
+
+        record = r.record
+
+        if record and r.component_name == "post":
+
+            component = r.component
+            ctable = component.table
+
+            ctable.name.comment = None
+
+            # Apply series settings
+            field = ctable.avatar
+            field.readable = field.writable = False
+            field.default = record.avatar
+
+            field = ctable.replies
+            field.readable = field.writable = False
+            field.default = record.replies
+
+            field = ctable.roles_permitted
+            field.readable = field.writable = False
+            field.default = record.roles_permitted
+
+            field = ctable.location_id
+            field.readable = field.writable = bool(record.location)
+
+            if record.richtext:
+                ctable.body.represent = lambda body: XML(body)
+                ctable.body.widget = s3_richtext_widget
             else:
-                table.body.represent = lambda body: XML(s3_URLise(body))
-                table.body.widget = None
-            # Titles do show up
-            table.name.comment = ""
+                ctable.body.represent = lambda body: XML(s3_URLise(body))
+                ctable.body.widget = None
+
+            # Special-purpose series
+            if record.name == "Announcements":
+                # Homepage announcements for logged-in users
+
+                field = ctable.priority
+                field.readable = field.writable = True
+
+                from core import S3SQLCustomForm, S3SQLInlineLink
+
+                crud_fields = ["name",
+                               "body",
+                               "priority",
+                               "date",
+                               "expired",
+                               S3SQLInlineLink("roles",
+                                               label = T("Roles"),
+                                               field = "group_id",
+                                               ),
+                               ]
+                list_fields = ["date",
+                               "priority",
+                               "name",
+                               "body",
+                               "post_role.group_id",
+                               "expired",
+                               ]
+
+                component.configure(crud_form = S3SQLCustomForm(*crud_fields),
+                                    list_fields = list_fields,
+                                    orderby = "cms_post.date desc",
+                                    )
+
         return True
     s3.prep = prep
 
