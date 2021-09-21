@@ -71,9 +71,10 @@ from gluon.settings import global_settings
 from gluon.storage import Storage
 
 from s3dal import Rows
-from ..model import s3_all_meta_field_names
+
+from ..methods import S3Method
 from ..io import S3ResourceTree
-from ..service import S3Method
+from ..model import s3_all_meta_field_names
 from ..tools import JSONERRORS, S3Trackable, s3_format_datetime, s3_parse_datetime, s3_include_ext, s3_include_underscore, s3_str
 
 # Map WKT types to db types

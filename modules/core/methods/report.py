@@ -52,8 +52,9 @@ from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
 from ..filters import FS
 from ..io import S3XMLFormat
-from ..service import S3Method
 from ..tools import s3_flatlist, s3_has_foreign_key, s3_str, S3MarkupStripper, s3_represent_value, JSONERRORS, IS_NUMBER
+
+from .base import S3Method
 
 # Compact JSON encoding
 DEFAULT = lambda: None

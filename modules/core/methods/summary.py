@@ -32,8 +32,8 @@
 from gluon import current, A, DIV, LI, UL
 
 from ..filters import S3FilterForm
-from ..gis import MAP
-from ..service import S3Method
+
+from .base import S3Method
 
 # =============================================================================
 class S3Summary(S3Method):
@@ -173,6 +173,7 @@ class S3Summary(S3Method):
                         r.error(405, current.ERROR.BAD_METHOD)
 
                 # Add content to section
+                from ..gis import MAP
                 if isinstance(content, dict):
                     if r.http == "POST" and content.get("success"):
                         # Form successfully processed: behave like the

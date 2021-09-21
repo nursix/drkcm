@@ -42,10 +42,10 @@ from s3dal import Field
 
 from ..filters import FS
 from ..io import SEPARATORS
-from ..service import S3Method
 from ..tools import s3_str, s3_mark_required, JSONERRORS
 from ..ui import s3_comments_widget
 
+from .base import S3Method
 from .crud import S3CRUD
 
 # =============================================================================

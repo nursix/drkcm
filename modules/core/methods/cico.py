@@ -34,8 +34,9 @@ __all__ = ("S3CheckInMethod",
 from gluon import current, HTTP, FORM, INPUT, LABEL, TABLE
 from gluon.storage import Storage
 
-from ..service import S3Method
 from ..tools import S3Trackable
+
+from .base import S3Method
 
 # =============================================================================
 class S3CheckInMethod(S3Method):

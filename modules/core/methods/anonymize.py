@@ -34,8 +34,9 @@ from gluon import current, redirect, A, BUTTON, DIV, FORM, INPUT, LABEL, P
 
 from s3dal import original_tablename
 
-from ..service import S3Method
 from ..tools import JSONERRORS, s3_str
+
+from .base import S3Method
 
 __all__ = ("S3Anonymize",
            "S3AnonymizeWidget",

@@ -36,8 +36,9 @@ import json
 
 from gluon import current, DIV, FORM
 
-from ..service import S3Method
 from ..tools import SEPARATORS, S3Hierarchy
+
+from .base import S3Method
 
 # =============================================================================
 class S3HierarchyCRUD(S3Method):

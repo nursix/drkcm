@@ -38,8 +38,9 @@ from gluon import current
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from ..service import S3Method
 from ..tools import SEPARATORS
+
+from .base import S3Method
 
 # =============================================================================
 class S3Filter(S3Method):

@@ -37,7 +37,7 @@ from gluon import current, URL, DIV
 from gluon.storage import Storage
 
 from ..filters import S3URLQuery
-from ..service import S3Method
+from ..methods import S3Method
 from ..tools import s3_parse_datetime, s3_utc, s3_str
 
 # =============================================================================

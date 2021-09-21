@@ -33,8 +33,9 @@ __all__ = ("S3XForms",
 
 from gluon import *
 
-from ..service import S3Method
 from ..tools import s3_str
+
+from .base import S3Method
 
 # =============================================================================
 class S3XForms(S3Method):

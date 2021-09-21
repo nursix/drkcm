@@ -39,12 +39,13 @@ import json
 
 from gluon import IS_EMPTY_OR, IS_IN_SET, current
 
-from ..service import S3Method
 from ..io import S3ResourceTree
 from ..tools import s3_get_foreign_key, s3_str, SEPARATORS, s3_parse_datetime, \
                     S3Represent
 from ..ui import S3SQLCustomForm, S3SQLDummyField, S3SQLField, \
                  S3SQLForm, S3SQLInlineInstruction, S3SQLSectionBreak
+
+from .base import S3Method
 
 DEFAULT = lambda: None
 

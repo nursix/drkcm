@@ -37,9 +37,10 @@ from gluon.storage import Storage
 from s3dal import Field
 
 from ..filters import FS
-from ..service import S3Method
 from ..tools import s3_get_foreign_key, s3_represent_value, s3_str, IS_ONE_OF
 from ..ui import S3DataTable, S3AddPersonWidget, S3LocationSelector, S3LocationAutocompleteWidget
+
+from .base import S3Method
 
 # =============================================================================
 class S3Merge(S3Method):

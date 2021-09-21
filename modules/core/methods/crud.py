@@ -51,9 +51,10 @@ from gluon.storage import Storage
 from gluon.tools import callback
 
 from ..io import S3Exporter
-from ..service import S3Method
 from ..tools import S3DateTime, s3_decode_iso_datetime, s3_str, s3_validate, s3_represent_value, s3_set_extension
 from ..ui import S3EmbeddedComponentWidget, S3Selector, ICON, S3SQLDefaultForm
+
+from .base import S3Method
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
