@@ -10,11 +10,12 @@
     <xsl:key name="requesters" match="resource[@name='pr_person']" use="@uuid"/>
     <xsl:key name="locations" match="resource[@name='gis_location']" use="@uuid"/>
     <xsl:key name="requests" match="resource[@name='req_req']" use="data[@field='req_ref']/text()"/>
+    <xsl:key name="reqitems" match="resource[@name='req_req_item']" use="@uuid"/>
 
     <s3:fields tables="inv_send" select="req_ref,site_id,to_site_id"/>
     <s3:fields tables="inv_track_item" select="item_id,item_pack_id,quantity,req_item_id"/>
 
-    <s3:fields tables="req_req_item" select="req_id"/>
+    <s3:fields tables="req_req_item" select="req_id,comments"/>
     <s3:fields tables="req_req" select="req_ref,date,comments,requester_id"/>
 
     <s3:fields tables="supply_item" select="code"/>
@@ -99,11 +100,13 @@
         <xsl:variable name="ItemUUID" select="reference[@field='item_id']/@uuid"/>
         <xsl:variable name="PackUUID" select="reference[@field='item_pack_id']/@uuid"/>
         <xsl:variable name="Quantity" select="data[@field='quantity']/@value"/>
+        <xsl:variable name="ReqItemUUID" select="reference[@field='req_item_id']/@uuid"/>
 
         <xsl:if test="$ItemUUID!='' and $PackUUID!='' and $Quantity!=''">
 
             <xsl:variable name="ItemCode" select="key('items', $ItemUUID)[1]/data[@field='code']/text()"/>
             <xsl:variable name="PackQuantity" select="key('packs', $PackUUID)[1]/data[@field='quantity']/@value"/>
+            <xsl:variable name="ReqItemComments" select='key("reqitems", $ReqItemUUID)[1]/data[@field="comments"]/text()'/>
 
             <xsl:if test="$ItemCode!='' and $PackQuantity!=''">
                 <xsl:variable name="TotalQuantity" select='$Quantity * $PackQuantity'/>
@@ -114,6 +117,9 @@
                     <Menge>
                         <xsl:value-of select="$TotalQuantity"/>
                     </Menge>
+                    <Anmerkung>
+                        <xsl:value-of select="$ReqItemComments"/>
+                    </Anmerkung>
                 </ArtikelBestellung>
             </xsl:if>
 
