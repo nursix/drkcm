@@ -897,7 +897,7 @@ class S3SQLCustomForm(S3SQLForm):
         if subtables:
             if not request:
                 # Create dummy S3Request
-                from ..service import S3Request
+                from ..controller import S3Request
                 r = S3Request(resource.prefix,
                               resource.name,
                               # Current request args/vars could be in a different
@@ -3896,7 +3896,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         component, link = self.get_link()
 
         # Customise resources
-        from ..service import S3Request
+        from ..controller import S3Request
         r = S3Request(resource.prefix,
                       resource.name,
                       # Current request args/vars could be in a different

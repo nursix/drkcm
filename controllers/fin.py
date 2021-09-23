@@ -117,31 +117,4 @@ def voucher_invoice():
 
     return s3_rest_controller(rheader = s3db.fin_rheader)
 
-# -----------------------------------------------------------------------------
-def payment_service():
-    """ Payment Services: RESTful CRUD controller """
-
-    return s3_rest_controller(rheader = s3db.fin_rheader)
-
-# -----------------------------------------------------------------------------
-def product():
-    """ Billable Products/Services: RESTful CRUD controller """
-
-    # TODO prep
-    #      - on product_service tab, limit service selector to services of owner org
-
-    return s3_rest_controller(rheader = s3db.fin_rheader)
-
-# -----------------------------------------------------------------------------
-def subscription_plan():
-    """ Subscription Plans: RESTful CRUD controller """
-
-    return s3_rest_controller(rheader = s3db.fin_rheader)
-
-# -----------------------------------------------------------------------------
-def subscription():
-    """ Subscriptions: RESTful CRUD controller """
-
-    return s3_rest_controller(rheader = s3db.fin_rheader)
-
 # END =========================================================================

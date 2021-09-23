@@ -48,8 +48,8 @@ from gluon.utils import web2py_uuid
 
 from s3dal import Row, Rows, Query, Field, original_tablename
 
+from ..controller import S3Request
 from ..model import S3MetaFields, s3_comments
-from ..service import S3Request
 from ..tools import S3Represent, S3Tracker, s3_addrow, s3_mark_required, s3_str, IS_ISO639_2_LANGUAGE_CODE
 
 from .permissions import S3Permission

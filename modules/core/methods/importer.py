@@ -63,8 +63,8 @@ from gluon.tools import callback, fetch
 
 from s3dal import Field
 
+from ..controller import S3Request
 from ..model import S3Resource
-from ..service import S3Request
 from ..tools import s3_utc, s3_get_foreign_key, s3_has_foreign_key, \
                     s3_mark_required, s3_str, IS_JSONS3, S3Represent
 

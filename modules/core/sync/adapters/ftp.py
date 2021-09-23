@@ -33,8 +33,8 @@ from io import StringIO
 
 from gluon import *
 
+from ...controller import S3Request
 from ...filters import S3URLQuery, FS
-from ...service import S3Request
 from ...io import S3Exporter
 
 from ..base import S3SyncBaseAdapter
