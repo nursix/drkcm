@@ -287,8 +287,10 @@ def post():
                         if module in ("appadmin", "errors"):
                             continue
                         modules[module] = _modules[module].get("name_nice")
-                    s3db.cms_post_module.field.requires = \
-                        IS_IN_SET_LAZY(lambda: sort_dict_by_values(modules))
+                    s3db.cms_post_module.field.requires = IS_IN_SET_LAZY(
+                        # Sort modules by human-readable name
+                        lambda: sorted(modules.items(), key=lambda item: item[1]),
+                        )
 
         return True
     s3.prep = prep

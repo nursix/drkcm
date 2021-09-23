@@ -41,8 +41,11 @@ __all__ = ("FinExpensesModel",
            "fin_voucher_settle_invoice",
            )
 
+from collections import OrderedDict
+
 from gluon import *
 from ..core import *
+
 from s3layouts import S3PopupLink
 
 # =============================================================================

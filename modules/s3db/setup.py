@@ -63,6 +63,8 @@ import string
 import sys
 import time
 
+from collections import OrderedDict
+
 from gluon import *
 
 from ..core import *

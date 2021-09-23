@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" S3 Extensions for gluon.dal.Field, reusable fields
+""" Representation Methods and Tools
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
@@ -31,16 +31,39 @@
 
 __all__ = ("S3Represent",
            "S3RepresentLazy",
+           "S3PriorityRepresent",
+           "s3_URLise",
+           "s3_auth_user_represent",
+           "s3_auth_user_represent_name",
+           "s3_avatar_represent",
+           "s3_comments_represent",
+           "s3_datatable_truncate",
+           "s3_format_fullname",
+           "s3_fullname",
+           "s3_fullname_bulk",
+           "s3_phone_represent",
+           "s3_qrcode_represent",
+           "s3_text_represent",
+           "s3_truncate",
+           "s3_trunk8",
+           "s3_url_represent",
+           "s3_yes_no_represent",
            )
 
+import re
 import sys
+
 from itertools import chain
 
-from gluon import current, A, TAG, URL
+from gluon import current, A, DIV, IMG, IS_URL, SPAN, TAG, URL, XML
 from gluon.storage import Storage
 from gluon.languages import lazyT
 
-from .utils import s3_str, S3MarkupStripper
+from .convert import s3_str
+from .utils import S3MarkupStripper
+
+URLSCHEMA = re.compile(r"((?:(())(www\.([^/?#\s]*))|((http(s)?|ftp):)"
+                       r"(//([^/?#\s]*)))([^?#\s]*)(\?([^#\s]*))?(#([^\s]*))?)")
 
 # =============================================================================
 class S3Represent(object):
@@ -736,5 +759,580 @@ class S3RepresentLazy(object):
             else:
                 attributes[name] = text
             return
+
+# =============================================================================
+class S3PriorityRepresent(object):
+    """
+        Color-coded representation of priorities
+    """
+
+    def __init__(self, options, classes=None):
+        """
+            Constructor
+
+            @param options: the options (as dict or anything that can be
+                            converted into a dict)
+            @param classes: a dict mapping keys to CSS class suffixes
+        """
+
+        self.options = dict(options)
+        self.classes = classes
+
+    # -------------------------------------------------------------------------
+    def __call__(self, value, row=None):
+        """
+            Representation function
+
+            @param value: the value to represent
+            @param row: the Row (unused, for API compatibility)
+        """
+
+        css_class = base_class = "prio"
+
+        classes = self.classes
+        if classes:
+            suffix = classes.get(value)
+            if suffix:
+                css_class = "%s %s-%s" % (css_class, base_class, suffix)
+
+        label = self.options.get(value)
+
+        return DIV(label, _class=css_class)
+
+    # -------------------------------------------------------------------------
+    def represent(self, value, row=None):
+        """
+            Wrapper for self.__call__, for backwards-compatibility
+        """
+
+        return self(value, row=row)
+
+# =============================================================================
+def s3_comments_represent(text, show_link=True):
+    """
+        Represent Comments Fields
+    """
+
+    # Make sure text is multi-byte-aware before truncating it
+    text = s3_str(text)
+    if len(text) < 80:
+        return text
+    elif not show_link:
+        return "%s..." % text[:76]
+    else:
+        import uuid
+        unique =  uuid.uuid4()
+        represent = DIV(
+                DIV(text,
+                    _id=unique,
+                    _class="hide showall",
+                    _onmouseout="$('#%s').hide()" % unique
+                   ),
+                A("%s..." % text[:76],
+                  _onmouseover="$('#%s').removeClass('hide').show()" % unique,
+                 ),
+                )
+        return represent
+
+# =============================================================================
+def s3_phone_represent(value):
+    """
+        Ensure that Phone numbers always show as LTR
+        - otherwise + appears at the end which looks wrong even in RTL
+    """
+
+    if not value:
+        return current.messages["NONE"]
+    return s3_str("%s%s" % (chr(8206), s3_str(value)))
+
+# =============================================================================
+def s3_url_represent(url):
+    """
+        Make URLs clickable
+    """
+
+    if not url:
+        return ""
+
+    url_, error = IS_URL(allowed_schemes = ["http", "https", None],
+                         prepend_scheme = "http",
+                         )(url)
+    if error:
+        return url
+    return A(url_, _href=url_, _target="_blank")
+
+# =============================================================================
+def s3_qrcode_represent(value, row=None, show_value=True):
+    """
+        Simple QR Code representer, produces a DIV with embedded SVG,
+        useful to embed QR Codes that are to be scanned directly from
+        the screen, or for previews
+
+        @requires: python-qrcode (pip install qrcode), and PIL
+
+        @param value: the value to render (will be converted to str)
+        @param row: the Row (unused, for API-compatibility)
+        @param show_value: include the value (as str) in the representation
+
+        @returns: DIV
+    """
+
+    try:
+        import qrcode
+        import qrcode.image.svg
+    except ImportError:
+        return s3_str(value)
+
+    # Generate the QR Code
+    qr = qrcode.QRCode(version = 2,
+                       # L-level good enough for displaying on screen, as
+                       # it would rarely be damaged or dirty there ;)
+                       error_correction = qrcode.constants.ERROR_CORRECT_L,
+                       box_size = 10,
+                       border = 4,
+                       image_factory=qrcode.image.svg.SvgImage,
+                       )
+    qr.add_data(s3_str(value))
+    qr.make(fit=True)
+
+    # Write the SVG into a buffer
+    qr_svg = qr.make_image()
+
+    from io import BytesIO
+    stream = BytesIO()
+    qr_svg.save(stream)
+
+    # Generate XML string to embed
+    stream.seek(0)
+    svgxml = XML(stream.read())
+
+    output = DIV(DIV(svgxml, _class="s3-qrcode-svg"),
+                 _class="s3-qrcode-display",
+                 )
+    if show_value:
+        output.append(DIV(s3_str(value), _class="s3-qrcode-val"))
+
+    return output
+
+# =============================================================================
+def s3_URLise(text):
+    """
+        Convert all URLs in a text into an HTML <A> tag.
+
+        @param text: the text
+    """
+
+    output = URLSCHEMA.sub(lambda m: '<a href="%s" target="_blank">%s</a>' %
+                          (m.group(0), m.group(0)), text)
+    return output
+
+# =============================================================================
+def s3_avatar_represent(user_id, tablename="auth_user", gravatar=False, **attr):
+    """
+        Represent a User as their profile picture or Gravatar
+
+        @param tablename: either "auth_user" or "pr_person" depending on which
+                          table the 'user_id' refers to
+        @param attr: additional HTML attributes for the IMG(), such as _class
+    """
+
+    size = (50, 50)
+
+    if user_id:
+        db = current.db
+        s3db = current.s3db
+        cache = s3db.cache
+
+        table = s3db[tablename]
+
+        email = None
+        image = None
+
+        if tablename == "auth_user":
+            user = db(table.id == user_id).select(table.email,
+                                                  cache = cache,
+                                                  limitby = (0, 1),
+                                                  ).first()
+            if user:
+                email = user.email.strip().lower()
+            ltable = s3db.pr_person_user
+            itable = s3db.pr_image
+            query = (ltable.user_id == user_id) & \
+                    (ltable.pe_id == itable.pe_id) & \
+                    (itable.profile == True)
+            image = db(query).select(itable.image,
+                                     limitby = (0, 1),
+                                     ).first()
+            if image:
+                image = image.image
+        elif tablename == "pr_person":
+            user = db(table.id == user_id).select(table.pe_id,
+                                                  cache = cache,
+                                                  limitby = (0, 1),
+                                                  ).first()
+            if user:
+                ctable = s3db.pr_contact
+                query = (ctable.pe_id == user.pe_id) & \
+                        (ctable.contact_method == "EMAIL")
+                email = db(query).select(ctable.value,
+                                         cache = cache,
+                                         limitby = (0, 1),
+                                         ).first()
+                if email:
+                    email = email.value
+                itable = s3db.pr_image
+                query = (itable.pe_id == user.pe_id) & \
+                        (itable.profile == True)
+                image = db(query).select(itable.image,
+                                         limitby = (0, 1),
+                                         ).first()
+                if image:
+                    image = image.image
+
+        if image:
+            image = s3db.pr_image_library_represent(image, size=size)
+            size = s3db.pr_image_size(image, size)
+            url = URL(c="default", f="download",
+                      args=image)
+        elif gravatar:
+            if email:
+                # If no Image uploaded, try Gravatar, which also provides a nice fallback identicon
+                import hashlib
+                email_hash = hashlib.md5(email).hexdigest()
+                url = "//www.gravatar.com/avatar/%s?s=50&d=identicon" % email_hash
+            else:
+                url = "//www.gravatar.com/avatar/00000000000000000000000000000000?d=mm"
+        else:
+            url = URL(c="static", f="img", args="blank-user.gif")
+    else:
+        url = URL(c="static", f="img", args="blank-user.gif")
+
+    if "_class" not in attr:
+        attr["_class"] = "avatar"
+    if "_width" not in attr:
+        attr["_width"] = size[0]
+    if "_height" not in attr:
+        attr["_height"] = size[1]
+    return IMG(_src=url, **attr)
+
+# =============================================================================
+def s3_auth_user_represent(user_id, row=None):
+    """
+        Represent a user as their email address
+
+        @ToDo: Deprecate (replace with auth_UserRepresent)
+    """
+
+    if row:
+        return row.email
+    elif not user_id:
+        return current.messages["NONE"]
+
+    db = current.db
+    table = db.auth_user
+    user = db(table.id == user_id).select(table.email,
+                                          cache = current.s3db.cache,
+                                          limitby = (0, 1),
+                                          ).first()
+    try:
+        return user.email
+    except:
+        return current.messages.UNKNOWN_OPT
+
+# =============================================================================
+def s3_auth_user_represent_name(user_id, row=None):
+    """
+        Represent users by their names
+
+        @ToDo: Deprecate (replace with auth_UserRepresent)
+    """
+
+    if not row:
+        if not user_id:
+            return current.messages["NONE"]
+        db = current.db
+        table = db.auth_user
+        row = db(table.id == user_id).select(table.first_name,
+                                             table.last_name,
+                                             cache = current.s3db.cache,
+                                             limitby = (0, 1),
+                                             ).first()
+    try:
+        return s3_format_fullname(row.first_name.strip(),
+                                  None,
+                                  row.last_name.strip(),
+                                  )
+    except:
+        return current.messages.UNKNOWN_OPT
+
+# =============================================================================
+def s3_yes_no_represent(value):
+    " Represent a Boolean field as Yes/No instead of True/False "
+
+    if value is True:
+        return current.T("Yes")
+    elif value is False:
+        return current.T("No")
+    else:
+        return current.messages["NONE"]
+
+# =============================================================================
+def s3_truncate(text, length=48, nice=True):
+    """
+        Nice truncating of text
+
+        @param text: the text
+        @param length: the maximum length
+        @param nice: do not truncate words
+    """
+
+
+    if len(text) > length:
+        if type(text) is str:
+            encode = False
+        else:
+            # Make sure text is multi-byte-aware before truncating it
+            text = s3_str(text)
+            encode = True
+        if nice:
+            truncated = "%s..." % text[:length].rsplit(" ", 1)[0][:length-3]
+        else:
+            truncated = "%s..." % text[:length-3]
+        if encode:
+            truncated = s3_str(truncated)
+        return truncated
+    else:
+        return text
+
+# =============================================================================
+def s3_datatable_truncate(string, maxlength=40):
+    """
+        Representation method to override the dataTables-internal truncation
+        of strings per field, like:
+
+        if not r.id and not r.method:
+            table.field.represent = lambda string: \
+                                    s3_datatable_truncate(string, maxlength=40)
+
+        @param string: the string
+        @param maxlength: the maximum string length
+
+        @note: the JS click-event will be attached by s3.ui.datatable.js
+    """
+
+    # Make sure text is multi-byte-aware before truncating it
+    string = s3_str(string)
+    if string and len(string) > maxlength:
+        _class = "dt-truncate"
+        return TAG[""](
+                DIV(SPAN(_class="ui-icon ui-icon-zoomin",
+                         _style="float:right",
+                         ),
+                    string[:maxlength-3] + "...",
+                    _class=_class),
+                DIV(SPAN(_class="ui-icon ui-icon-zoomout",
+                            _style="float:right"),
+                    string,
+                    _style="display:none",
+                    _class=_class),
+                )
+    else:
+        return string if string else ""
+
+# =============================================================================
+def s3_trunk8(selector=None, lines=None, less=None, more=None):
+    """
+        Intelligent client-side text truncation
+
+        @param selector: the jQuery selector (default: .s3-truncate)
+        @param lines: maximum number of lines (default: 1)
+    """
+
+    T = current.T
+
+    s3 = current.response.s3
+
+    scripts = s3.scripts
+    jquery_ready = s3.jquery_ready
+
+    if s3.debug:
+        script = "/%s/static/scripts/trunk8.js" % current.request.application
+    else:
+        script = "/%s/static/scripts/trunk8.min.js" % current.request.application
+
+    if script not in scripts:
+
+        scripts.append(script)
+
+        # Toggle-script
+        # - only required once per page
+        script = \
+"""$(document).on('click','.s3-truncate-more',function(event){
+$(this).parent().trunk8('revert').append(' <a class="s3-truncate-less" href="#">%(less)s</a>')
+return false})
+$(document).on('click','.s3-truncate-less',function(event){
+$(this).parent().trunk8()
+return false})""" % {"less": T("less") if less is None else less}
+        s3.jquery_ready.append(script)
+
+    # Init-script
+    # - required separately for each selector (but do not repeat the
+    #   same statement if called multiple times => makes the page very
+    #   slow)
+    script = """S3.trunk8('%(selector)s',%(lines)s,'%(more)s')""" % \
+             {"selector": ".s3-truncate" if selector is None else selector,
+              "lines": "null" if lines is None else lines,
+              "more": T("more") if more is None else more,
+              }
+
+    if script not in jquery_ready:
+        jquery_ready.append(script)
+
+# =============================================================================
+def s3_text_represent(text, truncate=True, lines=5, _class=None):
+    """
+        Representation function for text fields with intelligent
+        truncation and preserving whitespace.
+
+        @param text: the text
+        @param truncate: whether to truncate or not
+        @param lines: maximum number of lines to show
+        @param _class: CSS class to use for truncation (otherwise using
+                       the text-body class itself)
+    """
+
+    if not text:
+        text = current.messages["NONE"]
+    if _class is None:
+        selector = ".text-body"
+        _class = "text-body"
+    else:
+        selector = ".%s" % _class
+        _class = "text-body %s" % _class
+
+    if truncate and \
+       current.auth.permission.format in ("html", "popup", "iframe"):
+        s3_trunk8(selector = selector, lines = lines)
+
+    return DIV(text, _class=_class)
+
+# =============================================================================
+def s3_format_fullname(fname=None, mname=None, lname=None, truncate=True):
+    """
+        Formats the full name of a person
+
+        @param fname: the person's pr_person.first_name value
+        @param mname: the person's pr_person.middle_name value
+        @param lname: the person's pr_person.last_name value
+        @param truncate: truncate the name to max 24 characters
+    """
+
+    name = ""
+    if fname or mname or lname:
+        if not fname:
+            fname = ""
+        if not mname:
+            mname = ""
+        if not lname:
+            lname = ""
+        if truncate:
+            fname = "%s" % s3_truncate(fname, 24)
+            mname = "%s" % s3_truncate(mname, 24)
+            lname = "%s" % s3_truncate(lname, 24, nice=False)
+        name_format = current.deployment_settings.get_pr_name_format()
+        name = name_format % {"first_name": fname,
+                              "middle_name": mname,
+                              "last_name": lname,
+                              }
+        name = name.replace("  ", " ").rstrip()
+        if truncate:
+            name = s3_truncate(name, 24, nice=False)
+    return name
+
+# =============================================================================
+def s3_fullname(person=None, pe_id=None, truncate=True):
+    """
+        Returns the full name of a person
+
+        @param person: the pr_person record or record_id
+        @param pe_id: alternatively, the person entity ID
+        @param truncate: truncate the name to max 24 characters
+    """
+
+    record = None
+    query = None
+
+    if isinstance(person, int) or str(person).isdigit():
+        db = current.db
+        ptable = db.pr_person
+        query = (ptable.id == person)
+    elif person is not None:
+        record = person
+    elif pe_id is not None:
+        db = current.db
+        ptable = db.pr_person
+        query = (ptable.pe_id == pe_id)
+
+    if not record and query is not None:
+        record = db(query).select(ptable.first_name,
+                                  ptable.middle_name,
+                                  ptable.last_name,
+                                  limitby = (0, 1)
+                                  ).first()
+    if record:
+        fname, mname, lname = "", "", ""
+        if "pr_person" in record:
+            # Check if this is a LazySet from db.auth_user
+            #test = record["pr_person"]
+            #from pydal.objects import LazySet
+            #if not isinstance(test, LazySet)
+            #    record = test
+            record = record["pr_person"]
+        if record.first_name:
+            fname = record.first_name.strip()
+        if "middle_name" in record and record.middle_name:
+            mname = record.middle_name.strip()
+        if record.last_name:
+            lname = record.last_name.strip()
+        return s3_format_fullname(fname, mname, lname, truncate)
+
+    else:
+        return ""
+
+# =============================================================================
+def s3_fullname_bulk(record_ids=None, truncate=True):
+    """
+        Returns the full name for a set of Persons
+        - currently unused
+
+        @param record_ids: a list of record_ids
+        @param truncate: truncate the name to max 24 characters
+    """
+
+    represents = {}
+
+    if record_ids:
+
+        db = current.db
+        ptable = db.pr_person
+        query = (ptable.id.belongs(record_ids))
+        rows = db(query).select(ptable.id,
+                                ptable.first_name,
+                                ptable.middle_name,
+                                ptable.last_name,
+                                )
+
+        for row in rows:
+            fname, mname, lname = "", "", ""
+            if row.first_name:
+                fname = row.first_name.strip()
+            if row.middle_name:
+                mname = row.middle_name.strip()
+            if row.last_name:
+                lname = row.last_name.strip()
+            represent = s3_format_fullname(fname, mname, lname, truncate)
+            represents[row.id] = represent
+
+    return represents
 
 # END =========================================================================

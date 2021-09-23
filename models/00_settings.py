@@ -22,16 +22,6 @@ s3.base_url = "%s/%s" % (settings.get_base_public_url(),
 s3.download_url = "%s/default/download" % s3.base_url
 
 # -----------------------------------------------------------------------------
-# Client tests
-
-# Check whether browser is Mobile & store result in session
-# - commented-out until we make use of it
-#if session.s3.mobile is None:
-#    session.s3.mobile = s3base.s3_is_mobile_client(request)
-#if session.s3.browser is None:
-#    session.s3.browser = s3base.s3_populate_browser_compatibility(request)
-
-# -----------------------------------------------------------------------------
 # Global variables
 
 # Strings to i18n

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 """ Message Parsing
 
@@ -45,7 +44,7 @@ except:
 from gluon import current
 from gluon.tools import fetch
 
-from core import S3Represent, soundex
+from core import S3Represent
 from core.msg.parser import S3Parsing
 
 # =============================================================================
@@ -351,6 +350,7 @@ class S3Parser(object):
                                 table.first_name,
                                 table.middle_name,
                                 table.last_name)
+        soundex = self._soundex
         _name = soundex(str(name))
         for row in rows:
             if (_name == soundex(row.first_name)) or \
@@ -428,6 +428,7 @@ class S3Parser(object):
                                 table.aka2,
                                 table.phone_emergency
                                 )
+        soundex = self._soundex
         _name = soundex(str(name))
         for row in rows:
             if (_name == soundex(row.name)) or \
@@ -499,6 +500,7 @@ class S3Parser(object):
                                 table.name,
                                 table.phone,
                                 table.acronym)
+        soundex = self._soundex
         _name = soundex(str(name))
         for row in rows:
             if (_name == soundex(row.name)) or \
@@ -552,6 +554,7 @@ class S3Parser(object):
             reponse = ""
             report_id = None
             comments = False
+            soundex = self._soundex
             for word in words:
                 if "SI#" in word and not ireport:
                     report = word.split("#")[1]
@@ -633,6 +636,7 @@ class S3Parser(object):
         keywords = message_body.split(" ")
         pquery = []
         name = ""
+        soundex = self._soundex
         for word in keywords:
             match = None
             for key in pkeywords:
@@ -678,5 +682,38 @@ class S3Parser(object):
             reply = None
 
         return reply
+
+    # -------------------------------------------------------------------------
+    def _soundex(name, len=4):
+        """
+            Code referenced from http://code.activestate.com/recipes/52213-soundex-algorithm/
+
+            @todo: parameter description?
+        """
+
+        # digits holds the soundex values for the alphabet
+        digits = "01230120022455012623010202"
+        sndx = ""
+        fc = ""
+
+        # Translate alpha chars in name to soundex digits
+        for c in name.upper():
+            if c.isalpha():
+                if not fc:
+                    # remember first letter
+                    fc = c
+                d = digits[ord(c)-ord("A")]
+                # duplicate consecutive soundex digits are skipped
+                if not sndx or (d != sndx[-1]):
+                    sndx += d
+
+        # replace first digit with first alpha character
+        sndx = fc + sndx[1:]
+
+        # remove all 0s from the soundex code
+        sndx = sndx.replace("0", "")
+
+        # return soundex code padded to len characters
+        return (sndx + (len * "0"))[:len]
 
 # END =========================================================================

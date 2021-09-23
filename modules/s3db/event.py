@@ -77,6 +77,8 @@ __all__ = ("S3EventModel",
            "event_set_event_from_incident",
            )
 
+from collections import OrderedDict
+
 from gluon import *
 from gluon.storage import Storage
 

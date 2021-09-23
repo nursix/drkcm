@@ -44,7 +44,7 @@ from gluon import current, redirect, A, Field, INPUT, SQLFORM
 from ...methods import S3Method
 
 from ..calendar import S3DateTime
-from ..utils import s3_str
+from ..convert import s3_str
 from ..validators import JSONERRORS
 
 # =============================================================================

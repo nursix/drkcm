@@ -34,6 +34,8 @@ __all__ = ("S3IRSModel",
 
 import json
 
+from collections import OrderedDict
+
 from gluon import *
 from gluon.storage import Storage
 
@@ -209,8 +211,11 @@ class S3IRSModel(S3Model):
         define_table(tablename,
                      Field("code",
                            label = T("Category"),
-                           requires = IS_IN_SET_LAZY(lambda: \
-                                      sort_dict_by_values(irs_incident_type_opts)),
+                           requires = IS_IN_SET_LAZY(
+                                lambda: sorted(irs_incident_type_opts.items(),
+                                               key = lambda item: item[1],
+                                               ),
+                                ),
                            represent = lambda opt: \
                                        irs_incident_type_opts.get(opt, opt)),
                      *s3_meta_fields())
@@ -250,8 +255,11 @@ class S3IRSModel(S3Model):
                            label = T("Category"),
                            # The full set available to Admins & Imports/Exports
                            # (users use the subset by over-riding this in the Controller)
-                           requires = IS_EMPTY_OR(IS_IN_SET_LAZY(lambda: \
-                                      sort_dict_by_values(irs_incident_type_opts))),
+                           requires = IS_EMPTY_OR(IS_IN_SET_LAZY(
+                                        lambda: sorted(irs_incident_type_opts.items(),
+                                                       key = lambda item: item[1],
+                                                       ),
+                                        )),
                            # Use this instead if a simpler set of Options required
                            #requires = IS_EMPTY_OR(IS_IN_SET(irs_incident_type_opts)),
                            represent = lambda opt: \

@@ -51,6 +51,8 @@ __all__ = ("InvWarehouseModel",
 
 import datetime
 
+from collections import OrderedDict
+
 from gluon import *
 from gluon.sqlhtml import RadioWidget
 from gluon.storage import Storage

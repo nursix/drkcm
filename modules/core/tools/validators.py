@@ -75,7 +75,8 @@ from gluon.storage import Storage
 from gluon.validators import Validator, ValidationError
 
 from .calendar import S3DateTime
-from .utils import s3_orderby_fields, s3_str
+from .convert import s3_str
+from .utils import s3_orderby_fields
 
 DEFAULT = lambda: None
 JSONERRORS = (NameError, TypeError, ValueError, AttributeError, KeyError)

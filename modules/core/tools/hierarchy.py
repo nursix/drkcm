@@ -37,7 +37,7 @@ from gluon.storage import Storage
 from gluon.tools import callback
 
 from .represent import S3Represent
-from .utils import s3_str
+from .convert import s3_str
 
 DEFAULT = lambda: None
 

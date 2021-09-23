@@ -520,7 +520,7 @@ class S3Calendar(object):
                 dtfmt = "%Y-%m-%d" # ISO Date Format
 
         # Deal with T's
-        from .utils import s3_str
+        from .convert import s3_str
         dtfmt = s3_str(dtfmt)
 
         return self.calendar._format(dt, dtfmt)
@@ -545,7 +545,7 @@ class S3Calendar(object):
                 dtfmt = ISOFORMAT # ISO Date/Time Format
 
         # Deal with T's
-        from .utils import s3_str
+        from .convert import s3_str
         dtfmt = s3_str(dtfmt)
 
         # Remove microseconds
@@ -1268,7 +1268,7 @@ class S3DateTimeParser(object):
             if s:
                 result.append(pp.Suppress(pp.Literal(s)))
 
-        from .utils import s3_str
+        from .convert import s3_str
         rule = False
         for c in s3_str(dtfmt):
             if rule and c in rules:
@@ -1546,7 +1546,7 @@ class S3DateTimeFormatter(object):
             if s:
                 result.append(s)
 
-        from .utils import s3_str
+        from .convert import s3_str
         rule = False
         for c in s3_str(dtfmt):
             if rule and c in rules:
