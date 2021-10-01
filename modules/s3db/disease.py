@@ -360,18 +360,80 @@ class DiseaseDataModel(S3Model):
 class DiseaseMonitoringModel(S3Model):
     """ Data Model for Disease Monitoring """
 
-    names = ("disease_testing_report",
+    names = ("disease_demographic",
+             "disease_demographic_id",
+             "disease_testing_report",
              )
 
     def model(self):
 
         T = current.T
 
-        #db = current.db
+        db = current.db
         s3 = current.response.s3
 
         define_table = self.define_table
         crud_strings = s3.crud_strings
+
+        # ---------------------------------------------------------------------
+        # Demographics for disease monitoring/reporting
+        # - e.g. age groups, vulnerable groups...
+        #
+        tablename = "disease_demographic"
+        define_table(tablename,
+                     Field("code", length=16, notnull=True, unique=True,
+                           label = T("Code"),
+                           requires = [IS_NOT_EMPTY(),
+                                       IS_LENGTH(16, minsize=1),
+                                       IS_NOT_ONE_OF(db,
+                                                     "%s.code" % tablename,
+                                                     ),
+                                       ],
+                           comment = DIV(_class = "tooltip",
+                                         _title = "%s|%s" % (T("Code"),
+                                                             T("A unique code for this demographic"),
+                                                             ),
+                                         ),
+                           ),
+                     Field("name",
+                           label = T("Name"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     Field("obsolete", "boolean",
+                           default = False,
+                           label = T("Obsolete"),
+                           represent = s3_yes_no_represent,
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Add Demographic"),
+            title_display = T("Demographic Details"),
+            title_list = T("Demographics"),
+            title_update = T("Edit Demographic"),
+            label_list_button = T("List Demographics"),
+            label_delete_button = T("Delete Demographic"),
+            msg_record_created = T("Demographic added"),
+            msg_record_modified = T("Demographic updated"),
+            msg_record_deleted = T("Demographic deleted"),
+            msg_list_empty = T("No Demographics currently defined"),
+            )
+
+        # Reusable Field
+        represent = S3Represent(lookup=tablename)
+        demographic_id = S3ReusableField("demographic_id", "reference %s" % tablename,
+                                         label = T("Demographic"),
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  filterby = "obsolete",
+                                                                  filter_opts = (False,),
+                                                                  )),
+                                         sortby = "name",
+                                         )
 
         # ---------------------------------------------------------------------
         # Testing Site Daily Summary Report
@@ -474,16 +536,18 @@ class DiseaseMonitoringModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return {"disease_demographic_id": demographic_id,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField.dummy
+        dummy = S3ReusableField.dummy
 
-        return {}
+        return {"disease_demographic_id": dummy("demographic_id"),
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
