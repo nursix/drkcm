@@ -1,0 +1,10 @@
+Code,Name,Comments
+U12,Kinder unter 12 Jahre,
+U18,Jugendliche unter 18 Jahre,
+PREGNANT,Schwangere,
+STUDENT,Studierende,
+UNRVAC,Geimpft mit nicht gelistetem Impfstoff,
+MCIVAC,Impfunfähig aus med. Gründen,
+MSTUDY,Studienteilnehmer,
+QCHECK,Vormals Infizierte zwecks Aufhebung der Quarantäne,
+UNSPEC,Nicht spezifiziert,
