@@ -36,6 +36,7 @@ DISEASE_TEST_READER,Disease Test Reader,,,disease,case_diagnostics,,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,disease,testing_report,,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,disease,,,READ,,
 DISEASE_TEST_READER,Disease Test Reader,,,,,disease_case_diagnostics,READ,,any
+DISEASE_TEST_READER,Disease Test Reader,,,,,disease_testing_demographic,READ,,
 DISEASE_TEST_READER,Disease Test Reader,,,,,disease_testing_report,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,,,project_project,READ,,any
 MAP_ADMIN,,,true,gis,location,,CREATE|READ|UPDATE|DELETE,,
@@ -145,6 +146,7 @@ TEST_PROVIDER,Test Provider,,,disease,,,READ,,
 TEST_PROVIDER,Test Provider,,,disease,testing_report,,CREATE|READ|UPDATE|DELETE,,
 TEST_PROVIDER,Test Provider,,,disease,,,READ,,
 TEST_PROVIDER,Test Provider,,,,,disease_case_diagnostics,CREATE|READ|UPDATE|DELETE,,
+TEST_PROVIDER,Test Provider,,,,,disease_testing_demographic,CREATE|READ|UPDATE|DELETE,,
 TEST_PROVIDER,Test Provider,,,,,disease_testing_report,CREATE|READ|UPDATE|DELETE,,
 TEST_PROVIDER,Test Provider,,,,,org_site,READ,,
 VOUCHER_ISSUER,Voucher Issuer,,,fin,voucher,,READ,,any
