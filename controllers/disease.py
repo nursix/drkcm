@@ -212,6 +212,21 @@ def testing_report():
     return s3_rest_controller()
 
 # -----------------------------------------------------------------------------
+def testing_demographic():
+    """ Testing Reports by Demographic: RESTful CRUD Controller """
+
+    def prep(r):
+        r.resource.configure(# Only reporting in this controller
+                             insertable = False,
+                             editable = False,
+                             deletable = False,
+                             )
+        return True
+    s3.prep = prep
+
+    return s3_rest_controller()
+
+# -----------------------------------------------------------------------------
 def testing_device():
     """ Testing Device Registry: RESTful CRUD Controller """
 

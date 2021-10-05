@@ -119,6 +119,15 @@ class TestResultRegistration(S3Method):
         if isinstance(requires, IS_EMPTY_OR):
             field.requires = requires.other
 
+        # Configure demographic_id
+        if settings.get_disease_testing_report_by_demographic():
+            field = table.demographic_id
+            field.readable = field.writable = True
+            requires = field.requires
+            if isinstance(requires, IS_EMPTY_OR):
+                field.requires = requires.other
+            offset += 1
+
         # Configure device_id
         field = table.device_id
         field.readable = field.writable = True
@@ -141,6 +150,7 @@ class TestResultRegistration(S3Method):
                       table.site_id,
                       table.disease_id,
                       table.probe_date,
+                      table.demographic_id,
                       table.device_id,
                       table.result,
 
@@ -238,6 +248,8 @@ class TestResultRegistration(S3Method):
                 testresult["probe_date"] = formvars["probe_date"]
             if "device_id" in formvars:
                 testresult["device_id"] = formvars["device_id"]
+            if "demographic_id" in formvars:
+                testresult["demographic_id"] = formvars["demographic_id"]
 
             record_id = table.insert(**testresult)
             if not record_id:

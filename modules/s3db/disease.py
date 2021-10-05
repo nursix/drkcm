@@ -363,6 +363,7 @@ class DiseaseMonitoringModel(S3Model):
     names = ("disease_demographic",
              "disease_demographic_id",
              "disease_testing_report",
+             "disease_testing_demographic",
              )
 
     def model(self):
@@ -371,9 +372,12 @@ class DiseaseMonitoringModel(S3Model):
 
         db = current.db
         s3 = current.response.s3
+        settings = current.deployment_settings
+
+        crud_strings = s3.crud_strings
 
         define_table = self.define_table
-        crud_strings = s3.crud_strings
+        configure = self.configure
 
         # ---------------------------------------------------------------------
         # Demographics for disease monitoring/reporting
@@ -472,6 +476,35 @@ class DiseaseMonitoringModel(S3Model):
                      s3_comments(),
                      *s3_meta_fields())
 
+        # Components
+        self.add_components(tablename,
+                            disease_testing_demographic = "report_id",
+                            )
+
+        # CRUD Form
+        if settings.get_disease_testing_report_by_demographic():
+            crud_fields = ["disease_id",
+                           "site_id",
+                           "date",
+                           S3SQLInlineComponent("testing_demographic",
+                                                label = T("Details"),
+                                                fields = ["demographic_id",
+                                                          "tests_total",
+                                                          "tests_positive",
+                                                          ],
+                                                ),
+                           "comments",
+                           ]
+        else:
+            crud_fields = ["disease_id",
+                           "site_id",
+                           "date",
+                           "tests_total",
+                           "tests_positive",
+                           "comments",
+                           ]
+        crud_form = S3SQLCustomForm(*crud_fields)
+
         # Filter Widgets
         filter_widgets = [S3TextFilter(["site_id$name", "comments"],
                                        label = T("Search"),
@@ -511,13 +544,14 @@ class DiseaseMonitoringModel(S3Model):
             }
 
         # Table Configuration
-        self.configure(tablename,
-                       list_fields = list_fields,
-                       filter_widgets = filter_widgets,
-                       onvalidation = self.testing_report_onvalidation,
-                       orderby = "%s.date desc" % tablename,
-                       report_options = report_options,
-                       )
+        configure(tablename,
+                  crud_form = crud_form,
+                  list_fields = list_fields,
+                  filter_widgets = filter_widgets,
+                  onvalidation = self.testing_report_onvalidation,
+                  orderby = "%s.date desc" % tablename,
+                  report_options = report_options,
+                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -532,6 +566,88 @@ class DiseaseMonitoringModel(S3Model):
             msg_record_deleted = T("Daily Report deleted"),
             msg_list_empty = T("No Daily Reports currently registered"),
             )
+
+        # ---------------------------------------------------------------------
+        # Testing activity data per demographic
+        # - component of testing reports
+        #
+        # TODO better represent (site+date)
+        report_represent = S3Represent(lookup = "disease_testing_report",
+                                       fields = ["date"],
+                                       )
+        tablename = "disease_testing_demographic"
+        define_table(tablename,
+                     Field("report_id", "reference disease_testing_report",
+                           label = T("Report"),
+                           represent = report_represent,
+                           requires = IS_ONE_OF(db, "disease_testing_report.id",
+                                                report_represent,
+                                                ),
+                           ),
+                     demographic_id(
+                         label = T("Subject Group##med"),
+                         ondelete = "CASCADE",
+                         ),
+                     Field("tests_total", "integer",
+                           label = T("Total Number of Tests"),
+                           requires = IS_INT_IN_RANGE(0),
+                           ),
+                     Field("tests_positive", "integer",
+                           label = T("Number of Positive Test Results"),
+                           requires = IS_INT_IN_RANGE(0),
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # List fields
+        list_fields = ["report_id$site_id",
+                       "report_id$date",
+                       "demographic_id",
+                       "tests_total",
+                       "tests_positive",
+                       "report_id$comments",
+                       ]
+
+        # Filter Widgets
+        filter_widgets = [S3TextFilter(["report_id$site_id$name",
+                                        "report_id$comments",
+                                        ],
+                                       label = T("Search"),
+                                       ),
+                          S3DateFilter("report_id$date",
+                                       ),
+                          ]
+
+        # Report options
+        facts = ((T("Number of Tests"), "sum(tests_total)"),
+                 (T("Number of Positive Test Results"), "sum(tests_positive)"),
+                 (T("Number of Reports"), "count(report_id)"),
+                 )
+        axes = ["report_id$site_id",
+                "report_id$site_id$location_id$L2",
+                "report_id$site_id$location_id$L3",
+                "demographic_id",
+                "report_id$disease_id",
+                ]
+        report_options = {
+            "rows": axes,
+            "cols": axes,
+            "fact": facts,
+            "defaults": {"rows": axes[1],
+                         "cols": None,
+                         "fact": facts[0],
+                         "totals": True,
+                         },
+            }
+
+        configure(tablename,
+                  filter_widgets = filter_widgets,
+                  list_fields = list_fields,
+                  onvalidation = self.testing_demographic_onvalidation,
+                  onaccept = self.testing_demographic_onaccept,
+                  ondelete = self.testing_demographic_ondelete,
+                  report_options = report_options,
+                  )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -614,6 +730,91 @@ class DiseaseMonitoringModel(S3Model):
         if total is not None and positive is not None:
             if positive > total:
                 form.errors["tests_positive"] = T("Number of positive results cannot be greater than number of tests")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def testing_demographic_onvalidation(form):
+        """
+            Onvalidation of testing_demographic:
+            - check numbers for plausibility
+        """
+
+        T = current.T
+
+        form_vars = form.vars
+
+        # Validate numbers
+        total = form_vars.get("tests_total")
+        positive = form_vars.get("tests_positive")
+        if total is not None and positive is not None:
+            if positive > total:
+                form.errors["tests_positive"] = T("Number of positive results cannot be greater than number of tests")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def update_report_from_demographics(report_id):
+
+        db = current.db
+        s3db = current.s3db
+
+        # Get totals for all demographics under this report
+        table = s3db.disease_testing_demographic
+        query = (table.report_id == report_id) & \
+                (table.deleted == False)
+        tests_total = table.tests_total.sum()
+        tests_positive = table.tests_positive.sum()
+        row = db(query).select(tests_total, tests_positive).first()
+
+        # Update the report
+        rtable = s3db.disease_testing_report
+        query = (rtable.id == report_id) & \
+                (rtable.deleted == False)
+        db(query).update(tests_total = row[tests_total],
+                         tests_positive = row[tests_positive],
+                         )
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def testing_demographic_onaccept(cls, form):
+        """
+            Onaccept of disease_testing_demographic:
+            - update the totals in the corresponding report
+        """
+
+        # Get record ID
+        form_vars = form.vars
+        if "id" in form_vars:
+            record_id = form_vars.id
+        elif hasattr(form, "record_id"):
+            record_id = form.record_id
+        else:
+            return
+
+        table = current.s3db.disease_testing_demographic
+
+        report_id = form_vars.get("report_id")
+        if not report_id:
+            record = current.db(table.id == record_id).select(table.report_id,
+                                                              limitby = (0, 1),
+                                                              ).first()
+            if record:
+                report_id = record.report_id
+
+        if report_id:
+            cls.update_report_from_demographics(report_id)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def testing_demographic_ondelete(cls, row):
+        """
+            Ondelete of disease_testing_demographic:
+            - update the totals in the corresponding report
+        """
+
+        report_id = row.report_id
+
+        if report_id:
+            cls.update_report_from_demographics(report_id)
 
 # =============================================================================
 class DiseaseCertificateModel(S3Model):
@@ -1131,6 +1332,11 @@ class CaseTrackingModel(S3Model):
                                      readable = False,
                                      writable = False,
                                      ),
+                     # Optional link to demographic for disease monitoring
+                     self.disease_demographic_id(
+                            readable = False,
+                            writable = False,
+                            ),
                      # @todo: make a lookup table in DiseaseDataModel:
                      Field("probe_type"),
                      Field("probe_number", length=64, unique=True,

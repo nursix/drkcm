@@ -1174,6 +1174,223 @@ def facility_map_popup(record):
     return DIV(title, details, _class="map-popup")
 
 # =============================================================================
+def update_daily_report(site_id, result_date, disease_id):
+    """
+        Update daily testing activity report (without subtotals per demographic)
+        - called when a new individual test result is registered
+
+        @param site_id: the test station site ID
+        @param result_date: the result date of the test
+        @param disease_id: the disease ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.disease_case_diagnostics
+
+    # Count records grouped by result
+    query = (table.site_id == site_id) & \
+            (table.disease_id == disease_id) & \
+            (table.result_date == result_date) & \
+            (table.deleted == False)
+    cnt = table.id.count()
+    rows = db(query).select(table.result,
+                            cnt,
+                            groupby = table.result,
+                            )
+    total = positive = 0
+    for row in rows:
+        num = row[cnt]
+        total += num
+        if row.disease_case_diagnostics.result == "POS":
+            positive += num
+
+    # Look up the daily report
+    rtable = s3db.disease_testing_report
+    query = (rtable.site_id == site_id) & \
+            (rtable.disease_id == disease_id) & \
+            (rtable.date == result_date) & \
+            (rtable.deleted == False)
+    report = db(query).select(rtable.id,
+                              rtable.tests_total,
+                              rtable.tests_positive,
+                              limitby = (0, 1),
+                              ).first()
+
+    if report:
+        # Update report if actual numbers are greater
+        if report.tests_total < total or report.tests_positive < positive:
+            report.update_record(tests_total = total,
+                                 tests_positive = positive,
+                                 )
+    else:
+        # Create report
+        report = {"site_id": site_id,
+                  "disease_id": disease_id,
+                  "date": result_date,
+                  "tests_total": total,
+                  "tests_positive": positive,
+                  }
+        report_id = rtable.insert(**report)
+        if report_id:
+            current.auth.s3_set_record_owner(rtable, report_id)
+            report["id"] = report_id
+            s3db.onaccept(rtable, report, method="create")
+
+# -----------------------------------------------------------------------------
+def update_daily_report_by_demographic(site_id, result_date, disease_id):
+    """
+        Update daily testing activity report (with subtotals per demographic)
+        - called when a new individual test result is registered
+
+        @param site_id: the test station site ID
+        @param result_date: the result date of the test
+        @param disease_id: the disease ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+    set_record_owner = current.auth.s3_set_record_owner
+
+    table = s3db.disease_case_diagnostics
+    rtable = s3db.disease_testing_report
+    dtable = s3db.disease_testing_demographic
+
+    # Count individual results by demographic and result
+    query = (table.site_id == site_id) & \
+            (table.disease_id == disease_id) & \
+            (table.result_date == result_date) & \
+            (table.deleted == False)
+    cnt = table.id.count()
+    rows = db(query).select(table.demographic_id,
+                            table.result,
+                            cnt,
+                            groupby = (table.demographic_id, table.result),
+                            )
+
+    # Generate recorded-subtotals matrix
+    subtotals = {}
+    total = positive = 0
+    for row in rows:
+        record = row.disease_case_diagnostics
+        demographic_id = record.demographic_id
+        item = subtotals.get(demographic_id)
+        if not item:
+            item = subtotals[demographic_id] = {"tests_total": 0,
+                                                "tests_positive": 0,
+                                                }
+        num = row[cnt]
+        total += num
+        item["tests_total"] += num
+        if record.result == "POS":
+            positive += num
+            item["tests_positive"] += num
+
+    # Look up the daily report
+    query = (rtable.site_id == site_id) & \
+            (rtable.disease_id == disease_id) & \
+            (rtable.date == result_date) & \
+            (rtable.deleted == False)
+    report = db(query).select(rtable.id,
+                              rtable.tests_total,
+                              rtable.tests_positive,
+                              limitby = (0, 1),
+                              ).first()
+
+    if not report:
+        # Create a report with the recorded totals
+        report = {"site_id": site_id,
+                  "disease_id": disease_id,
+                  "date": result_date,
+                  "tests_total": total,
+                  "tests_positive": positive,
+                  }
+        report["id"] = report_id = rtable.insert(**report)
+        if report_id:
+            set_record_owner(rtable, report_id)
+            s3db.onaccept(rtable, report, method="create")
+
+            # Add subtotals per demographic
+            for demographic_id, item in subtotals.items():
+                subtotal = {"report_id": report_id,
+                            "demographic_id": demographic_id,
+                            "tests_total": item["tests_total"],
+                            "tests_positive": item["tests_positive"]
+                            }
+                subtotal_id = subtotal["id"] = dtable.insert(**subtotal)
+                set_record_owner(dtable, subtotal_id)
+                # We've already set the correct totals in the report:
+                #s3db.onaccept(dtable, subtotal, method="create")
+
+    else:
+        # Update the existing report with revised subtotals
+        report_id = report.id
+
+        # Get all current (reported) subtotals of this report
+        query = (dtable.report_id == report_id) & \
+                (dtable.deleted == False)
+        rows = db(query).select(dtable.id,
+                                dtable.demographic_id,
+                                dtable.tests_total,
+                                dtable.tests_positive,
+                                orderby = ~dtable.modified_on,
+                                )
+
+        # For each demographic, determine the recorded and reported subtotals
+        for demographic_id, item in subtotals.items():
+
+            # Recorded totals
+            recorded_total = item["tests_total"]
+            recorded_positive = item["tests_positive"]
+
+            # Reported totals
+            last_report = None
+            reported_total = reported_positive = 0
+            for row in rows:
+                if row.demographic_id == demographic_id:
+                    reported_total += row.tests_total
+                    reported_positive += row.tests_positive
+                    if not last_report:
+                        last_report = row
+
+            if not last_report:
+                # No subtotal for this demographic yet => create one
+                subtotal = {"report_id": report_id,
+                            "demographic_id": demographic_id,
+                            "tests_total": recorded_total,
+                            "tests_positive": recorded_positive,
+                            }
+                subtotal_id = subtotal["id"] = dtable.insert(**subtotal)
+                set_record_owner(dtable, subtotal_id)
+                # We do this in-bulk at the end:
+                #s3db.onaccept(dtable, subtotal, method="create")
+
+            elif reported_total < recorded_total or \
+                 reported_positive < recorded_positive:
+                # Update the last subtotal with the differences
+                last_report.update_record(
+                    tests_total = last_report.tests_total + \
+                                  max(recorded_total - reported_total, 1),
+                    tests_positive = last_report.tests_positive + \
+                                     max(recorded_positive - reported_positive, 0),
+                    )
+
+        # Get subtotals for all demographics under this report
+        query = (dtable.report_id == report_id) & \
+                (dtable.deleted == False)
+        total = dtable.tests_total.sum()
+        positive = dtable.tests_positive.sum()
+        row = db(query).select(total, positive).first()
+
+        # Update the overall report
+        query = (rtable.id == report_id) & \
+                (rtable.deleted == False)
+        db(query).update(tests_total = row[total],
+                         tests_positive = row[positive],
+                         )
+
+# =============================================================================
 class ServiceListRepresent(S3Represent):
 
     always_list = True
