@@ -253,6 +253,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
         has_role = current.auth.s3_has_role
         daily_report = lambda i: has_role("ORG_ADMIN") and \
                                  has_role("TEST_PROVIDER", include_admin=False)
+
+        if current.deployment_settings.get_disease_testing_report_by_demographic():
+            report_function = "testing_demographic"
+        else:
+            report_function = "testing_report"
+
         return M(c="disease")(
                     M("Test Results", f="case_diagnostics", restrict="TEST_PROVIDER")(
                         M("Registrieren", m="register"),
@@ -260,7 +266,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         ),
                     M("Daily Reports", f="testing_report")(
                         M("Create", m="create", check=daily_report),
-                        M("Statistics", m="report"),
+                        M("Statistics", f=report_function, m="report"),
                         ),
                     M("Administration", restrict="ADMIN")(
                         M("Diseases", f="disease"),

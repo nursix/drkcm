@@ -157,6 +157,9 @@ def config(settings):
     settings.pr.availability_json_rules = True
 
     # -------------------------------------------------------------------------
+    settings.disease.testing_report_by_demographic = True
+
+    # -------------------------------------------------------------------------
     settings.hrm.record_tab = True
     settings.hrm.staff_experience = False
     settings.hrm.staff_departments = False

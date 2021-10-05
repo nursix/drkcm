@@ -372,6 +372,7 @@ class DiseaseMonitoringModel(S3Model):
 
         db = current.db
         s3 = current.response.s3
+        settings = current.deployment_settings
 
         crud_strings = s3.crud_strings
 
@@ -480,6 +481,30 @@ class DiseaseMonitoringModel(S3Model):
                             disease_testing_demographic = "report_id",
                             )
 
+        # CRUD Form
+        if settings.get_disease_testing_report_by_demographic():
+            crud_fields = ["disease_id",
+                           "site_id",
+                           "date",
+                           S3SQLInlineComponent("testing_demographic",
+                                                label = T("Details"),
+                                                fields = [(T("Group"), "demographic_id"),
+                                                          "tests_total",
+                                                          "tests_positive",
+                                                          ],
+                                                ),
+                           "comments",
+                           ]
+        else:
+            crud_fields = ["disease_id",
+                           "site_id",
+                           "date",
+                           "tests_total",
+                           "tests_positive",
+                           "comments",
+                           ]
+        crud_form = S3SQLCustomForm(*crud_fields)
+
         # Filter Widgets
         filter_widgets = [S3TextFilter(["site_id$name", "comments"],
                                        label = T("Search"),
@@ -520,6 +545,7 @@ class DiseaseMonitoringModel(S3Model):
 
         # Table Configuration
         configure(tablename,
+                  crud_form = crud_form,
                   list_fields = list_fields,
                   filter_widgets = filter_widgets,
                   onvalidation = self.testing_report_onvalidation,
@@ -573,10 +599,54 @@ class DiseaseMonitoringModel(S3Model):
                      s3_comments(),
                      *s3_meta_fields())
 
+        # List fields
+        list_fields = ["report_id$site_id",
+                       "report_id$date",
+                       "demographic_id",
+                       "tests_total",
+                       "tests_positive",
+                       "report_id$comments",
+                       ]
+
+        # Filter Widgets
+        filter_widgets = [S3TextFilter(["report_id$site_id$name",
+                                        "report_id$comments",
+                                        ],
+                                       label = T("Search"),
+                                       ),
+                          S3DateFilter("report_id$date",
+                                       ),
+                          ]
+
+        # Report options
+        facts = ((T("Number of Tests"), "sum(tests_total)"),
+                 (T("Number of Positive Test Results"), "sum(tests_positive)"),
+                 (T("Number of Reports"), "count(report_id)"),
+                 )
+        axes = ["report_id$site_id",
+                "report_id$site_id$location_id$L2",
+                "report_id$site_id$location_id$L3",
+                "demographic_id",
+                "report_id$disease_id",
+                ]
+        report_options = {
+            "rows": axes,
+            "cols": axes,
+            "fact": facts,
+            "defaults": {"rows": axes[1],
+                         "cols": None,
+                         "fact": facts[0],
+                         "totals": True,
+                         },
+            }
+
         configure(tablename,
+                  filter_widgets = filter_widgets,
+                  list_fields = list_fields,
                   onvalidation = self.testing_demographic_onvalidation,
                   onaccept = self.testing_demographic_onaccept,
                   ondelete = self.testing_demographic_ondelete,
+                  report_options = report_options,
                   )
 
         # ---------------------------------------------------------------------
@@ -668,6 +738,8 @@ class DiseaseMonitoringModel(S3Model):
             Onvalidation of testing_demographic:
             - check numbers for plausibility
         """
+
+        T = current.T
 
         form_vars = form.vars
 
