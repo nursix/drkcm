@@ -307,6 +307,7 @@ class SpreadsheetImporter(S3Method):
 
             # Generate the datatable HTML
             s3.no_formats = True
+
             items =  dt.html(totalrows,
                              displayrows,
                              id = datatable_id,
@@ -318,6 +319,7 @@ class SpreadsheetImporter(S3Method):
                              dt_ajax_url = ajax_url,
                              dt_bulk_actions = dt_bulk_actions,
                              dt_bulk_selected = select_list,
+                             dt_styles = {"dtwarning": error_list},
                              )
 
             # Append the job_id to the datatable form
@@ -331,15 +333,14 @@ class SpreadsheetImporter(S3Method):
             s3.dataTableID = [datatable_id]
 
             # Add toggle-button for item details
-            # TODO alternate button label (display/hide)
-            s3.actions = [{"label": s3_str(T("Display Details")),
+            SHOW = T("Display Details")
+            HIDE = T("Hide Details")
+            s3.actions = [{"label": s3_str(SHOW),
                            "_class": "action-btn toggle-item",
                            },
                           ]
-            s3.jquery_ready.append('''$('#import-items').on('click','.toggle-item',function(){$('.importItem', $(this).closest('tr')).toggle();})''')
-
-            # Highlight rows in error in red
-            s3.dataTableStyleWarning = error_list
+            script = '''$('#import-items').on('click','.toggle-item',function(){b=$(this);$('.import-item-details',b.closest('tr')).toggle().each(function(){b.text($(this).is(':visible')?'%s':'%s')})})'''
+            s3.jquery_ready.append(script % (HIDE, SHOW))
 
             # View
             current.response.view = self._view(r, "list.html")
@@ -708,7 +709,7 @@ class SpreadsheetImporter(S3Method):
         table = s3db[tablename]
 
         output = DIV()
-        details = TABLE(_class="importItem")
+        details = TABLE(_class="import-item-details")
 
         # Field values in main record
         header, rows = self.item_details(table, element)
@@ -738,7 +739,7 @@ class SpreadsheetImporter(S3Method):
         if rows == [] and components == []:
             # No field data in the main record, nor components
             # => target table containing only references?
-            refdetail = TABLE(_class = "importItem")
+            refdetail = TABLE(_class = "import-item-details")
             references = element.findall("reference")
             for reference in references:
                 resource = reference.get("resource")

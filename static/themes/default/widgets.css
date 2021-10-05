@@ -376,17 +376,17 @@ a.paginate_active {
 .sorting_disabled {
     background: no-repeat scroll right center transparent;
 }
-.dataTable .row_selected td {
+/*.dataTable .row_selected td {
 	background-color: #ddd;
 	border: 1px solid #aaa;
-}
+}*/
 
 .dataTable tr.dtalert .action-btn,
 .dataTable tr.dtalert .delete-btn {
 	background-color: #d0d004;
 	color: #444420;
 }
-.dataTable tr.dtalert .action-btn:hover,
+/*.dataTable tr.dtalert .action-btn:hover,
 .dataTable tr.dtalert .delete-btn:hover {
     text-decoration: none;
     color: #222;
@@ -396,12 +396,26 @@ a.paginate_active {
     border-left: 1px solid #000;
     border-top: 1px solid #000;
     padding: 2px 4px 2px 4px;
+}*/
+.dataTable tr.dtwarning .action-btn,
+.dataTable tr.dtwarning .delete-btn{
+	background-color: #d07060;
+	color: #431;
+/*     text-shadow: #fff 0 0 0; */
 }
-.dataTable tr.dtdisable {
-    text-shadow: #ccc 1px 1px 1px;
-	color: #888;
-}
-.dataTable tr.even.row_selected td { background-color: #60f6ad; }
+/*.dataTable tr.dtwarning .action-btn:hover,
+.dataTable tr.dtwarning .delete-btn:hover {
+    text-decoration: none;
+    color: #fff;
+    background-color: #b37;
+    border-right: 1px solid #4589ce;
+    border-bottom: 1px solid #4589ce;
+    border-left: 1px solid #000;
+    border-top: 1px solid #000;
+    padding: 2px 4px 2px 4px;
+}*/
+
+/*.dataTable tr.even.row_selected td { background-color: #60f6ad; }
 .dataTable tr.even.row_selected td.sorting_1 { background-color: #40fa8d; }
 table.display tr.odd.row_selected td { background-color: #40fa8d; }
 table.display tr.odd.row_selected td.sorting_1 { background-color: #20f0ad; }
@@ -422,25 +436,12 @@ table.display tr.odd.row_selected td.sorting_1 { background-color: #20f0ad; }
 .dataTable tr.even.dtwarning { background-color: #ffa6a6; }
 .dataTable tr.even.dtwarning td.sorting_1 { background-color: #ff8383; }
 .dataTable tr.even.dtwarning td.sorting_2 { background-color: #ff7373; }
-.dataTable tr.even.dtwarning td.sorting_3 { background-color: #ff6363; }
-.dataTable tr.dtwarning .action-btn,
-.dataTable tr.dtwarning .delete-btn{
-	background-color: #d07060;
-	color: #431;
-    text-shadow: #fff 0 0 0;
-}
-.dataTable tr.dtwarning .action-btn:hover,
-.dataTable tr.dtwarning .delete-btn:hover {
-    text-decoration: none;
-    color: #fff;
-    background-color: #b37;
-    border-right: 1px solid #4589ce;
-    border-bottom: 1px solid #4589ce;
-    border-left: 1px solid #000;
-    border-top: 1px solid #000;
-    padding: 2px 4px 2px 4px;
-}
+.dataTable tr.even.dtwarning td.sorting_3 { background-color: #ff6363; }*/
 
+.dataTable tr.dtdisable {
+    text-shadow: #ccc 1px 1px 1px;
+	color: #888;
+}
 .dataTable-btn {
 	background-color: #ddd;
 	border: 1px solid #aaa;
@@ -454,7 +455,7 @@ table.display tr.odd.row_selected td.sorting_1 { background-color: #20f0ad; }
 	background-color: #efefef;
 }
 
-table.importItem {
+table.import-item-details {
     display: none;
 }
 

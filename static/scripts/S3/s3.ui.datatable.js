@@ -838,7 +838,7 @@
 
                 // Add per-row CSS classes
                 var styles = tableConfig.rowStyles;
-                if (styles.length) {
+                if (styles) {
                     var row = $(nRow);
                     for (var style in styles) {
                         if (inList(recordId, styles[style]) != -1) {
