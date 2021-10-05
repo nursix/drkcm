@@ -619,67 +619,24 @@ def config(settings):
         table = s3db.disease_case_diagnostics
         query = (table.id == record_id)
         record = db(query).select(table.site_id,
-                                  table.disease_id,
                                   table.result_date,
+                                  table.disease_id,
                                   limitby = (0, 1),
                                   ).first()
         if not record:
             return
 
         site_id = record.site_id
-        disease_id = record.disease_id
         result_date = record.result_date
+        disease_id = record.disease_id
 
         if site_id and disease_id and result_date:
-
-            # Count records grouped by result
-            query = (table.site_id == site_id) & \
-                    (table.disease_id == disease_id) & \
-                    (table.result_date == result_date) & \
-                    (table.deleted == False)
-            cnt = table.id.count()
-            rows = db(query).select(table.result,
-                                    cnt,
-                                    groupby = table.result,
-                                    )
-            total = positive = 0
-            for row in rows:
-                num = row[cnt]
-                total += num
-                if row.disease_case_diagnostics.result == "POS":
-                    positive += num
-
-            # Look up the daily report
-            rtable = s3db.disease_testing_report
-            query = (rtable.site_id == site_id) & \
-                    (rtable.disease_id == disease_id) & \
-                    (rtable.date == result_date) & \
-                    (rtable.deleted == False)
-            report = db(query).select(rtable.id,
-                                      rtable.tests_total,
-                                      rtable.tests_positive,
-                                      limitby = (0, 1),
-                                      ).first()
-
-            if report:
-                # Update report if actual numbers are greater
-                if report.tests_total < total or report.tests_positive < positive:
-                    report.update_record(tests_total = total,
-                                         tests_positive = positive,
-                                         )
+            # Update daily testing report
+            if settings.get_disease_testing_report_by_demographic():
+                from .helpers import update_daily_report_by_demographic as update_daily_report
             else:
-                # Create report
-                report = {"site_id": site_id,
-                          "disease_id": disease_id,
-                          "date": result_date,
-                          "tests_total": total,
-                          "tests_positive": positive,
-                          }
-                report_id = rtable.insert(**report)
-                if report_id:
-                    current.auth.s3_set_record_owner(rtable, report_id)
-                    report["id"] = report_id
-                    s3db.onaccept(rtable, report, method="create")
+                from .helpers import update_daily_report
+            update_daily_report(site_id, result_date, disease_id)
 
     # -------------------------------------------------------------------------
     def customise_disease_case_diagnostics_resource(r, tablename):

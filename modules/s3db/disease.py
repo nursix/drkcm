@@ -488,7 +488,7 @@ class DiseaseMonitoringModel(S3Model):
                            "date",
                            S3SQLInlineComponent("testing_demographic",
                                                 label = T("Details"),
-                                                fields = [(T("Group"), "demographic_id"),
+                                                fields = ["demographic_id",
                                                           "tests_total",
                                                           "tests_positive",
                                                           ],
@@ -585,7 +585,7 @@ class DiseaseMonitoringModel(S3Model):
                                                 ),
                            ),
                      demographic_id(
-                         label = T("Demographic"),
+                         label = T("Subject Group##med"),
                          ondelete = "CASCADE",
                          ),
                      Field("tests_total", "integer",
@@ -1332,6 +1332,11 @@ class CaseTrackingModel(S3Model):
                                      readable = False,
                                      writable = False,
                                      ),
+                     # Optional link to demographic for disease monitoring
+                     self.disease_demographic_id(
+                            readable = False,
+                            writable = False,
+                            ),
                      # @todo: make a lookup table in DiseaseDataModel:
                      Field("probe_type"),
                      Field("probe_number", length=64, unique=True,
