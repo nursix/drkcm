@@ -14,7 +14,7 @@ from gluon.storage import Storage
 from lxml import etree
 
 from core import S3Duplicate, S3ImportItem, S3ImportJob, s3_meta_fields
-from core.methods.importer import S3ObjectReferences
+from core.io.importer import S3ObjectReferences
 
 from unit_tests import run_suite
 

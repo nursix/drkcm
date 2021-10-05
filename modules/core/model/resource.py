@@ -300,6 +300,7 @@ class S3Resource(object):
         self.error = None
         self.error_tree = None
         self.import_count = 0
+        self.import_errors = 0
         self.import_created = []
         self.import_updated = []
         self.import_deleted = []
@@ -1598,6 +1599,7 @@ class S3Resource(object):
                    extra_data = None,
                    ignore_errors = False,
                    job_id = None,
+                   select_items = None,
                    commit_job = True,
                    delete_job = False,
                    strategy = None,
@@ -1662,7 +1664,7 @@ class S3Resource(object):
                 elif format == "json":
                     if isinstance(s, str):
                         source = StringIO(s)
-                        t = xml.json2tree(s)
+                        t = xml.json2tree(source)
                     else:
                         t = xml.json2tree(s)
                 elif format == "csv":
@@ -1711,6 +1713,7 @@ class S3Resource(object):
         success = self.import_tree(id, tree,
                                    ignore_errors = ignore_errors,
                                    job_id = job_id,
+                                   select_items = select_items if job_id else None,
                                    commit_job = commit_job,
                                    delete_job = delete_job,
                                    strategy = strategy,
@@ -1773,6 +1776,7 @@ class S3Resource(object):
     # -------------------------------------------------------------------------
     def import_tree(self, record_id, tree,
                     job_id = None,
+                    select_items = None,
                     ignore_errors = False,
                     delete_job = False,
                     commit_job = True,
@@ -1795,7 +1799,7 @@ class S3Resource(object):
             @todo: update for link table support
         """
 
-        from ..methods import S3ImportJob
+        from ..io import S3ImportJob
 
         db = current.db
         tablename = self.tablename
@@ -1822,10 +1826,17 @@ class S3Resource(object):
                 import_job.delete()
                 return True
 
-            # Load all items
+            # Load items
             job_id = import_job.job_id
             item_table = import_job.item_table
-            items = db(item_table.job_id == job_id).select()
+
+            query = (item_table.job_id == job_id)
+            if select_items:
+                # Limit to selected items for the resource table
+                query &= (item_table.tablename != self.tablename) | \
+                         (item_table.id.belongs(select_items))
+            items = db(query).select()
+
             load_item = import_job.load_item
             for item in items:
                 success = load_item(item)
@@ -1953,6 +1964,7 @@ class S3Resource(object):
         auth.rollback = False
         self.error = import_job.error
         self.import_count += import_job.count
+        self.import_errors += import_job.errors
         self.import_created += import_job.created
         self.import_updated += import_job.updated
         self.import_deleted += import_job.deleted
@@ -5702,6 +5714,7 @@ class S3ResourceData(object):
                 try:
                     text = renderer(value)
                 except:
+                    raise
                     text = s3_str(value)
                 fvalues[value] = text
 

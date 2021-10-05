@@ -217,7 +217,7 @@ def s3_rest_controller(prefix=None, resourcename=None, **attr):
     set_handler("filter", s3base.S3Filter)
     set_handler("grouped", s3base.S3GroupedItemsReport)
     set_handler("hierarchy", s3base.S3HierarchyCRUD)
-    set_handler("import", s3base.S3Importer)
+    set_handler("import", s3base.SpreadsheetImporter)
     set_handler("map", s3base.S3Map)
     set_handler("mform", s3base.S3MobileCRUD, representation="json")
     set_handler("organize", s3base.S3Organizer)

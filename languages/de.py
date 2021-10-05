@@ -6054,6 +6054,7 @@
 'Update your current ordered list': 'Aktualisieren Sie ihre aktuell bestellte Liste',
 'Update': 'Aktualisieren',
 'Updated By': 'Aktualisiert von',
+'Upload': 'Hochladen',
 'Upload Image': 'Bild hochladen',
 'Upload Photos': 'Fotos hochladen',
 'Upload Spreadsheet': 'Tabellendokument hochladen',

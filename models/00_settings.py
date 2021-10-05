@@ -296,6 +296,7 @@ s3.crud_strings = Storage(
     title_update = T("Edit Record"),
     title_map = T("Map"),
     title_report = T("Report"),
+    title_upload = T("Import Records"),
     label_list_button = T("List Records"),
     label_delete_button = T("Delete Record"),
     msg_record_created = T("Record added"),

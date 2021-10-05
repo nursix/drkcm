@@ -10,7 +10,7 @@
     padding-top: 2rem;
     margin-bottom: 3rem;
 }
-#site-title h2, h3 {
+#site-title h2, #site-title h3 {
     font-weight: normal!important;
     background: none!important;
     padding: 0.35rem 0!important;

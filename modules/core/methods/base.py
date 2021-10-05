@@ -456,6 +456,48 @@ class S3Method(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def _limits(get_vars, default_limit=0):
+        """
+            Extract page limits (start and limit) from GET vars
+
+            @param get_vars: the GET vars
+            @param default_limit: the default limit, explicit value or:
+                                  0 => response.s3.ROWSPERPAGE
+                                  None => no default limit
+        """
+
+        start = get_vars.get("start", None)
+        limit = get_vars.get("limit", default_limit)
+
+        # Deal with overrides (pagination limits come last)
+        if isinstance(start, list):
+            start = start[-1]
+        if isinstance(limit, list):
+            limit = limit[-1]
+
+        if limit:
+            # Ability to override default limit to "Show All"
+            if isinstance(limit, str) and limit.lower() == "none":
+                #start = None # needed?
+                limit = None
+            else:
+                try:
+                    start = int(start) if start is not None else None
+                    limit = int(limit)
+                except (ValueError, TypeError):
+                    # Fall back to defaults
+                    start, limit = None, default_limit
+
+        else:
+            # Use defaults, assume sspag because this is a
+            # pagination request by definition
+            start = None
+            limit = default_limit
+
+        return start, limit
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def crud_string(tablename, name):
         """
             Get a CRUD info string for interactive pages

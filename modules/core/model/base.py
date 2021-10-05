@@ -368,8 +368,7 @@ class S3Model(object):
             cls.load(prefix)
 
         # Define importer tables
-        from ..methods import S3Importer, S3ImportJob
-        S3Importer.define_upload_table()
+        from ..io import S3ImportJob
         S3ImportJob.define_job_table()
         S3ImportJob.define_item_table()
 
