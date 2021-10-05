@@ -40,19 +40,47 @@ table.dataTable {
     tbody {
         tr.even {
             background-color: $datatables_bgcolor_even;
-            // Current sorting column:
-            td.sorting_1 {
+            td.sorting_1 { // current sorting column
                 background-color: $datatables_bgcolor_even_highlight;
             }
         }
         tr.odd {
             background-color: $datatables_bgcolor_odd;
+            td.sorting_1 { // current sorting column
+                background-color: $datatables_bgcolor_odd_highlight;
+            }
             td {
                 border-color: $datatables_border_color;
             }
-            // Current sorting column:
-            td.sorting_1 {
-                background-color: $datatables_bgcolor_odd_highlight;
+        }
+        tr.row_selected {
+            &.odd {
+                background-color: #40fa8d;
+                td.sorting_1 { background-color: #20f0ad; }
+            }
+            &.even {
+                background-color: #60f6ad;
+                td.sorting_1 { background-color: #40fa8d; }
+            }
+        }
+        tr.dtalert {
+            &.odd {
+                background-color: #ffffc0;
+                td.sorting_1 { background-color: #ffffb0; }
+            }
+            &.even {
+                background-color: #ffffa0;
+                td.sorting_1 { background-color: #fffff0; }
+            }
+        }
+        tr.dtwarning {
+            &.odd {
+                background-color: #ffd9d9;
+                td.sorting_1 { background-color: #ffb6b6; }
+            }
+            &.even {
+                background-color: #ffa6a6;
+                td.sorting_1 { background-color: #ff8383; }
             }
         }
     }
@@ -107,6 +135,9 @@ table.dataTable {
     &.dtr-inline.collapsed tbody tr.parent th:first-child::before {
         top: 6px;
         background-color: $alert-color;
+    }
+    table.import-item-details {
+        display: none;
     }
 }
 

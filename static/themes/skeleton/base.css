@@ -614,7 +614,7 @@ table.dataTable tr.dtalert .delete-btn:hover {
 }
 table.dataTable tr.dtdisable {
 }
-table.dataTable tr.even.row_selected td { 
+table.dataTable tr.even.row_selected td {
 }
 table.dataTable tr.even.row_selected td.sorting_1 {
 }
@@ -668,7 +668,7 @@ span.dataTable-btn {
 span.dataTable-btn:hover {
 }
 
-table.importItem {
+table.import-item-details {
 }
 /* ========================================================================= */
 /* SEARCH */
