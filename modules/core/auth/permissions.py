@@ -136,8 +136,6 @@ class S3Permission(object):
         self.entity_realm = self.policy in (6, 7, 8)
         # Permissions shared along the hierarchy of entities:
         self.entity_hierarchy = self.policy in (7, 8)
-        # Permission sets can be delegated:
-        self.delegations = self.policy == 8
 
         # Permissions table
         self.tablename = tablename or self.TABLENAME
@@ -720,16 +718,13 @@ class S3Permission(object):
             if sr.ADMIN in realms:
                 # ADMIN can see all Realms
                 return None
-            delegations = user.delegations
         else:
             realms = Storage({sr.ANONYMOUS:None})
-            delegations = Storage()
 
         racl = self.required_acl([method])
         request = current.request
         acls = self.applicable_acls(racl,
                                     realms = realms,
-                                    delegations = delegations,
                                     c = c if c else request.controller,
                                     f = f if f else request.function,
                                     t = tablename,
@@ -915,10 +910,8 @@ class S3Permission(object):
         # Get realms and delegations
         if not logged_in:
             realms = Storage({sr.ANONYMOUS:None})
-            delegations = Storage()
         else:
             realms = auth.user.realms
-            delegations = auth.user.delegations
 
         # Administrators have all permissions
         if sr.ADMIN in realms:
@@ -975,7 +968,6 @@ class S3Permission(object):
         # Get the applicable ACLs
         acls = self.applicable_acls(racl,
                                     realms = realms,
-                                    delegations = delegations,
                                     c = c,
                                     f = f,
                                     t = t,
@@ -1127,10 +1119,8 @@ class S3Permission(object):
         user = auth.user
         if not logged_in:
             realms = Storage({sr.ANONYMOUS:None})
-            delegations = Storage()
         else:
             realms = user.realms
-            delegations = user.delegations
 
         # Don't filter out unapproved records owned by the user
         if requires_approval and not unapproved and \
@@ -1196,7 +1186,6 @@ class S3Permission(object):
         # Get the applicable ACLs
         acls = self.applicable_acls(racl,
                                     realms = realms,
-                                    delegations = delegations,
                                     c = c,
                                     f = f,
                                     t = table
@@ -1373,7 +1362,6 @@ class S3Permission(object):
     # -------------------------------------------------------------------------
     def applicable_acls(self, racl,
                         realms = None,
-                        delegations = None,
                         c = None,
                         f = None,
                         t = None,
@@ -1405,9 +1393,6 @@ class S3Permission(object):
         # Get all roles
         if realms:
             roles = set(realms.keys())
-            if delegations:
-                for role in delegations:
-                    roles.add(role)
         else:
             # No roles available (deny all)
             return acls
@@ -1482,16 +1467,11 @@ class S3Permission(object):
         most_restrictive = lambda x, y: (x[0] & y[0], x[1] & y[1])
 
         # Realms
-        delegation_rows = []
-        append_delegation = delegation_rows.append
-
         use_realms = self.entity_realm
         for row in rows:
 
             # Get the assigning entities
             group_id = row.group_id
-            if group_id in delegations:
-                append_delegation(row)
             if group_id not in realms:
                 continue
             rtype = rule_type(row)
@@ -1526,65 +1506,6 @@ class S3Permission(object):
             default = dict(acls[ANY])
         else:
             default = None
-
-        # Delegations
-        if self.delegations:
-            for row in delegation_rows:
-
-                # Get the rule type
-                rtype = rule_type(row)
-                if rtype is None:
-                    continue
-
-                # Get the delegation realms
-                group_id = row.group_id
-                if group_id not in delegations:
-                    continue
-                else:
-                    drealms = delegations[group_id]
-
-                acl = (row["uacl"], row["oacl"])
-
-                # Resolve the delegation realms
-                # @todo: optimize
-                for receiver in drealms:
-                    drealm = drealms[receiver]
-
-                    # Skip irrelevant delegations
-                    if entity:
-                        if entity not in drealm:
-                            continue
-                        else:
-                            drealm = [entity]
-
-                    # What ACLs do we have for the receiver?
-                    if receiver in acls:
-                        dacls = dict(acls[receiver])
-                    elif default is not None:
-                        dacls = default
-                    else:
-                        continue
-
-                    # Filter the delegated ACLs
-                    if rtype in dacls:
-                        dacls[rtype] = most_restrictive(dacls[rtype], acl)
-                    else:
-                        dacls[rtype] = acl
-
-                    # Add/extend the new realms (e=entity, t=rule type)
-                    # @todo: optimize
-                    for e in drealm:
-                        if e in acls:
-                            for acltype in ("c", "f", "t"):
-                                if acltype in acls[e]:
-                                    if acltype in dacls:
-                                        dacls[acltype] = most_restrictive(
-                                                            dacls[acltype],
-                                                            acls[e][acltype],
-                                                            )
-                                    else:
-                                        dacls[acltype] = acls[e][acltype]
-                        acls[e] = dacls
 
         acl = acls.get(ANY, {})
 
@@ -1805,10 +1726,8 @@ class S3Permission(object):
         user = auth.user
         if not logged_in:
             realms = Storage({sr.ANONYMOUS: None})
-            delegations = Storage()
         else:
             realms = user.realms
-            delegations = user.delegations
 
         # Admin always owns all records
         if sr.ADMIN in realms:
@@ -1821,7 +1740,6 @@ class S3Permission(object):
         # Get the applicable ACLs
         acls = self.applicable_acls(racl,
                                     realms = realms,
-                                    delegations = delegations,
                                     c = c,
                                     f = f,
                                     t = table)

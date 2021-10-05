@@ -1334,6 +1334,7 @@ class CaseTrackingModel(S3Model):
                                      ),
                      # Optional link to demographic for disease monitoring
                      self.disease_demographic_id(
+                            label = T("Subject Group##med"),
                             readable = False,
                             writable = False,
                             ),
