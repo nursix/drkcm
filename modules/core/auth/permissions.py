@@ -1502,11 +1502,6 @@ class S3Permission(object):
                 else:
                     acls[e] = {rtype: acl}
 
-        if ANY in acls:
-            default = dict(acls[ANY])
-        else:
-            default = None
-
         acl = acls.get(ANY, {})
 
         # Default page ACL

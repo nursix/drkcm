@@ -126,7 +126,6 @@ __all__ = (# PR Base Entities
 import json
 import os
 
-from collections import OrderedDict
 from urllib.parse import urlencode
 
 from gluon import current, redirect, URL, \
@@ -9195,8 +9194,6 @@ def pr_human_resource_update_affiliations(person_id):
     h = htable._tablename
     s = stable._tablename
     o = otable._tablename
-    r = rtable._tablename
-    #e = etable._tablename
 
     # Get the PE ID for this person
     pe_id = pr_get_pe_id("pr_person", person_id)
