@@ -4789,7 +4789,7 @@ Please go to %(url)s to approve this user."""
         elif policy == 2:
             # "editor" security policy: show all records
             return table.id > 0
-        elif policy in (3, 4, 5, 6, 7, 8):
+        elif policy in (3, 4, 5, 6, 7):
             # ACLs: use S3Permission method
             query = self.permission.accessible_query(method, table, c=c, f=f)
             return query

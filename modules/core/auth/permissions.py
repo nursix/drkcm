@@ -127,15 +127,15 @@ class S3Permission(object):
         # Policy: which level of granularity do we want?
         self.policy = settings.get_security_policy()
         # ACLs to control access per controller:
-        self.use_cacls = self.policy in (3, 4, 5, 6, 7, 8)
+        self.use_cacls = self.policy in (3, 4, 5, 6, 7)
         # ACLs to control access per function within controllers:
-        self.use_facls = self.policy in (4, 5, 6, 7, 8)
+        self.use_facls = self.policy in (4, 5, 6, 7)
         # ACLs to control access per table:
-        self.use_tacls = self.policy in (5, 6, 7, 8)
+        self.use_tacls = self.policy in (5, 6, 7)
         # Authorization takes realm entity into account:
-        self.entity_realm = self.policy in (6, 7, 8)
+        self.entity_realm = self.policy in (6, 7)
         # Permissions shared along the hierarchy of entities:
-        self.entity_hierarchy = self.policy in (7, 8)
+        self.entity_hierarchy = self.policy == 7
 
         # Permissions table
         self.tablename = tablename or self.TABLENAME
