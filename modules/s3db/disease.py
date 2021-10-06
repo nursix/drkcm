@@ -443,6 +443,7 @@ class DiseaseMonitoringModel(S3Model):
         # Testing Site Daily Summary Report
         # - for spatial-temporal analysis of testing activity and results
         #
+        subtotals = settings.get_disease_testing_report_by_demographic()
         tablename = "disease_testing_report"
         define_table(tablename,
                      self.disease_disease_id(
@@ -468,10 +469,12 @@ class DiseaseMonitoringModel(S3Model):
                      Field("tests_total", "integer",
                            label = T("Total Number of Tests"),
                            requires = IS_INT_IN_RANGE(0),
+                           writable = not subtotals,
                            ),
                      Field("tests_positive", "integer",
                            label = T("Number of Positive Test Results"),
                            requires = IS_INT_IN_RANGE(0),
+                           writable = not subtotals,
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -482,10 +485,12 @@ class DiseaseMonitoringModel(S3Model):
                             )
 
         # CRUD Form
-        if settings.get_disease_testing_report_by_demographic():
+        if subtotals:
             crud_fields = ["disease_id",
                            "site_id",
                            "date",
+                           "tests_total",
+                           "tests_positive",
                            S3SQLInlineComponent("testing_demographic",
                                                 label = T("Details"),
                                                 fields = ["demographic_id",

@@ -770,10 +770,17 @@ def config(settings):
             site_id = None
         disease_id = "disease_id" if not single_disease else None
 
+        if settings.get_disease_testing_report_by_demographic():
+            table.demographic_id.readable = True
+            demographic_id = "demographic_id"
+        else:
+            demographic_id = None
+
         # Custom list_fields
         list_fields = [site_id,
                        disease_id,
                        "probe_date",
+                       demographic_id,
                        "result",
                        "device_id",
                        ]
@@ -783,12 +790,13 @@ def config(settings):
         crud_form = S3SQLCustomForm(disease_id,
                                     site_id,
                                     "probe_date",
+                                    demographic_id,
                                     "result",
                                     "result_date",
                                     )
 
         # Filters
-        from core import S3DateFilter, S3OptionsFilter
+        from core import S3DateFilter, S3OptionsFilter, s3_get_filter_opts
         filter_widgets = [S3DateFilter("probe_date",
                                        label = T("Date"),
                                        hide_time = True,
@@ -807,7 +815,15 @@ def config(settings):
             # - better scalability, but cannot select multiple
             filter_widgets.append(S3OptionsFilter("site_id", hidden=True))
         if disease_id:
-            filter_widgets.append(S3OptionsFilter("disease_id", hidden=True))
+            filter_widgets.append(S3OptionsFilter("disease_id",
+                                                  options = lambda: s3_get_filter_opts("disease_disease"),
+                                                  hidden=True,
+                                                  ))
+        if demographic_id:
+            filter_widgets.append(S3OptionsFilter("demographic_id",
+                                                  options = lambda: s3_get_filter_opts("disease_demographic"),
+                                                  hidden=True,
+                                                  ))
 
         # Report options
         facts = ((T("Number of Tests"), "count(id)"),
@@ -970,6 +986,14 @@ def config(settings):
             field.readable = field.writable = False
         else:
             list_fields.insert(1, "disease_id")
+
+        if r.tablename == "disease_testing_report" and r.record and \
+           settings.get_disease_testing_report_by_demographic() and \
+           r.method != "read" and \
+           current.auth.s3_has_permission("update", table, record_id=r.record.id):
+            # Hide totals in create/update form
+            table.tests_total.readable = False
+            table.tests_positive.readable = False
 
         # If there is only one selectable site, set as default + make r/o
         field = table.site_id
