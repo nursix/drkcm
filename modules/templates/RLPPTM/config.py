@@ -286,6 +286,30 @@ def config(settings):
                                                      organisation_id,
                                                      )
 
+        elif tablename == "disease_testing_demographic":
+            # Demographics subtotals inherit the realm-entity from
+            # the main report
+            table = s3db.table(tablename)
+            rtable = s3db.disease_testing_report
+            query = (table._id == row.id) & \
+                    (rtable.id == table.report_id)
+            report = db(query).select(rtable.realm_entity,
+                                      limitby = (0, 1),
+                                      ).first()
+            if report:
+                realm_entity = report.realm_entity
+            else:
+                # Fall back to user organisation
+                user = current.auth.user
+                organisation_id = user.organisation_id if user else None
+                if not organisation_id:
+                    # Fall back to default organisation
+                    organisation_id = settings.get_org_default_organisation()
+                if organisation_id:
+                    realm_entity = s3db.pr_get_pe_id("org_organisation",
+                                                     organisation_id,
+                                                     )
+
         #elif tablename == "fin_voucher_program":
         #
         #    # Voucher programs are owned by the organisation managing
