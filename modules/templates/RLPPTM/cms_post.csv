@@ -81,3 +81,20 @@ Aktuell liegt kein (ausreichendes) Raumkonzept für Ihre Teststelle vor. Bitte b
 Bitte legen Sie ein entsprechendes Raumkonzept vor. ",
 TestResultRegistrationIntroDisabled,disease,case_diagnostics,Placeholder post for test result registration page intro,Rename into TestResultRegistrationIntro (remove Disabled-suffix) to activate
 HomepageIntroDisabled,default,index,,
+Subject FacilityObsolete,org,facility,Deaktivierung ihrer Teststellen-Registrierung,
+Message FacilityObsolete,org,facility,"Sehr geehrte Damen und Herren,
+
+für die von Ihnen betriebene COVID-19 Teststelle:
+    {facility}
+    {address}
+    {postcode} {place}
+
+wurden in den vergangenen vier Wochen keine Tagesberichte zur Testaktivität im ”{system}” Portal des LSJV registriert. Die Teststelle wurde deshalb vom System automatisch als ""nicht mehr bestehend"" markiert, und damit aus dem öffentlichen Verzeichnis entfernt.
+
+Falls die Teststelle noch weiterhin in Betrieb ist, können Sie die Markierung als ""nicht mehr bestehend"" selbst wieder entfernen. Bitte kontrollieren Sie bei dieser Gelegenheit auch ob sämtliche hinterlegten Daten zur Teststelle noch aktuell sind, und bringen Sie sie ggf. auf den letzten Stand.
+
+Beachten Sie jedoch dass die Teststelle erneut deaktiviert wird falls dazu keine regelmässigen Tagesberichte zur Testaktivität eingegeben werden.
+
+Mit freundlichen Grüßen,
+Ihr Landesamt für Soziales, Jugend und Versorgung
+",

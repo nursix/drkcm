@@ -1390,6 +1390,115 @@ def update_daily_report_by_demographic(site_id, result_date, disease_id):
                          tests_positive = row[positive],
                          )
 
+# -----------------------------------------------------------------------------
+def cleanup_public_registry():
+    """
+        Automatically mark test stations as obsolete (and thus remove them
+        from the public registry) when they have failed to submit daily
+        activity reports for more than 4 four_weeks_ago; + notify OrgAdmins
+        of thus deactivated facilities
+
+        @returns: error message, or None if successful
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ftable = s3db.org_facility
+    ttable = s3db.org_site_tag
+    otable = s3db.org_organisation
+    gtable = s3db.org_group
+    mtable = s3db.org_group_membership
+    rtable = s3db.disease_testing_report
+    ltable = s3db.gis_location
+
+    import datetime
+    four_weeks_ago = datetime.datetime.now().date() - datetime.timedelta(days=28)
+
+    from .config import TESTSTATIONS
+    join = [ttable.on((ttable.site_id == ftable.site_id) & \
+                      (ttable.tag == "PUBLIC") & \
+                      (ttable.deleted == False)),
+            otable.on((otable.id == ftable.organisation_id)),
+            gtable.on((mtable.organisation_id == otable.id) & \
+                      (mtable.deleted == False) & \
+                      (gtable.id == mtable.group_id) & \
+                      (gtable.name == TESTSTATIONS)),
+            ]
+    left = [rtable.on((rtable.site_id == ftable.site_id) & \
+                      (rtable.date >= four_weeks_ago) & \
+                      (rtable.deleted == False)),
+            ltable.on((ltable.id == ftable.location_id)),
+            ]
+    query = (rtable.id == None) & \
+            (ttable.value == "Y") & \
+            (ftable.obsolete == False) & \
+            (ftable.deleted == False)
+
+    rows = db(query).select(ftable.id,
+                            ftable.name,
+                            otable.id,
+                            otable.pe_id,
+                            otable.name,
+                            ltable.L1,
+                            #ltable.L2,
+                            ltable.L3,
+                            ltable.L4,
+                            ltable.addr_street,
+                            ltable.addr_postcode,
+                            join = join,
+                            left = left,
+                            )
+    if not rows:
+        return None
+
+    errors = []
+    for row in rows:
+
+        organisation = row.org_organisation
+        facility = row.org_facility
+        location = row.gis_location
+
+        # Mark facility as obsolete
+        facility.update_record(obsolete = True)
+
+        # Prepare data for notification template
+        place = location.L4 if location.L4 else location.L3
+        if location.L1:
+            place = "%s (%s)" % (place, location.L1)
+        reprstr = lambda v: s3_str(v) if v else "-"
+
+        data = {"organisation": reprstr(organisation.name),
+                "facility": reprstr(facility.name),
+                "address": reprstr(location.addr_street),
+                "postcode": reprstr(location.addr_postcode),
+                "place": place,
+                }
+
+        # Notify all OrgAdmins
+        contacts = get_role_emails("ORG_ADMIN", pe_id=organisation.pe_id)
+        if contacts:
+            from .notifications import CMSNotifications
+            error = CMSNotifications.send(contacts,
+                                          "FacilityObsolete",
+                                          data,
+                                          module = "org",
+                                          resource = "facility",
+                                          )
+        else:
+            error = "No contacts found"
+
+        if error:
+            msg = "Cound not notify %s (%s)" % (organisation.name, error)
+            current.log.error(msg)
+            errors.append(msg)
+        else:
+            # Commit after every facility, so the notification is
+            # not repeated in case the scheduler task times out
+            db.commit()
+
+    return "\n".join(errors) if errors else None
+
 # =============================================================================
 class ServiceListRepresent(S3Represent):
 

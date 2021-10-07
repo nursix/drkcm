@@ -222,6 +222,28 @@ def config(settings):
     settings.custom.test_station_registration = True
 
     # -------------------------------------------------------------------------
+    def poll_dcc():
+        """
+            Scheduler task to poll for DCC requests
+        """
+
+        from .dcc import DCC
+        return DCC.poll()
+
+    settings.tasks.poll_dcc = poll_dcc
+
+    # -------------------------------------------------------------------------
+    def cleanup_public_registry():
+        """
+            Scheduler task to cleanup public test facility registry
+        """
+
+        from .helpers import cleanup_public_registry
+        cleanup_public_registry()
+
+    settings.tasks.cleanup_public_registry = cleanup_public_registry
+
+    # -------------------------------------------------------------------------
     # Realm Rules
     #
     def rlpptm_realm_entity(table, row):
@@ -943,17 +965,6 @@ def config(settings):
         return attr
 
     settings.customise_disease_case_diagnostics_controller = customise_disease_case_diagnostics_controller
-
-    # -------------------------------------------------------------------------
-    def poll_dcc():
-        """
-            Scheduler task to poll for DCC requests
-        """
-
-        from .dcc import DCC
-        return DCC.poll()
-
-    settings.tasks.poll_dcc = poll_dcc
 
     # -------------------------------------------------------------------------
     def customise_disease_testing_report_resource(r, tablename):
