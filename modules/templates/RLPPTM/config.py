@@ -233,17 +233,6 @@ def config(settings):
     settings.tasks.poll_dcc = poll_dcc
 
     # -------------------------------------------------------------------------
-    def cleanup_public_registry():
-        """
-            Scheduler task to cleanup public test facility registry
-        """
-
-        from .helpers import cleanup_public_registry
-        cleanup_public_registry()
-
-    settings.tasks.cleanup_public_registry = cleanup_public_registry
-
-    # -------------------------------------------------------------------------
     # Realm Rules
     #
     def rlpptm_realm_entity(table, row):
