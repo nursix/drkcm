@@ -18,6 +18,7 @@ class Daily():
         request = current.request
 
         current.log.info("Daily Maintenance RLPPTM")
+        errors = None
 
         now = datetime.datetime.utcnow()
         week_past = now - datetime.timedelta(weeks=1)
@@ -60,6 +61,12 @@ class Daily():
         # Cleanup DCC data
         from .dcc import DCC
         DCC.cleanup()
+
+        # On Sundays, cleanup public test station registry
+        if now.weekday() == 6:
+            errors = self.cleanup_public_registry()
+
+        return errors if errors else None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -116,5 +123,115 @@ class Daily():
                 current.log.warning("Could not delete unverified user %s" % email)
 
             current.log.info("Deleted unverified user account %s" % email)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def cleanup_public_registry():
+        """
+            Automatically mark test stations as obsolete (and thus remove them
+            from the public registry) when they have failed to submit daily
+            activity reports for more than 4 four weeks; + notify OrgAdmins
+            about deactivation
+
+            @returns: error message, or None if successful
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ftable = s3db.org_facility
+        ttable = s3db.org_site_tag
+        otable = s3db.org_organisation
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        rtable = s3db.disease_testing_report
+        ltable = s3db.gis_location
+
+        four_weeks_ago = datetime.datetime.now().date() - datetime.timedelta(days=28)
+
+        from .config import TESTSTATIONS
+        join = [ttable.on((ttable.site_id == ftable.site_id) & \
+                        (ttable.tag == "PUBLIC") & \
+                        (ttable.deleted == False)),
+                otable.on((otable.id == ftable.organisation_id)),
+                gtable.on((mtable.organisation_id == otable.id) & \
+                        (mtable.deleted == False) & \
+                        (gtable.id == mtable.group_id) & \
+                        (gtable.name == TESTSTATIONS)),
+                ]
+        left = [rtable.on((rtable.site_id == ftable.site_id) & \
+                        (rtable.date >= four_weeks_ago) & \
+                        (rtable.deleted == False)),
+                ltable.on((ltable.id == ftable.location_id)),
+                ]
+        query = (rtable.id == None) & \
+                (ttable.value == "Y") & \
+                (ftable.obsolete == False) & \
+                (ftable.deleted == False)
+
+        rows = db(query).select(ftable.id,
+                                ftable.name,
+                                otable.id,
+                                otable.pe_id,
+                                otable.name,
+                                ltable.L1,
+                                #ltable.L2,
+                                ltable.L3,
+                                ltable.L4,
+                                ltable.addr_street,
+                                ltable.addr_postcode,
+                                join = join,
+                                left = left,
+                                )
+        if not rows:
+            return None
+        else:
+            current.log.info("%s test facilities found obsolete" % len(rows))
+
+        from .helpers import get_role_emails
+        from .notifications import CMSNotifications
+        from core import s3_str
+
+        errors = []
+        for row in rows:
+
+            organisation = row.org_organisation
+            facility = row.org_facility
+            location = row.gis_location
+
+            # Mark facility as obsolete
+            facility.update_record(obsolete = True)
+
+            # Prepare data for notification template
+            place = location.L4 if location.L4 else location.L3
+            if location.L1:
+                place = "%s (%s)" % (place, location.L1)
+            reprstr = lambda v: s3_str(v) if v else "-"
+
+            data = {"organisation": reprstr(organisation.name),
+                    "facility": reprstr(facility.name),
+                    "address": reprstr(location.addr_street),
+                    "postcode": reprstr(location.addr_postcode),
+                    "place": place,
+                    }
+
+            # Notify all OrgAdmins
+            contacts = get_role_emails("ORG_ADMIN", pe_id=organisation.pe_id)
+            if contacts:
+                error = CMSNotifications.send(contacts,
+                                              "FacilityObsolete",
+                                              data,
+                                              module = "org",
+                                              resource = "facility",
+                                              )
+            else:
+                error = "No contacts found"
+
+            if error:
+                msg = "Cound not notify %s (%s)" % (organisation.name, error)
+                current.log.error(msg)
+                errors.append(msg)
+
+        return "\n".join(errors) if errors else None
 
 # END =========================================================================
