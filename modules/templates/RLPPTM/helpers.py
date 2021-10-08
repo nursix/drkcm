@@ -2778,29 +2778,41 @@ class TestFacilityInfo(S3Method):
 
         # Look up activity data
         report = ref.get("report")
-        if isinstance(report, list) and len(report) == 2:
-            parse_date = current.calendar.parse_date
-            start, end = parse_date(s3_str(report[0])), \
-                         parse_date(s3_str(report[1]))
-            if start and end:
-                if start > end:
+        if report:
+            if isinstance(report, list) and len(report) == 2:
+
+                start, end = report
+
+                # Parse the dates, if any
+                parse_date = current.calendar.parse_date
+                start = parse_date(start) if start else False
+                end = parse_date(end) if end else False
+                if start is None or end is None:
+                    r.error(400, "Invalid date format in report parameter")
+                if start and end and start > end:
                     start, end = end, start
+
+                # Extract the totals from the database
                 table = s3db.disease_testing_report
-                query = (table.site_id == facility.site_id) & \
-                        (table.date >= start) & \
-                        (table.date <= end) & \
-                        (table.deleted == False)
+                query = (table.site_id == facility.site_id)
+                if start:
+                    query &= (table.date >= start)
+                if end:
+                    query &= (table.date <= end)
+                query &= (table.deleted == False)
                 total = table.tests_total.sum()
                 row = db(query).select(total).first()
                 tests_total = row[total]
                 if not tests_total:
                     tests_total = 0
-                output["report"] = [start.isoformat(), end.isoformat()]
+
+                # Add to output
+                output["report"] = [start.isoformat() if start else None,
+                                    end.isoformat() if end else None,
+                                    ]
                 output["activity"] = {"tests": tests_total}
             else:
-                r.error(400, "Invalid date format in report parameter")
-        else:
-            r.error(400, "Invalid report parameter format")
+                r.error(400, "Invalid report parameter format")
 
         # Return as JSON
         response = current.response
