@@ -33,8 +33,6 @@ __all__ = ("S3Represent",
            "S3RepresentLazy",
            "S3PriorityRepresent",
            "s3_URLise",
-           "s3_auth_user_represent",
-           "s3_auth_user_represent_name",
            "s3_avatar_represent",
            "s3_comments_represent",
            "s3_datatable_truncate",
@@ -1014,56 +1012,6 @@ def s3_avatar_represent(user_id, tablename="auth_user", gravatar=False, **attr):
     if "_height" not in attr:
         attr["_height"] = size[1]
     return IMG(_src=url, **attr)
-
-# =============================================================================
-def s3_auth_user_represent(user_id, row=None):
-    """
-        Represent a user as their email address
-
-        @ToDo: Deprecate (replace with auth_UserRepresent)
-    """
-
-    if row:
-        return row.email
-    elif not user_id:
-        return current.messages["NONE"]
-
-    db = current.db
-    table = db.auth_user
-    user = db(table.id == user_id).select(table.email,
-                                          cache = current.s3db.cache,
-                                          limitby = (0, 1),
-                                          ).first()
-    try:
-        return user.email
-    except:
-        return current.messages.UNKNOWN_OPT
-
-# =============================================================================
-def s3_auth_user_represent_name(user_id, row=None):
-    """
-        Represent users by their names
-
-        @ToDo: Deprecate (replace with auth_UserRepresent)
-    """
-
-    if not row:
-        if not user_id:
-            return current.messages["NONE"]
-        db = current.db
-        table = db.auth_user
-        row = db(table.id == user_id).select(table.first_name,
-                                             table.last_name,
-                                             cache = current.s3db.cache,
-                                             limitby = (0, 1),
-                                             ).first()
-    try:
-        return s3_format_fullname(row.first_name.strip(),
-                                  None,
-                                  row.last_name.strip(),
-                                  )
-    except:
-        return current.messages.UNKNOWN_OPT
 
 # =============================================================================
 def s3_yes_no_represent(value):
