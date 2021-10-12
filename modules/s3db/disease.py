@@ -590,6 +590,7 @@ class DiseaseMonitoringModel(S3Model):
                                                 ),
                            ),
                      demographic_id(
+                         empty = False,
                          label = T("Subject Group##med"),
                          ondelete = "CASCADE",
                          ),
