@@ -40,7 +40,7 @@ class ComponentJoinConstructionTests(unittest.TestCase):
 
         rtable = resource.table
         ctable = component.table
-        expected = (ctable.person_id == rtable.id) & \
+        expected = (rtable.id == ctable.person_id) & \
                    (ctable.deleted == False)
 
         join = component.get_join()
@@ -72,7 +72,7 @@ class ComponentJoinConstructionTests(unittest.TestCase):
         project_project = resource.table
         project_task_project = component.link.table
         project_task = component.table
-        expected = (((project_task_project.project_id == project_project.id) &
+        expected = (((project_project.id == project_task_project.project_id) &
                    (project_task_project.deleted == False)) &
                    (project_task_project.task_id == project_task.id))
 
@@ -102,7 +102,7 @@ class ComponentLeftJoinConstructionTests(unittest.TestCase):
 
         rtable = resource.table
         ctable = component.table
-        expected = ctable.on((ctable.person_id == rtable.id) &
+        expected = ctable.on((rtable.id == ctable.person_id) &
                              (ctable.deleted == False))
 
         ljoin = component.get_left_join()
@@ -145,7 +145,7 @@ class ComponentLeftJoinConstructionTests(unittest.TestCase):
         ltable = component.link.table
         ctable = component.table
 
-        expected_l = ltable.on((ltable.project_id == rtable.id) &
+        expected_l = ltable.on((rtable.id == ltable.project_id) &
                                (ltable.deleted == False))
         expected_r = ctable.on(ltable.task_id == ctable.id)
 
@@ -2793,7 +2793,7 @@ class ResourceFilteredComponentTests(unittest.TestCase):
 
         # Check that the aliased table is properly joined
         expected = org_test_office.on(
-                        ((org_test_office.organisation_id == org_organisation.id) &
+                        ((org_organisation.id == org_test_office.organisation_id) &
                          (org_test_office.deleted == False)) &
                         (org_test_office.office_type_id == 5))
         assertEqual(str(rfilter.get_joins(left=True)[0]), str(expected))
@@ -2816,7 +2816,7 @@ class ResourceFilteredComponentTests(unittest.TestCase):
 
         rfilter = component.rfilter
         expected = org_organisation.on(
-                        (org_test_office.organisation_id == org_organisation.id) &
+                        (org_organisation.id == org_test_office.organisation_id) &
                         (org_test_office.office_type_id == 5))
         assertEqual(str(rfilter.get_joins(left=True)[0]), str(expected))
 
