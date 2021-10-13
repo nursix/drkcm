@@ -15,13 +15,31 @@ from core import s3_format_datetime
 
 from templates.RLPPTM.config import SCHOOLS, TESTSTATIONS
 
+# -----------------------------------------------------------------------------
+# Filters
+
+# Org must belong to this organisation group
 org_group = TESTSTATIONS
+
+# Org must be partner of this project (None to disable)
 project = "COVID-19 Tests für Alle"
-tag = None # e.g. ("DELIVERY", "DIRECT")
-service = None # e.g. "PCR Tests"
+
+# Org must be tagged with this (tag, value) (e.g. ("DELIVERY", "DIRECT"))
+tag = None
+
+# Org must have a facility with this service (e.g. "PCR Tests")
+service = None
+
+# Org must have a facility with this PUBLIC-tag value ("Y"=yes, "N"=no, None=ignore)
+public = "Y"
+
+# User roles to include
 include = "ORG_ADMIN"
+
+# User roles to exclude
 exclude = None
 
+# -----------------------------------------------------------------------------
 # Override auth (disables all permission checks)
 auth.override = True
 
@@ -53,6 +71,7 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
     gmtable = s3db.org_group_membership
     ftable = s3db.org_facility
     sltable = s3db.org_service_site
+    sttable = s3db.org_site_tag
     stable = s3db.org_service
 
     join = [gmtable.on((gmtable.organisation_id == otable.id) & \
@@ -72,16 +91,26 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
                                (ttable.value == tag[1]) & \
                                (ttable.deleted == False))
                      ])
-    if service:
+
+    if service or public:
         join.extend([ftable.on((ftable.organisation_id == otable.id) & \
                                (ftable.obsolete == False) & \
                                (ftable.deleted == False)),
-                     sltable.on((sltable.site_id == ftable.site_id) & \
+                     ])
+    if service:
+        join.extend([sltable.on((sltable.site_id == ftable.site_id) & \
                                 (sltable.deleted == False)),
                      stable.on((stable.id == sltable.service_id) & \
                                (stable.name == service) & \
                                (stable.deleted == False)),
                      ])
+    if public is not None:
+        join.extend([sttable.on((sttable.site_id == ftable.site_id) & \
+                                (sttable.tag == "PUBLIC") & \
+                                (sttable.value == public) & \
+                                (sttable.deleted == False)),
+                     ])
+
     query = (otable.deleted == False)
     rows = db(query).select(otable.name,
                             otable.pe_id,
