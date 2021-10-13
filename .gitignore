@@ -3,6 +3,7 @@
 /cache/*
 /compiled/*
 /databases/*
+/docs/build/*
 /errors/*
 /indices/*
 /models/000_config.py
