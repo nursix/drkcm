@@ -96,8 +96,8 @@ Templates
 ---------
 
 Deployment configurations use configuration **templates**, which provide
-pre-configured settings suitable for a concrete deployment scenario. The
-example highlights how these templates are applied.
+pre-configured settings, customizations and extensions suitable for a concrete
+deployment scenario. The example above highlights how these templates are applied.
 
 .. important::
    Implementing configuration **templates** is the primary strategy to build
@@ -144,4 +144,5 @@ in a cascade, so that they complement each other:
    settings.base.template = ("locations.DE", "MYAPP")
 
 This is useful to separate e.g. locale-specific settings from use-case
-configurations, so that both can be reused across multiple deployments.
+configurations, so that both can be reused independently across multiple
+deployments.
