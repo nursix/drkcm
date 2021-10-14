@@ -17,6 +17,7 @@ This documentation is aimed at application developers, and included in the sourc
 
    Introduction <intro/index>
    Building Applications <dev/index>
+   Reference Guide <reference/index>
    Deploying Applications <deploy/index>
    Extending Eden ASP <extend/index>
    Core Libraries <core/index>
@@ -25,6 +26,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 

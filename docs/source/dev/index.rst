@@ -6,7 +6,7 @@ Building Applications
    :caption: Contents:
 
    Setting up for Development <setup>
-   Application Settings <settings>
+   About Templates <settings>
    Implementing Templates <templates>
    Built-in Data Models <models/index>
    Advanced Topics <advanced>

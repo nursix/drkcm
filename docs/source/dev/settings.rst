@@ -1,98 +1,48 @@
-Application Settings
-====================
+About Templates
+===============
 
-current
--------
+Global Config
+-------------
 
-The *current* object holds thread-local global variables. It can be imported into any context:
+Many features and behaviors of Eden ASP can be controlled by settings.
+
+These settings are stored in a global *S3Config* instance - which is accessible
+through :doc:`current </reference/current>` as *current.deployment_settings*.
 
 .. code-block:: python
 
    from gluon import current
 
-.. table:: Objects accessible through current
-   :widths: auto
-
-   ===========================  =================  ============================================
-   Attribute                    Type               Explanation
-   ===========================  =================  ============================================
-   current.db                   DAL                the database (DAL)
-   current.s3db                 S3Model            the model loader (S3Model)
-   current.config               S3Config           deployment settings
-   current.deployment_settings  S3Config           alias for current.config
-   current.auth                 AuthS3             global authentication/authorisation service
-   current.gis                  GIS                global GIS service
-   current.msg                  S3Msg              global messaging service
-   current.xml                  S3XML              global XML decoder/encoder service
-   current.request              Request            web2py's global request object
-   current.response             Response           web2py's global response object
-   current.T                    TranslatorFactory  String Translator (for i18n)
-   current.messages             Messages           Common labels (internationalised)
-   current.ERROR                Messages           Common error messages (internationalised)
-   ===========================  =================  ============================================
-
-Global Config
--------------
-
-Many elements of Eden ASP can be controlled by configuration settings.
-
-These configuration settings are stored in a global *S3Config* instance - which
-is accessible through *current.config* (alias *current.deployment_settings*).
-
-Templates
----------
-
-*current.config* comes with meaningful defaults, but some of them may need
-to be adjusted to enable/disable, configure, customize or extend features in
-the context of the specific application.
-
-These application settings are implemented as configuration **templates**,
-which are Python packages located in the *modules/templates* directory:
-
-.. image:: template_location.png
-   :align: center
-
-A template package must contain a module *config.py* which defines a *config*-function :
-
-.. code-block:: python
-   :caption: modules/templates/MYAPP/config.py
-
-   def config(settings):
-
-       T = current.T
-
-       settings.base.system_name = T("My Application")
-       settings.base.system_name_short = T("MyApp")
-
-       ...
-
-The *config* function is called with the *current.config* instance as parameter,
-so it can modify the global settings as needed by the application.
+   settings = current.deployment_settings
 
 .. note::
-   The template directory must also contain an *__init__.py* file (which can
-   be empty) in order to become a Python package!
+   In the models and controllers context, *current.deployment_settings* is
+   accessible simply as *settings*.
 
 Deployment Settings
 -------------------
 
-Some settings, e.g. database credentials, must be configured for the
-individual installation. These *deployment settings* are configured
-in a machine-specific configuration file (*models/000_config.py*).
+*S3Config* comes with meaningful defaults where possible.
+
+However, some settings will need to be adjusted to configure the application
+for a particular system environment - or to enable, disable, configure,
+customize or extend features in the specific context of the deployment.
+
+This configuration happens in a machine-specific configuration file:
+
+   **models/000_config.py**
 
 .. note::
-   If *models/000_config.py* does not exist, an annotated skeleton is
-   automatically generated when Eden ASP is first started. This
-   skeleton file can also be found in the *modules/templates* directory.
 
-The *000_config.py* is a Python script consisting of three sections:
+   *models/000_config.py is not part of the code base, and must be created
+   before the application can be started. An annotated example can be found
+   in the *modules/templates* directory.
 
-  - machine-specific settings
-  - template import
-  - settings after template import (can override template settings)
+The configuration file is a Python script that is executed for every request cycle:
 
 .. code-block:: python
    :caption: models/000_config.py (partial example)
+   :emphasize-lines: 11,36
 
    # -*- coding: utf-8 -*-
 
@@ -141,3 +91,57 @@ The *000_config.py* is a Python script consisting of three sections:
    VERSION = 1
 
    # END =========================================================================
+
+Templates
+---------
+
+Deployment configurations use configuration **templates**, which provide
+pre-configured settings suitable for a concrete deployment scenario. The
+example highlights how these templates are applied.
+
+.. important::
+   Implementing configuration **templates** is the primary strategy to build
+   applications with Eden ASP.
+
+Templates are Python packages located in the *modules/templates* directory:
+
+.. image:: template_location.png
+   :align: center
+
+Each template package must contain a module *config.py* which defines
+a *config*-function :
+
+.. code-block:: python
+   :caption: modules/templates/MYAPP/config.py
+
+   def config(settings):
+
+       T = current.T
+
+       settings.base.system_name = T("My Application")
+       settings.base.system_name_short = T("MyApp")
+
+       ...
+
+This *config* function is called from *models/000_config.py* (i.e. for every
+request cycle) with the *current.deployment_settings* instance as parameter,
+so that it can modify the global settings as needed.
+
+.. note::
+   The template directory must also contain an *__init__.py* file (which can
+   be empty) in order to become a Python package!
+
+Cascading Templates
+-------------------
+
+It is possible for a deployment configuration to apply multiple templates
+in a cascade, so that they complement each other:
+
+.. code-block:: python
+   :caption: Cascading templates (in models/000_config.py)
+
+   # Select the Template
+   settings.base.template = ("locations.DE", "MYAPP")
+
+This is useful to separate e.g. locale-specific settings from use-case
+configurations, so that both can be reused across multiple deployments.
