@@ -364,7 +364,7 @@ class S3FireStationModel(DataModel):
             msg_no_match = T("No Vehicles could be found"),
             msg_list_empty = T("No Vehicles currently registered"))
 
-        self.set_method("fire", "station",
+        self.set_method("fire_station",
                         method = "vehicle_report",
                         action = self.vehicle_report,
                         )

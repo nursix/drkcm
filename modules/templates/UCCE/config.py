@@ -490,16 +490,16 @@ def config(settings):
         from templates.UCCE.controllers import dc_QuestionSave
 
         set_method = current.s3db.set_method
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "create_json",
                    action = dc_QuestionCreate())
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "image_delete",
                    action = dc_QuestionImageDelete())
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "image_upload",
                    action = dc_QuestionImageUpload())
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "update_json",
                    action = dc_QuestionSave())
 
@@ -675,28 +675,28 @@ def config(settings):
         from templates.UCCE.controllers import dc_TargetReportFilters
 
         set_method = current.s3db.set_method
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "activate",
                    action = dc_TargetActivate())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "deactivate",
                    action = dc_TargetDeactivate())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "delete_confirm",
                    action = dc_TargetDelete())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "edit_confirm",
                    action = dc_TargetEdit())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "name",
                    action = dc_TargetName())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "l10n",
                    action = dc_TargetL10n())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "report_custom",
                    action = dc_TargetReport())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "report_filters",
                    action = dc_TargetReportFilters())
 
@@ -786,19 +786,19 @@ def config(settings):
         from templates.UCCE.controllers import dc_TemplateSave
 
         set_method = s3db.set_method
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "editor",
                    action = dc_TemplateEditor())
 
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "export_l10n",
                    action = dc_TemplateExportL10n())
 
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "upload_l10n",
                    action = dc_TemplateImportL10n())
 
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "update_json",
                    action = dc_TemplateSave())
 
@@ -1167,7 +1167,7 @@ def config(settings):
         from templates.UCCE.controllers import dc_ProjectDelete
 
         s3db = current.s3db
-        s3db.set_method("project", "project",
+        s3db.set_method("project_project",
                         method = "delete_confirm",
                         action = dc_ProjectDelete())
 

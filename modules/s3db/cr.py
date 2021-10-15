@@ -516,25 +516,25 @@ class CRShelterModel(DataModel):
                   )
 
         # Custom method to assign HRs
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "assign",
                    action = self.hrm_AssignMethod(component="human_resource_site"),
                    )
 
         # Check-in method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method="check-in",
                    action = self.org_SiteCheckInMethod,
                    )
 
         # Notification-dispatch method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "dispatch",
                    action = cr_notification_dispatcher,
                    )
 
         # Shelter Inspection method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "inspection",
                    action = CRShelterInspection,
                    )
@@ -1755,7 +1755,7 @@ class CRShelterRegistrationModel(DataModel):
                       )
 
         # Custom Methods
-        self.set_method("cr", "shelter_registration",
+        self.set_method("cr_shelter_registration",
                         method = "assign",
                         action = cr_AssignUnit())
 

@@ -1080,7 +1080,7 @@ class FinVoucherModel(DataModel):
                        create_onaccept = self.debit_create_onaccept,
                        )
 
-        self.set_method("fin", "voucher_debit",
+        self.set_method("fin_voucher_debit",
                         method = "cancel",
                         action = fin_VoucherCancelDebit,
                         )

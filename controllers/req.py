@@ -977,7 +977,7 @@ def req_item():
                      args = [req_id, "req_item"]
                      ))
 
-    s3db.set_method("req", "req_item",
+    s3db.set_method("req_req_item",
                     method = "order",
                     action = order_item
                     )

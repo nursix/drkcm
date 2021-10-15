@@ -621,11 +621,11 @@ class HRModel(DataModel):
 
         # Custom Method for S3HumanResourceAutocompleteWidget and S3AddPersonWidget
         set_method = self.set_method
-        set_method("hrm", "human_resource",
+        set_method("hrm_human_resource",
                    method = "search_ac",
                    action = self.hrm_search_ac)
 
-        set_method("hrm", "human_resource",
+        set_method("hrm_human_resource",
                    method = "lookup",
                    action = self.hrm_lookup)
 
@@ -5288,7 +5288,7 @@ class HRShiftModel(DataModel):
                        (T("Skills"), "person_id$competency.skill_id"),
                        ]
 
-        set_method("hrm", "shift",
+        set_method("hrm_shift",
                    method = "assign",
                    action = self.hrm_AssignMethod(component = "human_resource_shift",
                                                   next_tab = "facility",
@@ -5317,7 +5317,7 @@ class HRShiftModel(DataModel):
                          args = [facility.id, "shift"],
                          ))
 
-        set_method("hrm", "shift",
+        set_method("hrm_shift",
                    method = "facility",
                    action = facility_redirect)
 
@@ -8619,30 +8619,30 @@ def hrm_person_controller(**attr):
     # Custom Method(s) for Contacts
     contacts_tabs = settings.get_pr_contacts_tabs()
     if "all" in contacts_tabs:
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "contacts",
                    action = s3db.pr_Contacts)
     if "public" in contacts_tabs:
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "public_contacts",
                    action = s3db.pr_Contacts)
     if "private" in contacts_tabs:
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "private_contacts",
                    action = s3db.pr_Contacts)
 
     # Custom Method for CV
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "cv",
                action = hrm_CV)
 
     # Custom Method for Medical
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "medical",
                action = hrm_Medical)
 
     # Custom Method for HR Record
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "record",
                action = hrm_Record)
 

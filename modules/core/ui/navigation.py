@@ -1640,7 +1640,6 @@ class S3ComponentTab(object):
         s3db = current.s3db
 
         get_components = s3db.get_components
-        get_method = s3db.get_method
         get_vars = r.get_vars
         tablename = None
         if "viewing" in get_vars:
@@ -1653,6 +1652,7 @@ class S3ComponentTab(object):
         component = self.component
         function = self.function
         if component:
+            # Check if component alias
             clist = get_components(resource.table, names=[component])
             is_component = False
             if component in clist:
@@ -1663,13 +1663,12 @@ class S3ComponentTab(object):
                     is_component = True
             if is_component:
                 return self.authorised(clist[component])
-            handler = get_method(resource.prefix,
-                                 resource.name,
-                                 method=component)
+
+            # Check if URL method
+            get_method = s3db.get_method
+            handler = get_method(resource.tablename, method=component)
             if handler is None and tablename:
-                prefix, name = tablename.split("_", 1)
-                handler = get_method(prefix, name,
-                                     method=component)
+                handler = get_method(tablename, method=component)
             if handler is None:
                 handler = r.get_handler(component)
             if handler is None:

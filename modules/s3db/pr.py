@@ -326,7 +326,7 @@ class PRPersonEntityModel(DataModel):
                                       )
 
         # Custom Method for S3AutocompleteWidget
-        self.set_method("pr", "pentity",
+        self.set_method("pr_pentity",
                         method = "search_ac",
                         action = self.pe_search_ac)
 
@@ -1014,25 +1014,25 @@ class PRPersonModel(DataModel):
 
         # Custom Methods for S3PersonAutocompleteWidget and S3AddPersonWidget
         set_method = self.set_method
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "search_ac",
                    action = self.pr_search_ac,
                    )
 
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "lookup",
                    action = self.pr_person_lookup)
 
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "check_duplicates",
                    action = self.pr_person_check_duplicates)
 
         # Enable in templates as-required
-        #set_method("pr", "person",
+        #set_method("pr_person",
         #           method = "templates",
         #           action = pr_Templates())
 
-        #set_method("pr", "person",
+        #set_method("pr_person",
         #           method = "template",
         #           action = pr_Template())
 
@@ -3432,19 +3432,19 @@ class PRForumModel(DataModel):
                             )
 
         # Custom Methods
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "assign",
                    action = pr_AssignMethod(component = "forum_membership"))
 
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "join",
                    action = self.pr_forum_join)
 
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "leave",
                    action = self.pr_forum_leave)
 
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "request",
                    action = self.pr_forum_request)
 

@@ -36,7 +36,7 @@ def person():
     s3db.br_case_default_status()
 
     # Set contacts-method for tab
-    s3db.set_method("pr", "person",
+    s3db.set_method("pr_person",
                     method = "contacts",
                     action = s3db.pr_Contacts,
                     )
@@ -123,7 +123,7 @@ def person():
 
         # Configure Anonymizer
         from core import S3Anonymize
-        s3db.set_method("pr", "person",
+        s3db.set_method("pr_person",
                         method = "anonymize",
                         action = S3Anonymize,
                         )
@@ -319,7 +319,7 @@ def person():
                 resource.configure(filter_widgets = filter_widgets)
 
             # Autocomplete search-method
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "search_ac",
                             action = s3db.pr_PersonSearchAutocomplete(name_fields),
                             )
@@ -508,7 +508,7 @@ def person_search():
 
         # Autocomplete search-method including pe_label
         search_fields = tuple(name_fields) + ("pe_label",)
-        s3db.set_method("pr", "person",
+        s3db.set_method("pr_person",
                         method = "search_ac",
                         action = s3db.pr_PersonSearchAutocomplete(search_fields),
                         )
@@ -539,7 +539,7 @@ def group_membership():
             if vtablename == "pr_person":
 
                 # Set contacts-method to retain the tab
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "contacts",
                                 action = s3db.pr_Contacts,
                                 )
@@ -703,7 +703,7 @@ def document():
                 r.unauthorised()
 
             # Set contacts-method to retain the tab
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "contacts",
                             action = s3db.pr_Contacts,
                             )

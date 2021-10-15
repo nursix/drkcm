@@ -396,10 +396,10 @@ class S3Request(object):
         prefix, name = self.prefix, self.name
         component_name = self.component_name
 
-        custom_action = current.s3db.get_method(prefix,
-                                                name,
-                                                component_name=component_name,
-                                                method=method)
+        custom_action = current.s3db.get_method(self.tablename,
+                                                component = component_name,
+                                                method = method,
+                                                )
 
         http = self.http
         handler = None
@@ -654,10 +654,10 @@ class S3Request(object):
 
         # Custom action?
         if not self.custom_action:
-            action = current.s3db.get_method(self.prefix,
-                                             self.name,
-                                             component_name = self.component_name,
-                                             method = self.method)
+            action = current.s3db.get_method(self.tablename,
+                                             component = self.component_name,
+                                             method = self.method,
+                                             )
             if isinstance(action, type):
                 self.custom_action = action()
             else:

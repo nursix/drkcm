@@ -1792,7 +1792,7 @@ def rat_tables():
             raise HTTP(405, ERROR.BAD_METHOD)
 
 
-    s3db.set_method("assess", "rat",
+    s3db.set_method("assess_rat",
                      method="summary",
                      action=assess_rat_summary)
 

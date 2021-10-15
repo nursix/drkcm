@@ -68,7 +68,7 @@ def demographic_aggregate():
                      args="",
                      ))
 
-    s3db.set_method("stats", "demographic_aggregate",
+    s3db.set_method("stats_demographic_aggregate",
                     method="clear",
                     action=clear_aggregates)
 

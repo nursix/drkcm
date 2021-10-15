@@ -151,7 +151,7 @@ def post():
     #s3.filter = (table.series_id == None)
 
     # Custom Method to add Comments
-    s3db.set_method("cms", "post",
+    s3db.set_method("cms_post",
                     method = "discuss",
                     action = discuss)
 

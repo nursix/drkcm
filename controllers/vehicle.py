@@ -46,13 +46,13 @@ def vehicle():
 
     set_method = s3db.set_method
 
-    set_method("asset", "asset", method="assign",
+    set_method("asset_asset", method="assign",
                action = s3db.hrm_AssignMethod(component="human_resource"))
 
-    set_method("asset", "asset", method="check-in",
+    set_method("asset_asset", method="check-in",
                action = s3base.S3CheckInMethod())
 
-    set_method("asset", "asset", method="check-out",
+    set_method("asset_asset", method="check-out",
                action = s3base.S3CheckOutMethod())
 
     # Type is Vehicle

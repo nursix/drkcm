@@ -1497,23 +1497,22 @@ def vol_person_controller():
     s3 = response.s3
     session = current.session
     settings = current.deployment_settings
-    resourcename = "person"
 
     configure = s3db.configure
     set_method = s3db.set_method
 
     # Custom Method for Contacts
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
     # Custom Method for CV
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "cv",
                action = s3db.hrm_CV)
 
     # Custom Method for HR Record
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "record",
                action = s3db.hrm_Record)
 
@@ -1860,7 +1859,7 @@ def vol_person_controller():
     # REST Interface
     #orgname = session.s3.hrm.orgname
 
-    return current.rest_controller("pr", resourcename,
+    return current.rest_controller("pr", "person",
                                    csv_template = ("hrm", "volunteer"),
                                    csv_stylesheet = ("hrm", "person.xsl"),
                                    csv_extra_fields = [

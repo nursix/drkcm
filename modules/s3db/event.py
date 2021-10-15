@@ -566,36 +566,36 @@ class S3EventModel(DataModel):
                             )
 
         # Custom Methods
-        set_method("event", "event",
+        set_method("event_event",
                    method = "dispatch",
                    action = event_notification_dispatcher)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "add_bookmark",
                    action = self.event_add_bookmark)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "remove_bookmark",
                    action = self.event_remove_bookmark)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "add_tag",
                    action = self.event_add_tag)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "remove_tag",
                    action = self.event_remove_tag)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "share",
                    action = self.event_share)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "unshare",
                    action = self.event_unshare)
 
         # Custom Method to Assign HRs
-        set_method("event", "event",
+        set_method("event_event",
                    method = "assign",
                    action = self.pr_AssignMethod(component="human_resource"))
 
@@ -1440,47 +1440,47 @@ class S3IncidentModel(DataModel):
                             )
 
         # Custom Methods
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "add_bookmark",
                    action = self.incident_add_bookmark)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "remove_bookmark",
                    action = self.incident_remove_bookmark)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "add_tag",
                    action = self.incident_add_tag)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "remove_tag",
                    action = self.incident_remove_tag)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "share",
                    action = self.incident_share)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "unshare",
                    action = self.incident_unshare)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "plan",
                    action = event_ActionPlan)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "scenario",
                    action = event_ApplyScenario)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "assign",
                    action = self.pr_AssignMethod(component="human_resource"))
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "event",
                    action = event_EventAssignMethod())
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "dispatch",
                    action = event_notification_dispatcher)
 
@@ -2217,7 +2217,7 @@ class S3IncidentReportModel(DataModel):
                        )
 
         # Custom Methods
-        self.set_method("event", "incident_report",
+        self.set_method("event_incident_report",
                         method = "assign",
                         action = event_IncidentAssignMethod(component = "incident_report_incident",
                                                             next_tab = "incident_report"))
@@ -2449,7 +2449,7 @@ class S3EventResourceModel(DataModel):
             msg_list_empty=T("No Resources assigned to Incident"))
 
         # Custom Methods
-        #self.set_method("event", "resource",
+        #self.set_method("event_resource",
         #                method = "check-in",
         #                action = S3CheckInMethod())
 
@@ -2887,7 +2887,7 @@ class S3EventAlertModel(DataModel):
             msg_list_empty = T("No Alerts currently defined"))
 
         # Custom method to send alerts
-        #self.set_method("event", "alert",
+        #self.set_method("event_alert",
         #                method = "send",
         #                action = self.event_alert_send)
 
@@ -4313,7 +4313,7 @@ class S3EventScenarioModel(DataModel):
                        super_entity = "doc_entity",
                        )
 
-        self.set_method("event", "scenario",
+        self.set_method("event_scenario",
                         method = "plan",
                         action = event_ScenarioActionPlan)
 

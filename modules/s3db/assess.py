@@ -785,7 +785,7 @@ class S3AssessBuildingModel(DataModel):
                        )
 
         # Generate Work Order
-        self.set_method("assess", "building",
+        self.set_method("assess_building",
                         method="form",
                         action=self.assess_building_form)
 

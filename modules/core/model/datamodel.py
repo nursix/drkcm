@@ -240,14 +240,13 @@ class DataModel(object):
     @classmethod
     def table(cls, tablename, default=None, db_only=False):
         """
-            Helper function to load a table or other named object from
-            models
+            Helper function to load a table or other named object from models
 
-            @param tablename: the table name (or name of the object)
-            @param default: the default value to return if not found,
+            :param tablename: the table name (or name of the object)
+            :param default: the default value to return if not found,
                             - if default is an exception instance, it will
                               be raised instead of returned
-            @param db_only: find only tables, not other objects
+            :param db_only: find only tables, not other objects
         """
 
         s3 = current.response.s3
@@ -330,7 +329,7 @@ class DataModel(object):
         """
             Helper function to load all DataModels in a module
 
-            @param prefix: the module prefix
+            :param prefix: the module prefix
         """
 
         s3 = current.response.s3
@@ -419,10 +418,10 @@ class DataModel(object):
             re-instantiation of an already existing alias for the same
             table (which can otherwise lead to name collisions in PyDAL).
 
-            @param table: the original table
-            @param alias: the alias
+            :param table: the original table
+            :param alias: the alias
 
-            @return: the aliased Table instance
+            :returns: the aliased Table instance
         """
 
         db = current.db
@@ -457,8 +456,8 @@ class DataModel(object):
         """
             Update the extra configuration of a table
 
-            @param tablename: the name of the table
-            @param attr: dict of attributes to update
+            :param tablename: the name of the table
+            :param attr: dict of attributes to update
         """
 
         config = current.model["config"]
@@ -475,8 +474,8 @@ class DataModel(object):
         """
             Reads a configuration attribute of a resource
 
-            @param tablename: the name of the resource DB table
-            @param key: the key (name) of the attribute
+            :param tablename: the name of the resource DB table
+            :param key: the key (name) of the attribute
         """
 
         config = current.model["config"]
@@ -493,8 +492,8 @@ class DataModel(object):
         """
             Removes configuration attributes of a resource
 
-            @param table: the resource DB table
-            @param keys: keys of attributes to remove (maybe multiple)
+            :param table: the resource DB table
+            :param keys: keys of attributes to remove (maybe multiple)
         """
 
         config = current.model["config"]
@@ -516,12 +515,12 @@ class DataModel(object):
             callback to the originally configured callback chain,
             for use in customise_* in templates
 
-            @param tablename: the table name
-            @param hook: the main hook ("onvalidation"|"onaccept")
-            @param cb: the custom callback function
-            @param method: the sub-hook ("create"|"update"|None)
+            :param tablename: the table name
+            :param hook: the main hook ("onvalidation"|"onaccept")
+            :param cb: the custom callback function
+            :param method: the sub-hook ("create"|"update"|None)
 
-            @example:
+            Example:
                 # Add a create-onvalidation callback for the pr_person
                 # table, while retaining any existing onvalidation:
                 s3db.add_custom_callback("pr_person",
@@ -590,9 +589,8 @@ class DataModel(object):
                                         },
                           )
 
-            @param field: the Field
-
-            @returns: the name of the referenced table
+            :param field: the Field
+            :returns: the name of the referenced table
         """
 
         if str(field.type) == "integer":
@@ -622,9 +620,9 @@ class DataModel(object):
         """
             Helper to run the onvalidation routine for a record
 
-            @param table: the Table
-            @param record: the FORM or the Row to validate
-            @param method: the method
+            :param table: the Table
+            :param record: the FORM or the Row to validate
+            :param method: the method
         """
 
         if hasattr(table, "_tablename"):
@@ -647,9 +645,9 @@ class DataModel(object):
         """
             Helper to run the onvalidation routine for a record
 
-            @param table: the Table
-            @param record: the FORM or the Row to validate
-            @param method: the method
+            :param table: the Table
+            :param record: the FORM or the Row to validate
+            :param method: the method
         """
 
         if hasattr(table, "_tablename"):
@@ -673,8 +671,8 @@ class DataModel(object):
         """
             Configure component links for a master table.
 
-            @param master: the name of the master table
-            @param links: component link configurations
+            :param master: the name of the master table
+            :param links: component link configurations
         """
 
         components = current.model["components"]
@@ -798,8 +796,8 @@ class DataModel(object):
             for a table; called by get_components if dynamic_components
             is configured for the table
 
-            @param tablename: the table name
-            @param exclude: names to exclude (static components)
+            :param tablename: the table name
+            :param exclude: names to exclude (static components)
         """
 
         mtable = cls.table(tablename)
@@ -876,10 +874,10 @@ class DataModel(object):
         """
             Get a component description for a component alias
 
-            @param table: the master table
-            @param alias: the component alias
+            :param table: the master table
+            :param alias: the component alias
 
-            @returns: the component description (Storage)
+            :returns: the component description (Storage)
         """
         return cls.parse_hook(table, alias)
 
@@ -889,11 +887,11 @@ class DataModel(object):
         """
             Finds components of a table
 
-            @param table: the table or table name
-            @param names: a list of components names to limit the search to,
+            :param table: the table or table name
+            :param names: a list of components names to limit the search to,
                           None for all available components
 
-            @returns: the component descriptions (Storage {alias: description})
+            :returns: the component descriptions (Storage {alias: description})
         """
 
         table, hooks = cls.get_hooks(table, names=names)
@@ -915,11 +913,11 @@ class DataModel(object):
             Parse a component configuration, loading all necessary table
             models and applying defaults
 
-            @param table: the master table
-            @param alias: the component alias
-            @param hook: the component configuration (if already known)
+            :param table: the master table
+            :param alias: the component alias
+            :param hook: the component configuration (if already known)
 
-            @returns: the component description (Storage {key: value})
+            :returns: the component description (Storage {key: value})
         """
 
         load = cls.table
@@ -1007,11 +1005,11 @@ class DataModel(object):
         """
             Find applicable component configurations (hooks) for a table
 
-            @param table: the master table (or table name)
-            @param names: component aliases to find (default: all configured
+            :param table: the master table (or table name)
+            :param names: component aliases to find (default: all configured
                           components for the master table)
 
-            @returns: tuple (table, {alias: hook, ...})
+            :returns: tuple (table, {alias: hook, ...})
         """
 
         components = current.model["components"]
@@ -1093,12 +1091,12 @@ class DataModel(object):
         """
             DRY Helper method to filter component hooks
 
-            @param components: components already found, dict {alias: component}
-            @param hooks: component hooks to filter, dict {alias: hook}
-            @param names: the names (=aliases) to include
-            @param supertable: the super-table name to set for the component
+            :param components: components already found, dict {alias: component}
+            :param hooks: component hooks to filter, dict {alias: hook}
+            :param names: the names (=aliases) to include
+            :param supertable: the super-table name to set for the component
 
-            @returns: set of names that could not be found,
+            :returns: set of names that could not be found,
                       or None if names was None
         """
 
@@ -1118,7 +1116,7 @@ class DataModel(object):
         """
             Checks whether there are components defined for a table
 
-            @param table: the table or table name
+            :param table: the table or table name
         """
 
         components = current.model["components"]
@@ -1172,8 +1170,8 @@ class DataModel(object):
         """
             Find a component alias from the link table alias.
 
-            @param tablename: the name of the master table
-            @param link: the alias of the link table
+            :param tablename: the name of the master table
+            :param link: the alias of the link table
         """
 
         components = current.model["components"]
@@ -1226,9 +1224,9 @@ class DataModel(object):
             Get the alias of the component that represents the parent
             node in a hierarchy (for link-table based hierarchies)
 
-            @param tablename: the table name
+            :param tablename: the table name
 
-            @returns: the alias of the hierarchy parent component
+            :returns: the alias of the hierarchy parent component
         """
 
         if not cls.table(tablename, db_only=True):
@@ -1249,19 +1247,19 @@ class DataModel(object):
     # Resource Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def set_method(cls, prefix, name,
-                   component_name = None,
+    def set_method(cls, tablename,
+                   component = None,
                    method = None,
                    action = None,
                    ):
         """
-            Adds a custom method for a resource or component
+            Configure a URL method for a table, or a component in the context
+            of the table
 
-            @param prefix: prefix of the resource name (=module name)
-            @param name: name of the resource (=without prefix)
-            @param component_name: name of the component
-            @param method: name of the method
-            @param action: function to invoke for this method
+            :param str tablename: the name of the table
+            :param str component: component alias
+            :param str method: name of the method
+            :param action: function to invoke for this method
         """
 
         methods = current.model["methods"]
@@ -1270,31 +1268,29 @@ class DataModel(object):
         if not method:
             raise SyntaxError("No method specified")
 
-        tablename = "%s_%s" % (prefix, name)
-
-        if not component_name:
+        if not component:
             if method not in methods:
                 methods[method] = {}
             methods[method][tablename] = action
         else:
             if method not in cmethods:
                 cmethods[method] = {}
-            if component_name not in cmethods[method]:
-                cmethods[method][component_name] = {}
-            cmethods[method][component_name][tablename] = action
+            if component not in cmethods[method]:
+                cmethods[method][component] = {}
+            cmethods[method][component][tablename] = action
 
     # -------------------------------------------------------------------------
     @classmethod
-    def get_method(cls, prefix, name,
-                   component_name=None,
-                   method=None):
+    def get_method(cls, tablename, component=None, method=None):
         """
-            Retrieves a custom method for a resource or component
+            Get the handler for a URL method for a table, or a component
+            in the context of the table
 
-            @param prefix: prefix of the resource name (=module name)
-            @param name: name of the resource (=without prefix)
-            @param component_name: name of the component
-            @param method: name of the method
+            :param tablename: the name of the table
+            :param component: component alias
+            :param method: name of the method
+
+            :returns: the method handler
         """
 
         methods = current.model["methods"]
@@ -1303,18 +1299,16 @@ class DataModel(object):
         if not method:
             return None
 
-        tablename = "%s_%s" % (prefix, name)
-
-        if not component_name:
+        if not component:
             if method in methods and tablename in methods[method]:
                 return methods[method][tablename]
             else:
                 return None
         else:
             if method in cmethods and \
-               component_name in cmethods[method] and \
-               tablename in cmethods[method][component_name]:
-                return cmethods[method][component_name][tablename]
+               component in cmethods[method] and \
+               tablename in cmethods[method][component]:
+                return cmethods[method][component][tablename]
             else:
                 return None
 
@@ -1326,11 +1320,11 @@ class DataModel(object):
         """
             Define a super-entity table
 
-            @param tablename: the tablename
-            @param key: name of the primary key
-            @param types: a dictionary of instance types
-            @param fields: any shared fields
-            @param args: table arguments (e.g. migrate)
+            :param tablename: the tablename
+            :param key: name of the primary key
+            :param types: a dictionary of instance types
+            :param fields: any shared fields
+            :param args: table arguments (e.g. migrate)
         """
 
         db = current.db
@@ -1367,7 +1361,7 @@ class DataModel(object):
         """
             Get the name of the key for a super-entity
 
-            @param supertable: the super-entity table
+            :param supertable: the super-entity table
         """
 
         if supertable is None and default:
@@ -1409,11 +1403,11 @@ class DataModel(object):
         """
             Get a foreign key field for a super-entity
 
-            @param supertable: the super-entity table
-            @param label: label for the field
-            @param comment: comment for the field
-            @param readable: set the field readable
-            @param represent: set a representation function for the field
+            :param supertable: the super-entity table
+            :param label: label for the field
+            :param comment: comment for the field
+            :param readable: set the field readable
+            :param represent: set a representation function for the field
         """
 
         if isinstance(supertable, str):
@@ -1482,8 +1476,8 @@ class DataModel(object):
         """
             Updates the super-entity links of an instance record
 
-            @param table: the instance table
-            @param record: the instance record
+            :param table: the instance table
+            :param record: the instance record
         """
 
         get_config = cls.get_config
@@ -1612,11 +1606,11 @@ class DataModel(object):
         """
             Removes the super-entity links of an instance record
 
-            @param table: the instance table
-            @param record: the instance record
+            :param table: the instance table
+            :param record: the instance record
 
-            @return: True if successful, otherwise False (caller must
-                     roll back the transaction if False is returned!)
+            :returns: True if successful, otherwise False (caller must
+                      roll back the transaction if False is returned!)
         """
 
         # Must have a record ID
@@ -1685,8 +1679,8 @@ class DataModel(object):
         """
             Get the super-keys in an instance table
 
-            @param table: the instance table
-            @returns: list of field names
+            :param table: the instance table
+            :returns: list of field names
         """
 
         tablename = original_tablename(table)
@@ -1716,9 +1710,9 @@ class DataModel(object):
         """
             Get prefix, name and ID of an instance record
 
-            @param supertable: the super-entity table
-            @param superid: the super-entity record ID
-            @return: a tuple (prefix, name, ID) of the instance
+            :param supertable: the super-entity table
+            :param superid: the super-entity record ID
+            :returns: a tuple (prefix, name, ID) of the instance
                       record (if it exists)
         """
 

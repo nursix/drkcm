@@ -2034,7 +2034,7 @@ def config(settings):
 
                 # Configure Anonymizer
                 from core import S3Anonymize
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "anonymize",
                                 action = S3Anonymize,
                                 )

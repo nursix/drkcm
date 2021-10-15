@@ -1114,7 +1114,7 @@ class DataCollectionModel(DataModel):
             msg_record_deleted = T("Data Collection Target deleted"),
             msg_list_empty = T("No Data Collection Targets currently registered"))
 
-        self.set_method("dc", "target",
+        self.set_method("dc_target",
                         method = "results",
                         action = dc_TargetReport())
 

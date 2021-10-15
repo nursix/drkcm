@@ -1584,7 +1584,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
                              vars = {}))
 
         # Custom commit method to create an Activity Group from a Need
-        current.s3db.set_method("req", "need",
+        current.s3db.set_method("req_need",
                                 method = "commit",
                                 action = req_need_commit)
 
@@ -1711,7 +1711,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
             f.label = T("GN")
 
         # Custom method to (manually) update homepage statistics
-        s3db.set_method("req", "need_line",
+        s3db.set_method("req_need_line",
                         method = "update_stats",
                         action = req_need_line_update_stats,
                         )
@@ -1866,7 +1866,7 @@ S3.redraw_fns.push('tagit')''' % (T("Add tags here…"),
                        )
 
         # Custom commit method to create an Activity from a Need Line
-        s3db.set_method("req", "need_line",
+        s3db.set_method("req_need_line",
                         method = "commit",
                         action = req_need_line_commit)
 

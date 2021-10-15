@@ -329,8 +329,6 @@ class CAPAlertModel(DataModel):
         crud_strings = current.response.s3.crud_strings
 
         define_table = self.define_table
-        set_method = self.set_method
-
         cap_options = get_cap_options()
 
         incident_types = cap_options["incident_types"]
@@ -588,17 +586,18 @@ $.filterOptionsS3({
                             )
 
         # Resource-specific REST Methods
-        set_method("cap", "alert",
+        set_method = self.set_method
+        set_method("cap_alert",
                    method = "import_feed",
                    action = cap_ImportAlert,
                    )
 
-        set_method("cap", "alert",
+        set_method("cap_alert",
                    method = "assign",
                    action = cap_AssignArea,
                    )
 
-        set_method("cap", "alert",
+        set_method("cap_alert",
                    method = "clone",
                    action = cap_CloneAlert,
                    )

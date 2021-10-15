@@ -502,31 +502,31 @@ class CMSContentModel(DataModel):
                        )
 
         # Custom Methods
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "add_bookmark",
                    action = self.cms_add_bookmark)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "remove_bookmark",
                    action = self.cms_remove_bookmark)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "add_tag",
                    action = self.cms_add_tag)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "remove_tag",
                    action = self.cms_remove_tag)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "share",
                    action = self.cms_share)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "unshare",
                    action = self.cms_unshare)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "calendar",
                    action = cms_Calendar)
 
@@ -603,7 +603,7 @@ class CMSContentModel(DataModel):
                                  )
 
         # Custom Methods
-        set_method("cms", "tag",
+        set_method("cms_tag",
                    method = "tag_list",
                    action = cms_TagList)
 

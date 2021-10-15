@@ -140,14 +140,13 @@ The *add_components* method can be used to declare :doc:`components </extend/mod
 URL Method Handlers
 -------------------
 
-.. function:: s3db.set_method(prefix, name, component_name=None, method=None, action=None)
+.. function:: s3db.set_method(tablename, component=None, method=None, action=None)
 
-   Configure a handler for a URL method for a table
+   Configure a URL method for a table, or a component in the context of the table
 
-   :param prefix: prefix of the table name (=module name)
-   :param name: name of the table (without prefix)
-   :param component_name: name of the component (if the method applies for a component)
-   :param method: name of the method (to use in URLs)
+   :param str tablename: the name of the table
+   :param str component: component alias
+   :param str method: name of the method (to use in URLs)
    :param action: function or other callable to invoke for this method,
                   receives the S3Request instance and controller keyword
                   parameters as arguments
@@ -166,21 +165,21 @@ URL Method Handlers
 
    # Configure check_in_func as handler for the "check_in" method
    # (i.e. for URLs like /eden/pr/person/5/check_in):
-   s3db.set_method("pr", "person", method="check_in", action=check_in_func)
+   s3db.set_method("pr_person", method="check_in", action=check_in_func)
 
 .. tip::
 
    If a S3Method class is specified as action, it will be instantiated
    when the method is called (lazy instantiation).
 
-.. function:: s3db.get_method(prefix, name, component_name=None, method=None)
+.. function:: s3db.get_method(tablename, component=None, method=None)
 
-   Get the current handler for a URL method for a table
+   Get the handler for a URL method for a table, or a component in the context
+   of the table
 
-   :param prefix: prefix of the table name (=module name)
-   :param name: name of the table (without prefix)
-   :param component_name: name of the component (if the method applies for a component)
-   :param method: name of the method (as used in URLs)
+   :param str tablename: the name of the table
+   :param str component: component alias
+   :param str method: name of the method
    :returns: the handler configured for the method (or None)
 
 CRUD Callbacks

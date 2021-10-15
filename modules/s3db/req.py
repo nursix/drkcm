@@ -684,28 +684,28 @@ class RequestModel(DataModel):
                        )
 
         # Custom Methods
-        set_method("req", "req",
+        set_method("req_req",
                    method = "check",
                    action = req_CheckMethod())
 
-        set_method("req", "req",
+        set_method("req_req",
                    method = "commit_all",
                    action = self.req_commit_all)
 
-        set_method("req", "req",
+        set_method("req_req",
                    method = "copy_all",
                    action = self.req_copy_all)
 
-        set_method("req", "req",
+        set_method("req_req",
                    method = "submit",
                    action = self.req_submit)
 
-        set_method("req", "req",
+        set_method("req_req",
                    method = "approve_req", # Don't clash with core approve method
                    action = self.req_approve)
 
         # Print Forms
-        set_method("req", "req",
+        set_method("req_req",
                    method = "form",
                    action = self.req_form)
 
@@ -2469,14 +2469,14 @@ class RequestRecurringModel(DataModel):
             msg_no_match = T("No jobs configured"))
 
         # Custom Methods
-        self.set_method("req", "req",
-                        component_name = "job",
+        self.set_method("req_req",
+                        component = "job",
                         method = "reset",
                         action = req_job_reset,
                         )
 
-        self.set_method("req", "req",
-                        component_name = "job",
+        self.set_method("req_req",
+                        component = "job",
                         method = "run",
                         action = req_job_run,
                         )
@@ -2607,7 +2607,7 @@ class RequestNeedsModel(DataModel):
                             )
 
         # Custom Methods
-        self.set_method("req", "need",
+        self.set_method("req_need",
                         method = "assign",
                         action = self.pr_AssignMethod(component="need_person"))
 
@@ -4129,7 +4129,7 @@ class CommitModel(DataModel):
                        )
 
         # Custom Method to Assign HRs
-        self.set_method("req", "commit",
+        self.set_method("req_commit",
                         method = "assign",
                         action = self.hrm_AssignMethod(component="commit_person",
                                                        next_tab="commit_person",

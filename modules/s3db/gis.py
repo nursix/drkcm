@@ -376,7 +376,7 @@ class S3LocationModel(DataModel):
                        )
 
         # Custom Method for S3LocationAutocompleteWidget
-        self.set_method("gis", "location",
+        self.set_method("gis_location",
                         method = "search_ac",
                         action = self.gis_search_ac)
 
@@ -4501,7 +4501,7 @@ class S3GISThemeModel(DataModel):
                                          )
 
         # Custom Method to generate a style
-        self.set_method("gis", "layer_theme",
+        self.set_method("gis_layer_theme",
                         method = "style",
                         action = self.gis_theme_style)
 

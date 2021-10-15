@@ -764,15 +764,15 @@ class S3EmailModel(S3ChannelModel):
                   super_entity = "msg_channel",
                   )
 
-        set_method("msg", "email_channel",
+        set_method("msg_email_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "email_channel",
+        set_method("msg_email_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        set_method("msg", "email_channel",
+        set_method("msg_email_channel",
                    method = "poll",
                    action = self.msg_channel_poll)
 
@@ -900,15 +900,15 @@ class S3FacebookModel(S3ChannelModel):
                   super_entity = "msg_channel",
                   )
 
-        set_method("msg", "facebook_channel",
+        set_method("msg_facebook_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "facebook_channel",
+        set_method("msg_facebook_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        #set_method("msg", "facebook_channel",
+        #set_method("msg_facebook_channel",
         #           method = "poll",
         #           action = self.msg_channel_poll)
 
@@ -1037,15 +1037,15 @@ class S3MCommonsModel(S3ChannelModel):
                        super_entity = "msg_channel",
                        )
 
-        set_method("msg", "mcommons_channel",
+        set_method("msg_mcommons_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "mcommons_channel",
+        set_method("msg_mcommons_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        set_method("msg", "mcommons_channel",
+        set_method("msg_mcommons_channel",
                    method = "poll",
                    action = self.msg_channel_poll)
 
@@ -1099,15 +1099,15 @@ class S3GCMModel(S3ChannelModel):
                        super_entity = "msg_channel",
                        )
 
-        set_method("msg", "gcm_channel",
+        set_method("msg_gcm_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "gcm_channel",
+        set_method("msg_gcm_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        #set_method("msg", "gcm_channel",
+        #set_method("msg_gcm_channel",
         #           method = "poll",
         #           action = self.msg_channel_poll)
 
@@ -1174,15 +1174,15 @@ class S3ParsingModel(DataModel):
                        onaccept = self.msg_parser_onaccept,
                        )
 
-        set_method("msg", "parser",
+        set_method("msg_parser",
                    method = "enable",
                    action = self.parser_enable_interactive)
 
-        set_method("msg", "parser",
+        set_method("msg_parser",
                    method = "disable",
                    action = self.parser_disable_interactive)
 
-        set_method("msg", "parser",
+        set_method("msg_parser",
                    method = "parse",
                    action = self.parser_parse)
 
@@ -1518,15 +1518,15 @@ class S3RSSModel(S3ChannelModel):
                        super_entity = "msg_channel",
                        )
 
-        set_method("msg", "rss_channel",
+        set_method("msg_rss_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "rss_channel",
+        set_method("msg_rss_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        set_method("msg", "rss_channel",
+        set_method("msg_rss_channel",
                    method = "poll",
                    action = self.msg_channel_poll)
 
@@ -1898,15 +1898,15 @@ class S3TropoModel(DataModel):
                        super_entity = "msg_channel",
                        )
 
-        set_method("msg", "tropo_channel",
+        set_method("msg_tropo_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "tropo_channel",
+        set_method("msg_tropo_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        set_method("msg", "tropo_channel",
+        set_method("msg_tropo_channel",
                    method = "poll",
                    action = self.msg_channel_poll)
 
@@ -1981,15 +1981,15 @@ class S3TwilioModel(S3ChannelModel):
                        super_entity = "msg_channel",
                        )
 
-        set_method("msg", "twilio_channel",
+        set_method("msg_twilio_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "twilio_channel",
+        set_method("msg_twilio_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        set_method("msg", "twilio_channel",
+        set_method("msg_twilio_channel",
                    method = "poll",
                    action = self.msg_channel_poll)
 
@@ -2081,15 +2081,15 @@ class S3TwitterModel(DataModel):
                   super_entity = "msg_channel",
                   )
 
-        set_method("msg", "twitter_channel",
+        set_method("msg_twitter_channel",
                    method = "enable",
                    action = self.msg_channel_enable_interactive)
 
-        set_method("msg", "twitter_channel",
+        set_method("msg_twitter_channel",
                    method = "disable",
                    action = self.msg_channel_disable_interactive)
 
-        set_method("msg", "twitter_channel",
+        set_method("msg_twitter_channel",
                    method = "poll",
                    action = self.msg_channel_poll)
 
@@ -2310,15 +2310,15 @@ class S3TwitterSearchModel(S3ChannelModel):
                                 ),
                     )
 
-        set_method("msg", "twitter_search",
+        set_method("msg_twitter_search",
                    method = "poll",
                    action = self.twitter_search_poll)
 
-        set_method("msg", "twitter_search",
+        set_method("msg_twitter_search",
                    method = "keygraph",
                    action = self.twitter_keygraph)
 
-        set_method("msg", "twitter_result",
+        set_method("msg_twitter_result",
                    method = "timeline",
                    action = self.twitter_timeline)
 

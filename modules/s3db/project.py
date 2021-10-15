@@ -535,39 +535,39 @@ class ProjectModel(DataModel):
             )
 
         # Custom Methods
-        set_method("project", "project",
+        set_method("project_project",
                    method = "assign",
                    action = self.hrm_AssignMethod(component="human_resource"))
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "details",
                    action = project_Details)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "map",
                    action = self.project_map)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "timeline",
                    action = self.project_timeline)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "summary_report",
                    action = project_SummaryReport)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "indicator_summary_report",
                    action = project_IndicatorSummaryReport)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "project_progress_report",
                    action = project_ProgressReport)
 
-        #set_method("project", "project",
+        #set_method("project_project",
         #           method = "budget_progress_report",
         #           action = project_BudgetProgressReport)
 
-        #set_method("project", "project",
+        #set_method("project_project",
         #           method = "indicator_progress_report",
         #           action = project_IndicatorProgressReport)
 
@@ -1401,7 +1401,7 @@ class ProjectActivityModel(DataModel):
         # This component no longer has a case_id in it
         #if settings.has_module("dvr"):
         #    # Custom Method to Assign Cases
-        #    self.set_method("project", "activity",
+        #    self.set_method("project_activity",
         #                    method = "assign",
         #                    action = self.dvr_AssignMethod(component="case_activity"),
         #                    )
@@ -11294,15 +11294,15 @@ class ProjectTaskModel(DataModel):
         project_task_represent_w_project = project_TaskRepresent(show_project=True)
 
         # Custom Methods
-        set_method("project", "task",
+        set_method("project_task",
                    method = "share",
                    action = self.project_task_share)
 
-        set_method("project", "task",
+        set_method("project_task",
                    method = "unshare",
                    action = self.project_task_unshare)
 
-        set_method("project", "task",
+        set_method("project_task",
                    method = "dispatch",
                    action = self.project_task_dispatch)
 

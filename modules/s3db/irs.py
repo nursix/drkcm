@@ -479,15 +479,15 @@ class S3IRSModel(DataModel):
                                      )
 
         # Custom Methods
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "dispatch",
                    action=self.irs_dispatch)
 
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "timeline",
                    action = self.irs_timeline)
 
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "ushahidi",
                    action = self.irs_ushahidi_import)
 

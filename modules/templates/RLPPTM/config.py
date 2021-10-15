@@ -875,15 +875,15 @@ def config(settings):
 
         # Custom REST methods
         from .cwa import TestResultRegistration
-        s3db.set_method("disease", "case_diagnostics",
+        s3db.set_method("disease_case_diagnostics",
                         method = "register",
                         action = TestResultRegistration,
                         )
-        s3db.set_method("disease", "case_diagnostics",
+        s3db.set_method("disease_case_diagnostics",
                         method = "certify",
                         action = TestResultRegistration,
                         )
-        s3db.set_method("disease", "case_diagnostics",
+        s3db.set_method("disease_case_diagnostics",
                         method = "cwaretry",
                         action = TestResultRegistration,
                         )
@@ -1849,7 +1849,7 @@ def config(settings):
 
         # PDF export method
         from .helpers import ClaimPDF
-        s3db.set_method("fin", "voucher_claim",
+        s3db.set_method("fin_voucher_claim",
                         method = "record",
                         action = ClaimPDF,
                         )
@@ -2129,7 +2129,7 @@ def config(settings):
 
         # PDF export method
         from .helpers import InvoicePDF
-        s3db.set_method("fin", "voucher_invoice",
+        s3db.set_method("fin_voucher_invoice",
                         method = "record",
                         action = InvoicePDF,
                         )
@@ -2436,7 +2436,7 @@ def config(settings):
 
             # Add invite-method for ORG_GROUP_ADMIN role
             from .helpers import InviteUserOrg
-            s3db.set_method("org", "organisation",
+            s3db.set_method("org_organisation",
                             method = "invite",
                             action = InviteUserOrg,
                             )
@@ -3169,7 +3169,7 @@ def config(settings):
 
         # Custom method to produce KV report
         from .helpers import TestFacilityInfo
-        s3db.set_method("org", "facility",
+        s3db.set_method("org_facility",
                         method = "info",
                         action = TestFacilityInfo,
                         )
@@ -4389,7 +4389,7 @@ def config(settings):
         if auth.s3_has_role("SUPPLY_COORDINATOR"):
             # Custom method to register a shipment
             from .requests import RegisterShipment
-            s3db.set_method("req", "req",
+            s3db.set_method("req_req",
                             method = "ship",
                             action = RegisterShipment,
                             )

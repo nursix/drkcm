@@ -38,7 +38,7 @@ def config():
 def repository():
     """ Repository Management Controller """
 
-    s3db.set_method("sync", "repository",
+    s3db.set_method("sync_repository",
                     method = "register",
                     action = current.sync,
                     )

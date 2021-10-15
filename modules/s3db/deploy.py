@@ -990,7 +990,7 @@ class S3DeploymentAlertModel(DataModel):
                        )
 
         # Custom method to send alerts
-        self.set_method("deploy", "alert",
+        self.set_method("deploy_alert",
                         method = "send",
                         action = self.deploy_alert_send,
                         )

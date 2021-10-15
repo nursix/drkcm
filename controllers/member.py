@@ -104,12 +104,12 @@ def person():
 
     # Custom Method for Contacts
     set_method = s3db.set_method
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
     # Custom Method for CV
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "cv",
                # @ToDo: Allow Members to have a CV without enabling HRM?
                action = s3db.hrm_CV)

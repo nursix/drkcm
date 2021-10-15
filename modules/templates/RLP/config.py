@@ -1426,7 +1426,7 @@ def config(settings):
 
                 # Configure anonymize-method
                 from core import S3Anonymize
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "anonymize",
                                 action = S3Anonymize,
                                 )
@@ -1713,7 +1713,7 @@ def config(settings):
 
                     # Configure anonymize-method
                     from core import S3Anonymize
-                    s3db.set_method("pr", "person",
+                    s3db.set_method("pr_person",
                                     method = "anonymize",
                                     action = S3Anonymize,
                                     )
@@ -2598,7 +2598,7 @@ def config(settings):
 
             # Set method for Ajax-lookup of notification data
             from .notifications import InlineNotificationsData
-            s3db.set_method("hrm", "delegation",
+            s3db.set_method("hrm_delegation",
                             method = "notifications",
                             action = InlineNotificationsData,
                             )

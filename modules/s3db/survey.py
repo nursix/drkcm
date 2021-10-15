@@ -224,8 +224,8 @@ class S3SurveyTemplateModel(DataModel):
                             survey_translate = "template_id",
                             )
 
-        self.set_method("survey", "template",
-                        component_name = "translate",
+        self.set_method("survey_template",
+                        component = "translate",
                         method = "translate_download",
                         action = survey_TranslateDownload,
                         )
@@ -1540,15 +1540,15 @@ class S3SurveySeriesModel(DataModel):
                                     )
 
         # Custom Methods
-        set_method("survey", "series", method="summary", # NB This conflicts with the global summary method!
+        set_method("survey_series", method="summary", # NB This conflicts with the global summary method!
                    action = self.seriesSummary)
-        set_method("survey", "series", method="graph",
+        set_method("survey_series", method="graph",
                    action = self.seriesGraph)
-        set_method("survey", "series", method="map", # NB This conflicts with the global map method!
+        set_method("survey_series", method="map", # NB This conflicts with the global map method!
                    action = self.seriesMap)
-        set_method("survey", "series", method="series_chart_download",
+        set_method("survey_series", method="series_chart_download",
                    action = self.seriesChartDownload)
-        set_method("survey", "series", method="export_responses",
+        set_method("survey_series", method="export_responses",
                    action = survey_ExportResponses)
 
         # ---------------------------------------------------------------------

@@ -888,12 +888,12 @@ def person():
                 "form": form,
                 }
 
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "user_profile",
                action = auth_profile_method)
 
     # Custom Method for Contacts
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 

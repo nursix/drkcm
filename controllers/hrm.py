@@ -224,7 +224,7 @@ def profile():
     request.args = [str(auth.s3_logged_in_person())]
 
     # Custom Method for Contacts
-    s3db.set_method("pr", "profile",
+    s3db.set_method("pr_profile",
                     method = "contacts",
                     action = s3db.pr_Contacts)
 

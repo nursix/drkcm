@@ -1122,7 +1122,7 @@ class S3SetupDeploymentModel(DataModel):
                        setup_setting = "deployment_id",
                        )
 
-        set_method("setup", "deployment",
+        set_method("setup_deployment",
                    method = "wizard",
                    action = self.setup_server_wizard)
 
@@ -1263,15 +1263,15 @@ class S3SetupDeploymentModel(DataModel):
                                     sortby = "name",
                                     )
 
-        set_method("setup", "server",
+        set_method("setup_server",
                    method = "enable",
                    action = setup_monitor_server_enable_interactive)
 
-        set_method("setup", "server",
+        set_method("setup_server",
                    method = "disable",
                    action = setup_monitor_server_disable_interactive)
 
-        set_method("setup", "server",
+        set_method("setup_server",
                    method = "check",
                    action = setup_monitor_server_check)
 
@@ -1399,38 +1399,38 @@ class S3SetupDeploymentModel(DataModel):
                   update_onaccept = self.setup_instance_update_onaccept,
                   )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "deploy",
                    action = self.setup_instance_deploy,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "settings",
                    action = self.setup_instance_settings,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "start",
                    action = self.setup_instance_start,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "stop",
                    action = self.setup_instance_stop,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "clean",
                    action = self.setup_instance_clean,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "wizard",
                    action = self.setup_instance_wizard,
                    )
@@ -1484,8 +1484,8 @@ class S3SetupDeploymentModel(DataModel):
             msg_record_deleted = T("Setting deleted"),
             msg_list_empty = T("No Settings currently registered"))
 
-        set_method("setup", "deployment",
-                   component_name = "setting",
+        set_method("setup_deployment",
+                   component = "setting",
                    method = "apply",
                    action = self.setup_setting_apply_interactive,
                    )
@@ -2513,15 +2513,15 @@ class S3SetupMonitorModel(DataModel):
                        setup_monitor_run = "task_id",
                        )
 
-        set_method("setup", "monitor_task",
+        set_method("setup_monitor_task",
                    method = "enable",
                    action = setup_monitor_task_enable_interactive)
 
-        set_method("setup", "monitor_task",
+        set_method("setup_monitor_task",
                    method = "disable",
                    action = setup_monitor_task_disable_interactive)
 
-        set_method("setup", "monitor_task",
+        set_method("setup_monitor_task",
                    method = "check",
                    action = setup_monitor_task_run)
 

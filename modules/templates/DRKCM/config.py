@@ -493,7 +493,7 @@ def config(settings):
             attr["rheader"] = drk_dvr_rheader
 
             # Set contacts-method to retain the tab
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "contacts",
                             action = s3db.pr_Contacts,
                             )
@@ -704,7 +704,7 @@ def config(settings):
             # Configure anonymize-method
             # TODO make standard via setting
             from core import S3Anonymize
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "anonymize",
                             action = S3Anonymize,
                             )
@@ -717,11 +717,11 @@ def config(settings):
 
             if current.auth.s3_has_role("CASE_MANAGEMENT"):
                 # Allow use of Document Templates
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "templates",
                                 action = s3db.pr_Templates(),
                                 )
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "template",
                                 action = s3db.pr_Template(),
                                 )
@@ -804,7 +804,7 @@ def config(settings):
                 configure = resource.configure
 
                 # Set contacts-method for tab
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "contacts",
                                 action = s3db.pr_Contacts,
                                 )
@@ -822,7 +822,7 @@ def config(settings):
                 else:
                     # Add-Person-Widget (family members)
                     search_fields = ("first_name", "last_name")
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                method = "search_ac",
                                action = s3db.pr_PersonSearchAutocomplete(search_fields),
                                )
@@ -1437,7 +1437,7 @@ def config(settings):
             if r.controller == "dvr":
 
                 # Set contacts-method to retain the tab
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "contacts",
                                 action = s3db.pr_Contacts,
                                 )
@@ -3232,7 +3232,7 @@ def config(settings):
 
         if "viewing" in current.request.get_vars:
             # Set contacts-method to retain the tab
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "contacts",
                             action = s3db.pr_Contacts,
                             )
@@ -3251,7 +3251,7 @@ def config(settings):
             if not r.id:
                 from .stats import PerformanceIndicatorExport
                 pitype = get_ui_options().get("response_performance_indicators")
-                s3db.set_method("dvr", "response_action",
+                s3db.set_method("dvr_response_action",
                                 method = "indicators",
                                 action = PerformanceIndicatorExport(pitype),
                                 )

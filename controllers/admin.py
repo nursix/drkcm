@@ -186,19 +186,19 @@ def user():
 
     # Custom Methods
     set_method = s3db.set_method
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "roles",
                action = s3base.S3RoleManager)
 
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "disable",
                action = disable_user)
 
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "approve",
                action = approve_user)
 
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "link",
                action = link_user)
 

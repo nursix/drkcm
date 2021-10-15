@@ -38,7 +38,7 @@ def human_resource():
     """
 
     # Custom method for Service Record
-    s3db.set_method("hrm", "human_resource",
+    s3db.set_method("hrm_human_resource",
                     method = "form",
                     action = s3db.vol_service_record,
                     )

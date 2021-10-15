@@ -3814,7 +3814,7 @@ class DVRCaseAppointmentModel(DataModel):
             )
 
         # Custom methods
-        self.set_method("dvr", "case_appointment",
+        self.set_method("dvr_case_appointment",
                         method = "manage",
                         action = DVRManageAppointments,
                         )
@@ -4780,11 +4780,11 @@ class DVRCaseAllowanceModel(DataModel):
                   onvalidation = self.allowance_onvalidation,
                   )
 
-        set_method("dvr", "allowance",
+        set_method("dvr_allowance",
                    method = "register",
                    action = DVRRegisterPayment,
                    )
-        set_method("dvr", "allowance",
+        set_method("dvr_allowance",
                    method = "manage",
                    action = DVRManageAllowance,
                    )
@@ -5175,7 +5175,7 @@ class DVRCaseEventModel(DataModel):
                   )
 
         # Custom method for event registration
-        self.set_method("dvr", "case_event",
+        self.set_method("dvr_case_event",
                         method = "register",
                         action = DVRRegisterCaseEvent,
                         )
@@ -5525,7 +5525,7 @@ class DVRCaseEvaluationModel(DataModel):
                      )
 
         # Custom Report Method
-        #self.set_method("org", "capacity_assessment_data",
+        #self.set_method("org_capacity_assessment_data",
         #                method = "custom_report",
         #                action = org_CapacityReport())
 

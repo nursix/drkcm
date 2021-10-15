@@ -1251,11 +1251,11 @@ class InventoryTrackingModel(DataModel):
 
         # Custom methods
         # Generate Consignment Note
-        set_method("inv", "send",
+        set_method("inv_send",
                    method = "form",
                    action = self.inv_send_form)
 
-        set_method("inv", "send",
+        set_method("inv_send",
                    method = "timeline",
                    action = self.inv_timeline)
 
@@ -1566,15 +1566,15 @@ class InventoryTrackingModel(DataModel):
 
         # Custom methods
         # Print Forms
-        set_method("inv", "recv",
+        set_method("inv_recv",
                    method = "form",
                    action = self.inv_recv_form)
 
-        set_method("inv", "recv",
+        set_method("inv_recv",
                    method = "cert",
                    action = self.inv_recv_donation_cert)
 
-        set_method("inv", "recv",
+        set_method("inv_recv",
                    method = "timeline",
                    action = self.inv_timeline)
 

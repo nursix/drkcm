@@ -662,7 +662,7 @@ class OrgOrganisationModel(DataModel):
                   )
 
         # Custom Method for S3OrganisationAutocompleteWidget
-        self.set_method("org", "organisation",
+        self.set_method("org_organisation",
                         method = "search_ac",
                         action = self.org_search_ac)
 
@@ -1467,7 +1467,7 @@ class OrgOrganisationCapacityModel(DataModel):
                      )
 
         # Custom Report Method
-        self.set_method("org", "capacity_assessment_data",
+        self.set_method("org_capacity_assessment_data",
                         method = "custom_report",
                         action = org_CapacityReport())
 
@@ -1615,7 +1615,7 @@ class OrgOrganisationGroupModel(DataModel):
                             )
 
         # Custom Method to Assign Orgs
-        self.set_method("org", "group",
+        self.set_method("org_group",
                         method = "assign",
                         action = org_AssignMethod(component="membership"))
 
@@ -3303,19 +3303,19 @@ class OrgSiteModel(DataModel):
                                           )
 
         # Custom Method for S3SiteAutocompleteWidget
-        set_method("org", "site",
+        set_method("org_site",
                    method = "search_ac",
                    action = self.site_search_ac)
 
         # Custom Method for S3AddPersonWidget
         # @ToDo: One for HRMs
-        set_method("org", "site",
+        set_method("org_site",
                    method = "site_contact_person",
                    action = self.site_contact_person)
 
         # Custom Method to Assign HRs
         # - done in instances
-        #set_method("org", "site",
+        #set_method("org_site",
         #           method = "assign",
         #           action = self.hrm_AssignMethod(component="human_resource_site"))
 
@@ -4614,7 +4614,7 @@ class OrgFacilityModel(DataModel):
                   )
 
         # Custom Method to Assign HRs
-        self.set_method("org", "facility",
+        self.set_method("org_facility",
                         method = "assign",
                         action = self.hrm_AssignMethod(component="human_resource_site"))
 

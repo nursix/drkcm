@@ -412,7 +412,7 @@ class HospitalDataModel(DataModel):
                            )
 
         # Custom Method to Assign HRs
-        self.set_method("hms", "hospital",
+        self.set_method("hms_hospital",
                         method = "assign",
                         action = self.hrm_AssignMethod(component="human_resource_site"))
 

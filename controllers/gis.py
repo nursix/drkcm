@@ -296,13 +296,13 @@ def location():
     # Custom Methods
     set_method = s3db.set_method
     from core import S3ExportPOI, S3ImportPOI
-    set_method("gis", "location",
+    set_method("gis_location",
                method = "export_poi",
                action = S3ExportPOI())
-    set_method("gis", "location",
+    set_method("gis_location",
                method = "import_poi",
                action = S3ImportPOI())
-    set_method("gis", "location",
+    set_method("gis_location",
                method = "parents",
                action = s3_gis_location_parents)
 
@@ -1095,17 +1095,17 @@ def config():
 
     # Custom Methods to set as default
     set_method = s3db.set_method
-    set_method(module, resourcename,
+    set_method("gis_config",
                method = "default",
                action = config_default)
 
     # Custom Methods to enable/disable layers
-    set_method(module, resourcename,
-               component_name = "layer_entity",
+    set_method("gis_config",
+               component = "layer_entity",
                method = "enable",
                action = enable_layer)
-    set_method(module, resourcename,
-               component_name = "layer_entity",
+    set_method("gis_config",
+               component = "layer_entity",
                method = "disable",
                action = disable_layer)
 
@@ -1560,7 +1560,7 @@ def layer_entity():
         auth.permission.fail()
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_entity",
                     method = "disable",
                     action = disable_layer)
 
@@ -1621,7 +1621,7 @@ def layer_feature():
     """ RESTful CRUD controller """
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_feature",
                     method = "disable",
                     action = disable_layer)
 
@@ -1962,7 +1962,7 @@ def layer_arcrest():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_arcrest",
                     method = "enable",
                     action = enable_layer)
 
@@ -2095,7 +2095,7 @@ def layer_georss():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_georss",
                     method = "enable",
                     action = enable_layer)
 
@@ -2230,7 +2230,7 @@ def layer_kml():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    #s3db.set_method(module, resourcename,
+    #s3db.set_method("gis_layer_kml",
     #                method = "enable",
     #                action = enable_layer)
 
@@ -2297,7 +2297,7 @@ def layer_openweathermap():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_openweathermap",
                     method = "enable",
                     action = enable_layer)
 
@@ -2367,7 +2367,7 @@ def layer_shapefile():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_shapefile",
                     method = "enable",
                     action = enable_layer)
 
@@ -2563,7 +2563,7 @@ def layer_tms():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_tms",
                     method = "enable",
                     action = enable_layer)
 
@@ -2692,7 +2692,7 @@ def layer_wms():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_wms",
                     method = "enable",
                     action = enable_layer)
 
@@ -2758,7 +2758,7 @@ def layer_xyz():
         msg_list_empty = NO_LAYERS)
 
     # Custom Method
-    s3db.set_method(module, resourcename,
+    s3db.set_method("gis_layer_xyz",
                     method = "enable",
                     action = enable_layer)
 

@@ -380,13 +380,13 @@ class SyncRepositoryModel(DataModel):
                        )
 
         # REST Methods
-        set_method("sync", "repository",
+        set_method("sync_repository",
                    method = "now",
                    action = sync_now,
                    )
 
-        set_method("sync", "repository",
-                   component_name = "job",
+        set_method("sync_repository",
+                   component = "job",
                    method = "reset",
                    action = sync_job_reset,
                    )
@@ -635,7 +635,7 @@ class SyncDatasetModel(DataModel):
                   )
 
         # REST Methods
-        self.set_method("sync", "dataset",
+        self.set_method("sync_dataset",
                         method = "archive",
                         action = sync_CreateArchive,
                         )
