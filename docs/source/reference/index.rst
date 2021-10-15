@@ -8,3 +8,4 @@ Reference Guide
    current <current>
    services/index
    settings/index
+   models/index
