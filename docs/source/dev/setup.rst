@@ -66,12 +66,12 @@ To install web2py, clone it directly from GitHub:
    the clone - just remember to use the correct path in subsequent commands.
 
 Change into the *web2py* directory, and reset the repository (including
-all submodules) to the supported stable version (currently 2.21.1):
+all submodules) to the supported stable version (currently 2.21.2):
 
 .. code-block:: bash
 
    cd ~/web2py
-   git reset --hard 6da8479
+   git reset --hard 3190585
    git submodule update --recursive
 
 Installing Eden ASP
