@@ -13,8 +13,8 @@ The *current* object holds thread-local global variables. It can be imported int
    ===================================  =================  ============================================
    Attribute                            Type               Explanation
    ===================================  =================  ============================================
-   current.db                           DAL                the database (DAL)
-   :doc:`current.s3db <services/s3db>`  S3Model            the model loader (S3Model)
+   current.db                           DAL                the database
+   :doc:`current.s3db <services/s3db>`  DataModel          the model loader
    current.deployment_settings          S3Config           deployment settings
    :doc:`current.auth <services/auth>`  AuthS3             global authentication/authorisation service
    :doc:`current.gis <services/gis>`    GIS                global GIS service

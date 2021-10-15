@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" S3 Data Model Extensions
+""" Dynamic Table Models
 
     @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -27,7 +27,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3DynamicModel",
+__all__ = ("DynamicTableModel",
            "DYNAMIC_PREFIX",
            "SERIALIZABLE_OPTS",
            )
@@ -59,7 +59,7 @@ SERIALIZABLE_OPTS = ("autosync",
 DEFAULT = lambda: None
 
 # =============================================================================
-class S3DynamicModel(object):
+class DynamicTableModel(object):
     """
         Class representing a dynamic table model
     """

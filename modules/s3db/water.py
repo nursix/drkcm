@@ -35,7 +35,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3WaterModel(S3Model):
+class S3WaterModel(DataModel):
     """
         Water Sources
     """

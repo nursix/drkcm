@@ -88,7 +88,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class HRModel(S3Model):
+class HRModel(DataModel):
 
     names = ("hrm_department",
              "hrm_department_id",
@@ -1387,7 +1387,7 @@ class HRModel(S3Model):
             current.s3db.pr_update_affiliations(htable, row)
 
 # =============================================================================
-class HRSiteModel(S3Model):
+class HRSiteModel(DataModel):
 
     names = ("hrm_human_resource_site",)
 
@@ -1509,7 +1509,7 @@ class HRSiteModel(S3Model):
                                       )
 
 # =============================================================================
-class HRSalaryModel(S3Model):
+class HRSalaryModel(DataModel):
     """ Data Model to track salaries of staff """
 
     names = ("hrm_staff_level",
@@ -1741,7 +1741,7 @@ class hrm_OrgSpecificTypeRepresent(S3Represent):
             return name
 
 # =============================================================================
-class HRInsuranceModel(S3Model):
+class HRInsuranceModel(DataModel):
     """ Data Model to track insurance information of staff members """
 
     names = ("hrm_insurance",
@@ -1810,7 +1810,7 @@ class HRInsuranceModel(S3Model):
         return {}
 
 # =============================================================================
-class HRContractModel(S3Model):
+class HRContractModel(DataModel):
     """ Data model to track employment contract details of staff members """
 
     names = ("hrm_contract",
@@ -1863,7 +1863,7 @@ class HRContractModel(S3Model):
         return {}
 
 # =============================================================================
-class HRJobModel(S3Model):
+class HRJobModel(DataModel):
     """
         Unused
         @ToDo: If bringing back into use then Availability better as Person component not HR
@@ -2034,7 +2034,7 @@ class HRJobModel(S3Model):
                 }
 
 # =============================================================================
-class HRSkillModel(S3Model):
+class HRSkillModel(DataModel):
 
     names = ("hrm_skill_type",
              "hrm_skill",
@@ -4182,7 +4182,7 @@ def hrm_training_onaccept(form):
                 hrm_certification_onaccept(form)
 
 # =============================================================================
-class HREventStrategyModel(S3Model):
+class HREventStrategyModel(DataModel):
     """
         (Training) Events <> Strategies Link Table
     """
@@ -4211,7 +4211,7 @@ class HREventStrategyModel(S3Model):
         return {}
 
 # =============================================================================
-class HREventProgrammeModel(S3Model):
+class HREventProgrammeModel(DataModel):
     """
         (Training) Events <> Programmes Link Table
     """
@@ -4240,7 +4240,7 @@ class HREventProgrammeModel(S3Model):
         return {}
 
 # =============================================================================
-class HREventProjectModel(S3Model):
+class HREventProjectModel(DataModel):
     """
         (Training) Events <> Projects Link Table
     """
@@ -4269,7 +4269,7 @@ class HREventProjectModel(S3Model):
         return {}
 
 # =============================================================================
-class HREventAssessmentModel(S3Model):
+class HREventAssessmentModel(DataModel):
     """
         (Training) Events <> Data Collection Assessments Link Table
          Can be used for:
@@ -4316,7 +4316,7 @@ class HREventAssessmentModel(S3Model):
         return {}
 
 # =============================================================================
-class HRAppraisalModel(S3Model):
+class HRAppraisalModel(DataModel):
     """
         Appraisal for an HR
         - can be for a specific Mission or routine annual appraisal
@@ -4501,7 +4501,7 @@ class HRAppraisalModel(S3Model):
             db(db.doc_document.id == document_id).update(doc_id = doc_id)
 
 # =============================================================================
-class HRExperienceModel(S3Model):
+class HRExperienceModel(DataModel):
     """
         Record a person's work experience
     """
@@ -4681,7 +4681,7 @@ class HRExperienceModel(S3Model):
         return {}
 
 # =============================================================================
-class HRAwardModel(S3Model):
+class HRAwardModel(DataModel):
     """ Data model for staff awards """
 
     names = ("hrm_award_type",
@@ -4758,7 +4758,7 @@ class HRAwardModel(S3Model):
         return {}
 
 # =============================================================================
-class HRDisciplinaryActionModel(S3Model):
+class HRDisciplinaryActionModel(DataModel):
     """ Data model for staff disciplinary record """
 
     names = ("hrm_disciplinary_type",
@@ -4821,7 +4821,7 @@ class HRDisciplinaryActionModel(S3Model):
         return {}
 
 # =============================================================================
-class HRTagModel(S3Model):
+class HRTagModel(DataModel):
     """ Arbitrary Key:Value Tags for Human Resources """
 
     names = ("hrm_human_resource_tag",
@@ -4862,7 +4862,7 @@ class HRTagModel(S3Model):
         return {}
 
 # =============================================================================
-class HRProgrammeModel(S3Model):
+class HRProgrammeModel(DataModel):
     """
         Programmes
             - record Volunteer Hours
@@ -5109,7 +5109,7 @@ class HRProgrammeModel(S3Model):
                 }
 
 # =============================================================================
-class HRShiftModel(S3Model):
+class HRShiftModel(DataModel):
     """
         Shifts
     """
@@ -5365,7 +5365,7 @@ class HRShiftModel(S3Model):
                 }
 
 # =============================================================================
-class HRDelegationModel(S3Model):
+class HRDelegationModel(DataModel):
     """
         Model to manage delegations of staff/volunteers to other
         organisations.

@@ -49,7 +49,7 @@ assess_property_type_opts = {
     }
 
 # =============================================================================
-class S3Assess24HModel(S3Model):
+class S3Assess24HModel(DataModel):
     """
         IFRC 24H Assessment form
     """
@@ -130,7 +130,7 @@ class S3Assess24HModel(S3Model):
         return {}
 
 # =============================================================================
-class S3AssessBuildingModel(S3Model):
+class S3AssessBuildingModel(DataModel):
     """
         Building Damage Assessment form
     """
@@ -1006,7 +1006,7 @@ class S3AssessBuildingModel(S3Model):
                         )
 
 # =============================================================================
-class S3AssessCanvassModel(S3Model):
+class S3AssessCanvassModel(DataModel):
     """
         Building Canvassing form
     """
@@ -1091,7 +1091,7 @@ class S3AssessCanvassModel(S3Model):
         return {}
 
 # =============================================================================
-class S3AssessNeedsModel(S3Model):
+class S3AssessNeedsModel(DataModel):
     """
         Needs Assessment form
         - based on Iraqi Red Crescent requirements

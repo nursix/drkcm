@@ -47,7 +47,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class SyncConfigModel(S3Model):
+class SyncConfigModel(DataModel):
     """ Model to store local sync configuration """
 
     names = ("sync_config",
@@ -113,7 +113,7 @@ class SyncConfigModel(S3Model):
         return {}
 
 # =============================================================================
-class SyncStatusModel(S3Model):
+class SyncStatusModel(DataModel):
     """ Model to store the current sync module status """
 
     names = ("sync_status",
@@ -148,7 +148,7 @@ class SyncStatusModel(S3Model):
         return {}
 
 # =============================================================================
-class SyncRepositoryModel(S3Model):
+class SyncRepositoryModel(DataModel):
     """ Model representing a peer repository """
 
     names = ("sync_repository",
@@ -555,7 +555,7 @@ class SyncRepositoryModel(S3Model):
         return URL(c="sync", f="repository", args=["[id]", create_next])
 
 # =============================================================================
-class SyncDatasetModel(S3Model):
+class SyncDatasetModel(DataModel):
     """ Model representing a public data set """
 
     names = ("sync_dataset",
@@ -850,7 +850,7 @@ class SyncDatasetModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class SyncLogModel(S3Model):
+class SyncLogModel(DataModel):
     """ Model for the Sync log """
 
     names = ("sync_log",
@@ -914,7 +914,7 @@ class SyncLogModel(S3Model):
         return {}
 
 # =============================================================================
-class SyncTaskModel(S3Model):
+class SyncTaskModel(DataModel):
 
     names = ("sync_task",
              "sync_resource_filter",
@@ -1312,7 +1312,7 @@ class SyncTaskModel(S3Model):
                 db(ttable.id == task_id).update(last_push=None)
 
 # =============================================================================
-class SyncScheduleModel(S3Model):
+class SyncScheduleModel(DataModel):
     """ Model for automatic synchronization schedule """
 
     names = ("sync_job",

@@ -101,7 +101,7 @@ from .req import req_timeframe
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class ProjectModel(S3Model):
+class ProjectModel(DataModel):
     """
         Project Model
 
@@ -1091,7 +1091,7 @@ class ProjectModel(S3Model):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class ProjectActivityModel(S3Model):
+class ProjectActivityModel(DataModel):
     """
         Project Activity Model
 
@@ -1699,7 +1699,7 @@ class ProjectActivityModel(S3Model):
             return None
 
 # =============================================================================
-class ProjectActivityTypeModel(S3Model):
+class ProjectActivityTypeModel(DataModel):
     """
         Project Activity Type Model
 
@@ -1858,7 +1858,7 @@ class ProjectActivityTypeModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectActivityPersonModel(S3Model):
+class ProjectActivityPersonModel(DataModel):
     """
         Project Activity Person Model
 
@@ -1923,7 +1923,7 @@ class ProjectActivityPersonModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectActivityOrganisationModel(S3Model):
+class ProjectActivityOrganisationModel(DataModel):
     """
         Project Activity Organisation Model
 
@@ -1990,7 +1990,7 @@ class ProjectActivityOrganisationModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectActivityOrganisationGroupModel(S3Model):
+class ProjectActivityOrganisationGroupModel(DataModel):
     """
         Project Activity Organisation Group Model
 
@@ -2030,7 +2030,7 @@ class ProjectActivityOrganisationGroupModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectActivityDemographicsModel(S3Model):
+class ProjectActivityDemographicsModel(DataModel):
     """
         Project Activity Demographics Model
 
@@ -2096,7 +2096,7 @@ class ProjectActivityDemographicsModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectActivityItemModel(S3Model):
+class ProjectActivityItemModel(DataModel):
     """
         Project Activity Item Model
 
@@ -2159,7 +2159,7 @@ $.filterOptionsS3({
         return {}
 
 # =============================================================================
-class ProjectActivitySectorModel(S3Model):
+class ProjectActivitySectorModel(DataModel):
     """
         Project Activity Sector Model
 
@@ -2197,7 +2197,7 @@ class ProjectActivitySectorModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectActivityTagModel(S3Model):
+class ProjectActivityTagModel(DataModel):
     """
         Activity Tags
     """
@@ -2240,7 +2240,7 @@ class ProjectActivityTagModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectAnnualBudgetModel(S3Model):
+class ProjectAnnualBudgetModel(DataModel):
     """
         Project Budget Model
 
@@ -2316,7 +2316,7 @@ class ProjectAnnualBudgetModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectBeneficiaryModel(S3Model):
+class ProjectBeneficiaryModel(DataModel):
     """
         Project Beneficiary Model
         - depends on Stats module
@@ -2738,7 +2738,7 @@ class ProjectBeneficiaryModel(S3Model):
                 )
 
 # =============================================================================
-class ProjectCampaignModel(S3Model):
+class ProjectCampaignModel(DataModel):
     """
         Project Campaign Model
         - used for TERA integration:
@@ -3019,7 +3019,7 @@ class ProjectCampaignModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectFrameworkModel(S3Model):
+class ProjectFrameworkModel(DataModel):
     """
         Project Framework Model
     """
@@ -3163,7 +3163,7 @@ class ProjectFrameworkModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectHazardModel(S3Model):
+class ProjectHazardModel(DataModel):
     """
         Project Hazard Model
     """
@@ -3261,7 +3261,7 @@ class ProjectHazardModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectHRModel(S3Model):
+class ProjectHRModel(DataModel):
     """
         Optionally link Projects <> Human Resources
     """
@@ -3358,7 +3358,7 @@ class ProjectHRModel(S3Model):
             form.errors.human_resource_id = current.T("Record already exists")
 
 # =============================================================================
-class ProjectIndicatorModel(S3Model):
+class ProjectIndicatorModel(DataModel):
     """
         Project Indicator Model
         - depends on Stats module
@@ -3625,7 +3625,7 @@ class ProjectIndicatorModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectL10nModel(S3Model):
+class ProjectL10nModel(DataModel):
     """
         Project L10n Model
 
@@ -3651,7 +3651,7 @@ class ProjectL10nModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectLocationModel(S3Model):
+class ProjectLocationModel(DataModel):
     """
         Project Location Model
         - these can simply be ways to display a Project on the Map
@@ -4076,7 +4076,7 @@ class ProjectLocationModel(S3Model):
                 person.update_record(realm_entity = realm_entity)
 
 # =============================================================================
-class ProjectMasterKeyModel(S3Model):
+class ProjectMasterKeyModel(DataModel):
     """
         Link Projects to Master Keys for Mobile Data Entry
     """
@@ -4103,7 +4103,7 @@ class ProjectMasterKeyModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectOrganisationModel(S3Model):
+class ProjectOrganisationModel(DataModel):
     """
         Project Organisation Model
     """
@@ -4336,7 +4336,7 @@ class ProjectOrganisationModel(S3Model):
             return None
 
 # =============================================================================
-class ProjectPlanningModel(S3Model):
+class ProjectPlanningModel(DataModel):
     """
         Project Planning Model:
             Goals (Objectives)
@@ -9827,7 +9827,7 @@ def project_ProgressReport(r, **attr):
 #        r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class ProjectProgrammeModel(S3Model):
+class ProjectProgrammeModel(DataModel):
     """
         Programmes Model
     """
@@ -9942,7 +9942,7 @@ class ProjectProgrammeModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectProgrammeProjectModel(S3Model):
+class ProjectProgrammeProjectModel(DataModel):
     """
         Project Programme<>Project Model
     """
@@ -9967,7 +9967,7 @@ class ProjectProgrammeProjectModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectSectorModel(S3Model):
+class ProjectSectorModel(DataModel):
     """
         Project Sector Model
     """
@@ -10010,7 +10010,7 @@ class ProjectSectorModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectStatusModel(S3Model):
+class ProjectStatusModel(DataModel):
     """
         Project Status Model
         - used by both Projects & Activities
@@ -10085,7 +10085,7 @@ class ProjectStatusModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectStrategyModel(S3Model):
+class ProjectStrategyModel(DataModel):
     """
         Project Strategy Model
         - currently just used by IFRC to hold AoF/SFI (& then only for (Training) Events for Bangkok CCST)
@@ -10161,7 +10161,7 @@ class ProjectStrategyModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectTagModel(S3Model):
+class ProjectTagModel(DataModel):
     """
         Project Tags
     """
@@ -10204,7 +10204,7 @@ class ProjectTagModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectThemeModel(S3Model):
+class ProjectThemeModel(DataModel):
     """
         Project Theme Model
     """
@@ -10502,7 +10502,7 @@ class ProjectThemeModel(S3Model):
                                  percentage = percentages[theme_id])
 
 # =============================================================================
-class ProjectDRRModel(S3Model):
+class ProjectDRRModel(DataModel):
     """
         Models for DRR (Disaster Risk Reduction) extensions
     """
@@ -10555,7 +10555,7 @@ class ProjectDRRModel(S3Model):
         return ", ".join(vals)
 
 # =============================================================================
-class ProjectDRRPPModel(S3Model):
+class ProjectDRRPPModel(DataModel):
     """
         Models for DRR Project Portal extensions
         - injected into custom Project CRUD forms
@@ -10776,7 +10776,7 @@ class ProjectDRRPPModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class ProjectTargetModel(S3Model):
+class ProjectTargetModel(DataModel):
     """
         Project Target Model
     """
@@ -10819,7 +10819,7 @@ class ProjectTargetModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectTaskModel(S3Model):
+class ProjectTaskModel(DataModel):
     """
         Project Task Model
 
@@ -12186,7 +12186,7 @@ class ProjectTaskModel(S3Model):
             db(query).update(time_actual = hours)
 
 # =============================================================================
-class ProjectTaskForumModel(S3Model):
+class ProjectTaskForumModel(DataModel):
     """
         Shares for Tasks
     """
@@ -12226,7 +12226,7 @@ class ProjectTaskForumModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectTaskHRMModel(S3Model):
+class ProjectTaskHRMModel(DataModel):
     """
         Project Task HRM Model
 
@@ -12275,7 +12275,7 @@ class ProjectTaskHRMModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectTaskTagModel(S3Model):
+class ProjectTaskTagModel(DataModel):
     """
         Task Tags
     """
@@ -12317,7 +12317,7 @@ class ProjectTaskTagModel(S3Model):
         return {}
 
 # =============================================================================
-class ProjectWindowModel(S3Model):
+class ProjectWindowModel(DataModel):
     """
         Project Window Model
 

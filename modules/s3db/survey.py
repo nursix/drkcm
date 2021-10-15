@@ -102,7 +102,7 @@ else:
     _debug = lambda m: None
 
 # =============================================================================
-class S3SurveyTemplateModel(S3Model):
+class S3SurveyTemplateModel(DataModel):
     """
         Template model
 
@@ -765,7 +765,7 @@ def survey_build_template_summary(template_id):
     return form
 
 # =============================================================================
-class S3SurveyQuestionModel(S3Model):
+class S3SurveyQuestionModel(DataModel):
     """
         Question Model
     """
@@ -1231,7 +1231,7 @@ def survey_updateMetaData(record, qtype, metadata):
         widget_obj.insertChildren(record, metadata_list)
 
 # =============================================================================
-class S3SurveyFormatterModel(S3Model):
+class S3SurveyFormatterModel(DataModel):
     """
         The survey_formatter table defines the order in which the questions
         will be laid out when a formatted presentation is used.
@@ -1402,7 +1402,7 @@ def survey_getQstnLayoutRules(template_id, section_id, method = 1):
     return row_list
 
 # =============================================================================
-class S3SurveySeriesModel(S3Model):
+class S3SurveySeriesModel(DataModel):
     """
         Series Model
 
@@ -2402,7 +2402,7 @@ def buildSeriesSummary(series_id, posn_offset):
     return form
 
 # =============================================================================
-class S3SurveyCompleteModel(S3Model):
+class S3SurveyCompleteModel(DataModel):
     """
         Completed Surveys Model
     """
@@ -3081,7 +3081,7 @@ def getLocationList(series_id):
     return response_locations
 
 # =============================================================================
-class S3SurveyTranslateModel(S3Model):
+class S3SurveyTranslateModel(DataModel):
     """
         Translations Model
     """

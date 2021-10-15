@@ -119,7 +119,7 @@ def inv_itn_label():
     return current.T("CTN")
 
 # =============================================================================
-class InvWarehouseModel(S3Model):
+class InvWarehouseModel(DataModel):
 
     names = ("inv_warehouse",
              "inv_warehouse_type",
@@ -407,7 +407,7 @@ class InvWarehouseModel(S3Model):
         current.s3db.org_update_affiliations("inv_warehouse", form.vars)
 
 # =============================================================================
-class InventoryModel(S3Model):
+class InventoryModel(DataModel):
     """
         Inventory Management
 
@@ -930,7 +930,7 @@ $.filterOptionsS3({
                 item.data.quantity = duplicate.quantity
 
 # =============================================================================
-class InventoryTrackingModel(S3Model):
+class InventoryTrackingModel(DataModel):
     """
         A module to manage the shipment of inventory items
         - Sent Items
@@ -4060,7 +4060,7 @@ def inv_recv_pdf_footer(r):
     return None
 
 # =============================================================================
-class InventoryAdjustModel(S3Model):
+class InventoryAdjustModel(DataModel):
     """
         A module to manage the shipment of inventory items
         - Sent Items

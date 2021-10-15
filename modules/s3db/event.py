@@ -86,7 +86,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3EventModel(S3Model):
+class S3EventModel(DataModel):
     """
         Event Model
 
@@ -938,7 +938,7 @@ class S3EventModel(S3Model):
                 db(table.id == row.post_id).update(expired=True)
 
 # =============================================================================
-class S3EventLocationModel(S3Model):
+class S3EventLocationModel(DataModel):
     """
         Event Locations model
         - locations for Events
@@ -984,7 +984,7 @@ class S3EventLocationModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventNameModel(S3Model):
+class S3EventNameModel(DataModel):
     """
         Event Names model
         - local names for Events
@@ -1023,7 +1023,7 @@ class S3EventNameModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventTagModel(S3Model):
+class S3EventTagModel(DataModel):
     """
         Event Tags model
         - tags for Events
@@ -1072,7 +1072,7 @@ class S3EventTagModel(S3Model):
         return {}
 
 # =============================================================================
-class S3IncidentModel(S3Model):
+class S3IncidentModel(DataModel):
     """
         Incidents
          - the primary unit at which things are managed:
@@ -2061,7 +2061,7 @@ class S3IncidentModel(S3Model):
         return output
 
 # =============================================================================
-class S3IncidentReportModel(S3Model):
+class S3IncidentReportModel(DataModel):
     """
         Incident Reports
          - reports about incidents
@@ -2266,7 +2266,7 @@ class S3IncidentReportModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventActivityModel(S3Model):
+class S3EventActivityModel(DataModel):
     """
         Link Project Activities to Events
     """
@@ -2302,7 +2302,7 @@ class S3EventActivityModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventRequestModel(S3Model):
+class S3EventRequestModel(DataModel):
     """
         Link Requests to Incidents &/or Events
     """
@@ -2341,7 +2341,7 @@ class S3EventRequestModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventResourceModel(S3Model):
+class S3EventResourceModel(DataModel):
     """
         Resources Assigned to Events/Incidents
         - depends on Stats module
@@ -2520,7 +2520,7 @@ class S3EventResourceModel(S3Model):
         return {}
 
 # =============================================================================
-class S3IncidentReportOrganisationGroupModel(S3Model):
+class S3IncidentReportOrganisationGroupModel(DataModel):
     """
         Links between Incident Reports & Organisation Groups
     """
@@ -2558,7 +2558,7 @@ class S3IncidentReportOrganisationGroupModel(S3Model):
         return {}
 
 # =============================================================================
-class S3IncidentLogModel(S3Model):
+class S3IncidentLogModel(DataModel):
     """
         Incident Logs
             - record of all changes
@@ -2661,7 +2661,7 @@ class S3IncidentLogModel(S3Model):
             current.msg.send_by_pe_id(pe_id, subject, message, contact_method="SMS")
 
 # =============================================================================
-class S3IncidentTypeModel(S3Model):
+class S3IncidentTypeModel(DataModel):
     """
         Incident Types
     """
@@ -2786,7 +2786,7 @@ class S3IncidentTypeModel(S3Model):
                 }
 
 # =============================================================================
-class S3IncidentTypeTagModel(S3Model):
+class S3IncidentTypeTagModel(DataModel):
     """
         Incident Type Tags
          - Key-Value extensions
@@ -2825,7 +2825,7 @@ class S3IncidentTypeTagModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventAlertModel(S3Model):
+class S3EventAlertModel(DataModel):
     """
         Alerts for Events/Incidents
 
@@ -2929,7 +2929,7 @@ class S3EventAlertModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventAssetModel(S3Model):
+class S3EventAssetModel(DataModel):
     """
         Link Assets to Incidents
     """
@@ -3154,7 +3154,7 @@ class S3EventAssetModel(S3Model):
                              )
 
 # =============================================================================
-class S3EventBookmarkModel(S3Model):
+class S3EventBookmarkModel(DataModel):
     """
         Bookmarks for Events &/or Incidents
         - the Incident bookmarks do NOT populate the Event's
@@ -3203,7 +3203,7 @@ class S3EventBookmarkModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventCMSModel(S3Model):
+class S3EventCMSModel(DataModel):
     """
         Link CMS Posts to Events &/or Incidents
     """
@@ -3282,7 +3282,7 @@ class S3EventCMSModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventCMSTagModel(S3Model):
+class S3EventCMSTagModel(DataModel):
     """
         Link (CMS) Tags to Events or Incidents (used in WACOP)
         - the Incident tags do NOT populate the Event's
@@ -3324,7 +3324,7 @@ class S3EventCMSTagModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventDCModel(S3Model):
+class S3EventDCModel(DataModel):
     """
         Link Data Collections to Events &/or Incidents
     """
@@ -3394,7 +3394,7 @@ class S3EventDCModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventExpenseModel(S3Model):
+class S3EventExpenseModel(DataModel):
     """
         Link Expenses to Incidents &/or Events
         - normally linked at the Incident level & just visible at the Event level
@@ -3443,7 +3443,7 @@ class S3EventExpenseModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventForumModel(S3Model):
+class S3EventForumModel(DataModel):
     """
         Shares for Events &/or Incidents
         - the Incident shares do NOT populate the Event's
@@ -3491,7 +3491,7 @@ class S3EventForumModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventHRModel(S3Model):
+class S3EventHRModel(DataModel):
     """
         Link Human Resources to Events/Incidents
     """
@@ -3743,7 +3743,7 @@ class S3EventHRModel(S3Model):
                              )
 
 # =============================================================================
-class S3EventTeamModel(S3Model):
+class S3EventTeamModel(DataModel):
     """ Link Teams to Events &/or Incidents """
 
     names = ("event_team_status",
@@ -3858,7 +3858,7 @@ class S3EventTeamModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventImpactModel(S3Model):
+class S3EventImpactModel(DataModel):
     """
         Link Events &/or Incidents with Impacts
     """
@@ -3919,7 +3919,7 @@ class S3EventImpactModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventMapModel(S3Model):
+class S3EventMapModel(DataModel):
     """
         Link Map Configs to Incidents
     """
@@ -3966,7 +3966,7 @@ class S3EventMapModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventNeedModel(S3Model):
+class S3EventNeedModel(DataModel):
     """
         Link Events &/or Incidents with Needs
     """
@@ -4024,7 +4024,7 @@ class S3EventNeedModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventNeedResponseModel(S3Model):
+class S3EventNeedResponseModel(DataModel):
     """
         Link Events &/or Incidents with Need Responses (Activity Groups)
     """
@@ -4082,7 +4082,7 @@ class S3EventNeedResponseModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventOrganisationModel(S3Model):
+class S3EventOrganisationModel(DataModel):
     """
         Link Organisations to Events &/or Incidents
     """
@@ -4155,7 +4155,7 @@ class S3EventOrganisationModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventProjectModel(S3Model):
+class S3EventProjectModel(DataModel):
     """
         Link Projects to Events
     """
@@ -4191,7 +4191,7 @@ class S3EventProjectModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventScenarioModel(S3Model):
+class S3EventScenarioModel(DataModel):
     """
         Scenario Model
 
@@ -4322,7 +4322,7 @@ class S3EventScenarioModel(S3Model):
                 }
 
 # =============================================================================
-class S3EventScenarioAssetModel(S3Model):
+class S3EventScenarioAssetModel(DataModel):
     """
         Link Scenarios to Assets
     """
@@ -4422,7 +4422,7 @@ class S3EventScenarioAssetModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventScenarioHRModel(S3Model):
+class S3EventScenarioHRModel(DataModel):
     """
         Link Scenarios to Human Resources
     """
@@ -4521,7 +4521,7 @@ class S3EventScenarioHRModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventScenarioOrganisationModel(S3Model):
+class S3EventScenarioOrganisationModel(DataModel):
     """
         Link Scenarios to Organisations
     """
@@ -4572,7 +4572,7 @@ class S3EventScenarioOrganisationModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventScenarioTaskModel(S3Model):
+class S3EventScenarioTaskModel(DataModel):
     """
         Link Scenarios to Tasks
 
@@ -4626,7 +4626,7 @@ class S3EventScenarioTaskModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventSiteModel(S3Model):
+class S3EventSiteModel(DataModel):
     """
         Link Sites (Facilities) to Incidents
     """
@@ -4741,7 +4741,7 @@ class S3EventSiteModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventShelterModel(S3Model):
+class S3EventShelterModel(DataModel):
     """
         Link Shelters to Events
     """
@@ -4813,7 +4813,7 @@ class S3EventShelterModel(S3Model):
         return {}
 
 # =============================================================================
-class S3EventSitRepModel(S3Model):
+class S3EventSitRepModel(DataModel):
     """
         Situation Reports
         - can be simple text/rich text
@@ -5176,7 +5176,7 @@ class S3EventSitRepModel(S3Model):
         db(db.event_sitrep.id == sitrep_id).update(table_id=table_id)
 
 # =============================================================================
-class S3EventTaskModel(S3Model):
+class S3EventTaskModel(DataModel):
     """
         Link Tasks to Incidents &/or Events
         - normally linked at the Incident level & just visible at the Event level

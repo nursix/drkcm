@@ -46,7 +46,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3IRSModel(S3Model):
+class S3IRSModel(DataModel):
 
     names = ("irs_icategory",
              "irs_ireport",
@@ -994,7 +994,7 @@ S3.timeline.now="''', now.isoformat(), '''"
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class S3IRSResponseModel(S3Model):
+class S3IRSResponseModel(DataModel):
     """
         Tables used when responding to Incident Reports
         - with HRMs &/or Vehicles

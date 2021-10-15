@@ -35,7 +35,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3DVIModel(S3Model):
+class S3DVIModel(DataModel):
 
     names = ("dvi_recreq",
              "dvi_body",

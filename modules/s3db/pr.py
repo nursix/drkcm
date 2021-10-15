@@ -146,7 +146,7 @@ OTHER_ROLE = 9
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class PRPersonEntityModel(S3Model):
+class PRPersonEntityModel(DataModel):
     """ Person Super-Entity """
 
     names = ("pr_pentity",
@@ -740,7 +740,7 @@ class PRPersonEntityModel(S3Model):
         return
 
 # =============================================================================
-class PRPersonModel(S3Model):
+class PRPersonModel(DataModel):
     """ Persons and Groups """
 
     names = ("pr_person",
@@ -2387,7 +2387,7 @@ class PRPersonModel(S3Model):
         return output
 
 # =============================================================================
-class PRPersonRelationModel(S3Model):
+class PRPersonRelationModel(DataModel):
     """
         Link table between Persons & Persons
         - can be used to provide non-hierarchical relationships
@@ -2428,7 +2428,7 @@ class PRPersonRelationModel(S3Model):
         return {}
 
 # =============================================================================
-class PRGroupModel(S3Model):
+class PRGroupModel(DataModel):
     """ Groups """
 
     names = ("pr_group_status",
@@ -3191,7 +3191,7 @@ class PRGroupModel(S3Model):
             return None
 
 # =============================================================================
-class PRGroupCompetencyModel(S3Model):
+class PRGroupCompetencyModel(DataModel):
     """
         Group Competency Model
         - Skills available in a Group
@@ -3239,7 +3239,7 @@ class PRGroupCompetencyModel(S3Model):
         return {}
 
 # =============================================================================
-class PRGroupLocationModel(S3Model):
+class PRGroupLocationModel(DataModel):
     """
         Group Location Model
         - Locations served by a Group
@@ -3290,7 +3290,7 @@ class PRGroupLocationModel(S3Model):
         return {}
 
 # =============================================================================
-class PRGroupTagModel(S3Model):
+class PRGroupTagModel(DataModel):
     """
         Group Tags
     """
@@ -3324,7 +3324,7 @@ class PRGroupTagModel(S3Model):
         return {}
 
 # =============================================================================
-class PRForumModel(S3Model):
+class PRForumModel(DataModel):
     """
         Forums - similar to Groups, they are collections of People, however
                  these are restricted to those with User Accounts
@@ -3695,7 +3695,7 @@ class PRForumModel(S3Model):
         redirect(URL(args=None))
 
 # =============================================================================
-class PRRealmModel(S3Model):
+class PRRealmModel(DataModel):
     """
         Realms
         - used to be able to share data across multiple realms
@@ -3734,7 +3734,7 @@ class PRRealmModel(S3Model):
         return {}
 
 # =============================================================================
-class PRAddressModel(S3Model):
+class PRAddressModel(DataModel):
     """ Addresses for Person Entities: Persons and Organisations """
 
     names = ("pr_address",
@@ -3996,7 +3996,7 @@ class PRAddressModel(S3Model):
                 db(mtable.id == member.id).update(location_id=location_id)
 
 # =============================================================================
-class PRContactModel(S3Model):
+class PRContactModel(DataModel):
     """
         Person Entity Contacts
         - for Persons, Groups, Organisations and Organisation Groups
@@ -4269,7 +4269,7 @@ class PRContactModel(S3Model):
         return
 
 # =============================================================================
-class PRImageModel(S3Model):
+class PRImageModel(DataModel):
     """ Images for Persons """
 
     names = ("pr_image",)
@@ -4514,7 +4514,7 @@ class PRImageModel(S3Model):
         current.s3db.pr_image_delete_all(row.image)
 
 # =============================================================================
-class PRPresenceModel(S3Model):
+class PRPresenceModel(DataModel):
     """
         Presence Log for Persons
 
@@ -4864,7 +4864,7 @@ class PRPresenceModel(S3Model):
                 db(db.pr_person.pe_id == pe_id).update(missing = False)
 
 # =============================================================================
-class PRAvailabilityModel(S3Model):
+class PRAvailabilityModel(DataModel):
     """
         Availability for Persons, Sites, Services, Assets, etc
         - will allow for automated rostering/matching
@@ -5305,7 +5305,7 @@ class PRAvailabilityModel(S3Model):
             db(table.id == record_id).update(**data)
 
 # =============================================================================
-class PRUnavailabilityModel(S3Model):
+class PRUnavailabilityModel(DataModel):
     """
         Allow people to mark times when they are unavailable
         - this is generally easier for longer-term volunteers than marking times
@@ -5363,7 +5363,7 @@ class PRUnavailabilityModel(S3Model):
         return {}
 
 # =============================================================================
-class PRDescriptionModel(S3Model):
+class PRDescriptionModel(DataModel):
     """
         Additional tables used mostly for DVI/MPR
     """
@@ -5797,7 +5797,7 @@ class PRDescriptionModel(S3Model):
         return
 
 # =============================================================================
-class PREducationModel(S3Model):
+class PREducationModel(DataModel):
     """ Education details for Persons """
 
     names = ("pr_education_level",
@@ -5984,7 +5984,7 @@ class PREducationModel(S3Model):
         return {}
 
 # =============================================================================
-class PRIdentityModel(S3Model):
+class PRIdentityModel(DataModel):
     """ Identities for Persons """
 
     names = ("pr_identity",)
@@ -6110,7 +6110,7 @@ class PRIdentityModel(S3Model):
         return {}
 
 # =============================================================================
-class PRLanguageModel(S3Model):
+class PRLanguageModel(DataModel):
     """
         Languages for Persons
         - alternate model to Skills for alternate UX
@@ -6177,7 +6177,7 @@ class PRLanguageModel(S3Model):
         return {}
 
 # =============================================================================
-class PROccupationModel(S3Model):
+class PROccupationModel(DataModel):
     """
         Model for a person's current occupations, catalog-based
         alternative to the free-text pr_person_details.occupation
@@ -6269,7 +6269,7 @@ class PROccupationModel(S3Model):
         return {}
 
 # =============================================================================
-class PRPersonDetailsModel(S3Model):
+class PRPersonDetailsModel(DataModel):
     """ Extra optional details for People """
 
     names = ("pr_person_details",
@@ -6496,7 +6496,7 @@ class PRPersonDetailsModel(S3Model):
                 }
 
 # =============================================================================
-class PRPersonLocationModel(S3Model):
+class PRPersonLocationModel(DataModel):
     """
         Person Location Model
         - Locations served by a Person
@@ -6547,7 +6547,7 @@ class PRPersonLocationModel(S3Model):
         return {}
 
 # =============================================================================
-class PRPersonTagModel(S3Model):
+class PRPersonTagModel(DataModel):
     """
         Person Tags
     """
@@ -6581,7 +6581,7 @@ class PRPersonTagModel(S3Model):
         return {}
 
 # =============================================================================
-class PRReligionModel(S3Model):
+class PRReligionModel(DataModel):
     """
         Model for religions
         - alternative for the simple religion field for when a full hiearchy is
@@ -6702,7 +6702,7 @@ class PRReligionModel(S3Model):
         return {}
 
 # =============================================================================
-class S3ImageLibraryModel(S3Model):
+class S3ImageLibraryModel(DataModel):
     """
         Image Model
 
@@ -6787,7 +6787,7 @@ class S3ImageLibraryModel(S3Model):
         dbset.delete()
 
 # =============================================================================
-class S3SavedFilterModel(S3Model):
+class S3SavedFilterModel(DataModel):
     """ Saved Filters """
 
     names = ("pr_filter",
@@ -6864,7 +6864,7 @@ class S3SavedFilterModel(S3Model):
             form.vars.query = query
 
 # =============================================================================
-class S3SubscriptionModel(S3Model):
+class S3SubscriptionModel(DataModel):
     """
         Model for Subscriptions & hence Notifications
         http://eden.sahanafoundation.org/wiki/S3/Notifications

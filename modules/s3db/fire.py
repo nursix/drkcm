@@ -38,7 +38,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3FireModel(S3Model):
+class S3FireModel(DataModel):
     """
         Fire Zones: Burn Perimeter, Burnt zone, Evacuation Zone, etc
     """
@@ -140,7 +140,7 @@ class S3FireModel(S3Model):
         return {}
 
 # =============================================================================
-class S3FireStationModel(S3Model):
+class S3FireStationModel(DataModel):
     """
         A Model to manage Fire Stations:
         http://eden.sahanafoundation.org/wiki/Deployments/Bombeiros

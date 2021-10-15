@@ -47,7 +47,7 @@ from ..s3dal import original_tablename
 from ..s3layouts import S3PopupLink
 
 # =============================================================================
-class AuthDomainApproverModel(S3Model):
+class AuthDomainApproverModel(DataModel):
 
     names = ("auth_organisation",)
 
@@ -110,7 +110,7 @@ class AuthDomainApproverModel(S3Model):
 
 
 # =============================================================================
-class AuthUserOptionsModel(S3Model):
+class AuthUserOptionsModel(DataModel):
     """ Model to store per-user configuration options """
 
     names = ("auth_user_options",)
@@ -153,7 +153,7 @@ class AuthUserOptionsModel(S3Model):
         return {}
 
 # =============================================================================
-class AuthConsentModel(S3Model):
+class AuthConsentModel(DataModel):
     """
         Model to track consent, e.g. to legitimise processing of personal
         data under GDPR rules.
@@ -495,7 +495,7 @@ class AuthConsentModel(S3Model):
         db(query).update(expires_on = today)
 
 # =============================================================================
-class AuthMasterKeyModel(S3Model):
+class AuthMasterKeyModel(DataModel):
     """
         Model to store Master Keys
         - used for Authentication from Mobile App to e.g. Surveys
@@ -1318,7 +1318,7 @@ def auth_user_options_get_osm(pe_id):
         return None
 
 # =============================================================================
-class AuthUserTempModel(S3Model):
+class AuthUserTempModel(DataModel):
     """
         Model to store complementary data for pending user accounts
         after self-registration

@@ -169,7 +169,7 @@ def req_timeframe():
                            )
 
 # =============================================================================
-class RequestModel(S3Model):
+class RequestModel(DataModel):
     """
         Model for Requests
     """
@@ -1662,7 +1662,7 @@ class RequestModel(S3Model):
         db(query).delete()
 
 # =============================================================================
-class RequestApproverModel(S3Model):
+class RequestApproverModel(DataModel):
     """
         Model for request approvers
     """
@@ -1749,7 +1749,7 @@ class RequestApproverModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestItemModel(S3Model):
+class RequestItemModel(DataModel):
     """
         Model for requested items
     """
@@ -2146,7 +2146,7 @@ $.filterOptionsS3({
             item.method = item.METHOD.UPDATE
 
 # =============================================================================
-class RequestSkillModel(S3Model):
+class RequestSkillModel(DataModel):
     """
         Modell for requested skills
     """
@@ -2433,7 +2433,7 @@ class RequestSkillModel(S3Model):
             return current.messages.UNKNOWN_OPT
 
 # =============================================================================
-class RequestRecurringModel(S3Model):
+class RequestRecurringModel(DataModel):
     """
         Adjuvant model to support request generation by scheduler
     """
@@ -2487,7 +2487,7 @@ class RequestRecurringModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsModel(S3Model):
+class RequestNeedsModel(DataModel):
     """
         Simple Requests Management System
         - Starts as Simple free text Needs
@@ -2644,7 +2644,7 @@ class RequestNeedsModel(S3Model):
                 }
 
 # =============================================================================
-class RequestNeedsActivityModel(S3Model):
+class RequestNeedsActivityModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Activities (Activity created to respond to Need)
@@ -2679,7 +2679,7 @@ class RequestNeedsActivityModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsContactModel(S3Model):
+class RequestNeedsContactModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Contacts (People)
@@ -2718,7 +2718,7 @@ class RequestNeedsContactModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsDemographicsModel(S3Model):
+class RequestNeedsDemographicsModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Demographics
@@ -2815,7 +2815,7 @@ class RequestNeedsDemographicsModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsItemsModel(S3Model):
+class RequestNeedsItemsModel(DataModel):
     """
         Simple Requests Management System
         - optional extension to support Items, but still not using Inventory-linked Requests
@@ -2913,7 +2913,7 @@ $.filterOptionsS3({
         return {}
 
 # =============================================================================
-class RequestNeedsSkillsModel(S3Model):
+class RequestNeedsSkillsModel(DataModel):
     """
         Simple Requests Management System
         - optional extension to support Skills, but still not using normal Requests
@@ -2986,7 +2986,7 @@ class RequestNeedsSkillsModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsLineModel(S3Model):
+class RequestNeedsLineModel(DataModel):
     """
         Simple Requests Management System
         - optional extension to support Demographics & Items within a single Line
@@ -3168,7 +3168,7 @@ $.filterOptionsS3({
 
 
 # =============================================================================
-class RequestNeedsOrganisationModel(S3Model):
+class RequestNeedsOrganisationModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Organisations
@@ -3213,7 +3213,7 @@ class RequestNeedsOrganisationModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsPersonModel(S3Model):
+class RequestNeedsPersonModel(DataModel):
     """
         Simple Requests Management System
         - optional link to People (used for assignments to Skills)
@@ -3281,7 +3281,7 @@ class RequestNeedsPersonModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsSectorModel(S3Model):
+class RequestNeedsSectorModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Sectors
@@ -3316,7 +3316,7 @@ class RequestNeedsSectorModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsSiteModel(S3Model):
+class RequestNeedsSiteModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Sites
@@ -3359,7 +3359,7 @@ class RequestNeedsSiteModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsTagModel(S3Model):
+class RequestNeedsTagModel(DataModel):
     """
         Needs Tags
     """
@@ -3409,7 +3409,7 @@ class RequestNeedsTagModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestNeedsResponseModel(S3Model):
+class RequestNeedsResponseModel(DataModel):
     """
         A Response to a Need
         - a group of Activities
@@ -3519,7 +3519,7 @@ class RequestNeedsResponseModel(S3Model):
                 }
 
 # =============================================================================
-class RequestNeedsResponseLineModel(S3Model):
+class RequestNeedsResponseLineModel(DataModel):
     """
         A Line within a Response to a Need
         - an Activity
@@ -3633,7 +3633,7 @@ $.filterOptionsS3({
         return {}
 
 # =============================================================================
-class RequestNeedsResponseOrganisationModel(S3Model):
+class RequestNeedsResponseOrganisationModel(DataModel):
     """
         Organisations involved in Activity Groups
     """
@@ -3689,7 +3689,7 @@ class RequestNeedsResponseOrganisationModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestTagModel(S3Model):
+class RequestTagModel(DataModel):
     """
         Request Tags
     """
@@ -3732,7 +3732,7 @@ class RequestTagModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestOrderItemModel(S3Model):
+class RequestOrderItemModel(DataModel):
     """
         Simple Item Ordering for Requests
         - for when Procurement model isn't being used
@@ -3803,7 +3803,7 @@ class RequestOrderItemModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestProjectModel(S3Model):
+class RequestProjectModel(DataModel):
     """
         Link Requests to Projects
     """
@@ -3835,7 +3835,7 @@ class RequestProjectModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestTaskModel(S3Model):
+class RequestTaskModel(DataModel):
     """
         Link Requests for Skills to Tasks
     """
@@ -3869,7 +3869,7 @@ class RequestTaskModel(S3Model):
         return {}
 
 # =============================================================================
-class RequestRequesterCategoryModel(S3Model):
+class RequestRequesterCategoryModel(DataModel):
     """
         Model to control which types of requester can request which items
         - used by RLPPTM
@@ -3908,7 +3908,7 @@ class RequestRequesterCategoryModel(S3Model):
         return {}
 
 # =============================================================================
-class CommitModel(S3Model):
+class CommitModel(DataModel):
     """
         Model for commits (pledges)
     """
@@ -4225,7 +4225,7 @@ class CommitModel(S3Model):
         req_update_commit_quantities_and_status(req)
 
 # =============================================================================
-class CommitItemModel(S3Model):
+class CommitItemModel(DataModel):
     """
         Model for committed (pledged) items
     """
@@ -4352,7 +4352,7 @@ class CommitItemModel(S3Model):
                 req_update_commit_quantities_and_status(req)
 
 # =============================================================================
-class CommitPersonModel(S3Model):
+class CommitPersonModel(DataModel):
     """
         Commit a named individual to a Request
 
@@ -4446,7 +4446,7 @@ class CommitPersonModel(S3Model):
         #req_skill_onaccept(None)
 
 # =============================================================================
-class CommitSkillModel(S3Model):
+class CommitSkillModel(DataModel):
     """
         Commit anonymous people to a Request
 

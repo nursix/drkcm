@@ -46,7 +46,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3DeploymentOrganisationModel(S3Model):
+class S3DeploymentOrganisationModel(DataModel):
     """
         Split into separate model to avoid circular deadlock in HRModel
     """
@@ -72,7 +72,7 @@ class S3DeploymentOrganisationModel(S3Model):
         return {}
 
 # =============================================================================
-class S3DeploymentModel(S3Model):
+class S3DeploymentModel(DataModel):
 
     names = ("deploy_mission",
              "deploy_mission_id",
@@ -842,7 +842,7 @@ class S3DeploymentModel(S3Model):
         s3db.resource("hrm_appraisal", id=link.appraisal_id).delete()
 
 # =============================================================================
-class S3DeploymentAlertModel(S3Model):
+class S3DeploymentAlertModel(DataModel):
 
     names = ("deploy_alert",
              "deploy_alert_recipient",

@@ -310,7 +310,7 @@ def get_cap_options():
     return cap_options
 
 # =============================================================================
-class CAPAlertModel(S3Model):
+class CAPAlertModel(DataModel):
     """ Model for the cap:alert container object """
 
     names = ("cap_alert",
@@ -1009,7 +1009,7 @@ $.filterOptionsS3({
         return repr_str
 
 # =============================================================================
-class CAPInfoModel(S3Model):
+class CAPInfoModel(DataModel):
 
     names = ("cap_info",
              "cap_info_id",
@@ -1707,7 +1707,7 @@ $.filterOptionsS3({
         return "[%s]" % sanitized
 
 # =============================================================================
-class CAPAreaModel(S3Model):
+class CAPAreaModel(DataModel):
 
     names = ("cap_area",
              "cap_area_represent",
@@ -2302,7 +2302,7 @@ class CAPAreaModel(S3Model):
                     #s3db.onaccept(ltable, link)
 
 # =============================================================================
-class CAPResourceModel(S3Model):
+class CAPResourceModel(DataModel):
 
     names = ("cap_resource",
              )
@@ -2562,7 +2562,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                 db(db.cap_resource.id == form_vars.id).update(alert_id=alert_id)
 
 # =============================================================================
-class CAPWarningPriorityModel(S3Model):
+class CAPWarningPriorityModel(DataModel):
 
     names = ("cap_warning_priority",
              "cap_warning_priority_id",
@@ -2827,7 +2827,7 @@ class CAPWarningPriorityModel(S3Model):
         return output
 
 # =============================================================================
-class CAPHistoryModel(S3Model):
+class CAPHistoryModel(DataModel):
     """ TODO docstring (what is this used for?) """
 
     names = ("cap_alert_history",
@@ -3719,7 +3719,7 @@ class CAPHistoryModel(S3Model):
         return {}
 
 # =============================================================================
-class CAPAlertingAuthorityModel(S3Model):
+class CAPAlertingAuthorityModel(DataModel):
     """
         Model for known Alerting Authorities
             - see http://alerting.worldweather.org
@@ -3890,7 +3890,7 @@ class CAPAlertingAuthorityModel(S3Model):
         return {}
 
 # =============================================================================
-class CAPMessageModel(S3Model):
+class CAPMessageModel(DataModel):
     """ Link Alerts to Messages """
 
     names = ("cap_alert_message",

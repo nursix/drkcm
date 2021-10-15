@@ -1594,7 +1594,7 @@ class S3ComponentTab(object):
         """
 
         # @todo: use component hook label/plural as fallback for title
-        #        (see S3Model.add_components)
+        #        (see DataModel.add_components)
         title, component = tab[:2] # 'component' can be method
 
         self.title = title

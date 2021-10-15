@@ -48,7 +48,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class DataCollectionTemplateModel(S3Model):
+class DataCollectionTemplateModel(DataModel):
     """
         Templates to use for Assessments / Surveys
         - uses the Dynamic Tables back-end to store Questions
@@ -977,7 +977,7 @@ class DataCollectionTemplateModel(S3Model):
         write_dict(w2pfilename, translations)
 
 # =============================================================================
-class DataCollectionModel(S3Model):
+class DataCollectionModel(DataModel):
     """
         Results of Assessments / Surveys
         - uses the Dynamic Tables back-end to store Answers

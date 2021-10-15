@@ -44,7 +44,7 @@ from gluon import *
 from ..core import *
 
 # =============================================================================
-class FinExpensesModel(S3Model):
+class FinExpensesModel(DataModel):
     """ Model for Expenses """
 
     names = ("fin_expense",
@@ -152,7 +152,7 @@ class FinExpensesModel(S3Model):
                 }
 
 # =============================================================================
-class FinVoucherModel(S3Model):
+class FinVoucherModel(DataModel):
     """ Model for Voucher Programs """
 
     names = ("fin_voucher_program",

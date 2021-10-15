@@ -89,7 +89,7 @@ INSTANCE_TYPES = {1: "prod",
                   }
 
 # =============================================================================
-class S3DNSModel(S3Model):
+class S3DNSModel(DataModel):
     """
         Domain Name System (DNS) Providers
         - super-entity
@@ -254,7 +254,7 @@ class S3GoDaddyDNSModel(S3DNSModel):
         return {}
 
 # =============================================================================
-class S3CloudModel(S3Model):
+class S3CloudModel(DataModel):
     """
         Clouds
         - super-entity
@@ -679,7 +679,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                                      )
 
 # =============================================================================
-class S3EmailProviderModel(S3Model):
+class S3EmailProviderModel(DataModel):
     """
         Email Providers (we just use Groups currently)
         - super-entity
@@ -883,7 +883,7 @@ class S3GoogleEmailModel(S3EmailProviderModel):
         os.unlink(creds_path)
 
 # =============================================================================
-class S3SMTPModel(S3Model):
+class S3SMTPModel(DataModel):
     """
         SMTP Smart Hosts
         - tested with:
@@ -961,7 +961,7 @@ class S3SMTPModel(S3Model):
                 }
 
 # =============================================================================
-class S3SetupDeploymentModel(S3Model):
+class S3SetupDeploymentModel(DataModel):
 
     names = ("setup_deployment",
              "setup_deployment_id",
@@ -2281,7 +2281,7 @@ dropdown.change(function() {
                      )
 
 # =============================================================================
-class S3SetupMonitorModel(S3Model):
+class S3SetupMonitorModel(DataModel):
 
     names = ("setup_monitor_server",
              "setup_monitor_check",

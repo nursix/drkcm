@@ -98,7 +98,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class OrgOrganisationModel(S3Model):
+class OrgOrganisationModel(DataModel):
     """
         Organisations
     """
@@ -1130,7 +1130,7 @@ class OrgOrganisationModel(S3Model):
         return json.dumps(output, separators=SEPARATORS)
 
 # =============================================================================
-class OrgOrganisationNameModel(S3Model):
+class OrgOrganisationNameModel(DataModel):
     """
         Organsiation Names model
         - local names/acronyms for Organisations
@@ -1172,7 +1172,7 @@ class OrgOrganisationNameModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgOrganisationBranchModel(S3Model):
+class OrgOrganisationBranchModel(DataModel):
     """
         Organisation Branches
     """
@@ -1377,7 +1377,7 @@ class OrgOrganisationBranchModel(S3Model):
             org_update_affiliations("org_organisation_branch", record)
 
 # =============================================================================
-class OrgOrganisationCapacityModel(S3Model):
+class OrgOrganisationCapacityModel(DataModel):
     """
         (Branch) Organisational Capacity Assessment
         - Flexible Questions (Dynamic Data Model)
@@ -1476,7 +1476,7 @@ class OrgOrganisationCapacityModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgOrganisationGroupModel(S3Model):
+class OrgOrganisationGroupModel(DataModel):
     """
         Organisation Group Model
         - 'Coalitions' or 'Networks'
@@ -1728,7 +1728,7 @@ class OrgOrganisationGroupModel(S3Model):
             org_update_affiliations("org_group_membership", record)
 
 # =============================================================================
-class OrgOrganisationGroupPersonModel(S3Model):
+class OrgOrganisationGroupPersonModel(DataModel):
     """
         Link table between Organisation Groups & Persons
     """
@@ -1812,7 +1812,7 @@ class OrgOrganisationGroupPersonModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgOrganisationGroupTeamModel(S3Model):
+class OrgOrganisationGroupTeamModel(DataModel):
     """
         Link table between Organisation Groups & Teams
     """
@@ -1882,7 +1882,7 @@ class OrgOrganisationGroupTeamModel(S3Model):
                                             )
 
 # =============================================================================
-class OrgOrganisationLocationModel(S3Model):
+class OrgOrganisationLocationModel(DataModel):
     """
         Organisation Location Model
         - Locations served by an Organisation
@@ -1933,7 +1933,7 @@ class OrgOrganisationLocationModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgOrganisationOrganisationModel(S3Model):
+class OrgOrganisationOrganisationModel(DataModel):
     """
         Link table between Organisations & Organisations
         - can be used to provide non-hierarchical relationships
@@ -2004,7 +2004,7 @@ class OrgOrganisationOrganisationModel(S3Model):
             return None
 
 # =============================================================================
-class OrgOrganisationResourceModel(S3Model):
+class OrgOrganisationResourceModel(DataModel):
     """
         Organisation Resource Model
         - depends on Stats module
@@ -2164,7 +2164,7 @@ class OrgOrganisationResourceModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgOrganisationSectorModel(S3Model):
+class OrgOrganisationSectorModel(DataModel):
     """
         Organisation Sector Model
     """
@@ -2489,7 +2489,7 @@ class OrgOrganisationSectorModel(S3Model):
     #        return current.messages.UNKNOWN_OPT
 
 # =============================================================================
-class OrgServiceModel(S3Model):
+class OrgServiceModel(DataModel):
     """
         Organisation Service Model
     """
@@ -3062,7 +3062,7 @@ def org_service_root_service(service_id):
     return new_root
 
 # =============================================================================
-class OrgOrganisationTagModel(S3Model):
+class OrgOrganisationTagModel(DataModel):
     """
         Organisation Tags
     """
@@ -3107,7 +3107,7 @@ class OrgOrganisationTagModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgOrganisationTeamModel(S3Model):
+class OrgOrganisationTeamModel(DataModel):
     """
         Link table between Organisations & Teams
     """
@@ -3170,7 +3170,7 @@ class OrgOrganisationTeamModel(S3Model):
         org_update_affiliations("org_organisation_team", row.id)
 
 # =============================================================================
-class OrgOrganisationTypeTagModel(S3Model):
+class OrgOrganisationTypeTagModel(DataModel):
     """
         Organisation Type Tags
     """
@@ -3212,7 +3212,7 @@ class OrgOrganisationTypeTagModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgSiteModel(S3Model):
+class OrgSiteModel(DataModel):
     """
         Site Super-Entity
     """
@@ -3796,7 +3796,7 @@ class OrgSiteModel(S3Model):
         return json.dumps(output, separators=SEPARATORS)
 
 # =============================================================================
-class OrgSiteDetailsModel(S3Model):
+class OrgSiteDetailsModel(DataModel):
     """ Extra optional details for Sites """
 
     names = ("org_site_status",
@@ -3904,7 +3904,7 @@ class OrgSiteDetailsModel(S3Model):
                 }
 
 # =============================================================================
-class OrgSiteEventModel(S3Model):
+class OrgSiteEventModel(DataModel):
     """
         Events for Sites
         - Check-In/Check-Out
@@ -3969,7 +3969,7 @@ class OrgSiteEventModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgSiteGroupModel(S3Model):
+class OrgSiteGroupModel(DataModel):
     """ Link Sites to Org Groups """
 
     names = ("org_site_org_group",
@@ -3993,7 +3993,7 @@ class OrgSiteGroupModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgSiteNameModel(S3Model):
+class OrgSiteNameModel(DataModel):
     """
         Site Names model
         - local names/acronyms for Sites/Facilities
@@ -4031,7 +4031,7 @@ class OrgSiteNameModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgSiteShiftModel(S3Model):
+class OrgSiteShiftModel(DataModel):
     """
         Site Shifts model
     """
@@ -4073,7 +4073,7 @@ class OrgSiteShiftModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgSiteTagModel(S3Model):
+class OrgSiteTagModel(DataModel):
     """
         Site Tags
     """
@@ -4121,7 +4121,7 @@ class OrgSiteTagModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgSiteLocationModel(S3Model):
+class OrgSiteLocationModel(DataModel):
     """
         Site Location Model
         - Locations served by a Site/Facility
@@ -4186,7 +4186,7 @@ class OrgSiteLocationModel(S3Model):
         return {}
 
 # =============================================================================
-class OrgFacilityModel(S3Model):
+class OrgFacilityModel(DataModel):
     """
         Generic Site
     """
@@ -4852,7 +4852,7 @@ def org_facility_rheader(r, tabs=None):
     return rheader
 
 # =============================================================================
-class OrgRoomModel(S3Model):
+class OrgRoomModel(DataModel):
     """
         Rooms are a location within a Site
         - used by Asset module
@@ -4935,7 +4935,7 @@ class OrgRoomModel(S3Model):
                 }
 
 # =============================================================================
-class OrgOfficeModel(S3Model):
+class OrgOfficeModel(DataModel):
 
     names = ("org_office",
              "org_office_type",
@@ -5267,7 +5267,7 @@ class OrgOfficeModel(S3Model):
         org_update_affiliations("org_office", form.vars)
 
 # =============================================================================
-class OrgOfficeTypeTagModel(S3Model):
+class OrgOfficeTypeTagModel(DataModel):
     """
         Office Type Tags
     """

@@ -51,7 +51,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class VolunteerModel(S3Model):
+class VolunteerModel(DataModel):
 
     names = ("vol_details",)
 
@@ -102,7 +102,7 @@ class VolunteerModel(S3Model):
         return output
 
 # =============================================================================
-class VolunteerActivityModel(S3Model):
+class VolunteerActivityModel(DataModel):
     """
         Currently used by CRMADA
     """
@@ -586,7 +586,7 @@ def vol_activity_hours_onaccept(form):
                           active = active)
 
 # =============================================================================
-class VolunteerAwardModel(S3Model):
+class VolunteerAwardModel(DataModel):
 
     names = ("vol_award",
              "vol_volunteer_award",
@@ -738,7 +738,7 @@ class VolunteerAwardModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class VolunteerClusterModel(S3Model):
+class VolunteerClusterModel(DataModel):
     """
         Fucntionality to support the Philippines Red Cross
     """

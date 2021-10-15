@@ -41,7 +41,7 @@ from s3dal import Row
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class HospitalDataModel(S3Model):
+class HospitalDataModel(DataModel):
 
     names = ("hms_hospital",
              "hms_contact",
@@ -985,7 +985,7 @@ class HospitalDataModel(S3Model):
                                                 available_beds=a_beds)
 
 # =============================================================================
-class CholeraTreatmentCapabilityModel(S3Model):
+class CholeraTreatmentCapabilityModel(DataModel):
 
     names = ("hms_ctc",)
 
@@ -1132,7 +1132,7 @@ class CholeraTreatmentCapabilityModel(S3Model):
         return {}
 
 # =============================================================================
-class HospitalActivityReportModel(S3Model):
+class HospitalActivityReportModel(DataModel):
 
     names = ("hms_activity",)
 

@@ -54,8 +54,8 @@ if s3.debug:
     import s3db.water
 
 # Set up current.s3db
-from core import S3Model
-s3db = current.s3db = S3Model()
+from core import DataModel
+s3db = current.s3db = DataModel()
 
 # =============================================================================
 # Configure the auth models

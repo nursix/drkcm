@@ -1,8 +1,8 @@
 Defining Tables
 ===============
 
-Subclassing S3Model
--------------------
+Subclassing DataModel
+---------------------
 
 model()
 -------

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" S3 Data Model Extensions
+""" Data Models
 
     @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -27,7 +27,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Model",
+__all__ = ("DataModel",
            )
 
 import sys
@@ -41,20 +41,20 @@ from s3dal import Table, Field, original_tablename
 from ..tools import IS_ONE_OF
 from ..ui import S3ScriptItem
 
-from .dynamic import S3DynamicModel, DYNAMIC_PREFIX
+from .dynamic import DynamicTableModel, DYNAMIC_PREFIX
 from .resource import S3Resource
 
 DEFAULT = lambda: None
 MODULE_TYPE = type(sys)
 
 # =============================================================================
-class S3Model(object):
-    """ Base class for S3 models """
+class DataModel(object):
+    """ Base class for data models """
 
-    _s3model = True
+    _edenmodel = True
 
-    LOCK = "s3_model_lock"
-    LOAD = "s3_model_load"
+    LOCK = "eden_model_lock"
+    LOAD = "eden_model_load"
     DELETED = "deleted"
 
     def __init__(self, module=None):
@@ -225,7 +225,7 @@ class S3Model(object):
                 try:
                     p = __import__(package, fromlist=("DEFAULT",))
                 except ImportError:
-                    current.log.error("S3Model cannot import package %s" % package)
+                    current.log.error("DataModel cannot import package %s" % package)
                     continue
 
                 for k, v in p.__dict__.items():
@@ -275,7 +275,7 @@ class S3Model(object):
         prefix = tablename.split("_", 1)[0]
         if prefix == DYNAMIC_PREFIX:
             try:
-                found = S3DynamicModel(tablename).table
+                found = DynamicTableModel(tablename).table
             except AttributeError:
                 pass
         else:
@@ -292,12 +292,12 @@ class S3Model(object):
                         s3db.classes[tablename] = module
                         found = s3models[tablename]
                     else:
-                        # A name defined in an S3Model
+                        # A name defined in a DataModel
                         generic = []
                         loaded = False
                         for n in names:
                             model = s3models[n]
-                            if hasattr(model, "_s3model"):
+                            if hasattr(model, "_edenmodel"):
                                 if hasattr(model, "names"):
                                     if tablename in model.names:
                                         model(prefix)
@@ -328,7 +328,7 @@ class S3Model(object):
     @classmethod
     def load(cls, prefix):
         """
-            Helper function to load all S3Models in a module
+            Helper function to load all DataModels in a module
 
             @param prefix: the module prefix
         """
@@ -345,7 +345,7 @@ class S3Model(object):
             for n in module.__all__:
                 model = module.__dict__[n]
                 if type(model).__name__ == "type" and \
-                   issubclass(model, S3Model):
+                   issubclass(model, DataModel):
                     model(prefix)
                 elif n.startswith("%s_" % prefix):
                     s3[n] = model

@@ -65,7 +65,7 @@ um_patterns = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
                )
 
 # =============================================================================
-class S3SupplyModel(S3Model):
+class S3SupplyModel(DataModel):
     """
         Generic Supply functionality such as catalogs and items that is used
         across multiple modules.
@@ -1264,7 +1264,7 @@ $.filterOptionsS3({
                                    )
 
 # =============================================================================
-class S3SupplyDistributionModel(S3Model):
+class S3SupplyDistributionModel(DataModel):
     """
         Supply Distribution Model
         - depends on Stats module
@@ -1754,7 +1754,7 @@ class S3SupplyDistributionModel(S3Model):
             return list(range(date.year, end_date.year + 1))
 
 # =============================================================================
-class S3SupplyDistributionDVRActivityModel(S3Model):
+class S3SupplyDistributionDVRActivityModel(DataModel):
     """
         Model to link distributions to DVR activities / case activities
     """
@@ -1784,7 +1784,7 @@ class S3SupplyDistributionDVRActivityModel(S3Model):
         return {}
 
 # =============================================================================
-class S3SupplyPersonModel(S3Model):
+class S3SupplyPersonModel(DataModel):
     """
         Link table between People & Items
         - e.g. Donations

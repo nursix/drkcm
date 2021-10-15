@@ -35,7 +35,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3VehicleModel(S3Model):
+class S3VehicleModel(DataModel):
     """
         Vehicle Management Functionality
 

@@ -40,7 +40,7 @@ from gluon import *
 from ..core import *
 
 # =============================================================================
-class S3HierarchyModel(S3Model):
+class S3HierarchyModel(DataModel):
     """ Model for stored object hierarchies """
 
     names = ("s3_hierarchy",
@@ -72,7 +72,7 @@ class S3HierarchyModel(S3Model):
         return {}
 
 # =============================================================================
-class S3DashboardModel(S3Model):
+class S3DashboardModel(DataModel):
     """ Model for stored dashboard configurations """
 
     names = ("s3_dashboard",
@@ -171,7 +171,7 @@ class S3DashboardModel(S3Model):
             db(query).update(active = False)
 
 # =============================================================================
-class S3DynamicTablesModel(S3Model):
+class S3DynamicTablesModel(DataModel):
     """ Model for dynamic tables """
 
     names = ("s3_table",

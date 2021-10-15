@@ -80,7 +80,7 @@ asset_log_status = {"SET_BASE" : ASSET_LOG_SET_BASE,
                     }
 
 # =============================================================================
-class S3AssetModel(S3Model):
+class S3AssetModel(DataModel):
     """
         Asset Management
     """
@@ -832,7 +832,7 @@ $.filterOptionsS3({
             db(atable.id == asset_id).update(cond = form_vars.cond)
 
 # =============================================================================
-class S3AssetHRModel(S3Model):
+class S3AssetHRModel(DataModel):
     """
         Optionally link Assets to Human Resources
         - useful for staffing a vehicle
@@ -862,7 +862,7 @@ class S3AssetHRModel(S3Model):
         return {}
 
 # =============================================================================
-class S3AssetTeamModel(S3Model):
+class S3AssetTeamModel(DataModel):
     """
         Optionally link Assets to Teams
     """
@@ -891,7 +891,7 @@ class S3AssetTeamModel(S3Model):
         return {}
 
 # =============================================================================
-class S3AssetTelephoneModel(S3Model):
+class S3AssetTelephoneModel(DataModel):
     """
         Extend the Assset Module for Telephones:
             Usage Costs

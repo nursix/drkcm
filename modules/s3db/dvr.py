@@ -79,7 +79,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class DVRCaseModel(S3Model):
+class DVRCaseModel(DataModel):
     """
         Model for DVR Cases
 
@@ -870,7 +870,7 @@ class DVRCaseModel(S3Model):
                 dvr_case_household_size(row.id)
 
 # =============================================================================
-class DVRCaseFlagModel(S3Model):
+class DVRCaseFlagModel(DataModel):
     """ Model for Case Flags """
 
     names = ("dvr_case_flag",
@@ -1076,7 +1076,7 @@ class DVRCaseFlagModel(S3Model):
                 }
 
 # =============================================================================
-class DVRNeedsModel(S3Model):
+class DVRNeedsModel(DataModel):
     """ Model for Needs """
 
     names = ("dvr_need",
@@ -1216,7 +1216,7 @@ class DVRNeedsModel(S3Model):
                 }
 
 # =============================================================================
-class DVRNotesModel(S3Model):
+class DVRNotesModel(DataModel):
     """
         Model for Notes
     """
@@ -1323,7 +1323,7 @@ class DVRNotesModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRReferralModel(S3Model):
+class DVRReferralModel(DataModel):
     """
         Data model for case referrals (both incoming and outgoing)
     """
@@ -1399,7 +1399,7 @@ class DVRReferralModel(S3Model):
                 }
 
 # =============================================================================
-class DVRResponseModel(S3Model):
+class DVRResponseModel(DataModel):
     """ Model representing responses to case needs """
 
     names = ("dvr_response_action",
@@ -2360,7 +2360,7 @@ class DVRResponseModel(S3Model):
             action.update_record(response_theme_ids = theme_ids)
 
 # =============================================================================
-class DVRCaseActivityModel(S3Model):
+class DVRCaseActivityModel(DataModel):
     """ Model for Case Activities """
 
     names = ("dvr_activity",
@@ -3502,7 +3502,7 @@ class DVRCaseActivityModel(S3Model):
             activity.update_record(end_date = None)
 
 # =============================================================================
-class DVRCaseEffortModel(S3Model):
+class DVRCaseEffortModel(DataModel):
     """ Effort Log for Case / Case Activities """
 
     names = ("dvr_case_effort",
@@ -3630,7 +3630,7 @@ class DVRCaseEffortModel(S3Model):
                     effort.update_record(person_id = activity.person_id)
 
 # =============================================================================
-class DVRCaseAppointmentModel(S3Model):
+class DVRCaseAppointmentModel(DataModel):
     """ Model for Case Appointments """
 
     names = ("dvr_case_appointment",
@@ -4018,7 +4018,7 @@ class DVRCaseAppointmentModel(S3Model):
                     dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRHouseholdModel(S3Model):
+class DVRHouseholdModel(DataModel):
     """
         Model to document the household situation of a case
         - used by STL (DRK use pr_group_membership, SCPHIMS use DVRHouseholdMemberModel)
@@ -4228,7 +4228,7 @@ class DVRHouseholdModel(S3Model):
 
 
 # =============================================================================
-class DVRHouseholdMembersModel(S3Model):
+class DVRHouseholdMembersModel(DataModel):
     """
         Model to document the household situation of a case
         - used by SCPHIMS (DRK use pr_group_membership, STL use DVRHouseholdModel)
@@ -4282,7 +4282,7 @@ class DVRHouseholdMembersModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRCaseEconomyInformationModel(S3Model):
+class DVRCaseEconomyInformationModel(DataModel):
     """ Model for Household Economy Information """
 
     names = ("dvr_economy",
@@ -4507,7 +4507,7 @@ class DVRCaseEconomyInformationModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRLegalStatusModel(S3Model):
+class DVRLegalStatusModel(DataModel):
     """ Models to document the legal status of a beneficiary """
 
     names = ("dvr_residence_status_type",
@@ -4671,7 +4671,7 @@ class DVRLegalStatusModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRCaseAllowanceModel(S3Model):
+class DVRCaseAllowanceModel(DataModel):
     """ Model for Allowance Management """
 
     names = ("dvr_allowance",
@@ -4888,7 +4888,7 @@ class DVRCaseAllowanceModel(S3Model):
                     dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRCaseEventModel(S3Model):
+class DVRCaseEventModel(DataModel):
     """ Model representing monitoring events for cases """
 
     names = ("dvr_case_event_type",
@@ -5414,7 +5414,7 @@ class DVRCaseEventModel(S3Model):
                 dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRCaseEvaluationModel(S3Model):
+class DVRCaseEvaluationModel(DataModel):
     """
         Evaluation of Cases
         - Flexible Questions (Dynamic Data Model)
@@ -5534,7 +5534,7 @@ class DVRCaseEvaluationModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRVulnerabilityModel(S3Model):
+class DVRVulnerabilityModel(DataModel):
     """ Targeted vulnerabilities for activities """
 
     names = ("dvr_vulnerability_type",
@@ -5671,7 +5671,7 @@ class DVRVulnerabilityModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRActivityFundingModel(S3Model):
+class DVRActivityFundingModel(DataModel):
     """ Model to manage funding needs for cases """
 
     names = ("dvr_activity_funding",
@@ -5732,7 +5732,7 @@ class DVRActivityFundingModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRServiceContactModel(S3Model):
+class DVRServiceContactModel(DataModel):
     """ Model to track external service contacts of beneficiaries """
 
     names = ("dvr_service_contact",
@@ -5866,7 +5866,7 @@ class DVRServiceContactModel(S3Model):
         return {}
 
 # =============================================================================
-class DVRSiteActivityModel(S3Model):
+class DVRSiteActivityModel(DataModel):
     """ Model to record the activity of a site over time """
 
     names = ("dvr_site_activity",

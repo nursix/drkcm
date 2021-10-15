@@ -51,7 +51,7 @@ NIGHT = 1
 DAY_AND_NIGHT = 2
 
 # =============================================================================
-class CRShelterModel(S3Model):
+class CRShelterModel(DataModel):
 
     names = ("cr_shelter_type",
              "cr_shelter",
@@ -1030,7 +1030,7 @@ class CRShelterModel(S3Model):
         return current.messages["NONE"]
 
 # =============================================================================
-class CRShelterServiceModel(S3Model):
+class CRShelterServiceModel(DataModel):
     """ Model for Shelter Services """
 
     names = ("cr_shelter_service",
@@ -1131,7 +1131,7 @@ class CRShelterServiceModel(S3Model):
     #            }
 
 # =============================================================================
-class CRShelterInspectionModel(S3Model):
+class CRShelterInspectionModel(DataModel):
     """ Model for Shelter / Housing Unit Flags """
 
     names = ("cr_shelter_flag",
@@ -1599,7 +1599,7 @@ class CRShelterInspectionModel(S3Model):
             link.update_record(task_id = None)
 
 # =============================================================================
-class CRShelterRegistrationModel(S3Model):
+class CRShelterRegistrationModel(DataModel):
 
     names = ("cr_shelter_allocation",
              "cr_shelter_registration",

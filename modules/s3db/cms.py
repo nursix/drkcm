@@ -60,7 +60,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class CMSContentModel(S3Model):
+class CMSContentModel(DataModel):
     """
         Content Management System
     """
@@ -1060,7 +1060,7 @@ class CMSContentModel(S3Model):
         return output
 
 # =============================================================================
-class CMSContentForumModel(S3Model):
+class CMSContentForumModel(DataModel):
     """
         Link Posts to Forums to allow Users to Share posts
     """
@@ -1086,7 +1086,7 @@ class CMSContentForumModel(S3Model):
         return {}
 
 # =============================================================================
-class CMSContentMapModel(S3Model):
+class CMSContentMapModel(DataModel):
     """
         Use of the CMS to provide extra data about Map Layers
     """
@@ -1110,7 +1110,7 @@ class CMSContentMapModel(S3Model):
         return {}
 
 # =============================================================================
-class CMSContentOrgModel(S3Model):
+class CMSContentOrgModel(DataModel):
     """
         Link Posts to Organisations
     """
@@ -1138,7 +1138,7 @@ class CMSContentOrgModel(S3Model):
         return {}
 
 # =============================================================================
-class CMSContentOrgGroupModel(S3Model):
+class CMSContentOrgGroupModel(DataModel):
     """
         Link Posts to Organisation Groups (Coalitions/Networks)
     """
@@ -1162,7 +1162,7 @@ class CMSContentOrgGroupModel(S3Model):
         return {}
 
 # =============================================================================
-class CMSContentTeamModel(S3Model):
+class CMSContentTeamModel(DataModel):
     """
         Link Posts to Teams
     """
@@ -1190,7 +1190,7 @@ class CMSContentTeamModel(S3Model):
         return {}
 
 # =============================================================================
-class CMSContentUserModel(S3Model):
+class CMSContentUserModel(DataModel):
     """
         Link Posts to Users to allow Users to Bookmark posts
     """
@@ -1214,7 +1214,7 @@ class CMSContentUserModel(S3Model):
         return {}
 
 # =============================================================================
-class CMSContentRoleModel(S3Model):
+class CMSContentRoleModel(DataModel):
     """
         Link CMS posts to user roles
         - for role-specific announcements

@@ -36,7 +36,7 @@ from ..core import *
 #from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3SituationModel(S3Model):
+class S3SituationModel(DataModel):
     """
         Situation Super Entity & Presence tables for Trackable resources
     """

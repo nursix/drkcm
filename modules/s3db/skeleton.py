@@ -20,7 +20,7 @@
 # mandatory __all__ statement:
 #
 # - all classes in the name list will be initialized with the
-#   module prefix as only parameter. Subclasses of S3Model
+#   module prefix as only parameter. Subclasses of DataModel
 #   support this automatically, and run the model() method
 #   if the module is enabled in deployment_settings, otherwise
 #   the default() method.
@@ -42,14 +42,14 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-# Define a new class as subclass of S3Model
+# Define a new class as subclass of DataModel
 # => you can define multiple of these classes within the same module, each
 #    of them will be initialized only when one of the declared names gets
 #    requested from s3db
 # => remember to list all model classes in __all__, otherwise they won't ever
 #    be loaded.
 #
-class SkeletonDataModel(S3Model):
+class SkeletonDataModel(DataModel):
 
     # Declare all the names this model can auto-load, i.e. all tablenames
     # and all response.s3 names which are defined here. If you omit the "names"

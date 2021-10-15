@@ -56,7 +56,7 @@ from ..core import *
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3ChannelModel(S3Model):
+class S3ChannelModel(DataModel):
     """
         Messaging Channels
         - all Inbound & Outbound channels for messages are instances of this
@@ -356,7 +356,7 @@ class S3ChannelModel(S3Model):
         redirect(URL(f=fn))
 
 # =============================================================================
-class S3MessageModel(S3Model):
+class S3MessageModel(DataModel):
     """
         Messages
     """
@@ -537,7 +537,7 @@ class S3MessageModel(S3Model):
                 }
 
 # =============================================================================
-class S3MessageAttachmentModel(S3Model):
+class S3MessageAttachmentModel(DataModel):
     """
         Message Attachments
         - link table between msg_message & doc_document
@@ -562,7 +562,7 @@ class S3MessageAttachmentModel(S3Model):
         return {}
 
 # =============================================================================
-class S3MessageContactModel(S3Model):
+class S3MessageContactModel(DataModel):
     """
         Contact Form
     """
@@ -658,7 +658,7 @@ class S3MessageContactModel(S3Model):
         return {}
 
 # =============================================================================
-class S3MessageTagModel(S3Model):
+class S3MessageTagModel(DataModel):
     """
         Message Tags
     """
@@ -1126,7 +1126,7 @@ class S3GCMModel(S3ChannelModel):
         S3ChannelModel.channel_onaccept(form)
 
 # =============================================================================
-class S3ParsingModel(S3Model):
+class S3ParsingModel(DataModel):
     """
         Message Parsing Model
     """
@@ -1619,7 +1619,7 @@ class S3RSSModel(S3ChannelModel):
         return {}
 
 # =============================================================================
-class S3SMSModel(S3Model):
+class S3SMSModel(DataModel):
     """
         SMS: Short Message Service
 
@@ -1684,7 +1684,7 @@ class S3SMSModel(S3Model):
         return {}
 
 # =============================================================================
-class S3SMSOutboundModel(S3Model):
+class S3SMSOutboundModel(DataModel):
     """
         SMS: Short Message Service
         - Outbound Channels
@@ -1859,7 +1859,7 @@ class S3SMSOutboundModel(S3Model):
         return {}
 
 # =============================================================================
-class S3TropoModel(S3Model):
+class S3TropoModel(DataModel):
     """
         Tropo can be used to send & receive SMS, Twitter & XMPP
 
@@ -2008,7 +2008,7 @@ class S3TwilioModel(S3ChannelModel):
         return {}
 
 # =============================================================================
-class S3TwitterModel(S3Model):
+class S3TwitterModel(DataModel):
 
     names = ("msg_twitter_channel",
              "msg_twitter",
@@ -2507,7 +2507,7 @@ S3.timeline.now="''', now.isoformat(), '''"
         else:
             r.error(405, current.ERROR.BAD_METHOD)
 # =============================================================================
-class S3XFormsModel(S3Model):
+class S3XFormsModel(DataModel):
     """
         XForms are used by the ODK Collect mobile client
 
@@ -2535,7 +2535,7 @@ class S3XFormsModel(S3Model):
         return {}
 
 # =============================================================================
-class S3BaseStationModel(S3Model):
+class S3BaseStationModel(DataModel):
     """
         Base Stations (Cell Towers) are a type of Site
 

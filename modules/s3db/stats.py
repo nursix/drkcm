@@ -50,7 +50,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3StatsModel(S3Model):
+class S3StatsModel(DataModel):
     """
         Statistics Data
     """
@@ -231,7 +231,7 @@ class S3StatsModel(S3Model):
                 }
 
 # =============================================================================
-class S3StatsDemographicModel(S3Model):
+class S3StatsDemographicModel(DataModel):
     """
         Baseline Demographics
 
@@ -1222,7 +1222,7 @@ def stats_demographic_data_controller():
     return output
 
 # =============================================================================
-class S3StatsImpactModel(S3Model):
+class S3StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
@@ -1354,7 +1354,7 @@ class S3StatsImpactModel(S3Model):
                 }
 
 # =============================================================================
-class S3StatsPeopleModel(S3Model):
+class S3StatsPeopleModel(DataModel):
     """
         Used to record people in the CRMT (Community Resilience Mapping Tool) template
 
