@@ -1,9 +1,8 @@
-Standard Models - *s3db*
-========================
+Core Models
+===========
 
-This section describes built-in data and process models of Eden ASP.
-
-These models are implemented in the *modules/s3db* library.
+.. image:: er_core.png
+   :align: center
 
 .. toctree::
    :maxdepth: 2
@@ -13,5 +12,5 @@ These models are implemented in the *modules/s3db* library.
    Persons and Groups <pr>
    Organisations and Sites <org>
    Geospatial Information and Maps <gis>
-   Content Management <cms>
    Document Management <doc>
+   Content Management <cms>
