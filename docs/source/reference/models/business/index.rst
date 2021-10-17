@@ -9,5 +9,5 @@ These models are implemented in the *modules/s3db* library.
    :maxdepth: 2
    :caption: Contents:
 
-   Human Resources <hrm>
    Project Management <project>
+   Training Courses and Events <training>

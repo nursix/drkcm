@@ -8,4 +8,5 @@ functionality, unrelated to any specific type of business process.
    :maxdepth: 2
    :caption: Contents:
 
+   Human Resources <hrm>
    Content Management <cms>

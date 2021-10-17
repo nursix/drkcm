@@ -1,4 +1,4 @@
-Project Management - *project*
-==============================
+Project Management
+==================
 
 *to be written*
