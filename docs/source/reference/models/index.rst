@@ -5,5 +5,6 @@ Built-in Data Models
    :maxdepth: 2
    :caption: Contents:
 
-   Core Data Models <core/index>
+   Core Models <core/index>
+   Extensions <ext/index>
    Business Data Models <business/index>
