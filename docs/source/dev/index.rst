@@ -7,5 +7,6 @@ Building Applications
 
    Setting up for Development <setup>
    About Templates <settings>
+   About Controllers <controller>
    Implementing Templates <templates>
    Advanced Topics <advanced>

@@ -33,8 +33,7 @@ def shelter_type():
         School, Hospital -- see Agasti opt_camp_type.)
     """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def shelter_service():
@@ -43,8 +42,7 @@ def shelter_service():
         List / add shelter services (e.g. medical, housing, food, ...)
     """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def shelter_unit():
@@ -78,7 +76,7 @@ def shelter_unit():
 
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def shelter_registration():
@@ -98,8 +96,7 @@ def shelter_registration():
         msg_list_empty = T("No people currently registered in shelters")
         )
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def shelter():
@@ -232,7 +229,7 @@ def shelter():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.cr_shelter_rheader)
+    return crud_controller(rheader=s3db.cr_shelter_rheader)
 
 # -----------------------------------------------------------------------------
 def shelter_flag():
@@ -274,7 +271,7 @@ def shelter_flag():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def shelter_inspection():
@@ -282,7 +279,7 @@ def shelter_inspection():
         Shelter Inspections - RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def shelter_inspection_flag():
@@ -290,7 +287,7 @@ def shelter_inspection_flag():
         Shelter Inspection Flags - RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def incoming():

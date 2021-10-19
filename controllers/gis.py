@@ -650,13 +650,13 @@ def location():
                               represent = lambda code: \
                                     gis.get_country(code, key_type="code") or UNKNOWN_OPT)
 
-    output = s3_rest_controller(# CSV column headers, so no T()
-                                csv_extra_fields = [{"label": "Country",
-                                                     "field": country(),
-                                                     }
-                                                    ],
-                                rheader = s3db.gis_rheader,
-                                )
+    output = crud_controller(# CSV column headers, so no T()
+                             csv_extra_fields = [{"label": "Country",
+                                                  "field": country(),
+                                                  }
+                                                 ],
+                             rheader = s3db.gis_rheader,
+                             )
 
     _map = prep_vars.get("_map")
     if _map and isinstance(output, dict):
@@ -1376,9 +1376,7 @@ def config():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader,
-                                )
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def enable_layer(r, **attr):
@@ -1424,19 +1422,19 @@ def hierarchy():
 
     s3db.gis_hierarchy_form_setup()
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def location_tag():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def menu():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def marker():
@@ -1452,7 +1450,7 @@ def marker():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.gis_rheader)
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def projection():
@@ -1461,7 +1459,7 @@ def projection():
     if settings.get_security_map() and not auth.s3_has_role("MAP_ADMIN"):
         auth.permission.fail()
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def style():
@@ -1474,13 +1472,13 @@ def style():
     field.requires = IS_ONE_OF(db, "gis_layer_entity.layer_id",
                                represent)
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def waypoint():
     """ RESTful CRUD controller for GPS Waypoints """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def waypoint_upload():
@@ -1495,13 +1493,13 @@ def waypoint_upload():
 def trackpoint():
     """ RESTful CRUD controller for GPS Track points """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def track():
     """ RESTful CRUD controller for GPS Tracks (uploaded as files) """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def inject_enable(output):
@@ -1549,8 +1547,7 @@ def layer_config():
         # Cannot import without a specific layer type
         csv_stylesheet = None
 
-    output = s3_rest_controller(csv_stylesheet = csv_stylesheet)
-    return output
+    return crud_controller(csv_stylesheet=csv_stylesheet)
 
 # -----------------------------------------------------------------------------
 def layer_entity():
@@ -1613,8 +1610,7 @@ def layer_entity():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_feature():
@@ -1657,8 +1653,7 @@ def layer_feature():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_openstreetmap():
@@ -1715,9 +1710,7 @@ def layer_openstreetmap():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_bing():
@@ -1772,9 +1765,7 @@ def layer_bing():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_empty():
@@ -1820,9 +1811,7 @@ def layer_empty():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_google():
@@ -1876,9 +1865,7 @@ def layer_google():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_mgrs():
@@ -1931,9 +1918,7 @@ def layer_mgrs():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_arcrest():
@@ -1998,9 +1983,7 @@ def layer_arcrest():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_geojson():
@@ -2064,9 +2047,7 @@ def layer_geojson():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_georss():
@@ -2135,9 +2116,7 @@ def layer_georss():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_gpx():
@@ -2199,9 +2178,7 @@ def layer_gpx():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_kml():
@@ -2266,9 +2243,7 @@ def layer_kml():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_openweathermap():
@@ -2337,8 +2312,7 @@ def layer_openweathermap():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_shapefile():
@@ -2445,8 +2419,7 @@ def layer_shapefile():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_theme():
@@ -2513,12 +2486,12 @@ def layer_theme():
 
     if "import" in request.args:
         # Import to 'layer_config' resource instead
-        output = s3_rest_controller("gis", "layer_config",
-                                    csv_template="layer_theme",
-                                    csv_stylesheet="layer_theme.xsl",
-                                    )
+        output = crud_controller("gis", "layer_config",
+                                 csv_template="layer_theme",
+                                 csv_stylesheet="layer_theme.xsl",
+                                 )
     else:
-        output = s3_rest_controller(rheader = s3db.gis_rheader)
+        output = crud_controller(rheader=s3db.gis_rheader)
 
     return output
 
@@ -2528,13 +2501,12 @@ def theme_data():
 
     field = s3db.gis_layer_theme_id()
     field.requires = IS_EMPTY_OR(field.requires)
-    output = s3_rest_controller(csv_extra_fields = [# CSV column headers, so no T()
-                                                    {"label": "Layer",
-                                                     "field": field,
-                                                     }],
-                                )
-
-    return output
+    return crud_controller(csv_extra_fields = [# CSV column headers, so no T()
+                                               {"label": "Layer",
+                                                "field": field,
+                                                },
+                                               ],
+                           )
 
 # -----------------------------------------------------------------------------
 def layer_tms():
@@ -2599,9 +2571,7 @@ def layer_tms():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_wfs():
@@ -2661,9 +2631,7 @@ def layer_wfs():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_wms():
@@ -2727,9 +2695,7 @@ def layer_wms():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_xyz():
@@ -2794,9 +2760,7 @@ def layer_xyz():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # -----------------------------------------------------------------------------
 def layer_js():
@@ -2857,9 +2821,7 @@ def layer_js():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.gis_rheader)
-
-    return output
+    return crud_controller(rheader=s3db.gis_rheader)
 
 # =============================================================================
 def cache_feed():
@@ -2900,8 +2862,7 @@ def cache_feed():
         # Unzip & Follow Network Links
         #download_kml.delay(url)
 
-    output = s3_rest_controller("gis", "cache")
-    return output
+    return crud_controller("gis", "cache")
 
 # =============================================================================
 def feature_query():
@@ -2957,7 +2918,7 @@ def poi_type():
         RESTful CRUD controller for PoI Types
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def poi():
@@ -3047,7 +3008,7 @@ def poi():
 
     dt_bulk_actions = [(T("Delete"), "delete")]
 
-    return s3_rest_controller(dtargs = {"dt_bulk_actions": dt_bulk_actions})
+    return crud_controller(dtargs = {"dt_bulk_actions": dt_bulk_actions})
 
 # =============================================================================
 def display_feature():
@@ -3437,7 +3398,7 @@ def geocode_manual():
                                   ],
                    )
 
-    output = s3_rest_controller("gis", "location")
+    output = crud_controller("gis", "location")
 
     _map = vars.get("_map", None)
     if _map and isinstance(output, dict):

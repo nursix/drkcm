@@ -52,7 +52,7 @@ def role():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("auth", "group")
+    return crud_controller("auth", "group")
 
 # -----------------------------------------------------------------------------
 def user():
@@ -460,12 +460,11 @@ def user():
 
     s3.import_prep = auth.s3_import_prep
 
-    output = s3_rest_controller("auth", "user",
-                                csv_stylesheet = ("auth", "user.xsl"),
-                                csv_template = ("auth", "user"),
-                                rheader = rheader,
-                                )
-    return output
+    return crud_controller("auth", "user",
+                           csv_stylesheet = ("auth", "user.xsl"),
+                           csv_template = ("auth", "user"),
+                           rheader = rheader,
+                           )
 
 # =============================================================================
 def group():
@@ -498,7 +497,7 @@ def group():
         )
 
     s3db.configure(tablename, main="role")
-    return s3_rest_controller("auth", "group")
+    return crud_controller("auth", "group")
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -525,7 +524,7 @@ def organisation():
         msg_list_empty = T("No Organization Domains currently registered")
         )
 
-    return s3_rest_controller("auth", "organisation")
+    return crud_controller("auth", "organisation")
 
 # -----------------------------------------------------------------------------
 def user_create_onvalidation (form):
@@ -550,7 +549,7 @@ def audit():
     # Represent the user_id column
     db.s3_audit.user_id.represent = s3db.auth_UserRepresent()
 
-    return s3_rest_controller("s3", "audit")
+    return crud_controller("s3", "audit")
 
 # =============================================================================
 # Consent Tracking
@@ -559,10 +558,10 @@ def audit():
 def processing_type():
     """ Types of Data Processing: RESTful CRUD Controller """
 
-    return s3_rest_controller("auth", "processing_type",
-                              csv_template = ("auth", "processing_type"),
-                              csv_stylesheet = ("auth", "processing_type.xsl"),
-                              )
+    return crud_controller("auth", "processing_type",
+                           csv_template = ("auth", "processing_type"),
+                           csv_stylesheet = ("auth", "processing_type.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -630,10 +629,10 @@ def consent_option():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("auth", "consent_option",
-                              csv_template = ("auth", "consent_option"),
-                              csv_stylesheet = ("auth", "consent_option.xsl"),
-                              )
+    return crud_controller("auth", "consent_option",
+                           csv_template = ("auth", "consent_option"),
+                           csv_stylesheet = ("auth", "consent_option.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -734,8 +733,7 @@ def acl():
         next = request.vars._next
         s3db.configure(tablename, delete_next=next)
 
-    output = s3_rest_controller("s3", "permission")
-    return output
+    return crud_controller("s3", "permission")
 
 # -----------------------------------------------------------------------------
 def acl_represent(acl, options):
@@ -1319,8 +1317,7 @@ def translate():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("translate", "language")
-    return output
+    return crud_controller("translate", "language")
 
 # =============================================================================
 @auth.s3_requires_membership(1)
@@ -1352,9 +1349,9 @@ def task():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("scheduler", "task",
-                              rheader = s3db.s3_scheduler_rheader,
-                              )
+    return crud_controller("scheduler", "task",
+                           rheader = s3db.s3_scheduler_rheader,
+                           )
 
 # =============================================================================
 def result():
@@ -1424,6 +1421,6 @@ def dashboard():
         Dashboard Configurations
     """
 
-    return s3_rest_controller("s3", "dashboard")
+    return crud_controller("s3", "dashboard")
 
 # END =========================================================================

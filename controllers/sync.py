@@ -203,7 +203,7 @@ def repository():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("sync", "repository", rheader=s3db.sync_rheader)
+    return crud_controller("sync", "repository", rheader=s3db.sync_rheader)
 
 # -----------------------------------------------------------------------------
 def dataset():
@@ -268,7 +268,7 @@ def dataset():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.sync_rheader)
+    return crud_controller(rheader=s3db.sync_rheader)
 
 # -----------------------------------------------------------------------------
 def sync():
@@ -328,11 +328,11 @@ def log():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("sync", "log",
-                              subtitle=None,
-                              rheader=s3base.S3SyncLog.rheader,
-                              list_btn=list_btn,
-                              )
+    return crud_controller("sync", "log",
+                           subtitle = None,
+                           rheader = s3base.S3SyncLog.rheader,
+                           list_btn = list_btn,
+                           )
 
 # -----------------------------------------------------------------------------
 def task():
@@ -351,7 +351,7 @@ def task():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def resource_filter():
@@ -370,6 +370,6 @@ def resource_filter():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

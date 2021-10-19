@@ -169,6 +169,6 @@ def person():
                 ]
     rheader = lambda r: s3db.pr_rheader(r, tabs=mpr_tabs)
 
-    return s3_rest_controller("pr", "person", rheader=rheader)
+    return crud_controller("pr", "person", rheader=rheader)
 
 # END =========================================================================

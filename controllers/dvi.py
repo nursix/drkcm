@@ -92,8 +92,7 @@ def recreq():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def morgue():
@@ -117,8 +116,7 @@ def morgue():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader=rheader)
-    return output
+    return crud_controller(rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def body():
@@ -146,7 +144,7 @@ def body():
                                 ],
                                 tabs=dvi_tabs)
 
-    return s3_rest_controller(rheader=rheader)
+    return crud_controller(rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def person():
@@ -221,12 +219,11 @@ def person():
 
     rheader = lambda r: s3db.pr_rheader(r, tabs=mpr_tabs)
 
-    output = s3_rest_controller("pr", "person",
-                                main = "first_name",
-                                extra = "last_name",
-                                rheader = rheader,
-                                )
-    return output
+    return crud_controller("pr", "person",
+                           main = "first_name",
+                           extra = "last_name",
+                           rheader = rheader,
+                           )
 
 # -------------------------------------------------------------------------
 def dvi_match_query(body_id):

@@ -5141,10 +5141,10 @@ def inv_send_controller():
                            )
 
     s3.prep = prep
-    output = current.rest_controller("inv", "send",
-                                     rheader = inv_send_rheader,
-                                     )
-    return output
+
+    return current.crud_controller("inv", "send",
+                                   rheader = inv_send_rheader,
+                                   )
 
 # =============================================================================
 def inv_send_process():

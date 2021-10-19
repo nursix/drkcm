@@ -140,12 +140,10 @@ def person():
                    listadd = False,
                    )
 
-    output = s3_rest_controller(main = "first_name",
-                                extra = "last_name",
-                                rheader = lambda r: \
-                                            s3db.pr_rheader(r, tabs=tabs))
-
-    return output
+    return crud_controller(main = "first_name",
+                           extra = "last_name",
+                           rheader = lambda r: s3db.pr_rheader(r, tabs=tabs),
+                           )
 
 # -----------------------------------------------------------------------------
 def address():
@@ -200,8 +198,7 @@ def address():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def contact():
@@ -270,7 +267,7 @@ def contact():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def contact_emergency():
@@ -320,8 +317,7 @@ def contact_emergency():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -332,7 +328,7 @@ def person_search():
     """
 
     s3.prep = lambda r: r.method == "search_ac"
-    return s3_rest_controller(module, "person")
+    return crud_controller(module, "person")
 
 # -----------------------------------------------------------------------------
 def forum():
@@ -372,17 +368,14 @@ def forum():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.pr_rheader)
-    return output
+    return crud_controller(rheader = s3db.pr_rheader)
 
 # -----------------------------------------------------------------------------
 #def forum_membership():
 #    """ RESTful CRUD controller """
 #
-#    output = s3_rest_controller()
+#    return crud_controller()
 #
-#    return output
-
 # -----------------------------------------------------------------------------
 def group():
     """ RESTful CRUD controller """
@@ -407,27 +400,25 @@ def group():
                                    (T("Members"), "group_membership")
                                    ])
 
-    output = s3_rest_controller(rheader = rheader)
-
-    return output
+    return crud_controller(rheader = rheader)
 
 # -----------------------------------------------------------------------------
 def group_member_role():
     """ Group Member Roles: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def group_status():
     """ Group Statuses: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def image():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def education():
@@ -445,13 +436,13 @@ def education():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def education_level():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def language():
@@ -469,19 +460,19 @@ def language():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def occupation_type():
     """ Occupation Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def religion():
     """ Religions: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 #def contact():
@@ -493,7 +484,7 @@ def religion():
 #    table.pe_id.readable = True
 #    table.pe_id.writable = True
 #
-#    return s3_rest_controller()
+#    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def presence():
@@ -515,7 +506,7 @@ def presence():
     table.presence_condition.readable = False
     # @ToDo: Add Skills
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def pentity():
@@ -525,37 +516,37 @@ def pentity():
     """
 
     s3.prep = lambda r: r.method == "search_ac"
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def affiliation():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def role():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def slot():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def date_formula():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def time_formula():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def tooltip():
@@ -590,8 +581,7 @@ def filter():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def subscription():
@@ -600,8 +590,7 @@ def subscription():
         - to allow Admins to control subscriptions for people
     """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def human_resource():
@@ -621,7 +610,7 @@ def human_resource():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("hrm", "human_resource")
+    return crud_controller("hrm", "human_resource")
 
 # =============================================================================
 # Messaging

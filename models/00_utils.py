@@ -128,7 +128,7 @@ menu["main"] = main
 s3_menu_dict = {}
 
 # -----------------------------------------------------------------------------
-def s3_rest_controller(prefix=None, resourcename=None, **attr):
+def crud_controller(prefix=None, resourcename=None, **attr):
     """
         Helper function to apply the S3Resource REST interface
 
@@ -327,6 +327,6 @@ def s3_rest_controller(prefix=None, resourcename=None, **attr):
     return output
 
 # Enable access to this function from modules
-current.rest_controller = s3_rest_controller
+current.crud_controller = crud_controller
 
 # END =========================================================================

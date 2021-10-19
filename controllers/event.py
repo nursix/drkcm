@@ -86,7 +86,7 @@ def event():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.event_rheader)
+    return crud_controller(rheader=s3db.event_rheader)
 
 # -----------------------------------------------------------------------------
 def event_location():
@@ -94,7 +94,7 @@ def event_location():
         RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def event_type():
@@ -102,7 +102,7 @@ def event_type():
         RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def incident_type():
@@ -110,7 +110,7 @@ def incident_type():
         RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def incident():
@@ -242,8 +242,7 @@ $.filterOptionsS3({
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(rheader = s3db.event_rheader)
-    return output
+    return crud_controller(rheader=s3db.event_rheader)
 
 # -----------------------------------------------------------------------------
 def incident_report():
@@ -281,7 +280,7 @@ def incident_report():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def job_title():
@@ -327,7 +326,7 @@ def job_title():
     if not auth.s3_has_role("ADMIN"):
         s3.filter &= auth.filter_by_root_org(table)
 
-    return s3_rest_controller("hrm")
+    return crud_controller("hrm")
 
 # -----------------------------------------------------------------------------
 def scenario():
@@ -335,7 +334,7 @@ def scenario():
         RESTful CRUD controller
     """
 
-    return s3_rest_controller(rheader = s3db.event_rheader)
+    return crud_controller(rheader=s3db.event_rheader)
 
 # -----------------------------------------------------------------------------
 def sitrep():
@@ -396,7 +395,7 @@ def sitrep():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.event_rheader)
+    return crud_controller(rheader=s3db.event_rheader)
 
 # -----------------------------------------------------------------------------
 def template():
@@ -407,9 +406,7 @@ def template():
 
     s3db.dc_template.master.default = "event_sitrep"
 
-    return s3_rest_controller("dc", "template",
-                              rheader = s3db.dc_rheader,
-                              )
+    return crud_controller("dc", "template", rheader=s3db.dc_rheader)
 
 # -----------------------------------------------------------------------------
 def resource():
@@ -441,7 +438,7 @@ def resource():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person():
@@ -456,7 +453,7 @@ def person():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def group():
@@ -493,31 +490,31 @@ def group():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "group")
+    return crud_controller("pr", "group")
 
 # -----------------------------------------------------------------------------
 def team():
     """ Events <> Teams """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def team_status():
     """ Team statuses """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def human_resource():
     """ Events <> Human Resources """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def organisation():
     """ Events <> Organisations """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def compose():

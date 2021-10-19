@@ -51,6 +51,6 @@ def rest():
         prefix, name = c, f
 
     # Run REST controller
-    return s3_rest_controller(prefix, name)
+    return crud_controller(prefix, name)
 
 # END =========================================================================

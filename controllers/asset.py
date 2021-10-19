@@ -50,15 +50,15 @@ def asset():
 def brand():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("supply", "brand")
+    return crud_controller("supply", "brand")
 
 # -----------------------------------------------------------------------------
 def catalog():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("supply", "catalog",
-                              rheader = s3db.supply_catalog_rheader,
-                              )
+    return crud_controller("supply", "catalog",
+                           rheader = s3db.supply_catalog_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def item():
@@ -97,10 +97,10 @@ def catalog_item():
         - used for Imports
     """
 
-    return s3_rest_controller("supply", "catalog_item",
-                              csv_template = ("supply", "catalog_item"),
-                              csv_stylesheet = ("supply", "catalog_item.xsl"),
-                              )
+    return crud_controller("supply", "catalog_item",
+                           csv_template = ("supply", "catalog_item"),
+                           csv_stylesheet = ("supply", "catalog_item.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 def item_category():
@@ -116,7 +116,7 @@ def item_category():
     field.readable = field.writable = False
     field.default = True
 
-    return s3_rest_controller("supply", "item_category")
+    return crud_controller("supply", "item_category")
 
 # -----------------------------------------------------------------------------
 def supplier():

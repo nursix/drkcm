@@ -254,8 +254,7 @@ def hospital():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.hms_hospital_rheader)
-    return output
+    return crud_controller(rheader=s3db.hms_hospital_rheader)
 
 # -----------------------------------------------------------------------------
 def incoming():

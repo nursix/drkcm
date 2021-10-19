@@ -5346,10 +5346,7 @@ def req_match(rheader = None):
         return output
     s3.postp = postp
 
-    output = current.rest_controller("req", "req",
-                                     rheader = rheader,
-                                     )
-    return output
+    return current.crud_controller("req", "req", rheader=rheader)
 
 # =============================================================================
 def req_send_commit():

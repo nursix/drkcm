@@ -7236,19 +7236,14 @@ def org_organisation_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("org", "organisation",
-                                     # Need to be explicit since can also come from HRM or Project controllers
-                                     csv_stylesheet = ("org", "organisation.xsl"),
-                                     csv_template = ("org", "organisation"),
-                                     # Don't allow components with components (such as document) to breakout from tabs
-                                     native = False,
-                                     rheader = org_rheader,
-                                     )
-    return output
-
-
-
-
+    return current.crud_controller("org", "organisation",
+                                   # Need to be explicit since can also come from HRM or Project controllers
+                                   csv_stylesheet = ("org", "organisation.xsl"),
+                                   csv_template = ("org", "organisation"),
+                                   # Don't allow components with components (such as document) to breakout from tabs
+                                   native = False,
+                                   rheader = org_rheader,
+                                   )
 
 # -----------------------------------------------------------------------------
 def org_organisation_organisation_onaccept(form):
@@ -7549,12 +7544,11 @@ def org_office_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("org", "office",
-                                     # Don't allow components with components (such as document) to breakout from tabs
-                                     native = False,
-                                     rheader = org_rheader,
-                                     )
-    return output
+    return current.crud_controller("org", "office",
+                                   # Don't allow components with components (such as document) to breakout from tabs
+                                   native = False,
+                                   rheader = org_rheader,
+                                   )
 
 # =============================================================================
 def org_facility_controller():
@@ -7812,10 +7806,7 @@ def org_facility_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("org", "facility",
-                                     rheader = org_rheader,
-                                     )
-    return output
+    return current.crud_controller("org", "facility", rheader=org_rheader)
 
 # =============================================================================
 # Hierarchy Manipulation

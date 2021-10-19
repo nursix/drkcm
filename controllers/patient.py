@@ -30,7 +30,7 @@ def person():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def patient():
@@ -61,10 +61,9 @@ def patient():
     tabs = [(T("Basic Details"), None),
             (T("Accompanying Relative"), "relative"),
             (T("Home"), "home")]
-    rheader = lambda r: patient_rheader(r, tabs=tabs)
-    output = s3_rest_controller(rheader = rheader)
 
-    return output
+    rheader = lambda r: patient_rheader(r, tabs=tabs)
+    return crud_controller(rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def patient_rheader(r, tabs=[]):

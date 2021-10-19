@@ -1305,10 +1305,9 @@ def asset_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("asset", "asset",
-                                     rheader = asset_rheader,
-                                     )
-    return output
+    return current.crud_controller("asset", "asset",
+                                   rheader = asset_rheader,
+                                   )
 
 # =============================================================================
 class asset_AssetRepresent(S3Represent):

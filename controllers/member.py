@@ -34,8 +34,7 @@ def membership_type():
     if not auth.s3_has_role("ADMIN"):
         s3.filter = auth.filter_by_root_org(s3db.member_membership_type)
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def membership():
@@ -78,7 +77,7 @@ def membership():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.member_rheader)
+    return crud_controller(rheader=s3db.member_rheader)
 
 # =============================================================================
 def person():
@@ -205,10 +204,9 @@ def person():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("pr", resourcename,
-                                replace_option = T("Remove existing data before import"),
-                                rheader = s3db.member_rheader,
-                                )
-    return output
+    return crud_controller("pr", resourcename,
+                           replace_option = T("Remove existing data before import"),
+                           rheader = s3db.member_rheader,
+                           )
 
 # END =========================================================================

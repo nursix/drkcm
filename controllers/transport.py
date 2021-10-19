@@ -42,13 +42,13 @@ def airport():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.transport_rheader)
+    return crud_controller(rheader=s3db.transport_rheader)
 
 # -----------------------------------------------------------------------------
 def border_crossing():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller(rheader=s3db.transport_rheader)
+    return crud_controller(rheader=s3db.transport_rheader)
 
 # -----------------------------------------------------------------------------
 def border_control_point():
@@ -77,7 +77,7 @@ def border_control_point():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.transport_rheader)
+    return crud_controller(rheader=s3db.transport_rheader)
 
 # -----------------------------------------------------------------------------
 def heliport():
@@ -106,7 +106,7 @@ def heliport():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.transport_rheader)
+    return crud_controller(rheader=s3db.transport_rheader)
 
 # -----------------------------------------------------------------------------
 def seaport():
@@ -135,7 +135,7 @@ def seaport():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.transport_rheader)
+    return crud_controller(rheader=s3db.transport_rheader)
 
 # -----------------------------------------------------------------------------
 def incoming():

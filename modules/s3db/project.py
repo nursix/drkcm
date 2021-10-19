@@ -13499,7 +13499,7 @@ def project_task_controller():
     else:
         hide_filter = None
 
-    return current.rest_controller("project", "task",
+    return current.crud_controller("project", "task",
                                    hide_filter = hide_filter,
                                    rheader = s3db.project_rheader,
                                    )

@@ -2737,7 +2737,7 @@ def supply_item_controller():
         return True
     s3.prep = prep
 
-    return current.rest_controller("supply", "item",
+    return current.crud_controller("supply", "item",
                                    rheader = supply_item_rheader,
                                    )
 
@@ -2991,10 +2991,7 @@ $('#organisation_dropdown').change(function(){
         return output
     s3.postp = postp
 
-    output = current.rest_controller("supply", "item_entity",
-                                     hide_filter = True,
-                                    )
-    return output
+    return current.crud_controller("supply", "item_entity", hide_filter=True)
 
 # -----------------------------------------------------------------------------
 def supply_get_shipping_code(doctype, site_id, field):

@@ -178,7 +178,7 @@ class S3RL_PDF(S3Codec):
             Export data as a PDF document
 
             @param resource: the resource
-            @param attr: dictionary of keyword arguments, in s3_rest_controller
+            @param attr: dictionary of keyword arguments, in crud_controller
                          passed through from the calling controller
 
             @keyword request: the S3Request

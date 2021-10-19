@@ -479,10 +479,9 @@ def person():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("pr", "person",
-                                rheader = s3db.br_rheader,
-                                )
-    return output
+    return crud_controller("pr", "person",
+                           rheader = s3db.br_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -515,7 +514,7 @@ def person_search():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def group_membership():
@@ -667,9 +666,9 @@ def group_membership():
     settings.pr.request_home_phone = False
     settings.hrm.email_required = False
 
-    return s3_rest_controller("pr", "group_membership",
-                              rheader = s3db.br_rheader,
-                              )
+    return crud_controller("pr", "group_membership",
+                           rheader = s3db.br_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def document():
@@ -828,9 +827,9 @@ def document():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("doc", "document",
-                              rheader = s3db.br_rheader,
-                              )
+    return crud_controller("doc", "document",
+                           rheader = s3db.br_rheader,
+                           )
 
 # =============================================================================
 # Case Activities
@@ -1019,7 +1018,7 @@ def case_activity():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def activities():
@@ -1127,7 +1126,7 @@ def activities():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("br", "case_activity")
+    return crud_controller("br", "case_activity")
 
 # =============================================================================
 # Assistance
@@ -1135,25 +1134,25 @@ def activities():
 def assistance_status():
     """ Assistance Statuses: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def assistance_theme():
     """ Assistance Themes: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def assistance_type():
     """ Types of Assistance: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def assistance_offer():
     """ Offers of Assistance: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def offers():
@@ -1176,7 +1175,7 @@ def offers():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("br", "assistance_offer")
+    return crud_controller("br", "assistance_offer")
 
 # -----------------------------------------------------------------------------
 def assistance_measure():
@@ -1312,7 +1311,7 @@ def assistance_measure():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Look-up Tables
@@ -1329,36 +1328,36 @@ def case_status():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def case_activity_status():
     """ Activity Statuses: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def case_activity_update_type():
     """ Activity Update Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def need():
     """ Needs: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def note_type():
     """ Note Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def service_contact_type():
     """ Service Contact Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

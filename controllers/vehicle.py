@@ -120,7 +120,7 @@ def vehicle():
 def vehicle_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def item():
@@ -186,6 +186,6 @@ def item_category():
     field.readable = field.writable = False
     field.default = True
 
-    return s3_rest_controller("supply", "item_category")
+    return crud_controller("supply", "item_category")
 
 # END =========================================================================

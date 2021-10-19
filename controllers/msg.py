@@ -23,7 +23,7 @@ def index():
 def basestation():
     """ RESTful CRUD controller for Base Stations """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def compose():
@@ -73,7 +73,7 @@ def message():
                    insertable = False,
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def contact():
@@ -87,7 +87,7 @@ def contact():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def mark_sender():
@@ -169,7 +169,7 @@ def outbox():
                    insertable = False,
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def email_outbox():
@@ -222,7 +222,7 @@ def email_outbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "email")
+    return crud_controller(module, "email")
 
 # -----------------------------------------------------------------------------
 def facebook_outbox():
@@ -273,7 +273,7 @@ def facebook_outbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "facebook")
+    return crud_controller(module, "facebook")
 
 # -----------------------------------------------------------------------------
 def sms_outbox():
@@ -325,7 +325,7 @@ def sms_outbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "sms")
+    return crud_controller(module, "sms")
 
 # -----------------------------------------------------------------------------
 def twitter_outbox():
@@ -377,7 +377,7 @@ def twitter_outbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "twitter")
+    return crud_controller(module, "twitter")
 
 # =============================================================================
 def inbox():
@@ -418,7 +418,7 @@ def inbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "message")
+    return crud_controller(module, "message")
 
 # -----------------------------------------------------------------------------
 def email_inbox():
@@ -480,7 +480,7 @@ def email_inbox():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(module, "email")
+    return crud_controller(module, "email")
 
 # =============================================================================
 def rss():
@@ -519,7 +519,7 @@ def rss():
                                   ],
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def sms_inbox():
@@ -559,7 +559,7 @@ def sms_inbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "sms")
+    return crud_controller(module, "sms")
 
 # -----------------------------------------------------------------------------
 def twitter():
@@ -580,7 +580,7 @@ def twitter():
                                   ],
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def twitter_inbox():
@@ -618,7 +618,7 @@ def twitter_inbox():
                                   ],
                    )
 
-    return s3_rest_controller(module, "twitter")
+    return crud_controller(module, "twitter")
 
 # =============================================================================
 def tropo():
@@ -701,7 +701,7 @@ def sms_outbound_gateway():
         msg_record_deleted = T("SMS Outbound Gateway deleted"),
         msg_list_empty = T("No SMS Outbound Gateways currently registered"))
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def channel():
@@ -710,7 +710,7 @@ def channel():
         - unused
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def email_channel():
@@ -787,7 +787,7 @@ def email_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def facebook_channel():
@@ -850,7 +850,7 @@ def facebook_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def mcommons_channel():
@@ -930,7 +930,7 @@ def mcommons_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def gcm_channel():
@@ -1000,7 +1000,7 @@ def gcm_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def rss_channel():
@@ -1082,7 +1082,7 @@ def rss_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def twilio_channel():
@@ -1157,7 +1157,7 @@ def twilio_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -1202,7 +1202,7 @@ def sms_modem_channel():
         msg_record_deleted = T("Modem Channel deleted"),
         msg_list_empty = T("No Modem Channels currently defined"))
 
-    return s3_rest_controller()
+    return crud_controller()
 
 #------------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -1244,7 +1244,7 @@ def sms_smtp_channel():
     s3db.configure(tablename,
                    update_next = URL(args=[1, "update"]))
 
-    return s3_rest_controller()
+    return crud_controller()
 
 #------------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -1298,7 +1298,7 @@ def sms_webapi_channel():
         msg_record_deleted=T("Web API Channel deleted"),
         msg_list_empty=T("No Web API Channels currently registered"))
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -1330,7 +1330,7 @@ def tropo_channel():
         msg_record_deleted=T("Tropo Channel deleted"),
         msg_list_empty=T("No Tropo Channels currently registered"))
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -1439,7 +1439,7 @@ def twitter_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def inject_search_after_save(output):
@@ -1622,7 +1622,7 @@ def twitter_search():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def twitter_result():
@@ -1715,7 +1715,7 @@ def twitter_result():
 
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def sender():
@@ -1751,13 +1751,13 @@ def sender():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def keyword():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def parser():
@@ -1851,7 +1851,7 @@ def parser():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # The following functions hook into the pr functions:
@@ -1875,9 +1875,9 @@ def group():
     # Do not show system groups
     s3.filter = (table.system == False)
 
-    return s3_rest_controller(module, resourcename,
-                              rheader = s3db.pr_rheader,
-                              )
+    return crud_controller(module, resourcename,
+                           rheader = s3db.pr_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def group_membership():
@@ -1895,7 +1895,7 @@ def group_membership():
     table.comments.readable = table.comments.writable = False
     table.group_head.readable = table.group_head.writable = False
 
-    return s3_rest_controller("pr", resourcename)
+    return crud_controller("pr", resourcename)
 
 # -----------------------------------------------------------------------------
 def contacts():
@@ -1943,7 +1943,7 @@ def contacts():
 
     response.menu_options = []
 
-    return s3_rest_controller("pr", "contact")
+    return crud_controller("pr", "contact")
 
 # -----------------------------------------------------------------------------
 def search():
@@ -2055,7 +2055,7 @@ def person_search(value, type=None):
 def subscription():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 # Send Outbound Messages (was for being called via cron, now useful for debugging)
@@ -2246,7 +2246,7 @@ def twitter_post():
 def tag():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Enabled only for testing:

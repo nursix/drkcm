@@ -1479,7 +1479,7 @@ def vol_volunteer_controller():
         return output
     s3.postp = postp
 
-    return current.rest_controller("hrm", "human_resource")
+    return current.crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def vol_person_controller():
@@ -1859,7 +1859,7 @@ def vol_person_controller():
     # REST Interface
     #orgname = session.s3.hrm.orgname
 
-    return current.rest_controller("pr", "person",
+    return current.crud_controller("pr", "person",
                                    csv_template = ("hrm", "volunteer"),
                                    csv_stylesheet = ("hrm", "person.xsl"),
                                    csv_extra_fields = [

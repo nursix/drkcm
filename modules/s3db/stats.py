@@ -1173,8 +1173,7 @@ def stats_demographic_data_controller():
     request = current.request
     if "options.s3json" in request.args:
         # options.s3json lookups for AddResourceLink
-        output = current.rest_controller("stats", "demographic_data")
-        return output
+        return current.crud_controller("stats", "demographic_data")
 
     # Only viewing is valid
     get_vars = request.get_vars
@@ -1215,11 +1214,9 @@ def stats_demographic_data_controller():
     else:
         rheader = None
 
-    output = current.rest_controller("stats", "demographic_data",
-                                     rheader = rheader,
-                                     )
-
-    return output
+    return current.crud_controller("stats", "demographic_data",
+                                   rheader = rheader,
+                                   )
 
 # =============================================================================
 class S3StatsImpactModel(DataModel):

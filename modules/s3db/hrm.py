@@ -7849,7 +7849,7 @@ def hrm_competency_controller():
         return output
     s3.postp = postp
 
-    return current.rest_controller("hrm", "competency",
+    return current.crud_controller("hrm", "competency",
                                    # @ToDo: Create these if-required
                                    #csv_stylesheet = ("hrm", "competency.xsl"),
                                    #csv_template = ("hrm", "competency"),
@@ -7880,7 +7880,7 @@ def hrm_credential_controller():
         return True
     s3.prep = prep
 
-    return current.rest_controller("hrm", "credential",
+    return current.crud_controller("hrm", "credential",
                                    # @ToDo: Create these if-required
                                    #csv_stylesheet = ("hrm", "credential.xsl"),
                                    #csv_template = ("hrm", "credential"),
@@ -7910,7 +7910,7 @@ def hrm_experience_controller():
         return True
     current.response.s3.prep = prep
 
-    return current.rest_controller("hrm", "experience",
+    return current.crud_controller("hrm", "experience",
                                    # @ToDo: Create these if-required
                                    #csv_stylesheet = ("hrm", "experience.xsl"),
                                    #csv_template = ("hrm", "experience"),
@@ -8104,7 +8104,7 @@ def hrm_group_controller():
             (T("Documents"), "document"),
             ]
 
-    return current.rest_controller("pr", "group",
+    return current.crud_controller("pr", "group",
                                    csv_stylesheet = ("hrm", "group.xsl"),
                                    csv_template = "group",
                                    rheader = lambda r: \
@@ -8593,7 +8593,7 @@ def hrm_human_resource_controller(extra_filter = None):
         return output
     s3.postp = postp
 
-    return current.rest_controller("hrm", "human_resource")
+    return current.crud_controller("hrm", "human_resource")
 
 # =============================================================================
 def hrm_person_controller(**attr):
@@ -9022,7 +9022,7 @@ def hrm_person_controller(**attr):
              }
     _attr.update(attr)
 
-    return current.rest_controller("pr", "person", **_attr)
+    return current.crud_controller("pr", "person", **_attr)
 
 # =============================================================================
 def hrm_training_controller():
@@ -9084,7 +9084,7 @@ def hrm_training_controller():
         return True
     current.response.s3.prep = prep
 
-    return current.rest_controller("hrm", "training",
+    return current.crud_controller("hrm", "training",
                                    csv_stylesheet = ("hrm", "training.xsl"),
                                    csv_template = ("hrm", "training"),
                                    csv_extra_fields = [{"label": "Training Event",
@@ -9228,7 +9228,7 @@ def hrm_training_event_controller():
     #    return output
     #s3.postp = postp
 
-    return current.rest_controller("hrm", "training_event",
+    return current.crud_controller("hrm", "training_event",
                                    rheader = hrm_rheader,
                                    )
 
