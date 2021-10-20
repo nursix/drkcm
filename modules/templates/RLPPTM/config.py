@@ -14,7 +14,7 @@ from gluon import current, URL, A, DIV, TAG, \
 
 from gluon.storage import Storage
 
-from core import FS, IS_FLOAT_AMOUNT, ICON, IS_ONE_OF, S3Represent, s3_str
+from core import FS, IS_FLOAT_AMOUNT, ICON, IS_ONE_OF, IS_UTC_DATE, S3Represent, s3_str
 from s3dal import original_tablename
 
 from .rlpgeonames import rlp_GeoNames
@@ -1003,6 +1003,22 @@ def config(settings):
             if len(selectable) == 1:
                 field.default = selectable[0]
                 field.writable = False
+
+        # Allow daily reports up to 3 months back in time (1st of month)
+        field = table.date
+
+        from dateutil.relativedelta import relativedelta
+        today = current.request.utcnow.date()
+        earliest = today - relativedelta(months=3, day=1)
+
+        from core import S3CalendarWidget
+        field.requires = IS_UTC_DATE(minimum = earliest,
+                                     maximum = today,
+                                     )
+        field.widget = S3CalendarWidget(minimum = earliest,
+                                        maximum = today,
+                                        month_selector = True,
+                                        )
 
         # Daily reports only writable for ORG_ADMINs of test stations
         writable = current.auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
