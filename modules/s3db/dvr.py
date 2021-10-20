@@ -3976,11 +3976,11 @@ class DVRCaseAppointmentModel(DataModel):
                 for case in cases:
                     if has_permission("update", ctable, record_id=case.id):
                         # Customise case resource
-                        r = S3Request("dvr", "case",
-                                      current.request,
-                                      args = [],
-                                      get_vars = {},
-                                      )
+                        r = CRUDRequest("dvr", "case",
+                                        current.request,
+                                        args = [],
+                                        get_vars = {},
+                                        )
                         r.customise_resource("dvr_case")
                         # Update case status + run onaccept
                         case.update_record(status_id = status_id)
@@ -5368,11 +5368,11 @@ class DVRCaseEventModel(DataModel):
                                                                )
                     if permitted:
                         # Customise appointment resource
-                        r = S3Request("dvr", "case_appointment",
-                                      current.request,
-                                      args = [],
-                                      get_vars = {},
-                                      )
+                        r = CRUDRequest("dvr", "case_appointment",
+                                        current.request,
+                                        args = [],
+                                        get_vars = {},
+                                        )
                         r.customise_resource("dvr_case_appointment")
                         # Update appointment
                         success = update.update_record(**data)
@@ -6255,10 +6255,10 @@ def dvr_due_followups(human_resource_id=None):
     """
 
     # Generate a request for case activities and customise it
-    r = S3Request("dvr", "case_activity",
-                  args = ["count_due_followups"],
-                  get_vars = {},
-                  )
+    r = CRUDRequest("dvr", "case_activity",
+                    args = ["count_due_followups"],
+                    get_vars = {},
+                    )
     r.customise_resource()
     resource = r.resource
 
@@ -7197,7 +7197,7 @@ class DVRManageAppointments(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
+                    _vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Where to retrieve updated filter options from:
@@ -7268,7 +7268,7 @@ class DVRManageAllowance(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7292,7 +7292,7 @@ class DVRManageAllowance(S3Method):
         """
             Method to bulk-update status of allowance payments
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7548,7 +7548,7 @@ class DVRRegisterCaseEvent(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7580,7 +7580,7 @@ class DVRRegisterCaseEvent(S3Method):
         """
             Render and process the registration form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7889,7 +7889,7 @@ class DVRRegisterCaseEvent(S3Method):
         """
             Helper function to process the form
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param form: the FORM
             @param event_type: the event_type (Row)
         """
@@ -7930,7 +7930,7 @@ class DVRRegisterCaseEvent(S3Method):
                  t: the event type code
                  }
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
 
             @return: JSON response, structure:
@@ -8198,11 +8198,11 @@ class DVRRegisterCaseEvent(S3Method):
             case_id = None
 
         # Customise event resource
-        r = S3Request("dvr", "case_event",
-                      current.request,
-                      args = [],
-                      get_vars = {},
-                      )
+        r = CRUDRequest("dvr", "case_event",
+                        current.request,
+                        args = [],
+                        get_vars = {},
+                        )
         r.customise_resource("dvr_case_event")
 
         data = {"person_id": person_id,
@@ -8851,7 +8851,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to process the form
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param form: the FORM
             @param event_type: the event_type (Row)
         """
@@ -8904,7 +8904,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
                  d: the payment data (raw data, which payments to update)
                  }
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
 
             @return: JSON response, structure:
@@ -9199,11 +9199,11 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         failed = 0
 
         # Customise allowance resource
-        r = S3Request("dvr", "allowance",
-                      current.request,
-                      args = [],
-                      get_vars = {},
-                      )
+        r = CRUDRequest("dvr", "allowance",
+                        current.request,
+                        args = [],
+                        get_vars = {},
+                        )
         r.customise_resource("dvr_allowance")
         onaccept = current.s3db.onaccept
 
@@ -9271,7 +9271,7 @@ class dvr_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -9422,7 +9422,7 @@ class dvr_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
+                    _vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Default Filters (before selecting data!)

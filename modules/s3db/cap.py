@@ -4599,7 +4599,7 @@ class cap_ImportAlert(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -4943,7 +4943,7 @@ class cap_AssignArea(S3Method):
     def apply_method(self, r, **attr):
         """
             Apply method.
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -5107,7 +5107,7 @@ class cap_AssignArea(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    get_vars = aresource.crud._remove_filters(r.get_vars)
+                    get_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=get_vars)
 
                     # Where to retrieve updated filter options from:
@@ -5272,7 +5272,7 @@ class cap_CloneAlert(S3Method):
         """
             Apply method
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -5291,7 +5291,7 @@ def clone(r, record=None, **attr):
     """
         Clone the cap_alert
 
-        @param r: the S3Request instance
+        @param r: the CRUDRequest instance
         @param record: the record row
         @param attr: controller attributes
     """

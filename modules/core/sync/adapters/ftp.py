@@ -33,7 +33,7 @@ from io import StringIO
 
 from gluon import *
 
-from ...controller import S3Request
+from ...controller import CRUDRequest
 from ...filters import S3URLQuery, FS
 from ...io import S3Exporter
 
@@ -267,10 +267,10 @@ class S3SyncAdapter(S3SyncBaseAdapter):
     def _get_data(self, resource, representation):
         """ Returns the representation data for the resource """
 
-        request = S3Request(prefix = resource.prefix,
-                            name = resource.name,
-                            extension = representation,
-                            )
+        request = CRUDRequest(prefix = resource.prefix,
+                              name = resource.name,
+                              extension = representation,
+                              )
 
         if request.transformable():
             return resource.export_xml(stylesheet = request.stylesheet(),

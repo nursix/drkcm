@@ -9015,7 +9015,7 @@ def search_ac(r, **attr):
     """
         JSON search method for S3AutocompleteWidget
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param attr: request attributes
     """
 

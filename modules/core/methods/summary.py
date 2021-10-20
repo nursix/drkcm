@@ -34,6 +34,7 @@ from gluon import current, A, DIV, LI, UL
 from ..filters import S3FilterForm
 
 from .base import S3Method
+from .crud import S3CRUD
 
 # =============================================================================
 class S3Summary(S3Method):
@@ -44,7 +45,7 @@ class S3Summary(S3Method):
         """
             Entry point for REST interface
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -60,7 +61,7 @@ class S3Summary(S3Method):
         """
             Render the summary page
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -157,7 +158,7 @@ class S3Summary(S3Method):
                     handler = r.get_widget_handler(method)
                     if handler is None:
                         # Fall back to CRUD
-                        handler = resource.crud
+                        handler = S3CRUD()
                     if handler is not None:
                         if method == "datatable":
                             # Assume that we have a FilterForm, so disable Quick Search
@@ -297,7 +298,7 @@ class S3Summary(S3Method):
         """
             Render a specific widget for pulling-in via AJAX
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 

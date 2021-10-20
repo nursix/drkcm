@@ -1461,7 +1461,7 @@ def sync_now(r, **attr):
     """
         Manual synchronization of a repository
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param attr: controller options for the request
     """
 
@@ -1537,7 +1537,7 @@ class sync_CreateArchive(S3Method):
         """
             Entry point for REST controller
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
 
             @todo: perform archive creation async?
@@ -1578,7 +1578,7 @@ class sync_CreateArchive(S3Method):
         """
             Simple UI form to trigger POST method
 
-            @param r: the S3Request embedding the form
+            @param r: the CRUDRequest embedding the form
             @param row: the data set Row
 
             @todo: if archive is currently being built (async),

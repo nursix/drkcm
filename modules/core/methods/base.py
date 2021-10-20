@@ -76,7 +76,7 @@ class S3Method(object):
         """
             Entry point for the REST interface
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the method established by the REST interface
             @param widget_id: widget ID
             @param attr: dict of parameters for the method handler
@@ -189,7 +189,7 @@ class S3Method(object):
             Stub, to be implemented in subclass. This method is used
             to get the results as a standalone page.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @return: output object to send to the view
@@ -232,7 +232,7 @@ class S3Method(object):
                 parameter if delayed loading of the data layer is not
                 all([possible, useful, supported]).
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the URL method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -293,9 +293,9 @@ class S3Method(object):
     @staticmethod
     def _record_id(r):
         """
-            Get the ID of the target record of a S3Request
+            Get the ID of the target record of a CRUDRequest
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         master_id = r.id
@@ -344,7 +344,7 @@ class S3Method(object):
         """
             Get the path to the view template
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param default: name of the default view template
         """
 
@@ -410,7 +410,7 @@ class S3Method(object):
             Add additional view variables (invokes all callables)
 
             @param output: the output dict
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the view variables (e.g. 'rheader')
 
             @note: overload this method in subclasses if you don't want

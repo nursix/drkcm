@@ -237,7 +237,7 @@ class S3Notifications(object):
             notification message and send it - responds to POST?format=msg
             requests to the respective resource.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param resource: the S3Resource
         """
 

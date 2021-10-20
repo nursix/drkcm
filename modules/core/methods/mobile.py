@@ -1260,7 +1260,7 @@ class S3MobileCRUD(S3Method):
         """
             Entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -1288,7 +1288,7 @@ class S3MobileCRUD(S3Method):
         """
             Get the mobile form for the target resource
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
 
             @returns: a JSON string

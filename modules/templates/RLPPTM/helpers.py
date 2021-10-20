@@ -272,7 +272,7 @@ def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     settings = current.deployment_settings
@@ -1585,7 +1585,7 @@ class InviteUserOrg(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -1608,7 +1608,7 @@ class InviteUserOrg(S3Method):
         """
             Prepare and process invitation form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -1827,7 +1827,7 @@ class InvoicePDF(S3Method):
         """
             Generate a PDF of an Invoice
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -1864,7 +1864,7 @@ class InvoicePDF(S3Method):
         """
             Generate the invoice header
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1909,7 +1909,7 @@ class InvoicePDF(S3Method):
         """
             Generate the invoice body
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1975,7 +1975,7 @@ class InvoicePDF(S3Method):
         """
             Generate the invoice footer
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -2144,7 +2144,7 @@ class ClaimPDF(S3Method):
         """
             Generate a PDF of a Claim
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -2199,7 +2199,7 @@ class ClaimPDF(S3Method):
         """
             Generate the claim header
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -2248,7 +2248,7 @@ class ClaimPDF(S3Method):
         """
             Generate the claim body
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -2314,7 +2314,7 @@ class ClaimPDF(S3Method):
         """
             Generate the claim footer
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -2494,7 +2494,7 @@ class TestFacilityInfo(S3Method):
         """
             Report test facility information
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

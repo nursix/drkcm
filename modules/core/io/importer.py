@@ -53,7 +53,7 @@ from gluon.tools import callback, fetch
 
 from s3dal import Field
 
-from ..controller import S3Request
+from ..controller import CRUDRequest
 from ..model import S3Resource
 from ..tools import s3_utc, s3_get_foreign_key, s3_has_foreign_key, \
                     s3_str, IS_JSONS3
@@ -2740,7 +2740,7 @@ class S3BulkImporter(object):
                 # Customise the resource
                 customise = current.deployment_settings.customise_resource(tablename)
                 if customise:
-                    request = S3Request(prefix, name, current.request)
+                    request = CRUDRequest(prefix, name, current.request)
                     customise(request, tablename)
                     self.customised.append(tablename)
 
@@ -3415,7 +3415,7 @@ class S3BulkImporter(object):
             # Customise the resource
             customise = current.deployment_settings.customise_resource(tablename)
             if customise:
-                request = S3Request(prefix, resourcename, current.request)
+                request = CRUDRequest(prefix, resourcename, current.request)
                 customise(request, tablename)
                 self.customised.append(tablename)
 

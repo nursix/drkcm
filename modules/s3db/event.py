@@ -5322,7 +5322,7 @@ class event_ActionPlan(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -5577,7 +5577,7 @@ class event_ScenarioActionPlan(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -5806,7 +5806,7 @@ class event_ApplyScenario(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -5936,7 +5936,7 @@ class event_EventAssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -6210,7 +6210,7 @@ class event_EventAssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -6332,7 +6332,7 @@ class event_IncidentAssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -6595,7 +6595,7 @@ class event_IncidentAssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)

@@ -148,7 +148,7 @@ URL Method Handlers
    :param str component: component alias
    :param str method: name of the method (to use in URLs)
    :param action: function or other callable to invoke for this method,
-                  receives the S3Request instance and controller keyword
+                  receives the CRUDRequest instance and controller keyword
                   parameters as arguments
 
 .. code-block:: python

@@ -49,7 +49,7 @@ class S3HierarchyCRUD(S3Method):
         """
             Entry point for REST interface
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -72,7 +72,7 @@ class S3HierarchyCRUD(S3Method):
         """
             Page load
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -171,7 +171,7 @@ class S3HierarchyCRUD(S3Method):
         """
             Return a single node as JSON (id, parent and label)
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 

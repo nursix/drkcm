@@ -37,7 +37,7 @@ from gluon import current, URL, DIV
 from gluon.storage import Storage
 
 from ..filters import S3URLQuery
-from ..methods import S3Method
+from ..methods import S3Method, S3CRUD
 from ..tools import s3_parse_datetime, s3_utc, s3_str
 
 # =============================================================================
@@ -61,9 +61,9 @@ class S3Sync(S3Method):
                 - POST sync/repository/register.json    - remote registration
 
             NB incoming pull/push reponse normally by local sync/sync
-               controller as resource proxy => back-end generated S3Request
+               controller as resource proxy => back-end generated CRUDRequest
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 
@@ -107,7 +107,7 @@ class S3Sync(S3Method):
         """
             Respond to an incoming registration request
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 
@@ -206,7 +206,7 @@ class S3Sync(S3Method):
         """
             Respond to an incoming pull
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes
         """
 
@@ -309,11 +309,11 @@ class S3Sync(S3Method):
         """
             Respond to an incoming push
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes
         """
 
-        from ..methods import S3ImportItem
+        from ..io import S3ImportItem
 
         mixed = attr.get("mixed", False)
         get_vars = r.get_vars
@@ -553,7 +553,7 @@ class S3Sync(S3Method):
             @param resource: the resource the item shall be imported to
         """
 
-        from ..methods import S3ImportItem
+        from ..io import S3ImportItem
 
         s3db = current.s3db
         debug = current.log.debug
@@ -840,7 +840,7 @@ class S3SyncLog(S3Method):
         """
             RESTful method handler
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -848,7 +848,7 @@ class S3SyncLog(S3Method):
 
         resource = r.resource
         if resource.tablename == self.TABLENAME:
-            return resource.crud.select(r, **attr)
+            return S3CRUD().select(r, **attr)
 
         elif resource.tablename == "sync_repository":
             # READ for sync log for this repository (currently not needed)

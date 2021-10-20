@@ -2499,7 +2499,7 @@ class cr_AssignUnit(S3CRUD):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2715,7 +2715,7 @@ class CRShelterInspection(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -2756,7 +2756,7 @@ class CRShelterInspection(S3Method):
         """
             Generate the form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -2852,7 +2852,7 @@ class CRShelterInspection(S3Method):
         """
             Ajax-registration of shelter inspection
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 

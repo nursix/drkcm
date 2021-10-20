@@ -191,11 +191,11 @@ def person():
 
     def postp(r, output):
         if r.interactive:
-            if not r.component and "buttons" in output:
+            if not r.component and isinstance(output, dict) and "buttons" in output:
                 # Provide correct list-button (non-native controller)
                 buttons = output["buttons"]
                 if "list_btn" in buttons:
-                    crud_button = r.resource.crud.crud_button
+                    crud_button = s3base.S3CRUD.crud_button
                     buttons["list_btn"] = crud_button(None,
                                                 tablename="member_membership",
                                                 name="label_list_button",

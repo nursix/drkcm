@@ -126,8 +126,8 @@ from core.ui.widgets import *
 # GIS Module
 gis = current.gis = s3base.GIS()
 
-# s3_request
-s3_request = s3base.s3_request
+# crud_request
+crud_request = s3base.crud_request
 
 # Field Selectors
 FS = s3base.FS

@@ -63,7 +63,7 @@ class SpreadsheetImporter(S3Method):
         """
             Full-page method
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters (see below)
 
             @keyword csv_extra_fields: add values to each row in the CSV,
@@ -124,7 +124,7 @@ class SpreadsheetImporter(S3Method):
         """
             Request/submit upload form
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -201,7 +201,7 @@ class SpreadsheetImporter(S3Method):
             - submitting the selection goes to commit()
 
             @param job_id: the import job UUID (or None to read from request vars)
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -355,7 +355,7 @@ class SpreadsheetImporter(S3Method):
         """
             Commit the selected items (coming from select_items())
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -431,7 +431,7 @@ class SpreadsheetImporter(S3Method):
         """
             Construct the upload form
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
 
             @returns: FORM
@@ -514,7 +514,7 @@ class SpreadsheetImporter(S3Method):
         """
             Get a download URL for the CSV template
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
 
             @returns: URL (or None if no CSV template can be downloaded)
@@ -622,7 +622,7 @@ class SpreadsheetImporter(S3Method):
         """
             Get the XSLT transformation stylesheet
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
 
             @returns: the path to the XSLT stylesheet

@@ -603,7 +603,6 @@ class S3FireStationModel(DataModel):
                                          fact = "sum(minutes)",
                                          ),
                             )
-            req.set_handler("report", S3Report())
             req.resource.add_filter(query)
             return req(rheader=rheader)
 

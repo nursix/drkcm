@@ -2639,7 +2639,7 @@ class S3Compose(S3CRUD):
         """
             API entry point
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -2654,7 +2654,7 @@ class S3Compose(S3CRUD):
         """
             Generate a form to send a message
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 

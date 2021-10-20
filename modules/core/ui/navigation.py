@@ -1345,7 +1345,7 @@ def s3_rheader_resource(r):
     """
         Identify the tablename and record ID for the rheader
 
-        @param r: the current S3Request
+        @param r: the current CRUDRequest
 
     """
 
@@ -1402,7 +1402,7 @@ class S3ComponentTabs(object):
         """
             Render the tabs row
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         rheader_tabs = []
@@ -1634,7 +1634,7 @@ class S3ComponentTab(object):
         """
             Check whether the this tab is active
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         s3db = current.s3db
@@ -1670,7 +1670,7 @@ class S3ComponentTab(object):
             if handler is None and tablename:
                 handler = get_method(tablename, method=component)
             if handler is None:
-                handler = r.get_handler(component)
+                handler = r.default_methods.get(component)
             if handler is None:
                 return component in ("create", "read", "update", "delete")
 
@@ -1708,7 +1708,7 @@ class S3ComponentTab(object):
             Check whether the request GET vars match the GET vars in
             the URL of this tab
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         if self.vars is None:
@@ -1819,7 +1819,7 @@ class S3ResourceHeader(object):
         """
             Return the HTML representation of this rheader
 
-            @param r: the S3Request instance to render the header for
+            @param r: the CRUDRequest instance to render the header for
             @param tabs: the tabs (overrides the original tabs definition)
             @param table: override r.table
             @param record: override r.record

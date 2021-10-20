@@ -1008,7 +1008,7 @@ class OrgOrganisationModel(DataModel):
             JSON search method for S3OrganisationAutocompleteWidget
             - searches name & acronym for both this organisation & the parent
               of branches
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -3699,7 +3699,7 @@ class OrgSiteModel(DataModel):
         """
             JSON search method for S3SiteAutocompleteWidget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -5996,7 +5996,7 @@ class org_SiteCheckInMethod(S3Method):
         """
             Entry point for the REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -6023,7 +6023,7 @@ class org_SiteCheckInMethod(S3Method):
         """
             Render the check-in page
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -6189,7 +6189,7 @@ class org_SiteCheckInMethod(S3Method):
                  l: the PE label
                  }
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -6348,7 +6348,7 @@ class org_SiteCheckInMethod(S3Method):
             invokes the check_in_status hook for the site resource
             to obtain current status information.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param site_id: the site ID
             @param person: the person record
 
@@ -6447,7 +6447,7 @@ class org_SiteCheckInMethod(S3Method):
             Check-in the person at this site, invokes the site_check_in
             hook for the site resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param person: the person record
         """
 
@@ -6482,7 +6482,7 @@ class org_SiteCheckInMethod(S3Method):
             Check-out the person from this site, invokes the site_check_out
             hook for the site resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param person: the person record
         """
 
@@ -8425,7 +8425,7 @@ class org_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8585,7 +8585,7 @@ class org_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
+                    _vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Where to retrieve updated filter options from:
@@ -8653,7 +8653,7 @@ class org_CapacityReport(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8739,7 +8739,7 @@ class org_CapacityReport(S3Method):
         """
             Method to read the data
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         # Read all the permitted data
@@ -8818,7 +8818,7 @@ class org_CapacityReport(S3Method):
             import xlwt
         except ImportError:
             from core.io.codecs.xls import S3XLS
-            if current.auth.permission.format in S3Request.INTERACTIVE_FORMATS:
+            if current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
                 current.session.error = S3XLS.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))
             else:

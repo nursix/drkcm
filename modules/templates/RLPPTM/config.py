@@ -14,7 +14,7 @@ from gluon import current, URL, A, DIV, TAG, \
 
 from gluon.storage import Storage
 
-from core import FS, IS_FLOAT_AMOUNT, ICON, IS_ONE_OF, IS_UTC_DATE, S3Represent, s3_str
+from core import FS, IS_FLOAT_AMOUNT, ICON, IS_ONE_OF, IS_UTC_DATE, S3CRUD, S3Represent, s3_str
 from s3dal import original_tablename
 
 from .rlpgeonames import rlp_GeoNames
@@ -942,10 +942,9 @@ def config(settings):
                     elif record and method in (None, "read"):
                         key, label = "list_btn", T("Register another test result")
                 if key:
-                    crud = r.resource.crud
-                    regbtn =  crud.crud_button(label = label,
-                                               _href = r.url(id="", method="register"),
-                                               )
+                    regbtn = S3CRUD.crud_button(label = label,
+                                                _href = r.url(id="", method="register"),
+                                                )
                     output["buttons"] = {key: regbtn}
 
             return output
@@ -3329,7 +3328,6 @@ def config(settings):
                 # Override list-button to go to summary
                 buttons = output.get("buttons")
                 if isinstance(buttons, dict) and "list_btn" in buttons:
-                    from core import S3CRUD
                     summary = r.url(method="summary", id="", component="")
                     buttons["list_btn"] = S3CRUD.crud_button(label = T("List Facilities"),
                                                              _href = summary,
@@ -4714,7 +4712,6 @@ def config(settings):
                     stable = s3db.org_site
 
                     # Default action buttons (except delete)
-                    from core import S3CRUD
                     S3CRUD.action_buttons(r, deletable =False)
 
                     if has_role("SUPPLY_COORDINATOR"):

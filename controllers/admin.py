@@ -35,20 +35,7 @@ def role():
     def prep(r):
         if r.representation not in ("html", "aadata", "csv", "json"):
             return False
-
-        # Configure REST methods
-        methods = ("read",
-                   "list",
-                   "create",
-                   "update",
-                   "delete",
-                   "users",
-                   "copy",
-                   "datatable",
-                   "datalist",
-                   "import",
-                   )
-        r.set_handler(methods, s3base.S3RoleManager)
+        r.custom_action = s3base.S3RoleManager
         return True
     s3.prep = prep
 

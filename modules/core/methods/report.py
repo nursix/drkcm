@@ -73,7 +73,7 @@ class S3Report(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -98,7 +98,7 @@ class S3Report(S3Method):
         """
             Pivot table report page
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -280,7 +280,7 @@ class S3Report(S3Method):
             Render the pivot table data as a dict ready to be exported as
             GeoJSON for display on a Map.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -467,7 +467,7 @@ class S3Report(S3Method):
         """
             Pivot table report widget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -580,7 +580,7 @@ class S3Report(S3Method):
             - called with a body JSON containing the record IDs to represent,
               and the URL params for the pivot table (rows, cols, fact)
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 

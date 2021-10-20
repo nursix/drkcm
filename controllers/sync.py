@@ -31,7 +31,7 @@ def config():
     s3.postp = postp
 
     # Can't do anything else than update here
-    r = s3_request(args=[str(record_id), "update"], extension="html")
+    r = crud_request(args=[str(record_id), "update"], extension="html")
     return r()
 
 # -----------------------------------------------------------------------------
@@ -296,11 +296,11 @@ def sync():
 
         # Request
         prefix, name = tablename.split("_", 1)
-        r = s3_request(prefix = prefix,
-                       name = name,
-                       args = ["sync"],
-                       get_vars = get_vars_new,
-                       )
+        r = crud_request(prefix = prefix,
+                         name = name,
+                         args = ["sync"],
+                         get_vars = get_vars_new,
+                         )
 
         # Response
         return r(mixed=mixed)

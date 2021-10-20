@@ -3989,7 +3989,7 @@ def br_group_membership_onaccept(membership, group, group_id, person_id):
                 row = db(query).select(ctable.id, limitby=(0, 1)).first()
                 if not row:
                     # Customise case resource
-                    r = S3Request("br", "case", current.request)
+                    r = CRUDRequest("br", "case", current.request)
                     r.customise_resource("br_case")
 
                     # Get the default case status from database

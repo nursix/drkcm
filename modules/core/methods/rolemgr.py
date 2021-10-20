@@ -57,7 +57,7 @@ class S3RoleManager(S3Method):
         """
             Entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -118,7 +118,7 @@ class S3RoleManager(S3Method):
         """
             List or export roles
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
 
             NB this function must be restricted to ADMINs (in apply_method)
@@ -268,7 +268,7 @@ class S3RoleManager(S3Method):
         """
             Configure action buttons for role list
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T

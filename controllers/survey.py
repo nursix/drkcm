@@ -180,7 +180,7 @@ def template_read():
                    deletable=False,
                    )
 
-    r = s3_request("survey", "template", args=[template_id])
+    r = crud_request("survey", "template", args=[template_id])
     output = r(method="read", rheader=s3db.survey_template_rheader)
     return output
 

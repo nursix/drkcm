@@ -309,13 +309,6 @@ class S3Resource(object):
         self.muntil = None      # latest mtime of the exported records
         self.results = None     # number of exported records
 
-        # Standard methods ----------------------------------------------------
-
-        # CRUD
-        from ..methods import S3CRUD
-        self.crud = S3CRUD()
-        self.crud.resource = self
-
     # -------------------------------------------------------------------------
     # Query handling
     # -------------------------------------------------------------------------

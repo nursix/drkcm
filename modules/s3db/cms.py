@@ -1417,7 +1417,7 @@ def cms_documentation(r, default_page, default_url):
     """
         Render an online documentation page, to be called from prep
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param default_page: the default page name
         @param default_url: the default URL if no contents found
     """
@@ -1507,10 +1507,10 @@ class S3CMS(S3Method):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point to apply cms method to S3Requests
+            Entry point to apply cms method to CRUDRequests
             - produces a full page with a Richtext widget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @return: output object to send to the view
@@ -1526,7 +1526,7 @@ class S3CMS(S3Method):
             S3Summary
 
             @param method: the widget method
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
 
             @ToDo: Support comments
@@ -2189,7 +2189,7 @@ class cms_Calendar(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2359,7 +2359,7 @@ class cms_TagList(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

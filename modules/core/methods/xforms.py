@@ -46,7 +46,7 @@ class S3XForms(S3Method):
         """
             Apply CRUD methods
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
 
             @return: output object to send to the view
@@ -62,7 +62,7 @@ class S3XForms(S3Method):
         """
             Generate an XForms form for the current resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 

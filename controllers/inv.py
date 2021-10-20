@@ -211,8 +211,7 @@ def index2():
                                    pdf_groupby = "site_id",
                                    )
                     s3.filter = filter
-                    r = s3_request("inv", "inv_item",
-                                   vars={"orderby" : orderby})
+                    r = crud_request("inv", "inv_item", vars={"orderby" : orderby})
                     r.resource = resource
                     output = r(pdf_groupby = "site_id",
                                dt_group = 1,
@@ -262,7 +261,7 @@ def index2():
                                        dt_action_col = 1,
                                        )
                 return supply_items
-        r = s3_request(prefix = "inv", name = "inv_item")
+        r = crud_request(prefix = "inv", name = "inv_item")
         return {"module_name": module_name,
                 "warehouses": warehouses,
                 "inventory": inventory,
@@ -1282,7 +1281,7 @@ def recv_process():
 
     # Customise the inv_track_item so templates can customise the onaccept
     tracktable = db.inv_track_item
-    r = s3_request("inv", "track_item", args=[], vars={})
+    r = crud_request("inv", "track_item", args=[], vars={})
     r.customise_resource("inv_track_item")
 
     # Lookup the send_id from a track item of this recv

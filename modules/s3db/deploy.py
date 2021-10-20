@@ -1358,7 +1358,7 @@ def deploy_availability_filter(r):
             - called from prep of the respective controller
             - adds resource filter for r.resource
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     get_vars = r.get_vars
@@ -1680,7 +1680,7 @@ class deploy_Inbox(S3Method):
             Custom method for email inbox, provides a datatable with bulk-delete
             option
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes
         """
 
@@ -2067,7 +2067,7 @@ def deploy_apply(r, **attr):
             if filter_widgets:
 
                 # Where to retrieve filtered data from:
-                submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                submit_url_vars = S3Method._remove_filters(r.get_vars)
                 filter_submit_url = r.url(vars=submit_url_vars)
 
                 # Where to retrieve updated filter options from:
@@ -2294,7 +2294,7 @@ def deploy_alert_select_recipients(r, **attr):
         if filter_widgets:
 
             # Where to retrieve filtered data from:
-            _vars = resource.crud._remove_filters(r.get_vars)
+            _vars = S3Method._remove_filters(r.get_vars)
             filter_submit_url = r.url(vars=_vars)
 
             # Where to retrieve updated filter options from:
@@ -2514,7 +2514,7 @@ def deploy_response_select_mission(r, **attr):
         if filter_widgets:
 
             # Where to retrieve filtered data from:
-            submit_url_vars = resource.crud._remove_filters(get_vars)
+            submit_url_vars = S3Method._remove_filters(get_vars)
             filter_submit_url = r.url(vars=submit_url_vars)
 
             # Where to retrieve updated filter options from:

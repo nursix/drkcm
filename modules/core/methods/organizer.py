@@ -60,7 +60,7 @@ class S3Organizer(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -87,7 +87,7 @@ class S3Organizer(S3Method):
         """
             Render the organizer view (HTML method)
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
 
             @returns: dict of values for the view
@@ -254,7 +254,7 @@ class S3Organizer(S3Method):
         """
             Extract the resource data and return them as JSON (Ajax method)
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
 
             TODO correct documentation!
@@ -414,7 +414,7 @@ class S3Organizer(S3Method):
         """
             Update or delete calendar items (Ajax method)
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

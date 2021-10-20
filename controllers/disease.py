@@ -114,10 +114,10 @@ def person():
                     r.error(404, current.ERROR.BAD_RECORD)
 
                 # Update the request
-                request = s3base.S3Request("pr", "person",
-                                           args = [str(row.person_id)],
-                                           vars = {},
-                                           )
+                request = s3base.CRUDRequest("pr", "person",
+                                             args = [str(row.person_id)],
+                                             vars = {},
+                                             )
                 r.resource = resource = request.resource
                 r.record = request.record
                 r.id = request.id

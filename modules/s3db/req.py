@@ -4604,7 +4604,7 @@ def req_tabs(r, match=True):
     """
         Add a set of rheader tabs for a site's request management
 
-        @param r: the S3Request (for permission checking)
+        @param r: the CRUDRequest (for permission checking)
         @param match: request matching is applicable for this type of site
 
         @return: list of rheader tab definitions
@@ -5456,7 +5456,7 @@ class req_CheckMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 

@@ -8,7 +8,7 @@ from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import FS, S3CustomController
+from core import FS, S3CRUD, S3CustomController
 from s3theme import formstyle_foundation_inline
 
 THEME = "DRK"
@@ -266,18 +266,18 @@ class userstats(S3CustomController):
         if not auth.s3_has_role("ORG_GROUP_ADMIN"):
             auth.permission.fail()
 
-        from core import S3CRUD, s3_get_extension, s3_request
+        from core import S3CRUD, s3_get_extension, crud_request
 
         request = current.request
         args = request.args
 
-        # Create an S3Request
-        r = s3_request("org", "organisation",
-                       c = "default",
-                       f = "index/%s" % args[0],
-                       args = args[1:],
-                       extension = s3_get_extension(request),
-                       )
+        # Create an CRUDRequest
+        r = crud_request("org", "organisation",
+                         c = "default",
+                         f = "index/%s" % args[0],
+                         args = args[1:],
+                         extension = s3_get_extension(request),
+                         )
 
         # Filter to root organisations
         resource = r.resource
@@ -340,7 +340,7 @@ class userstats(S3CustomController):
             output["title"] = T("User Statistics")
 
             # URL to open the resource
-            open_url = resource.crud._linkto(r, update=False)("[id]")
+            open_url = S3CRUD._linkto(r, update=False)("[id]")
 
             # Add action button for open
             action_buttons = S3CRUD.action_buttons
@@ -358,7 +358,7 @@ class userstats(S3CustomController):
         """
             Show the current date in the output
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @returns: the page header (rheader)
         """
 

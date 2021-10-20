@@ -50,7 +50,7 @@ class S3Filter(S3Method):
         """
             Entry point for REST interface
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: additional controller parameters
         """
 
@@ -90,7 +90,7 @@ class S3Filter(S3Method):
 
             GET filter.html
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: additional controller parameters
         """
 
@@ -108,7 +108,7 @@ class S3Filter(S3Method):
 
             GET filter.options
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: additional controller parameters (ignored currently)
         """
 
@@ -138,7 +138,7 @@ class S3Filter(S3Method):
         """
             Delete a filter, responds to POST filter.json?delete=
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: additional controller parameters
         """
 
@@ -191,7 +191,7 @@ class S3Filter(S3Method):
         """
             Save a filter, responds to POST filter.json
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: additional controller parameters
         """
 
@@ -293,7 +293,7 @@ class S3Filter(S3Method):
 
             GET filter.json or GET filter.json?load=<id>
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: additional controller parameters
         """
 

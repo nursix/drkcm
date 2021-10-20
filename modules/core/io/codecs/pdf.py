@@ -181,7 +181,7 @@ class S3RL_PDF(S3Codec):
             @param attr: dictionary of keyword arguments, in crud_controller
                          passed through from the calling controller
 
-            @keyword request: the S3Request
+            @keyword request: the CRUDRequest
             @keyword method: "read" to not include a list view when no
                              component is specified
             @keyword list_fields: fields to include in lists
@@ -362,7 +362,7 @@ class S3RL_PDF(S3Codec):
 
             @param rules: the HTML (web2py helper class) or a callback
                           to produce it. The callback receives the
-                          S3Request as parameter.
+                          CRUDRequest as parameter.
             @param printable_width: the printable width
             @param styles: styles for HTML=>PDF conversion
         """

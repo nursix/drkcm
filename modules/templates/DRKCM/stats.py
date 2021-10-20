@@ -374,7 +374,7 @@ class PerformanceIndicatorExport(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -395,7 +395,7 @@ class PerformanceIndicatorExport(S3Method):
         """
             Export the performance indicators as XLS data sheet
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

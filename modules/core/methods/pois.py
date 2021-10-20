@@ -52,7 +52,7 @@ class S3ExportPOI(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -88,7 +88,7 @@ class S3ExportPOI(S3Method):
 
             (other formats can be requested, but may give unexpected results)
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -260,7 +260,7 @@ class S3ImportPOI(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 

@@ -473,7 +473,7 @@ class PRPersonEntityModel(DataModel):
         """
             JSON search method for S3AutocompleteWidget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -1854,7 +1854,7 @@ class PRPersonModel(DataModel):
                 r.error(400, "No Record ID provided")
 
         # NB Requirement to identify a single record also (indirectly)
-        #    requires read permission to that record (=>S3Request).
+        #    requires read permission to that record (=>CRUDRequest).
         #
         #    However: that does not imply that the user also has
         #    permission to see person details or contact information,
@@ -3149,7 +3149,7 @@ class PRGroupModel(DataModel):
                         row = db(query).select(ctable.id, limitby=(0, 1)).first()
                         if not row:
                             # Customise case resource
-                            r = S3Request("dvr", "case", current.request)
+                            r = CRUDRequest("dvr", "case", current.request)
                             r.customise_resource("dvr_case")
 
                             # Get the default case status from database
@@ -8093,7 +8093,7 @@ class pr_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8313,7 +8313,7 @@ class pr_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars = submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -8498,7 +8498,7 @@ class pr_Contacts(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 
@@ -8609,7 +8609,7 @@ class pr_Contacts(S3Method):
         """
             Contact Information Subform
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param pe_id: the pe_id
             @param allow_create: allow adding of new contacts
             @param method: the request method ("contacts", "private_contacts"
@@ -8864,7 +8864,7 @@ class pr_Templates(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8924,7 +8924,7 @@ class pr_Template(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -10285,7 +10285,7 @@ def pr_availability_filter(r):
             - called from prep of the respective controller
             - adds resource filter for r.resource
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     get_vars = r.get_vars
@@ -10895,7 +10895,7 @@ class pr_PersonSearchAutocomplete(S3Method):
         """
             Entry point for REST controller
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 

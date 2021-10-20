@@ -186,7 +186,7 @@ def parameter():
         return output
     s3.postp = postp
 
-    r = s3_request(args=[str(record_id)])
+    r = crud_request(args=[str(record_id)])
     return r()
 
 # =============================================================================

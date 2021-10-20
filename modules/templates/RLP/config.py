@@ -1076,7 +1076,7 @@ def config(settings):
         """
             Customise availability fields in volunteer form
 
-            @param r: the current S3Request
+            @param r: the current CRUDRequest
         """
 
         from core import S3WeeklyHoursWidget, S3WithIntro, s3_text_represent
@@ -1123,7 +1123,7 @@ def config(settings):
         """
             Determine fields for volunteer list
 
-            @param r: the current S3Request
+            @param r: the current CRUDRequest
             @param coordinator: user is COORDINATOR
             @param name_fields: name fields in order
 

@@ -57,7 +57,7 @@ class S3Merge(S3Method):
         """
             Apply Merge methods
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @return: output object to send to the view
@@ -105,7 +105,7 @@ class S3Merge(S3Method):
         """
             Bookmark the current record for de-duplication
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller parameters for the request
         """
 
@@ -137,7 +137,7 @@ class S3Merge(S3Method):
         """
             Remove a record from the deduplicate list
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller parameters for the request
         """
 
@@ -174,7 +174,7 @@ class S3Merge(S3Method):
             view, also renders a link to the duplicate bookmark list to
             initiate the merge process from
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param tablename: the table name
             @param record_id: the record ID
         """
@@ -233,7 +233,7 @@ class S3Merge(S3Method):
             records in this resource, with option to select two
             and initiate the merge process from here
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes for the request
         """
 
@@ -387,7 +387,7 @@ class S3Merge(S3Method):
         """
             Merge form for two records
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param **attr: the controller attributes for the request
 
             @note: this method can always only be POSTed, and requires

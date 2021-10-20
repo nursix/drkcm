@@ -932,7 +932,7 @@ class S3LocationModel(DataModel):
             JSON search method for S3LocationAutocompleteWidget
             - adds hierarchy support
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 

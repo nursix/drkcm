@@ -87,7 +87,7 @@ class S3TimePlot(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -102,7 +102,7 @@ class S3TimePlot(S3Method):
         """
             Widget-render entry point for S3Summary.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -196,7 +196,7 @@ class S3TimePlot(S3Method):
         """
             Time plot report page
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -336,7 +336,7 @@ class S3TimePlot(S3Method):
         """
             Identify the target resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         # Fallback
@@ -359,7 +359,7 @@ class S3TimePlot(S3Method):
         """
             Read the relevant GET vars for the timeplot
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param resource: the target S3Resource
         """
 

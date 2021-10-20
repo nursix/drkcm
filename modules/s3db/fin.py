@@ -3003,8 +3003,8 @@ class fin_VoucherBilling(object):
         ctable = s3db.fin_voucher_claim
 
         # Customise claim resource
-        from core import S3Request
-        r = S3Request("fin", "voucher_claim", args=[], get_vars={})
+        from core import CRUDRequest
+        r = CRUDRequest("fin", "voucher_claim", args=[], get_vars={})
         r.customise_resource("fin_voucher_claim")
 
         # Base query
@@ -3158,8 +3158,8 @@ class fin_VoucherBilling(object):
         invoice_no = "B%s%02dC%04d" % (bprefix, claim.billing_id, claim.id)
 
         # Customise invoice resource
-        from core import S3Request
-        r = S3Request("fin", "voucher_invoice", args=[], get_vars={})
+        from core import CRUDRequest
+        r = CRUDRequest("fin", "voucher_invoice", args=[], get_vars={})
         r.customise_resource("fin_voucher_invoice")
 
         # Generate invoice
@@ -3349,8 +3349,8 @@ class fin_VoucherBilling(object):
                          )
 
         # Customise invoice resource
-        from core import S3Request
-        r = S3Request("fin", "voucher_invoice", args=[], get_vars={})
+        from core import CRUDRequest
+        r = CRUDRequest("fin", "voucher_invoice", args=[], get_vars={})
         r.customise_resource("fin_voucher_invoice")
 
         # Trigger onsettled-callback for invoice
@@ -3556,7 +3556,7 @@ class fin_VoucherCancelDebit(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -3581,7 +3581,7 @@ class fin_VoucherCancelDebit(S3Method):
         """
             Cancel a voucher debit
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

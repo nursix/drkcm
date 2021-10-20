@@ -1184,10 +1184,7 @@ def config(settings):
 
             if r.id and not r.component and r.representation == "xls":
                 # Custom XLS Exporter to include all Responses.
-                r.set_handler("read", s3db.dc_TargetXLS(),
-                              http = ("GET", "POST"),
-                              representation = "xls"
-                              )
+                r.custom_action = s3db.dc_TargetXLS
             elif r.component_name == "target":
                 ltable = s3db.project_l10n
                 l10n = current.db(ltable.project_id == r.id).select(ltable.language,

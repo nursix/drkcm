@@ -15,8 +15,10 @@ from .organizer import *
 from .pois import *
 from .profile import *
 from .report import *
+from .rest import *
 from .rolemgr import *
 from .ssi import SpreadsheetImporter
 from .summary import *
 from .timeplot import *
 from .xforms import *
+

@@ -2899,7 +2899,7 @@ def feature_query():
     s3.filter = (table.lat != None) & (table.lon != None)
 
     # Parse the Request
-    r = s3_request()
+    r = crud_request()
 
     if r.representation != "geojson":
         session.error = ERROR.BAD_FORMAT

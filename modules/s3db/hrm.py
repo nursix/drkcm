@@ -5744,7 +5744,7 @@ class hrm_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -6004,7 +6004,7 @@ class hrm_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars = submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -9373,7 +9373,7 @@ class hrm_CV(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -9669,7 +9669,7 @@ class hrm_Medical(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -9791,7 +9791,7 @@ class hrm_Record(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -10088,7 +10088,7 @@ def hrm_configure_salary(r):
     """
         Configure the salary tab
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     hr_id = None

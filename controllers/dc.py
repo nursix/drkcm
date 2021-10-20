@@ -121,10 +121,7 @@ def target():
                                )
         elif r.id and not r.component and r.representation == "xls":
             # Custom XLS Exporter to include all Responses.
-            r.set_handler("read", s3db.dc_TargetXLS(),
-                          http = ("GET", "POST"),
-                          representation = "xls"
-                          )
+            r.custom_action = s3db.dc_TargetXLS
 
         return True
     s3.prep = prep
