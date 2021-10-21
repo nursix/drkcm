@@ -83,6 +83,24 @@ explicitly to *crud_controller*, e.g.:
 
 ...will provide CRUD functions for the *org_organisation* table instead.
 
+.. _resources_and_components:
+
+Resources and Components
+------------------------
+
+As explained above, a *crud_controller* is a database end-point that maps to
+a certain table or - depending on the request - certain records in that table.
+
+This *context data set* (consisting of a table and a query) is referred to
+as the **resource** addressed by the HTTP request and served by the controller.
+
+Apart from the data set in the primary table (called *master*), a resource
+can also include data in related tables that reference the master (e.g. via
+foreign keys or link tables) and which have been *declared* (usually in the
+data model) as **components** in the context of the master table.
+
+An example for this would be addresses (*component*) of a person (*master*).
+
 CRUD URLs and Methods
 ---------------------
 
@@ -132,6 +150,8 @@ organize  *Table*   Calendar-based manipulation of records
    further methods, or overriding the standard methods with specific
    implementations.
 
+.. _restapi:
+
 Default REST API
 ----------------
 
@@ -160,3 +180,41 @@ The default REST API *could* be used to integrate Eden ASP with other
 applications, but normally such integrations require process-specific end
 points (rather than just database end points) - which would be implemented
 as explicit methods instead.
+
+Component URLs
+--------------
+
+URLs served by a *crud_controller* can also directly address a :ref:`component <resources_and_components>`.
+For that, the *record* parameter would be extended like::
+
+   https:// server.domain.tld / a / c / f / record / component / method
+
+Here, the **component** is the *declared* name (*alias*) of the component in
+the context of the master table - usually the name of the component table
+without prefix, e.g.::
+
+   https:// server.domain.tld / eden / pr / person / 16 / address
+
+...would produce a list of all addresses (*pr_address* table) that are related
+to the *pr_person* record #16. Similar, replacing *list* with *create* would
+access the workflow to create new addresses in the context of that person record.
+
+.. note::
+
+   The `/list` method can be omitted here - if the end-point is a table rather
+   than a single record, then the *crud_controller* will automatically apply
+   the *list* method for interactive data formats.
+
+To access a particular record in a component, the primary key (id) of the
+component record can be appended, as in::
+
+   https:// server.domain.tld / eden / pr / person / 16 / address / 2 / read
+
+...to read the *pr_address* record #2 in the context of the *pr_person*
+record #16 (if the specified component record does not reference that master
+record, the request will result in a HTTP 404 status).
+
+.. note::
+
+   The :ref:`default REST API <restapi>` *always* serves the master table, even if the URL
+   addresses a component (however, the XML/JSON will include the component).
