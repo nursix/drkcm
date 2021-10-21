@@ -36,8 +36,6 @@ import re
 from gluon import current
 from gluon.storage import Storage
 
-REGEX_FILTER = re.compile(r".+\..+|.*\(.+\).*")
-
 # =============================================================================
 class S3Method(object):
     """
@@ -451,8 +449,10 @@ class S3Method(object):
             @param get_vars: the URL vars as dict
         """
 
+        regex_filter = re.compile(r".+\..+|.*\(.+\).*")
+
         return Storage((k, v) for k, v in get_vars.items()
-                              if not REGEX_FILTER.match(k))
+                              if not regex_filter.match(k))
 
     # -------------------------------------------------------------------------
     @staticmethod

@@ -34,7 +34,6 @@ __all__ = ("CRUDRequest",
 
 import json
 import os
-import re
 import sys
 
 from io import StringIO
@@ -45,7 +44,6 @@ from gluon.storage import Storage
 from .model import S3Resource
 from .tools import s3_get_extension, s3_keep_messages, s3_store_last_record_id, s3_str
 
-REGEX_FILTER = re.compile(r".+\..+|.*\(.+\).*")
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
 
 # =============================================================================
@@ -89,57 +87,59 @@ class CRUDRequest(object):
                       current web2py request object
         """
 
-        auth = current.auth
-
-        # Common settings
-
         # XSLT Paths
         self.XSLT_PATH = "static/formats"
         self.XSLT_EXTENSION = "xsl"
 
-        # Attached files
-        self.files = Storage()
-
         # Allow override of controller/function
         self.controller = c or self.controller
         self.function = f or self.function
+
+        # Format extension
+        request = current.request
         if "." in self.function:
             self.function, ext = self.function.split(".", 1)
             if extension is None:
                 extension = ext
+        self.extension = extension or request.extension
+
+        # Check permission
+        auth = current.auth
         if c or f:
             if not auth.permission.has_permission("read",
-                                                  c=self.controller,
-                                                  f=self.function):
+                                                  c = self.controller,
+                                                  f = self.function):
                 auth.permission.fail()
+
+
+        # HTTP method
+        self.http = http or request.env.request_method
+
+        # Attached files
+        self.files = Storage()
 
         # Allow override of request args/vars
         if args is not None:
-            if isinstance(args, (list, tuple)):
-                self.args = args
-            else:
-                self.args = [args]
-        if get_vars is not None:
-            self.get_vars = get_vars
-            self.vars = get_vars.copy()
+            self.args = args if isinstance(args, (list, tuple)) else [args]
+
+        if get_vars is not None or post_vars is not None:
+
+            self.vars = request_vars = Storage()
+
+            if get_vars is not None:
+                self.get_vars = Storage(get_vars)
+            request_vars.update(self.get_vars)
+
             if post_vars is not None:
-                self.vars.update(post_vars)
-            else:
-                self.vars.update(self.post_vars)
-        if post_vars is not None:
-            self.post_vars = post_vars
-            if get_vars is None:
-                self.vars = post_vars.copy()
-                self.vars.update(self.get_vars)
-        if get_vars is None and post_vars is None and vars is not None:
-            self.vars = vars
-            self.get_vars = vars
+                self.post_vars = Storage(post_vars)
+            request_vars.update(self.post_vars)
+
+        elif vars is not None:
+
+            self.vars = self.get_vars = Storage(vars)
             self.post_vars = Storage()
 
-        self.extension = extension or current.request.extension
-        self.http = http or current.request.env.request_method
-
-        # Main resource attributes
+        # Target table prefix/name
         if r is not None:
             if not prefix:
                 prefix = r.prefix
@@ -151,27 +151,34 @@ class CRUDRequest(object):
         # Parse the request
         self.__parse()
         self.custom_action = None
-        get_vars = Storage(self.get_vars)
 
         # Interactive representation format?
         self.interactive = self.representation in self.INTERACTIVE_FORMATS
+
+        get_vars = self.get_vars
 
         # Show information on deleted records?
         include_deleted = False
         if self.representation == "xml" and "include_deleted" in get_vars:
             include_deleted = True
-        if "components" in get_vars:
-            cnames = get_vars["components"]
-            if isinstance(cnames, list):
-                cnames = ",".join(cnames)
-            cnames = cnames.split(",")
-            if len(cnames) == 1 and cnames[0].lower() == "none":
-                cnames = []
+
+        # Which components to load?
+        component_name = self.component_name
+        if not component_name:
+            if "components" in get_vars:
+                cnames = get_vars["components"]
+                if isinstance(cnames, list):
+                    cnames = ",".join(cnames)
+                cnames = cnames.split(",")
+                if len(cnames) == 1 and cnames[0].lower() == "none":
+                    cnames = []
+                components = cnames
+            else:
+                components = None
         else:
-            cnames = None
+            components = component_name
 
         # Append component ID to the URL query
-        component_name = self.component_name
         component_id = self.component_id
         if component_name and component_id:
             varname = "%s.id" % component_name
@@ -184,14 +191,9 @@ class CRUDRequest(object):
             else:
                 get_vars[varname] = component_id
 
-        # Define the target resource
-        _filter = current.response.s3.filter
-        components = component_name
-        if components is None:
-            components = cnames
-
         tablename = "%s_%s" % (self.prefix, self.name)
 
+        # Handle approval settings
         if not current.deployment_settings.get_auth_record_approval():
             # Record Approval is off
             approved, unapproved = True, False
@@ -205,9 +207,10 @@ class CRUDRequest(object):
         else:
             approved, unapproved = True, False
 
+        # Instantiate resource
         self.resource = S3Resource(tablename,
                                    id = self.id,
-                                   filter = _filter,
+                                   filter = current.response.s3.filter,
                                    vars = get_vars,
                                    components = components,
                                    approved = approved,
@@ -217,48 +220,49 @@ class CRUDRequest(object):
                                    filter_component = component_name,
                                    )
 
-        self.tablename = self.resource.tablename
-        table = self.table = self.resource.table
+        resource = self.resource
+        self.tablename = resource.tablename
+        table = self.table = resource.table
 
         # Try to load the master record
         self.record = None
         uid = self.vars.get("%s.uid" % self.name)
         if self.id or uid and not isinstance(uid, (list, tuple)):
             # Single record expected
-            self.resource.load()
-            if len(self.resource) == 1:
-                self.record = self.resource.records().first()
-                _id = table._id.name
-                self.id = self.record[_id]
+            resource.load()
+            if len(resource) == 1:
+                self.record = resource.records().first()
+                self.id = self.record[table._id.name]
                 s3_store_last_record_id(self.tablename, self.id)
             else:
                 raise KeyError(current.ERROR.BAD_RECORD)
 
         # Identify the component
-        self.component = None
-        if self.component_name:
-            c = self.resource.components.get(self.component_name)
+        self.component = component = None
+        if component_name:
+            c = resource.components.get(component_name)
             if c:
-                self.component = c
+                self.component = component = c
             else:
-                error = "%s not a component of %s" % (self.component_name,
-                                                      self.resource.tablename)
+                error = "%s not a component of %s" % \
+                        (self.component_name, self.tablename)
                 raise AttributeError(error)
 
         # Identify link table and link ID
-        self.link = None
-        self.link_id = None
-
-        if self.component is not None:
-            self.link = self.component.link
-        if self.link and self.id and self.component_id:
-            self.link_id = self.link.link_id(self.id, self.component_id)
-            if self.link_id is None:
+        link = link_id = None
+        if component is not None:
+            link = component.link
+        if link and self.id and self.component_id:
+            link_id = link.link_id(self.id, self.component_id)
+            if link_id is None:
                 raise KeyError(current.ERROR.BAD_RECORD)
+        self.link = link
+        self.link_id = link_id
 
         # Initialize default methods
         self._default_methods = None
 
+        # Initialize next-URL
         self.next = None
 
     # -------------------------------------------------------------------------
@@ -358,7 +362,6 @@ class CRUDRequest(object):
             body = self.body
             body.seek(0)
             # Decode request body (=bytes stream) into a str
-            # - json.load/loads do not accept bytes in Py3 before 3.6
             # - minor performance advantage by avoiding the need for
             #   json.loads to detect the encoding
             s = body.read().decode("utf-8")
@@ -413,6 +416,9 @@ class CRUDRequest(object):
     # -------------------------------------------------------------------------
     @property
     def default_methods(self):
+        """
+            Default method handlers as dict {method: handler}
+        """
 
         methods = self._default_methods
 
@@ -501,7 +507,7 @@ class CRUDRequest(object):
         """
             Execute this request
 
-            :param attr: Parameters for the method handler
+            :param attr: Controller parameters
         """
 
         response = current.response
@@ -534,23 +540,20 @@ class CRUDRequest(object):
             pre = preprocess(self)
             # Re-read representation after preprocess:
             representation = self.representation
-            if pre and isinstance(pre, dict):
+            if not pre:
+                self.error(400, current.ERROR.BAD_REQUEST)
+            elif isinstance(pre, dict):
                 bypass = pre.get("bypass", False) is True
                 output = pre.get("output")
-                if not bypass:
-                    success = pre.get("success", True)
-                    if not success:
-                        if representation == "html" and output:
-                            if isinstance(output, dict):
-                                output["r"] = self
-                            return output
-                        else:
-                            status = pre.get("status", 400)
-                            message = pre.get("message",
-                                              current.ERROR.BAD_REQUEST)
-                            self.error(status, message)
-            elif not pre:
-                self.error(400, current.ERROR.BAD_REQUEST)
+                success = pre.get("success", True)
+                if not bypass and not success:
+                    if representation == "html" and output:
+                        if isinstance(output, dict):
+                            output["r"] = self
+                        return output
+                    status = pre.get("status", 400)
+                    message = pre.get("message", current.ERROR.BAD_REQUEST)
+                    self.error(status, message)
 
         # Default view
         if representation not in ("html", "popup"):

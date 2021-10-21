@@ -64,7 +64,7 @@ def series():
                 ctable.body.represent = lambda body: XML(body)
                 ctable.body.widget = s3_richtext_widget
             else:
-                ctable.body.represent = lambda body: XML(s3_URLise(body))
+                ctable.body.represent = lambda body: XML(s3base.s3_URLise(body))
                 ctable.body.widget = None
 
             # Special-purpose series
