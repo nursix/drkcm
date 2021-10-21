@@ -83,3 +83,80 @@ explicitly to *crud_controller*, e.g.:
 
 ...will provide CRUD functions for the *org_organisation* table instead.
 
+CRUD URLs and Methods
+---------------------
+
+The *crud_controller* extends web2py's URL schema with two additional path elements::
+
+   https:// server.domain.tld / a / c / f / record / method
+
+Here, the **record** is the primary key (*id*) of a record in the table served
+by the crud_controller function - while the **method** specifies how to access
+that record, e.g. *read* or *update*.
+
+For instance, the following URL::
+
+   https:// server.domain.tld / eden / org / organisation / 4 / update
+
+...accesses the workflow to update the record #4 in the org_organisation table
+(with HTTP GET to retrieve the update-form, and POST to submit it and perform
+the update).
+
+Without a *record* key, the URL accesses the table itself - as some methods, like
+*create*, only make sense in the table context::
+
+   https:// server.domain.tld / eden / org / organisation / create
+
+The *crud_controller* comes pre-configured with a number of standard methods,
+including:
+
+========  ========  ===========================================================
+Method    Target    Description
+========  ========  ===========================================================
+create    *Table*   Create a new record (form)
+read      *Record*  View a record (read-only representation)
+update    *Record*  Update a record (form)
+delete    *Record*  Delete a record
+list      *Table*   A tabular view of records
+report    *Table*   Pivot table report with charts
+timeplot  *Table*   Statistics over a time axis
+map       *Table*   Show location context of records on a map
+summary   *Table*   Meta-method with list, report, map on the same page (tabs)
+import    *Table*   Import records from spreadsheets
+organize  *Table*   Calendar-based manipulation of records
+========  ========  ===========================================================
+
+.. note::
+
+   Both *models* and *templates* can extend the *crud_controller* by adding
+   further methods, or overriding the standard methods with specific
+   implementations.
+
+Default REST API
+----------------
+
+If no *method* is specified in the URL, then the *crud_controller* will treat
+the request as **RESTful** - i.e. the HTTP verb (GET, PUT, POST or DELETE)
+determines the access method, e.g.::
+
+   GET https:// server.domain.tld / eden / org / organisation / 3.xml
+
+...produces a XML representation of the record #3 in the org_organisation table.
+A *POST* request to the same URL, with XML data in the request body, will update
+the record.
+
+This **REST API** is a simpler, lower-level interface that is primarily used by
+certain client-side scripts, e.g. the map viewer. It does not implement complete
+CRUD workflows, but rather each function individually (stateless).
+
+.. note::
+
+   A data format extension in the URL is required for the REST API, as it can
+   produce and process multiple data formats (extensible). Without extension,
+   HTML format will be assumed and one of the interactive *read*, *update*,
+   *delete* or *list* methods will be chosen to handle the request instead.
+
+The default REST API *could* be used to integrate Eden ASP with other
+applications, but normally such integrations require process-specific end
+points (rather than just database end points) - which would be implemented
+as explicit methods instead.
