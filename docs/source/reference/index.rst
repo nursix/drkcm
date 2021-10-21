@@ -9,3 +9,4 @@ Reference Guide
    services/index
    settings/index
    models/index
+   methods/index

@@ -128,21 +128,21 @@ Without a *record* key, the URL accesses the table itself - as some methods, lik
 The *crud_controller* comes pre-configured with a number of standard methods,
 including:
 
-========  ========  ===========================================================
-Method    Target    Description
-========  ========  ===========================================================
-create    *Table*   Create a new record (form)
-read      *Record*  View a record (read-only representation)
-update    *Record*  Update a record (form)
-delete    *Record*  Delete a record
-list      *Table*   A tabular view of records
-report    *Table*   Pivot table report with charts
-timeplot  *Table*   Statistics over a time axis
-map       *Table*   Show location context of records on a map
-summary   *Table*   Meta-method with list, report, map on the same page (tabs)
-import    *Table*   Import records from spreadsheets
-organize  *Table*   Calendar-based manipulation of records
-========  ========  ===========================================================
+===============================================  ========  ===========================================================
+Method                                           Target    Description
+===============================================  ========  ===========================================================
+:doc:`create <../reference/methods/crud>`        *Table*   Create a new record (form)
+:doc:`read <../reference/methods/crud>`          *Record*  View a record (read-only representation)
+:doc:`update <../reference/methods/crud>`        *Record*  Update a record (form)
+:doc:`delete <../reference/methods/crud>`        *Record*  Delete a record
+:doc:`list <../reference/methods/datatable>`     *Table*   A tabular view of records
+:doc:`report <../reference/methods/report>`      *Table*   Pivot table report with charts
+:doc:`timeplot <../reference/methods/timeplot>`  *Table*   Statistics over a time axis
+:doc:`map <../reference/methods/map>`            *Table*   Show location context of records on a map
+:doc:`summary <../reference/methods/summary>`    *Table*   Meta-method with list, report, map on the same page (tabs)
+:doc:`import <../reference/methods/import>`      *Table*   Import records from spreadsheets
+:doc:`organize <../reference/methods/organize>`  *Table*   Calendar-based manipulation of records
+===============================================  ========  ===========================================================
 
 .. note::
 
