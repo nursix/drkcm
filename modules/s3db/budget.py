@@ -1402,7 +1402,7 @@ class S3BudgetAllocationModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     def defaults(self):
@@ -1410,7 +1410,7 @@ class S3BudgetAllocationModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1528,7 +1528,7 @@ class S3BudgetMonitoringModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

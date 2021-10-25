@@ -559,7 +559,7 @@ class S3MessageAttachmentModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class S3MessageContactModel(DataModel):
@@ -655,7 +655,7 @@ class S3MessageContactModel(DataModel):
             msg_list_empty=T("No Contacts currently registered"))
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3MessageTagModel(DataModel):
@@ -699,7 +699,7 @@ class S3MessageTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class S3EmailModel(S3ChannelModel):
@@ -833,7 +833,7 @@ class S3EmailModel(S3ChannelModel):
                             )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3FacebookModel(S3ChannelModel):
@@ -1050,7 +1050,7 @@ class S3MCommonsModel(S3ChannelModel):
                    action = self.msg_channel_poll)
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3GCMModel(S3ChannelModel):
@@ -1112,7 +1112,7 @@ class S3GCMModel(S3ChannelModel):
         #           action = self.msg_channel_poll)
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1616,7 +1616,7 @@ class S3RSSModel(S3ChannelModel):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3SMSModel(DataModel):
@@ -1681,7 +1681,7 @@ class S3SMSModel(DataModel):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3SMSOutboundModel(DataModel):
@@ -1856,7 +1856,7 @@ class S3SMSOutboundModel(DataModel):
                   )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3TropoModel(DataModel):
@@ -1923,7 +1923,7 @@ class S3TropoModel(DataModel):
                      )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3TwilioModel(S3ChannelModel):
@@ -2005,7 +2005,7 @@ class S3TwilioModel(S3ChannelModel):
                      *s3_meta_fields())
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3TwitterModel(DataModel):
@@ -2144,7 +2144,7 @@ class S3TwitterModel(DataModel):
                   )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2376,7 +2376,7 @@ class S3TwitterSearchModel(S3ChannelModel):
                   )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -----------------------------------------------------------------------------
     @staticmethod
@@ -2532,7 +2532,7 @@ class S3XFormsModel(DataModel):
                           )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3BaseStationModel(DataModel):
@@ -2608,6 +2608,6 @@ class S3BaseStationModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # END =========================================================================

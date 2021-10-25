@@ -49,7 +49,7 @@ except ImportError:
 
 from gluon import current, HTTP
 
-from ...model import S3Resource
+from ...resource import S3Resource
 from ...tools import s3_str
 
 from ..codec import S3Codec

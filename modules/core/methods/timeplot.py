@@ -50,13 +50,13 @@ from gluon.html import FORM, INPUT, TABLE, TAG, XML
 from gluon.validators import IS_IN_SET
 from gluon.sqlhtml import OptionsWidget
 
-from ..filters import FS
+from ..resource import FS
 from ..tools import s3_decode_iso_datetime, s3_utc, s3_flatlist, s3_represent_value, s3_str, S3MarkupStripper
 
 from .base import S3Method
 from .report import S3Report, S3ReportForm
 
-tp_datetime = lambda *t: datetime.datetime(tzinfo=dateutil.tz.tzutc(), *t)
+tp_datetime = lambda year, *t: datetime.datetime(year, *t, tzinfo=dateutil.tz.tzutc())
 
 tp_tzsafe = lambda dt: dt.replace(tzinfo=dateutil.tz.tzutc()) \
                        if dt and dt.tzinfo is None else dt

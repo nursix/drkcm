@@ -638,7 +638,7 @@ class S3GroupedItemsTable(object):
 
         pdf_footer = self.pdf_footer
 
-        from ..io import S3Exporter
+        from ..resource import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(self.resource,
                         request = r,
@@ -702,7 +702,7 @@ class S3GroupedItemsTable(object):
                    }
 
         # Export as XLS
-        from ..io import S3Exporter
+        from ..resource import S3Exporter
         exporter = S3Exporter().xls
         return exporter(xlsdata,
                         title = self.title,

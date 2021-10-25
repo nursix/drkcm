@@ -40,8 +40,7 @@ from gluon import current, URL, DIV, SPAN, SQLFORM, INPUT, A, LI, UL
 
 from s3dal import Field
 
-from ..filters import FS
-from ..io import SEPARATORS
+from ..resource import FS, SEPARATORS
 from ..tools import s3_str, s3_mark_required, JSONERRORS
 from ..ui import s3_comments_widget
 

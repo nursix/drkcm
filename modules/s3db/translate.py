@@ -91,7 +91,7 @@ class S3TranslateModel(DataModel):
 
         #----------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

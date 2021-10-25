@@ -890,7 +890,7 @@ class DiseaseCertificateModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -899,7 +899,7 @@ class DiseaseCertificateModel(DataModel):
 
         #dummy = S3ReusableField.dummy
 
-        return {}
+        return None
 
 # =============================================================================
 class CaseTrackingModel(DataModel):
@@ -1890,13 +1890,13 @@ class ContactTracingModel(DataModel):
             msg_list_empty = T("No Exposure Information currently registered"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

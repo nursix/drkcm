@@ -38,9 +38,10 @@ from gluon.storage import Storage
 
 from s3dal import original_tablename
 
-from ..model import DEFAULT, MAXDEPTH
-from ..filters import FS, S3URLQuery
 from ..tools import s3_get_foreign_key, s3_str, S3Represent, S3RepresentLazy
+
+from .query import FS, S3URLQuery
+from .resource import DEFAULT, MAXDEPTH
 
 # =============================================================================
 class S3ResourceTree(object):

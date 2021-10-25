@@ -353,8 +353,8 @@ class RESTful(S3Method):
 
         try:
             output = r.resource.import_xml(source,
-                                           id = record_id,
-                                           format = representation,
+                                           record_id = record_id,
+                                           source_type = representation,
                                            files = r.files,
                                            stylesheet = stylesheet,
                                            ignore_errors = ignore_errors,

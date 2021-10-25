@@ -301,7 +301,7 @@ auth.override = True
 stylesheet = os.path.join(request.folder, "static", "formats", "s3csv", "disease", "stats_data.xsl")
 resource = s3db.resource("disease_stats_data")
 File = open(OUTPUT_CSV, "rb")
-resource.import_xml(File, format="csv", stylesheet=stylesheet)
+resource.import_xml(File, source_type="csv", stylesheet=stylesheet)
 db.commit()
 
 if len(rejected_loc) or len(rejected_data) or len(suspect_data) or len(new_org):

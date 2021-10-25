@@ -34,8 +34,7 @@ from io import StringIO
 from gluon import *
 
 from ...controller import CRUDRequest
-from ...filters import S3URLQuery, FS
-from ...io import S3Exporter
+from ...resource import S3URLQuery, FS, S3Exporter
 
 from ..base import S3SyncBaseAdapter
 

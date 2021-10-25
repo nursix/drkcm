@@ -221,7 +221,7 @@ class S3Anonymize(S3Method):
                                the transaction if an exception is raised
         """
 
-        from ..filters import FS, S3Joins
+        from ..resource import FS, S3Joins
 
         s3db = current.s3db
 

@@ -106,7 +106,7 @@ class AuthDomainApproverModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 
 # =============================================================================
@@ -150,7 +150,7 @@ class AuthUserOptionsModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class AuthConsentModel(DataModel):
@@ -1356,7 +1356,7 @@ class AuthUserTempModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 
 # =============================================================================

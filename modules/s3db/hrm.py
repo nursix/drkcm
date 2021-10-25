@@ -1053,7 +1053,7 @@ class HRModel(DataModel):
         """
             Update detection for hrm_job_title
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         data = item.data
@@ -1439,7 +1439,7 @@ class HRSiteModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1654,7 +1654,7 @@ class HRSalaryModel(DataModel):
         #
         # @todo: implement
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1807,7 +1807,7 @@ class HRInsuranceModel(DataModel):
                                                  ),
                        )
 
-        return {}
+        return None
 
 # =============================================================================
 class HRContractModel(DataModel):
@@ -1860,7 +1860,7 @@ class HRContractModel(DataModel):
                        deduplicate = S3Duplicate(primary = ("human_resource_id",)),
                        )
 
-        return {}
+        return None
 
 # =============================================================================
 class HRJobModel(DataModel):
@@ -3876,7 +3876,7 @@ class HRSkillModel(DataModel):
           This callback will be called when importing records
           it will look to see if the record being imported is a duplicate.
 
-          @param item: An S3ImportItem object which includes all the details
+          @param item: An ImportItem object which includes all the details
                       of the record being imported
 
           If the record is a duplicate then it will set the item method to update
@@ -4208,7 +4208,7 @@ class HREventStrategyModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HREventProgrammeModel(DataModel):
@@ -4237,7 +4237,7 @@ class HREventProgrammeModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HREventProjectModel(DataModel):
@@ -4266,7 +4266,7 @@ class HREventProjectModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HREventAssessmentModel(DataModel):
@@ -4313,7 +4313,7 @@ class HREventAssessmentModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HRAppraisalModel(DataModel):
@@ -4444,7 +4444,7 @@ class HRAppraisalModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4678,7 +4678,7 @@ class HRExperienceModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HRAwardModel(DataModel):
@@ -4755,7 +4755,7 @@ class HRAwardModel(DataModel):
             msg_list_empty = T("Currently no awards registered"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class HRDisciplinaryActionModel(DataModel):
@@ -4818,7 +4818,7 @@ class HRDisciplinaryActionModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HRTagModel(DataModel):
@@ -4859,7 +4859,7 @@ class HRTagModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class HRProgrammeModel(DataModel):
@@ -8748,46 +8748,44 @@ def hrm_person_controller(**attr):
                 )
 
     # Import pre-process
-    def import_prep(data, group=group):
+    def import_prep(tree, group=group):
         """
             Deletes all HR records (of the given group) of the
             organisation/branch before processing a new data import
         """
-        if s3.import_replace:
-            resource, tree = data
-            if tree is not None:
-                xml = current.xml
-                tag = xml.TAG
-                att = xml.ATTRIBUTE
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
 
-                if group == "staff":
-                    group = 1
-                elif group == "volunteer":
-                    group = 2
-                else:
-                    return # don't delete if no group specified
+            if group == "staff":
+                group = 1
+            elif group == "volunteer":
+                group = 2
+            else:
+                return # don't delete if no group specified
 
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        htable = s3db.hrm_human_resource
-                        otable = s3db.org_organisation
-                        query = (otable.name == org_name) & \
-                                (htable.organisation_id == otable.id) & \
-                                (htable.type == group)
-                        resource = s3db.resource("hrm_human_resource", filter=query)
-                        # Use cascade=True so that the deletion gets
-                        # rolled back if the import fails:
-                        resource.delete(format="xml", cascade=True)
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    htable = s3db.hrm_human_resource
+                    otable = s3db.org_organisation
+                    query = (otable.name == org_name) & \
+                            (htable.organisation_id == otable.id) & \
+                            (htable.type == group)
+                    resource = s3db.resource("hrm_human_resource", filter=query)
+                    # Use cascade=True so that the deletion gets
+                    # rolled back if the import fails:
+                    resource.delete(format="xml", cascade=True)
 
     s3.import_prep = import_prep
 

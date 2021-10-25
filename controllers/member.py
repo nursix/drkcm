@@ -114,38 +114,36 @@ def person():
                action = s3db.hrm_CV)
 
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Deletes all Member records of the organisation/branch
             before processing a new data import
         """
-        if s3.import_replace:
-            resource, tree = data
-            if tree is not None:
-                xml = current.xml
-                tag = xml.TAG
-                att = xml.ATTRIBUTE
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
 
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        mtable = s3db.member_membership
-                        otable = s3db.org_organisation
-                        query = (otable.name == org_name) & \
-                                (mtable.organisation_id == otable.id)
-                        resource = s3db.resource("member_membership", filter=query)
-                        # Use cascade=True so that the deletion gets
-                        # rolled back if the import fails:
-                        resource.delete(format="xml", cascade=True)
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    mtable = s3db.member_membership
+                    otable = s3db.org_organisation
+                    query = (otable.name == org_name) & \
+                            (mtable.organisation_id == otable.id)
+                    resource = s3db.resource("member_membership", filter=query)
+                    # Use cascade=True so that the deletion gets
+                    # rolled back if the import fails:
+                    resource.delete(format="xml", cascade=True)
 
     s3.import_prep = import_prep
 

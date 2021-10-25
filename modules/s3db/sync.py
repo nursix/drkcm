@@ -110,7 +110,7 @@ class SyncConfigModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
 class SyncStatusModel(DataModel):
@@ -145,7 +145,7 @@ class SyncStatusModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
 class SyncRepositoryModel(DataModel):
@@ -911,7 +911,7 @@ class SyncLogModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
 class SyncTaskModel(DataModel):
@@ -950,7 +950,7 @@ class SyncTaskModel(DataModel):
         }
 
         # Strategy (allowed import methods)
-        sync_strategy = S3ImportItem.METHOD
+        sync_strategy = ImportItem.METHOD
         all_strategies = list(sync_strategy.values())
 
         sync_strategy_represent = lambda opt: ", ".join(o for o in sync_strategy.values() if o in opt) \
@@ -963,13 +963,12 @@ class SyncTaskModel(DataModel):
         }
 
         # Update/conflict resolution policy
-        sync_policies = S3ImportItem.POLICY
-        sync_policy = {
-            sync_policies.OTHER: T("always update"),
-            sync_policies.NEWER: T("update if newer"),
-            sync_policies.MASTER: T("update if master"),
-            sync_policies.THIS: T("never update")
-        }
+        from core import SyncPolicy
+        sync_policy = {SyncPolicy.OTHER: T("always update"),
+                       SyncPolicy.NEWER: T("update if newer"),
+                       SyncPolicy.MASTER: T("update if master"),
+                       SyncPolicy.THIS: T("never update")
+                       }
 
         sync_policy_represent = lambda opt: \
                                 opt and sync_policy.get(opt, UNKNOWN_OPT) or NONE
@@ -1117,10 +1116,10 @@ class SyncTaskModel(DataModel):
                                          ),
                            ),
                      Field("update_policy",
-                           default = sync_policies.NEWER,
+                           default = SyncPolicy.NEWER,
                            label = T("Update Policy"),
                            represent = sync_policy_represent,
-                           requires = IS_IN_SET(sync_policies,
+                           requires = IS_IN_SET(sync_policy,
                                                 zero = None,
                                                 ),
                            comment = DIV(_class = "tooltip",
@@ -1131,10 +1130,10 @@ class SyncTaskModel(DataModel):
                                          ),
                            ),
                      Field("conflict_policy",
-                           default = sync_policies.NEWER,
+                           default = SyncPolicy.NEWER,
                            label = T("Conflict Policy"),
                            represent = sync_policy_represent,
-                           requires = IS_IN_SET(sync_policies,
+                           requires = IS_IN_SET(sync_policy,
                                                 zero = None,
                                                 ),
                            comment = DIV(_class = "tooltip",
@@ -1213,7 +1212,7 @@ class SyncTaskModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1352,7 +1351,7 @@ class SyncScheduleModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
 def sync_rheader(r, tabs=None):

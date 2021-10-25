@@ -127,7 +127,7 @@ class S3Assess24HModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3AssessBuildingModel(DataModel):
@@ -1088,7 +1088,7 @@ class S3AssessCanvassModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3AssessNeedsModel(DataModel):
@@ -1231,7 +1231,7 @@ class S3AssessNeedsModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def assess_multi_type_represent(ids, opts):

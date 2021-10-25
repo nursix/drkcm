@@ -2425,7 +2425,7 @@ class PRPersonRelationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class PRGroupModel(DataModel):
@@ -3236,7 +3236,7 @@ class PRGroupCompetencyModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class PRGroupLocationModel(DataModel):
@@ -3287,7 +3287,7 @@ class PRGroupLocationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class PRGroupTagModel(DataModel):
@@ -3321,7 +3321,7 @@ class PRGroupTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class PRForumModel(DataModel):
@@ -3731,7 +3731,7 @@ class PRRealmModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class PRAddressModel(DataModel):
@@ -4407,7 +4407,7 @@ class PRImageModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -5199,7 +5199,7 @@ class PRAvailabilityModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -5360,7 +5360,7 @@ class PRUnavailabilityModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class PRDescriptionModel(DataModel):
@@ -5981,7 +5981,7 @@ class PREducationModel(DataModel):
         # ---------------------------------------------------------------------
         # Return model-global names to response.s3
         #
-        return {}
+        return None
 
 # =============================================================================
 class PRIdentityModel(DataModel):
@@ -6107,7 +6107,7 @@ class PRIdentityModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class PRLanguageModel(DataModel):
@@ -6174,7 +6174,7 @@ class PRLanguageModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class PROccupationModel(DataModel):
@@ -6266,7 +6266,7 @@ class PROccupationModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class PRPersonDetailsModel(DataModel):
@@ -6544,7 +6544,7 @@ class PRPersonLocationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class PRPersonTagModel(DataModel):
@@ -6578,7 +6578,7 @@ class PRPersonTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class PRReligionModel(DataModel):
@@ -6699,7 +6699,7 @@ class PRReligionModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3ImageLibraryModel(DataModel):
@@ -10328,7 +10328,7 @@ def pr_availability_filter(r):
             r.resource.add_filter(~(FS("id").belongs(person_ids)))
 
 # =============================================================================
-def pr_import_prep(data):
+def pr_import_prep(tree):
     """
         Called when contacts are imported from CSV
 
@@ -10345,8 +10345,6 @@ def pr_import_prep(data):
     set_record_owner = current.auth.s3_set_record_owner
     update_super = s3db.update_super
     table = s3db.org_organisation
-
-    tree = data[1]
 
     # Memberships
     elements = tree.getroot().xpath("/s3xml//resource[@name='pr_contact']/data[@field='pe_id']")

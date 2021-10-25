@@ -31,14 +31,9 @@ import datetime
 import json
 import sys
 
+from lxml import etree
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urllib_quote
-
-try:
-    from lxml import etree
-except ImportError:
-    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
-    raise
 
 from gluon import current
 

@@ -1507,7 +1507,7 @@ class S3StatsPeopleModel(DataModel):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def stats_quantile(data, q):

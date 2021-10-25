@@ -723,7 +723,7 @@ class S3LocationModel(DataModel):
           This callback will be called when importing location records it will look
           to see if the record being imported is a duplicate.
 
-          @param item: An S3ImportItem object which includes all the details
+          @param item: An ImportItem object which includes all the details
                        of the record being imported
 
           If the record is a duplicate then it will set the item method to update
@@ -1300,7 +1300,7 @@ class S3LocationNameModel(DataModel):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class S3LocationTagModel(DataModel):
@@ -1436,7 +1436,7 @@ class S3LocationGroupModel(DataModel):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class S3LocationHierarchyModel(DataModel):
@@ -3014,7 +3014,7 @@ class S3FeatureLayerModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4067,7 +4067,7 @@ class S3MapModel(DataModel):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4932,7 +4932,7 @@ class S3PoIOrganisationGroupModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class S3PoIFeedModel(DataModel):
@@ -4953,7 +4953,7 @@ class S3PoIFeedModel(DataModel):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def name_field():

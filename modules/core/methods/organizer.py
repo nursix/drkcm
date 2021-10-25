@@ -312,7 +312,7 @@ class S3Organizer(S3Method):
         # Add date filter
         start, end = self.parse_interval(r.get_vars.get("$interval"))
         if start and end:
-            from ..filters import FS
+            from ..resource import FS
             start_fs = FS(start_rfield.selector)
             if not end_rfield:
                 query = (start_fs >= start) & (start_fs < end)

@@ -31,7 +31,7 @@ stylesheet = os.path.join(stylesheet_dir, "item_category_ifrc_standard.xsl")
 resource = s3db.resource("supply_item_category")
 File = open(import_file, "r")
 resource.import_xml(File,
-                    format="csv",
+                    source_type="csv",
                     stylesheet=stylesheet)
 File.close()
 
@@ -49,7 +49,7 @@ stylesheet = os.path.join(stylesheet_dir, "item_ifrc_standard.xsl")
 resource = s3db.resource("supply_item")
 File = open(import_file, "r")
 resource.import_xml(File,
-                    format="csv",
+                    source_type="csv",
                     stylesheet=stylesheet)
 File.close()
 

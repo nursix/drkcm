@@ -1080,7 +1080,7 @@ class S3IRSResponseModel(DataModel):
                               ])
 
         if not settings.has_module("vehicle"):
-            return {}
+            return None
 
         # ---------------------------------------------------------------------
         # Vehicles assigned to an Incident
@@ -1157,7 +1157,7 @@ class S3IRSResponseModel(DataModel):
         # ---------------------------------------------------------------------
         # Return model-global names to s3db.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

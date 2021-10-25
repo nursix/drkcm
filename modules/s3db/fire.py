@@ -137,7 +137,7 @@ class S3FireModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3FireStationModel(DataModel):

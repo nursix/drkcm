@@ -41,10 +41,10 @@ from .controller import *
 from .errors import *
 from .filters import *
 from .gis import *
-from .io import *
 from .methods import *
 from .model import *
 from .msg import *
+from .resource import *
 from .sync import *
 from .tools import *
 from .ui import *

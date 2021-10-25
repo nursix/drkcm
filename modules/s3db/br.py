@@ -300,14 +300,14 @@ class BRCaseModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1139,14 +1139,14 @@ class BRAppointmentModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
 # Category Models
@@ -2537,14 +2537,14 @@ class BRLanguageModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
 class BRLegalStatusModel(DataModel):
@@ -2680,14 +2680,14 @@ class BRServiceContactModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
 class BRNotesModel(DataModel):
@@ -2810,7 +2810,7 @@ class BRNotesModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class BRReferralModel(DataModel):

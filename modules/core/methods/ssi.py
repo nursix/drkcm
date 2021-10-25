@@ -41,7 +41,6 @@ from gluon import current, redirect, URL, \
 
 from s3dal import Field
 
-from ..io import S3ImportJob
 from ..tools import s3_mark_required, s3_str, s3_addrow
 
 from .base import S3Method
@@ -170,7 +169,7 @@ class SpreadsheetImporter(S3Method):
                                                      fmt = fmt,
                                                      stylesheet = stylesheet,
                                                      extra_data = extra_data,
-                                                     #commit_job = False,
+                                                     #commit = False,
                                                      **args,
                                                      )
             except ValueError:
@@ -212,9 +211,10 @@ class SpreadsheetImporter(S3Method):
         if not job_id:
             r.error(400, T("No import job specified"))
 
+        s3db = current.s3db
         s3 = current.response.s3
 
-        itable = S3ImportJob.define_item_table()
+        itable = s3db.s3_import_item
 
         field = itable.element
         field.represent = self.element_represent
@@ -222,10 +222,10 @@ class SpreadsheetImporter(S3Method):
         # Target resource tablename
         ttablename = r.resource.tablename
 
-        from ..filters import FS
+        from ..resource import FS
         query = (FS("job_id") == job_id) & \
                 (FS("tablename") == ttablename)
-        iresource = current.s3db.resource(itable, filter=query)
+        iresource = s3db.resource(itable, filter=query)
 
         # Get a list of the records that have an error of None
         query =  (itable.job_id == job_id) & \
@@ -361,9 +361,8 @@ class SpreadsheetImporter(S3Method):
 
         T = current.T
 
-        post_vars = r.post_vars
-
         # Get the import job ID
+        post_vars = r.post_vars
         job_id = post_vars.get("job_id")
         if not job_id:
             r.error(400, T("Missing import job ID"))
@@ -375,7 +374,8 @@ class SpreadsheetImporter(S3Method):
             r.unauthorised()
 
         # Check that the job exists
-        jtable = S3ImportJob.define_job_table()
+        s3db = current.s3db
+        jtable = s3db.s3_import_job
         query = (jtable.job_id == job_id)
         job = current.db(query).select(jtable.id,
                                        limitby = (0, 1),
@@ -393,7 +393,7 @@ class SpreadsheetImporter(S3Method):
         if mode == "Inclusive":
             select_items = selected
         elif mode == "Exclusive":
-            itable = S3ImportJob.define_item_table()
+            itable = s3db.s3_import_item
             query = (itable.job_id == job_id) & \
                     (itable.tablename == tablename)
             if selected:
@@ -657,7 +657,7 @@ class SpreadsheetImporter(S3Method):
                            fmt = "csv",
                            stylesheet = None,
                            extra_data = None,
-                           commit_job = False,
+                           commit = False,
                            **args,
                            ):
         """
@@ -667,25 +667,25 @@ class SpreadsheetImporter(S3Method):
             @param source: the source (file-like object)
             @param fmt: the source file format (in connection with source)
             @param extra_data: extra data to add to source rows (in connection with source)
-            @param commit_job: whether to commit the import immediately (in connection with source)
+            @param commit: whether to commit the import immediately (in connection with source)
             @param args: additional stylesheet args
 
             @returns: import job UUID
         """
 
         resource.import_xml(source,
-                            format = fmt,
+                            source_type = fmt,
                             extra_data = extra_data,
-                            commit_job = commit_job,
+                            commit = commit,
                             ignore_errors = True,
                             stylesheet = stylesheet,
                             **args)
 
-        job = resource.job
-        if not job and resource.error:
+        job_id = resource.job_id
+        if not job_id and resource.error:
             raise ValueError(resource.error)
 
-        return job.job_id if job else None
+        return job_id
 
     # -------------------------------------------------------------------------
     def element_represent(self, value):
@@ -698,15 +698,13 @@ class SpreadsheetImporter(S3Method):
             @returns: DIV containing a representation of the element
         """
 
-        s3db = current.s3db
-
         try:
             element = etree.fromstring(value)
         except (etree.ParseError, etree.XMLSyntaxError):
             return DIV(value)
 
-        tablename = element.get("name")
-        table = s3db[tablename]
+        s3db = current.s3db
+        table = s3db[element.get("name")]
 
         output = DIV()
         details = TABLE(_class="import-item-details")
@@ -718,7 +716,6 @@ class SpreadsheetImporter(S3Method):
 
         # Add component details, if present
         components = element.findall("resource")
-        s3db = current.s3db
         for component in components:
             ctablename = component.get("name")
             ctable = s3db.table(ctablename)
@@ -826,7 +823,7 @@ class SpreadsheetImporter(S3Method):
         db = current.db
 
         # Count matching top-level items in job
-        itable = S3ImportJob.define_item_table()
+        itable = current.s3db.s3_import_item
         query = (itable.job_id == job_id) & \
                 (itable.tablename == resource.tablename) & \
                 (itable.parent == None)

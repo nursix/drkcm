@@ -395,7 +395,7 @@ class InvWarehouseModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -890,7 +890,7 @@ $.filterOptionsS3({
         """
             Update detection for inv_inv_item
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         table = item.table

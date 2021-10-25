@@ -1124,12 +1124,12 @@ class CholeraTreatmentCapabilityModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3db
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     def defaults(self):
 
-        return {}
+        return None
 
 # =============================================================================
 class HospitalActivityReportModel(DataModel):
@@ -1216,12 +1216,12 @@ class HospitalActivityReportModel(DataModel):
         # ---------------------------------------------------------------------
         # Return global names to s3db
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     def defaults(self):
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

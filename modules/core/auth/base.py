@@ -2152,7 +2152,7 @@ $.filterOptionsS3({
                                                                ))
 
     # -------------------------------------------------------------------------
-    def s3_import_prep(self, data):
+    def s3_import_prep(self, tree):
         """
             Called when users are imported from CSV
 
@@ -2167,8 +2167,6 @@ $.filterOptionsS3({
         update_super = s3db.update_super
         otable = s3db.org_organisation
         btable = s3db.org_organisation_branch
-
-        tree = data[1]
 
         ORG_ADMIN = not self.s3_has_role("ADMIN")
         TRANSLATE = current.deployment_settings.get_L10n_translate_org_organisation()

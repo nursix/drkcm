@@ -1083,7 +1083,7 @@ class CMSContentForumModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class CMSContentMapModel(DataModel):
@@ -1107,7 +1107,7 @@ class CMSContentMapModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class CMSContentOrgModel(DataModel):
@@ -1135,7 +1135,7 @@ class CMSContentOrgModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class CMSContentOrgGroupModel(DataModel):
@@ -1159,7 +1159,7 @@ class CMSContentOrgGroupModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class CMSContentTeamModel(DataModel):
@@ -1187,7 +1187,7 @@ class CMSContentTeamModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class CMSContentUserModel(DataModel):
@@ -1211,7 +1211,7 @@ class CMSContentUserModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class CMSContentRoleModel(DataModel):
@@ -1250,7 +1250,7 @@ class CMSContentRoleModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def cms_rheader(r, tabs=None):

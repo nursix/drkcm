@@ -162,6 +162,8 @@ class ResourceAxisFilterTests(unittest.TestCase):
     def testListTypeFilter(self):
         """ Test list:type axis value filtering """
 
+        from core.methods.report import S3AxisFilter
+
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 

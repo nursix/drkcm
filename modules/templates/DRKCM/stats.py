@@ -5,7 +5,7 @@ from io import BytesIO
 from gluon import current, HTTP
 
 from core import S3Method, s3_decode_iso_datetime, s3_str
-from core.io.codecs.xls import S3XLS
+from core.resource.codecs.xls import S3XLS
 
 # =============================================================================
 class PerformanceIndicators(object):

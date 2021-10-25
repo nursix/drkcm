@@ -1761,7 +1761,7 @@ class S3SQLField(S3SQLFormElement):
         """
 
         # Import S3ResourceField only here, to avoid circular dependency
-        from ..filters import S3ResourceField
+        from ..resource import S3ResourceField
 
         rfield = S3ResourceField(resource, self.selector)
 
@@ -4093,7 +4093,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             @todo: implement audit
         """
 
-        from ..filters import FS
+        from ..resource import FS
 
         s3db = current.s3db
 
@@ -4232,7 +4232,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             @return: dict {value: representation} of options
         """
 
-        from ..filters import FS
+        from ..resource import FS
 
         resource = self.resource
         component, link = self.get_link()

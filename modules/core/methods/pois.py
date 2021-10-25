@@ -38,7 +38,7 @@ from gluon.storage import Storage
 from s3dal import Field
 
 from ..gis import GIS
-from ..io import S3ResourceTree
+from ..resource import S3ResourceTree
 from ..tools import s3_format_datetime, s3_parse_datetime
 
 from .base import S3Method
@@ -243,7 +243,7 @@ class S3ExportPOI(S3Method):
             @param resource: the resource
         """
 
-        from ..filters import FS
+        from ..resource import FS
         query = (FS("location_id$path").contains("/%s/" % lx)) | \
                 (FS("location_id$path").like("%s/%%" % lx))
         resource.add_filter(query)

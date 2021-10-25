@@ -277,6 +277,8 @@ class DynamicTableModelTests(unittest.TestCase):
             record["id"] = record_id
             s3db.onaccept(ftable, record)
 
+        current.db.commit()
+
     # -------------------------------------------------------------------------
     @classmethod
     def tearDownClass(cls):
@@ -287,6 +289,7 @@ class DynamicTableModelTests(unittest.TestCase):
         ttable = s3db.s3_table
         query = (ttable.name == cls.TABLENAME)
         current.db(query).delete()
+        current.db.commit()
 
     # -------------------------------------------------------------------------
     def testDynamicTableInstantiationFailure(self):
@@ -1018,6 +1021,8 @@ class DynamicComponentTests(unittest.TestCase):
             record["id"] = record_id
             s3db.onaccept(ftable, record)
 
+        current.db.commit()
+
     # -------------------------------------------------------------------------
     @classmethod
     def tearDownClass(cls):
@@ -1028,6 +1033,7 @@ class DynamicComponentTests(unittest.TestCase):
         ttable = s3db.s3_table
         query = (ttable.name == cls.TABLENAME)
         current.db(query).delete()
+        current.db.commit()
 
     # -------------------------------------------------------------------------
     def setUp(self):

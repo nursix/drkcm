@@ -36,12 +36,7 @@ __all__ = ("S3CRUD",)
 
 import json
 
-try:
-    from lxml import etree
-except ImportError:
-    import sys
-    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
-    raise
+from lxml import etree
 
 from gluon import current, redirect, HTTP, URL, \
                   A, DIV, FORM, INPUT, TABLE, TD, TR, XML
@@ -50,7 +45,7 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from ..io import S3Exporter
+from ..resource import S3Exporter
 from ..tools import S3DateTime, s3_decode_iso_datetime, s3_str, s3_validate, s3_represent_value, s3_set_extension
 from ..ui import S3EmbeddedComponentWidget, S3Selector, ICON, S3SQLDefaultForm
 
@@ -493,9 +488,9 @@ class S3CRUD(S3Method):
             else:
                 session.confirmation = current.T("Data uploaded")
 
-        elif representation == "url":
-            results = self.import_url(r)
-            return results
+        #elif representation == "url":
+            #results = self.import_url(r)
+            #return results
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
@@ -1039,8 +1034,8 @@ class S3CRUD(S3Method):
                 else:
                     self.next = update_next
 
-        elif representation == "url":
-            return self.import_url(r)
+        #elif representation == "url":
+            #return self.import_url(r)
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
@@ -1706,7 +1701,7 @@ class S3CRUD(S3Method):
         record_id = get_vars.get("record", None)
         if record_id is not None:
             # Ajax-reload of a single record
-            from ..filters import FS
+            from ..resource import FS
             resource.add_filter(FS("id") == record_id)
             start = 0
             limit = 1
@@ -2146,7 +2141,7 @@ class S3CRUD(S3Method):
         if r.representation != "json":
             r.error(415, current.ERROR.BAD_FORMAT)
 
-        resource = self.resource
+        resource = r.resource
 
         get_vars = r.get_vars
         if "component" in get_vars:
@@ -2865,99 +2860,99 @@ class S3CRUD(S3Method):
             db.commit()
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def import_url(r):
-        """
-            Import data from vars in URL query
+    #@staticmethod
+    #def import_url(r):
+        #"""
+            #Import data from vars in URL query
 
-            @param r: the CRUDRequest
-            @note: can only update single records (no mass-update)
+            #@param r: the CRUDRequest
+            #@note: can only update single records (no mass-update)
 
-            @todo: update for link table components
-            @todo: re-integrate into S3Importer
-        """
+            #@todo: update for link table components
+            #@todo: re-integrate into S3Importer
+        #"""
 
-        xml = current.xml
+        #xml = current.xml
 
-        table = r.target()[2]
+        #table = r.target()[2]
 
-        record = r.record
-        resource = r.resource
+        #record = r.record
+        #resource = r.resource
 
-        # Handle components
-        if record and r.component:
-            resource = resource.components[r.component_name]
-            resource.load()
-            if len(resource) == 1:
-                record = resource.records()[0]
-            else:
-                record = None
-            r.vars.update({resource.fkey: r.record[resource.pkey]})
-        elif not record and r.component:
-            item = xml.json_message(False, 400, "Invalid Request!")
-            return {"item": item}
+        ## Handle components
+        #if record and r.component:
+            #resource = resource.components[r.component_name]
+            #resource.load()
+            #if len(resource) == 1:
+                #record = resource.records()[0]
+            #else:
+                #record = None
+            #r.vars.update({resource.fkey: r.record[resource.pkey]})
+        #elif not record and r.component:
+            #item = xml.json_message(False, 400, "Invalid Request!")
+            #return {"item": item}
 
-        # Check for update
-        if record and xml.UID in table.fields:
-            r.vars.update({xml.UID: xml.export_uid(record[xml.UID])})
+        ## Check for update
+        #if record and xml.UID in table.fields:
+            #r.vars.update({xml.UID: xml.export_uid(record[xml.UID])})
 
-        # Build tree
-        element = etree.Element(xml.TAG.resource)
-        element.set(xml.ATTRIBUTE.name, resource.tablename)
-        for var in r.vars:
-            if var.find(".") != -1:
-                continue
-            elif var in table.fields:
-                field = table[var]
-                value = s3_str(r.vars[var])
-                if var in xml.FIELDS_TO_ATTRIBUTES:
-                    element.set(var, value)
-                else:
-                    data = etree.Element(xml.TAG.data)
-                    data.set(xml.ATTRIBUTE.field, var)
-                    if field.type == "upload":
-                        data.set(xml.ATTRIBUTE.filename, value)
-                    else:
-                        data.text = value
-                    element.append(data)
-        tree = xml.tree([element], domain=xml.domain)
+        ## Build tree
+        #element = etree.Element(xml.TAG.resource)
+        #element.set(xml.ATTRIBUTE.name, resource.tablename)
+        #for var in r.vars:
+            #if var.find(".") != -1:
+                #continue
+            #elif var in table.fields:
+                #field = table[var]
+                #value = s3_str(r.vars[var])
+                #if var in xml.FIELDS_TO_ATTRIBUTES:
+                    #element.set(var, value)
+                #else:
+                    #data = etree.Element(xml.TAG.data)
+                    #data.set(xml.ATTRIBUTE.field, var)
+                    #if field.type == "upload":
+                        #data.set(xml.ATTRIBUTE.filename, value)
+                    #else:
+                        #data.text = value
+                    #element.append(data)
+        #tree = xml.tree([element], domain=xml.domain)
 
-        # Import data
-        result = Storage(committed=False)
-        def log(item):
-            result["item"] = item
-        resource.configure(oncommit_import_item = log)
-        try:
-            success = resource.import_xml(tree)
-        except SyntaxError:
-            pass
+        ## Import data
+        #result = Storage(committed=False)
+        #def log(item):
+            #result["item"] = item
+        #resource.configure(oncommit_import_item = log)
+        #try:
+            #success = resource.import_xml(tree)
+        #except SyntaxError:
+            #pass
 
-        # Check result
-        if result.item:
-            result = result.item
+        ## Check result
+        #if result.item:
+            #result = result.item
 
-        # Build response
-        if success and result.committed:
-            r.id = result.id
-            method = result.method
-            if method == result.METHOD.CREATE:
-                item = xml.json_message(True, 201, "Created as %s?%s.id=%s" %
-                        (str(r.url(method="",
-                                   representation="html",
-                                   vars={},
-                                  )
-                            ),
-                         r.name, result.id)
-                        )
-            else:
-                item = xml.json_message(True, 200, "Record updated")
-        else:
-            item = xml.json_message(False, 403,
-                        "Could not create/update record: %s" %
-                            resource.error or xml.error,
-                        tree=xml.tree2json(tree))
+        ## Build response
+        #if success and result.committed:
+            #r.id = result.id
+            #method = result.method
+            #if method == result.METHOD.CREATE:
+                #item = xml.json_message(True, 201, "Created as %s?%s.id=%s" %
+                        #(str(r.url(method="",
+                                   #representation="html",
+                                   #vars={},
+                                  #)
+                            #),
+                         #r.name, result.id)
+                        #)
+            #else:
+                #item = xml.json_message(True, 200, "Record updated")
+        #else:
+            #item = xml.json_message(False, 403,
+                        #"Could not create/update record: %s" %
+                            #resource.error or xml.error,
+                        #tree=xml.tree2json(tree))
 
-        return {"item": item}
+        #return {"item": item}
 
 
     # -------------------------------------------------------------------------

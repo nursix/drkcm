@@ -37,14 +37,9 @@ import os
 import re
 import sys
 
+from lxml import etree
 from urllib import parse as urlparse
 from urllib.request import urlopen
-
-try:
-    from lxml import etree
-except ImportError:
-    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
-    raise
 
 from gluon import current, HTTP, URL, IS_EMPTY_OR
 from gluon.storage import Storage

@@ -43,7 +43,7 @@ class ValidateTests(unittest.TestCase):
         """ Test successful main table validation """
 
         request = self.request
-        crud = S3CRUD
+        crud = S3CRUD()
 
         jsonstr = """{"name":"TestOrganisation", "acronym":"TO"}"""
         request.body = StringIO(jsonstr)
@@ -74,7 +74,7 @@ class ValidateTests(unittest.TestCase):
         """ Test error in main table validation """
 
         request = self.request
-        crud = S3CRUD
+        crud = S3CRUD()
 
         jsonstr = """{"name":"", "acronym":"TO"}"""
         request.body = StringIO(jsonstr)
@@ -104,7 +104,7 @@ class ValidateTests(unittest.TestCase):
         """ Test successful component validation """
 
         request = self.request
-        crud = S3CRUD
+        crud = S3CRUD()
 
         jsonstr = """{"name":"TestOffice"}"""
         request.body = StringIO(jsonstr)
@@ -129,7 +129,7 @@ class ValidateTests(unittest.TestCase):
         """ Test error in component validation """
 
         request = self.request
-        crud = S3CRUD
+        crud = S3CRUD()
 
         jsonstr = """{"name":"", "acronym":"test"}"""
         request.body = StringIO(jsonstr)
@@ -174,7 +174,7 @@ class ValidateTests(unittest.TestCase):
                           representation="json",
                           http="GET")
 
-        crud = S3CRUD
+        crud = S3CRUD()
 
         jsonstr = """{"organisation_id":"1", "role":"1"}"""
         request.body = StringIO(jsonstr)

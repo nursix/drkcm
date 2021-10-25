@@ -36,7 +36,7 @@ from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from ..filters import FS
+from ..resource import FS
 from ..tools import s3_str
 from ..ui import ICON
 

@@ -1920,7 +1920,7 @@ class ProjectActivityPersonModel(DataModel):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectActivityOrganisationModel(DataModel):
@@ -1987,7 +1987,7 @@ class ProjectActivityOrganisationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectActivityOrganisationGroupModel(DataModel):
@@ -2027,7 +2027,7 @@ class ProjectActivityOrganisationGroupModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectActivityDemographicsModel(DataModel):
@@ -2093,7 +2093,7 @@ class ProjectActivityDemographicsModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectActivityItemModel(DataModel):
@@ -2156,7 +2156,7 @@ $.filterOptionsS3({
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectActivitySectorModel(DataModel):
@@ -2194,7 +2194,7 @@ class ProjectActivitySectorModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectActivityTagModel(DataModel):
@@ -2237,7 +2237,7 @@ class ProjectActivityTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectAnnualBudgetModel(DataModel):
@@ -2313,7 +2313,7 @@ class ProjectAnnualBudgetModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectBeneficiaryModel(DataModel):
@@ -2333,7 +2333,7 @@ class ProjectBeneficiaryModel(DataModel):
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Project Beneficiary Model needs Stats module enabling")
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -2683,7 +2683,7 @@ class ProjectBeneficiaryModel(DataModel):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2758,7 +2758,7 @@ class ProjectCampaignModel(DataModel):
         if not current.deployment_settings.has_module("stats"):
             # Campaigns Model needs Stats module enabling
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -3016,7 +3016,7 @@ class ProjectCampaignModel(DataModel):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectFrameworkModel(DataModel):
@@ -3160,7 +3160,7 @@ class ProjectFrameworkModel(DataModel):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectHazardModel(DataModel):
@@ -3333,7 +3333,7 @@ class ProjectHRModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3374,7 +3374,7 @@ class ProjectIndicatorModel(DataModel):
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Project Indicator Model needs Stats module enabling")
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -3622,7 +3622,7 @@ class ProjectIndicatorModel(DataModel):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectL10nModel(DataModel):
@@ -3648,7 +3648,7 @@ class ProjectL10nModel(DataModel):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectLocationModel(DataModel):
@@ -4100,7 +4100,7 @@ class ProjectMasterKeyModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class ProjectOrganisationModel(DataModel):
@@ -4218,7 +4218,7 @@ class ProjectOrganisationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -8336,7 +8336,7 @@ class project_SummaryReport(S3Method):
             -the actual report
         """
 
-        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         db = current.db
@@ -9089,7 +9089,7 @@ class project_IndicatorSummaryReport(S3Method):
             XLS Representation
         """
 
-        from core.io.codecs.xls import S3XLS
+        from core.resource.codecs.xls import S3XLS
 
         try:
             import xlwt
@@ -9964,7 +9964,7 @@ class ProjectProgrammeProjectModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class ProjectSectorModel(DataModel):
@@ -10007,7 +10007,7 @@ class ProjectSectorModel(DataModel):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectStatusModel(DataModel):
@@ -10201,7 +10201,7 @@ class ProjectTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectThemeModel(DataModel):
@@ -10534,7 +10534,7 @@ class ProjectDRRModel(DataModel):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -10709,7 +10709,7 @@ class ProjectDRRPPModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -10816,7 +10816,7 @@ class ProjectTargetModel(DataModel):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectTaskModel(DataModel):
@@ -12223,7 +12223,7 @@ class ProjectTaskForumModel(DataModel):
         #    msg_list_empty = T("No Tasks currently shared"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectTaskHRMModel(DataModel):
@@ -12272,7 +12272,7 @@ class ProjectTaskHRMModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class ProjectTaskTagModel(DataModel):
@@ -12314,7 +12314,7 @@ class ProjectTaskTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class ProjectWindowModel(DataModel):
@@ -12349,7 +12349,7 @@ class ProjectWindowModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def multi_theme_percentage_represent(record_id):

@@ -41,7 +41,7 @@ from io import StringIO
 from gluon import current, redirect, A, HTTP, URL
 from gluon.storage import Storage
 
-from .model import S3Resource
+from .resource import S3Resource
 from .tools import s3_get_extension, s3_keep_messages, s3_store_last_record_id, s3_str
 
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
@@ -179,17 +179,18 @@ class CRUDRequest(object):
             components = component_name
 
         # Append component ID to the URL query
+        url_query = dict(get_vars)
         component_id = self.component_id
         if component_name and component_id:
             varname = "%s.id" % component_name
             if varname in get_vars:
-                var = get_vars[varname]
+                var = url_query[varname]
                 if not isinstance(var, (list, tuple)):
                     var = [var]
                 var.append(component_id)
-                get_vars[varname] = var
+                url_query[varname] = var
             else:
-                get_vars[varname] = component_id
+                url_query[varname] = component_id
 
         tablename = "%s_%s" % (self.prefix, self.name)
 
@@ -211,7 +212,7 @@ class CRUDRequest(object):
         self.resource = S3Resource(tablename,
                                    id = self.id,
                                    filter = current.response.s3.filter,
-                                   vars = get_vars,
+                                   vars = url_query,
                                    components = components,
                                    approved = approved,
                                    unapproved = unapproved,

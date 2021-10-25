@@ -630,7 +630,7 @@ class S3Hierarchy(object):
                     total += result
 
             # Delete node
-            from ..filters import FS
+            from ..resource import FS
             query = (FS(self.pkey.name) == node_id)
             resource = current.s3db.resource(tablename, filter=query)
             success = resource.delete(cascade=True)

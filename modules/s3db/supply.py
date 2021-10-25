@@ -1053,7 +1053,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1100,7 +1100,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1131,7 +1131,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1159,7 +1159,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1781,7 +1781,7 @@ class S3SupplyDistributionDVRActivityModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3SupplyPersonModel(DataModel):
@@ -1883,7 +1883,7 @@ class S3SupplyPersonModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class supply_ItemRepresent(S3Represent):

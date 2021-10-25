@@ -230,7 +230,7 @@ class S3PatientModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class patient_PatientRepresent(S3Represent):

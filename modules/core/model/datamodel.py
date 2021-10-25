@@ -42,7 +42,6 @@ from ..tools import IS_ONE_OF
 from ..ui import S3ScriptItem
 
 from .dynamic import DynamicTableModel, DYNAMIC_PREFIX
-from .resource import S3Resource
 
 DEFAULT = lambda: None
 MODULE_TYPE = type(sys)
@@ -366,11 +365,6 @@ class DataModel(object):
         for prefix in current.s3db.module_map:
             cls.load(prefix)
 
-        # Define importer tables
-        from ..io import S3ImportJob
-        S3ImportJob.define_job_table()
-        S3ImportJob.define_item_table()
-
         # Define Scheduler tables
         # - already done during Scheduler().init() run during S3Task().init() in models/tasks.py
         #settings = current.deployment_settings
@@ -448,6 +442,7 @@ class DataModel(object):
             the global s3db.resource() method
         """
 
+        from ..resource import S3Resource
         return S3Resource(tablename, *args, **kwargs)
 
     # -------------------------------------------------------------------------

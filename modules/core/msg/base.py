@@ -46,16 +46,11 @@ import string
 import sys
 
 from io import StringIO
+from lxml import etree
 from urllib import request as urllib2
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 from urllib.parse import urlencode
-
-try:
-    from lxml import etree
-except ImportError:
-    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
-    raise
 
 from gluon import current, redirect, IS_IN_SET
 from gluon.html import *

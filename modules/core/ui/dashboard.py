@@ -352,7 +352,7 @@ class S3DashboardConfig(object):
                 configs.append(widget)
 
         # Generate a new version key
-        version = uuid4().get_hex()
+        version = uuid4().hex
 
         config_id = self.config_id
         if not config_id:

@@ -859,7 +859,7 @@ class S3AssetHRModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3AssetTeamModel(DataModel):
@@ -888,7 +888,7 @@ class S3AssetTeamModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class S3AssetTelephoneModel(DataModel):
@@ -953,7 +953,7 @@ class S3AssetTelephoneModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def asset_get_current_log(asset_id):
@@ -1249,7 +1249,7 @@ def asset_controller():
     s3.prep = prep
 
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Flag that this is an Import (to distinguish from Sync)
             @ToDo: Find Person records from their email addresses
@@ -1261,7 +1261,6 @@ def asset_controller():
         ctable = s3db.pr_contact
         ptable = s3db.pr_person
 
-        resource, tree = data
         elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
         persons = {}
         for element in elements:

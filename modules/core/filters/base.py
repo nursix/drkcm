@@ -64,7 +64,7 @@ from ..ui import ICON, S3CalendarWidget, S3CascadeSelectWidget, \
                        S3GroupedOptionsWidget, S3HierarchyWidget, \
                        S3MultiSelectWidget
 
-from .query import FS, S3ResourceField, S3ResourceQuery, S3URLQuery
+from ..resource import FS, S3ResourceField, S3ResourceQuery, S3URLQuery
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -1784,7 +1784,7 @@ class S3LocationFilter(S3FilterWidget):
             rfield = resource.resolve_selector(selector)
 
             # Get the joins for the selector
-            from .query import S3Joins
+            from ..resource import S3Joins
             joins = S3Joins(resource.tablename)
             joins.extend(rfield._joins)
             join = joins.as_list()

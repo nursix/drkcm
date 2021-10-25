@@ -9,7 +9,7 @@
 # stylesheet = os.path.join(request.folder, "static", "formats", "s3csv", "hrm", "person.xsl")
 # filename = "people.csv"
 # File = open(filename, "r")
-# resource.import_xml(File, format="csv", stylesheet=stylesheet)
+# resource.import_xml(File, source_type="csv", stylesheet=stylesheet)
 # db.commit()
 #
 # @ToDo: Email Addresses, Job Titles

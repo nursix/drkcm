@@ -1415,7 +1415,7 @@ $.filterOptionsS3({
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1595,7 +1595,7 @@ $.filterOptionsS3({
         """
             Duplicate detection for info-segments
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         data = item.data
@@ -2130,7 +2130,7 @@ class CAPAreaModel(DataModel):
         """
             Detect an area duplicate
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         data = item.data
@@ -2481,7 +2481,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2490,7 +2490,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3706,7 +3706,7 @@ class CAPHistoryModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3715,7 +3715,7 @@ class CAPHistoryModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
 # =============================================================================
 class CAPAlertingAuthorityModel(DataModel):
@@ -3877,7 +3877,7 @@ class CAPAlertingAuthorityModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3886,7 +3886,7 @@ class CAPAlertingAuthorityModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
 # =============================================================================
 class CAPMessageModel(DataModel):
@@ -3913,7 +3913,7 @@ class CAPMessageModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3922,7 +3922,7 @@ class CAPMessageModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
 # =============================================================================
 def list_string_represent(value, fmt=lambda v: v):

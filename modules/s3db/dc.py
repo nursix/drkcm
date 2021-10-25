@@ -1837,7 +1837,7 @@ class dc_TargetReport(S3Method):
                    (original is project_SummaryReport)
         """
 
-        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         table = r.table
@@ -1888,7 +1888,7 @@ class dc_TargetXLS(S3Method):
 
     def apply_method(self, r, **attr):
 
-        from core.io.codecs.xls import S3XLS
+        from core.resource.codecs.xls import S3XLS
 
         try:
             import xlwt

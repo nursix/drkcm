@@ -39,7 +39,7 @@ import json
 
 from gluon import IS_EMPTY_OR, IS_IN_SET, current
 
-from ..io import S3ResourceTree
+from ..resource import S3ResourceTree
 from ..tools import s3_get_foreign_key, s3_str, SEPARATORS, s3_parse_datetime, \
                     S3Represent
 from ..ui import S3SQLCustomForm, S3SQLDummyField, S3SQLField, \

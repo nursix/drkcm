@@ -1169,7 +1169,7 @@ class OrgOrganisationNameModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgOrganisationBranchModel(DataModel):
@@ -1473,7 +1473,7 @@ class OrgOrganisationCapacityModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgOrganisationGroupModel(DataModel):
@@ -1809,7 +1809,7 @@ class OrgOrganisationGroupPersonModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgOrganisationGroupTeamModel(DataModel):
@@ -1846,7 +1846,7 @@ class OrgOrganisationGroupTeamModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1930,7 +1930,7 @@ class OrgOrganisationLocationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgOrganisationOrganisationModel(DataModel):
@@ -1978,7 +1978,7 @@ class OrgOrganisationOrganisationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2019,7 +2019,7 @@ class OrgOrganisationResourceModel(DataModel):
         #settings = current.deployment_settings
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Organisation Resource Model needs Stats module enabling")
-            return {}
+            return None
 
         T = current.T
         #auth = current.auth
@@ -2161,7 +2161,7 @@ class OrgOrganisationResourceModel(DataModel):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgOrganisationSectorModel(DataModel):
@@ -3104,7 +3104,7 @@ class OrgOrganisationTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgOrganisationTeamModel(DataModel):
@@ -3139,7 +3139,7 @@ class OrgOrganisationTeamModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3209,7 +3209,7 @@ class OrgOrganisationTypeTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgSiteModel(DataModel):
@@ -3966,7 +3966,7 @@ class OrgSiteEventModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgSiteGroupModel(DataModel):
@@ -3990,7 +3990,7 @@ class OrgSiteGroupModel(DataModel):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgSiteNameModel(DataModel):
@@ -4028,7 +4028,7 @@ class OrgSiteNameModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgSiteShiftModel(DataModel):
@@ -4070,7 +4070,7 @@ class OrgSiteShiftModel(DataModel):
         #    )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgSiteTagModel(DataModel):
@@ -4118,7 +4118,7 @@ class OrgSiteTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgSiteLocationModel(DataModel):
@@ -4183,7 +4183,7 @@ class OrgSiteLocationModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class OrgFacilityModel(DataModel):
@@ -5308,7 +5308,7 @@ class OrgOfficeTypeTagModel(DataModel):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def org_organisation_address(row):
@@ -8208,7 +8208,7 @@ class org_OrganisationDuplicate(object):
         """
             Main method, to be set for the "deduplicate" hook
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         try:
@@ -8817,7 +8817,7 @@ class org_CapacityReport(S3Method):
         try:
             import xlwt
         except ImportError:
-            from core.io.codecs.xls import S3XLS
+            from core.resource.codecs.xls import S3XLS
             if current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
                 current.session.error = S3XLS.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))

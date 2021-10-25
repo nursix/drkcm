@@ -1307,7 +1307,7 @@ class S3SurveyFormatterModel(DataModel):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1624,7 +1624,7 @@ class S3SurveySeriesModel(DataModel):
                             question_ids.append(str(question.question_id))
                 items = buildCompletedList(series_id, question_ids)
                 if r.representation == "xls":
-                    from core.io.codecs.xls import S3XLS
+                    from core.resource.codecs.xls import S3XLS
                     exporter = S3XLS()
                     return exporter.encode(items,
                                            title=crud_strings.title_selected,
@@ -2648,7 +2648,7 @@ class S3SurveyCompleteModel(DataModel):
                            "survey",
                            "answer.xsl")
         resource = current.s3db.resource("survey_answer")
-        resource.import_xml(bio, stylesheet=xsl, format="csv")
+        resource.import_xml(bio, stylesheet=xsl, source_type="csv")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2707,7 +2707,7 @@ class S3SurveyCompleteModel(DataModel):
                            "gis",
                            "location.xsl")
         resource = current.s3db.resource("gis_location")
-        resource.import_xml(bio, stylesheet = xsl, format="csv")
+        resource.import_xml(bio, stylesheet = xsl, source_type="csv")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3133,7 +3133,7 @@ class S3SurveyTranslateModel(DataModel):
                        onaccept = self.translate_onaccept,
                        )
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
