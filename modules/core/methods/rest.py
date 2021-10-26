@@ -56,13 +56,7 @@ class RESTful(S3Method):
 
         http, method = r.http, r.method
         if not method:
-            # If non-transformable format, forward to CRUD
-            m = "import" if http in ("PUT", "POST") else None
-            if not r.transformable(method=m):
-                from .crud import S3CRUD
-                output = S3CRUD()(r, **attr)
-                self.next = r.next
-            elif http == "GET":
+            if http == "GET":
                 output = self.get_tree(r, **attr)
             elif r.http in ("PUT", "POST"):
                 output = self.put_tree(r, **attr)

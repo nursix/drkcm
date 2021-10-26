@@ -445,7 +445,6 @@ class CRUDRequest(object):
                        "sync": current.sync,
                        "timeplot": S3TimePlot,
                        "xform": S3XForms,
-                       None: RESTful,
                        }
 
             methods["copy"] = lambda r, **attr: redirect(URL(args = "create",
@@ -582,7 +581,12 @@ class CRUDRequest(object):
             else:
                 handler = self.default_methods.get(method)
                 if not handler:
-                    if http in HTTP_METHODS:
+                    m = "import" if http in ("PUT", "POST") else None
+                    if not method and \
+                       (http not in ("GET", "POST") or self.transformable(method=m)):
+                        from .methods import RESTful
+                        method = RESTful
+                    elif http in HTTP_METHODS:
                         from .methods import S3CRUD
                         handler = S3CRUD
                     else:
