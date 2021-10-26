@@ -134,15 +134,15 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             return (error, None)
 
         # Set strategy and policies
-        from ...resource import ImportItem
+        from ...resource import SyncPolicy
         strategy = task.strategy
         conflict_policy = task.conflict_policy
         if not conflict_policy:
-            conflict_policy = ImportItem.POLICY.MASTER
+            conflict_policy = SyncPolicy.MASTER
         update_policy = task.update_policy
         if not update_policy:
-            update_policy = ImportItem.POLICY.NEWER
-        if update_policy not in ("THIS", "OTHER"):
+            update_policy = SyncPolicy.NEWER
+        if update_policy not in (SyncPolicy.THIS, SyncPolicy.OTHER):
             last_sync = task.last_pull
         else:
             last_sync = None
@@ -277,11 +277,11 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             return (error, None)
 
         # Update policy and msince
-        from ...resource import ImportItem
+        from ...resource import SyncPolicy
         update_policy = task.update_policy
         if not update_policy:
-            update_policy = ImportItem.POLICY.NEWER
-        if update_policy not in ("THIS", "OTHER"):
+            update_policy = SyncPolicy.NEWER
+        if update_policy not in (SyncPolicy.THIS, SyncPolicy.OTHER):
             msince = task.last_push
         else:
             msince = None
