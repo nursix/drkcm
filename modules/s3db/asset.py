@@ -80,7 +80,7 @@ asset_log_status = {"SET_BASE" : ASSET_LOG_SET_BASE,
                     }
 
 # =============================================================================
-class S3AssetModel(S3Model):
+class S3AssetModel(DataModel):
     """
         Asset Management
     """
@@ -832,7 +832,7 @@ $.filterOptionsS3({
             db(atable.id == asset_id).update(cond = form_vars.cond)
 
 # =============================================================================
-class S3AssetHRModel(S3Model):
+class S3AssetHRModel(DataModel):
     """
         Optionally link Assets to Human Resources
         - useful for staffing a vehicle
@@ -859,10 +859,10 @@ class S3AssetHRModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3AssetTeamModel(S3Model):
+class S3AssetTeamModel(DataModel):
     """
         Optionally link Assets to Teams
     """
@@ -888,10 +888,10 @@ class S3AssetTeamModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3AssetTelephoneModel(S3Model):
+class S3AssetTelephoneModel(DataModel):
     """
         Extend the Assset Module for Telephones:
             Usage Costs
@@ -953,7 +953,7 @@ class S3AssetTelephoneModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def asset_get_current_log(asset_id):
@@ -1249,7 +1249,7 @@ def asset_controller():
     s3.prep = prep
 
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Flag that this is an Import (to distinguish from Sync)
             @ToDo: Find Person records from their email addresses
@@ -1261,7 +1261,6 @@ def asset_controller():
         ctable = s3db.pr_contact
         ptable = s3db.pr_person
 
-        resource, tree = data
         elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
         persons = {}
         for element in elements:
@@ -1305,10 +1304,9 @@ def asset_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("asset", "asset",
-                                     rheader = asset_rheader,
-                                     )
-    return output
+    return current.crud_controller("asset", "asset",
+                                   rheader = asset_rheader,
+                                   )
 
 # =============================================================================
 class asset_AssetRepresent(S3Represent):

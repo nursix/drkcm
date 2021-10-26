@@ -65,7 +65,7 @@ um_patterns = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
                )
 
 # =============================================================================
-class S3SupplyModel(S3Model):
+class S3SupplyModel(DataModel):
     """
         Generic Supply functionality such as catalogs and items that is used
         across multiple modules.
@@ -1053,7 +1053,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1100,7 +1100,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1131,7 +1131,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1159,7 +1159,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1264,7 +1264,7 @@ $.filterOptionsS3({
                                    )
 
 # =============================================================================
-class S3SupplyDistributionModel(S3Model):
+class S3SupplyDistributionModel(DataModel):
     """
         Supply Distribution Model
         - depends on Stats module
@@ -1754,7 +1754,7 @@ class S3SupplyDistributionModel(S3Model):
             return list(range(date.year, end_date.year + 1))
 
 # =============================================================================
-class S3SupplyDistributionDVRActivityModel(S3Model):
+class S3SupplyDistributionDVRActivityModel(DataModel):
     """
         Model to link distributions to DVR activities / case activities
     """
@@ -1781,10 +1781,10 @@ class S3SupplyDistributionDVRActivityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3SupplyPersonModel(S3Model):
+class S3SupplyPersonModel(DataModel):
     """
         Link table between People & Items
         - e.g. Donations
@@ -1883,7 +1883,7 @@ class S3SupplyPersonModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class supply_ItemRepresent(S3Represent):
@@ -2737,7 +2737,7 @@ def supply_item_controller():
         return True
     s3.prep = prep
 
-    return current.rest_controller("supply", "item",
+    return current.crud_controller("supply", "item",
                                    rheader = supply_item_rheader,
                                    )
 
@@ -2991,10 +2991,7 @@ $('#organisation_dropdown').change(function(){
         return output
     s3.postp = postp
 
-    output = current.rest_controller("supply", "item_entity",
-                                     hide_filter = True,
-                                    )
-    return output
+    return current.crud_controller("supply", "item_entity", hide_filter=True)
 
 # -----------------------------------------------------------------------------
 def supply_get_shipping_code(doctype, site_id, field):

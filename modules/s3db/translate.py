@@ -35,7 +35,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3TranslateModel(S3Model):
+class S3TranslateModel(DataModel):
 
     names = ("translate_language",
              "translate_percentage",
@@ -91,7 +91,7 @@ class S3TranslateModel(S3Model):
 
         #----------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

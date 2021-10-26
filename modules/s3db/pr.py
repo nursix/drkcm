@@ -146,7 +146,7 @@ OTHER_ROLE = 9
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class PRPersonEntityModel(S3Model):
+class PRPersonEntityModel(DataModel):
     """ Person Super-Entity """
 
     names = ("pr_pentity",
@@ -326,7 +326,7 @@ class PRPersonEntityModel(S3Model):
                                       )
 
         # Custom Method for S3AutocompleteWidget
-        self.set_method("pr", "pentity",
+        self.set_method("pr_pentity",
                         method = "search_ac",
                         action = self.pe_search_ac)
 
@@ -473,7 +473,7 @@ class PRPersonEntityModel(S3Model):
         """
             JSON search method for S3AutocompleteWidget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -740,7 +740,7 @@ class PRPersonEntityModel(S3Model):
         return
 
 # =============================================================================
-class PRPersonModel(S3Model):
+class PRPersonModel(DataModel):
     """ Persons and Groups """
 
     names = ("pr_person",
@@ -1014,25 +1014,25 @@ class PRPersonModel(S3Model):
 
         # Custom Methods for S3PersonAutocompleteWidget and S3AddPersonWidget
         set_method = self.set_method
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "search_ac",
                    action = self.pr_search_ac,
                    )
 
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "lookup",
                    action = self.pr_person_lookup)
 
-        set_method("pr", "person",
+        set_method("pr_person",
                    method = "check_duplicates",
                    action = self.pr_person_check_duplicates)
 
         # Enable in templates as-required
-        #set_method("pr", "person",
+        #set_method("pr_person",
         #           method = "templates",
         #           action = pr_Templates())
 
-        #set_method("pr", "person",
+        #set_method("pr_person",
         #           method = "template",
         #           action = pr_Template())
 
@@ -1854,7 +1854,7 @@ class PRPersonModel(S3Model):
                 r.error(400, "No Record ID provided")
 
         # NB Requirement to identify a single record also (indirectly)
-        #    requires read permission to that record (=>S3Request).
+        #    requires read permission to that record (=>CRUDRequest).
         #
         #    However: that does not imply that the user also has
         #    permission to see person details or contact information,
@@ -2387,7 +2387,7 @@ class PRPersonModel(S3Model):
         return output
 
 # =============================================================================
-class PRPersonRelationModel(S3Model):
+class PRPersonRelationModel(DataModel):
     """
         Link table between Persons & Persons
         - can be used to provide non-hierarchical relationships
@@ -2425,10 +2425,10 @@ class PRPersonRelationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class PRGroupModel(S3Model):
+class PRGroupModel(DataModel):
     """ Groups """
 
     names = ("pr_group_status",
@@ -3149,7 +3149,7 @@ class PRGroupModel(S3Model):
                         row = db(query).select(ctable.id, limitby=(0, 1)).first()
                         if not row:
                             # Customise case resource
-                            r = S3Request("dvr", "case", current.request)
+                            r = CRUDRequest("dvr", "case", current.request)
                             r.customise_resource("dvr_case")
 
                             # Get the default case status from database
@@ -3191,7 +3191,7 @@ class PRGroupModel(S3Model):
             return None
 
 # =============================================================================
-class PRGroupCompetencyModel(S3Model):
+class PRGroupCompetencyModel(DataModel):
     """
         Group Competency Model
         - Skills available in a Group
@@ -3236,10 +3236,10 @@ class PRGroupCompetencyModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class PRGroupLocationModel(S3Model):
+class PRGroupLocationModel(DataModel):
     """
         Group Location Model
         - Locations served by a Group
@@ -3287,10 +3287,10 @@ class PRGroupLocationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class PRGroupTagModel(S3Model):
+class PRGroupTagModel(DataModel):
     """
         Group Tags
     """
@@ -3321,10 +3321,10 @@ class PRGroupTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class PRForumModel(S3Model):
+class PRForumModel(DataModel):
     """
         Forums - similar to Groups, they are collections of People, however
                  these are restricted to those with User Accounts
@@ -3432,19 +3432,19 @@ class PRForumModel(S3Model):
                             )
 
         # Custom Methods
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "assign",
                    action = pr_AssignMethod(component = "forum_membership"))
 
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "join",
                    action = self.pr_forum_join)
 
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "leave",
                    action = self.pr_forum_leave)
 
-        set_method("pr", "forum",
+        set_method("pr_forum",
                    method = "request",
                    action = self.pr_forum_request)
 
@@ -3695,7 +3695,7 @@ class PRForumModel(S3Model):
         redirect(URL(args=None))
 
 # =============================================================================
-class PRRealmModel(S3Model):
+class PRRealmModel(DataModel):
     """
         Realms
         - used to be able to share data across multiple realms
@@ -3731,10 +3731,10 @@ class PRRealmModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class PRAddressModel(S3Model):
+class PRAddressModel(DataModel):
     """ Addresses for Person Entities: Persons and Organisations """
 
     names = ("pr_address",
@@ -3996,7 +3996,7 @@ class PRAddressModel(S3Model):
                 db(mtable.id == member.id).update(location_id=location_id)
 
 # =============================================================================
-class PRContactModel(S3Model):
+class PRContactModel(DataModel):
     """
         Person Entity Contacts
         - for Persons, Groups, Organisations and Organisation Groups
@@ -4269,7 +4269,7 @@ class PRContactModel(S3Model):
         return
 
 # =============================================================================
-class PRImageModel(S3Model):
+class PRImageModel(DataModel):
     """ Images for Persons """
 
     names = ("pr_image",)
@@ -4407,7 +4407,7 @@ class PRImageModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4514,7 +4514,7 @@ class PRImageModel(S3Model):
         current.s3db.pr_image_delete_all(row.image)
 
 # =============================================================================
-class PRPresenceModel(S3Model):
+class PRPresenceModel(DataModel):
     """
         Presence Log for Persons
 
@@ -4864,7 +4864,7 @@ class PRPresenceModel(S3Model):
                 db(db.pr_person.pe_id == pe_id).update(missing = False)
 
 # =============================================================================
-class PRAvailabilityModel(S3Model):
+class PRAvailabilityModel(DataModel):
     """
         Availability for Persons, Sites, Services, Assets, etc
         - will allow for automated rostering/matching
@@ -5199,7 +5199,7 @@ class PRAvailabilityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -5305,7 +5305,7 @@ class PRAvailabilityModel(S3Model):
             db(table.id == record_id).update(**data)
 
 # =============================================================================
-class PRUnavailabilityModel(S3Model):
+class PRUnavailabilityModel(DataModel):
     """
         Allow people to mark times when they are unavailable
         - this is generally easier for longer-term volunteers than marking times
@@ -5360,10 +5360,10 @@ class PRUnavailabilityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class PRDescriptionModel(S3Model):
+class PRDescriptionModel(DataModel):
     """
         Additional tables used mostly for DVI/MPR
     """
@@ -5797,7 +5797,7 @@ class PRDescriptionModel(S3Model):
         return
 
 # =============================================================================
-class PREducationModel(S3Model):
+class PREducationModel(DataModel):
     """ Education details for Persons """
 
     names = ("pr_education_level",
@@ -5981,10 +5981,10 @@ class PREducationModel(S3Model):
         # ---------------------------------------------------------------------
         # Return model-global names to response.s3
         #
-        return {}
+        return None
 
 # =============================================================================
-class PRIdentityModel(S3Model):
+class PRIdentityModel(DataModel):
     """ Identities for Persons """
 
     names = ("pr_identity",)
@@ -6107,10 +6107,10 @@ class PRIdentityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class PRLanguageModel(S3Model):
+class PRLanguageModel(DataModel):
     """
         Languages for Persons
         - alternate model to Skills for alternate UX
@@ -6174,10 +6174,10 @@ class PRLanguageModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class PROccupationModel(S3Model):
+class PROccupationModel(DataModel):
     """
         Model for a person's current occupations, catalog-based
         alternative to the free-text pr_person_details.occupation
@@ -6266,10 +6266,10 @@ class PROccupationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class PRPersonDetailsModel(S3Model):
+class PRPersonDetailsModel(DataModel):
     """ Extra optional details for People """
 
     names = ("pr_person_details",
@@ -6496,7 +6496,7 @@ class PRPersonDetailsModel(S3Model):
                 }
 
 # =============================================================================
-class PRPersonLocationModel(S3Model):
+class PRPersonLocationModel(DataModel):
     """
         Person Location Model
         - Locations served by a Person
@@ -6544,10 +6544,10 @@ class PRPersonLocationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class PRPersonTagModel(S3Model):
+class PRPersonTagModel(DataModel):
     """
         Person Tags
     """
@@ -6578,10 +6578,10 @@ class PRPersonTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class PRReligionModel(S3Model):
+class PRReligionModel(DataModel):
     """
         Model for religions
         - alternative for the simple religion field for when a full hiearchy is
@@ -6699,10 +6699,10 @@ class PRReligionModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3ImageLibraryModel(S3Model):
+class S3ImageLibraryModel(DataModel):
     """
         Image Model
 
@@ -6787,7 +6787,7 @@ class S3ImageLibraryModel(S3Model):
         dbset.delete()
 
 # =============================================================================
-class S3SavedFilterModel(S3Model):
+class S3SavedFilterModel(DataModel):
     """ Saved Filters """
 
     names = ("pr_filter",
@@ -6864,7 +6864,7 @@ class S3SavedFilterModel(S3Model):
             form.vars.query = query
 
 # =============================================================================
-class S3SubscriptionModel(S3Model):
+class S3SubscriptionModel(DataModel):
     """
         Model for Subscriptions & hence Notifications
         http://eden.sahanafoundation.org/wiki/S3/Notifications
@@ -8093,7 +8093,7 @@ class pr_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8313,7 +8313,7 @@ class pr_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars = submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -8498,7 +8498,7 @@ class pr_Contacts(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 
@@ -8609,7 +8609,7 @@ class pr_Contacts(S3Method):
         """
             Contact Information Subform
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param pe_id: the pe_id
             @param allow_create: allow adding of new contacts
             @param method: the request method ("contacts", "private_contacts"
@@ -8864,7 +8864,7 @@ class pr_Templates(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8924,7 +8924,7 @@ class pr_Template(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -10285,7 +10285,7 @@ def pr_availability_filter(r):
             - called from prep of the respective controller
             - adds resource filter for r.resource
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     get_vars = r.get_vars
@@ -10328,7 +10328,7 @@ def pr_availability_filter(r):
             r.resource.add_filter(~(FS("id").belongs(person_ids)))
 
 # =============================================================================
-def pr_import_prep(data):
+def pr_import_prep(tree):
     """
         Called when contacts are imported from CSV
 
@@ -10345,8 +10345,6 @@ def pr_import_prep(data):
     set_record_owner = current.auth.s3_set_record_owner
     update_super = s3db.update_super
     table = s3db.org_organisation
-
-    tree = data[1]
 
     # Memberships
     elements = tree.getroot().xpath("/s3xml//resource[@name='pr_contact']/data[@field='pe_id']")
@@ -10895,7 +10893,7 @@ class pr_PersonSearchAutocomplete(S3Method):
         """
             Entry point for REST controller
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 

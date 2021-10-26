@@ -122,12 +122,12 @@ def mission():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(# Remove the title if we have a component
-                              # (rheader includes the title)
-                              notitle = lambda r: {"title": ""} \
-                                               if r.component else None,
-                              rheader = s3db.deploy_rheader,
-                              )
+    return crud_controller(# Remove the title if we have a component
+                           # (rheader includes the title)
+                           notitle = lambda r: {"title": ""} \
+                                            if r.component else None,
+                           rheader = s3db.deploy_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def response_message():
@@ -136,9 +136,9 @@ def response_message():
         - can't be called 'response' as this clobbbers web2py global!
     """
 
-    return s3_rest_controller("deploy", "response",
-                              custom_crud_buttons = {"list_btn": None},
-                              )
+    return crud_controller("deploy", "response",
+                           custom_crud_buttons = {"list_btn": None},
+                           )
 
 # -----------------------------------------------------------------------------
 def human_resource():
@@ -272,7 +272,7 @@ def group():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "group")
+    return crud_controller("pr", "group")
 
 # -----------------------------------------------------------------------------
 def application():
@@ -296,11 +296,12 @@ def application():
     s3.prep = prep
 
     if "delete" in request.args or \
-       request.env.request_method == "POST" and auth.permission.format=="s3json":
-        return s3_rest_controller()
+       request.env.request_method == "POST" and \
+       auth.permission.format == "s3json":
+        return crud_controller()
     else:
         #return s3db.hrm_human_resource_controller()
-        return s3_rest_controller("hrm", "human_resource")
+        return crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def assignment():
@@ -393,7 +394,7 @@ def assignment():
         return output
     s3.postp = postp
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def competency():
@@ -417,13 +418,13 @@ def experience():
 def event_type():
     """ RESTful CRUD Controller """
 
-    return s3_rest_controller("event", "event_type")
+    return crud_controller("event", "event_type")
 
 # -----------------------------------------------------------------------------
 def job_title():
     """ RESTful CRUD Controller """
 
-    return s3_rest_controller("hrm", "job_title")
+    return crud_controller("hrm", "job_title")
 
 # -----------------------------------------------------------------------------
 def training():
@@ -444,7 +445,7 @@ def hr_search():
 
     s3.prep = lambda r: r.method == "search_ac"
 
-    return s3_rest_controller("hrm", "human_resource")
+    return crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -459,7 +460,7 @@ def person_search():
 
     s3.prep = lambda r: r.method == "search_ac"
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def alert_create_script():
@@ -638,12 +639,12 @@ def alert():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.deploy_rheader,
-                              # Show filter only on recipient tab
-                              hide_filter = {"recipient": False,
-                                             "_default": True,
-                                             }
-                              )
+    return crud_controller(rheader = s3db.deploy_rheader,
+                           # Show filter only on recipient tab
+                           hide_filter = {"recipient": False,
+                                          "_default": True,
+                                          }
+                           )
 
 # -----------------------------------------------------------------------------
 def alert_response():
@@ -678,7 +679,7 @@ def alert_response():
     #    # Block
     #    pass
 
-    return s3_rest_controller("deploy", "response")
+    return crud_controller("deploy", "response")
 
 # -----------------------------------------------------------------------------
 def email_inbox():
@@ -782,7 +783,7 @@ def email_inbox():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("msg", "email")
+    return crud_controller("msg", "email")
 
 # -----------------------------------------------------------------------------
 def email_channel():
@@ -868,7 +869,7 @@ def email_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("msg")
+    return crud_controller("msg")
 
 # -----------------------------------------------------------------------------
 def twitter_channel():
@@ -972,10 +973,10 @@ def twitter_channel():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("msg",
-                              deduplicate = "",
-                              list_btn = "",
-                              )
+    return crud_controller("msg",
+                           deduplicate = "",
+                           list_btn = "",
+                           )
 
 # -----------------------------------------------------------------------------
 def alert_recipient():
@@ -986,7 +987,7 @@ def alert_recipient():
 
     s3.prep = lambda r: r.method == "options" and r.representation == "s3json"
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 # Messaging

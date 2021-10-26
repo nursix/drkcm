@@ -3533,7 +3533,7 @@ class S3EmbeddedComponentWidget(FormWidget):
             if "deleted" in linktable:
                 fq &= (linktable.deleted == False)
             linked = current.db(fq).select(table._id)
-            from ..filters import FS
+            from ..resource import FS
             pkey = FS("id")
             exclude = (~(pkey.belongs([r[table._id.name] for r in linked])))
             return exclude
@@ -9015,7 +9015,7 @@ def search_ac(r, **attr):
     """
         JSON search method for S3AutocompleteWidget
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param attr: request attributes
     """
 
@@ -9038,7 +9038,7 @@ def search_ac(r, **attr):
 
     limit = int(_vars.limit or 0)
 
-    from ..filters import FS
+    from ..resource import FS
     field = FS(fieldname)
 
     # Default fields to return

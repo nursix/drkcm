@@ -19,19 +19,19 @@ def index():
 def level():
     """ Security Level Assessments: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def zone():
     """ Security Zones: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def zone_type():
     """ Security Zone Types: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person():
@@ -40,7 +40,7 @@ def person():
         authorisation and configuration
     """
 
-    return s3_rest_controller("pr")
+    return crud_controller("pr")
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -49,19 +49,19 @@ def person_search():
     """
 
     s3.prep = lambda r: r.method == "search_ac"
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def staff():
     """ Security Staff Assignments: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def staff_type():
     """ Security Staff Types (roles): RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def essential():
@@ -70,24 +70,24 @@ def essential():
     table = s3db.hrm_human_resource
     s3.filter = (table.essential == True)
 
-    return s3_rest_controller("hrm", "human_resource")
+    return crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def seized_item_type():
     """ Seized item types: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def seized_item_depository():
     """ Seized item depositories: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def seized_item():
     """ Seized items: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

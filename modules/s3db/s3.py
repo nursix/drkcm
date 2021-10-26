@@ -29,6 +29,7 @@
 
 __all__ = ("S3HierarchyModel",
            "S3DashboardModel",
+           "S3ImportJobModel",
            "S3DynamicTablesModel",
            "s3_table_rheader",
            "s3_scheduler_rheader",
@@ -40,7 +41,7 @@ from gluon import *
 from ..core import *
 
 # =============================================================================
-class S3HierarchyModel(S3Model):
+class S3HierarchyModel(DataModel):
     """ Model for stored object hierarchies """
 
     names = ("s3_hierarchy",
@@ -63,16 +64,16 @@ class S3HierarchyModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     def defaults(self):
         """ Safe defaults if module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
-class S3DashboardModel(S3Model):
+class S3DashboardModel(DataModel):
     """ Model for stored dashboard configurations """
 
     names = ("s3_dashboard",
@@ -125,13 +126,13 @@ class S3DashboardModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     def defaults(self):
         """ Safe defaults if module is disabled """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -171,7 +172,44 @@ class S3DashboardModel(S3Model):
             db(query).update(active = False)
 
 # =============================================================================
-class S3DynamicTablesModel(S3Model):
+class S3ImportJobModel(DataModel):
+    """ Tables to store pending import jobs """
+
+    names = ("s3_import_job",
+             "s3_import_item",
+             )
+
+    def model(self):
+
+        # ---------------------------------------------------------------------
+        tablename = "s3_import_job"
+        self.define_table(tablename,
+                          Field("job_id", length=128, unique=True, notnull=True),
+                          Field("tablename"),
+                          s3_datetime("timestmp", default="now"),
+                          )
+
+        # ---------------------------------------------------------------------
+        tablename = "s3_import_item"
+        self.define_table(tablename,
+                          Field("item_id", length=128, unique=True, notnull=True),
+                          Field("job_id", length=128),
+                          Field("tablename", length=128),
+                          Field("record_uid"),
+                          Field("skip", "boolean"),
+                          Field("error", "text"),
+                          Field("data", "blob"),
+                          Field("element", "text"),
+                          Field("ritems", "list:string"),
+                          Field("citems", "list:string"),
+                          Field("parent", length=128),
+                          )
+
+        # ---------------------------------------------------------------------
+        return None
+
+# =============================================================================
+class S3DynamicTablesModel(DataModel):
     """ Model for dynamic tables """
 
     names = ("s3_table",

@@ -825,7 +825,7 @@ class TranslateReadFiles(object):
             which are to be considered for translation.
         """
 
-        from ..methods import S3BulkImporter
+        from ..resource import S3BulkImporter
 
 
 

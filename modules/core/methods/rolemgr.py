@@ -40,8 +40,7 @@ from gluon import current, URL, DIV, SPAN, SQLFORM, INPUT, A, LI, UL
 
 from s3dal import Field
 
-from ..filters import FS
-from ..io import SEPARATORS
+from ..resource import FS, SEPARATORS
 from ..tools import s3_str, s3_mark_required, JSONERRORS
 from ..ui import s3_comments_widget
 
@@ -57,7 +56,7 @@ class S3RoleManager(S3Method):
         """
             Entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -118,7 +117,7 @@ class S3RoleManager(S3Method):
         """
             List or export roles
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
 
             NB this function must be restricted to ADMINs (in apply_method)
@@ -268,7 +267,7 @@ class S3RoleManager(S3Method):
         """
             Configure action buttons for role list
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T

@@ -48,7 +48,7 @@ from gluon.utils import web2py_uuid
 
 from s3dal import Row, Rows, Query, Field, original_tablename
 
-from ..controller import S3Request
+from ..controller import CRUDRequest
 from ..model import S3MetaFields, s3_comments
 from ..tools import S3Represent, S3Tracker, s3_addrow, s3_mark_required, s3_str, IS_ISO639_2_LANGUAGE_CODE
 
@@ -2152,7 +2152,7 @@ $.filterOptionsS3({
                                                                ))
 
     # -------------------------------------------------------------------------
-    def s3_import_prep(self, data):
+    def s3_import_prep(self, tree):
         """
             Called when users are imported from CSV
 
@@ -2167,8 +2167,6 @@ $.filterOptionsS3({
         update_super = s3db.update_super
         otable = s3db.org_organisation
         btable = s3db.org_organisation_branch
-
-        tree = data[1]
 
         ORG_ADMIN = not self.s3_has_role("ADMIN")
         TRANSLATE = current.deployment_settings.get_L10n_translate_org_organisation()
@@ -3449,10 +3447,10 @@ Please go to %(url)s to approve this user."""
             """ Customise hrm_human_resource """
             customise = settings.customise_resource(htablename)
             if customise:
-                request = S3Request("hrm", "human_resource",
-                                    current.request,
-                                    args = [str(hr_id)] if hr_id else [],
-                                    )
+                request = CRUDRequest("hrm", "human_resource",
+                                      current.request,
+                                      args = [str(hr_id)] if hr_id else [],
+                                      )
                 customise(request, htablename)
 
         # Determine the site ID
@@ -3600,9 +3598,9 @@ Please go to %(url)s to approve this user."""
                 # Customise the resource
                 customise = current.deployment_settings.customise_resource(mtablename)
                 if customise:
-                    request = S3Request("member", "membership",
-                                        current.request,
-                                        args = [str(member_id)])
+                    request = CRUDRequest("member", "membership",
+                                          current.request,
+                                          args = [str(member_id)])
                     customise(request, mtablename)
 
                 self.s3_set_record_owner(mtable, member_id)

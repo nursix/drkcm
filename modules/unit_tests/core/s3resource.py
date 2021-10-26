@@ -162,6 +162,8 @@ class ResourceAxisFilterTests(unittest.TestCase):
     def testListTypeFilter(self):
         """ Test list:type axis value filtering """
 
+        from core.methods.report import S3AxisFilter
+
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
@@ -682,9 +684,9 @@ class ResourceImportTests(unittest.TestCase):
             xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
             resource = current.s3db.resource("pr_person")
-            msg = resource.import_xml(xmltree)
+            result = resource.import_xml(xmltree)
 
-            msg = json.loads(msg)
+            msg = json.loads(result.json_message())
 
             assertEqual(msg["status"], "success")
             assertEqual(msg["statuscode"], "200")
@@ -713,8 +715,8 @@ class ResourceImportTests(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("importer_test")
-        resource.import_xml(xmltree)
-        self.assertEqual(s3_utc(resource.mtime),
+        result = resource.import_xml(xmltree)
+        self.assertEqual(s3_utc(result.mtime),
                          s3_utc(datetime.datetime(2012, 4, 21, 0, 0, 0)))
 
     # -------------------------------------------------------------------------
@@ -731,10 +733,10 @@ class ResourceImportTests(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("importer_test")
-        resource.import_xml(xmltree)
+        result = resource.import_xml(xmltree)
         # Can't compare with exactly utcnow as these would be milliseconds apart,
         # assume equal dates are sufficient for this test
-        self.assertEqual(s3_utc(resource.mtime).date(),
+        self.assertEqual(s3_utc(result.mtime).date(),
                          s3_utc(datetime.datetime.utcnow()).date())
 
     # -------------------------------------------------------------------------
@@ -754,8 +756,8 @@ class ResourceImportTests(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("importer_test")
-        resource.import_xml(xmltree)
-        self.assertEqual(s3_utc(resource.mtime).date(),
+        result = resource.import_xml(xmltree)
+        self.assertEqual(s3_utc(result.mtime).date(),
                          s3_utc(datetime.datetime.utcnow()).date())
 
 # =============================================================================

@@ -402,7 +402,7 @@ def audit():
         - used e.g. for Site Activity
     """
 
-    return s3_rest_controller("s3", "audit")
+    return crud_controller("s3", "audit")
 
 # -----------------------------------------------------------------------------
 #def call():
@@ -449,8 +449,7 @@ def contact():
             return True
         s3.prep = prep
 
-        output = s3_rest_controller(prefix, resourcename)
-        return output
+        return crud_controller(prefix, resourcename)
 
     templates = settings.get_template()
     if templates != "default":
@@ -578,7 +577,7 @@ def group():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "group")
+    return crud_controller("pr", "group")
 
 # -----------------------------------------------------------------------------
 def help():
@@ -888,12 +887,12 @@ def person():
                 "form": form,
                 }
 
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "user_profile",
                action = auth_profile_method)
 
     # Custom Method for Contacts
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
@@ -1104,9 +1103,9 @@ def person():
             (T("My Maps"), "config"),
             ]
 
-    return s3_rest_controller("pr", "person",
-                              rheader = lambda r, tabs=tabs: \
-                                                s3db.pr_rheader(r, tabs=tabs))
+    return crud_controller("pr", "person",
+                           rheader = lambda r, t=tabs: s3db.pr_rheader(r, tabs=t),
+                           )
 
 # -----------------------------------------------------------------------------
 def privacy():
@@ -1181,7 +1180,7 @@ def skill():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("hrm", "skill")
+    return crud_controller("hrm", "skill")
 
 # -----------------------------------------------------------------------------
 def tables():
@@ -1189,11 +1188,11 @@ def tables():
         RESTful CRUD Controller for Dynamic Table Models
     """
 
-    return s3_rest_controller("s3", "table",
-                              rheader = s3db.s3_table_rheader,
-                              csv_template = ("s3", "table"),
-                              csv_stylesheet = ("s3", "table.xsl"),
-                              )
+    return crud_controller("s3", "table",
+                           rheader = s3db.s3_table_rheader,
+                           csv_template = ("s3", "table"),
+                           csv_stylesheet = ("s3", "table.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 def table():
@@ -1207,7 +1206,7 @@ def table():
 
     args = request.args
     if len(args):
-        return s3_rest_controller(dynamic = args[0].rsplit(".", 1)[0])
+        return crud_controller(dynamic = args[0].rsplit(".", 1)[0])
     else:
         raise HTTP(400, "No resource specified")
 
@@ -1327,7 +1326,7 @@ def user():
 
     elif arg == "options.s3json":
         # Used when adding organisations from registration form
-        return s3_rest_controller(prefix="auth", resourcename="user")
+        return crud_controller(prefix="auth", resourcename="user")
 
     else:
         # logout or verify_email

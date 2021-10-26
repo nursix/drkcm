@@ -359,7 +359,7 @@ class RegisterShipment(S3Method):
         """
             Entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

@@ -60,7 +60,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class CMSContentModel(S3Model):
+class CMSContentModel(DataModel):
     """
         Content Management System
     """
@@ -502,31 +502,31 @@ class CMSContentModel(S3Model):
                        )
 
         # Custom Methods
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "add_bookmark",
                    action = self.cms_add_bookmark)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "remove_bookmark",
                    action = self.cms_remove_bookmark)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "add_tag",
                    action = self.cms_add_tag)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "remove_tag",
                    action = self.cms_remove_tag)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "share",
                    action = self.cms_share)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "unshare",
                    action = self.cms_unshare)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "calendar",
                    action = cms_Calendar)
 
@@ -603,7 +603,7 @@ class CMSContentModel(S3Model):
                                  )
 
         # Custom Methods
-        set_method("cms", "tag",
+        set_method("cms_tag",
                    method = "tag_list",
                    action = cms_TagList)
 
@@ -1060,7 +1060,7 @@ class CMSContentModel(S3Model):
         return output
 
 # =============================================================================
-class CMSContentForumModel(S3Model):
+class CMSContentForumModel(DataModel):
     """
         Link Posts to Forums to allow Users to Share posts
     """
@@ -1083,10 +1083,10 @@ class CMSContentForumModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentMapModel(S3Model):
+class CMSContentMapModel(DataModel):
     """
         Use of the CMS to provide extra data about Map Layers
     """
@@ -1107,10 +1107,10 @@ class CMSContentMapModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentOrgModel(S3Model):
+class CMSContentOrgModel(DataModel):
     """
         Link Posts to Organisations
     """
@@ -1135,10 +1135,10 @@ class CMSContentOrgModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentOrgGroupModel(S3Model):
+class CMSContentOrgGroupModel(DataModel):
     """
         Link Posts to Organisation Groups (Coalitions/Networks)
     """
@@ -1159,10 +1159,10 @@ class CMSContentOrgGroupModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentTeamModel(S3Model):
+class CMSContentTeamModel(DataModel):
     """
         Link Posts to Teams
     """
@@ -1187,10 +1187,10 @@ class CMSContentTeamModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentUserModel(S3Model):
+class CMSContentUserModel(DataModel):
     """
         Link Posts to Users to allow Users to Bookmark posts
     """
@@ -1211,10 +1211,10 @@ class CMSContentUserModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentRoleModel(S3Model):
+class CMSContentRoleModel(DataModel):
     """
         Link CMS posts to user roles
         - for role-specific announcements
@@ -1250,7 +1250,7 @@ class CMSContentRoleModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def cms_rheader(r, tabs=None):
@@ -1417,7 +1417,7 @@ def cms_documentation(r, default_page, default_url):
     """
         Render an online documentation page, to be called from prep
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param default_page: the default page name
         @param default_url: the default URL if no contents found
     """
@@ -1507,10 +1507,10 @@ class S3CMS(S3Method):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point to apply cms method to S3Requests
+            Entry point to apply cms method to CRUDRequests
             - produces a full page with a Richtext widget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @return: output object to send to the view
@@ -1526,7 +1526,7 @@ class S3CMS(S3Method):
             S3Summary
 
             @param method: the widget method
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
 
             @ToDo: Support comments
@@ -2189,7 +2189,7 @@ class cms_Calendar(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2359,7 +2359,7 @@ class cms_TagList(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

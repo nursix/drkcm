@@ -40,7 +40,7 @@ import os
 import re
 import sys
 
-from itertools import product
+from itertools import product, chain
 
 from gluon import current
 from gluon.contenttype import contenttype
@@ -50,8 +50,7 @@ from gluon.sqlhtml import OptionsWidget
 from gluon.storage import Storage
 from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
-from ..filters import FS
-from ..io import S3XMLFormat
+from ..resource import FS, S3XMLFormat, S3Joins
 from ..tools import s3_flatlist, s3_has_foreign_key, s3_str, S3MarkupStripper, s3_represent_value, JSONERRORS, IS_NUMBER
 
 from .base import S3Method
@@ -73,7 +72,7 @@ class S3Report(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -98,7 +97,7 @@ class S3Report(S3Method):
         """
             Pivot table report page
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -280,7 +279,7 @@ class S3Report(S3Method):
             Render the pivot table data as a dict ready to be exported as
             GeoJSON for display on a Map.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -467,7 +466,7 @@ class S3Report(S3Method):
         """
             Pivot table report widget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -580,7 +579,7 @@ class S3Report(S3Method):
             - called with a body JSON containing the record IDs to represent,
               and the URL params for the pivot table (rows, cols, fact)
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -1856,7 +1855,7 @@ class S3PivotTable(object):
                 axes = (rfield
                         for rfield in (rfields[rows], rfields[cols])
                         if rfield != None)
-                axisfilter = resource.axisfilter(axes)
+                axisfilter = self.axisfilter(resource, axes)
             else:
                 axisfilter = None
 
@@ -2397,7 +2396,7 @@ class S3PivotTable(object):
             @returns: the XLS file as stream
         """
 
-        from ..io import S3Codec
+        from ..resource import S3Codec
         exporter = S3Codec.get_codec("xls")
 
         return exporter.encode_pt(self, title)
@@ -2904,5 +2903,253 @@ class S3PivotTable(object):
                 append([(colname, value)])
         result = [dict(i) for i in product(*pairs)]
         return result
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def axisfilter(resource, axes):
+        """
+            Get all values for the given S3ResourceFields (axes) which
+            match the resource query, used in pivot tables to filter out
+            additional values where dimensions can have multiple values
+            per record
+
+            @param axes: the axis fields as list/tuple of S3ResourceFields
+
+            @return: a dict with values per axis, only containes those
+                     axes which are affected by the resource filter
+        """
+
+        axisfilter = {}
+
+        qdict = resource.get_query().as_dict(flat=True)
+
+        for rfield in axes:
+            field = rfield.field
+
+            if field is None:
+                # virtual field or unresolvable selector
+                continue
+
+            left_joins = S3Joins(resource.tablename)
+            left_joins.extend(rfield.left)
+
+            tablenames = list(left_joins.joins.keys())
+            tablenames.append(resource.tablename)
+            af = S3AxisFilter(qdict, tablenames)
+
+            if af.op is not None:
+                query = af.query()
+                left = left_joins.as_list()
+
+                # @todo: this does not work with virtual fields: need
+                # to retrieve all extra_fields for the dimension table
+                # and can't groupby (=must deduplicate afterwards)
+                rows = current.db(query).select(field,
+                                                left=left,
+                                                groupby=field)
+                colname = rfield.colname
+                if rfield.ftype[:5] == "list:":
+                    values = []
+                    vappend = values.append
+                    for row in rows:
+                        v = row[colname]
+                        vappend(v if v else [None])
+                    values = set(chain.from_iterable(values))
+
+                    include, exclude = af.values(rfield)
+                    fdict = {}
+                    if include:
+                        for v in values:
+                            vstr = s3_str(v) if v is not None else v
+                            if vstr in include and vstr not in exclude:
+                                fdict[v] = None
+                    else:
+                        fdict = dict((v, None) for v in values)
+
+                    axisfilter[colname] = fdict
+
+                else:
+                    axisfilter[colname] = dict((row[colname], None)
+                                               for row in rows)
+
+        return axisfilter
+
+# =============================================================================
+class S3AxisFilter(object):
+    """
+        Helper to extract filter values for pivot table axis fields
+    """
+
+    # -------------------------------------------------------------------------
+    def __init__(self, qdict, tablenames):
+        """
+            Constructor, recursively introspect the query dict and extract
+            all relevant subqueries.
+
+            @param qdict: the query dict (from Query.as_dict(flat=True))
+            @param tablenames: the names of the relevant tables
+        """
+
+        self.l = None
+        self.r = None
+        self.op = None
+
+        self.tablename = None
+        self.fieldname = None
+
+        if not qdict:
+            return
+
+        l = qdict["first"]
+        if "second" in qdict:
+            r = qdict["second"]
+        else:
+            r = None
+
+        op = qdict["op"]
+        if op:
+            # Convert operator name to standard uppercase name
+            # without underscore prefix
+            op = op.upper().strip("_")
+
+        if "tablename" in l:
+            if l["tablename"] in tablenames:
+                self.tablename = l["tablename"]
+                self.fieldname = l["fieldname"]
+                if isinstance(r, dict):
+                    self.op = None
+                else:
+                    self.op = op
+                    self.r = r
+
+        elif op == "AND":
+            self.l = S3AxisFilter(l, tablenames)
+            self.r = S3AxisFilter(r, tablenames)
+            if self.l.op or self.r.op:
+                self.op = op
+
+        elif op == "OR":
+            self.l = S3AxisFilter(l, tablenames)
+            self.r = S3AxisFilter(r, tablenames)
+            if self.l.op and self.r.op:
+                self.op = op
+
+        elif op == "NOT":
+            self.l = S3AxisFilter(l, tablenames)
+            self.op = op
+
+        else:
+            self.l = S3AxisFilter(l, tablenames)
+            if self.l.op:
+                self.op = op
+
+    # -------------------------------------------------------------------------
+    def query(self):
+        """ Reconstruct the query from this filter """
+
+        op = self.op
+        if op is None:
+            return None
+
+        if self.tablename and self.fieldname:
+            l = current.s3db[self.tablename][self.fieldname]
+        elif self.l:
+            l = self.l.query()
+        else:
+            l = None
+
+        r = self.r
+        if op in ("AND", "OR", "NOT"):
+            r = r.query() if r else True
+
+        if op == "AND":
+            if l is not None and r is not None:
+                return l & r
+            elif r is not None:
+                return r
+            else:
+                return l
+        elif op == "OR":
+            if l is not None and r is not None:
+                return l | r
+            else:
+                return None
+        elif op == "NOT":
+            if l is not None:
+                return ~l
+            else:
+                return None
+        elif l is None:
+            return None
+
+        if isinstance(r, S3AxisFilter):
+            r = r.query()
+        if r is None:
+            return None
+
+        if op == "LOWER":
+            return l.lower()
+        elif op == "UPPER":
+            return l.upper()
+        elif op == "EQ":
+            return l == r
+        elif op == "NE":
+            return l != r
+        elif op == "LT":
+            return l < r
+        elif op == "LE":
+            return l <= r
+        elif op == "GE":
+            return l >= r
+        elif op == "GT":
+            return l > r
+        elif op == "BELONGS":
+            return l.belongs(r)
+        elif op == "CONTAINS":
+            return l.contains(r)
+        else:
+            return None
+
+    # -------------------------------------------------------------------------
+    def values(self, rfield):
+        """
+            Helper method to filter list:type axis values
+
+            @param rfield: the axis field
+
+            @return: pair of value lists [include], [exclude]
+        """
+
+        op = self.op
+        tablename = self.tablename
+        fieldname = self.fieldname
+
+        if tablename == rfield.tname and \
+           fieldname == rfield.fname:
+            value = self.r
+            if isinstance(value, (list, tuple)):
+                value = [s3_str(v) for v in value]
+                if not value:
+                    value = [None]
+            else:
+                value = [s3_str(value)]
+            if op == "CONTAINS":
+                return value, []
+            elif op == "EQ":
+                return value, []
+            elif op == "NE":
+                return [], value
+        elif op == "AND":
+            li, le = self.l.values(rfield)
+            ri, re = self.r.values(rfield)
+            return [v for v in li + ri if v not in le + re], []
+        elif op == "OR":
+            li, le = self.l.values(rfield)
+            ri, re = self.r.values(rfield)
+            return [v for v in li + ri], []
+        if op == "NOT":
+            li, le = self.l.values(rfield)
+            return [], li
+        return [], []
 
 # END =========================================================================

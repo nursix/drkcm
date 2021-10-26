@@ -36,12 +36,7 @@ __all__ = ("S3CRUD",)
 
 import json
 
-try:
-    from lxml import etree
-except ImportError:
-    import sys
-    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
-    raise
+from lxml import etree
 
 from gluon import current, redirect, HTTP, URL, \
                   A, DIV, FORM, INPUT, TABLE, TD, TR, XML
@@ -50,7 +45,7 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from ..io import S3Exporter
+from ..resource import S3Exporter
 from ..tools import S3DateTime, s3_decode_iso_datetime, s3_str, s3_validate, s3_represent_value, s3_set_extension
 from ..ui import S3EmbeddedComponentWidget, S3Selector, ICON, S3SQLDefaultForm
 
@@ -70,7 +65,7 @@ class S3CRUD(S3Method):
         """
             Apply CRUD methods
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @return: output object to send to the view
@@ -98,10 +93,14 @@ class S3CRUD(S3Method):
 
         if r.http == "DELETE" or self.method == "delete":
             output = self.delete(r, **attr)
+
         elif method == "create":
+
             output = self.create(r, **attr)
+
         elif method == "read":
             output = self.read(r, **attr)
+
         elif method == "update":
             output = self.update(r, **attr)
 
@@ -117,6 +116,7 @@ class S3CRUD(S3Method):
             if method == "datatable_f":
                 self.hide_filter = False
             output = self.select(r, **_attr)
+
         elif method in ("datalist", "datalist_f"):
             _attr = Storage(attr)
             _attr["list_type"] = "datalist"
@@ -126,6 +126,7 @@ class S3CRUD(S3Method):
 
         elif method == "validate":
             output = self.validate(r, **attr)
+
         elif method == "review":
             if r.record:
                 output = self.review(r, **attr)
@@ -142,7 +143,7 @@ class S3CRUD(S3Method):
             Entry point for other method handlers to embed this
             method as widget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -177,7 +178,7 @@ class S3CRUD(S3Method):
         """
             Create new records
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -346,9 +347,16 @@ class S3CRUD(S3Method):
             # Success message
             message = crud_string(self.tablename, "msg_record_created")
 
-            # Copy formkey if un-deleting a duplicate
-            if "id" in request.post_vars:
-                post_vars = request.post_vars
+            # Re-instate a deleted duplicate
+            post_vars = r.post_vars
+            if r.http == "POST":
+                if "deleted" in table and "id" not in post_vars:
+                    existing = resource.original(table, post_vars)
+                    if existing and existing.deleted:
+                        r.vars["id"] = post_vars["id"] = existing.id
+
+            # Copy formkey if re-instating a deleted duplicate
+            if "id" in post_vars:
                 original = str(post_vars.id)
                 if original:
                     formkey = session.get("_formkey[%s/None]" % tablename)
@@ -480,10 +488,6 @@ class S3CRUD(S3Method):
             else:
                 session.confirmation = current.T("Data uploaded")
 
-        elif representation == "url":
-            results = self.import_url(r)
-            return results
-
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
 
@@ -494,7 +498,7 @@ class S3CRUD(S3Method):
         """
             Create-buttons/form in summary views, both GET and POST
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -582,7 +586,7 @@ class S3CRUD(S3Method):
         """
             Read a single record
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -848,7 +852,7 @@ class S3CRUD(S3Method):
         """
             Update a record
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -1026,9 +1030,6 @@ class S3CRUD(S3Method):
                 else:
                     self.next = update_next
 
-        elif representation == "url":
-            return self.import_url(r)
-
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
 
@@ -1039,7 +1040,7 @@ class S3CRUD(S3Method):
         """
             Delete record(s)
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @todo: update for link table components
@@ -1156,7 +1157,7 @@ class S3CRUD(S3Method):
         """
             Filterable datatable/datalist
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -1439,7 +1440,7 @@ class S3CRUD(S3Method):
         """
             Get a data table
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: parameters for the method handler
         """
 
@@ -1625,7 +1626,7 @@ class S3CRUD(S3Method):
         """
             Get a data list
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: parameters for the method handler
         """
 
@@ -1693,7 +1694,7 @@ class S3CRUD(S3Method):
         record_id = get_vars.get("record", None)
         if record_id is not None:
             # Ajax-reload of a single record
-            from ..filters import FS
+            from ..resource import FS
             resource.add_filter(FS("id") == record_id)
             start = 0
             limit = 1
@@ -1798,7 +1799,7 @@ class S3CRUD(S3Method):
         """
             Get a list of unapproved records in this resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -1983,7 +1984,7 @@ class S3CRUD(S3Method):
         """
             Review/approve/reject an unapproved record.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
         """
 
@@ -2099,7 +2100,7 @@ class S3CRUD(S3Method):
             and returns a JSON object with either the validation errors or
             the text representations of the data.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             Input JSON format:
@@ -2133,7 +2134,7 @@ class S3CRUD(S3Method):
         if r.representation != "json":
             r.error(415, current.ERROR.BAD_FORMAT)
 
-        resource = self.resource
+        resource = r.resource
 
         get_vars = r.get_vars
         if "component" in get_vars:
@@ -2476,7 +2477,7 @@ class S3CRUD(S3Method):
         """
             Render CRUD buttons
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param buttons: list of button names, any of:
                             "add", "edit", "delete", "list", "summary"
             @param record_id: the record ID
@@ -2642,7 +2643,7 @@ class S3CRUD(S3Method):
             that would be inserted by CRUD/select via linkto. The resource
             id should be represented by "[id]".
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param deletable: records can be deleted
             @param editable: records can be modified
             @param copyable: record data can be copied into new record
@@ -2782,7 +2783,7 @@ class S3CRUD(S3Method):
             Individual controllers can override this by setting
             response.s3.cancel = False.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         if r.representation != "html":
@@ -2850,102 +2851,6 @@ class S3CRUD(S3Method):
             # This is the preferred method as it updates reference fields
             db.import_from_csv_file(stream)
             db.commit()
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def import_url(r):
-        """
-            Import data from vars in URL query
-
-            @param r: the S3Request
-            @note: can only update single records (no mass-update)
-
-            @todo: update for link table components
-            @todo: re-integrate into S3Importer
-        """
-
-        xml = current.xml
-
-        table = r.target()[2]
-
-        record = r.record
-        resource = r.resource
-
-        # Handle components
-        if record and r.component:
-            resource = resource.components[r.component_name]
-            resource.load()
-            if len(resource) == 1:
-                record = resource.records()[0]
-            else:
-                record = None
-            r.vars.update({resource.fkey: r.record[resource.pkey]})
-        elif not record and r.component:
-            item = xml.json_message(False, 400, "Invalid Request!")
-            return {"item": item}
-
-        # Check for update
-        if record and xml.UID in table.fields:
-            r.vars.update({xml.UID: xml.export_uid(record[xml.UID])})
-
-        # Build tree
-        element = etree.Element(xml.TAG.resource)
-        element.set(xml.ATTRIBUTE.name, resource.tablename)
-        for var in r.vars:
-            if var.find(".") != -1:
-                continue
-            elif var in table.fields:
-                field = table[var]
-                value = s3_str(r.vars[var])
-                if var in xml.FIELDS_TO_ATTRIBUTES:
-                    element.set(var, value)
-                else:
-                    data = etree.Element(xml.TAG.data)
-                    data.set(xml.ATTRIBUTE.field, var)
-                    if field.type == "upload":
-                        data.set(xml.ATTRIBUTE.filename, value)
-                    else:
-                        data.text = value
-                    element.append(data)
-        tree = xml.tree([element], domain=xml.domain)
-
-        # Import data
-        result = Storage(committed=False)
-        def log(item):
-            result["item"] = item
-        resource.configure(oncommit_import_item = log)
-        try:
-            success = resource.import_xml(tree)
-        except SyntaxError:
-            pass
-
-        # Check result
-        if result.item:
-            result = result.item
-
-        # Build response
-        if success and result.committed:
-            r.id = result.id
-            method = result.method
-            if method == result.METHOD.CREATE:
-                item = xml.json_message(True, 201, "Created as %s?%s.id=%s" %
-                        (str(r.url(method="",
-                                   representation="html",
-                                   vars={},
-                                  )
-                            ),
-                         r.name, result.id)
-                        )
-            else:
-                item = xml.json_message(True, 200, "Record updated")
-        else:
-            item = xml.json_message(False, 403,
-                        "Could not create/update record: %s" %
-                            resource.error or xml.error,
-                        tree=xml.tree2json(tree))
-
-        return {"item": item}
-
 
     # -------------------------------------------------------------------------
     def _embed_component(self, resource, record=None):
@@ -3084,11 +2989,12 @@ class S3CRUD(S3Method):
         return
 
     # -------------------------------------------------------------------------
-    def _linkto(self, r, authorised=None, update=None, native=False):
+    @classmethod
+    def _linkto(cls, r, authorised=None, update=None, native=False):
         """
             Returns a linker function for the record ID column in list views
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param authorised: user authorised for update
                 (override internal check)
             @param update: provide link to update rather than to read
@@ -3135,7 +3041,7 @@ class S3CRUD(S3Method):
                 except TypeError:
                     url = linkto % record_id
             else:
-                get_vars = self._linkto_vars(r)
+                get_vars = cls._linkto_vars(r)
 
                 if r.component:
                     if r.link and not r.actuate_link():
@@ -3184,7 +3090,7 @@ class S3CRUD(S3Method):
         """
             Retain certain GET vars of the request in action links
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
 
             @return: Storage with GET vars
         """

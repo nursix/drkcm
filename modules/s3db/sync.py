@@ -47,7 +47,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class SyncConfigModel(S3Model):
+class SyncConfigModel(DataModel):
     """ Model to store local sync configuration """
 
     names = ("sync_config",
@@ -110,10 +110,10 @@ class SyncConfigModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
-class SyncStatusModel(S3Model):
+class SyncStatusModel(DataModel):
     """ Model to store the current sync module status """
 
     names = ("sync_status",
@@ -145,10 +145,10 @@ class SyncStatusModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
-class SyncRepositoryModel(S3Model):
+class SyncRepositoryModel(DataModel):
     """ Model representing a peer repository """
 
     names = ("sync_repository",
@@ -380,13 +380,13 @@ class SyncRepositoryModel(S3Model):
                        )
 
         # REST Methods
-        set_method("sync", "repository",
+        set_method("sync_repository",
                    method = "now",
                    action = sync_now,
                    )
 
-        set_method("sync", "repository",
-                   component_name = "job",
+        set_method("sync_repository",
+                   component = "job",
                    method = "reset",
                    action = sync_job_reset,
                    )
@@ -555,7 +555,7 @@ class SyncRepositoryModel(S3Model):
         return URL(c="sync", f="repository", args=["[id]", create_next])
 
 # =============================================================================
-class SyncDatasetModel(S3Model):
+class SyncDatasetModel(DataModel):
     """ Model representing a public data set """
 
     names = ("sync_dataset",
@@ -635,7 +635,7 @@ class SyncDatasetModel(S3Model):
                   )
 
         # REST Methods
-        self.set_method("sync", "dataset",
+        self.set_method("sync_dataset",
                         method = "archive",
                         action = sync_CreateArchive,
                         )
@@ -850,7 +850,7 @@ class SyncDatasetModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class SyncLogModel(S3Model):
+class SyncLogModel(DataModel):
     """ Model for the Sync log """
 
     names = ("sync_log",
@@ -911,10 +911,10 @@ class SyncLogModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
-class SyncTaskModel(S3Model):
+class SyncTaskModel(DataModel):
 
     names = ("sync_task",
              "sync_resource_filter",
@@ -950,7 +950,7 @@ class SyncTaskModel(S3Model):
         }
 
         # Strategy (allowed import methods)
-        sync_strategy = S3ImportItem.METHOD
+        sync_strategy = ImportItem.METHOD
         all_strategies = list(sync_strategy.values())
 
         sync_strategy_represent = lambda opt: ", ".join(o for o in sync_strategy.values() if o in opt) \
@@ -963,13 +963,12 @@ class SyncTaskModel(S3Model):
         }
 
         # Update/conflict resolution policy
-        sync_policies = S3ImportItem.POLICY
-        sync_policy = {
-            sync_policies.OTHER: T("always update"),
-            sync_policies.NEWER: T("update if newer"),
-            sync_policies.MASTER: T("update if master"),
-            sync_policies.THIS: T("never update")
-        }
+        from core import SyncPolicy
+        sync_policy = {SyncPolicy.OTHER: T("always update"),
+                       SyncPolicy.NEWER: T("update if newer"),
+                       SyncPolicy.MASTER: T("update if master"),
+                       SyncPolicy.THIS: T("never update")
+                       }
 
         sync_policy_represent = lambda opt: \
                                 opt and sync_policy.get(opt, UNKNOWN_OPT) or NONE
@@ -1117,10 +1116,10 @@ class SyncTaskModel(S3Model):
                                          ),
                            ),
                      Field("update_policy",
-                           default = sync_policies.NEWER,
+                           default = SyncPolicy.NEWER,
                            label = T("Update Policy"),
                            represent = sync_policy_represent,
-                           requires = IS_IN_SET(sync_policies,
+                           requires = IS_IN_SET(sync_policy,
                                                 zero = None,
                                                 ),
                            comment = DIV(_class = "tooltip",
@@ -1131,10 +1130,10 @@ class SyncTaskModel(S3Model):
                                          ),
                            ),
                      Field("conflict_policy",
-                           default = sync_policies.NEWER,
+                           default = SyncPolicy.NEWER,
                            label = T("Conflict Policy"),
                            represent = sync_policy_represent,
-                           requires = IS_IN_SET(sync_policies,
+                           requires = IS_IN_SET(sync_policy,
                                                 zero = None,
                                                 ),
                            comment = DIV(_class = "tooltip",
@@ -1213,7 +1212,7 @@ class SyncTaskModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1312,7 +1311,7 @@ class SyncTaskModel(S3Model):
                 db(ttable.id == task_id).update(last_push=None)
 
 # =============================================================================
-class SyncScheduleModel(S3Model):
+class SyncScheduleModel(DataModel):
     """ Model for automatic synchronization schedule """
 
     names = ("sync_job",
@@ -1352,7 +1351,7 @@ class SyncScheduleModel(S3Model):
         # ---------------------------------------------------------------------
         # Return global names to s3.*
         #
-        return {}
+        return None
 
 # =============================================================================
 def sync_rheader(r, tabs=None):
@@ -1461,7 +1460,7 @@ def sync_now(r, **attr):
     """
         Manual synchronization of a repository
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param attr: controller options for the request
     """
 
@@ -1537,7 +1536,7 @@ class sync_CreateArchive(S3Method):
         """
             Entry point for REST controller
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
 
             @todo: perform archive creation async?
@@ -1578,7 +1577,7 @@ class sync_CreateArchive(S3Method):
         """
             Simple UI form to trigger POST method
 
-            @param r: the S3Request embedding the form
+            @param r: the CRUDRequest embedding the form
             @param row: the data set Row
 
             @todo: if archive is currently being built (async),

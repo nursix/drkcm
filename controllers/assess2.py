@@ -1792,7 +1792,7 @@ def rat_tables():
             raise HTTP(405, ERROR.BAD_METHOD)
 
 
-    s3db.set_method("assess", "rat",
+    s3db.set_method("assess_rat",
                      method="summary",
                      action=assess_rat_summary)
 
@@ -1943,8 +1943,7 @@ def population():
 
     """ RESTful controller """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 # Rapid Assessments
@@ -2074,8 +2073,8 @@ def rat():
     rheader = lambda r: rat_rheader(r,
                                     tabs)
 
-    output = s3_rest_controller(rheader=rheader,
-                                s3ocr_config={"tabs": tabs})
+    output = curd_controller(rheader=rheader,
+                             s3ocr_config={"tabs": tabs})
 
     response.s3.stylesheets.append( "S3/rat.css" )
     return output
@@ -2192,7 +2191,7 @@ def assess():
 
     rheader = lambda r: assess_rheader(r, tabs)
 
-    return s3_rest_controller(rheader=rheader)
+    return crud_controller(rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def impact_type():
@@ -2204,7 +2203,7 @@ def impact_type():
     module = "impact"
     resourcename = "type"
 
-    return s3_rest_controller(module, resourcename)
+    return crud_controller(module, resourcename)
 
 # -----------------------------------------------------------------------------
 def baseline_type():
@@ -2213,7 +2212,7 @@ def baseline_type():
     # Load Models
     assess_tables()
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def baseline():
@@ -2222,7 +2221,7 @@ def baseline():
     # Load Models
     assess_tables()
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def summary():
@@ -2231,7 +2230,7 @@ def summary():
     # Load Models
     assess_tables()
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def basic_assess():
@@ -2534,12 +2533,12 @@ def custom_assess(custom_assess_fields, location_id=None):
 def type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("impact", "type")
+    return crud_controller("impact", "type")
 
 # =============================================================================
 def impact():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("impact", "impact")
+    return crud_controller("impact", "impact")
 
 # END =========================================================================

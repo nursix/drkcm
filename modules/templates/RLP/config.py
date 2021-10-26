@@ -1076,7 +1076,7 @@ def config(settings):
         """
             Customise availability fields in volunteer form
 
-            @param r: the current S3Request
+            @param r: the current CRUDRequest
         """
 
         from core import S3WeeklyHoursWidget, S3WithIntro, s3_text_represent
@@ -1123,7 +1123,7 @@ def config(settings):
         """
             Determine fields for volunteer list
 
-            @param r: the current S3Request
+            @param r: the current CRUDRequest
             @param coordinator: user is COORDINATOR
             @param name_fields: name fields in order
 
@@ -1426,7 +1426,7 @@ def config(settings):
 
                 # Configure anonymize-method
                 from core import S3Anonymize
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "anonymize",
                                 action = S3Anonymize,
                                 )
@@ -1713,7 +1713,7 @@ def config(settings):
 
                     # Configure anonymize-method
                     from core import S3Anonymize
-                    s3db.set_method("pr", "person",
+                    s3db.set_method("pr_person",
                                     method = "anonymize",
                                     action = S3Anonymize,
                                     )
@@ -2598,7 +2598,7 @@ def config(settings):
 
             # Set method for Ajax-lookup of notification data
             from .notifications import InlineNotificationsData
-            s3db.set_method("hrm", "delegation",
+            s3db.set_method("hrm_delegation",
                             method = "notifications",
                             action = InlineNotificationsData,
                             )

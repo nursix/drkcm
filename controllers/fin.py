@@ -20,7 +20,7 @@ def index():
 def expense():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def voucher_program():
@@ -52,19 +52,19 @@ def voucher_program():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.fin_rheader)
+    return crud_controller(rheader=s3db.fin_rheader)
 
 # -----------------------------------------------------------------------------
 def voucher():
     """ Vouchers: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def voucher_debit():
     """ Voucher Debits: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def voucher_claim():
@@ -91,7 +91,7 @@ def voucher_claim():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.fin_rheader)
+    return crud_controller(rheader=s3db.fin_rheader)
 
 # -----------------------------------------------------------------------------
 def voucher_invoice():
@@ -115,6 +115,6 @@ def voucher_invoice():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.fin_rheader)
+    return crud_controller(rheader=s3db.fin_rheader)
 
 # END =========================================================================

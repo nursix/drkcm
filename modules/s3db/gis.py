@@ -65,7 +65,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3LocationModel(S3Model):
+class S3LocationModel(DataModel):
     """
         Locations model
     """
@@ -376,7 +376,7 @@ class S3LocationModel(S3Model):
                        )
 
         # Custom Method for S3LocationAutocompleteWidget
-        self.set_method("gis", "location",
+        self.set_method("gis_location",
                         method = "search_ac",
                         action = self.gis_search_ac)
 
@@ -723,7 +723,7 @@ class S3LocationModel(S3Model):
           This callback will be called when importing location records it will look
           to see if the record being imported is a duplicate.
 
-          @param item: An S3ImportItem object which includes all the details
+          @param item: An ImportItem object which includes all the details
                        of the record being imported
 
           If the record is a duplicate then it will set the item method to update
@@ -932,7 +932,7 @@ class S3LocationModel(S3Model):
             JSON search method for S3LocationAutocompleteWidget
             - adds hierarchy support
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -1232,7 +1232,7 @@ class S3LocationModel(S3Model):
         return output
 
 # =============================================================================
-class S3LocationNameModel(S3Model):
+class S3LocationNameModel(DataModel):
     """
         Location Names model
         - local/alternate names for Locations
@@ -1300,10 +1300,10 @@ class S3LocationNameModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3LocationTagModel(S3Model):
+class S3LocationTagModel(DataModel):
     """
         Location Tags model
         - flexible Key-Value component attributes to Locations
@@ -1383,7 +1383,7 @@ class S3LocationTagModel(S3Model):
         return od
 
 # =============================================================================
-class S3LocationGroupModel(S3Model):
+class S3LocationGroupModel(DataModel):
     """
         Location Groups model
         - currently unused
@@ -1436,10 +1436,10 @@ class S3LocationGroupModel(S3Model):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3LocationHierarchyModel(S3Model):
+class S3LocationHierarchyModel(DataModel):
     """
         Location Hierarchy model
     """
@@ -1615,7 +1615,7 @@ class S3LocationHierarchyModel(S3Model):
                     form.errors[gap] = hierarchy_gap
 
 # =============================================================================
-class S3GISConfigModel(S3Model):
+class S3GISConfigModel(DataModel):
     """
         GIS Config model: Web Map Context
         - Site config
@@ -2474,7 +2474,7 @@ class gis_MarkerRepresent(S3Represent):
         return represent
 
 # ==============================================================================
-class S3LayerEntityModel(S3Model):
+class S3LayerEntityModel(DataModel):
     """
         Model for Layer SuperEntity
         - used to provide a common link table for:
@@ -2860,7 +2860,7 @@ class S3LayerEntityModel(S3Model):
                               )
 
 # =============================================================================
-class S3FeatureLayerModel(S3Model):
+class S3FeatureLayerModel(DataModel):
     """
         Model for Feature Layers
         - used to select a set of Features for either Display on a Map
@@ -3014,7 +3014,7 @@ class S3FeatureLayerModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3069,7 +3069,7 @@ class S3FeatureLayerModel(S3Model):
             item.method = item.METHOD.UPDATE
 
 # =============================================================================
-class S3MapModel(S3Model):
+class S3MapModel(DataModel):
     """ Models for Maps """
 
     names = ("gis_cache",
@@ -4067,7 +4067,7 @@ class S3MapModel(S3Model):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4434,7 +4434,7 @@ class S3MapModel(S3Model):
         S3MapModel.gis_layer_shapefile_onaccept(form)
 
 # =============================================================================
-class S3GISThemeModel(S3Model):
+class S3GISThemeModel(DataModel):
     """
         Thematic Mapping model
 
@@ -4501,7 +4501,7 @@ class S3GISThemeModel(S3Model):
                                          )
 
         # Custom Method to generate a style
-        self.set_method("gis", "layer_theme",
+        self.set_method("gis_layer_theme",
                         method = "style",
                         action = self.gis_theme_style)
 
@@ -4594,7 +4594,7 @@ class S3GISThemeModel(S3Model):
         return json.dumps(style)
 
 # =============================================================================
-class S3PoIModel(S3Model):
+class S3PoIModel(DataModel):
     """
         Data Model for PoIs (Points of Interest)
     """
@@ -4897,7 +4897,7 @@ class S3PoIModel(S3Model):
             current.log.warning("Unable to update GIS PoI Style as there are multiple possible")
 
 # =============================================================================
-class S3PoIOrganisationGroupModel(S3Model):
+class S3PoIOrganisationGroupModel(DataModel):
     """
         PoI Organisation Group Model
 
@@ -4932,10 +4932,10 @@ class S3PoIOrganisationGroupModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3PoIFeedModel(S3Model):
+class S3PoIFeedModel(DataModel):
     """ Data Model for PoI feeds """
 
     names = ("gis_poi_feed",)
@@ -4953,7 +4953,7 @@ class S3PoIFeedModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def name_field():

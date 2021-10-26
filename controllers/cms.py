@@ -64,7 +64,7 @@ def series():
                 ctable.body.represent = lambda body: XML(body)
                 ctable.body.widget = s3_richtext_widget
             else:
-                ctable.body.represent = lambda body: XML(s3_URLise(body))
+                ctable.body.represent = lambda body: XML(s3base.s3_URLise(body))
                 ctable.body.widget = None
 
             # Special-purpose series
@@ -102,19 +102,19 @@ def series():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.cms_rheader)
+    return crud_controller(rheader=s3db.cms_rheader)
 
 # -----------------------------------------------------------------------------
 def status():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def tag():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def blog():
@@ -138,8 +138,7 @@ def blog():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cms", "series")
-    return output
+    return crud_controller("cms", "series")
 
 # -----------------------------------------------------------------------------
 def post():
@@ -151,7 +150,7 @@ def post():
     #s3.filter = (table.series_id == None)
 
     # Custom Method to add Comments
-    s3db.set_method("cms", "post",
+    s3db.set_method("cms_post",
                     method = "discuss",
                     action = discuss)
 
@@ -295,9 +294,7 @@ def post():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.cms_rheader,
-                                )
-    return output
+    return crud_controller(rheader=s3db.cms_rheader)
 
 # -----------------------------------------------------------------------------
 def page():
@@ -362,8 +359,7 @@ function comment_reply(id){
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cms", "post")
-    return output
+    return crud_controller("cms", "post")
 
 # -----------------------------------------------------------------------------
 def cms_post_age(row):
@@ -770,8 +766,7 @@ def newsfeed():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cms", "post")
-    return output
+    return crud_controller("cms", "post")
 
 # =============================================================================
 # Comments
@@ -779,7 +774,7 @@ def newsfeed():
 def comment():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def discuss(r, **attr):

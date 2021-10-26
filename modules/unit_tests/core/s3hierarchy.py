@@ -172,7 +172,7 @@ class S3HierarchyTests(unittest.TestCase):
     def testPreprocessCreateNode(self):
         """ Test preprocessing of a create-node request """
 
-        r = s3_request("test", "hierarchy", http="POST")
+        r = crud_request("test", "hierarchy", http="POST")
         parent_node = self.rows["HIERARCHY1"]
         parent_id = parent_node.id
 
@@ -875,7 +875,7 @@ class S3LinkedHierarchyTests(unittest.TestCase):
     def testPreprocessCreateNode(self):
         """ Test preprocessing of a create-node request """
 
-        r = s3_request("test", "lhierarchy", http="POST")
+        r = crud_request("test", "lhierarchy", http="POST")
         parent_node = self.rows["LHIERARCHY1"]
 
         h = S3Hierarchy("test_lhierarchy")
@@ -892,7 +892,7 @@ class S3LinkedHierarchyTests(unittest.TestCase):
     def testPostprocessCreateNode(self):
         """ Test postprocessing of a create-node request """
 
-        r = s3_request("test", "lhierarchy", http="POST")
+        r = crud_request("test", "lhierarchy", http="POST")
         parent_node = self.rows["LHIERARCHY1"]
 
         h = S3Hierarchy("test_lhierarchy")

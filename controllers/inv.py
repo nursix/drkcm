@@ -211,8 +211,7 @@ def index2():
                                    pdf_groupby = "site_id",
                                    )
                     s3.filter = filter
-                    r = s3_request("inv", "inv_item",
-                                   vars={"orderby" : orderby})
+                    r = crud_request("inv", "inv_item", vars={"orderby" : orderby})
                     r.resource = resource
                     output = r(pdf_groupby = "site_id",
                                dt_group = 1,
@@ -262,7 +261,7 @@ def index2():
                                        dt_action_col = 1,
                                        )
                 return supply_items
-        r = s3_request(prefix = "inv", name = "inv_item")
+        r = crud_request(prefix = "inv", name = "inv_item")
         return {"module_name": module_name,
                 "warehouses": warehouses,
                 "inventory": inventory,
@@ -410,21 +409,20 @@ def warehouse():
         native = False
 
     from s3db.inv import inv_rheader
-    output = s3_rest_controller(module, resourcename,
-                                #hide_filter = {"inv_item": False,
-                                #               "_default": True,
-                                #               },
-                                # Extra fields for CSV uploads:
-                                #csv_extra_fields = [
-                                #         dict(label="Organisation",
-                                #         field=s3db.org_organisation_id(comment=None))
-                                #]
-                                csv_stylesheet = csv_stylesheet,
-                                csv_template = resourcename,
-                                native = native,
-                                rheader = inv_rheader,
-                                )
-    return output
+    return crud_controller(module, resourcename,
+                           #hide_filter = {"inv_item": False,
+                           #               "_default": True,
+                           #               },
+                           ## Extra fields for CSV uploads:
+                           #csv_extra_fields = [{"label": "Organisation",
+                           #                     "field": s3db.org_organisation_id(comment=None)),
+                           #                     },
+                           #                    ],
+                           csv_stylesheet = csv_stylesheet,
+                           csv_template = resourcename,
+                           native = native,
+                           rheader = inv_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def warehouse_type():
@@ -432,7 +430,7 @@ def warehouse_type():
         RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def supplier():
@@ -549,54 +547,52 @@ def inv_item():
     s3.prep = prep
 
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Deletes all Stock records of the organisation/branch
             before processing a new data import
         """
-        if s3.import_replace:
-            resource, tree = data
-            if tree is not None:
-                xml = current.xml
-                tag = xml.TAG
-                att = xml.ATTRIBUTE
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
 
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                otable = s3db.org_organisation
-                stable = s3db.org_site
-                itable = s3db.inv_inv_item
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        query = (otable.name == org_name) & \
-                                (stable.organisation_id == otable.id) & \
-                                (itable.site_id == stable.id)
-                        resource = s3db.resource("inv_inv_item", filter=query)
-                        # Use cascade=True so that the deletion gets
-                        # rolled back if the import fails:
-                        resource.delete(format="xml", cascade=True)
-            resource.skip_import = True
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            otable = s3db.org_organisation
+            stable = s3db.org_site
+            itable = s3db.inv_inv_item
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    query = (otable.name == org_name) & \
+                            (stable.organisation_id == otable.id) & \
+                            (itable.site_id == stable.id)
+                    resource = s3db.resource("inv_inv_item", filter=query)
+                    # Use cascade=True so that the deletion gets
+                    # rolled back if the import fails:
+                    resource.delete(format="xml", cascade=True)
+
     s3.import_prep = import_prep
 
-    output = s3_rest_controller(#csv_extra_fields = [{"label": "Organisation",
-                                #                     "field": s3db.org_organisation_id(comment = None)
-                                #                     },
-                                #                    ],
-                                pdf_orientation = "Landscape",
-                                pdf_table_autogrow = "B",
-                                pdf_groupby = "site_id, item_id",
-                                pdf_orderby = "expiry_date, supply_org_id",
-                                replace_option = T("Remove existing data before import"),
-                                rheader = s3db.inv_rheader,
-                                )
+    output = crud_controller(#csv_extra_fields = [{"label": "Organisation",
+                             #                     "field": s3db.org_organisation_id(comment = None)
+                             #                     },
+                             #                    ],
+                             pdf_orientation = "Landscape",
+                             pdf_table_autogrow = "B",
+                             pdf_groupby = "site_id, item_id",
+                             pdf_orderby = "expiry_date, supply_org_id",
+                             replace_option = T("Remove existing data before import"),
+                             rheader = s3db.inv_rheader,
+                             )
 
     if not settings.get_inv_direct_stock_edits() and \
        isinstance(output, dict) and \
@@ -629,9 +625,9 @@ def track_movement():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller("inv", "track_item",
-                                rheader = s3db.inv_rheader,
-                                )
+    output = crud_controller("inv", "track_item",
+                             rheader = s3db.inv_rheader,
+                             )
     if isinstance(output, dict) and \
        "add_btn" in output:
         del output["add_btn"]
@@ -1132,9 +1128,7 @@ def recv():
                            )
 
     from s3db.inv import inv_recv_rheader
-    output = s3_rest_controller(rheader = inv_recv_rheader,
-                                )
-    return output
+    return crud_controller(rheader=inv_recv_rheader)
 
 # -----------------------------------------------------------------------------
 def req_items_for_inv(site_id, quantity_type):
@@ -1285,7 +1279,7 @@ def recv_process():
 
     # Customise the inv_track_item so templates can customise the onaccept
     tracktable = db.inv_track_item
-    r = s3_request("inv", "track_item", args=[], vars={})
+    r = crud_request("inv", "track_item", args=[], vars={})
     r.customise_resource("inv_track_item")
 
     # Lookup the send_id from a track item of this recv
@@ -1531,9 +1525,7 @@ def track_item():
         s3.filter = (FS("expiry_date") != None)
 
     from s3db.inv import inv_rheader
-    output = s3_rest_controller(rheader = inv_rheader,
-                                )
-    return output
+    return crud_controller(rheader=inv_rheader)
 
 # =============================================================================
 def adj():
@@ -1634,9 +1626,7 @@ def adj():
                        )
 
     from s3db.inv import inv_adj_rheader
-    output = s3_rest_controller(rheader = inv_adj_rheader,
-                                )
-    return output
+    return crud_controller(rheader=inv_adj_rheader)
 
 # -----------------------------------------------------------------------------
 def adj_close():
@@ -1802,8 +1792,7 @@ def send_item_json():
 def kitting():
 
     from s3db.inv import inv_rheader
-    return s3_rest_controller(rheader = inv_rheader,
-                              )
+    return crud_controller(rheader=inv_rheader)
 
 # -----------------------------------------------------------------------------
 def facility():
@@ -1817,7 +1806,7 @@ def facility():
 
 # -----------------------------------------------------------------------------
 def facility_type():
-    return s3_rest_controller("org")
+    return crud_controller("org")
 
 # -----------------------------------------------------------------------------
 def project():
@@ -1846,7 +1835,7 @@ def project():
                    list_fields = list_fields,
                    )
 
-    return s3_rest_controller("project")
+    return crud_controller("project")
 
 # -----------------------------------------------------------------------------
 def incoming():

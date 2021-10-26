@@ -69,7 +69,7 @@ def template():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.dc_rheader)
+    return crud_controller(rheader=s3db.dc_rheader)
 
 # -----------------------------------------------------------------------------
 def question():
@@ -78,8 +78,7 @@ def question():
         - used for imports & to manage translations
     """
 
-    return s3_rest_controller(rheader = s3db.dc_rheader,
-                              )
+    return crud_controller(rheader=s3db.dc_rheader)
 
 # -----------------------------------------------------------------------------
 def question_l10n():
@@ -88,8 +87,8 @@ def question_l10n():
         - used for imports
     """
 
-    return s3_rest_controller(#rheader = s3db.dc_rheader,
-                              )
+    return crud_controller(#rheader = s3db.dc_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def target():
@@ -122,16 +121,12 @@ def target():
                                )
         elif r.id and not r.component and r.representation == "xls":
             # Custom XLS Exporter to include all Responses.
-            r.set_handler("read", s3db.dc_TargetXLS(),
-                          http = ("GET", "POST"),
-                          representation = "xls"
-                          )
+            r.custom_action = s3db.dc_TargetXLS
 
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.dc_rheader,
-                              )
+    return crud_controller(rheader=s3db.dc_rheader)
 
 # -----------------------------------------------------------------------------
 def respnse(): # Cannot call this 'response' or it will clobber the global
@@ -191,8 +186,8 @@ def respnse(): # Cannot call this 'response' or it will clobber the global
         return True
     s3.prep = prep
 
-    return s3_rest_controller("dc", "response",
-                              rheader = s3db.dc_rheader,
-                              )
+    return crud_controller("dc", "response",
+                           rheader = s3db.dc_rheader,
+                           )
 
 # END =========================================================================

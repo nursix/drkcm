@@ -446,7 +446,7 @@ class dc_QuestionCreate(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -495,7 +495,7 @@ class dc_QuestionImageDelete(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -539,7 +539,7 @@ class dc_QuestionImageUpload(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -589,7 +589,7 @@ class dc_QuestionSave(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -679,7 +679,7 @@ class dc_TargetActivate(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -893,7 +893,7 @@ class dc_TargetDeactivate(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -943,7 +943,7 @@ class dc_TargetEdit(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -1080,7 +1080,7 @@ class dc_TargetDelete(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -1191,7 +1191,7 @@ class dc_TargetName(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -1250,7 +1250,7 @@ class dc_TargetL10n(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -1329,7 +1329,7 @@ class dc_TargetReport(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2075,7 +2075,7 @@ class dc_TargetReport(S3Method):
 
         raise NotImplementedError
 
-        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         # etc, etc
 
@@ -2107,7 +2107,7 @@ class dc_TargetReportFilters(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2293,7 +2293,7 @@ class dc_TemplateEditor(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2690,7 +2690,7 @@ class dc_TemplateExportL10n(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2700,7 +2700,7 @@ class dc_TemplateExportL10n(S3Method):
 
                 # No need to check for 'read' permission within single-record methods, as that has already been checked
 
-                from core.io.codecs.xls import S3XLS
+                from core.resource.codecs.xls import S3XLS
 
                 try:
                     import xlwt
@@ -2961,7 +2961,7 @@ class dc_TemplateImportL10n(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -3165,7 +3165,7 @@ class dc_TemplateSave(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -3206,7 +3206,7 @@ class dc_ProjectDelete(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

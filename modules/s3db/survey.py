@@ -102,7 +102,7 @@ else:
     _debug = lambda m: None
 
 # =============================================================================
-class S3SurveyTemplateModel(S3Model):
+class S3SurveyTemplateModel(DataModel):
     """
         Template model
 
@@ -224,8 +224,8 @@ class S3SurveyTemplateModel(S3Model):
                             survey_translate = "template_id",
                             )
 
-        self.set_method("survey", "template",
-                        component_name = "translate",
+        self.set_method("survey_template",
+                        component = "translate",
                         method = "translate_download",
                         action = survey_TranslateDownload,
                         )
@@ -765,7 +765,7 @@ def survey_build_template_summary(template_id):
     return form
 
 # =============================================================================
-class S3SurveyQuestionModel(S3Model):
+class S3SurveyQuestionModel(DataModel):
     """
         Question Model
     """
@@ -1231,7 +1231,7 @@ def survey_updateMetaData(record, qtype, metadata):
         widget_obj.insertChildren(record, metadata_list)
 
 # =============================================================================
-class S3SurveyFormatterModel(S3Model):
+class S3SurveyFormatterModel(DataModel):
     """
         The survey_formatter table defines the order in which the questions
         will be laid out when a formatted presentation is used.
@@ -1307,7 +1307,7 @@ class S3SurveyFormatterModel(S3Model):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1402,7 +1402,7 @@ def survey_getQstnLayoutRules(template_id, section_id, method = 1):
     return row_list
 
 # =============================================================================
-class S3SurveySeriesModel(S3Model):
+class S3SurveySeriesModel(DataModel):
     """
         Series Model
 
@@ -1540,15 +1540,15 @@ class S3SurveySeriesModel(S3Model):
                                     )
 
         # Custom Methods
-        set_method("survey", "series", method="summary", # NB This conflicts with the global summary method!
+        set_method("survey_series", method="summary", # NB This conflicts with the global summary method!
                    action = self.seriesSummary)
-        set_method("survey", "series", method="graph",
+        set_method("survey_series", method="graph",
                    action = self.seriesGraph)
-        set_method("survey", "series", method="map", # NB This conflicts with the global map method!
+        set_method("survey_series", method="map", # NB This conflicts with the global map method!
                    action = self.seriesMap)
-        set_method("survey", "series", method="series_chart_download",
+        set_method("survey_series", method="series_chart_download",
                    action = self.seriesChartDownload)
-        set_method("survey", "series", method="export_responses",
+        set_method("survey_series", method="export_responses",
                    action = survey_ExportResponses)
 
         # ---------------------------------------------------------------------
@@ -1624,7 +1624,7 @@ class S3SurveySeriesModel(S3Model):
                             question_ids.append(str(question.question_id))
                 items = buildCompletedList(series_id, question_ids)
                 if r.representation == "xls":
-                    from core.io.codecs.xls import S3XLS
+                    from core.resource.codecs.xls import S3XLS
                     exporter = S3XLS()
                     return exporter.encode(items,
                                            title=crud_strings.title_selected,
@@ -2402,7 +2402,7 @@ def buildSeriesSummary(series_id, posn_offset):
     return form
 
 # =============================================================================
-class S3SurveyCompleteModel(S3Model):
+class S3SurveyCompleteModel(DataModel):
     """
         Completed Surveys Model
     """
@@ -2648,7 +2648,7 @@ class S3SurveyCompleteModel(S3Model):
                            "survey",
                            "answer.xsl")
         resource = current.s3db.resource("survey_answer")
-        resource.import_xml(bio, stylesheet=xsl, format="csv")
+        resource.import_xml(bio, stylesheet=xsl, source_type="csv")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2707,7 +2707,7 @@ class S3SurveyCompleteModel(S3Model):
                            "gis",
                            "location.xsl")
         resource = current.s3db.resource("gis_location")
-        resource.import_xml(bio, stylesheet = xsl, format="csv")
+        resource.import_xml(bio, stylesheet = xsl, source_type="csv")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3081,7 +3081,7 @@ def getLocationList(series_id):
     return response_locations
 
 # =============================================================================
-class S3SurveyTranslateModel(S3Model):
+class S3SurveyTranslateModel(DataModel):
     """
         Translations Model
     """
@@ -3133,7 +3133,7 @@ class S3SurveyTranslateModel(S3Model):
                        onaccept = self.translate_onaccept,
                        )
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3238,7 +3238,7 @@ class survey_TranslateDownload(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -3341,7 +3341,7 @@ class survey_ExportResponses(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

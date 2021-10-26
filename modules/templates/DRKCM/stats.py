@@ -5,7 +5,7 @@ from io import BytesIO
 from gluon import current, HTTP
 
 from core import S3Method, s3_decode_iso_datetime, s3_str
-from core.io.codecs.xls import S3XLS
+from core.resource.codecs.xls import S3XLS
 
 # =============================================================================
 class PerformanceIndicators(object):
@@ -374,7 +374,7 @@ class PerformanceIndicatorExport(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -395,7 +395,7 @@ class PerformanceIndicatorExport(S3Method):
         """
             Export the performance indicators as XLS data sheet
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

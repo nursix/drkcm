@@ -48,7 +48,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3ProcurementPlansModel(S3Model):
+class S3ProcurementPlansModel(DataModel):
     """
         Procurement Plans
 
@@ -244,7 +244,7 @@ class S3ProcurementPlansModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -272,7 +272,7 @@ class S3ProcurementPlansModel(S3Model):
             return current.messages.UNKNOWN_OPT
 
 # =============================================================================
-class S3PurchaseOrdersModel(S3Model):
+class S3PurchaseOrdersModel(DataModel):
     """
         Purchase Orders (PO)
 

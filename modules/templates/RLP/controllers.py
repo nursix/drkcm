@@ -807,8 +807,8 @@ class register(S3CustomController):
             return
 
         # Customise resources
-        from core import S3Request
-        r = S3Request("auth", "user", args=[], get_vars={})
+        from core import CRUDRequest
+        r = CRUDRequest("auth", "user", args=[], get_vars={})
         customise_resource = current.deployment_settings.customise_resource
         for tablename in ("pr_person", "pr_group", "pr_group_membership"):
             customise = customise_resource(tablename)

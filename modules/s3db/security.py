@@ -37,7 +37,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class SecurityZonesModel(S3Model):
+class SecurityZonesModel(DataModel):
     """ Model for security zones """
 
     names = ("security_level",
@@ -298,7 +298,7 @@ class SecurityZonesModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -----------------------------------------------------------------------------
     @staticmethod
@@ -337,7 +337,7 @@ class SecurityZonesModel(S3Model):
         return vals
 
 # =============================================================================
-class SecuritySeizedItemsModel(S3Model):
+class SecuritySeizedItemsModel(DataModel):
     """
         Model for the tracking of seized items (e.g. in connection
         with security procedures at shelters, borders or transport

@@ -27,8 +27,7 @@ def icategory():
         The full list of hard-coded categories are visible to admins & should remain unchanged for sync
     """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def ireport():
@@ -140,7 +139,7 @@ def ireport():
         return output
     response.s3.postp = postp
 
-    output = s3_rest_controller(rheader=s3db.irs_rheader)
+    output = crud_controller(rheader=s3db.irs_rheader)
 
     # @ToDo: Add 'Dispatch' button to send OpenGeoSMS
     #try:

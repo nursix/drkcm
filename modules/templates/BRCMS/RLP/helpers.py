@@ -765,7 +765,7 @@ def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     settings = current.deployment_settings

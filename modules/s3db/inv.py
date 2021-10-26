@@ -119,7 +119,7 @@ def inv_itn_label():
     return current.T("CTN")
 
 # =============================================================================
-class InvWarehouseModel(S3Model):
+class InvWarehouseModel(DataModel):
 
     names = ("inv_warehouse",
              "inv_warehouse_type",
@@ -395,7 +395,7 @@ class InvWarehouseModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -407,7 +407,7 @@ class InvWarehouseModel(S3Model):
         current.s3db.org_update_affiliations("inv_warehouse", form.vars)
 
 # =============================================================================
-class InventoryModel(S3Model):
+class InventoryModel(DataModel):
     """
         Inventory Management
 
@@ -890,7 +890,7 @@ $.filterOptionsS3({
         """
             Update detection for inv_inv_item
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         table = item.table
@@ -930,7 +930,7 @@ $.filterOptionsS3({
                 item.data.quantity = duplicate.quantity
 
 # =============================================================================
-class InventoryTrackingModel(S3Model):
+class InventoryTrackingModel(DataModel):
     """
         A module to manage the shipment of inventory items
         - Sent Items
@@ -1251,11 +1251,11 @@ class InventoryTrackingModel(S3Model):
 
         # Custom methods
         # Generate Consignment Note
-        set_method("inv", "send",
+        set_method("inv_send",
                    method = "form",
                    action = self.inv_send_form)
 
-        set_method("inv", "send",
+        set_method("inv_send",
                    method = "timeline",
                    action = self.inv_timeline)
 
@@ -1566,15 +1566,15 @@ class InventoryTrackingModel(S3Model):
 
         # Custom methods
         # Print Forms
-        set_method("inv", "recv",
+        set_method("inv_recv",
                    method = "form",
                    action = self.inv_recv_form)
 
-        set_method("inv", "recv",
+        set_method("inv_recv",
                    method = "cert",
                    action = self.inv_recv_donation_cert)
 
-        set_method("inv", "recv",
+        set_method("inv_recv",
                    method = "timeline",
                    action = self.inv_timeline)
 
@@ -4060,7 +4060,7 @@ def inv_recv_pdf_footer(r):
     return None
 
 # =============================================================================
-class InventoryAdjustModel(S3Model):
+class InventoryAdjustModel(DataModel):
     """
         A module to manage the shipment of inventory items
         - Sent Items
@@ -5141,10 +5141,10 @@ def inv_send_controller():
                            )
 
     s3.prep = prep
-    output = current.rest_controller("inv", "send",
-                                     rheader = inv_send_rheader,
-                                     )
-    return output
+
+    return current.crud_controller("inv", "send",
+                                   rheader = inv_send_rheader,
+                                   )
 
 # =============================================================================
 def inv_send_process():

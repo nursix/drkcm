@@ -36,8 +36,8 @@ from io import BytesIO
 from gluon import current, URL, DIV
 from gluon.storage import Storage
 
-from ..filters import S3URLQuery
-from ..methods import S3Method
+from ..resource import S3URLQuery, SyncPolicy
+from ..methods import S3Method, S3CRUD
 from ..tools import s3_parse_datetime, s3_utc, s3_str
 
 # =============================================================================
@@ -45,7 +45,6 @@ class S3Sync(S3Method):
     """ Synchronization Handler """
 
     def __init__(self):
-        """ Constructor """
 
         S3Method.__init__(self)
 
@@ -61,9 +60,9 @@ class S3Sync(S3Method):
                 - POST sync/repository/register.json    - remote registration
 
             NB incoming pull/push reponse normally by local sync/sync
-               controller as resource proxy => back-end generated S3Request
+               controller as resource proxy => back-end generated CRUDRequest
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 
@@ -107,7 +106,7 @@ class S3Sync(S3Method):
         """
             Respond to an incoming registration request
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters for the request
         """
 
@@ -206,7 +205,7 @@ class S3Sync(S3Method):
         """
             Respond to an incoming pull
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes
         """
 
@@ -309,11 +308,11 @@ class S3Sync(S3Method):
         """
             Respond to an incoming push
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes
         """
 
-        from ..methods import S3ImportItem
+        from ..resource import ImportItem
 
         mixed = attr.get("mixed", False)
         get_vars = r.get_vars
@@ -343,8 +342,8 @@ class S3Sync(S3Method):
                                                         ))
 
         # Get strategy and policy
-        default_update_policy = S3ImportItem.POLICY.NEWER
-        default_conflict_policy = S3ImportItem.POLICY.MASTER
+        default_update_policy = SyncPolicy.NEWER
+        default_conflict_policy = SyncPolicy.MASTER
 
         # Identify the synchronization task
         ttable = s3db.sync_task
@@ -361,32 +360,27 @@ class S3Sync(S3Method):
             strategy = task.strategy
             update_policy = task.update_policy or default_update_policy
             conflict_policy = task.conflict_policy or default_conflict_policy
-            if update_policy not in ("THIS", "OTHER"):
+            if update_policy not in (SyncPolicy.THIS, SyncPolicy.OTHER):
                 last_sync = task.last_pull
 
         else:
-            policies = S3ImportItem.POLICY
+            policies = {SyncPolicy.THIS: SyncPolicy.OTHER,
+                        SyncPolicy.OTHER: SyncPolicy.THIS,
+                        SyncPolicy.NEWER: SyncPolicy.NEWER,
+                        SyncPolicy.MASTER: SyncPolicy.MASTER,
+                        }
             p = get_vars.get("update_policy", None)
-            values = {"THIS": "OTHER", "OTHER": "THIS"}
-            switch = lambda p: p in values and values[p] or p
-            if p and p in policies:
-                p = switch(p)
-                update_policy = policies[p]
-            else:
-                update_policy = default_update_policy
+            update_policy = policies.get(p) if p else default_update_policy
             p = get_vars.get("conflict_policy", None)
-            if p and p in policies:
-                p = switch(p)
-                conflict_policy = policies[p]
-            else:
-                conflict_policy = default_conflict_policy
+            conflict_policy = policies.get(p) if p else default_conflict_policy
+
             msince = get_vars.get("msince", None)
             if msince is not None:
                 last_sync = s3_parse_datetime(msince)
             s = get_vars.get("strategy", None)
             if s:
                 s = str(s).split(",")
-                methods = S3ImportItem.METHOD
+                methods = ImportItem.METHOD
                 strategy = [method for method in methods.values()
                                    if method in s]
             else:
@@ -553,8 +547,6 @@ class S3Sync(S3Method):
             @param resource: the resource the item shall be imported to
         """
 
-        from ..methods import S3ImportItem
-
         s3db = current.s3db
         debug = current.log.debug
 
@@ -576,7 +568,6 @@ class S3Sync(S3Method):
         else:
             debug("Applying default rule")
             ttable = s3db.sync_task
-            policies = S3ImportItem.POLICY
             query = (ttable.repository_id == repository.id) & \
                     (ttable.resource_name == tablename) & \
                     (ttable.deleted == False)
@@ -584,11 +575,11 @@ class S3Sync(S3Method):
             if task and item.original:
                 original = item.original
                 conflict_policy = task.conflict_policy
-                if conflict_policy == policies.OTHER:
+                if conflict_policy == SyncPolicy.OTHER:
                     # Always accept
                     debug("Accept by default")
                     item.conflict = False
-                elif conflict_policy == policies.NEWER:
+                elif conflict_policy == SyncPolicy.NEWER:
                     # Accept if newer
                     xml = current.xml
                     if xml.MTIME in original and \
@@ -597,7 +588,7 @@ class S3Sync(S3Method):
                         item.conflict = False
                     else:
                         debug("Do not accept")
-                elif conflict_policy == policies.MASTER:
+                elif conflict_policy == SyncPolicy.MASTER:
                     # Accept if master
                     if current.xml.MCI in original and \
                        original.mci == 0 or item.mci == 1:
@@ -840,7 +831,7 @@ class S3SyncLog(S3Method):
         """
             RESTful method handler
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -848,7 +839,7 @@ class S3SyncLog(S3Method):
 
         resource = r.resource
         if resource.tablename == self.TABLENAME:
-            return resource.crud.select(r, **attr)
+            return S3CRUD().select(r, **attr)
 
         elif resource.tablename == "sync_repository":
             # READ for sync log for this repository (currently not needed)
@@ -950,9 +941,7 @@ class S3SyncRepository(object):
 
     def __init__(self, repository):
         """
-            Constructor
-
-            @param repository: the repository record (Row)
+            :param Row repository: the repository record
         """
 
         # Logger and Config
@@ -1044,9 +1033,7 @@ class S3SyncBaseAdapter(object):
 
     def __init__(self, repository):
         """
-            Constructor
-
-            @param repository: the repository (S3Repository instance)
+            :param S3Repository repository: the repository
         """
 
         self.repository = repository

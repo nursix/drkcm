@@ -133,7 +133,7 @@ def person():
                 linkto = URL(f="person", args=("[id]", "note"))
             else:
                 label = UPDATE
-                linkto = r.resource.crud._linkto(r)("[id]")
+                linkto = s3base.S3CRUD._linkto(r)("[id]")
             s3.actions = [action(label, linkto)]
             if not r.component:
                 label = str(T("Found"))
@@ -169,6 +169,6 @@ def person():
                 ]
     rheader = lambda r: s3db.pr_rheader(r, tabs=mpr_tabs)
 
-    return s3_rest_controller("pr", "person", rheader=rheader)
+    return crud_controller("pr", "person", rheader=rheader)
 
 # END =========================================================================

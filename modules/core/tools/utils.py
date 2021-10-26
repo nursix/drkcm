@@ -695,7 +695,7 @@ def s3_get_extension(request=None):
     """
         Get the file extension in the path of the request
 
-        @param request: the request object (web2py request or S3Request),
+        @param request: the request object (web2py request or CRUDRequest),
                         defaults to current.request
     """
 

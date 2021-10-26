@@ -141,7 +141,7 @@ class S3SQLForm(object):
         """
             Render/process the form. To be implemented in subclass.
 
-            @param request: the S3Request
+            @param request: the CRUDRequest
             @param resource: the target S3Resource
             @param record_id: the record ID
             @param readonly: render the form read-only
@@ -454,7 +454,7 @@ class S3SQLDefaultForm(S3SQLForm):
         """
             Render/process the form.
 
-            @param request: the S3Request
+            @param request: the CRUDRequest
             @param resource: the target S3Resource
             @param record_id: the record ID
             @param readonly: render the form read-only
@@ -836,7 +836,7 @@ class S3SQLCustomForm(S3SQLForm):
         """
             Render/process the form.
 
-            @param request: the S3Request
+            @param request: the CRUDRequest
             @param resource: the target S3Resource
             @param record_id: the record ID
             @param readonly: render the form read-only
@@ -896,15 +896,15 @@ class S3SQLCustomForm(S3SQLForm):
         # Customise subtables
         if subtables:
             if not request:
-                # Create dummy S3Request
-                from ..controller import S3Request
-                r = S3Request(resource.prefix,
-                              resource.name,
-                              # Current request args/vars could be in a different
-                              # resource context, so must override them here:
-                              args = [],
-                              get_vars = {},
-                              )
+                # Create dummy CRUDRequest
+                from ..controller import CRUDRequest
+                r = CRUDRequest(resource.prefix,
+                                resource.name,
+                                # Current request args/vars could be in a different
+                                # resource context, so must override them here:
+                                args = [],
+                                get_vars = {},
+                                )
             else:
                 r = request
 
@@ -1761,7 +1761,7 @@ class S3SQLField(S3SQLFormElement):
         """
 
         # Import S3ResourceField only here, to avoid circular dependency
-        from ..filters import S3ResourceField
+        from ..resource import S3ResourceField
 
         rfield = S3ResourceField(resource, self.selector)
 
@@ -3896,14 +3896,14 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         component, link = self.get_link()
 
         # Customise resources
-        from ..controller import S3Request
-        r = S3Request(resource.prefix,
-                      resource.name,
-                      # Current request args/vars could be in a different
-                      # resource context, so must override them here:
-                      args = [],
-                      get_vars = {},
-                      )
+        from ..controller import CRUDRequest
+        r = CRUDRequest(resource.prefix,
+                        resource.name,
+                        # Current request args/vars could be in a different
+                        # resource context, so must override them here:
+                        args = [],
+                        get_vars = {},
+                        )
         customise_resource = current.deployment_settings.customise_resource
         for tablename in (component.tablename, link.tablename):
             customise = customise_resource(tablename)
@@ -4093,7 +4093,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             @todo: implement audit
         """
 
-        from ..filters import FS
+        from ..resource import FS
 
         s3db = current.s3db
 
@@ -4232,7 +4232,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             @return: dict {value: representation} of options
         """
 
-        from ..filters import FS
+        from ..resource import FS
 
         resource = self.resource
         component, link = self.get_link()

@@ -49,7 +49,7 @@ class S3HierarchyCRUD(S3Method):
         """
             Entry point for REST interface
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -72,7 +72,7 @@ class S3HierarchyCRUD(S3Method):
         """
             Page load
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -171,7 +171,7 @@ class S3HierarchyCRUD(S3Method):
         """
             Return a single node as JSON (id, parent and label)
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
         """
 
@@ -372,7 +372,7 @@ class S3HierarchyCRUD(S3Method):
         all_nodes = h.findall(roots, inclusive=True)
 
         # ...and extract their data from a clone of the resource
-        from ..filters import FS
+        from ..resource import FS
         query = FS(h.pkey.name).belongs(all_nodes)
         clone = current.s3db.resource(resource, filter=query)
         data = clone.select(selectors, represent=True, raw_data=True)
@@ -412,7 +412,7 @@ class S3HierarchyCRUD(S3Method):
             output.extend(rows)
 
         # Encode in XLS format
-        from ..io import S3Codec
+        from ..resource import S3Codec
         codec = S3Codec.get_codec("xls")
         result = codec.encode(output,
                               title = resource.name,

@@ -13,17 +13,17 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 
 from core import s3_meta_fields, DYNAMIC_PREFIX, IS_NOT_ONE_OF, IS_ONE_OF, IS_UTC_DATE, IS_UTC_DATETIME
-from core.model.dynamic import S3DynamicModel
+from core.model.dynamic import DynamicTableModel
 
 from unit_tests import run_suite
 
 # =============================================================================
-class S3ModelTests(unittest.TestCase):
+class DataModelTests(unittest.TestCase):
 
     pass
 
 # =============================================================================
-class S3SuperEntityTests(unittest.TestCase):
+class SuperEntityTests(unittest.TestCase):
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -234,7 +234,7 @@ class S3SuperEntityTests(unittest.TestCase):
         self.assertFalse(super_record.deleted)
 
 # =============================================================================
-class S3DynamicModelTests(unittest.TestCase):
+class DynamicTableModelTests(unittest.TestCase):
     """ Dynamic Model Tests """
 
     TABLENAME = "%s_test" % DYNAMIC_PREFIX
@@ -277,6 +277,8 @@ class S3DynamicModelTests(unittest.TestCase):
             record["id"] = record_id
             s3db.onaccept(ftable, record)
 
+        current.db.commit()
+
     # -------------------------------------------------------------------------
     @classmethod
     def tearDownClass(cls):
@@ -287,6 +289,7 @@ class S3DynamicModelTests(unittest.TestCase):
         ttable = s3db.s3_table
         query = (ttable.name == cls.TABLENAME)
         current.db(query).delete()
+        current.db.commit()
 
     # -------------------------------------------------------------------------
     def testDynamicTableInstantiationFailure(self):
@@ -304,7 +307,7 @@ class S3DynamicModelTests(unittest.TestCase):
 
     # -------------------------------------------------------------------------
     def testDynamicTableInstantiation(self):
-        """ Test instantiation of dynamic tables with S3Model """
+        """ Test instantiation of dynamic tables with DataModel """
 
         assertEqual = self.assertEqual
         assertNotEqual = self.assertNotEqual
@@ -353,7 +356,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # String-field, not unique and empty allowed
@@ -421,7 +424,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # Reference-field, empty allowed
@@ -466,7 +469,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         from core import s3_yes_no_represent
@@ -504,7 +507,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # Integer-field
@@ -579,7 +582,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # Double-field
@@ -634,7 +637,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # Date-field
@@ -751,7 +754,7 @@ class S3DynamicModelTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertFalse = self.assertFalse
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # Datetime-field
@@ -876,7 +879,7 @@ class S3DynamicModelTests(unittest.TestCase):
         T = current.T
         T.force("en") # Options sort order depends on language
 
-        dm = S3DynamicModel(self.TABLENAME)
+        dm = DynamicTableModel(self.TABLENAME)
         define_field = dm._field
 
         # Options-field
@@ -968,7 +971,7 @@ class S3DynamicModelTests(unittest.TestCase):
                               ])
 
 # =============================================================================
-class S3DynamicComponentTests(unittest.TestCase):
+class DynamicComponentTests(unittest.TestCase):
     """ Dynamic Component Tests """
 
     TABLENAME = "%s_test_component" % DYNAMIC_PREFIX
@@ -1018,6 +1021,8 @@ class S3DynamicComponentTests(unittest.TestCase):
             record["id"] = record_id
             s3db.onaccept(ftable, record)
 
+        current.db.commit()
+
     # -------------------------------------------------------------------------
     @classmethod
     def tearDownClass(cls):
@@ -1028,6 +1033,7 @@ class S3DynamicComponentTests(unittest.TestCase):
         ttable = s3db.s3_table
         query = (ttable.name == cls.TABLENAME)
         current.db(query).delete()
+        current.db.commit()
 
     # -------------------------------------------------------------------------
     def setUp(self):
@@ -1090,10 +1096,10 @@ class S3DynamicComponentTests(unittest.TestCase):
 if __name__ == "__main__":
 
     run_suite(
-        #S3ModelTests,
-        S3SuperEntityTests,
-        S3DynamicModelTests,
-        S3DynamicComponentTests,
+        #DataModelTests,
+        SuperEntityTests,
+        DynamicTableModelTests,
+        DynamicComponentTests,
     )
 
 # END ========================================================================

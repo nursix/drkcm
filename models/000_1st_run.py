@@ -100,7 +100,6 @@ current.MAX_FILENAME_LENGTH = 255 # Defined early for use by S3Config.
 
 # Import S3Config
 import s3cfg
-settings = s3cfg.S3Config()
-current.deployment_settings = deployment_settings = settings
+current.deployment_settings = deployment_settings = settings = s3cfg.S3Config()
 
 # END =========================================================================

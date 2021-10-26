@@ -34,8 +34,6 @@ __all__ = ("S3IRSModel",
 
 import json
 
-from collections import OrderedDict
-
 from gluon import *
 from gluon.storage import Storage
 
@@ -46,7 +44,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3IRSModel(S3Model):
+class S3IRSModel(DataModel):
 
     names = ("irs_icategory",
              "irs_ireport",
@@ -479,15 +477,15 @@ class S3IRSModel(S3Model):
                                      )
 
         # Custom Methods
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "dispatch",
                    action=self.irs_dispatch)
 
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "timeline",
                    action = self.irs_timeline)
 
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "ushahidi",
                    action = self.irs_ushahidi_import)
 
@@ -968,23 +966,23 @@ S3.timeline.now="''', now.isoformat(), '''"
                     ignore_errors = formvars.get("ignore_errors")
                     resource = r.resource
                     try:
-                        success = resource.import_xml(ushahidi_url,
-                                                      stylesheet = stylesheet,
-                                                      ignore_errors = ignore_errors,
-                                                      )
+                        result = resource.import_xml(ushahidi_url,
+                                                     stylesheet = stylesheet,
+                                                     ignore_errors = ignore_errors,
+                                                     )
                     except:
                         import sys
                         response.error = sys.exc_info()[1]
                     else:
-                        if success:
-                            count = resource.import_count
+                        if result.success:
+                            count = result.count
                             if count:
                                 response.confirmation = "%(number)s reports successfully imported." % \
                                                         {"number": count}
                             else:
                                 response.information = T("No reports available.")
                         else:
-                            response.error = resource.error
+                            response.error = result.error
 
 
             response.view = "create.html"
@@ -994,7 +992,7 @@ S3.timeline.now="''', now.isoformat(), '''"
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class S3IRSResponseModel(S3Model):
+class S3IRSResponseModel(DataModel):
     """
         Tables used when responding to Incident Reports
         - with HRMs &/or Vehicles
@@ -1080,7 +1078,7 @@ class S3IRSResponseModel(S3Model):
                               ])
 
         if not settings.has_module("vehicle"):
-            return {}
+            return None
 
         # ---------------------------------------------------------------------
         # Vehicles assigned to an Incident
@@ -1157,7 +1155,7 @@ class S3IRSResponseModel(S3Model):
         # ---------------------------------------------------------------------
         # Return model-global names to s3db.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

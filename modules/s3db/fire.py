@@ -38,7 +38,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3FireModel(S3Model):
+class S3FireModel(DataModel):
     """
         Fire Zones: Burn Perimeter, Burnt zone, Evacuation Zone, etc
     """
@@ -137,10 +137,10 @@ class S3FireModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3FireStationModel(S3Model):
+class S3FireStationModel(DataModel):
     """
         A Model to manage Fire Stations:
         http://eden.sahanafoundation.org/wiki/Deployments/Bombeiros
@@ -364,7 +364,7 @@ class S3FireStationModel(S3Model):
             msg_no_match = T("No Vehicles could be found"),
             msg_list_empty = T("No Vehicles currently registered"))
 
-        self.set_method("fire", "station",
+        self.set_method("fire_station",
                         method = "vehicle_report",
                         action = self.vehicle_report,
                         )
@@ -603,7 +603,6 @@ class S3FireStationModel(S3Model):
                                          fact = "sum(minutes)",
                                          ),
                             )
-            req.set_handler("report", S3Report())
             req.resource.add_filter(query)
             return req(rheader=rheader)
 

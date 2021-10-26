@@ -77,7 +77,7 @@ def capacity_assessment():
                    #subheadings = subheadings,
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def capacity_assessment_data():
@@ -86,13 +86,13 @@ def capacity_assessment_data():
         - just used for the custom_report method
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def capacity_indicator():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def group():
@@ -104,7 +104,7 @@ def group():
                             URL(c="hrm", f="group", args=[record_id]),
                    )
 
-    return s3_rest_controller(rheader = s3db.org_rheader)
+    return crud_controller(rheader=s3db.org_rheader)
 
 # -----------------------------------------------------------------------------
 def group_membership():
@@ -120,13 +120,13 @@ def group_membership():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def group_membership_status():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def group_person():
@@ -134,13 +134,13 @@ def group_person():
 
     s3.prep = lambda r: r.representation == "s3json" and r.method == "options"
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def group_person_status():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def facility():
@@ -152,7 +152,7 @@ def facility():
 def facility_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def office():
@@ -165,7 +165,7 @@ def office():
 def office_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def organisation():
@@ -178,7 +178,7 @@ def organisation():
 def organisation_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def organisation_organisation_type():
@@ -186,7 +186,7 @@ def organisation_organisation_type():
 
     s3.prep = lambda r: r.representation == "s3json" and r.method == "options"
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def org_search():
@@ -198,7 +198,7 @@ def org_search():
 
     s3.prep = lambda r: r.method == "search_ac"
 
-    return s3_rest_controller(module, "organisation")
+    return crud_controller(module, "organisation")
 
 # -----------------------------------------------------------------------------
 def organisation_list_represent(l):
@@ -234,7 +234,7 @@ def region():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def sector():
@@ -247,13 +247,13 @@ def sector():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def subsector():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def site():
@@ -276,7 +276,7 @@ def site():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def sites_for_org():
@@ -331,7 +331,7 @@ def person():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def room():
@@ -352,7 +352,7 @@ def room():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def mailing_list():
@@ -391,9 +391,7 @@ def mailing_list():
 
     rheader = lambda r: _rheader(r, tabs = _tabs)
 
-    return s3_rest_controller("pr", "group",
-                              rheader = rheader,
-                              )
+    return crud_controller("pr", "group", rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def donor():
@@ -419,14 +417,13 @@ def donor():
                    listadd = False,
                    )
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 #def organisation_location():
 #    """ RESTful CRUD controller """
 
-#    return s3_rest_controller()
+#    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def resource():
@@ -451,43 +448,43 @@ def resource():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def resource_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def service():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def service_location():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def service_mode():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def booking_mode():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def site_location():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def req_match():

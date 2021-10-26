@@ -35,7 +35,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3WaterModel(S3Model):
+class S3WaterModel(DataModel):
     """
         Water Sources
     """
@@ -283,6 +283,6 @@ class S3WaterModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # END =========================================================================

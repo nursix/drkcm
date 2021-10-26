@@ -50,13 +50,13 @@ from gluon.html import FORM, INPUT, TABLE, TAG, XML
 from gluon.validators import IS_IN_SET
 from gluon.sqlhtml import OptionsWidget
 
-from ..filters import FS
+from ..resource import FS
 from ..tools import s3_decode_iso_datetime, s3_utc, s3_flatlist, s3_represent_value, s3_str, S3MarkupStripper
 
 from .base import S3Method
 from .report import S3Report, S3ReportForm
 
-tp_datetime = lambda *t: datetime.datetime(tzinfo=dateutil.tz.tzutc(), *t)
+tp_datetime = lambda year, *t: datetime.datetime(year, *t, tzinfo=dateutil.tz.tzutc())
 
 tp_tzsafe = lambda dt: dt.replace(tzinfo=dateutil.tz.tzutc()) \
                        if dt and dt.tzinfo is None else dt
@@ -87,7 +87,7 @@ class S3TimePlot(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -102,7 +102,7 @@ class S3TimePlot(S3Method):
         """
             Widget-render entry point for S3Summary.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -196,7 +196,7 @@ class S3TimePlot(S3Method):
         """
             Time plot report page
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -336,7 +336,7 @@ class S3TimePlot(S3Method):
         """
             Identify the target resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         # Fallback
@@ -359,7 +359,7 @@ class S3TimePlot(S3Method):
         """
             Read the relevant GET vars for the timeplot
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param resource: the target S3Resource
         """
 

@@ -199,7 +199,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def testMatchNames(self):
 
         s3db = current.s3db
-        from core import S3ImportItem
+        from core import ImportItem
 
         deduplicate = s3db.get_config("pr_person", "deduplicate")
 
@@ -210,7 +210,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person)
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Mismatch:
         # Different first name, same last name
@@ -225,7 +225,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def testMatchEmail(self):
 
         s3db = current.s3db
-        from core import S3ImportItem
+        from core import ImportItem
 
         deduplicate = s3db.get_config("pr_person", "deduplicate")
 
@@ -239,7 +239,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person, email="testuser@example.com")
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Mismatch
         # Different first name, same last name,
@@ -270,7 +270,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person, email="testuser@example.com")
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Mismatch - same names, no email in import item
         person = Storage(first_name = "Test",
@@ -287,7 +287,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person)
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Mismatch - same names, different email
         person = Storage(first_name = "Test",
@@ -304,7 +304,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person, email="otheremail@example.com")
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Match - same names, same email, but other record
         person = Storage(first_name = "Test",
@@ -312,7 +312,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person, email="otheruser@example.org")
         deduplicate(item)
         self.assertEqual(item.id, self.person2_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Mismatch - First names different
         person = Storage(first_name = "Other",
@@ -326,7 +326,7 @@ class PersonDeduplicateTests(unittest.TestCase):
     def testMatchInitials(self):
 
         s3db = current.s3db
-        from core import S3ImportItem
+        from core import ImportItem
 
         deduplicate = s3db.get_config("pr_person", "deduplicate")
 
@@ -346,7 +346,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person)
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Match - same names, different initials
         person = Storage(first_name="Test",
@@ -355,7 +355,7 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person)
         deduplicate(item)
         self.assertEqual(item.id, self.person2_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Match - same names, different initials, and email
         person = Storage(first_name="Test",
@@ -364,21 +364,21 @@ class PersonDeduplicateTests(unittest.TestCase):
         item = self.import_item(person, email="testuser@example.org")
         deduplicate(item)
         self.assertEqual(item.id, self.person2_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Match - same initials
         person = Storage(initials="OU")
         item = self.import_item(person)
         deduplicate(item)
         self.assertEqual(item.id, self.person2_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
         # Test Match - same initials, same email
         person = Storage(initials="TU")
         item = self.import_item(person, email="testuser@example.com")
         deduplicate(item)
         self.assertEqual(item.id, self.person1_id)
-        self.assertEqual(item.method, S3ImportItem.METHOD.UPDATE)
+        self.assertEqual(item.method, ImportItem.METHOD.UPDATE)
 
     # -------------------------------------------------------------------------
     def testMatchDOB(self):
@@ -417,14 +417,14 @@ class PersonDeduplicateTests(unittest.TestCase):
     def import_item(self, person, email=None, sms=None):
         """ Construct a fake import item """
 
-        from core import S3ImportItem
+        from core import ImportItem
         def item(tablename, data):
             return Storage(id = None,
                            method = None,
                            tablename = tablename,
                            data = data,
                            components = [],
-                           METHOD = S3ImportItem.METHOD)
+                           METHOD = ImportItem.METHOD)
         import_item = item("pr_person", person)
         if email:
             import_item.components.append(item("pr_contact",
@@ -551,7 +551,7 @@ class ContactValidationTests(unittest.TestCase):
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
         resource = s3db.resource("pr_person")
-        result = resource.import_xml(xmltree, ignore_errors=True)
+        resource.import_xml(xmltree, ignore_errors=True)
 
         resource = s3db.resource("pr_contact", uid="VALIDATORTESTCONTACT1")
         self.assertEqual(resource.count(), 1)
@@ -590,7 +590,7 @@ class ContactValidationTests(unittest.TestCase):
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
         resource = s3db.resource("pr_person")
-        result = resource.import_xml(xmltree, ignore_errors=True)
+        resource.import_xml(xmltree, ignore_errors=True)
 
         resource = s3db.resource("pr_contact", uid="VALIDATORTESTCONTACT1")
         self.assertEqual(resource.count(), 0)
@@ -650,7 +650,7 @@ class ContactRepresentationTests(unittest.TestCase):
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
         resource = s3db.resource("pr_person")
-        result = resource.import_xml(xmltree, ignore_errors=True)
+        resource.import_xml(xmltree, ignore_errors=True)
 
     @classmethod
     def tearDownClass(cls):

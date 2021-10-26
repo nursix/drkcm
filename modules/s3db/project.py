@@ -101,7 +101,7 @@ from .req import req_timeframe
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class ProjectModel(S3Model):
+class ProjectModel(DataModel):
     """
         Project Model
 
@@ -535,39 +535,39 @@ class ProjectModel(S3Model):
             )
 
         # Custom Methods
-        set_method("project", "project",
+        set_method("project_project",
                    method = "assign",
                    action = self.hrm_AssignMethod(component="human_resource"))
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "details",
                    action = project_Details)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "map",
                    action = self.project_map)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "timeline",
                    action = self.project_timeline)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "summary_report",
                    action = project_SummaryReport)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "indicator_summary_report",
                    action = project_IndicatorSummaryReport)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "project_progress_report",
                    action = project_ProgressReport)
 
-        #set_method("project", "project",
+        #set_method("project_project",
         #           method = "budget_progress_report",
         #           action = project_BudgetProgressReport)
 
-        #set_method("project", "project",
+        #set_method("project_project",
         #           method = "indicator_progress_report",
         #           action = project_IndicatorProgressReport)
 
@@ -1091,7 +1091,7 @@ class ProjectModel(S3Model):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class ProjectActivityModel(S3Model):
+class ProjectActivityModel(DataModel):
     """
         Project Activity Model
 
@@ -1401,7 +1401,7 @@ class ProjectActivityModel(S3Model):
         # This component no longer has a case_id in it
         #if settings.has_module("dvr"):
         #    # Custom Method to Assign Cases
-        #    self.set_method("project", "activity",
+        #    self.set_method("project_activity",
         #                    method = "assign",
         #                    action = self.dvr_AssignMethod(component="case_activity"),
         #                    )
@@ -1699,7 +1699,7 @@ class ProjectActivityModel(S3Model):
             return None
 
 # =============================================================================
-class ProjectActivityTypeModel(S3Model):
+class ProjectActivityTypeModel(DataModel):
     """
         Project Activity Type Model
 
@@ -1858,7 +1858,7 @@ class ProjectActivityTypeModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectActivityPersonModel(S3Model):
+class ProjectActivityPersonModel(DataModel):
     """
         Project Activity Person Model
 
@@ -1920,10 +1920,10 @@ class ProjectActivityPersonModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectActivityOrganisationModel(S3Model):
+class ProjectActivityOrganisationModel(DataModel):
     """
         Project Activity Organisation Model
 
@@ -1987,10 +1987,10 @@ class ProjectActivityOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectActivityOrganisationGroupModel(S3Model):
+class ProjectActivityOrganisationGroupModel(DataModel):
     """
         Project Activity Organisation Group Model
 
@@ -2027,10 +2027,10 @@ class ProjectActivityOrganisationGroupModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectActivityDemographicsModel(S3Model):
+class ProjectActivityDemographicsModel(DataModel):
     """
         Project Activity Demographics Model
 
@@ -2093,10 +2093,10 @@ class ProjectActivityDemographicsModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectActivityItemModel(S3Model):
+class ProjectActivityItemModel(DataModel):
     """
         Project Activity Item Model
 
@@ -2156,10 +2156,10 @@ $.filterOptionsS3({
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectActivitySectorModel(S3Model):
+class ProjectActivitySectorModel(DataModel):
     """
         Project Activity Sector Model
 
@@ -2194,10 +2194,10 @@ class ProjectActivitySectorModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectActivityTagModel(S3Model):
+class ProjectActivityTagModel(DataModel):
     """
         Activity Tags
     """
@@ -2237,10 +2237,10 @@ class ProjectActivityTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectAnnualBudgetModel(S3Model):
+class ProjectAnnualBudgetModel(DataModel):
     """
         Project Budget Model
 
@@ -2313,10 +2313,10 @@ class ProjectAnnualBudgetModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectBeneficiaryModel(S3Model):
+class ProjectBeneficiaryModel(DataModel):
     """
         Project Beneficiary Model
         - depends on Stats module
@@ -2333,7 +2333,7 @@ class ProjectBeneficiaryModel(S3Model):
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Project Beneficiary Model needs Stats module enabling")
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -2683,7 +2683,7 @@ class ProjectBeneficiaryModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2738,7 +2738,7 @@ class ProjectBeneficiaryModel(S3Model):
                 )
 
 # =============================================================================
-class ProjectCampaignModel(S3Model):
+class ProjectCampaignModel(DataModel):
     """
         Project Campaign Model
         - used for TERA integration:
@@ -2758,7 +2758,7 @@ class ProjectCampaignModel(S3Model):
         if not current.deployment_settings.has_module("stats"):
             # Campaigns Model needs Stats module enabling
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -3016,10 +3016,10 @@ class ProjectCampaignModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectFrameworkModel(S3Model):
+class ProjectFrameworkModel(DataModel):
     """
         Project Framework Model
     """
@@ -3160,10 +3160,10 @@ class ProjectFrameworkModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectHazardModel(S3Model):
+class ProjectHazardModel(DataModel):
     """
         Project Hazard Model
     """
@@ -3261,7 +3261,7 @@ class ProjectHazardModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectHRModel(S3Model):
+class ProjectHRModel(DataModel):
     """
         Optionally link Projects <> Human Resources
     """
@@ -3333,7 +3333,7 @@ class ProjectHRModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3358,7 +3358,7 @@ class ProjectHRModel(S3Model):
             form.errors.human_resource_id = current.T("Record already exists")
 
 # =============================================================================
-class ProjectIndicatorModel(S3Model):
+class ProjectIndicatorModel(DataModel):
     """
         Project Indicator Model
         - depends on Stats module
@@ -3374,7 +3374,7 @@ class ProjectIndicatorModel(S3Model):
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Project Indicator Model needs Stats module enabling")
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -3622,10 +3622,10 @@ class ProjectIndicatorModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectL10nModel(S3Model):
+class ProjectL10nModel(DataModel):
     """
         Project L10n Model
 
@@ -3648,10 +3648,10 @@ class ProjectL10nModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectLocationModel(S3Model):
+class ProjectLocationModel(DataModel):
     """
         Project Location Model
         - these can simply be ways to display a Project on the Map
@@ -4076,7 +4076,7 @@ class ProjectLocationModel(S3Model):
                 person.update_record(realm_entity = realm_entity)
 
 # =============================================================================
-class ProjectMasterKeyModel(S3Model):
+class ProjectMasterKeyModel(DataModel):
     """
         Link Projects to Master Keys for Mobile Data Entry
     """
@@ -4100,10 +4100,10 @@ class ProjectMasterKeyModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class ProjectOrganisationModel(S3Model):
+class ProjectOrganisationModel(DataModel):
     """
         Project Organisation Model
     """
@@ -4218,7 +4218,7 @@ class ProjectOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4336,7 +4336,7 @@ class ProjectOrganisationModel(S3Model):
             return None
 
 # =============================================================================
-class ProjectPlanningModel(S3Model):
+class ProjectPlanningModel(DataModel):
     """
         Project Planning Model:
             Goals (Objectives)
@@ -7130,7 +7130,7 @@ class project_SummaryReport(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -8336,7 +8336,7 @@ class project_SummaryReport(S3Method):
             -the actual report
         """
 
-        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         db = current.db
@@ -8696,7 +8696,7 @@ class project_IndicatorSummaryReport(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -9089,7 +9089,7 @@ class project_IndicatorSummaryReport(S3Method):
             XLS Representation
         """
 
-        from core.io.codecs.xls import S3XLS
+        from core.resource.codecs.xls import S3XLS
 
         try:
             import xlwt
@@ -9827,7 +9827,7 @@ def project_ProgressReport(r, **attr):
 #        r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class ProjectProgrammeModel(S3Model):
+class ProjectProgrammeModel(DataModel):
     """
         Programmes Model
     """
@@ -9942,7 +9942,7 @@ class ProjectProgrammeModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectProgrammeProjectModel(S3Model):
+class ProjectProgrammeProjectModel(DataModel):
     """
         Project Programme<>Project Model
     """
@@ -9964,10 +9964,10 @@ class ProjectProgrammeProjectModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class ProjectSectorModel(S3Model):
+class ProjectSectorModel(DataModel):
     """
         Project Sector Model
     """
@@ -10007,10 +10007,10 @@ class ProjectSectorModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectStatusModel(S3Model):
+class ProjectStatusModel(DataModel):
     """
         Project Status Model
         - used by both Projects & Activities
@@ -10085,7 +10085,7 @@ class ProjectStatusModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectStrategyModel(S3Model):
+class ProjectStrategyModel(DataModel):
     """
         Project Strategy Model
         - currently just used by IFRC to hold AoF/SFI (& then only for (Training) Events for Bangkok CCST)
@@ -10161,7 +10161,7 @@ class ProjectStrategyModel(S3Model):
                 }
 
 # =============================================================================
-class ProjectTagModel(S3Model):
+class ProjectTagModel(DataModel):
     """
         Project Tags
     """
@@ -10201,10 +10201,10 @@ class ProjectTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectThemeModel(S3Model):
+class ProjectThemeModel(DataModel):
     """
         Project Theme Model
     """
@@ -10502,7 +10502,7 @@ class ProjectThemeModel(S3Model):
                                  percentage = percentages[theme_id])
 
 # =============================================================================
-class ProjectDRRModel(S3Model):
+class ProjectDRRModel(DataModel):
     """
         Models for DRR (Disaster Risk Reduction) extensions
     """
@@ -10534,7 +10534,7 @@ class ProjectDRRModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -10555,7 +10555,7 @@ class ProjectDRRModel(S3Model):
         return ", ".join(vals)
 
 # =============================================================================
-class ProjectDRRPPModel(S3Model):
+class ProjectDRRPPModel(DataModel):
     """
         Models for DRR Project Portal extensions
         - injected into custom Project CRUD forms
@@ -10709,7 +10709,7 @@ class ProjectDRRPPModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -10776,7 +10776,7 @@ class ProjectDRRPPModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class ProjectTargetModel(S3Model):
+class ProjectTargetModel(DataModel):
     """
         Project Target Model
     """
@@ -10816,10 +10816,10 @@ class ProjectTargetModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectTaskModel(S3Model):
+class ProjectTaskModel(DataModel):
     """
         Project Task Model
 
@@ -11294,15 +11294,15 @@ class ProjectTaskModel(S3Model):
         project_task_represent_w_project = project_TaskRepresent(show_project=True)
 
         # Custom Methods
-        set_method("project", "task",
+        set_method("project_task",
                    method = "share",
                    action = self.project_task_share)
 
-        set_method("project", "task",
+        set_method("project_task",
                    method = "unshare",
                    action = self.project_task_unshare)
 
-        set_method("project", "task",
+        set_method("project_task",
                    method = "dispatch",
                    action = self.project_task_dispatch)
 
@@ -12186,7 +12186,7 @@ class ProjectTaskModel(S3Model):
             db(query).update(time_actual = hours)
 
 # =============================================================================
-class ProjectTaskForumModel(S3Model):
+class ProjectTaskForumModel(DataModel):
     """
         Shares for Tasks
     """
@@ -12223,10 +12223,10 @@ class ProjectTaskForumModel(S3Model):
         #    msg_list_empty = T("No Tasks currently shared"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectTaskHRMModel(S3Model):
+class ProjectTaskHRMModel(DataModel):
     """
         Project Task HRM Model
 
@@ -12272,10 +12272,10 @@ class ProjectTaskHRMModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class ProjectTaskTagModel(S3Model):
+class ProjectTaskTagModel(DataModel):
     """
         Task Tags
     """
@@ -12314,10 +12314,10 @@ class ProjectTaskTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class ProjectWindowModel(S3Model):
+class ProjectWindowModel(DataModel):
     """
         Project Window Model
 
@@ -12349,7 +12349,7 @@ class ProjectWindowModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def multi_theme_percentage_represent(record_id):
@@ -13499,7 +13499,7 @@ def project_task_controller():
     else:
         hide_filter = None
 
-    return current.rest_controller("project", "task",
+    return current.crud_controller("project", "task",
                                    hide_filter = hide_filter,
                                    rheader = s3db.project_rheader,
                                    )
@@ -14127,7 +14127,7 @@ class project_Details(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

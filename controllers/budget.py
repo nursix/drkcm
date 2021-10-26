@@ -40,7 +40,7 @@ def budget():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.budget_rheader)
+    return crud_controller(rheader=s3db.budget_rheader)
 
 # =============================================================================
 def allocation():
@@ -50,7 +50,7 @@ def allocation():
         @status: experimental, not for production use
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def location():
@@ -60,7 +60,7 @@ def location():
 
     # @todo: link to gis_location
 
-    return s3_rest_controller(main = "code")
+    return crud_controller(main="code")
 
 # =============================================================================
 def item():
@@ -70,7 +70,7 @@ def item():
 
     #s3.formats.pdf = URL(f="item_export_pdf")
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def kit():
@@ -83,9 +83,9 @@ def kit():
         s3db.configure("budget_kit",
                        update_next=URL(f="kit_item", args=request.args[1]))
 
-    return s3_rest_controller(main = "code",
-                              rheader = s3db.budget_rheader,
-                              )
+    return crud_controller(main = "code",
+                           rheader = s3db.budget_rheader,
+                           )
 
 # =============================================================================
 def bundle():
@@ -95,7 +95,7 @@ def bundle():
         s3db.configure("budget_bundle",
             update_next=URL(f="bundle_kit_item", args=request.args[1]))
 
-    return s3_rest_controller(rheader = s3db.budget_rheader)
+    return crud_controller(rheader=s3db.budget_rheader)
 
 # =============================================================================
 def staff():
@@ -105,7 +105,7 @@ def staff():
 
     # @todo: link to hrm_job_title (?)
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def budget_staff():
@@ -114,7 +114,7 @@ def budget_staff():
     """
 
     s3.prep = lambda r: r.representation == "s3json"
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def budget_bundle():
@@ -123,7 +123,7 @@ def budget_bundle():
     """
 
     s3.prep = lambda r: r.representation == "s3json"
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def bundle_kit():
@@ -132,7 +132,7 @@ def bundle_kit():
     """
 
     s3.prep = lambda r: r.representation == "s3json"
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def bundle_item():
@@ -141,7 +141,7 @@ def bundle_item():
     """
 
     s3.prep = lambda r: r.representation == "s3json"
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def kit_item():
@@ -150,7 +150,7 @@ def kit_item():
     """
 
     s3.prep = lambda r: r.representation == "s3json"
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def project():
@@ -164,11 +164,9 @@ def project():
            ]
     rheader = lambda r: s3db.project_rheader(r, tabs=tabs)
 
-    output = s3_rest_controller("project", "project",
-                                rheader = rheader,
-                                )
-
-    return output
+    return crud_controller("project", "project",
+                           rheader = rheader,
+                           )
 
 # =============================================================================
 def parameter():
@@ -188,7 +186,7 @@ def parameter():
         return output
     s3.postp = postp
 
-    r = s3_request(args=[str(record_id)])
+    r = crud_request(args=[str(record_id)])
     return r()
 
 # =============================================================================

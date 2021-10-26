@@ -36,7 +36,7 @@ from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from ..filters import FS
+from ..resource import FS
 from ..tools import s3_str
 from ..ui import ICON
 
@@ -65,7 +65,7 @@ class S3Profile(S3CRUD):
         """
             API entry point
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -97,7 +97,7 @@ class S3Profile(S3CRUD):
         """
             Generate a Profile page
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -326,7 +326,7 @@ class S3Profile(S3CRUD):
         """
             Generate a Comments widget
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget definition as dict
             @param attr: controller attributes for the request
 
@@ -364,7 +364,7 @@ class S3Profile(S3CRUD):
         """
             Generate a Custom widget
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget definition as dict
             @param attr: controller attributes for the request
         """
@@ -400,7 +400,7 @@ class S3Profile(S3CRUD):
         """
             Generate a data list
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget definition as dict
             @param attr: controller attributes for the request
         """
@@ -563,7 +563,7 @@ class S3Profile(S3CRUD):
         """
             Generate a data table.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget definition as dict
             @param attr: controller attributes for the request
 
@@ -800,7 +800,7 @@ class S3Profile(S3CRUD):
         """
             Generate a Form widget
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget definition as dict
             @param attr: controller attributes for the request
         """
@@ -885,7 +885,7 @@ class S3Profile(S3CRUD):
         """
             Generate a Map widget
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget as a tuple: (label, type, icon)
             @param attr: controller attributes for the request
         """
@@ -1053,7 +1053,7 @@ class S3Profile(S3CRUD):
         """
             Generate a Report widget
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget as a tuple: (label, type, icon)
             @param attr: controller attributes for the request
         """
@@ -1109,7 +1109,7 @@ class S3Profile(S3CRUD):
         """
             Generate an Organizer widget
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget configuration (a dict)
             @param attr: controller attributes for the request
         """
@@ -1247,7 +1247,7 @@ class S3Profile(S3CRUD):
         """
             Provide the column-width class for the widgets
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param widget: the widget config (dict)
         """
 
@@ -1272,7 +1272,7 @@ class S3Profile(S3CRUD):
             Render an action link for a create-popup (used in data lists
             and data tables).
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param widget: the widget definition as dict
             @param list_id: the list ID
             @param resource: the target resource

@@ -11,7 +11,7 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 from gluon.storage import Storage
 
 from core import FS, ICON, IS_PHONE_NUMBER_MULTI, JSONERRORS, S3CRUD, S3CustomController, \
-                 S3GroupedOptionsWidget, S3LocationSelector, S3Represent, S3Request, \
+                 S3GroupedOptionsWidget, S3LocationSelector, S3Represent, CRUDRequest, \
                  S3WithIntro, s3_comments_widget, s3_get_extension, s3_mark_required, \
                  s3_str, s3_text_represent, s3_truncate
 
@@ -832,7 +832,7 @@ class approve(S3CustomController):
 
             s3 = response.s3
             representation = s3_get_extension(request) or \
-                             S3Request.DEFAULT_REPRESENTATION
+                             CRUDRequest.DEFAULT_REPRESENTATION
 
             # Pagination
             get_vars = request.get_vars
@@ -849,7 +849,7 @@ class approve(S3CustomController):
             distinct = False
             dtargs = {}
 
-            if representation in S3Request.INTERACTIVE_FORMATS:
+            if representation in CRUDRequest.INTERACTIVE_FORMATS:
 
                 # How many records per page?
                 if s3.dataTable_pageLength:
@@ -965,7 +965,7 @@ class approve(S3CustomController):
                              '"draw":%s,' \
                              '"data":[]}' % (totalrows, list_id, draw)
             else:
-                S3Request("auth", "user").error(415, current.ERROR.BAD_FORMAT)
+                CRUDRequest("auth", "user").error(415, current.ERROR.BAD_FORMAT)
 
         return output
 

@@ -31,14 +31,9 @@ import datetime
 import json
 import sys
 
+from lxml import etree
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote as urllib_quote
-
-try:
-    from lxml import etree
-except ImportError:
-    sys.stderr.write("ERROR: lxml module needed for XML handling\n")
-    raise
 
 from gluon import current
 
@@ -318,10 +313,10 @@ class S3SyncAdapter(S3SyncEdenAdapter):
 
         response = update["response"]
         try:
-            resource.import_xml(response,
-                                ignore_errors = True,
-                                strategy = strategy,
-                                )
+            import_result = resource.import_xml(response,
+                                                ignore_errors = True,
+                                                strategy = strategy,
+                                                )
         except IOError:
             result = log.FATAL
             error = "%s" % sys.exc_info()[1]
@@ -333,13 +328,13 @@ class S3SyncAdapter(S3SyncEdenAdapter):
                     traceback.format_exc()
 
         else:
-            if resource.error:
+            if import_result.error:
                 result = log.ERROR
-                error = resource.error
+                error = import_result.error
             else:
                 result = log.SUCCESS
-                update["count"] = resource.import_count
-                update["mtime"] = resource.mtime
+                update["count"] = import_result.count
+                update["mtime"] = import_result.mtime
 
         update["result"] = result
 

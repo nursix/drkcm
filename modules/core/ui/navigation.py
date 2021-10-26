@@ -1345,7 +1345,7 @@ def s3_rheader_resource(r):
     """
         Identify the tablename and record ID for the rheader
 
-        @param r: the current S3Request
+        @param r: the current CRUDRequest
 
     """
 
@@ -1402,7 +1402,7 @@ class S3ComponentTabs(object):
         """
             Render the tabs row
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         rheader_tabs = []
@@ -1594,7 +1594,7 @@ class S3ComponentTab(object):
         """
 
         # @todo: use component hook label/plural as fallback for title
-        #        (see S3Model.add_components)
+        #        (see DataModel.add_components)
         title, component = tab[:2] # 'component' can be method
 
         self.title = title
@@ -1634,13 +1634,12 @@ class S3ComponentTab(object):
         """
             Check whether the this tab is active
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         s3db = current.s3db
 
         get_components = s3db.get_components
-        get_method = s3db.get_method
         get_vars = r.get_vars
         tablename = None
         if "viewing" in get_vars:
@@ -1653,6 +1652,7 @@ class S3ComponentTab(object):
         component = self.component
         function = self.function
         if component:
+            # Check if component alias
             clist = get_components(resource.table, names=[component])
             is_component = False
             if component in clist:
@@ -1663,15 +1663,14 @@ class S3ComponentTab(object):
                     is_component = True
             if is_component:
                 return self.authorised(clist[component])
-            handler = get_method(resource.prefix,
-                                 resource.name,
-                                 method=component)
+
+            # Check if URL method
+            get_method = s3db.get_method
+            handler = get_method(resource.tablename, method=component)
             if handler is None and tablename:
-                prefix, name = tablename.split("_", 1)
-                handler = get_method(prefix, name,
-                                     method=component)
+                handler = get_method(tablename, method=component)
             if handler is None:
-                handler = r.get_handler(component)
+                handler = r.default_methods.get(component)
             if handler is None:
                 return component in ("create", "read", "update", "delete")
 
@@ -1709,7 +1708,7 @@ class S3ComponentTab(object):
             Check whether the request GET vars match the GET vars in
             the URL of this tab
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         if self.vars is None:
@@ -1820,7 +1819,7 @@ class S3ResourceHeader(object):
         """
             Return the HTML representation of this rheader
 
-            @param r: the S3Request instance to render the header for
+            @param r: the CRUDRequest instance to render the header for
             @param tabs: the tabs (overrides the original tabs definition)
             @param table: override r.table
             @param record: override r.record

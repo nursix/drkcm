@@ -46,7 +46,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3DocumentLibrary(S3Model):
+class S3DocumentLibrary(DataModel):
 
     names = ("doc_entity",
              "doc_document",
@@ -529,7 +529,7 @@ class S3DocumentLibrary(S3Model):
                                  )
 
 # =============================================================================
-class S3DocumentTagModel(S3Model):
+class S3DocumentTagModel(DataModel):
     """
         Document Tags
     """
@@ -569,7 +569,7 @@ class S3DocumentTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def doc_image_represent(filename):
@@ -742,7 +742,7 @@ class doc_DocumentRepresent(S3Represent):
         return v
 
 # =============================================================================
-class S3CKEditorModel(S3Model):
+class S3CKEditorModel(DataModel):
     """
         Storage for Images used by CKEditor
         - and hence the s3_richtext_widget
@@ -816,7 +816,7 @@ class S3CKEditorModel(S3Model):
         return ftype
 
 # =============================================================================
-class S3DataCardModel(S3Model):
+class S3DataCardModel(DataModel):
     """
         Model to manage context-specific features of printable
         data cards (S3PDFCard)

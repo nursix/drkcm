@@ -29,31 +29,31 @@ def index_alt():
 def parameter():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def data():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def source():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def demographic():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def demographic_data():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def demographic_aggregate():
@@ -68,41 +68,40 @@ def demographic_aggregate():
                      args="",
                      ))
 
-    s3db.set_method("stats", "demographic_aggregate",
+    s3db.set_method("stats_demographic_aggregate",
                     method="clear",
                     action=clear_aggregates)
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def people_type():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def people():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def trained_type():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def trained():
     """ REST Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def impact_type():
     """ REST Controller for impact types """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

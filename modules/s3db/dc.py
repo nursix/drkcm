@@ -48,7 +48,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class DataCollectionTemplateModel(S3Model):
+class DataCollectionTemplateModel(DataModel):
     """
         Templates to use for Assessments / Surveys
         - uses the Dynamic Tables back-end to store Questions
@@ -977,7 +977,7 @@ class DataCollectionTemplateModel(S3Model):
         write_dict(w2pfilename, translations)
 
 # =============================================================================
-class DataCollectionModel(S3Model):
+class DataCollectionModel(DataModel):
     """
         Results of Assessments / Surveys
         - uses the Dynamic Tables back-end to store Answers
@@ -1114,7 +1114,7 @@ class DataCollectionModel(S3Model):
             msg_record_deleted = T("Data Collection Target deleted"),
             msg_list_empty = T("No Data Collection Targets currently registered"))
 
-        self.set_method("dc", "target",
+        self.set_method("dc_target",
                         method = "results",
                         action = dc_TargetReport())
 
@@ -1543,7 +1543,7 @@ class dc_TargetReport(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -1837,7 +1837,7 @@ class dc_TargetReport(S3Method):
                    (original is project_SummaryReport)
         """
 
-        from core.io.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         table = r.table
@@ -1888,7 +1888,7 @@ class dc_TargetXLS(S3Method):
 
     def apply_method(self, r, **attr):
 
-        from core.io.codecs.xls import S3XLS
+        from core.resource.codecs.xls import S3XLS
 
         try:
             import xlwt

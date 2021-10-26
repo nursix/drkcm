@@ -150,8 +150,8 @@ class S3DataList(object):
                          ]
 
             if empty is None:
-                empty = resource.crud.crud_string(resource.tablename,
-                                                  "msg_no_match")
+                from ..methods import S3Method
+                empty = S3Method.crud_string(resource.tablename, "msg_no_match")
             empty = DIV(empty, _class="dl-empty")
             if self.total > 0:
                 empty.update(_style="display:none")

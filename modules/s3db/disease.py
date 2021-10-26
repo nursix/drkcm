@@ -65,7 +65,7 @@ MONITORING_UPGRADE = {"OBSERVATION": ("NONE",
                       }
 
 # =============================================================================
-class DiseaseDataModel(S3Model):
+class DiseaseDataModel(DataModel):
 
     names = ("disease_disease",
              "disease_disease_id",
@@ -357,7 +357,7 @@ class DiseaseDataModel(S3Model):
             record.update_record(available=False)
 
 # =============================================================================
-class DiseaseMonitoringModel(S3Model):
+class DiseaseMonitoringModel(DataModel):
     """ Data Model for Disease Monitoring """
 
     names = ("disease_demographic",
@@ -823,7 +823,7 @@ class DiseaseMonitoringModel(S3Model):
             cls.update_report_from_demographics(report_id)
 
 # =============================================================================
-class DiseaseCertificateModel(S3Model):
+class DiseaseCertificateModel(DataModel):
     """
         Model to manage disease-related health certificates
     """
@@ -890,7 +890,7 @@ class DiseaseCertificateModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -899,10 +899,10 @@ class DiseaseCertificateModel(S3Model):
 
         #dummy = S3ReusableField.dummy
 
-        return {}
+        return None
 
 # =============================================================================
-class CaseTrackingModel(S3Model):
+class CaseTrackingModel(DataModel):
 
     names = ("disease_case",
              "disease_case_id",
@@ -1703,7 +1703,7 @@ class disease_CaseRepresent(S3Represent):
             return full_name
 
 # =============================================================================
-class ContactTracingModel(S3Model):
+class ContactTracingModel(DataModel):
 
     names = ("disease_tracing",
              "disease_exposure",
@@ -1890,13 +1890,13 @@ class ContactTracingModel(S3Model):
             msg_list_empty = T("No Exposure Information currently registered"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2066,7 +2066,7 @@ def disease_upgrade_monitoring(case_id, level, case=None):
         case.update_record(monitoring_level = level)
 
 # =============================================================================
-class DiseaseStatsModel(S3Model):
+class DiseaseStatsModel(DataModel):
     """
         Disease Statistics:
             Cases:

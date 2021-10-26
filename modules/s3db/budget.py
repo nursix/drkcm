@@ -44,7 +44,7 @@ from s3dal import Row
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3BudgetModel(S3Model):
+class S3BudgetModel(DataModel):
 
     names = ("budget_entity",
              "budget_budget",
@@ -553,7 +553,7 @@ class S3BudgetModel(S3Model):
         return
 
 # =============================================================================
-class S3BudgetKitModel(S3Model):
+class S3BudgetKitModel(DataModel):
 
     names = ("budget_kit",
              "budget_item",
@@ -922,7 +922,7 @@ class S3BudgetKitModel(S3Model):
         return
 
 # =============================================================================
-class S3BudgetBundleModel(S3Model):
+class S3BudgetBundleModel(DataModel):
     """ Model for Budget Bundles """
 
     names = ("budget_bundle",
@@ -1308,7 +1308,7 @@ class S3BudgetBundleModel(S3Model):
         return
 
 # =============================================================================
-class S3BudgetAllocationModel(S3Model):
+class S3BudgetAllocationModel(DataModel):
     """
         Model for Budget Allocation
    """
@@ -1402,7 +1402,7 @@ class S3BudgetAllocationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     def defaults(self):
@@ -1410,7 +1410,7 @@ class S3BudgetAllocationModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1446,7 +1446,7 @@ class S3BudgetAllocationModel(S3Model):
         return
 
 # =============================================================================
-class S3BudgetMonitoringModel(S3Model):
+class S3BudgetMonitoringModel(DataModel):
     """
         Budget Monitoring Model
 
@@ -1528,7 +1528,7 @@ class S3BudgetMonitoringModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

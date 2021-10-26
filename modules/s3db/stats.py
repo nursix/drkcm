@@ -50,7 +50,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3StatsModel(S3Model):
+class S3StatsModel(DataModel):
     """
         Statistics Data
     """
@@ -231,7 +231,7 @@ class S3StatsModel(S3Model):
                 }
 
 # =============================================================================
-class S3StatsDemographicModel(S3Model):
+class S3StatsDemographicModel(DataModel):
     """
         Baseline Demographics
 
@@ -1173,8 +1173,7 @@ def stats_demographic_data_controller():
     request = current.request
     if "options.s3json" in request.args:
         # options.s3json lookups for AddResourceLink
-        output = current.rest_controller("stats", "demographic_data")
-        return output
+        return current.crud_controller("stats", "demographic_data")
 
     # Only viewing is valid
     get_vars = request.get_vars
@@ -1215,14 +1214,12 @@ def stats_demographic_data_controller():
     else:
         rheader = None
 
-    output = current.rest_controller("stats", "demographic_data",
-                                     rheader = rheader,
-                                     )
-
-    return output
+    return current.crud_controller("stats", "demographic_data",
+                                   rheader = rheader,
+                                   )
 
 # =============================================================================
-class S3StatsImpactModel(S3Model):
+class S3StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
@@ -1354,7 +1351,7 @@ class S3StatsImpactModel(S3Model):
                 }
 
 # =============================================================================
-class S3StatsPeopleModel(S3Model):
+class S3StatsPeopleModel(DataModel):
     """
         Used to record people in the CRMT (Community Resilience Mapping Tool) template
 
@@ -1510,7 +1507,7 @@ class S3StatsPeopleModel(S3Model):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def stats_quantile(data, q):

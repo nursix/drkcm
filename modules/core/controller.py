@@ -27,31 +27,29 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Request",
-           "s3_request",
+__all__ = ("CRUDRequest",
+           "crud_request",
+           "crud_controller",
            )
 
 import json
 import os
-import re
 import sys
 
 from io import StringIO
-from urllib.request import urlopen
 
-from gluon import current, redirect, HTTP, URL
+from gluon import current, redirect, A, HTTP, URL
 from gluon.storage import Storage
 
-from .model import S3Resource
-from .tools import s3_parse_datetime, s3_get_extension, s3_keep_messages, s3_remove_last_record_id, s3_store_last_record_id, s3_str
+from .resource import S3Resource
+from .tools import s3_get_extension, s3_keep_messages, s3_store_last_record_id, s3_str
 
-REGEX_FILTER = re.compile(r".+\..+|.*\(.+\).*")
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
 
 # =============================================================================
-class S3Request(object):
+class CRUDRequest(object):
     """
-        Class to handle RESTful requests
+        Class to handle CRUD requests
     """
 
     INTERACTIVE_FORMATS = ("html", "iframe", "popup", "dl")
@@ -69,76 +67,79 @@ class S3Request(object):
                  extension = None,
                  get_vars = None,
                  post_vars = None,
-                 http = None):
+                 http = None,
+                 ):
         """
             Constructor
 
-            @param prefix: the table name prefix
-            @param name: the table name
-            @param c: the controller prefix
-            @param f: the controller function
-            @param args: list of request arguments
-            @param vars: dict of request variables
-            @param extension: the format extension (representation)
-            @param get_vars: the URL query variables (overrides vars)
-            @param post_vars: the POST variables (overrides vars)
-            @param http: the HTTP method (GET, PUT, POST, or DELETE)
+            :param prefix: the table name prefix
+            :param name: the table name
+            :param c: the controller prefix
+            :param f: the controller function
+            :param args: list of request arguments
+            :param vars: dict of request variables
+            :param extension: the format extension (representation)
+            :param get_vars: the URL query variables (overrides vars)
+            :param post_vars: the POST variables (overrides vars)
+            :param http: the HTTP method (GET, PUT, POST, or DELETE)
 
-            @note: all parameters fall back to the attributes of the
-                   current web2py request object
+            .. note:: all parameters fall back to the attributes of the
+                      current web2py request object
         """
-
-        auth = current.auth
-
-        # Common settings
 
         # XSLT Paths
         self.XSLT_PATH = "static/formats"
         self.XSLT_EXTENSION = "xsl"
 
-        # Attached files
-        self.files = Storage()
-
         # Allow override of controller/function
         self.controller = c or self.controller
         self.function = f or self.function
+
+        # Format extension
+        request = current.request
         if "." in self.function:
             self.function, ext = self.function.split(".", 1)
             if extension is None:
                 extension = ext
+        self.extension = extension or request.extension
+
+        # Check permission
+        auth = current.auth
         if c or f:
             if not auth.permission.has_permission("read",
-                                                  c=self.controller,
-                                                  f=self.function):
+                                                  c = self.controller,
+                                                  f = self.function):
                 auth.permission.fail()
+
+
+        # HTTP method
+        self.http = http or request.env.request_method
+
+        # Attached files
+        self.files = Storage()
 
         # Allow override of request args/vars
         if args is not None:
-            if isinstance(args, (list, tuple)):
-                self.args = args
-            else:
-                self.args = [args]
-        if get_vars is not None:
-            self.get_vars = get_vars
-            self.vars = get_vars.copy()
+            self.args = args if isinstance(args, (list, tuple)) else [args]
+
+        if get_vars is not None or post_vars is not None:
+
+            self.vars = request_vars = Storage()
+
+            if get_vars is not None:
+                self.get_vars = Storage(get_vars)
+            request_vars.update(self.get_vars)
+
             if post_vars is not None:
-                self.vars.update(post_vars)
-            else:
-                self.vars.update(self.post_vars)
-        if post_vars is not None:
-            self.post_vars = post_vars
-            if get_vars is None:
-                self.vars = post_vars.copy()
-                self.vars.update(self.get_vars)
-        if get_vars is None and post_vars is None and vars is not None:
-            self.vars = vars
-            self.get_vars = vars
+                self.post_vars = Storage(post_vars)
+            request_vars.update(self.post_vars)
+
+        elif vars is not None:
+
+            self.vars = self.get_vars = Storage(vars)
             self.post_vars = Storage()
 
-        self.extension = extension or current.request.extension
-        self.http = http or current.request.env.request_method
-
-        # Main resource attributes
+        # Target table prefix/name
         if r is not None:
             if not prefix:
                 prefix = r.prefix
@@ -150,47 +151,50 @@ class S3Request(object):
         # Parse the request
         self.__parse()
         self.custom_action = None
-        get_vars = Storage(self.get_vars)
 
         # Interactive representation format?
         self.interactive = self.representation in self.INTERACTIVE_FORMATS
+
+        get_vars = self.get_vars
 
         # Show information on deleted records?
         include_deleted = False
         if self.representation == "xml" and "include_deleted" in get_vars:
             include_deleted = True
-        if "components" in get_vars:
-            cnames = get_vars["components"]
-            if isinstance(cnames, list):
-                cnames = ",".join(cnames)
-            cnames = cnames.split(",")
-            if len(cnames) == 1 and cnames[0].lower() == "none":
-                cnames = []
+
+        # Which components to load?
+        component_name = self.component_name
+        if not component_name:
+            if "components" in get_vars:
+                cnames = get_vars["components"]
+                if isinstance(cnames, list):
+                    cnames = ",".join(cnames)
+                cnames = cnames.split(",")
+                if len(cnames) == 1 and cnames[0].lower() == "none":
+                    cnames = []
+                components = cnames
+            else:
+                components = None
         else:
-            cnames = None
+            components = component_name
 
         # Append component ID to the URL query
-        component_name = self.component_name
+        url_query = dict(get_vars)
         component_id = self.component_id
         if component_name and component_id:
             varname = "%s.id" % component_name
             if varname in get_vars:
-                var = get_vars[varname]
+                var = url_query[varname]
                 if not isinstance(var, (list, tuple)):
                     var = [var]
                 var.append(component_id)
-                get_vars[varname] = var
+                url_query[varname] = var
             else:
-                get_vars[varname] = component_id
-
-        # Define the target resource
-        _filter = current.response.s3.filter
-        components = component_name
-        if components is None:
-            components = cnames
+                url_query[varname] = component_id
 
         tablename = "%s_%s" % (self.prefix, self.name)
 
+        # Handle approval settings
         if not current.deployment_settings.get_auth_record_approval():
             # Record Approval is off
             approved, unapproved = True, False
@@ -204,10 +208,11 @@ class S3Request(object):
         else:
             approved, unapproved = True, False
 
+        # Instantiate resource
         self.resource = S3Resource(tablename,
                                    id = self.id,
-                                   filter = _filter,
-                                   vars = get_vars,
+                                   filter = current.response.s3.filter,
+                                   vars = url_query,
                                    components = components,
                                    approved = approved,
                                    unapproved = unapproved,
@@ -216,228 +221,50 @@ class S3Request(object):
                                    filter_component = component_name,
                                    )
 
-        self.tablename = self.resource.tablename
-        table = self.table = self.resource.table
+        resource = self.resource
+        self.tablename = resource.tablename
+        table = self.table = resource.table
 
         # Try to load the master record
         self.record = None
         uid = self.vars.get("%s.uid" % self.name)
         if self.id or uid and not isinstance(uid, (list, tuple)):
             # Single record expected
-            self.resource.load()
-            if len(self.resource) == 1:
-                self.record = self.resource.records().first()
-                _id = table._id.name
-                self.id = self.record[_id]
+            resource.load()
+            if len(resource) == 1:
+                self.record = resource.records().first()
+                self.id = self.record[table._id.name]
                 s3_store_last_record_id(self.tablename, self.id)
             else:
                 raise KeyError(current.ERROR.BAD_RECORD)
 
         # Identify the component
-        self.component = None
-        if self.component_name:
-            c = self.resource.components.get(self.component_name)
+        self.component = component = None
+        if component_name:
+            c = resource.components.get(component_name)
             if c:
-                self.component = c
+                self.component = component = c
             else:
-                error = "%s not a component of %s" % (self.component_name,
-                                                      self.resource.tablename)
+                error = "%s not a component of %s" % \
+                        (self.component_name, self.tablename)
                 raise AttributeError(error)
 
         # Identify link table and link ID
-        self.link = None
-        self.link_id = None
-
-        if self.component is not None:
-            self.link = self.component.link
-        if self.link and self.id and self.component_id:
-            self.link_id = self.link.link_id(self.id, self.component_id)
-            if self.link_id is None:
+        link = link_id = None
+        if component is not None:
+            link = component.link
+        if link and self.id and self.component_id:
+            link_id = link.link_id(self.id, self.component_id)
+            if link_id is None:
                 raise KeyError(current.ERROR.BAD_RECORD)
+        self.link = link
+        self.link_id = link_id
 
-        # Store method handlers
-        self._handlers = {}
-        set_handler = self.set_handler
+        # Initialize default methods
+        self._default_methods = None
 
-        set_handler("export_tree", self.get_tree,
-                    http=("GET",), transform=True)
-        set_handler("import_tree", self.put_tree,
-                    http=("GET", "PUT", "POST"), transform=True)
-        set_handler("fields", self.get_fields,
-                    http=("GET",), transform=True)
-        set_handler("options", self.get_options,
-                    http=("GET",),
-                    representation = ("__transform__", "json"),
-                    )
-
-        sync = current.sync
-        set_handler("sync", sync,
-                    http=("GET", "PUT", "POST",), transform=True)
-        set_handler("sync_log", sync.log,
-                    http=("GET",), transform=True)
-        set_handler("sync_log", sync.log,
-                    http=("GET",), transform=False)
-
-        # Initialize CRUD
-        self.resource.crud(self, method="_init")
-        if self.component is not None:
-            self.component.crud(self, method="_init")
-
-    # -------------------------------------------------------------------------
-    # Method handler configuration
-    # -------------------------------------------------------------------------
-    def set_handler(self, method, handler,
-                    http = None,
-                    representation = None,
-                    transform = False):
-        """
-            Set a method handler for this request
-
-            @param method: the method name
-            @param handler: the handler function
-            @type handler: handler(S3Request, **attr)
-            @param http: restrict to these HTTP methods, list|tuple
-            @param representation: register handler for non-transformable data
-                                   formats
-            @param transform: register handler for transformable data formats
-                              (overrides representation)
-        """
-
-        if http is None:
-            http = HTTP_METHODS
-        else:
-            if not isinstance(http, (tuple, list)):
-                http = (http,)
-
-        if transform:
-            representation = ("__transform__",)
-        elif not representation:
-            representation = (self.DEFAULT_REPRESENTATION,)
-        else:
-            if not isinstance(representation, (tuple, list)):
-                representation = (representation,)
-
-        if not isinstance(method, (tuple, list)):
-            method = (method,)
-
-        handlers = self._handlers
-        for h in http:
-            if h not in HTTP_METHODS:
-                continue
-            format_hooks = handlers.get(h)
-            if format_hooks is None:
-                format_hooks = handlers[h] = {}
-            for r in representation:
-                method_hooks = format_hooks.get(r)
-                if method_hooks is None:
-                    method_hooks = format_hooks[r] = {}
-                for m in method:
-                    method_hooks[m] = handler
-
-    # -------------------------------------------------------------------------
-    def get_handler(self, method, transform=False):
-        """
-            Get a method handler for this request
-
-            @param method: the method name
-            @param transform: get handler for transformable data format
-
-            @return: the method handler
-        """
-
-        handlers = self._handlers
-
-        http_hooks = handlers.get(self.http)
-        if not http_hooks:
-            return None
-
-        DEFAULT_REPRESENTATION = self.DEFAULT_REPRESENTATION
-        hooks = http_hooks.get(DEFAULT_REPRESENTATION)
-        if hooks:
-            method_hooks = dict(hooks)
-        else:
-            method_hooks = {}
-
-        representation = "__transform__" if transform else self.representation
-        if representation and representation != DEFAULT_REPRESENTATION:
-            hooks = http_hooks.get(representation)
-            if hooks:
-                method_hooks.update(hooks)
-
-        if not method:
-            methods = (None,)
-        else:
-            methods = (method, None)
-        for m in methods:
-            handler = method_hooks.get(m)
-            if handler is not None:
-                break
-
-        if isinstance(handler, type):
-            return handler()
-        else:
-            return handler
-
-    # -------------------------------------------------------------------------
-    def get_widget_handler(self, method):
-        """
-            Get the widget handler for a method
-
-            @param r: the S3Request
-            @param method: the widget method
-        """
-
-        if self.component:
-            resource = self.component
-            if resource.link:
-                resource = resource.link
-        else:
-            resource = self.resource
-        prefix, name = self.prefix, self.name
-        component_name = self.component_name
-
-        custom_action = current.s3db.get_method(prefix,
-                                                name,
-                                                component_name=component_name,
-                                                method=method)
-
-        http = self.http
-        handler = None
-
-        if method and custom_action:
-            handler = custom_action
-
-        if http == "GET":
-            if not method:
-                if resource.count() == 1:
-                    method = "read"
-                else:
-                    method = "list"
-            transform = self.transformable()
-            handler = self.get_handler(method, transform=transform)
-
-        elif http == "PUT":
-            transform = self.transformable(method="import")
-            handler = self.get_handler(method, transform=transform)
-
-        elif http == "POST":
-            transform = self.transformable(method="import")
-            return self.get_handler(method, transform=transform)
-
-        elif http == "DELETE":
-            if method:
-                return self.get_handler(method)
-            else:
-                return self.get_handler("delete")
-
-        else:
-            return None
-
-        if handler is None:
-            handler = resource.crud
-        if isinstance(handler, type):
-            handler = handler()
-        return handler
+        # Initialize next-URL
+        self.next = None
 
     # -------------------------------------------------------------------------
     # Request Parser
@@ -512,7 +339,7 @@ class S3Request(object):
             in POST vars (if multipart), or from JSON request body (if
             not multipart or $search=ajax).
 
-            NB: overrides S3Request method as GET (r.http) to trigger
+            NB: overrides CRUDRequest method as GET (r.http) to trigger
                 the correct method handlers, but will not change
                 current.request.env.request_method
         """
@@ -536,7 +363,6 @@ class S3Request(object):
             body = self.body
             body.seek(0)
             # Decode request body (=bytes stream) into a str
-            # - json.load/loads do not accept bytes in Py3 before 3.6
             # - minor performance advantage by avoiding the need for
             #   json.loads to detect the encoding
             s = body.read().decode("utf-8")
@@ -587,13 +413,102 @@ class S3Request(object):
         self.vars.update(self.post_vars)
 
     # -------------------------------------------------------------------------
-    # REST Interface
+    # Method handlers
+    # -------------------------------------------------------------------------
+    @property
+    def default_methods(self):
+        """
+            Default method handlers as dict {method: handler}
+        """
+
+        methods = self._default_methods
+
+        if not methods:
+            from .methods import RESTful, S3Filter, S3GroupedItemsReport, \
+                                 S3HierarchyCRUD, S3Map, S3Merge, S3MobileCRUD, \
+                                 S3Organizer, S3Profile, S3Report, S3Summary, \
+                                 S3TimePlot, S3XForms, SpreadsheetImporter
+
+            methods = {"deduplicate": S3Merge,
+                       "fields": RESTful,
+                       "filter": S3Filter,
+                       "grouped": S3GroupedItemsReport,
+                       "hierarchy": S3HierarchyCRUD,
+                       "import": SpreadsheetImporter,
+                       "map": S3Map,
+                       "mform": S3MobileCRUD,
+                       "options": RESTful,
+                       "organize": S3Organizer,
+                       "profile": S3Profile,
+                       "report": S3Report,
+                       "summary": S3Summary,
+                       "sync": current.sync,
+                       "timeplot": S3TimePlot,
+                       "xform": S3XForms,
+                       None: RESTful,
+                       }
+
+            methods["copy"] = lambda r, **attr: redirect(URL(args = "create",
+                                                             vars = {"from_record": r.id},
+                                                             ))
+
+            from .msg import S3Compose
+            methods["compose"] = S3Compose
+
+            from .ui import search_ac
+            methods["search_ac"] = search_ac
+
+            try:
+                from s3db.cms import S3CMS
+            except ImportError:
+                current.log.error("S3CMS default method not found")
+            else:
+                methods["cms"] = S3CMS
+
+            self._default_methods = methods
+
+        return methods
+
+    # -------------------------------------------------------------------------
+    def get_widget_handler(self, method):
+        """
+            Get the widget handler for a method
+
+            :param r: the CRUDRequest
+            :param method: the widget method
+        """
+
+        handler = None
+
+        if method:
+            handler = current.s3db.get_method(self.tablename,
+                                              component = self.component_name,
+                                              method = method,
+                                              )
+        if handler is None:
+            if self.http == "GET" and not method:
+                component = self.component
+                if component:
+                    resource = component.link if component.link else component
+                else:
+                    resource = self.resource
+                method = "read" if resource.count() == 1 else "list"
+            handler = self.default_methods.get(method)
+
+        if handler is None:
+            from .methods import S3CRUD
+            handler = S3CRUD()
+
+        return handler() if isinstance(handler, type) else handler
+
+    # -------------------------------------------------------------------------
+    # Controller
     # -------------------------------------------------------------------------
     def __call__(self, **attr):
         """
             Execute this request
 
-            @param attr: Parameters for the method handler
+            :param attr: Controller parameters
         """
 
         response = current.response
@@ -626,23 +541,20 @@ class S3Request(object):
             pre = preprocess(self)
             # Re-read representation after preprocess:
             representation = self.representation
-            if pre and isinstance(pre, dict):
+            if not pre:
+                self.error(400, current.ERROR.BAD_REQUEST)
+            elif isinstance(pre, dict):
                 bypass = pre.get("bypass", False) is True
                 output = pre.get("output")
-                if not bypass:
-                    success = pre.get("success", True)
-                    if not success:
-                        if representation == "html" and output:
-                            if isinstance(output, dict):
-                                output["r"] = self
-                            return output
-                        else:
-                            status = pre.get("status", 400)
-                            message = pre.get("message",
-                                              current.ERROR.BAD_REQUEST)
-                            self.error(status, message)
-            elif not pre:
-                self.error(400, current.ERROR.BAD_REQUEST)
+                success = pre.get("success", True)
+                if not bypass and not success:
+                    if representation == "html" and output:
+                        if isinstance(output, dict):
+                            output["r"] = self
+                        return output
+                    status = pre.get("status", 400)
+                    message = pre.get("message", current.ERROR.BAD_REQUEST)
+                    self.error(status, message)
 
         # Default view
         if representation not in ("html", "popup"):
@@ -653,39 +565,31 @@ class S3Request(object):
                                                                "text/html")
 
         # Custom action?
-        if not self.custom_action:
-            action = current.s3db.get_method(self.prefix,
-                                             self.name,
-                                             component_name = self.component_name,
-                                             method = self.method)
-            if isinstance(action, type):
-                self.custom_action = action()
-            else:
-                self.custom_action = action
+        custom_action = self.custom_action
+        if not custom_action:
+            custom_action = current.s3db.get_method(self.tablename,
+                                                    component = self.component_name,
+                                                    method = self.method,
+                                                    )
+            self.custom_action = custom_action
 
         # Method handling
-        http = self.http
+        http, method = self.http, self.method
         handler = None
         if not bypass:
-            # Find the method handler
-            if self.method and self.custom_action:
-                handler = self.custom_action
-            elif http == "GET":
-                handler = self.__GET()
-            elif http == "PUT":
-                handler = self.__PUT()
-            elif http == "POST":
-                handler = self.__POST()
-            elif http == "DELETE":
-                handler = self.__DELETE()
+            if custom_action:
+                handler = custom_action
             else:
-                self.error(405, current.ERROR.BAD_METHOD)
-            # Invoke the method handler
-            if handler is not None:
-                output = handler(self, **attr)
-            else:
-                # Fall back to CRUD
-                output = self.resource.crud(self, **attr)
+                handler = self.default_methods.get(method)
+                if not handler:
+                    if http in HTTP_METHODS:
+                        from .methods import S3CRUD
+                        handler = S3CRUD
+                    else:
+                        self.error(405, current.ERROR.BAD_METHOD)
+            if isinstance(handler, type):
+                handler = handler()
+            output = handler(self, **attr)
 
         # Post-process
         if s3 is not None:
@@ -718,554 +622,25 @@ class S3Request(object):
         return output
 
     # -------------------------------------------------------------------------
-    def __GET(self, resource=None):
-        """
-            Get the GET method handler
-        """
-
-        method = self.method
-        transform = False
-        if method is None or method in ("read", "display", "update"):
-            if self.transformable():
-                method = "export_tree"
-                transform = True
-            elif self.component:
-                resource = self.resource
-                if self.interactive and resource.count() == 1:
-                    # Load the record
-                    if not resource._rows:
-                        resource.load(start=0, limit=1)
-                    if resource._rows:
-                        self.record = resource._rows[0]
-                        self.id = resource.get_id()
-                        self.uid = resource.get_uid()
-                if self.component.multiple and not self.component_id:
-                    method = "list"
-                else:
-                    method = "read"
-            elif self.id or method in ("read", "display", "update"):
-                # Enforce single record
-                resource = self.resource
-                if not resource._rows:
-                    resource.load(start=0, limit=1)
-                if resource._rows:
-                    self.record = resource._rows[0]
-                    self.id = resource.get_id()
-                    self.uid = resource.get_uid()
-                else:
-                    # Record not found => go to list
-                    self.error(404, current.ERROR.BAD_RECORD,
-                               next = self.url(id="", method=""),
-                               )
-                method = "read"
-            else:
-                method = "list"
-
-        elif method in ("create", "update"):
-            if self.transformable(method="import"):
-                method = "import_tree"
-                transform = True
-
-        elif method == "delete":
-            return self.__DELETE()
-
-        elif method == "clear" and not self.component:
-            s3_remove_last_record_id(self.tablename)
-            self.next = URL(r=self, f=self.name)
-            return lambda r, **attr: None
-
-        elif self.transformable():
-            transform = True
-
-        return self.get_handler(method, transform=transform)
-
-    # -------------------------------------------------------------------------
-    def __PUT(self):
-        """
-            Get the PUT method handler
-        """
-
-        transform = self.transformable(method="import")
-
-        method = self.method
-        if not method and transform:
-            method = "import_tree"
-
-        return self.get_handler(method, transform=transform)
-
-    # -------------------------------------------------------------------------
-    def __POST(self):
-        """
-            Get the POST method handler
-        """
-
-        if self.method == "delete":
-            return self.__DELETE()
-        else:
-            if self.transformable(method="import"):
-                return self.__PUT()
-            else:
-                post_vars = self.post_vars
-                table = self.target()[2]
-                if "deleted" in table and "id" not in post_vars: # and "uuid" not in post_vars:
-                    original = S3Resource.original(table, post_vars)
-                    if original and original.deleted:
-                        self.post_vars["id"] = original.id
-                        self.vars["id"] = original.id
-                return self.__GET()
-
-    # -------------------------------------------------------------------------
-    def __DELETE(self):
-        """
-            Get the DELETE method handler
-        """
-
-        if self.method:
-            return self.get_handler(self.method)
-        else:
-            return self.get_handler("delete")
-
-    # -------------------------------------------------------------------------
-    # Built-in method handlers
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_tree(r, **attr):
-        """
-            XML Element tree export method
-
-            @param r: the S3Request instance
-            @param attr: controller attributes
-        """
-
-        get_vars = r.get_vars
-        args = Storage()
-
-        # Slicing
-        start = get_vars.get("start")
-        if start is not None:
-            try:
-                start = int(start)
-            except ValueError:
-                start = None
-        limit = get_vars.get("limit")
-        if limit is not None:
-            try:
-                limit = int(limit)
-            except ValueError:
-                limit = None
-
-        # msince
-        msince = get_vars.get("msince")
-        if msince is not None:
-            msince = s3_parse_datetime(msince)
-
-        # Show IDs (default: False)
-        if "show_ids" in get_vars:
-            if get_vars["show_ids"].lower() == "true":
-                current.xml.show_ids = True
-
-        # Show URLs (default: True)
-        if "show_urls" in get_vars:
-            if get_vars["show_urls"].lower() == "false":
-                current.xml.show_urls = False
-
-        # Mobile data export (default: False)
-        mdata = get_vars.get("mdata") == "1"
-
-        # Maxbounds (default: False)
-        maxbounds = False
-        if "maxbounds" in get_vars:
-            if get_vars["maxbounds"].lower() == "true":
-                maxbounds = True
-        if r.representation in ("gpx", "osm"):
-            maxbounds = True
-
-        # Components of the master resource (tablenames)
-        if "mcomponents" in get_vars:
-            mcomponents = get_vars["mcomponents"]
-            if str(mcomponents).lower() == "none":
-                mcomponents = None
-            elif not isinstance(mcomponents, list):
-                mcomponents = mcomponents.split(",")
-        else:
-            mcomponents = [] # all
-
-        # Components of referenced resources (tablenames)
-        if "rcomponents" in get_vars:
-            rcomponents = get_vars["rcomponents"]
-            if str(rcomponents).lower() == "none":
-                rcomponents = None
-            elif not isinstance(rcomponents, list):
-                rcomponents = rcomponents.split(",")
-        else:
-            rcomponents = None
-
-        # Maximum reference resolution depth
-        if "maxdepth" in get_vars:
-            try:
-                args["maxdepth"] = int(get_vars["maxdepth"])
-            except ValueError:
-                pass
-
-        # References to resolve (field names)
-        if "references" in get_vars:
-            references = get_vars["references"]
-            if str(references).lower() == "none":
-                references = []
-            elif not isinstance(references, list):
-                references = references.split(",")
-        else:
-            references = None # all
-
-        # Export field selection
-        if "fields" in get_vars:
-            fields = get_vars["fields"]
-            if str(fields).lower() == "none":
-                fields = []
-            elif not isinstance(fields, list):
-                fields = fields.split(",")
-        else:
-            fields = None # all
-
-        # Find XSLT stylesheet
-        stylesheet = r.stylesheet()
-
-        # Add stylesheet parameters
-        if stylesheet is not None:
-            if r.component:
-                args["id"] = r.id
-                args["component"] = r.component.tablename
-                if r.component.alias:
-                    args["alias"] = r.component.alias
-            mode = get_vars.get("xsltmode")
-            if mode is not None:
-                args["mode"] = mode
-
-        # Set response headers
-        response = current.response
-        s3 = response.s3
-        headers = response.headers
-        representation = r.representation
-        if representation in s3.json_formats:
-            as_json = True
-            default = "application/json"
-        else:
-            as_json = False
-            default = "text/xml"
-        headers["Content-Type"] = s3.content_type.get(representation,
-                                                      default)
-
-        # Export the resource
-        resource = r.resource
-        target = r.target()[3]
-        if target == resource.tablename:
-            # Master resource targetted
-            target = None
-        output = resource.export_xml(start = start,
-                                     limit = limit,
-                                     msince = msince,
-                                     fields = fields,
-                                     dereference = True,
-                                     # maxdepth in args
-                                     references = references,
-                                     mdata = mdata,
-                                     mcomponents = mcomponents,
-                                     rcomponents = rcomponents,
-                                     stylesheet = stylesheet,
-                                     as_json = as_json,
-                                     maxbounds = maxbounds,
-                                     target = target,
-                                     **args)
-        # Transformation error?
-        if not output:
-            r.error(400, "XSLT Transformation Error: %s " % current.xml.error)
-
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def put_tree(r, **attr):
-        """
-            XML Element tree import method
-
-            @param r: the S3Request method
-            @param attr: controller attributes
-        """
-
-        get_vars = r.get_vars
-
-        # Skip invalid records?
-        if "ignore_errors" in get_vars:
-            ignore_errors = True
-        else:
-            ignore_errors = False
-
-        # Find all source names in the URL vars
-        def findnames(get_vars, name):
-            nlist = []
-            if name in get_vars:
-                names = get_vars[name]
-                if isinstance(names, (list, tuple)):
-                    names = ",".join(names)
-                names = names.split(",")
-                for n in names:
-                    if n[0] == "(" and ")" in n[1:]:
-                        nlist.append(n[1:].split(")", 1))
-                    else:
-                        nlist.append([None, n])
-            return nlist
-        filenames = findnames(get_vars, "filename")
-        fetchurls = findnames(get_vars, "fetchurl")
-        source_url = None
-
-        # Get the source(s)
-        s3 = current.response.s3
-        json_formats = s3.json_formats
-        csv_formats = s3.csv_formats
-        source = []
-        representation = r.representation
-        if representation in json_formats or representation in csv_formats:
-            if filenames:
-                try:
-                    for f in filenames:
-                        source.append((f[0], open(f[1], "rb")))
-                except:
-                    source = []
-            elif fetchurls:
-                try:
-                    for u in fetchurls:
-                        source.append((u[0], urlopen(u[1])))
-                except:
-                    source = []
-            elif r.http != "GET":
-                source = r.read_body()
-        else:
-            if filenames:
-                source = filenames
-            elif fetchurls:
-                source = fetchurls
-                # Assume only 1 URL for GeoRSS feed caching
-                source_url = fetchurls[0][1]
-            elif r.http != "GET":
-                source = r.read_body()
-        if not source:
-            if filenames or fetchurls:
-                # Error: source not found
-                r.error(400, "Invalid source")
-            else:
-                # No source specified => return resource structure
-                return r.get_struct(r, **attr)
-
-        # Find XSLT stylesheet
-        stylesheet = r.stylesheet(method="import")
-        # Target IDs
-        if r.method == "create":
-            _id = None
-        else:
-            _id = r.id
-
-        # Transformation mode?
-        if "xsltmode" in get_vars:
-            args = {"xsltmode": get_vars["xsltmode"]}
-        else:
-            args = {}
-        # These 3 options are called by gis.show_map() & read by the
-        # GeoRSS Import stylesheet to populate the gis_cache table
-        # Source URL: For GeoRSS/KML Feed caching
-        if source_url:
-            args["source_url"] = source_url
-        # Data Field: For GeoRSS/KML Feed popups
-        if "data_field" in get_vars:
-            args["data_field"] = get_vars["data_field"]
-        # Image Field: For GeoRSS/KML Feed popups
-        if "image_field" in get_vars:
-            args["image_field"] = get_vars["image_field"]
-
-        # Format type?
-        if representation in json_formats:
-            representation = "json"
-        elif representation in csv_formats:
-            representation = "csv"
-        else:
-            representation = "xml"
-
-        try:
-            output = r.resource.import_xml(source,
-                                           id=_id,
-                                           format=representation,
-                                           files=r.files,
-                                           stylesheet=stylesheet,
-                                           ignore_errors=ignore_errors,
-                                           **args)
-        except IOError:
-            current.auth.permission.fail()
-        except SyntaxError:
-            e = sys.exc_info()[1]
-            if hasattr(e, "message"):
-                e = e.message
-            r.error(400, e)
-
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_struct(r, **attr):
-        """
-            Resource structure introspection method
-
-            @param r: the S3Request instance
-            @param attr: controller attributes
-        """
-
-        response = current.response
-        json_formats = response.s3.json_formats
-        if r.representation in json_formats:
-            as_json = True
-            content_type = "application/json"
-        else:
-            as_json = False
-            content_type = "text/xml"
-        get_vars = r.get_vars
-        meta = str(get_vars.get("meta", False)).lower() == "true"
-        opts = str(get_vars.get("options", False)).lower() == "true"
-        refs = str(get_vars.get("references", False)).lower() == "true"
-        stylesheet = r.stylesheet()
-        output = r.resource.export_struct(meta=meta,
-                                          options=opts,
-                                          references=refs,
-                                          stylesheet=stylesheet,
-                                          as_json=as_json)
-        if output is None:
-            # Transformation error
-            r.error(400, current.xml.error)
-        response.headers["Content-Type"] = content_type
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_fields(r, **attr):
-        """
-            Resource structure introspection method (single table)
-
-            @param r: the S3Request instance
-            @param attr: controller attributes
-        """
-
-        representation = r.representation
-        if representation == "xml":
-            output = r.resource.export_fields(component=r.component_name)
-            content_type = "text/xml"
-        elif representation == "s3json":
-            output = r.resource.export_fields(component=r.component_name,
-                                              as_json=True)
-            content_type = "application/json"
-        else:
-            r.error(415, current.ERROR.BAD_FORMAT)
-        response = current.response
-        response.headers["Content-Type"] = content_type
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_options(r, **attr):
-        """
-            Field options introspection method (single table)
-
-            @param r: the S3Request instance
-            @param attr: controller attributes
-        """
-
-        get_vars = r.get_vars
-
-        items = get_vars.get("field")
-        if items:
-            if not isinstance(items, (list, tuple)):
-                items = [items]
-            fields = []
-            add_fields = fields.extend
-            for item in items:
-                f = item.split(",")
-                if f:
-                    add_fields(f)
-        else:
-            fields = None
-
-        if "hierarchy" in get_vars:
-            hierarchy = get_vars["hierarchy"].lower() not in ("false", "0")
-        else:
-            hierarchy = False
-
-        if "only_last" in get_vars:
-            only_last = get_vars["only_last"].lower() not in ("false", "0")
-        else:
-            only_last = False
-
-        if "show_uids" in get_vars:
-            show_uids = get_vars["show_uids"].lower() not in ("false", "0")
-        else:
-            show_uids = False
-
-        representation = r.representation
-        flat = False
-        if representation == "xml":
-            only_last = False
-            as_json = False
-            content_type = "text/xml"
-        elif representation == "s3json":
-            show_uids = False
-            as_json = True
-            content_type = "application/json"
-        elif representation == "json" and fields and len(fields) == 1:
-            # JSON option supported for flat data structures only
-            # e.g. for use by jquery.jeditable
-            flat = True
-            show_uids = False
-            as_json = True
-            content_type = "application/json"
-        else:
-            r.error(415, current.ERROR.BAD_FORMAT)
-
-        component = r.component_name
-        output = r.resource.export_options(component=component,
-                                           fields=fields,
-                                           show_uids=show_uids,
-                                           only_last=only_last,
-                                           hierarchy=hierarchy,
-                                           as_json=as_json,
-                                           )
-
-        if flat:
-            s3json = json.loads(output)
-            output = {}
-            options = s3json.get("option")
-            if options:
-                for item in options:
-                    output[item.get("@value")] = item.get("$", "")
-            output = json.dumps(output)
-
-        current.response.headers["Content-Type"] = content_type
-        return output
-
-    # -------------------------------------------------------------------------
     # Tools
     # -------------------------------------------------------------------------
     def factory(self, **args):
         """
             Generate a new request for the same resource
 
-            @param args: arguments for request constructor
+            :param args: arguments for request constructor
         """
 
-        return s3_request(r=self, **args)
+        return crud_request(r=self, **args)
 
     # -------------------------------------------------------------------------
     def __getattr__(self, key):
         """
-            Called upon S3Request.<key> - looks up the value for the <key>
+            Called upon CRUDRequest.<key> - looks up the value for the <key>
             attribute. Falls back to current.request if the attribute is
-            not defined in this S3Request.
+            not defined in this CRUDRequest.
 
-            @param key: the key to lookup
+            :param key: the key to lookup
         """
 
         if key in self.__dict__:
@@ -1282,7 +657,7 @@ class S3Request(object):
         """
             Check the request for a transformable format
 
-            @param method: "import" for import methods, else None
+            :param method: "import" for import methods, else None
         """
 
         if self.representation in ("html", "aadata", "popup", "iframe"):
@@ -1300,7 +675,7 @@ class S3Request(object):
         """
             Determine whether to actuate a link or not
 
-            @param component_id: the component_id (if not self.component_id)
+            :param component_id: the component_id (if not self.component_id)
         """
 
         if not component_id:
@@ -1347,9 +722,9 @@ class S3Request(object):
         """
             Action upon error
 
-            @param status: HTTP status code
-            @param message: the error message
-            @param tree: the tree causing the error
+            :param status: HTTP status code
+            :param message: the error message
+            :param tree: the tree causing the error
         """
 
         if self.representation == "html":
@@ -1371,14 +746,15 @@ class S3Request(object):
 
     # -------------------------------------------------------------------------
     def url(self,
-            id=None,
-            component=None,
-            component_id=None,
-            target=None,
-            method=None,
-            representation=None,
-            vars=None,
-            host=None):
+            id = None,
+            component = None,
+            component_id = None,
+            target = None,
+            method = None,
+            representation = None,
+            vars = None,
+            host = None,
+            ):
         """
             Returns the URL of this request, use parameters to override
             current requests attributes:
@@ -1387,14 +763,14 @@ class S3Request(object):
                 - 0 or "" to set attribute to NONE
                 - value to use explicit value
 
-            @param id: the master record ID
-            @param component: the component name
-            @param component_id: the component ID
-            @param target: the target record ID (choose automatically)
-            @param method: the URL method
-            @param representation: the representation for the URL
-            @param vars: the URL query variables
-            @param host: string to force absolute URL with host (True means http_host)
+            :param id: the master record ID
+            :param component: the component name
+            :param component_id: the component ID
+            :param target: the target record ID (choose automatically)
+            :param method: the URL method
+            :param representation: the representation for the URL
+            :param vars: the URL query variables
+            :param host: string to force absolute URL with host (True means http_host)
 
             Particular behavior:
                 - changing the master record ID resets the component ID
@@ -1504,10 +880,10 @@ class S3Request(object):
         """
             Get the target table of the current request
 
-            @return: a tuple of (prefix, name, table, tablename) of the target
+            :return: a tuple of (prefix, name, table, tablename) of the target
                 resource of this request
 
-            @todo: update for link table support
+            TODO update for link table support
         """
 
         component = self.component
@@ -1535,7 +911,7 @@ class S3Request(object):
             Parse the "viewing" URL parameter, frequently used for
             perspective discrimination and processing in prep
 
-            @returns: tuple (tablename, record_id) if "viewing" is set,
+            :returns: tuple (tablename, record_id) if "viewing" is set,
                       None otherwise
         """
 
@@ -1558,8 +934,8 @@ class S3Request(object):
         """
             Find the XSLT stylesheet for this request
 
-            @param method: "import" for data imports, else None
-            @param skip_error: do not raise an HTTP error status
+            :param method: "import" for data imports, else None
+            :param skip_error: do not raise an HTTP error status
                                if the stylesheet cannot be found
         """
 
@@ -1654,7 +1030,7 @@ class S3Request(object):
         """
             Invoke the customization callback for a resource.
 
-            @param tablename: the tablename of the resource; if called
+            :param tablename: the tablename of the resource; if called
                               without tablename it will invoke the callbacks
                               for the target resources of this request:
                                 - master
@@ -1673,10 +1049,10 @@ class S3Request(object):
                 settings.customise_resource_my_table = \
                                         customise_resource_my_table
 
-            @note: the hook itself can call r.customise_resource in order
-                   to cascade customizations as necessary
-            @note: if a table is customised that is not currently loaded,
-                   then it will be loaded for this process
+            .. note:: the hook itself can call r.customise_resource in order
+                      to cascade customizations as necessary
+            .. note:: if a table is customised that is not currently loaded,
+                      then it will be loaded for this process
         """
 
         if tablename is None:
@@ -1700,16 +1076,14 @@ class S3Request(object):
                 customise(self, tablename)
 
 # =============================================================================
-# Global functions
-#
-def s3_request(*args, **kwargs):
+def crud_request(*args, **kwargs):
     """
-        Helper function to generate S3Request instances
+        Helper function to generate CRUDRequest instances
 
-        @param args: arguments for the S3Request
-        @param kwargs: keyword arguments for the S3Request
+        :param args: arguments for the CRUDRequest
+        :param kwargs: keyword arguments for the CRUDRequest
 
-        @keyword catch_errors: if set to False, errors will be raised
+        :keyword catch_errors: if set to False, errors will be raised
                                instead of returned to the client, useful
                                for optional sub-requests, or if the caller
                                implements fallbacks
@@ -1719,7 +1093,7 @@ def s3_request(*args, **kwargs):
 
     error = None
     try:
-        r = S3Request(*args, **kwargs)
+        r = CRUDRequest(*args, **kwargs)
     except (AttributeError, SyntaxError):
         if catch_errors is False:
             raise
@@ -1739,12 +1113,194 @@ def s3_request(*args, **kwargs):
             headers = {"Content-Type":"application/json"}
             current.log.error(message)
             raise HTTP(error,
-                       body=current.xml.json_message(success=False,
-                                                     statuscode=error,
-                                                     message=message,
-                                                     ),
-                       web2py_error=message,
+                       body = current.xml.json_message(success = False,
+                                                       statuscode = error,
+                                                       message = message,
+                                                       ),
+                       web2py_error = message,
                        **headers)
     return r
+
+# -----------------------------------------------------------------------------
+def crud_controller(prefix=None, resourcename=None, **attr):
+    """
+        Helper function to apply the S3Resource REST interface
+
+        :param prefix: the application prefix
+        :param resourcename: the resource name (without prefix)
+        :param attr: additional keyword parameters
+
+        Any keyword parameters will be copied into the output dict (provided
+        that the output is a dict). If a keyword parameter is callable, then
+        it will be invoked, and its return value will be added to the output
+        dict instead. The callable receives the CRUDRequest as its first and
+        only parameter.
+
+        CRUD can be configured per table using:
+
+            s3db.configure(tablename, **attr)
+
+        *** Redirection:
+
+        create_next             URL to redirect to after a record has been created
+        update_next             URL to redirect to after a record has been updated
+        delete_next             URL to redirect to after a record has been deleted
+
+        *** Form configuration:
+
+        list_fields             list of names of fields to include into list views
+        subheadings             Sub-headings (see separate documentation)
+        listadd                 Enable/Disable add-form in list views
+
+        *** CRUD configuration:
+
+        editable                Allow/Deny record updates in this table
+        deletable               Allow/Deny record deletions in this table
+        insertable              Allow/Deny record insertions into this table
+        copyable                Allow/Deny record copying within this table
+
+        *** Callbacks:
+
+        create_onvalidation     Function for additional record validation on create
+        create_onaccept         Function after successful record insertion
+
+        update_onvalidation     Function for additional record validation on update
+        update_onaccept         Function after successful record update
+
+        onvalidation            Fallback for both create_onvalidation and update_onvalidation
+        onaccept                Fallback for both create_onaccept and update_onaccept
+        ondelete                Function after record deletion
+    """
+
+    auth = current.auth
+    s3db = current.s3db
+
+    request = current.request
+    response = current.response
+    s3 = response.s3
+    settings = current.deployment_settings
+
+    # Parse the request
+    dynamic = attr.get("dynamic")
+    if dynamic:
+        # Dynamic table controller
+        c = request.controller
+        f = request.function
+        attr = settings.customise_controller("%s_%s" % (c, f), **attr)
+        from core import DYNAMIC_PREFIX, s3_get_extension
+        r = crud_request(DYNAMIC_PREFIX,
+                         dynamic,
+                         f = "%s/%s" % (f, dynamic),
+                         args = request.args[1:],
+                         extension = s3_get_extension(request),
+                         )
+    else:
+        # Customise Controller from Template
+        attr = settings.customise_controller(
+                    "%s_%s" % (prefix or request.controller,
+                               resourcename or request.function,
+                               ),
+                    **attr)
+        r = crud_request(prefix, resourcename)
+
+    # Customize target resource(s) from Template
+    r.customise_resource()
+
+    # List of methods rendering datatables with default action buttons
+    dt_methods = (None, "datatable", "datatable_f", "summary", "list")
+
+    # List of methods rendering datatables with custom action buttons,
+    # => for these, s3.actions must not be touched, see below
+    # (defining here allows postp to add a custom method to the list)
+    s3.action_methods = ("import",
+                         "review",
+                         "approve",
+                         "reject",
+                         "deduplicate",
+                         )
+
+    # Execute the request
+    output = r(**attr)
+
+    method = r.method
+    if isinstance(output, dict) and method in dt_methods:
+
+        if s3.actions is None:
+
+            # Add default action buttons
+            prefix, name, table, tablename = r.target()
+            authorised = auth.s3_has_permission("update", tablename)
+
+            # If a component has components itself, then action buttons
+            # can be forwarded to the native controller by setting native=True
+            if r.component and s3db.has_components(table):
+                native = output.get("native", False)
+            else:
+                native = False
+
+            # Get table config
+            get_config = s3db.get_config
+            listadd = get_config(tablename, "listadd", True)
+
+            # Which is the standard open-action?
+            if settings.get_ui_open_read_first():
+                # Always read, irrespective permissions
+                editable = False
+            else:
+                editable = get_config(tablename, "editable", True)
+                if editable and \
+                   auth.permission.ownership_required("update", table):
+                    # User cannot edit all records in the table
+                    if settings.get_ui_auto_open_update():
+                        # Decide automatically per-record (implicit method)
+                        editable = "auto"
+                    else:
+                        # Always open read first (explicit read)
+                        editable = False
+
+            deletable = get_config(tablename, "deletable", True)
+            copyable = get_config(tablename, "copyable", False)
+
+            # URL to open the resource
+            from .methods import S3CRUD
+            open_url = S3CRUD._linkto(r,
+                                      authorised = authorised,
+                                      update = editable,
+                                      native = native)("[id]")
+
+            # Add action buttons for Open/Delete/Copy as appropriate
+            S3CRUD.action_buttons(r,
+                                  deletable = deletable,
+                                  copyable = copyable,
+                                  editable = editable,
+                                  read_url = open_url,
+                                  update_url = open_url
+                                  # To use modals
+                                  #update_url = "%s.popup?refresh=list" % open_url
+                                  )
+
+            # Override Add-button, link to native controller and put
+            # the primary key into get_vars for automatic linking
+            if native and not listadd and \
+               auth.s3_has_permission("create", tablename):
+                label = S3CRUD.crud_string(tablename, "label_create")
+                component = r.resource.components[name]
+                fkey = "%s.%s" % (name, component.fkey)
+                get_vars_copy = request.get_vars.copy()
+                get_vars_copy.update({fkey: r.record[component.fkey]})
+                url = URL(prefix, name,
+                          args = ["create"],
+                          vars = get_vars_copy,
+                          )
+                add_btn = A(label,
+                            _href = url,
+                            _class = "action-btn",
+                            )
+                output.update(add_btn = add_btn)
+
+    elif method not in s3.action_methods:
+        s3.actions = None
+
+    return output
 
 # END =========================================================================

@@ -30,28 +30,28 @@ def index():
 def order():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller(rheader = s3db.proc_rheader,
-                              hide_filter = True,
-                              )
+    return crud_controller(rheader = s3db.proc_rheader,
+                           hide_filter = True,
+                           )
 
 # -----------------------------------------------------------------------------
 #def order_item():
 #    """ RESTful CRUD controller """
 
-#    return s3_rest_controller()
+#    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def plan():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller(rheader = s3db.proc_rheader,
-                              hide_filter = True,
-                              )
+    return crud_controller(rheader = s3db.proc_rheader,
+                           hide_filter = True,
+                           )
 
 # -----------------------------------------------------------------------------
 def supplier():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("org", "organisation")
+    return crud_controller("org", "organisation")
 
 # END =========================================================================

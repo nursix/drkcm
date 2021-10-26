@@ -55,7 +55,7 @@ class S3Anonymize(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
 
             @return: output data (JSON)
@@ -90,7 +90,7 @@ class S3Anonymize(S3Method):
         """
             Handle POST (anonymize-request), i.e. anonymize the target record
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param table: the target Table
             @param record_id: the target record ID
 
@@ -221,7 +221,7 @@ class S3Anonymize(S3Method):
                                the transaction if an exception is raised
         """
 
-        from ..filters import FS, S3Joins
+        from ..resource import FS, S3Joins
 
         s3db = current.s3db
 
@@ -377,10 +377,10 @@ class S3AnonymizeWidget(object):
                ):
         """
             Render an action item (link or button) to anonymize the
-            target record of an S3Request, which can be embedded in
+            target record of an CRUDRequest, which can be embedded in
             the record view
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param label: The label for the action item
             @param ajaxURL: The URL for the AJAX request
             @param _class: HTML class for the action item
@@ -609,7 +609,7 @@ class S3AnonymizeBulk(S3Anonymize):
         """
             Entry point for REST API
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
 
             @return: output data (JSON)
@@ -666,7 +666,7 @@ class S3AnonymizeBulk(S3Anonymize):
         """
             Handle POST (anonymize-request), i.e. anonymize the target record
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param table: the target Table
             @param record_ids: the target record IDs
 
@@ -757,7 +757,7 @@ class S3AnonymizeBulkWidget(S3AnonymizeWidget):
             Render an action item (link or button) to anonymize the
             provided records
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param record_ids: The list of record_ids to act on
             @param _class: HTML class for the action item
 

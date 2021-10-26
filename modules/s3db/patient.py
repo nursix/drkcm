@@ -35,7 +35,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3PatientModel(S3Model):
+class S3PatientModel(DataModel):
     """
     """
 
@@ -230,7 +230,7 @@ class S3PatientModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 class patient_PatientRepresent(S3Represent):

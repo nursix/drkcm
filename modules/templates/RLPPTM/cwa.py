@@ -38,7 +38,7 @@ class TestResultRegistration(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -58,7 +58,7 @@ class TestResultRegistration(S3Method):
         """
             Register a test result
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -410,7 +410,7 @@ class TestResultRegistration(S3Method):
         """
             Generate a test certificate (PDF) for download
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -507,7 +507,7 @@ class TestResultRegistration(S3Method):
         """
             Retry sending test result to CWA result server
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 

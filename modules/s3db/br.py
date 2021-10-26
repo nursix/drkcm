@@ -72,7 +72,7 @@ from ..core import *
 CASE_GROUP = 7
 
 # =============================================================================
-class BRCaseModel(S3Model):
+class BRCaseModel(DataModel):
     """
         Model to register cases ("case registry") and track their processing
         status; uses pr_person for beneficiary person data
@@ -300,14 +300,14 @@ class BRCaseModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -468,7 +468,7 @@ class BRCaseModel(S3Model):
 # =============================================================================
 # Process Models
 # =============================================================================
-class BRCaseActivityModel(S3Model):
+class BRCaseActivityModel(DataModel):
     """
         Model for problem/needs-oriented case processing: activities taking
         place in response to individual needs of the beneficiary
@@ -994,7 +994,7 @@ class BRCaseActivityModel(S3Model):
                 data["end_date"] = None
 
 # =============================================================================
-class BRAppointmentModel(S3Model):
+class BRAppointmentModel(DataModel):
     """
         Model for workflow-oriented case processing: cases must pass a number
         of predefined processing steps (=appointments) in order to achieve a
@@ -1139,19 +1139,19 @@ class BRAppointmentModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
 # Category Models
 # =============================================================================
-class BRNeedsModel(S3Model):
+class BRNeedsModel(DataModel):
     """ Model for Need Categories """
 
     names = ("br_need",
@@ -1275,7 +1275,7 @@ class BRNeedsModel(S3Model):
 # =============================================================================
 # Assistance Models
 # =============================================================================
-class BRAssistanceModel(S3Model):
+class BRAssistanceModel(DataModel):
     """
         Generic model to track individual measures of assistance
     """
@@ -2093,7 +2093,7 @@ class BRAssistanceModel(S3Model):
                                         )
 
 # =============================================================================
-class BRAssistanceOfferModel(S3Model):
+class BRAssistanceOfferModel(DataModel):
     """
         Generic model to track individual measures of assistance
     """
@@ -2461,14 +2461,14 @@ class BRAssistanceOfferModel(S3Model):
             form.errors[error_field] = error
 
 # =============================================================================
-class BRDistributionModel(S3Model):
+class BRDistributionModel(DataModel):
     """
         Model to process+track relief item distributions to beneficiaries
     """
     pass
 
 # =============================================================================
-class BRPaymentModel(S3Model):
+class BRPaymentModel(DataModel):
     """
         Model to process+track benefits payments to beneficiaries
     """
@@ -2477,7 +2477,7 @@ class BRPaymentModel(S3Model):
 # =============================================================================
 # Tracking Models
 # =============================================================================
-class BRCaseEventModel(S3Model):
+class BRCaseEventModel(DataModel):
     """
         Model for checkpoint-style tracking of beneficiaries
     """
@@ -2486,7 +2486,7 @@ class BRCaseEventModel(S3Model):
 # =============================================================================
 # Case Documentation Models
 # =============================================================================
-class BRLanguageModel(S3Model):
+class BRLanguageModel(DataModel):
     """
         Model to document language options for communication
         with a beneficiary
@@ -2537,21 +2537,21 @@ class BRLanguageModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
-class BRLegalStatusModel(S3Model):
+class BRLegalStatusModel(DataModel):
     pass
 
 # =============================================================================
-class BRServiceContactModel(S3Model):
+class BRServiceContactModel(DataModel):
     """ Model to track external service contacts of beneficiaries """
 
     names = ("br_service_contact",
@@ -2680,17 +2680,17 @@ class BRServiceContactModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
-class BRNotesModel(S3Model):
+class BRNotesModel(DataModel):
     """ Simple Journal for Case Files """
 
     names = ("br_note",
@@ -2810,14 +2810,14 @@ class BRNotesModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class BRReferralModel(S3Model):
+class BRReferralModel(DataModel):
     pass
 
 # =============================================================================
-class BRVulnerabilityModel(S3Model):
+class BRVulnerabilityModel(DataModel):
     pass
 
 # =============================================================================
@@ -3989,7 +3989,7 @@ def br_group_membership_onaccept(membership, group, group_id, person_id):
                 row = db(query).select(ctable.id, limitby=(0, 1)).first()
                 if not row:
                     # Customise case resource
-                    r = S3Request("br", "case", current.request)
+                    r = CRUDRequest("br", "case", current.request)
                     r.customise_resource("br_case")
 
                     # Get the default case status from database

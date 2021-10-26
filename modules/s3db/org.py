@@ -98,7 +98,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class OrgOrganisationModel(S3Model):
+class OrgOrganisationModel(DataModel):
     """
         Organisations
     """
@@ -662,7 +662,7 @@ class OrgOrganisationModel(S3Model):
                   )
 
         # Custom Method for S3OrganisationAutocompleteWidget
-        self.set_method("org", "organisation",
+        self.set_method("org_organisation",
                         method = "search_ac",
                         action = self.org_search_ac)
 
@@ -1008,7 +1008,7 @@ class OrgOrganisationModel(S3Model):
             JSON search method for S3OrganisationAutocompleteWidget
             - searches name & acronym for both this organisation & the parent
               of branches
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -1130,7 +1130,7 @@ class OrgOrganisationModel(S3Model):
         return json.dumps(output, separators=SEPARATORS)
 
 # =============================================================================
-class OrgOrganisationNameModel(S3Model):
+class OrgOrganisationNameModel(DataModel):
     """
         Organsiation Names model
         - local names/acronyms for Organisations
@@ -1169,10 +1169,10 @@ class OrgOrganisationNameModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgOrganisationBranchModel(S3Model):
+class OrgOrganisationBranchModel(DataModel):
     """
         Organisation Branches
     """
@@ -1377,7 +1377,7 @@ class OrgOrganisationBranchModel(S3Model):
             org_update_affiliations("org_organisation_branch", record)
 
 # =============================================================================
-class OrgOrganisationCapacityModel(S3Model):
+class OrgOrganisationCapacityModel(DataModel):
     """
         (Branch) Organisational Capacity Assessment
         - Flexible Questions (Dynamic Data Model)
@@ -1467,16 +1467,16 @@ class OrgOrganisationCapacityModel(S3Model):
                      )
 
         # Custom Report Method
-        self.set_method("org", "capacity_assessment_data",
+        self.set_method("org_capacity_assessment_data",
                         method = "custom_report",
                         action = org_CapacityReport())
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgOrganisationGroupModel(S3Model):
+class OrgOrganisationGroupModel(DataModel):
     """
         Organisation Group Model
         - 'Coalitions' or 'Networks'
@@ -1615,7 +1615,7 @@ class OrgOrganisationGroupModel(S3Model):
                             )
 
         # Custom Method to Assign Orgs
-        self.set_method("org", "group",
+        self.set_method("org_group",
                         method = "assign",
                         action = org_AssignMethod(component="membership"))
 
@@ -1728,7 +1728,7 @@ class OrgOrganisationGroupModel(S3Model):
             org_update_affiliations("org_group_membership", record)
 
 # =============================================================================
-class OrgOrganisationGroupPersonModel(S3Model):
+class OrgOrganisationGroupPersonModel(DataModel):
     """
         Link table between Organisation Groups & Persons
     """
@@ -1809,10 +1809,10 @@ class OrgOrganisationGroupPersonModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgOrganisationGroupTeamModel(S3Model):
+class OrgOrganisationGroupTeamModel(DataModel):
     """
         Link table between Organisation Groups & Teams
     """
@@ -1846,7 +1846,7 @@ class OrgOrganisationGroupTeamModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1882,7 +1882,7 @@ class OrgOrganisationGroupTeamModel(S3Model):
                                             )
 
 # =============================================================================
-class OrgOrganisationLocationModel(S3Model):
+class OrgOrganisationLocationModel(DataModel):
     """
         Organisation Location Model
         - Locations served by an Organisation
@@ -1930,10 +1930,10 @@ class OrgOrganisationLocationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgOrganisationOrganisationModel(S3Model):
+class OrgOrganisationOrganisationModel(DataModel):
     """
         Link table between Organisations & Organisations
         - can be used to provide non-hierarchical relationships
@@ -1978,7 +1978,7 @@ class OrgOrganisationOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2004,7 +2004,7 @@ class OrgOrganisationOrganisationModel(S3Model):
             return None
 
 # =============================================================================
-class OrgOrganisationResourceModel(S3Model):
+class OrgOrganisationResourceModel(DataModel):
     """
         Organisation Resource Model
         - depends on Stats module
@@ -2019,7 +2019,7 @@ class OrgOrganisationResourceModel(S3Model):
         #settings = current.deployment_settings
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Organisation Resource Model needs Stats module enabling")
-            return {}
+            return None
 
         T = current.T
         #auth = current.auth
@@ -2161,10 +2161,10 @@ class OrgOrganisationResourceModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgOrganisationSectorModel(S3Model):
+class OrgOrganisationSectorModel(DataModel):
     """
         Organisation Sector Model
     """
@@ -2489,7 +2489,7 @@ class OrgOrganisationSectorModel(S3Model):
     #        return current.messages.UNKNOWN_OPT
 
 # =============================================================================
-class OrgServiceModel(S3Model):
+class OrgServiceModel(DataModel):
     """
         Organisation Service Model
     """
@@ -3062,7 +3062,7 @@ def org_service_root_service(service_id):
     return new_root
 
 # =============================================================================
-class OrgOrganisationTagModel(S3Model):
+class OrgOrganisationTagModel(DataModel):
     """
         Organisation Tags
     """
@@ -3104,10 +3104,10 @@ class OrgOrganisationTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgOrganisationTeamModel(S3Model):
+class OrgOrganisationTeamModel(DataModel):
     """
         Link table between Organisations & Teams
     """
@@ -3139,7 +3139,7 @@ class OrgOrganisationTeamModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3170,7 +3170,7 @@ class OrgOrganisationTeamModel(S3Model):
         org_update_affiliations("org_organisation_team", row.id)
 
 # =============================================================================
-class OrgOrganisationTypeTagModel(S3Model):
+class OrgOrganisationTypeTagModel(DataModel):
     """
         Organisation Type Tags
     """
@@ -3209,10 +3209,10 @@ class OrgOrganisationTypeTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgSiteModel(S3Model):
+class OrgSiteModel(DataModel):
     """
         Site Super-Entity
     """
@@ -3303,19 +3303,19 @@ class OrgSiteModel(S3Model):
                                           )
 
         # Custom Method for S3SiteAutocompleteWidget
-        set_method("org", "site",
+        set_method("org_site",
                    method = "search_ac",
                    action = self.site_search_ac)
 
         # Custom Method for S3AddPersonWidget
         # @ToDo: One for HRMs
-        set_method("org", "site",
+        set_method("org_site",
                    method = "site_contact_person",
                    action = self.site_contact_person)
 
         # Custom Method to Assign HRs
         # - done in instances
-        #set_method("org", "site",
+        #set_method("org_site",
         #           method = "assign",
         #           action = self.hrm_AssignMethod(component="human_resource_site"))
 
@@ -3699,7 +3699,7 @@ class OrgSiteModel(S3Model):
         """
             JSON search method for S3SiteAutocompleteWidget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: request attributes
         """
 
@@ -3796,7 +3796,7 @@ class OrgSiteModel(S3Model):
         return json.dumps(output, separators=SEPARATORS)
 
 # =============================================================================
-class OrgSiteDetailsModel(S3Model):
+class OrgSiteDetailsModel(DataModel):
     """ Extra optional details for Sites """
 
     names = ("org_site_status",
@@ -3904,7 +3904,7 @@ class OrgSiteDetailsModel(S3Model):
                 }
 
 # =============================================================================
-class OrgSiteEventModel(S3Model):
+class OrgSiteEventModel(DataModel):
     """
         Events for Sites
         - Check-In/Check-Out
@@ -3966,10 +3966,10 @@ class OrgSiteEventModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgSiteGroupModel(S3Model):
+class OrgSiteGroupModel(DataModel):
     """ Link Sites to Org Groups """
 
     names = ("org_site_org_group",
@@ -3990,10 +3990,10 @@ class OrgSiteGroupModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgSiteNameModel(S3Model):
+class OrgSiteNameModel(DataModel):
     """
         Site Names model
         - local names/acronyms for Sites/Facilities
@@ -4028,10 +4028,10 @@ class OrgSiteNameModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgSiteShiftModel(S3Model):
+class OrgSiteShiftModel(DataModel):
     """
         Site Shifts model
     """
@@ -4070,10 +4070,10 @@ class OrgSiteShiftModel(S3Model):
         #    )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgSiteTagModel(S3Model):
+class OrgSiteTagModel(DataModel):
     """
         Site Tags
     """
@@ -4118,10 +4118,10 @@ class OrgSiteTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgSiteLocationModel(S3Model):
+class OrgSiteLocationModel(DataModel):
     """
         Site Location Model
         - Locations served by a Site/Facility
@@ -4183,10 +4183,10 @@ class OrgSiteLocationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class OrgFacilityModel(S3Model):
+class OrgFacilityModel(DataModel):
     """
         Generic Site
     """
@@ -4614,7 +4614,7 @@ class OrgFacilityModel(S3Model):
                   )
 
         # Custom Method to Assign HRs
-        self.set_method("org", "facility",
+        self.set_method("org_facility",
                         method = "assign",
                         action = self.hrm_AssignMethod(component="human_resource_site"))
 
@@ -4852,7 +4852,7 @@ def org_facility_rheader(r, tabs=None):
     return rheader
 
 # =============================================================================
-class OrgRoomModel(S3Model):
+class OrgRoomModel(DataModel):
     """
         Rooms are a location within a Site
         - used by Asset module
@@ -4935,7 +4935,7 @@ class OrgRoomModel(S3Model):
                 }
 
 # =============================================================================
-class OrgOfficeModel(S3Model):
+class OrgOfficeModel(DataModel):
 
     names = ("org_office",
              "org_office_type",
@@ -5267,7 +5267,7 @@ class OrgOfficeModel(S3Model):
         org_update_affiliations("org_office", form.vars)
 
 # =============================================================================
-class OrgOfficeTypeTagModel(S3Model):
+class OrgOfficeTypeTagModel(DataModel):
     """
         Office Type Tags
     """
@@ -5308,7 +5308,7 @@ class OrgOfficeTypeTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def org_organisation_address(row):
@@ -5996,7 +5996,7 @@ class org_SiteCheckInMethod(S3Method):
         """
             Entry point for the REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -6023,7 +6023,7 @@ class org_SiteCheckInMethod(S3Method):
         """
             Render the check-in page
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -6189,7 +6189,7 @@ class org_SiteCheckInMethod(S3Method):
                  l: the PE label
                  }
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller parameters
         """
 
@@ -6348,7 +6348,7 @@ class org_SiteCheckInMethod(S3Method):
             invokes the check_in_status hook for the site resource
             to obtain current status information.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param site_id: the site ID
             @param person: the person record
 
@@ -6447,7 +6447,7 @@ class org_SiteCheckInMethod(S3Method):
             Check-in the person at this site, invokes the site_check_in
             hook for the site resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param person: the person record
         """
 
@@ -6482,7 +6482,7 @@ class org_SiteCheckInMethod(S3Method):
             Check-out the person from this site, invokes the site_check_out
             hook for the site resource
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param person: the person record
         """
 
@@ -7236,19 +7236,14 @@ def org_organisation_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("org", "organisation",
-                                     # Need to be explicit since can also come from HRM or Project controllers
-                                     csv_stylesheet = ("org", "organisation.xsl"),
-                                     csv_template = ("org", "organisation"),
-                                     # Don't allow components with components (such as document) to breakout from tabs
-                                     native = False,
-                                     rheader = org_rheader,
-                                     )
-    return output
-
-
-
-
+    return current.crud_controller("org", "organisation",
+                                   # Need to be explicit since can also come from HRM or Project controllers
+                                   csv_stylesheet = ("org", "organisation.xsl"),
+                                   csv_template = ("org", "organisation"),
+                                   # Don't allow components with components (such as document) to breakout from tabs
+                                   native = False,
+                                   rheader = org_rheader,
+                                   )
 
 # -----------------------------------------------------------------------------
 def org_organisation_organisation_onaccept(form):
@@ -7549,12 +7544,11 @@ def org_office_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("org", "office",
-                                     # Don't allow components with components (such as document) to breakout from tabs
-                                     native = False,
-                                     rheader = org_rheader,
-                                     )
-    return output
+    return current.crud_controller("org", "office",
+                                   # Don't allow components with components (such as document) to breakout from tabs
+                                   native = False,
+                                   rheader = org_rheader,
+                                   )
 
 # =============================================================================
 def org_facility_controller():
@@ -7812,10 +7806,7 @@ def org_facility_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("org", "facility",
-                                     rheader = org_rheader,
-                                     )
-    return output
+    return current.crud_controller("org", "facility", rheader=org_rheader)
 
 # =============================================================================
 # Hierarchy Manipulation
@@ -8217,7 +8208,7 @@ class org_OrganisationDuplicate(object):
         """
             Main method, to be set for the "deduplicate" hook
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         try:
@@ -8434,7 +8425,7 @@ class org_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8594,7 +8585,7 @@ class org_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
+                    _vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Where to retrieve updated filter options from:
@@ -8662,7 +8653,7 @@ class org_CapacityReport(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -8748,7 +8739,7 @@ class org_CapacityReport(S3Method):
         """
             Method to read the data
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         # Read all the permitted data
@@ -8826,8 +8817,8 @@ class org_CapacityReport(S3Method):
         try:
             import xlwt
         except ImportError:
-            from core.io.codecs.xls import S3XLS
-            if current.auth.permission.format in S3Request.INTERACTIVE_FORMATS:
+            from core.resource.codecs.xls import S3XLS
+            if current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
                 current.session.error = S3XLS.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))
             else:

@@ -12,7 +12,7 @@ from io import BytesIO
 from gluon import *
 from gluon.storage import Storage
 
-from core import S3Request
+from core import CRUDRequest
 
 from unit_tests import run_suite
 
@@ -46,17 +46,17 @@ class POSTFilterTests(unittest.TestCase):
         request.env.content_type = "multipart/form-data"
 
         # Test with valid filter expression JSON
-        r = S3Request(prefix = "org",
-                      name = "organisation",
-                      http = "POST",
-                      get_vars = {"$search": "form", "test": "retained"},
-                      post_vars = {"~.name|~.comments__like": '''["first","second"]''',
-                                   "~.other_field__lt": '''"1"''',
-                                   "multi.nonstr__belongs": '''[1,2,3]''',
-                                   "service_organisation.service_id__belongs": "1",
-                                   "other": "testing",
-                                   },
-                      )
+        r = CRUDRequest(prefix = "org",
+                        name = "organisation",
+                        http = "POST",
+                        get_vars = {"$search": "form", "test": "retained"},
+                        post_vars = {"~.name|~.comments__like": '''["first","second"]''',
+                                     "~.other_field__lt": '''"1"''',
+                                     "multi.nonstr__belongs": '''[1,2,3]''',
+                                     "service_organisation.service_id__belongs": "1",
+                                     "other": "testing",
+                                     },
+                        )
 
         # Method changed to GET:
         assertEqual(r.http, "GET")
@@ -86,14 +86,14 @@ class POSTFilterTests(unittest.TestCase):
         assertEqual(get_vars.get("test"), "retained")
 
         # Test without $search
-        r = S3Request(prefix = "org",
-                      name = "organisation",
-                      http = "POST",
-                      get_vars = {"test": "retained"},
-                      post_vars = {"service_organisation.service_id__belongs": "1",
-                                   "other": "testing",
-                                   },
-                      )
+        r = CRUDRequest(prefix = "org",
+                        name = "organisation",
+                        http = "POST",
+                        get_vars = {"test": "retained"},
+                        post_vars = {"service_organisation.service_id__belongs": "1",
+                                     "other": "testing",
+                                     },
+                        )
 
         # Method should still be POST:
         assertEqual(r.http, "POST")
@@ -124,11 +124,11 @@ class POSTFilterTests(unittest.TestCase):
         # Test with valid filter expression JSON
         jsonstr = '''{"service_organisation.service_id__belongs":"1","~.example__lt":1,"~.other__like":[1,2],"~.name__like":"*Liquiçá*"}'''
         request._body = BytesIO(jsonstr.encode("utf-8"))
-        r = S3Request(prefix = "org",
-                      name = "organisation",
-                      http = "POST",
-                      get_vars = {"$search": "ajax", "test": "retained"},
-                      )
+        r = CRUDRequest(prefix = "org",
+                        name = "organisation",
+                        http = "POST",
+                        get_vars = {"$search": "ajax", "test": "retained"},
+                        )
 
         # Method changed to GET:
         assertEqual(r.http, "GET")
@@ -154,11 +154,11 @@ class POSTFilterTests(unittest.TestCase):
 
         # Test without $search
         request._body = BytesIO(b'{"service_organisation.service_id__belongs":"1"}')
-        r = S3Request(prefix = "org",
-                      name = "organisation",
-                      http = "POST",
-                      get_vars = {"test": "retained"},
-                      )
+        r = CRUDRequest(prefix = "org",
+                        name = "organisation",
+                        http = "POST",
+                        get_vars = {"test": "retained"},
+                        )
 
         # Method should still be POST:
         assertEqual(r.http, "POST")
@@ -175,11 +175,11 @@ class POSTFilterTests(unittest.TestCase):
 
         # Test with valid JSON but invalid filter expression
         request._body = BytesIO(b'[1,2,3]')
-        r = S3Request(prefix = "org",
-                      name = "organisation",
-                      http = "POST",
-                      get_vars = {"$search": "ajax", "test": "retained"},
-                      )
+        r = CRUDRequest(prefix = "org",
+                        name = "organisation",
+                        http = "POST",
+                        get_vars = {"$search": "ajax", "test": "retained"},
+                        )
 
         # Method changed to GET:
         assertEqual(r.http, "GET")
@@ -196,11 +196,11 @@ class POSTFilterTests(unittest.TestCase):
 
         # Test with empty body
         request._body = BytesIO(b'')
-        r = S3Request(prefix = "org",
-                      name = "organisation",
-                      http = "POST",
-                      get_vars = {"$search": "ajax", "test": "retained"},
-                      )
+        r = CRUDRequest(prefix = "org",
+                        name = "organisation",
+                        http = "POST",
+                        get_vars = {"$search": "ajax", "test": "retained"},
+                        )
 
         # Method changed to GET:
         assertEqual(r.http, "GET")
@@ -235,12 +235,12 @@ class URLBuilderTests(unittest.TestCase):
             self.a = current.request.application
             self.p = str(record[ptable.id])
             self.c = str(record[ctable.id])
-            self.r = S3Request(prefix="pr",
-                               name="person",
-                               c="pr",
-                               f="person",
-                               args=[self.p, "contact", self.c, "method"],
-                               vars=Storage(format="xml", test="test"))
+            self.r = CRUDRequest(prefix="pr",
+                                 name="person",
+                                 c="pr",
+                                 f="person",
+                                 args=[self.p, "contact", self.c, "method"],
+                                 vars=Storage(format="xml", test="test"))
 
     # -------------------------------------------------------------------------
     def tearDown(self):
@@ -272,12 +272,12 @@ class URLBuilderTests(unittest.TestCase):
                          "/%s/pr/person/%s/contact/%s/read.xml?test=test" % (a, p, c))
 
         # Test without component
-        r = S3Request(prefix="pr",
-                      name="person",
-                      c="pr",
-                      f="person",
-                      args=[self.p, "method"],
-                      vars=Storage(format="xml", test="test"))
+        r = CRUDRequest(prefix="pr",
+                        name="person",
+                        c="pr",
+                        f="person",
+                        args=[self.p, "method"],
+                        vars=Storage(format="xml", test="test"))
 
         # No change
         self.assertEqual(r.url(method=None),
@@ -378,12 +378,12 @@ class URLBuilderTests(unittest.TestCase):
     def testURLTargetOverrideMaster(self):
 
         (a, p, c, r) = (self.a, self.p, self.c, self.r)
-        r = S3Request(prefix="pr",
-                      name="person",
-                      c="pr",
-                      f="person",
-                      args=[self.p, "method"],
-                      vars=Storage(format="xml", test="test"))
+        r = CRUDRequest(prefix="pr",
+                        name="person",
+                        c="pr",
+                        f="person",
+                        args=[self.p, "method"],
+                        vars=Storage(format="xml", test="test"))
 
         # No change
         self.assertEqual(r.url(target=None),
@@ -453,12 +453,12 @@ class URLBuilderTests(unittest.TestCase):
                          "/%s/pr/person/%s/contact/deduplicate.xml" % (a, p))
 
         # Test request with component (without component ID)
-        r = S3Request(prefix="pr",
-                      name="person",
-                      c="pr",
-                      f="person",
-                      args=[self.p, "contact", "method"],
-                      vars=Storage(format="xml", test="test"))
+        r = CRUDRequest(prefix="pr",
+                        name="person",
+                        c="pr",
+                        f="person",
+                        args=[self.p, "contact", "method"],
+                        vars=Storage(format="xml", test="test"))
 
         self.assertEqual(r.url(method="", id=5),
                          "/%s/pr/person/5/contact.xml?test=test" % a)
@@ -470,12 +470,12 @@ class URLBuilderTests(unittest.TestCase):
                          "/%s/pr/person/%s/contact/deduplicate.xml" % (a, p))
 
         # Test request without component
-        r = S3Request(prefix="pr",
-                      name="person",
-                      c="pr",
-                      f="person",
-                      args=[self.p, "method"],
-                      vars=Storage(format="xml", test="test"))
+        r = CRUDRequest(prefix="pr",
+                        name="person",
+                        c="pr",
+                        f="person",
+                        args=[self.p, "method"],
+                        vars=Storage(format="xml", test="test"))
 
         self.assertEqual(r.url(method="", id=5),
                          "/%s/pr/person/5.xml?test=test" % a)

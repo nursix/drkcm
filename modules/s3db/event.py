@@ -86,7 +86,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3EventModel(S3Model):
+class S3EventModel(DataModel):
     """
         Event Model
 
@@ -566,36 +566,36 @@ class S3EventModel(S3Model):
                             )
 
         # Custom Methods
-        set_method("event", "event",
+        set_method("event_event",
                    method = "dispatch",
                    action = event_notification_dispatcher)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "add_bookmark",
                    action = self.event_add_bookmark)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "remove_bookmark",
                    action = self.event_remove_bookmark)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "add_tag",
                    action = self.event_add_tag)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "remove_tag",
                    action = self.event_remove_tag)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "share",
                    action = self.event_share)
 
-        set_method("event", "event",
+        set_method("event_event",
                    method = "unshare",
                    action = self.event_unshare)
 
         # Custom Method to Assign HRs
-        set_method("event", "event",
+        set_method("event_event",
                    method = "assign",
                    action = self.pr_AssignMethod(component="human_resource"))
 
@@ -938,7 +938,7 @@ class S3EventModel(S3Model):
                 db(table.id == row.post_id).update(expired=True)
 
 # =============================================================================
-class S3EventLocationModel(S3Model):
+class S3EventLocationModel(DataModel):
     """
         Event Locations model
         - locations for Events
@@ -981,10 +981,10 @@ class S3EventLocationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventNameModel(S3Model):
+class S3EventNameModel(DataModel):
     """
         Event Names model
         - local names for Events
@@ -1020,10 +1020,10 @@ class S3EventNameModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventTagModel(S3Model):
+class S3EventTagModel(DataModel):
     """
         Event Tags model
         - tags for Events
@@ -1069,10 +1069,10 @@ class S3EventTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3IncidentModel(S3Model):
+class S3IncidentModel(DataModel):
     """
         Incidents
          - the primary unit at which things are managed:
@@ -1440,47 +1440,47 @@ class S3IncidentModel(S3Model):
                             )
 
         # Custom Methods
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "add_bookmark",
                    action = self.incident_add_bookmark)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "remove_bookmark",
                    action = self.incident_remove_bookmark)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "add_tag",
                    action = self.incident_add_tag)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "remove_tag",
                    action = self.incident_remove_tag)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "share",
                    action = self.incident_share)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "unshare",
                    action = self.incident_unshare)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "plan",
                    action = event_ActionPlan)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "scenario",
                    action = event_ApplyScenario)
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "assign",
                    action = self.pr_AssignMethod(component="human_resource"))
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "event",
                    action = event_EventAssignMethod())
 
-        set_method("event", "incident",
+        set_method("event_incident",
                    method = "dispatch",
                    action = event_notification_dispatcher)
 
@@ -2061,7 +2061,7 @@ class S3IncidentModel(S3Model):
         return output
 
 # =============================================================================
-class S3IncidentReportModel(S3Model):
+class S3IncidentReportModel(DataModel):
     """
         Incident Reports
          - reports about incidents
@@ -2217,7 +2217,7 @@ class S3IncidentReportModel(S3Model):
                        )
 
         # Custom Methods
-        self.set_method("event", "incident_report",
+        self.set_method("event_incident_report",
                         method = "assign",
                         action = event_IncidentAssignMethod(component = "incident_report_incident",
                                                             next_tab = "incident_report"))
@@ -2263,10 +2263,10 @@ class S3IncidentReportModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventActivityModel(S3Model):
+class S3EventActivityModel(DataModel):
     """
         Link Project Activities to Events
     """
@@ -2299,10 +2299,10 @@ class S3EventActivityModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventRequestModel(S3Model):
+class S3EventRequestModel(DataModel):
     """
         Link Requests to Incidents &/or Events
     """
@@ -2338,10 +2338,10 @@ class S3EventRequestModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventResourceModel(S3Model):
+class S3EventResourceModel(DataModel):
     """
         Resources Assigned to Events/Incidents
         - depends on Stats module
@@ -2360,7 +2360,7 @@ class S3EventResourceModel(S3Model):
 
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Event Resource Model needs Stats module enabling")
-            return {}
+            return None
 
         T = current.T
         super_link = self.super_link
@@ -2449,7 +2449,7 @@ class S3EventResourceModel(S3Model):
             msg_list_empty=T("No Resources assigned to Incident"))
 
         # Custom Methods
-        #self.set_method("event", "resource",
+        #self.set_method("event_resource",
         #                method = "check-in",
         #                action = S3CheckInMethod())
 
@@ -2517,10 +2517,10 @@ class S3EventResourceModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3IncidentReportOrganisationGroupModel(S3Model):
+class S3IncidentReportOrganisationGroupModel(DataModel):
     """
         Links between Incident Reports & Organisation Groups
     """
@@ -2555,10 +2555,10 @@ class S3IncidentReportOrganisationGroupModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3IncidentLogModel(S3Model):
+class S3IncidentLogModel(DataModel):
     """
         Incident Logs
             - record of all changes
@@ -2628,7 +2628,7 @@ class S3IncidentLogModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2661,7 +2661,7 @@ class S3IncidentLogModel(S3Model):
             current.msg.send_by_pe_id(pe_id, subject, message, contact_method="SMS")
 
 # =============================================================================
-class S3IncidentTypeModel(S3Model):
+class S3IncidentTypeModel(DataModel):
     """
         Incident Types
     """
@@ -2786,7 +2786,7 @@ class S3IncidentTypeModel(S3Model):
                 }
 
 # =============================================================================
-class S3IncidentTypeTagModel(S3Model):
+class S3IncidentTypeTagModel(DataModel):
     """
         Incident Type Tags
          - Key-Value extensions
@@ -2822,10 +2822,10 @@ class S3IncidentTypeTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventAlertModel(S3Model):
+class S3EventAlertModel(DataModel):
     """
         Alerts for Events/Incidents
 
@@ -2887,7 +2887,7 @@ class S3EventAlertModel(S3Model):
             msg_list_empty = T("No Alerts currently defined"))
 
         # Custom method to send alerts
-        #self.set_method("event", "alert",
+        #self.set_method("event_alert",
         #                method = "send",
         #                action = self.event_alert_send)
 
@@ -2926,10 +2926,10 @@ class S3EventAlertModel(S3Model):
             msg_list_empty = T("No Recipients currently defined"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventAssetModel(S3Model):
+class S3EventAssetModel(DataModel):
     """
         Link Assets to Incidents
     """
@@ -2943,7 +2943,7 @@ class S3EventAssetModel(S3Model):
         if not settings.has_module("supply"):
             # Don't crash
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
 
@@ -3075,7 +3075,7 @@ class S3EventAssetModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -3154,7 +3154,7 @@ class S3EventAssetModel(S3Model):
                              )
 
 # =============================================================================
-class S3EventBookmarkModel(S3Model):
+class S3EventBookmarkModel(DataModel):
     """
         Bookmarks for Events &/or Incidents
         - the Incident bookmarks do NOT populate the Event's
@@ -3200,10 +3200,10 @@ class S3EventBookmarkModel(S3Model):
         #    msg_list_empty = T("No Incidents currently bookmarked"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventCMSModel(S3Model):
+class S3EventCMSModel(DataModel):
     """
         Link CMS Posts to Events &/or Incidents
     """
@@ -3279,10 +3279,10 @@ class S3EventCMSModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventCMSTagModel(S3Model):
+class S3EventCMSTagModel(DataModel):
     """
         Link (CMS) Tags to Events or Incidents (used in WACOP)
         - the Incident tags do NOT populate the Event's
@@ -3321,10 +3321,10 @@ class S3EventCMSTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventDCModel(S3Model):
+class S3EventDCModel(DataModel):
     """
         Link Data Collections to Events &/or Incidents
     """
@@ -3391,10 +3391,10 @@ class S3EventDCModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventExpenseModel(S3Model):
+class S3EventExpenseModel(DataModel):
     """
         Link Expenses to Incidents &/or Events
         - normally linked at the Incident level & just visible at the Event level
@@ -3440,10 +3440,10 @@ class S3EventExpenseModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventForumModel(S3Model):
+class S3EventForumModel(DataModel):
     """
         Shares for Events &/or Incidents
         - the Incident shares do NOT populate the Event's
@@ -3488,10 +3488,10 @@ class S3EventForumModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventHRModel(S3Model):
+class S3EventHRModel(DataModel):
     """
         Link Human Resources to Events/Incidents
     """
@@ -3664,7 +3664,7 @@ class S3EventHRModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -3743,7 +3743,7 @@ class S3EventHRModel(S3Model):
                              )
 
 # =============================================================================
-class S3EventTeamModel(S3Model):
+class S3EventTeamModel(DataModel):
     """ Link Teams to Events &/or Incidents """
 
     names = ("event_team_status",
@@ -3855,10 +3855,10 @@ class S3EventTeamModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventImpactModel(S3Model):
+class S3EventImpactModel(DataModel):
     """
         Link Events &/or Incidents with Impacts
     """
@@ -3870,7 +3870,7 @@ class S3EventImpactModel(S3Model):
 
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Event Impact Model needs Stats module enabling")
-            return {}
+            return None
 
         #T = current.T
 
@@ -3916,10 +3916,10 @@ class S3EventImpactModel(S3Model):
         #    msg_list_empty = T("No Impacts currently registered in this Event"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventMapModel(S3Model):
+class S3EventMapModel(DataModel):
     """
         Link Map Configs to Incidents
     """
@@ -3963,10 +3963,10 @@ class S3EventMapModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventNeedModel(S3Model):
+class S3EventNeedModel(DataModel):
     """
         Link Events &/or Incidents with Needs
     """
@@ -4021,10 +4021,10 @@ class S3EventNeedModel(S3Model):
         #    msg_list_empty = T("No Needs currently registered in this Event"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventNeedResponseModel(S3Model):
+class S3EventNeedResponseModel(DataModel):
     """
         Link Events &/or Incidents with Need Responses (Activity Groups)
     """
@@ -4079,10 +4079,10 @@ class S3EventNeedResponseModel(S3Model):
         #    msg_list_empty = T("No Activity Groups currently registered in this Event"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventOrganisationModel(S3Model):
+class S3EventOrganisationModel(DataModel):
     """
         Link Organisations to Events &/or Incidents
     """
@@ -4152,10 +4152,10 @@ class S3EventOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventProjectModel(S3Model):
+class S3EventProjectModel(DataModel):
     """
         Link Projects to Events
     """
@@ -4188,10 +4188,10 @@ class S3EventProjectModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventScenarioModel(S3Model):
+class S3EventScenarioModel(DataModel):
     """
         Scenario Model
 
@@ -4313,7 +4313,7 @@ class S3EventScenarioModel(S3Model):
                        super_entity = "doc_entity",
                        )
 
-        self.set_method("event", "scenario",
+        self.set_method("event_scenario",
                         method = "plan",
                         action = event_ScenarioActionPlan)
 
@@ -4322,7 +4322,7 @@ class S3EventScenarioModel(S3Model):
                 }
 
 # =============================================================================
-class S3EventScenarioAssetModel(S3Model):
+class S3EventScenarioAssetModel(DataModel):
     """
         Link Scenarios to Assets
     """
@@ -4336,7 +4336,7 @@ class S3EventScenarioAssetModel(S3Model):
         if not settings.has_module("supply"):
             # Don't crash
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
 
@@ -4419,10 +4419,10 @@ class S3EventScenarioAssetModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventScenarioHRModel(S3Model):
+class S3EventScenarioHRModel(DataModel):
     """
         Link Scenarios to Human Resources
     """
@@ -4518,10 +4518,10 @@ class S3EventScenarioHRModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventScenarioOrganisationModel(S3Model):
+class S3EventScenarioOrganisationModel(DataModel):
     """
         Link Scenarios to Organisations
     """
@@ -4569,10 +4569,10 @@ class S3EventScenarioOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventScenarioTaskModel(S3Model):
+class S3EventScenarioTaskModel(DataModel):
     """
         Link Scenarios to Tasks
 
@@ -4623,10 +4623,10 @@ class S3EventScenarioTaskModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventSiteModel(S3Model):
+class S3EventSiteModel(DataModel):
     """
         Link Sites (Facilities) to Incidents
     """
@@ -4738,10 +4738,10 @@ class S3EventSiteModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventShelterModel(S3Model):
+class S3EventShelterModel(DataModel):
     """
         Link Shelters to Events
     """
@@ -4810,10 +4810,10 @@ class S3EventShelterModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3EventSitRepModel(S3Model):
+class S3EventSitRepModel(DataModel):
     """
         Situation Reports
         - can be simple text/rich text
@@ -5176,7 +5176,7 @@ class S3EventSitRepModel(S3Model):
         db(db.event_sitrep.id == sitrep_id).update(table_id=table_id)
 
 # =============================================================================
-class S3EventTaskModel(S3Model):
+class S3EventTaskModel(DataModel):
     """
         Link Tasks to Incidents &/or Events
         - normally linked at the Incident level & just visible at the Event level
@@ -5238,7 +5238,7 @@ class S3EventTaskModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def set_event_from_incident(form, tablename):
@@ -5322,7 +5322,7 @@ class event_ActionPlan(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -5577,7 +5577,7 @@ class event_ScenarioActionPlan(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -5806,7 +5806,7 @@ class event_ApplyScenario(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -5936,7 +5936,7 @@ class event_EventAssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -6210,7 +6210,7 @@ class event_EventAssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -6332,7 +6332,7 @@ class event_IncidentAssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -6595,7 +6595,7 @@ class event_IncidentAssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                    submit_url_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)

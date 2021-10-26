@@ -38,7 +38,7 @@ from ..core import *
 from ..s3layouts import S3PopupLink
 
 # =============================================================================
-class S3TransportModel(S3Model):
+class S3TransportModel(DataModel):
     """
         http://eden.sahanafoundation.org/wiki/BluePrint/Transport
     """
@@ -771,7 +771,7 @@ class S3TransportModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

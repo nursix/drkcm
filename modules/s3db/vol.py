@@ -51,7 +51,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class VolunteerModel(S3Model):
+class VolunteerModel(DataModel):
 
     names = ("vol_details",)
 
@@ -102,7 +102,7 @@ class VolunteerModel(S3Model):
         return output
 
 # =============================================================================
-class VolunteerActivityModel(S3Model):
+class VolunteerActivityModel(DataModel):
     """
         Currently used by CRMADA
     """
@@ -499,7 +499,7 @@ $.filterOptionsS3({
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def vol_activity_hours_month(row):
@@ -586,7 +586,7 @@ def vol_activity_hours_onaccept(form):
                           active = active)
 
 # =============================================================================
-class VolunteerAwardModel(S3Model):
+class VolunteerAwardModel(DataModel):
 
     names = ("vol_award",
              "vol_volunteer_award",
@@ -711,7 +711,7 @@ class VolunteerAwardModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -738,7 +738,7 @@ class VolunteerAwardModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class VolunteerClusterModel(S3Model):
+class VolunteerClusterModel(DataModel):
     """
         Fucntionality to support the Philippines Red Cross
     """
@@ -1479,7 +1479,7 @@ def vol_volunteer_controller():
         return output
     s3.postp = postp
 
-    return current.rest_controller("hrm", "human_resource")
+    return current.crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def vol_person_controller():
@@ -1497,23 +1497,22 @@ def vol_person_controller():
     s3 = response.s3
     session = current.session
     settings = current.deployment_settings
-    resourcename = "person"
 
     configure = s3db.configure
     set_method = s3db.set_method
 
     # Custom Method for Contacts
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
     # Custom Method for CV
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "cv",
                action = s3db.hrm_CV)
 
     # Custom Method for HR Record
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "record",
                action = s3db.hrm_Record)
 
@@ -1597,45 +1596,44 @@ def vol_person_controller():
             )
 
     # Import pre-process
-    def import_prep(data, group=group):
+    def import_prep(tree, group=group):
         """
             Deletes all HR records (of the given group) of the organisation
             before processing a new data import, used for the import_prep
             hook in response.s3
         """
-        if s3.import_replace:
-            resource, tree = data
-            if tree is not None:
-                xml = current.xml
-                tag = xml.TAG
-                att = xml.ATTRIBUTE
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
 
-                if group == "staff":
-                    group = 1
-                elif group == "volunteer":
-                    group = 2
-                else:
-                    return # don't delete if no group specified
+            if group == "staff":
+                group = 1
+            elif group == "volunteer":
+                group = 2
+            else:
+                return # don't delete if no group specified
 
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        htable = s3db.hrm_human_resource
-                        otable = s3db.org_organisation
-                        query = (otable.name == org_name) & \
-                                (htable.organisation_id == otable.id) & \
-                                (htable.type == group)
-                        resource = s3db.resource("hrm_human_resource", filter=query)
-                        resource.delete(format="xml", cascade=True)
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    htable = s3db.hrm_human_resource
+                    otable = s3db.org_organisation
+                    query = (otable.name == org_name) & \
+                            (htable.organisation_id == otable.id) & \
+                            (htable.type == group)
+                    resource = s3db.resource("hrm_human_resource", filter=query)
+                    resource.delete(format="xml", cascade=True)
+
     s3.import_prep = import_prep
 
     # CRUD pre-process
@@ -1860,7 +1858,7 @@ def vol_person_controller():
     # REST Interface
     #orgname = session.s3.hrm.orgname
 
-    return current.rest_controller("pr", resourcename,
+    return current.crud_controller("pr", "person",
                                    csv_template = ("hrm", "volunteer"),
                                    csv_stylesheet = ("hrm", "person.xsl"),
                                    csv_extra_fields = [

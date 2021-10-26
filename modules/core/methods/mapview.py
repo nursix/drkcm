@@ -44,10 +44,10 @@ class S3Map(S3Method):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point to apply map method to S3Requests
+            Entry point to apply map method to CRUDRequests
             - produces a full page with S3FilterWidgets above a Map
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
 
             @return: output object to send to the view
@@ -69,7 +69,7 @@ class S3Map(S3Method):
         """
             Map page
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes for the request
         """
 
@@ -144,7 +144,7 @@ class S3Map(S3Method):
             Render a Map widget suitable for use in an S3Filter-based page
             such as S3Summary
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible

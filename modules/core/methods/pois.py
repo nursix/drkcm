@@ -38,7 +38,7 @@ from gluon.storage import Storage
 from s3dal import Field
 
 from ..gis import GIS
-from ..io import S3ResourceTree
+from ..resource import S3ResourceTree
 from ..tools import s3_format_datetime, s3_parse_datetime
 
 from .base import S3Method
@@ -52,7 +52,7 @@ class S3ExportPOI(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -88,7 +88,7 @@ class S3ExportPOI(S3Method):
 
             (other formats can be requested, but may give unexpected results)
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -243,7 +243,7 @@ class S3ExportPOI(S3Method):
             @param resource: the resource
         """
 
-        from ..filters import FS
+        from ..resource import FS
         query = (FS("location_id$path").contains("/%s/" % lx)) | \
                 (FS("location_id$path").like("%s/%%" % lx))
         resource.add_filter(query)
@@ -260,7 +260,7 @@ class S3ImportPOI(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -422,18 +422,21 @@ class S3ImportPOI(S3Method):
                         # Module disabled
                         continue
                     resource = define_resource(tablename)
-                    s3xml = xml.transform(tree, stylesheet_path=stylesheet,
-                                          name=resource.name)
+                    s3xml = xml.transform(tree,
+                                          stylesheet_path = stylesheet,
+                                          name = resource.name,
+                                          )
                     try:
-                        resource.import_xml(s3xml,
-                                            ignore_errors=ignore_errors)
-                        import_count += resource.import_count
+                        result = resource.import_xml(s3xml,
+                                                     ignore_errors = ignore_errors,
+                                                     )
                     except Exception:
                         response.error += str(sys.exc_info()[1])
+                    else:
+                        import_count += result.count
                 if import_count:
                     response.confirmation = "%s %s" % \
-                        (import_count,
-                         T("PoIs successfully imported."))
+                        (import_count, T("PoIs successfully imported."))
                 else:
                     response.information = T("No PoIs available.")
 

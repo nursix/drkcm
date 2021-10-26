@@ -13,8 +13,8 @@ from gluon import *
 from gluon.storage import Storage
 from lxml import etree
 
-from core import S3Duplicate, S3ImportItem, S3ImportJob, s3_meta_fields
-from core.io.importer import S3ObjectReferences
+from core import S3Duplicate, ImportItem, ImportJob, s3_meta_fields
+from core.resource.importer import ObjectReferences
 
 from unit_tests import run_suite
 
@@ -163,7 +163,7 @@ class ComponentDisambiguationTests(unittest.TestCase):
 
         current.auth.override = True
         resource = s3db.resource("org_organisation")
-        msg = resource.import_xml(self.branch_tree)
+        resource.import_xml(self.branch_tree)
 
         table = resource.table
 
@@ -190,7 +190,7 @@ class ComponentDisambiguationTests(unittest.TestCase):
 
         current.auth.override = True
         resource = s3db.resource("org_organisation")
-        msg = resource.import_xml(self.parent_tree)
+        resource.import_xml(self.parent_tree)
 
         table = resource.table
 
@@ -312,7 +312,7 @@ class FailedReferenceTests(unittest.TestCase):
         resource = current.s3db.resource("org_office")
         result = resource.import_xml(tree)
 
-        msg = json.loads(result)
+        msg = json.loads(result.json_message())
         self.assertEqual(msg["status"], "failed")
 
         error_resources = list(msg["tree"].keys())
@@ -359,7 +359,7 @@ class FailedReferenceTests(unittest.TestCase):
         resource = current.s3db.resource("org_office")
         result = resource.import_xml(tree)
 
-        msg = json.loads(result)
+        msg = json.loads(result.json_message())
         self.assertEqual(msg["status"], "failed")
 
         error_resources = list(msg["tree"].keys())
@@ -418,7 +418,7 @@ class DuplicateDetectionTests(unittest.TestCase):
     def setUp(self):
 
         # Create a dummy import job
-        self.job = S3ImportJob(current.db.dedup_test)
+        self.job = ImportJob(current.db.dedup_test)
 
         db = current.db
         table = db.dedup_test
@@ -450,7 +450,7 @@ class DuplicateDetectionTests(unittest.TestCase):
                                   )
 
         # Dummy item for testing
-        item = S3ImportItem(self.job)
+        item = ImportItem(self.job)
         item.table = current.db.dedup_test
 
         ids = self.ids
@@ -500,7 +500,7 @@ class DuplicateDetectionTests(unittest.TestCase):
         deduplicate = S3Duplicate()
 
         # Dummy item for testing
-        item = S3ImportItem(self.job)
+        item = ImportItem(self.job)
         item.table = current.db.dedup_test
 
         ids = self.ids
@@ -540,7 +540,7 @@ class DuplicateDetectionTests(unittest.TestCase):
 
 
         # Dummy item for testing
-        item = S3ImportItem(self.job)
+        item = ImportItem(self.job)
         item.table = current.db.dedup_test
 
         # Test invalid primary
@@ -609,7 +609,7 @@ class MtimeImportTests(unittest.TestCase):
 
         # Import the data
         resource = s3db.resource("org_facility")
-        result = resource.import_xml(tree)
+        resource.import_xml(tree)
 
         # Verify outer resource
         resource = s3db.resource("org_facility", uid="MTFAC")
@@ -623,7 +623,7 @@ class MtimeImportTests(unittest.TestCase):
 
 # =============================================================================
 class ObjectReferencesTests(unittest.TestCase):
-    """ Tests for S3ObjectReferences """
+    """ Tests for ObjectReferences """
 
     # -------------------------------------------------------------------------
     def testDiscoverFromObject(self):
@@ -639,7 +639,7 @@ class ObjectReferencesTests(unittest.TestCase):
                "key3": "value_3",
                }
 
-        refs = S3ObjectReferences(obj).refs
+        refs = ObjectReferences(obj).refs
 
         assertTrue(isinstance(refs, list))
         assertEqual(len(refs), 1)
@@ -666,7 +666,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        refs = S3ObjectReferences(obj).refs
+        refs = ObjectReferences(obj).refs
 
         assertTrue(isinstance(refs, list))
         assertEqual(len(refs), 1)
@@ -699,7 +699,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        refs = S3ObjectReferences(obj).refs
+        refs = ObjectReferences(obj).refs
 
         assertTrue(isinstance(refs, list))
         assertEqual(len(refs), 1)
@@ -736,7 +736,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        refs = S3ObjectReferences(obj).refs
+        refs = ObjectReferences(obj).refs
 
         assertTrue(isinstance(refs, list))
         assertEqual(len(refs), 2)
@@ -776,7 +776,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        refs = S3ObjectReferences(obj).refs
+        refs = ObjectReferences(obj).refs
 
         assertTrue(isinstance(refs, list))
         assertEqual(len(refs), 1)
@@ -798,7 +798,7 @@ class ObjectReferencesTests(unittest.TestCase):
                "key3": "value_3",
                }
 
-        S3ObjectReferences(obj).resolve("org_organisation", "tuid", "ORG1", 57)
+        ObjectReferences(obj).resolve("org_organisation", "tuid", "ORG1", 57)
 
         target = obj
         self.assertNotIn("$k_key_2", target)
@@ -818,7 +818,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        S3ObjectReferences(obj).resolve("org_organisation", "uuid", "ORG1", 57)
+        ObjectReferences(obj).resolve("org_organisation", "uuid", "ORG1", 57)
 
         target = obj[1]
         self.assertNotIn("$k_key_2", target)
@@ -844,7 +844,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        S3ObjectReferences(obj).resolve("pr_person", "tuid", "PR2", 3283)
+        ObjectReferences(obj).resolve("pr_person", "tuid", "PR2", 3283)
 
         target = obj[1]["complex"][1]
         self.assertNotIn("$k_key_2", target)
@@ -880,7 +880,7 @@ class ObjectReferencesTests(unittest.TestCase):
                 },
                ]
 
-        refs = S3ObjectReferences(obj)
+        refs = ObjectReferences(obj)
         refs.resolve("pr_person", "tuid", "PR2", 3283)
         refs.resolve("org_organisation", "uuid", "ORG1", 14)
 
@@ -921,7 +921,7 @@ class ObjectReferencesTests(unittest.TestCase):
                None,
                ]
 
-        S3ObjectReferences(obj).resolve("req_req", "uuid", "REQ0928", 3)
+        ObjectReferences(obj).resolve("req_req", "uuid", "REQ0928", 3)
 
         target = obj[1]["$k_key_3"][1]
         self.assertNotIn("$k_key_2", target)
@@ -989,7 +989,7 @@ class ObjectReferencesImportTests(unittest.TestCase):
 
         # Create an import job
         tree = etree.fromstring(xmlstr)
-        job = S3ImportJob(current.db.ort_master, tree)
+        job = ImportJob(current.db.ort_master, tree)
 
         # Add the ort_master element to it
         element = tree.findall('resource[@name="ort_master"][1]')[0]

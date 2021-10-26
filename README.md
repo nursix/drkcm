@@ -8,3 +8,8 @@ Platform.
 # Who is Eden ASP for?
 
 Eden ASP is for application developers and service providers.
+
+# What about documentation?
+
+The developer handbook is included in the repository, or you can
+read it on [ReadTheDocs](https://eden-asp.readthedocs.io).

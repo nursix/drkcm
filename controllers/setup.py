@@ -69,38 +69,38 @@ def index():
 # -----------------------------------------------------------------------------
 def aws_cloud():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def openstack_cloud():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def gandi_dns():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def godaddy_dns():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def smtp():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def google_email():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def deployment():
@@ -542,8 +542,7 @@ def deployment():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # -----------------------------------------------------------------------------
 def server():
@@ -653,20 +652,19 @@ def server():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # -----------------------------------------------------------------------------
 #def instance():
 
-#    return s3_rest_controller(#rheader = s3db.setup_rheader,
-#                              )
+#    return crud_controller(#rheader = s3db.setup_rheader,
+#                           )
 
 # -----------------------------------------------------------------------------
 #def setting():
 
-#    return s3_rest_controller(#rheader = s3db.setup_rheader,
-#                              )
+#    return crud_controller(#rheader = s3db.setup_rheader,
+#                           )
 
 # -----------------------------------------------------------------------------
 def monitor_check():
@@ -699,8 +697,7 @@ def monitor_check():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # -----------------------------------------------------------------------------
 def monitor_run():
@@ -708,7 +705,7 @@ def monitor_run():
         Logs
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def monitor_task():
@@ -768,7 +765,6 @@ def monitor_task():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # END =========================================================================

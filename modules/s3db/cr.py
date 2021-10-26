@@ -51,7 +51,7 @@ NIGHT = 1
 DAY_AND_NIGHT = 2
 
 # =============================================================================
-class CRShelterModel(S3Model):
+class CRShelterModel(DataModel):
 
     names = ("cr_shelter_type",
              "cr_shelter",
@@ -516,25 +516,25 @@ class CRShelterModel(S3Model):
                   )
 
         # Custom method to assign HRs
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "assign",
                    action = self.hrm_AssignMethod(component="human_resource_site"),
                    )
 
         # Check-in method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method="check-in",
                    action = self.org_SiteCheckInMethod,
                    )
 
         # Notification-dispatch method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "dispatch",
                    action = cr_notification_dispatcher,
                    )
 
         # Shelter Inspection method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "inspection",
                    action = CRShelterInspection,
                    )
@@ -1030,7 +1030,7 @@ class CRShelterModel(S3Model):
         return current.messages["NONE"]
 
 # =============================================================================
-class CRShelterServiceModel(S3Model):
+class CRShelterServiceModel(DataModel):
     """ Model for Shelter Services """
 
     names = ("cr_shelter_service",
@@ -1131,7 +1131,7 @@ class CRShelterServiceModel(S3Model):
     #            }
 
 # =============================================================================
-class CRShelterInspectionModel(S3Model):
+class CRShelterInspectionModel(DataModel):
     """ Model for Shelter / Housing Unit Flags """
 
     names = ("cr_shelter_flag",
@@ -1599,7 +1599,7 @@ class CRShelterInspectionModel(S3Model):
             link.update_record(task_id = None)
 
 # =============================================================================
-class CRShelterRegistrationModel(S3Model):
+class CRShelterRegistrationModel(DataModel):
 
     names = ("cr_shelter_allocation",
              "cr_shelter_registration",
@@ -1755,7 +1755,7 @@ class CRShelterRegistrationModel(S3Model):
                       )
 
         # Custom Methods
-        self.set_method("cr", "shelter_registration",
+        self.set_method("cr_shelter_registration",
                         method = "assign",
                         action = cr_AssignUnit())
 
@@ -2499,7 +2499,7 @@ class cr_AssignUnit(S3CRUD):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2715,7 +2715,7 @@ class CRShelterInspection(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -2756,7 +2756,7 @@ class CRShelterInspection(S3Method):
         """
             Generate the form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -2852,7 +2852,7 @@ class CRShelterInspection(S3Method):
         """
             Ajax-registration of shelter inspection
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 

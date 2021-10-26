@@ -595,8 +595,7 @@ def nzseel1():
 
     rheader = nzseel1_rheader
 
-    output = s3_rest_controller(rheader=rheader)
-    return output
+    return crud_controller(rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def nzseel1_rheader(r, tabs=[]):
@@ -675,8 +674,7 @@ def nzseel2():
 
     rheader = nzseel2_rheader
 
-    output = s3_rest_controller(rheader=rheader)
-    return output
+    return crud_controller(rheader=rheader)
 
 # -----------------------------------------------------------------------------
 def nzseel2_rheader(r, tabs=[]):

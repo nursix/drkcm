@@ -26,19 +26,19 @@ def index():
 def brand():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def catalog():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller(rheader=s3db.supply_catalog_rheader)
+    return crud_controller(rheader=s3db.supply_catalog_rheader)
 
 # -----------------------------------------------------------------------------
 def catalog_item():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def distribution_rheader(r):
@@ -90,7 +90,7 @@ def distribution():
     #    return True
     #s3.prep = prep
 
-    return s3_rest_controller(rheader = distribution_rheader)
+    return crud_controller(rheader=distribution_rheader)
 
 # -----------------------------------------------------------------------------
 def distribution_report():
@@ -104,13 +104,13 @@ def distribution_report():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("supply", "distribution")
+    return crud_controller("supply", "distribution")
 
 # -----------------------------------------------------------------------------
 def distribution_item():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def item():
@@ -145,7 +145,7 @@ def item_category():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def item_entity():
@@ -162,24 +162,24 @@ def item_pack():
                    listadd = False,
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def kit_item():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person_item():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person_item_status():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

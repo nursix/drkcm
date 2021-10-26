@@ -941,9 +941,7 @@ $.filterOptionsS3({
         return output
     s3.postp = postp
 
-    return s3_rest_controller("req", "req",
-                              rheader = s3db.req_rheader,
-                              )
+    return crud_controller("req", "req", rheader=s3db.req_rheader)
 
 # =============================================================================
 def req_item():
@@ -977,7 +975,7 @@ def req_item():
                      args = [req_id, "req_item"]
                      ))
 
-    s3db.set_method("req", "req_item",
+    s3db.set_method("req_req_item",
                     method = "order",
                     action = order_item
                     )
@@ -1008,7 +1006,7 @@ def req_item():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller("req", "req_item")
+    output = crud_controller("req", "req_item")
 
     if settings.get_req_prompt_match():
         req_item_inv_item_btn = {"label": s3_str(T("Request from Facility")),
@@ -1128,7 +1126,7 @@ def req_item_inv_item():
     # Tweak CRUD String for this context
     s3.crud_strings["inv_inv_item"].msg_list_empty = T("No Inventories currently have this item in stock")
 
-    inv_items = s3_rest_controller("inv", "inv_item")
+    inv_items = crud_controller("inv", "inv_item")
     output["items"] = inv_items["items"]
 
     if settings.get_supply_use_alt_name():
@@ -1141,7 +1139,7 @@ def req_item_inv_item():
 
         if alt_item_ids:
             s3.filter = (itable.item_id.belongs(alt_item_ids))
-            inv_items_alt = s3_rest_controller("inv", "inv_item")
+            inv_items_alt = crud_controller("inv", "inv_item")
             output["items_alt"] = inv_items_alt["items"]
         else:
             output["items_alt"] = T("No Inventories currently have suitable alternative items in stock")
@@ -1220,7 +1218,7 @@ def req_skill():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("req", "req_skill")
+    return crud_controller("req", "req_skill")
 
 # =============================================================================
 def skills_filter(req_id):
@@ -1462,7 +1460,7 @@ $.filterOptionsS3({
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = commit_rheader)
+    return crud_controller(rheader=commit_rheader)
 
 # -----------------------------------------------------------------------------
 def commit_rheader(r):
@@ -1614,7 +1612,7 @@ def commit_item():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def commit_req():
@@ -1958,7 +1956,7 @@ def approver():
     #if not auth.s3_has_role("ADMIN"):
     #    s3.filter = auth.filter_by_root_org(s3db.req_approver)
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def fema():
@@ -2016,7 +2014,7 @@ def need():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.req_rheader)
+    return crud_controller(rheader=s3db.req_rheader)
 
 # -----------------------------------------------------------------------------
 def need_line():
@@ -2024,7 +2022,7 @@ def need_line():
         RESTful CRUD Controller for Need Lines
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def need_response():
@@ -2032,7 +2030,7 @@ def need_response():
         RESTful CRUD Controller for Need Responses (i.e. Activity Groups)
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def need_response_line():
@@ -2040,7 +2038,7 @@ def need_response_line():
         RESTful CRUD Controller for Need Response Lines (i.e. Activities)
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def order_item():
@@ -2048,7 +2046,7 @@ def order_item():
         RESTful CRUD Controller for Order Items
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def facility():
@@ -2075,6 +2073,6 @@ def project_req():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

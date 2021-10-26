@@ -60,7 +60,7 @@ class S3GroupedItemsReport(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -76,7 +76,7 @@ class S3GroupedItemsReport(S3Method):
         """
             Summary widget method
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param method: the widget method
             @param widget_id: the widget ID
             @param visible: whether the widget is initially visible
@@ -95,7 +95,7 @@ class S3GroupedItemsReport(S3Method):
         """
             Report generator
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -474,7 +474,7 @@ class S3GroupedItemsReport(S3Method):
         """
             Render export links for the report
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -613,7 +613,7 @@ class S3GroupedItemsTable(object):
         """
             Produce a PDF representation of the grouped table
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @return: the PDF document
         """
 
@@ -638,7 +638,7 @@ class S3GroupedItemsTable(object):
 
         pdf_footer = self.pdf_footer
 
-        from ..io import S3Exporter
+        from ..resource import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(self.resource,
                         request = r,
@@ -658,7 +658,7 @@ class S3GroupedItemsTable(object):
         """
             Produce an XLS sheet of the grouped table
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @return: the XLS document
         """
 
@@ -702,7 +702,7 @@ class S3GroupedItemsTable(object):
                    }
 
         # Export as XLS
-        from ..io import S3Exporter
+        from ..resource import S3Exporter
         exporter = S3Exporter().xls
         return exporter(xlsdata,
                         title = self.title,

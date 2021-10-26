@@ -35,9 +35,7 @@ def document():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = document_rheader,
-                                )
-    return output
+    return crud_controller(rheader=document_rheader)
 
 # -----------------------------------------------------------------------------
 def document_rheader(r):
@@ -131,8 +129,7 @@ def image():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def bulk_upload():
@@ -145,7 +142,7 @@ def bulk_upload():
     """
 
     s3.stylesheets.append("plugins/fileuploader.css")
-    return dict()
+    return {}
 
 def upload_bulk():
     """
@@ -318,6 +315,6 @@ def ck_delete():
 # -----------------------------------------------------------------------------
 def card_config():
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================
