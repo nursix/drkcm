@@ -995,14 +995,28 @@ def config(settings):
             table.tests_total.readable = False
             table.tests_positive.readable = False
 
-        # If there is only one selectable site, set as default + make r/o
+        # Order testing sites selector by obsolete-flag
         field = table.site_id
-        requires = field.requires
-        if hasattr(requires, "options"):
-            selectable = [o[0] for o in field.requires.options() if o[0]]
-            if len(selectable) == 1:
-                field.default = selectable[0]
-                field.writable = False
+        stable = current.s3db.org_site
+        field.requires = IS_ONE_OF(db, "org_site.site_id",
+                                   field.represent,
+                                   instance_types = ["org_facility"],
+                                   orderby = (stable.obsolete, stable.name),
+                                   sort = False,
+                                   )
+        # Check how many sites are selectable
+        selectable = [o[0] for o in field.requires.options() if o[0]]
+        if len(selectable) == 1:
+            # If only one selectable site, set as default + make r/o
+            field.default = selectable[0]
+            field.writable = False
+        else:
+            # If one active site, set it as default, but leave selectable
+            query = (stable.site_id.belongs(selectable)) & \
+                    (stable.obsolete == False)
+            active = db(query).select(stable.site_id, limitby = (0, 2))
+            if len(active) == 1:
+                field.default = active.first().site_id
 
         # Allow daily reports up to 3 months back in time (1st of month)
         field = table.date

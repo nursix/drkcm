@@ -193,6 +193,7 @@ class Daily():
         from core import s3_str
 
         errors = []
+        update_super = s3db.update_super
         for row in rows:
 
             organisation = row.org_organisation
@@ -201,6 +202,7 @@ class Daily():
 
             # Mark facility as obsolete
             facility.update_record(obsolete = True)
+            update_super(ftable, facility)
 
             # Prepare data for notification template
             place = location.L4 if location.L4 else location.L3
