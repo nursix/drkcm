@@ -291,7 +291,6 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         # Process the response
         mtime = None
         if response:
-            success = True
             message = ""
             action = "import"
 
@@ -312,12 +311,12 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             # Import the data
             count = 0
             try:
-                success = resource.import_xml(response,
-                                              ignore_errors = True,
-                                              strategy = task.strategy,
-                                              sync_policy = sync_policy,
-                                              )
-                count = resource.import_count
+                import_result = resource.import_xml(response,
+                                                    ignore_errors = True,
+                                                    strategy = task.strategy,
+                                                    sync_policy = sync_policy,
+                                                    )
+                count = import_result.count
 
             except IOError as e:
                 result = log.FATAL
@@ -335,13 +334,13 @@ class S3SyncAdapter(S3SyncBaseAdapter):
                           traceback.format_exc()
                 output = xml.json_message(False, 500, sys.exc_info()[1])
 
-            mtime = resource.mtime
+            mtime = import_result.mtime
 
             # Log all validation errors
-            if resource.error_tree is not None:
+            if import_result.error_tree is not None:
                 result = log.WARNING
-                message = "%s" % resource.error
-                for element in resource.error_tree.findall("resource"):
+                message = "%s" % import_result.error
+                for element in import_result.error_tree.findall("resource"):
                     for field in element.findall("data[@error]"):
                         error_msg = field.get("error", None)
                         if error_msg:
@@ -354,10 +353,10 @@ class S3SyncAdapter(S3SyncBaseAdapter):
                             message = "%s, %s" % (message, msg)
 
             # Check for failure
-            if not success:
+            if not import_result.success:
                 result = log.FATAL
                 if not message:
-                    message = "%s" % resource.error
+                    message = "%s" % import_result.error
                 output = xml.json_message(False, 400, message)
                 mtime = None
 
@@ -635,24 +634,24 @@ class S3SyncAdapter(S3SyncBaseAdapter):
                                  last_sync = last_sync,
                                  )
 
-        output = resource.import_xml(source,
-                                     source_type = "xml",
-                                     ignore_errors = ignore_errors,
-                                     strategy = strategy,
-                                     sync_policy = sync_policy,
-                                     )
+        import_result = resource.import_xml(source,
+                                            source_type = "xml",
+                                            ignore_errors = ignore_errors,
+                                            strategy = strategy,
+                                            sync_policy = sync_policy,
+                                            )
 
         log = self.log
 
-        if resource.error_tree is not None:
+        if import_result.error_tree is not None:
             # Validation error (log in any case)
             if ignore_errors:
                 result = log.WARNING
             else:
                 result = log.FATAL
             remote = True
-            message = "%s" % resource.error
-            for element in resource.error_tree.findall("resource"):
+            message = "%s" % import_result.error
+            for element in import_result.error_tree.findall("resource"):
 
                 error_msg = element.get("error", "unknown error")
 
@@ -688,7 +687,7 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         return {"status": result,
                 "remote": remote,
                 "message": message,
-                "response": output,
+                "response": import_result.json_message(),
                 }
 
     # -------------------------------------------------------------------------
@@ -941,8 +940,8 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             # any case:
             import base64
             credentials = "%s:%s" % (username, password)
-            base64string = base64.b64encode(credentials.encode("utf-8"))
-            addheaders.append(("Authorization", "Basic %s" % base64string))
+            encoded = base64.b64encode(credentials.encode("utf-8"))
+            addheaders.append(("Authorization", "Basic %s" % encoded.decode("utf-8")))
 
         if addheaders:
             opener.addheaders = addheaders

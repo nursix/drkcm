@@ -293,28 +293,28 @@ class S3BulkImporter(object):
             auth.rollback = True
             try:
                 # @todo: add extra_data and file attachments
-                resource.import_xml(csv,
-                                    source_type = "csv",
-                                    stylesheet = task[4],
-                                    extra_data = extra_data,
-                                    )
+                result = resource.import_xml(csv,
+                                             source_type = "csv",
+                                             stylesheet = task[4],
+                                             extra_data = extra_data,
+                                             )
             except SyntaxError as e:
                 self.errorList.append("WARNING: import error - %s (file: %s, stylesheet: %s)" %
                                      (e, filename, task[4]))
                 auth.rollback = False
                 return
 
-            if not resource.error:
-                current.db.commit()
-            else:
+            error = result.error
+            if error:
                 # Must roll back if there was an error!
-                error = resource.error
                 self.errorList.append("%s - %s: %s" % (
                                       task[3], resource.tablename, error))
-                errors = current.xml.collect_errors(resource)
+                errors = current.xml.collect_errors(result.error_tree)
                 if errors:
                     self.errorList.extend(errors)
                 current.db.rollback()
+            else:
+                current.db.commit()
 
             auth.rollback = False
 

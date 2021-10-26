@@ -67,19 +67,19 @@ class S3OutboxTests(unittest.TestCase):
 
         # Import the test entities
         resource = s3db.resource("pr_person")
-        resource.import_xml(xmltree)
-        if resource.error is not None:
-            raise AssertionError("Test data import failed: %s" % resource.error)
+        result = resource.import_xml(xmltree)
+        if result.error is not None:
+            raise AssertionError("Test data import failed: %s" % result.error)
 
         resource = s3db.resource("org_organisation")
-        resource.import_xml(xmltree)
-        if resource.error is not None:
-            raise AssertionError("Test data import failed: %s" % resource.error)
+        result = resource.import_xml(xmltree)
+        if result.error is not None:
+            raise AssertionError("Test data import failed: %s" % result.error)
 
         resource = s3db.resource("pr_group")
-        resource.import_xml(xmltree)
-        if resource.error is not None:
-            raise AssertionError("Test data import failed: %s" % resource.error)
+        result = resource.import_xml(xmltree)
+        if result.error is not None:
+            raise AssertionError("Test data import failed: %s" % result.error)
 
     # -------------------------------------------------------------------------
     @classmethod

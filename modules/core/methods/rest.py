@@ -352,7 +352,7 @@ class RESTful(S3Method):
             representation = "xml"
 
         try:
-            output = r.resource.import_xml(source,
+            result = r.resource.import_xml(source,
                                            record_id = record_id,
                                            source_type = representation,
                                            files = r.files,
@@ -367,7 +367,9 @@ class RESTful(S3Method):
                 e = e.message
             r.error(400, e)
 
-        return output
+        if representation == "json":
+            current.response.headers["Content-Type"] = "application/json"
+        return result.json_message()
 
     # -------------------------------------------------------------------------
     @staticmethod

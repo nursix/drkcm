@@ -551,7 +551,7 @@ class ContactValidationTests(unittest.TestCase):
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
         resource = s3db.resource("pr_person")
-        result = resource.import_xml(xmltree, ignore_errors=True)
+        resource.import_xml(xmltree, ignore_errors=True)
 
         resource = s3db.resource("pr_contact", uid="VALIDATORTESTCONTACT1")
         self.assertEqual(resource.count(), 1)
@@ -590,7 +590,7 @@ class ContactValidationTests(unittest.TestCase):
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
         resource = s3db.resource("pr_person")
-        result = resource.import_xml(xmltree, ignore_errors=True)
+        resource.import_xml(xmltree, ignore_errors=True)
 
         resource = s3db.resource("pr_contact", uid="VALIDATORTESTCONTACT1")
         self.assertEqual(resource.count(), 0)
@@ -650,7 +650,7 @@ class ContactRepresentationTests(unittest.TestCase):
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
 
         resource = s3db.resource("pr_person")
-        result = resource.import_xml(xmltree, ignore_errors=True)
+        resource.import_xml(xmltree, ignore_errors=True)
 
     @classmethod
     def tearDownClass(cls):

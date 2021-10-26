@@ -673,17 +673,17 @@ class SpreadsheetImporter(S3Method):
             @returns: import job UUID
         """
 
-        resource.import_xml(source,
-                            source_type = fmt,
-                            extra_data = extra_data,
-                            commit = commit,
-                            ignore_errors = True,
-                            stylesheet = stylesheet,
-                            **args)
+        result = resource.import_xml(source,
+                                     source_type = fmt,
+                                     extra_data = extra_data,
+                                     commit = commit,
+                                     ignore_errors = True,
+                                     stylesheet = stylesheet,
+                                     **args)
 
-        job_id = resource.job_id
-        if not job_id and resource.error:
-            raise ValueError(resource.error)
+        job_id = result.job_id
+        if not job_id and result.error:
+            raise ValueError(result.error)
 
         return job_id
 
@@ -834,16 +834,16 @@ class SpreadsheetImporter(S3Method):
         selected = db(query).count()
 
         # Commit the job
-        resource.import_xml(None,
-                            job_id = job_id,
-                            select_items = select_items,
-                            ignore_errors = True,
-                            )
+        result = resource.import_xml(None,
+                                     job_id = job_id,
+                                     select_items = select_items,
+                                     ignore_errors = True,
+                                     )
 
         return {"total": total,
-                "imported": resource.import_count,
+                "imported": result.count,
                 "skipped": max(total - selected, 0),
-                "errors": resource.import_errors,
+                "errors": result.failed,
                 }
 
 # END =========================================================================

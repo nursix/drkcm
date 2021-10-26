@@ -159,8 +159,8 @@ class ImportMergeWithExistingRecords(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
     def testImportMerge(self):
 
@@ -197,8 +197,8 @@ class ImportMergeWithExistingRecords(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        msg = resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
         # Check the result
         resource = s3db.resource("org_organisation",
@@ -240,8 +240,8 @@ class ImportMergeWithExistingOriginal(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
     def testImportMerge(self):
 
@@ -274,8 +274,8 @@ class ImportMergeWithExistingOriginal(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        msg = resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
         # Check the result: the duplicate should never be imported
         # Note that no components of the deleted duplicate would ever
@@ -315,8 +315,8 @@ class ImportMergeWithExistingDuplicate(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
     def testImportMerge(self):
 
@@ -350,8 +350,8 @@ class ImportMergeWithExistingDuplicate(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        msg = resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
         # Check the result: new record gets imported, duplicate merged into it
         resource = s3db.resource("org_organisation",
@@ -412,8 +412,8 @@ class ImportMergeWithoutExistingRecords(unittest.TestCase):
 
         xmltree = etree.ElementTree(etree.fromstring(xmlstr))
         resource = current.s3db.resource("org_organisation")
-        msg = resource.import_xml(xmltree)
-        self.assertEqual(resource.error, None)
+        result = resource.import_xml(xmltree)
+        self.assertEqual(result.error, None)
 
         # Check the result: only the final record gets imported
         # Note that no components of the deleted duplicate would ever

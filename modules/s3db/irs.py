@@ -34,8 +34,6 @@ __all__ = ("S3IRSModel",
 
 import json
 
-from collections import OrderedDict
-
 from gluon import *
 from gluon.storage import Storage
 
@@ -968,23 +966,23 @@ S3.timeline.now="''', now.isoformat(), '''"
                     ignore_errors = formvars.get("ignore_errors")
                     resource = r.resource
                     try:
-                        success = resource.import_xml(ushahidi_url,
-                                                      stylesheet = stylesheet,
-                                                      ignore_errors = ignore_errors,
-                                                      )
+                        result = resource.import_xml(ushahidi_url,
+                                                     stylesheet = stylesheet,
+                                                     ignore_errors = ignore_errors,
+                                                     )
                     except:
                         import sys
                         response.error = sys.exc_info()[1]
                     else:
-                        if success:
-                            count = resource.import_count
+                        if result.success:
+                            count = result.count
                             if count:
                                 response.confirmation = "%(number)s reports successfully imported." % \
                                                         {"number": count}
                             else:
                                 response.information = T("No reports available.")
                         else:
-                            response.error = resource.error
+                            response.error = result.error
 
 
             response.view = "create.html"

@@ -267,23 +267,14 @@ class S3Resource(object):
                                    unapproved = self._unapproved,
                                    )
 
-        # Export and Import ---------------------------------------------------
+        # Export meta data ----------------------------------------------------
 
-        # Pending Imports
-        self.skip_import = False
-        self.job_id = None
-        self.mtime = None
-        self.error = None
-        self.error_tree = None
-        self.import_count = 0
-        self.import_errors = 0
-        self.import_created = []
-        self.import_updated = []
-        self.import_deleted = []
-
-        # Export meta data
         self.muntil = None      # latest mtime of the exported records
         self.results = None     # number of exported records
+
+        # Errors --------------------------------------------------------------
+
+        self.error = None
 
     # -------------------------------------------------------------------------
     # Query handling
@@ -1617,71 +1608,18 @@ class S3Resource(object):
         elif not job_id:
             raise ValueError("Source or Job ID required")
 
-        result = XMLImporter.import_tree(tablename,
-                                         tree,
-                                         files = files,
-                                         record_id = record_id,
-                                         components = self.components.exposed_aliases,
-                                         commit = commit,
-                                         ignore_errors = ignore_errors,
-                                         job_id = job_id if tree is None else None,
-                                         select_items = select_items,
-                                         strategy = strategy,
-                                         sync_policy = sync_policy,
-                                         )
-
-        self.job_id = result.job_id
-
-        # TODO return result, move out response message into REST API
-        success = result.success
-
-        self.error = result.error
-        self.error_tree = result.error_tree
-
-        self.import_count += result.count
-        self.import_errors += result.failed
-        self.import_created += result.created
-        self.import_updated += result.updated
-        self.import_deleted += result.deleted
-        job_mtime = result.mtime
-        if self.mtime is None or \
-           job_mtime and job_mtime > self.mtime:
-            self.mtime = job_mtime
-
-        xml = current.xml
-
-        # Response message
-        if source_type == "json":
-            # Whilst all Responses are JSON, it's easier to debug by having the
-            # response appear in the browser than launching a text editor
-            current.response.headers["Content-Type"] = "application/json"
-        if self.error_tree is not None:
-            tree = xml.tree2json(self.error_tree)
-        else:
-            tree = None
-
-        # Import Summary Info
-        import_info = {"records": self.import_count}
-        created = list(set(self.import_created))
-        if created:
-            import_info["created"] = created
-        updated = list(set(self.import_updated))
-        if updated:
-            import_info["updated"] = updated
-        deleted = list(set(self.import_deleted))
-        if deleted:
-            import_info["deleted"] = deleted
-
-        if success and not result.job_id:
-            # 2nd phase of 2-phase import
-            return xml.json_message(message=self.error, tree=tree, **import_info)
-
-        elif success:
-            # 1st phase of 2-phase import
-            return xml.json_message(message=self.error, tree=tree, **import_info)
-
-        # Failure
-        return xml.json_message(False, 400, message=self.error, tree=tree)
+        return XMLImporter.import_tree(tablename,
+                                       tree,
+                                       files = files,
+                                       record_id = record_id,
+                                       components = self.components.exposed_aliases,
+                                       commit = commit,
+                                       ignore_errors = ignore_errors,
+                                       job_id = job_id if tree is None else None,
+                                       select_items = select_items,
+                                       strategy = strategy,
+                                       sync_policy = sync_policy,
+                                       )
 
     # -------------------------------------------------------------------------
     # XML introspection

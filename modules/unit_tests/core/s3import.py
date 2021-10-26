@@ -163,7 +163,7 @@ class ComponentDisambiguationTests(unittest.TestCase):
 
         current.auth.override = True
         resource = s3db.resource("org_organisation")
-        msg = resource.import_xml(self.branch_tree)
+        resource.import_xml(self.branch_tree)
 
         table = resource.table
 
@@ -190,7 +190,7 @@ class ComponentDisambiguationTests(unittest.TestCase):
 
         current.auth.override = True
         resource = s3db.resource("org_organisation")
-        msg = resource.import_xml(self.parent_tree)
+        resource.import_xml(self.parent_tree)
 
         table = resource.table
 
@@ -312,7 +312,7 @@ class FailedReferenceTests(unittest.TestCase):
         resource = current.s3db.resource("org_office")
         result = resource.import_xml(tree)
 
-        msg = json.loads(result)
+        msg = json.loads(result.json_message())
         self.assertEqual(msg["status"], "failed")
 
         error_resources = list(msg["tree"].keys())
@@ -359,7 +359,7 @@ class FailedReferenceTests(unittest.TestCase):
         resource = current.s3db.resource("org_office")
         result = resource.import_xml(tree)
 
-        msg = json.loads(result)
+        msg = json.loads(result.json_message())
         self.assertEqual(msg["status"], "failed")
 
         error_resources = list(msg["tree"].keys())
@@ -609,7 +609,7 @@ class MtimeImportTests(unittest.TestCase):
 
         # Import the data
         resource = s3db.resource("org_facility")
-        result = resource.import_xml(tree)
+        resource.import_xml(tree)
 
         # Verify outer resource
         resource = s3db.resource("org_facility", uid="MTFAC")

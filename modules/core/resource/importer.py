@@ -387,6 +387,42 @@ class ImportResult(object):
             self.mtime = None
             self.error_tree = None
 
+    # -------------------------------------------------------------------------
+    def json_message(self):
+        """
+            Generate a JSON message from this result
+
+            :returns str: the JSON message
+        """
+
+        xml = current.xml
+
+        if self.error_tree is not None:
+            tree = xml.tree2json(self.error_tree)
+        else:
+            tree = None
+
+        # Import Summary Info
+        info = {"records": self.count,
+                }
+        if self.created:
+            info["created"] = list(set(self.created))
+        if self.updated:
+            info["updated"] = list(set(self.updated))
+        if self.deleted:
+            info["deleted"] = list(set(self.deleted))
+
+        if self.success:
+            msg = xml.json_message(message = self.error,
+                                   tree = tree,
+                                   **info)
+        else:
+            msg = xml.json_message(False, 400,
+                                   message = self.error,
+                                   tree = tree,
+                                   )
+        return msg
+
 # =============================================================================
 class ImportJob():
     """

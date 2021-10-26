@@ -422,18 +422,21 @@ class S3ImportPOI(S3Method):
                         # Module disabled
                         continue
                     resource = define_resource(tablename)
-                    s3xml = xml.transform(tree, stylesheet_path=stylesheet,
-                                          name=resource.name)
+                    s3xml = xml.transform(tree,
+                                          stylesheet_path = stylesheet,
+                                          name = resource.name,
+                                          )
                     try:
-                        resource.import_xml(s3xml,
-                                            ignore_errors=ignore_errors)
-                        import_count += resource.import_count
+                        result = resource.import_xml(s3xml,
+                                                     ignore_errors = ignore_errors,
+                                                     )
                     except Exception:
                         response.error += str(sys.exc_info()[1])
+                    else:
+                        import_count += result.count
                 if import_count:
                     response.confirmation = "%s %s" % \
-                        (import_count,
-                         T("PoIs successfully imported."))
+                        (import_count, T("PoIs successfully imported."))
                 else:
                     response.information = T("No PoIs available.")
 

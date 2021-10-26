@@ -4790,22 +4790,22 @@ class cap_ImportAlert(S3Method):
         if resource is None:
             resource = s3db.resource("cap_alert")
         try:
-            resource.import_xml(tree,
-                                stylesheet = stylesheet,
-                                ignore_errors = ignore_errors,
-                                )
+            result = resource.import_xml(tree,
+                                         stylesheet = stylesheet,
+                                         ignore_errors = ignore_errors,
+                                         )
         except (IOError, SyntaxError):
             import sys
             error = "CAP import error: %s" % sys.exc_info()[1]
         else:
-            if resource.error:
+            if result.error:
                 # Import validation error
-                errors = current.xml.collect_errors(resource.error_tree)
-                error = "%s\n%s" % (resource.error, "\n".join(errors))
+                errors = current.xml.collect_errors(result.error_tree)
+                error = "%s\n%s" % (result.error, "\n".join(errors))
             else:
                 error = None
 
-            if resource.import_count == 0:
+            if result.count == 0:
                 if not error:
                     # No error, but nothing imported either
                     error = "No CAP alerts found in source"
@@ -4813,8 +4813,7 @@ class cap_ImportAlert(S3Method):
                 # Success
                 error = None
                 msg = "%s new CAP alerts imported, %s alerts updated" % (
-                        len(resource.import_created),
-                        len(resource.import_updated))
+                        len(result.created), len(result.updated))
 
         return error, msg
 
@@ -4926,8 +4925,9 @@ class cap_ImportAlert(S3Method):
         # Pre-emptive basic auth
         if preemptive_auth and username and password:
             import base64
-            base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
-            addheaders.append(("Authorization", "Basic %s" % base64string))
+            credentials = "%s:%s" % (username, password)
+            encoded = base64.b64encode(credentials.encode("utf-8"))
+            addheaders.append(("Authorization", "Basic %s" % encoded.decode("utf-8")))
 
         if addheaders:
             opener.addheaders = addheaders

@@ -56,7 +56,7 @@ class S3ConfigTests(unittest.TestCase):
             tree = etree.ElementTree(etree.fromstring(xmlstr))
 
             resource = s3db.resource("org_organisation")
-            msg = resource.import_xml(tree)
+            resource.import_xml(tree)
 
             resource = s3db.resource("org_organisation", uid="ExampleRootOrg")
             org = resource.select(None, as_rows=True)[0]
