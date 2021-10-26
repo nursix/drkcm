@@ -585,7 +585,7 @@ class CRUDRequest(object):
                     if not method and \
                        (http not in ("GET", "POST") or self.transformable(method=m)):
                         from .methods import RESTful
-                        method = RESTful
+                        handler = RESTful
                     elif http in HTTP_METHODS:
                         from .methods import S3CRUD
                         handler = S3CRUD
