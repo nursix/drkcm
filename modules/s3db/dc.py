@@ -91,7 +91,7 @@ class DataCollectionTemplateModel(DataModel):
                      Field("master", length=32,
                            default = "dc_response",
                            label = T("Used for"),
-                           represent = S3Represent(options = master_opts),
+                           represent = represent_option(master_opts),
                            requires = IS_IN_SET(master_opts),
                            # Either set via Controller or on Import
                            readable = False,
@@ -260,7 +260,7 @@ class DataCollectionTemplateModel(DataModel):
                      Field("field_type", "integer", notnull=True,
                            default = 1, # string
                            label = T("Field Type"),
-                           represent = S3Represent(options = type_opts),
+                           represent = represent_option(type_opts),
                            requires = IS_IN_SET(type_opts),
                            ),
                      Field("options", "json",
@@ -1047,7 +1047,7 @@ class DataCollectionModel(DataModel):
                      Field("status", "integer",
                            default = default_status,
                            label = T("Status"),
-                           represent = S3Represent(options = status_opts),
+                           represent = represent_option(status_opts),
                            requires = IS_IN_SET(status_opts),
                            readable = target_status,
                            writable = target_status,

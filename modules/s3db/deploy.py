@@ -138,7 +138,7 @@ class S3DeploymentModel(DataModel):
                      Field("status", "integer",
                            default = 2,
                            label = T("Status"),
-                           represent = S3Represent(options = mission_status_opts),
+                           represent = represent_option(mission_status_opts),
                            requires = IS_IN_SET(mission_status_opts),
                            ),
                      # @todo: change into real fields written onaccept?

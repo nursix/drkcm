@@ -493,7 +493,7 @@ class InventoryModel(DataModel):
                           Field("status", "integer",
                                 default = 0, # Only Items with this Status can be allocated to Outgoing Shipments
                                 label = T("Status"),
-                                represent = S3Represent(options = inv_item_status_opts),
+                                represent = represent_option(inv_item_status_opts),
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(inv_item_status_opts)
                                             ),
@@ -534,7 +534,7 @@ class InventoryModel(DataModel):
                           Field("source_type", "integer",
                                 default = 0,
                                 label = T("Type"),
-                                represent = S3Represent(options = inv_source_type),
+                                represent = represent_option(inv_source_type),
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(inv_source_type)
                                             ),
@@ -1054,7 +1054,7 @@ class InventoryTrackingModel(DataModel):
                      Field("type", "integer",
                            default = type_default,
                            label = T("Shipment Type"),
-                           represent = S3Represent(options = send_type_opts),
+                           represent = represent_option(send_type_opts),
                            requires = IS_IN_SET(send_type_opts),
                            readable = not type_default,
                            writable = not type_default,
@@ -1151,7 +1151,7 @@ class InventoryTrackingModel(DataModel):
                      Field("status", "integer",
                            default = SHIP_STATUS_IN_PROCESS,
                            label = T("Status"),
-                           represent = S3Represent(options = shipment_status),
+                           represent = represent_option(shipment_status),
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(shipment_status)
                                       ),
@@ -1161,7 +1161,7 @@ class InventoryTrackingModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(ship_doc_status)
                                        ),
-                           represent = S3Represent(options = ship_doc_status),
+                           represent = represent_option(ship_doc_status),
                            default = SHIP_DOC_PENDING,
                            widget = radio_widget,
                            label = T("Filing Status"),
@@ -1333,7 +1333,7 @@ class InventoryTrackingModel(DataModel):
                                 ),
                      Field("type", "integer",
                            requires = IS_IN_SET(recv_type_opts),
-                           represent = S3Represent(options = recv_type_opts),
+                           represent = represent_option(recv_type_opts),
                            label = T("Shipment Type"),
                            default = 0,
                            ),
@@ -1394,7 +1394,7 @@ class InventoryTrackingModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(shipment_status)
                                         ),
-                           represent = S3Represent(options = shipment_status),
+                           represent = represent_option(shipment_status),
                            default = SHIP_STATUS_IN_PROCESS,
                            label = T("Status"),
                            writable = False,
@@ -1403,7 +1403,7 @@ class InventoryTrackingModel(DataModel):
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(ship_doc_status)
                                        ),
-                           represent = S3Represent(options = ship_doc_status),
+                           represent = represent_option(ship_doc_status),
                            default = SHIP_DOC_PENDING,
                            widget = radio_widget,
                            label = T("%(GRN)s Status") % {"GRN": recv_shortname},
@@ -1419,7 +1419,7 @@ class InventoryTrackingModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(ship_doc_status)
                                        ),
-                           represent = S3Represent(options = ship_doc_status),
+                           represent = represent_option(ship_doc_status),
                            default = SHIP_DOC_PENDING,
                            widget = radio_widget,
                            label = T("Certificate Status"),
@@ -1431,7 +1431,7 @@ class InventoryTrackingModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(ship_doc_status)
                                        ),
-                           represent = S3Represent(options = ship_doc_status),
+                           represent = represent_option(ship_doc_status),
                            default = SHIP_DOC_PENDING,
                            widget = radio_widget,
                            label = T("Filing Status"),
@@ -1832,7 +1832,7 @@ $.filterOptionsS3({
                      Field("inv_item_status", "integer",
                            default = 0,
                            label = T("Item Status"),
-                           represent = S3Represent(options = inv_item_status_opts),
+                           represent = represent_option(inv_item_status_opts),
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(inv_item_status_opts)
                                         ),
@@ -1840,7 +1840,7 @@ $.filterOptionsS3({
                      Field("status", "integer",
                            default = 1,
                            label = T("Item Tracking Status"),
-                           represent = S3Represent(options = tracking_status),
+                           represent = represent_option(tracking_status),
                            required = True,
                            requires = IS_IN_SET(tracking_status),
                            writable = False,
@@ -4129,14 +4129,14 @@ class InventoryAdjustModel(DataModel):
                              ),
                      Field("status", "integer",
                            requires = IS_EMPTY_OR(IS_IN_SET(adjust_status)),
-                           represent = S3Represent(options = adjust_status),
+                           represent = represent_option(adjust_status),
                            default = 0,
                            label = T("Status"),
                            writable = False
                            ),
                      Field("category", "integer",
                            requires = IS_EMPTY_OR(IS_IN_SET(adjust_type)),
-                           represent = S3Represent(options = adjust_type),
+                           represent = represent_option(adjust_type),
                            default = 1,
                            label = T("Type"),
                            writable = False,
@@ -4238,7 +4238,7 @@ class InventoryAdjustModel(DataModel):
                      Field("reason", "integer",
                            default = 1,
                            label = T("Reason"),
-                           represent = S3Represent(options = adjust_reason),
+                           represent = represent_option(adjust_reason),
                            requires = IS_IN_SET(adjust_reason),
                            writable = False,
                            ),
@@ -4257,14 +4257,14 @@ class InventoryAdjustModel(DataModel):
                      Field("old_status", "integer",
                            default = 0,
                            label = T("Current Status"),
-                           represent = S3Represent(options = inv_item_status_opts),
+                           represent = represent_option(inv_item_status_opts),
                            requires = IS_EMPTY_OR(IS_IN_SET(inv_item_status_opts)),
                            writable = False,
                            ),
                      Field("new_status", "integer",
                            default = 0,
                            label = T("Revised Status"),
-                           represent = S3Represent(options = inv_item_status_opts),
+                           represent = represent_option(inv_item_status_opts),
                            requires = IS_EMPTY_OR(IS_IN_SET(inv_item_status_opts)),
                            ),
                      s3_date("expiry_date",

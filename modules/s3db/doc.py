@@ -307,7 +307,7 @@ class S3DocumentLibrary(DataModel):
                      Field("type", "integer",
                            default = 1,
                            label = T("Image Type"),
-                           represent = S3Represent(options = doc_image_type_opts),
+                           represent = represent_option(doc_image_type_opts),
                            requires = IS_IN_SET(doc_image_type_opts,
                                                 zero=None),
                            ),
@@ -859,7 +859,7 @@ class S3DataCardModel(DataModel):
                                                      sort = True,
                                                      zero = None,
                                                      ),
-                                represent = S3Represent(options = card_types),
+                                represent = represent_option(card_types),
                                 ),
                           # Card Feature Configurations:
                           Field("authority_statement", "text",

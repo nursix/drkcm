@@ -115,7 +115,7 @@ def req_priority():
                            label = current.T("Priority"),
                            #@ToDo: Colour code the priority text - red, orange, green
                            #represent = req_priority_represent,
-                           represent = S3Represent(options = priority_opts),
+                           represent = represent_option(priority_opts),
                            requires = IS_EMPTY_OR(
                                            IS_IN_SET(priority_opts)
                                            ),
@@ -139,7 +139,7 @@ def req_status():
     status_opts = req_status_opts()
     return S3ReusableField("req_status", "integer",
                            label = current.T("Request Status"),
-                           represent = S3Represent(options = status_opts),
+                           represent = represent_option(status_opts),
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(status_opts,
                                                   zero = None,
@@ -160,7 +160,7 @@ def req_timeframe():
     return S3ReusableField("timeframe", "integer",
                            default = 3,
                            label = T("Timeframe"),
-                           represent = S3Represent(options = timeframe_opts),
+                           represent = represent_option(timeframe_opts),
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(timeframe_opts,
                                                   zero = None,
@@ -431,7 +431,7 @@ class RequestModel(DataModel):
                                 label = T("Status"),
                                 default = workflow_default,
                                 requires = IS_IN_SET(workflow_opts),
-                                represent = S3Represent(options = workflow_opts),
+                                represent = represent_option(workflow_opts),
                                 readable = use_workflow,
                                 writable = False,
                                 ),
@@ -3247,7 +3247,7 @@ class RequestNeedsPersonModel(DataModel):
                           Field("status", "integer",
                                 default = 4, # Invited
                                 label = T("Status"),
-                                represent = S3Represent(options=status_opts),
+                                represent = represent_option(status_opts),
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(status_opts)),
                                 ),
@@ -3565,7 +3565,7 @@ class RequestNeedsResponseLineModel(DataModel):
                           self.org_sector_id(),
                           Field("modality", "integer",
                                 label = T("Modality"),
-                                represent = S3Represent(options = modality_opts),
+                                represent = represent_option(modality_opts),
                                 requires = IS_IN_SET(modality_opts),
                                 ),
                           s3_date(label = T("Date Planned")),
@@ -3670,7 +3670,7 @@ class RequestNeedsResponseOrganisationModel(DataModel):
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(project_organisation_roles)
                                             ),
-                                represent = S3Represent(options=project_organisation_roles),
+                                represent = represent_option(project_organisation_roles),
                                 ),
                           s3_comments(),
                           *s3_meta_fields())

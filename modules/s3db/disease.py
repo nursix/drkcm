@@ -211,7 +211,7 @@ class DiseaseDataModel(DataModel):
                            requires = IS_IN_SET(device_classes,
                                                 zero = None,
                                                 ),
-                           represent = S3Represent(options=device_classes),
+                           represent = represent_option(device_classes),
                            ),
                      Field("approved", "boolean",
                            default = True,
@@ -854,7 +854,7 @@ class DiseaseCertificateModel(DataModel):
         self.define_table(tablename,
                           self.disease_disease_id(),
                           Field("type",
-                                represent = S3Represent(options = hcert_types),
+                                represent = represent_option(hcert_types),
                                 requires = IS_IN_SET(hcert_types),
                                 ),
                           Field("instance_id",
@@ -866,7 +866,7 @@ class DiseaseCertificateModel(DataModel):
                           Field("vhash", "text",
                                 ),
                           Field("status",
-                                represent = S3Represent(options = hcert_status),
+                                represent = represent_option(hcert_status),
                                 requires = IS_IN_SET(hcert_status),
                                 ),
                           Field("errors", "text",
@@ -936,7 +936,7 @@ class CaseTrackingModel(DataModel):
                             "CONFIRMED-POS": T("Confirmed Positive"),
                             "CONFIRMED-NEG": T("Confirmed Negative"),
                             }
-        diagnosis_status_represent = S3Represent(options = diagnosis_status)
+        diagnosis_status_represent = represent_option(diagnosis_status)
 
         # =====================================================================
         # Monitoring Levels
@@ -951,7 +951,7 @@ class CaseTrackingModel(DataModel):
                              # Follow-up after recovery:
                              "FOLLOW-UP": T("Post-Recovery Follow-Up"),
                              }
-        monitoring_level_represent = S3Represent(options = monitoring_levels)
+        monitoring_level_represent = represent_option(monitoring_levels)
         # =====================================================================
         # Illness status
         #
@@ -962,7 +962,7 @@ class CaseTrackingModel(DataModel):
                           "DECEASED": T("Deceased, Clinical Signs Positive"),
                           "RECOVERED": T("Recovered"),
                           }
-        illness_status_represent = S3Represent(options = illness_status)
+        illness_status_represent = represent_option(illness_status)
 
         # =====================================================================
         # Case
@@ -1262,7 +1262,7 @@ class CaseTrackingModel(DataModel):
                      ("VACCINATED", T("Vaccinated")),
                      ("OTHER", T("Other")),
                      )
-        occasion_represent = S3Represent(options=dict(occasions))
+        occasion_represent = represent_option(dict(occasions))
         tablename = "disease_case_treatment"
         define_table(tablename,
                      case_id(empty=False),
@@ -1355,7 +1355,7 @@ class CaseTrackingModel(DataModel):
                                  future = 0,
                                  ),
                      Field("probe_status",
-                           represent = S3Represent(options = probe_status),
+                           represent = represent_option(probe_status),
                            requires = IS_IN_SET(probe_status),
                            default = "PENDING",
                            ),
@@ -1748,7 +1748,7 @@ class ContactTracingModel(DataModel):
                            default = "OPEN",
                            label = T("Tracing Status"),
                            requires = IS_IN_SET(contact_tracing_status, zero=None),
-                           represent = S3Represent(options=contact_tracing_status),
+                           represent = represent_option(contact_tracing_status),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -1794,7 +1794,7 @@ class ContactTracingModel(DataModel):
                             "PARTIAL": T("Partial"),
                             "FULL": T("Full"),
                             }
-        protection_level_represent = S3Represent(options = protection_level)
+        protection_level_represent = represent_option(protection_level)
 
         # =====================================================================
         # Exposure Type
@@ -1803,7 +1803,7 @@ class ContactTracingModel(DataModel):
                          "DIRECT": T("Direct"),
                          "INDIRECT": T("Indirect"),
                          }
-        exposure_type_represent = S3Represent(options = exposure_type)
+        exposure_type_represent = represent_option(exposure_type)
 
         # =====================================================================
         # Exposure Risk Level
@@ -1813,7 +1813,7 @@ class ContactTracingModel(DataModel):
                          "LOW": T("Low risk exposure"),
                          "HIGH": T("High risk exposure"),
                          }
-        exposure_risk_represent = S3Represent(options = exposure_risk)
+        exposure_risk_represent = represent_option(exposure_risk)
 
         # =====================================================================
         # Exposure: when and how was a person exposed to the disease?

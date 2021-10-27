@@ -1167,7 +1167,7 @@ class S3IncidentModel(DataModel):
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(severity_opts)
                                             ),
-                                represent = S3Represent(options = severity_opts),
+                                represent = represent_option(severity_opts),
                                 # Enable this field in templates if-required
                                 readable = False,
                                 writable = False,
@@ -1177,7 +1177,7 @@ class S3IncidentModel(DataModel):
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(level_opts)
                                             ),
-                                represent = S3Represent(options = level_opts),
+                                represent = represent_option(level_opts),
                                 # Enable this field in templates if-required
                                 readable = False,
                                 writable = False,
@@ -4907,7 +4907,7 @@ class S3EventSitRepModel(DataModel):
                                                  ),
                           #Field("phase", "integer",
                           #      label = T("Incident Lifecycle Phase"),
-                          #      represent = S3Represent(options = phase_opts),
+                          #      represent = represent_option(phase_opts),
                           #      requires = IS_EMPTY_OR(
                           #                  IS_IN_SET(phase_opts)
                           #                  ),
@@ -4924,7 +4924,7 @@ class S3EventSitRepModel(DataModel):
                                 ),
                           #Field("version", length=16,
                           #      label = T("Version"),
-                          #      represent = S3Represent(options = version_opts),
+                          #      represent = represent_option(version_opts),
                           #      requires = IS_IN_SET(version_opts) if sitrep_edxl else IS_EMPTY_OR(IS_IN_SET(version_opts)),
                           #      readable = sitrep_edxl,
                           #      writable = sitrep_edxl,
@@ -4956,7 +4956,7 @@ class S3EventSitRepModel(DataModel):
                           #      ),
                           #Field("urgency", length=16,
                           #      label = T("Urgency"),
-                          #      represent = S3Represent(options = urgency_opts),
+                          #      represent = represent_option(urgency_opts),
                           #      requires = IS_EMPTY_OR(
                           #                  IS_IN_SET(urgency_opts)
                           #                  ),
@@ -4965,14 +4965,14 @@ class S3EventSitRepModel(DataModel):
                           #      ),
                           #Field("Confidence", length=16,
                           #      label = T("Confidence"),
-                          #      represent = S3Represent(options = confidence_opts),
+                          #      represent = represent_option(confidence_opts),
                           #      requires = IS_IN_SET(confidence_opts) if sitrep_edxl else IS_EMPTY_OR(IS_IN_SET(confidence_opts)),
                           #      readable = sitrep_edxl,
                           #      writable = sitrep_edxl,
                           #      ),
                           #Field("severity", length=16,
                           #      label = T("Severity"),
-                          #      represent = S3Represent(options = severity_opts),
+                          #      represent = represent_option(severity_opts),
                           #      requires = IS_IN_SET(severity_opts) if sitrep_edxl else IS_EMPTY_OR(IS_IN_SET(severity_opts)),
                           #      readable = sitrep_edxl,
                           #      writable = sitrep_edxl,

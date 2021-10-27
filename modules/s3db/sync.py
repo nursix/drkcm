@@ -205,7 +205,7 @@ class SyncRepositoryModel(DataModel):
                      Field("apitype",
                            default = "eden",
                            label = T("Repository Type"),
-                           represent = S3Represent(options=sync_repository_types),
+                           represent = represent_option(sync_repository_types),
                            requires = IS_IN_SET(sync_repository_types,
                                                 sort = True,
                                                 ),
@@ -213,7 +213,7 @@ class SyncRepositoryModel(DataModel):
                      Field("backend",
                            default = "eden",
                            label = T("Data Format"),
-                           represent = S3Represent(options=sync_backend_types),
+                           represent = represent_option(sync_backend_types),
                            requires = IS_IN_SET(sync_backend_types),
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (

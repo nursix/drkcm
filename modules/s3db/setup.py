@@ -386,7 +386,7 @@ class S3AWSCloudModel(S3CloudModel):
                            default = "eu-west-2", # Europe (London)
                            #label = T("Region"),
                            #requires = IS_IN_SET(aws_regions),
-                           #represent = S3Represent(options = aws_regions)
+                           #represent = represent_option(aws_regions)
                            ),
                      Field("instance_type",
                            default = "t3.micro",
@@ -592,7 +592,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                            default = "RegionOne", # Varies by Deployment, this matches OSUOSL
                            #label = T("Region"),
                            #requires = IS_IN_SET(openstack_regions), # Varies by Deployment
-                           #represent = S3Represent(options = aws_regions)
+                           #represent = represent_option(aws_regions)
                            ),
                      Field("availability_zone",
                            default = "nova", # Varies by Deployment, this matches OSUOSL
@@ -1035,7 +1035,7 @@ class S3SetupDeploymentModel(DataModel):
                      Field("webserver_type", "integer",
                            default = 3,
                            label = T("Web Server"),
-                           represent = S3Represent(options = WEB_SERVERS),
+                           represent = represent_option(WEB_SERVERS),
                            requires = IS_IN_SET(WEB_SERVERS),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Web Server"),
@@ -1046,7 +1046,7 @@ class S3SetupDeploymentModel(DataModel):
                      Field("db_type", "integer",
                            default = 2,
                            label = T("Database"),
-                           represent = S3Represent(options = DB_SERVERS),
+                           represent = represent_option(DB_SERVERS),
                            requires = IS_IN_SET(DB_SERVERS),
                            writable = False,
                            comment = DIV(_class="tooltip",
@@ -1182,7 +1182,7 @@ class S3SetupDeploymentModel(DataModel):
                      Field("role", "integer",
                            default = 1,
                            label = T("Role"),
-                           represent = S3Represent(options = SERVER_ROLES),
+                           represent = represent_option(SERVER_ROLES),
                            requires = IS_IN_SET(SERVER_ROLES),
                            writable = False,
                            comment = DIV(_class="tooltip",
@@ -1281,7 +1281,7 @@ class S3SetupDeploymentModel(DataModel):
         # @ToDo: Allow a Test instance to source Prod data from a different deployment
         #        - to allow it to be run on different hosts (or even different cloud)
         #
-        type_represent = S3Represent(options = INSTANCE_TYPES)
+        type_represent = represent_option(INSTANCE_TYPES)
 
         tablename = "setup_instance"
         define_table(tablename,

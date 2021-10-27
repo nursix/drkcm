@@ -46,6 +46,7 @@ __all__ = ("S3Represent",
            "s3_trunk8",
            "s3_url_represent",
            "s3_yes_no_represent",
+           "represent_option",
            )
 
 import re
@@ -804,6 +805,21 @@ class S3PriorityRepresent(object):
         """
 
         return self(value, row=row)
+
+# =============================================================================
+def represent_option(options, default="-"):
+    """
+        Representation function for option dicts
+
+        :param options: the options dict
+        :param default: the default value for unknown options
+
+        :returns function: the representation function
+    """
+
+    def represent(value, row=None):
+        return options.get(value, default)
+    return represent
 
 # =============================================================================
 def s3_comments_represent(text, show_link=True):

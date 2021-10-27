@@ -275,7 +275,7 @@ class HRModel(DataModel):
                            label = T("Type"),
                            readable = hrm_types,
                            writable = hrm_types,
-                           represent = S3Represent(options = hrm_type_opts),
+                           represent = represent_option(hrm_type_opts),
                            requires = IS_IN_SET(hrm_type_opts),
                            ),
                      s3_comments(comment = None,
@@ -1754,7 +1754,7 @@ class HRInsuranceModel(DataModel):
         insurance_types = {"SOCIAL": T("Social Insurance"),
                            "HEALTH": T("Health Insurance"),
                            }
-        insurance_type_represent = S3Represent(options = insurance_types)
+        insurance_type_represent = represent_option(insurance_types)
 
         # =====================================================================
         # Insurance Information
@@ -1824,12 +1824,12 @@ class HRContractModel(DataModel):
                           "LONG": T("Long-term"),
                           "PERMANENT": T("Permanent")
                           }
-        contract_term_represent = S3Represent(options = contract_terms)
+        contract_term_represent = represent_option(contract_terms)
 
         hours_models = {"PARTTIME": T("Part-time"),
                         "FULLTIME": T("Full-time"),
                         }
-        hours_model_represent = S3Represent(options = hours_models)
+        hours_model_represent = represent_option(hours_models)
 
         # =====================================================================
         # Employment Contract Details
@@ -3092,7 +3092,7 @@ class HRSkillModel(DataModel):
                      Field("status", "integer",
                            default = 4, # Invited
                            label = T("Status"),
-                           represent = S3Represent(options=status_opts),
+                           represent = represent_option(status_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(status_opts)),
                            # Enable in templates as-required
@@ -4306,7 +4306,7 @@ class HREventAssessmentModel(DataModel):
                                 default = 1,
                                 label = T("Type"),
                                 requires = IS_EMPTY_OR(IS_IN_SET(type_opts)),
-                                represent = S3Represent(options = type_opts),
+                                represent = represent_option(type_opts),
                                 ),
                           *s3_meta_fields())
 
@@ -4552,7 +4552,7 @@ class HRExperienceModel(DataModel):
             for k, v in activity_types.items():
                 activity_type_opts[k] = T(v)
             activity_type_requires = IS_EMPTY_OR(IS_IN_SET(activity_type_opts))
-            activity_type_represent = S3Represent(options=activity_type_opts)
+            activity_type_represent = represent_option(activity_type_opts)
             use_activity_types = True
 
         tablename = "hrm_experience"
@@ -5154,7 +5154,7 @@ class HRShiftModel(DataModel):
                      skill_id(),
                      Field("day_of_week", "integer",
                            requires = IS_IN_SET(DAYS_OF_WEEK),
-                           represent = S3Represent(options = DAYS_OF_WEEK),
+                           represent = represent_option(DAYS_OF_WEEK),
                            ),
                      s3_time("start_time",
                              empty = False,
@@ -5466,7 +5466,7 @@ class HRDelegationModel(DataModel):
                                                 zero = None,
                                                 sort = False,
                                                 ),
-                           represent = S3Represent(options = dict(delegation_status)),
+                           represent = represent_option(dict(delegation_status)),
                            ),
                      # Enable in template if/as required:
                      Field("hours_per_week", "integer",
@@ -5528,7 +5528,7 @@ class HRDelegationModel(DataModel):
                            requires = IS_IN_SET(message_status,
                                                 zero = None,
                                                 ),
-                           represent = S3Represent(options=message_status),
+                           represent = represent_option(message_status),
                            writable = False,
                            ),
                      s3_comments(),
