@@ -352,7 +352,7 @@ class CRShelterModel(DataModel):
                      Field("status", "integer",
                            label = T("Status"),
                            default = 2, # Open
-                           represent = S3Represent(options = cr_shelter_opts),
+                           represent = represent_option(cr_shelter_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(cr_shelter_opts)
                                        ),
@@ -601,7 +601,7 @@ class CRShelterModel(DataModel):
                      s3_date(),
                      Field("status", "integer",
                            label = T("Status"),
-                           represent = S3Represent(options = cr_shelter_opts),
+                           represent = represent_option(cr_shelter_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(cr_shelter_opts)
                                        ),
@@ -1186,7 +1186,7 @@ class CRShelterInspectionModel(DataModel):
                      Field("task_priority", "integer",
                            default = 3,
                            label = T("Priority"),
-                           represent = S3Represent(options=task_priority_opts),
+                           represent = represent_option(task_priority_opts),
                            requires = IS_IN_SET(task_priority_opts,
                                                 zero = None,
                                                 ),
@@ -1642,8 +1642,8 @@ class CRShelterRegistrationModel(DataModel):
                      Field("status", "integer",
                            default = 3,
                            label = T("Status"),
+                           represent = represent_option(allocation_status_opts),
                            requires = IS_IN_SET(allocation_status_opts),
-                           represent = S3Represent(options = allocation_status_opts),
                            ),
                      Field("group_size_day", "integer",
                            default = 0,
@@ -1717,8 +1717,7 @@ class CRShelterRegistrationModel(DataModel):
                      Field("day_or_night", "integer",
                            default = DAY_AND_NIGHT,
                            label = T("Presence in the shelter"),
-                           represent = S3Represent(options=cr_day_or_night_opts
-                                                   ),
+                           represent = represent_option(cr_day_or_night_opts),
                            requires = IS_IN_SET(cr_day_or_night_opts,
                                                 zero=None
                                                 ),

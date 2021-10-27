@@ -491,7 +491,7 @@ class SecuritySeizedItemsModel(DataModel):
                      Field("status",
                            default = "DEP",
                            requires = IS_IN_SET(seized_item_status, zero=None),
-                           represent = S3Represent(options=seized_item_status),
+                           represent = represent_option(seized_item_status),
                            ),
                      depository_id(ondelete="SET NULL",
                                    ),
