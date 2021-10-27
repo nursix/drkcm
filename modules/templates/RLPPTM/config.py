@@ -963,6 +963,7 @@ def config(settings):
         table = s3db.disease_testing_report
 
         list_fields = ["date",
+                       (T("Test Station ID"), "site_id$org_facility.code"),
                        "site_id",
                        #"disease_id",
                        "tests_total",
@@ -1024,7 +1025,7 @@ def config(settings):
         today = current.request.utcnow.date()
         earliest = today - relativedelta(months=3, day=1)
 
-        from core import S3CalendarWidget
+        from core import S3CalendarWidget, S3DateFilter, S3TextFilter
         field.requires = IS_UTC_DATE(minimum = earliest,
                                      maximum = today,
                                      )
@@ -1036,7 +1037,18 @@ def config(settings):
         # Daily reports only writable for ORG_ADMINs of test stations
         writable = current.auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
 
+        filter_widgets = [S3TextFilter(["site_id$name",
+                                        "site_id$org_facility.code",
+                                        "comments",
+                                        ],
+                                       label = T("Search"),
+                                       ),
+                          S3DateFilter("date",
+                                       ),
+                          ]
+
         s3db.configure("disease_testing_report",
+                       filter_widgets = filter_widgets,
                        list_fields = list_fields,
                        insertable = writable,
                        editable = writable,
