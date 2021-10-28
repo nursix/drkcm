@@ -425,8 +425,8 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 M("Shipments", c="inv", f="send", check=supply_distributor),
                 M("Deliveries", "inv", "recv", check=supply_requester),
                 M("Statistics", link=False, restrict="SUPPLY_COORDINATOR")(
-                    M("Orders##delivery", c="req", f="req", m="report"),
-                    M("Shipments", c="inv", f="send", m="report"),
+                    M("Orders##delivery", c="req", f="req_item", m="report"),
+                    M("Shipments", c="inv", f="track_item", m="report"),
                     ),
                 M("Items", c="supply", f="item")(
                     M("Create", m="create"),

@@ -123,10 +123,12 @@ PROVIDER_ACCOUNTANT,Provider Accountant,,,,,fin_voucher_debit,READ,,
 PROVIDER_ACCOUNTANT,Provider Accountant,,,,,fin_voucher_program,READ,,any
 SUPPLY_COORDINATOR,Supply Coordinator,,,inv,send,,CREATE|READ|UPDATE|DELETE,,any
 SUPPLY_COORDINATOR,Supply Coordinator,,,inv,send_process,,READ|UPDATE,,any
+SUPPLY_COORDINATOR,Supply Coordinator,,,inv,track_item,,READ,,any
 SUPPLY_COORDINATOR,Supply Coordinator,,,inv,warehouse,,CREATE|READ|UPDATE|DELETE,,
 SUPPLY_COORDINATOR,Supply Coordinator,,,inv,,,READ,,
 SUPPLY_COORDINATOR,Supply Coordinator,,,req,req,,CREATE,,
 SUPPLY_COORDINATOR,Supply Coordinator,,,req,req,,READ,,any
+SUPPLY_COORDINATOR,Supply Coordinator,,,req,req_item,,READ,,any
 SUPPLY_COORDINATOR,Supply Coordinator,,,req,send,,READ|UPDATE|DELETE,,
 SUPPLY_COORDINATOR,Supply Coordinator,,,req,,,READ,,
 SUPPLY_COORDINATOR,Supply Coordinator,,,supply,item,,CREATE|READ|UPDATE|DELETE,,

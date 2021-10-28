@@ -3806,34 +3806,6 @@ def config(settings):
         # Do not check for site_id (unused)
         s3db.clear_config("inv_send", "onvalidation")
 
-        if r.method == "report":
-            axes = [(T("Orderer"), "to_site_id"),
-                    "to_site_id$location_id$L3",
-                    "to_site_id$location_id$L2",
-                    "to_site_id$location_id$L1",
-                    (T("Shipment Items"), "track_item.item_id"),
-                    (T("Distribution Center"), "site_id"),
-                    "status",
-                    ]
-
-            report_options = {
-                "rows": axes,
-                "cols": axes,
-                "fact": [(T("Number of Shipments"), "count(id)"),
-                         (T("Number of Items"), "count(track_item.id)"),
-                         (T("Sent Quantity"), "sum(track_item.quantity)"),
-                        ],
-                "defaults": {"rows": "track_item.item_id",
-                             "cols": "status",
-                             "fact": "sum(track_item.quantity)",
-                             "totals": True,
-                             },
-                }
-
-            s3db.configure(tablename,
-                           report_options = report_options,
-                           )
-
     settings.customise_inv_send_resource = customise_inv_send_resource
 
     # -------------------------------------------------------------------------
@@ -4175,6 +4147,33 @@ def config(settings):
                            deletable = False,
                            )
 
+        if r.method == "report":
+            axes = [(T("Orderer"), "send_id$to_site_id"),
+                    "send_id$to_site_id$location_id$L3",
+                    "send_id$to_site_id$location_id$L2",
+                    "send_id$to_site_id$location_id$L1",
+                    (T("Shipment Items"), "item_id"),
+                    (T("Distribution Center"), "send_id$site_id"),
+                    "send_id$status",
+                    ]
+
+            report_options = {
+                "rows": axes,
+                "cols": axes,
+                "fact": [(T("Number of Shipments"), "count(send_id)"),
+                         (T("Number of Items"), "count(id)"),
+                         (T("Sent Quantity"), "sum(quantity)"),
+                        ],
+                "defaults": {"rows": "item_id",
+                             "cols": "send_id$status",
+                             "fact": "sum(quantity)",
+                             "totals": True,
+                             },
+                }
+            s3db.configure("inv_track_item",
+                           report_options = report_options,
+                           )
+
         # Override standard-onaccept to prevent inventory updates
         s3db.configure("inv_track_item",
                        onaccept = inv_track_item_onaccept,
@@ -4464,34 +4463,6 @@ def config(settings):
         # Custom label for Pack
         field = ritable.item_pack_id
         field.label = T("Order Unit")
-
-        if r.method == "report":
-            axes = [(T("Orderer"), "site_id"),
-                    "site_id$location_id$L3",
-                    "site_id$location_id$L2",
-                    "site_id$location_id$L1",
-                    (T("Requested Items"), "req_item.item_id"),
-                    "transit_status",
-                    "fulfil_status",
-                    ]
-
-            report_options = {
-                "rows": axes,
-                "cols": axes,
-                "fact": [(T("Number of Requests"), "count(id)"),
-                         (T("Number of Items"), "count(req_item.id)"),
-                         (T("Requested Quantity"), "sum(req_item.quantity)"),
-                        ],
-                "defaults": {"rows": "site_id$location_id$L2",
-                             "cols": None,
-                             "fact": "count(id)",
-                             "totals": True,
-                             },
-                }
-
-            s3db.configure(tablename,
-                           report_options = report_options,
-                           )
 
     settings.customise_req_req_resource = customise_req_req_resource
 
@@ -4922,6 +4893,35 @@ def config(settings):
                                  req_req_item_create_onaccept,
                                  method = "create",
                                  )
+
+        if r.method == "report":
+            axes = [(T("Orderer"), "req_id$site_id"),
+                    "req_id$site_id$location_id$L3",
+                    "req_id$site_id$location_id$L2",
+                    "req_id$site_id$location_id$L1",
+                    (T("Requested Items"), "item_id"),
+                    "req_id$transit_status",
+                    "req_id$fulfil_status",
+                    ]
+
+            report_options = {
+                "rows": axes,
+                "cols": axes,
+                "fact": [(T("Number of Requests"), "count(req_id)"),
+                         (T("Number of Items"), "count(id)"),
+                         (T("Requested Quantity"), "sum(quantity)"),
+                        ],
+                "defaults": {"rows": "req_id$site_id$location_id$L2",
+                             "cols": None,
+                             "fact": "count(req_id)",
+                             "totals": True,
+                             },
+                }
+
+            s3db.configure(tablename,
+                           report_options = report_options,
+                           )
+
 
     settings.customise_req_req_item_resource = customise_req_req_item_resource
 
