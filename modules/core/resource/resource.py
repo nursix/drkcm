@@ -568,13 +568,13 @@ class S3Resource(object):
             :returns: number of records deleted
 
             NB skipping undeletable rows is no longer the default behavior,
-               process will now fail immediately for any error; use S3Delete
+               process will now fail immediately for any error; use DeleteProcess
                directly if skipping of undeletable rows is desired
         """
 
-        from .delete import S3Delete
+        from .delete import DeleteProcess
 
-        delete = S3Delete(self, representation=format)
+        delete = DeleteProcess(self, representation=format)
         result = delete(cascade = cascade,
                         replaced_by = replaced_by,
                         #skip_undeletable = False,
