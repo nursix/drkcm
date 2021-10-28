@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" S3 Record Deletion
+""" Cascading Deletion/Archiving of Records
 
     :copyright: 2018-2021 (c) Sahana Software Foundation
     :license: MIT
@@ -37,21 +37,19 @@ from s3dal import original_tablename, Row
 
 from ..tools import s3_get_last_record_id, s3_has_foreign_key, s3_remove_last_record_id
 
-__all__ = ("S3Delete",
+__all__ = ("DeleteProcess",
            )
 
 DELETED = "deleted"
 
 # =============================================================================
-class S3Delete(object):
+class DeleteProcess(object):
     """
-        Process to delete/archive records in a S3Resource
+        Process to delete/archive records
     """
 
     def __init__(self, resource, archive=None, representation=None):
         """
-            Constructor
-
             :param S3Resource resource: the resource to delete records from
             :param bool archive: True|False to override global
                                  security.archive_not_delete setting
@@ -128,11 +126,9 @@ class S3Delete(object):
             return 0
         else:
             first = rows[0]
-            if hasattr(first, tablename) and isinstance(first[tablename], Row):
-                # Rows are the result of a join (due to extra_fields)
-                joined = True
-            else:
-                joined = False
+            # Are the rows the result of a join (due to extra_fields)?
+            joined = hasattr(first, tablename) and \
+                     isinstance(first[tablename], Row)
 
         table = self.table
         pkey = table._id.name
@@ -263,8 +259,6 @@ class S3Delete(object):
              Extract the rows to be deleted
 
              :returns: a Rows instance
-
-             :meta private:
         """
 
         table = self.table
@@ -294,8 +288,6 @@ class S3Delete(object):
                               standard because of performance cost)
             :returns: array of Rows found to be deletable
                       NB those can still fail further down the cascade
-
-            :meta private:
         """
 
         db = current.db
@@ -363,7 +355,6 @@ class S3Delete(object):
             Run the automatic deletion cascade: remove or update records
             referencing this row with ondelete!="RESTRICT"
 
-            :meta private:
             :param row: the Row to delete
             :param check_all: process the entire cascade to reveal all
                               errors (rather than breaking out of it after
@@ -401,10 +392,10 @@ class S3Delete(object):
                                             filter = query,
                                             unapproved = True,
                                             )
-                delete = S3Delete(rresource,
-                                  archive = self.archive,
-                                  representation = self.representation,
-                                  )
+                delete = DeleteProcess(rresource,
+                                       archive = self.archive,
+                                       representation = self.representation,
+                                       )
                 delete(cascade=True)
                 if delete.errors:
                     success = False
@@ -443,9 +434,7 @@ class S3Delete(object):
         """
             Auto-delete linked records if row was the last link
 
-            @param row: the Row about to get deleted
-
-            :meta private:
+            :param row: the Row about to get deleted
         """
 
         resource = self.resource
@@ -476,10 +465,10 @@ class S3Delete(object):
                                            filter = query,
                                            unapproved = True,
                                            )
-                    delete = S3Delete(linked,
-                                      archive = self.archive,
-                                      representation = self.representation,
-                                      )
+                    delete = DeleteProcess(linked,
+                                           archive = self.archive,
+                                           representation = self.representation,
+                                           )
                     delete(cascade=True)
                     if delete.errors:
                         delete.log_errors()
@@ -496,8 +485,6 @@ class S3Delete(object):
                                 by record merger to log which record has replaced which
 
             :returns: True for success, False on error
-
-            :meta private:
         """
 
         table = self.table
@@ -543,11 +530,9 @@ class S3Delete(object):
         """
             Delete a record
 
-            @param row: the Row to delete
+            :param row: the Row to delete
 
-            @returns: True for success, False on error
-
-            :meta private:
+            :returns: True for success, False on error
         """
 
         table = self.table
@@ -575,9 +560,7 @@ class S3Delete(object):
         """
             List of super-keys (instance links) in this resource
 
-            @returns: a list of field names
-
-            :meta private:
+            :returns: a list of field names
         """
 
         super_keys = self._super_keys
@@ -613,9 +596,7 @@ class S3Delete(object):
         """
             List of foreign key fields in this resource
 
-            @returns: a list of field names
-
-            :meta private:
+            :returns: a list of field names
         """
 
         # Produce a list of foreign key Fields in self.table
@@ -636,9 +617,7 @@ class S3Delete(object):
             A list of foreign keys referencing this resource,
             lazy property
 
-            @returns: a list of Fields
-
-            :meta private:
+            :returns: a list of Fields
         """
 
         references = self._references
@@ -656,9 +635,7 @@ class S3Delete(object):
             A list of foreign keys referencing this resource with
             ondelete="RESTRICT", lazy property
 
-            @returns: a list of Fields
-
-            :meta private:
+            :returns: a list of Fields
         """
 
         restrictions = self._restrictions
@@ -673,8 +650,6 @@ class S3Delete(object):
     def introspect(self):
         """
             Introspect the resource to set process properties
-
-            :meta private:
         """
 
         # Must load all models to detect dependencies
@@ -704,10 +679,8 @@ class S3Delete(object):
         """
             Add an error
 
-            @param record_id: the record ID
-            @param msg: the error message
-
-            :meta private:
+            :param record_id: the record ID
+            :param msg: the error message
         """
 
         key = (self.tablename, record_id)
@@ -724,8 +697,6 @@ class S3Delete(object):
     def set_resource_error(self):
         """
             Set the resource.error
-
-            :meta private:
         """
 
         if not self.errors:
@@ -741,8 +712,6 @@ class S3Delete(object):
     def log_errors(self):
         """
             Log all errors of this process instance
-
-            :meta private:
         """
 
         if not self.errors:
@@ -758,14 +727,10 @@ class S3Delete(object):
         """
             Log all errors for a failed master record
 
-            @param master: the master log message
-            @param reference: the prefix for the sub-message
-            @param errors: the errors
-
-            :meta private:
+            :param master: the master log message
+            :param reference: the prefix for the sub-message
+            :param errors: the errors
         """
-
-        log = current.log.error
 
         if isinstance(errors, list):
             # Multiple errors for the same record
@@ -788,6 +753,6 @@ class S3Delete(object):
                 msg = "%s (%s)" % (reference, errors)
             else:
                 msg = errors
-            log("%s: %s" % (master, msg))
+            current.log.error("%s: %s" % (master, msg))
 
 # END =========================================================================
