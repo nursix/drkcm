@@ -2487,7 +2487,7 @@ class GIS(object):
             e.g. Exports in KML, GeoRSS or GPX format
 
             Called by S3ResourceTree
-            @param: resource - S3Resource instance (required)
+            @param: resource - CRUDResource instance (required)
             @param: attr_fields - list of attr_fields to use instead of reading
                                   from get_vars or looking up in gis_layer_feature
             @param: count - total number of features

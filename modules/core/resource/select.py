@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Resource Data Reader
 
-""" Resource Data Reader
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -44,7 +42,7 @@ osetattr = object.__setattr__
 ogetattr = object.__getattribute__
 
 # =============================================================================
-class S3ResourceData(object):
+class S3ResourceData:
     """ Class representing data in a resource """
 
     def __init__(self,
@@ -1090,7 +1088,7 @@ class S3ResourceData(object):
                     try:
                         value = getval[idx](row)
                     except AttributeError:
-                        current.log.warning("Warning S3Resource.extract: column %s not in row" % col)
+                        current.log.warning("Warning CRUDResource.extract: column %s not in row" % col)
                         value = None
                     if lazy or callable(value):
                         # Lazy virtual field

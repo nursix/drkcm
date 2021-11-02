@@ -4577,7 +4577,7 @@ def inv_stock_movements(resource, selectors, orderby):
     """
         Extraction method for stock movements report
 
-        @param resource: the S3Resource (inv_inv_item)
+        @param resource: the CRUDResource (inv_inv_item)
         @param selectors: the field selectors
         @param orderby: orderby expression
 

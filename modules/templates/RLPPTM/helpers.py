@@ -15,7 +15,7 @@ from gluon import current, Field, URL, \
 from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
                  S3Method, S3Represent, s3_fullname, s3_mark_required, s3_str
 
-from s3db.pr import pr_PersonRepresentContact, pr_default_realms
+from s3db.pr import pr_PersonRepresentContact
 
 # =============================================================================
 def get_role_realms(role):
@@ -480,7 +480,7 @@ def can_cancel_debit(debit):
             # User has a site-wide VOUCHER_PROVIDER role, however
             # for cancellation of debits they must be affiliated
             # with the debit owner organisation
-            role_realms = pr_default_realms(user["pe_id"])
+            role_realms = current.s3db.pr_default_realms(user["pe_id"])
 
         return debit.pe_id in role_realms
 
@@ -493,7 +493,7 @@ def configure_binary_tags(resource, tag_components):
     """
         Configure representation of binary tags
 
-        @param resource: the S3Resource
+        @param resource: the CRUDResource
         @param tag_components: tuple|list of filtered tag component aliases
     """
 

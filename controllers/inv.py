@@ -408,7 +408,6 @@ def warehouse():
     else:
         native = False
 
-    from s3db.inv import inv_rheader
     return crud_controller(module, resourcename,
                            #hide_filter = {"inv_item": False,
                            #               "_default": True,
@@ -421,7 +420,7 @@ def warehouse():
                            csv_stylesheet = csv_stylesheet,
                            csv_template = resourcename,
                            native = native,
-                           rheader = inv_rheader,
+                           rheader = s3db.inv_rheader,
                            )
 
 # -----------------------------------------------------------------------------
@@ -694,8 +693,7 @@ def inv_item_packs():
 def send():
     """ RESTful CRUD controller """
 
-    from s3db.inv import inv_send_controller
-    return inv_send_controller()
+    return s3db.inv_send_controller()
 
 # ==============================================================================
 def send_commit():
@@ -703,15 +701,13 @@ def send_commit():
         Send a Shipment containing all items in a Commitment
     """
 
-    from s3db.req import req_send_commit
-    return req_send_commit()
+    return s3db.req_send_commit()
 
 # -----------------------------------------------------------------------------
 def send_process():
     """ Process a Shipment """
 
-    from s3db.inv import inv_send_process
-    return inv_send_process()
+    return s3db.inv_send_process()
 
 # -----------------------------------------------------------------------------
 def send_returns():
@@ -912,7 +908,7 @@ def set_recv_attr(status):
     recvtable.cert_status.readable = recvtable.cert_status.writable = False
     recvtable.eta.readable = False
     recvtable.req_ref.writable = True
-    from s3db.inv import inv_ship_status
+    inv_ship_status = s3db.inv_ship_status
     if status == inv_ship_status["IN_PROCESS"]:
         recvtable.send_ref.writable = True
         recvtable.recv_ref.readable = False
@@ -956,13 +952,13 @@ def recv():
         except:
             pass
 
-    from s3db.inv import inv_ship_status
+    inv_ship_status = s3db.inv_ship_status
     SHIP_STATUS_IN_PROCESS = inv_ship_status["IN_PROCESS"]
     SHIP_STATUS_SENT = inv_ship_status["SENT"]
     SHIP_STATUS_RECEIVED = inv_ship_status["RECEIVED"]
     SHIP_STATUS_CANCEL = inv_ship_status["CANCEL"]
 
-    from s3db.inv import inv_tracking_status
+    inv_tracking_status = s3db.inv_tracking_status
     TRACK_STATUS_UNKNOWN    = inv_tracking_status["UNKNOWN"]
     TRACK_STATUS_PREPARING  = inv_tracking_status["IN_PROCESS"]
     TRACK_STATUS_TRANSIT    = inv_tracking_status["SENT"]
@@ -1127,8 +1123,7 @@ def recv():
                            listadd = False,
                            )
 
-    from s3db.inv import inv_recv_rheader
-    return crud_controller(rheader=inv_recv_rheader)
+    return crud_controller(rheader=s3db.inv_recv_rheader)
 
 # -----------------------------------------------------------------------------
 def req_items_for_inv(site_id, quantity_type):
@@ -1247,7 +1242,7 @@ def recv_process():
 
     # Check status
     status = recv_record.status
-    from s3db.inv import inv_ship_status
+    inv_ship_status = s3db.inv_ship_status
     if status == inv_ship_status["RECEIVED"]:
         session.error = T("This shipment has already been received.")
         redirect(URL(c="inv", f="recv", args=[recv_id]))
@@ -1335,7 +1330,7 @@ def recv_cancel():
                                                   limitby = (0, 1)
                                                   ).first()
 
-    from s3db.inv import inv_ship_status
+    inv_ship_status = s3db.inv_ship_status
     if recv_record.status != inv_ship_status["RECEIVED"]:
         session.error = T("This shipment has not been received - it has NOT been canceled because it can still be edited.")
         redirect(URL(c="inv", f="recv", args=[recv_id]))
@@ -1524,8 +1519,7 @@ def track_item():
                        )
         s3.filter = (FS("expiry_date") != None)
 
-    from s3db.inv import inv_rheader
-    return crud_controller(rheader=inv_rheader)
+    return crud_controller(rheader=s3db.inv_rheader)
 
 # =============================================================================
 def adj():
@@ -1625,8 +1619,7 @@ def adj():
                        listadd = False,
                        )
 
-    from s3db.inv import inv_adj_rheader
-    return crud_controller(rheader=inv_adj_rheader)
+    return crud_controller(rheader=s3db.inv_adj_rheader)
 
 # -----------------------------------------------------------------------------
 def adj_close():
@@ -1721,7 +1714,7 @@ def recv_item_json():
     except:
         raise HTTP(400, current.xml.json_message(False, 400, "No value provided!"))
 
-    from s3db.inv import inv_ship_status
+    inv_ship_status = s3db.inv_ship_status
     stable = s3db.org_site
     rtable = s3db.inv_recv
     ittable = s3db.inv_track_item
@@ -1760,7 +1753,7 @@ def send_item_json():
     except:
         raise HTTP(400, current.xml.json_message(False, 400, "No value provided!"))
 
-    from s3db.inv import inv_ship_status
+    inv_ship_status = s3db.inv_ship_status
     stable = s3db.org_site
     istable = s3db.inv_send
     ittable = s3db.inv_track_item
@@ -1791,8 +1784,7 @@ def send_item_json():
 # -----------------------------------------------------------------------------
 def kitting():
 
-    from s3db.inv import inv_rheader
-    return crud_controller(rheader=inv_rheader)
+    return crud_controller(rheader=s3db.inv_rheader)
 
 # -----------------------------------------------------------------------------
 def facility():
@@ -1846,14 +1838,12 @@ def incoming():
     """
 
     # @ToDo: Create this function!
-    from s3db.inv import inv_incoming
-    return inv_incoming()
+    return s3db.inv_incoming()
 
 # -----------------------------------------------------------------------------
 def req_match():
     """ Match Requests """
 
-    from s3db.req import req_match
-    return req_match()
+    return s3db.req_match()
 
 # END =========================================================================

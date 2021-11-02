@@ -252,7 +252,7 @@ class S3SVG(S3Codec):
         """
             Import data from a Scalable Vector Graphic
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param source: the source
 
             @return: an S3XML ElementTree

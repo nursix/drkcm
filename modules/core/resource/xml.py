@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    S3XML Toolkit
 
-""" S3XML Toolkit
-
-    @see: U{B{I{S3XRC}} <http://eden.sahanafoundation.org/wiki/S3XRC>}
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-    @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -2175,7 +2168,7 @@ class S3XML(S3Codec):
             <col field="fieldname"> elements (see: L{csv2tree}).
 
             The returned ElementTree can be imported using S3CSV
-            stylesheets (through S3Resource.import_xml()).
+            stylesheets (through CRUDResource.import_xml()).
 
             @param source: the XLS source (stream, or XLRD book, or
                            None if sheet is an open XLRD sheet)
@@ -2428,7 +2421,7 @@ class S3XML(S3Codec):
             <col field="fieldname"> elements (see: L{csv2tree}).
 
             The returned ElementTree can be imported using S3CSV
-            stylesheets (through S3Resource.import_xml()).
+            stylesheets (through CRUDResource.import_xml()).
 
             @param source: the XLS source (stream, or OpenPyXL book, or
                            None if sheet is an open OpenPyXL sheet)
@@ -2900,7 +2893,7 @@ class S3EntityResolver(etree.Resolver):
         return None
 
 # =============================================================================
-class S3XMLFormat(object):
+class S3XMLFormat:
     """ Helper class to store a pre-parsed stylesheet """
 
     def __init__(self, stylesheet):

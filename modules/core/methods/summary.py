@@ -336,7 +336,7 @@ class S3Summary(S3Method):
         """
             Get the summary page configuration
 
-            @param resource: the target S3Resource
+            @param resource: the target CRUDResource
         """
 
         get_config = resource.get_config

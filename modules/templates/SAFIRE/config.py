@@ -747,8 +747,7 @@ def config(settings):
         db = current.db
         s3db = current.s3db
 
-        from s3db.event import event_set_event_from_incident
-        event_set_event_from_incident(form, "event_human_resource")
+        s3db.event_set_event_from_incident(form, "event_human_resource")
 
         table = s3db.event_human_resource
 
@@ -1024,7 +1023,7 @@ def config(settings):
 
         duty = components_get("duty")
         f = duty.table.value
-        f.represent = s3_phone_represent,
+        f.represent = s3_phone_represent
         f.requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI())
         f.widget = S3PhoneWidget()
 
@@ -1158,8 +1157,7 @@ def config(settings):
                          URL(c="event", f= "incident",
                              args = [incident_id, "task", task_id]),
                              )
-            from s3db.pr import pr_instance_type
-            instance_type = pr_instance_type(pe_id)
+            instance_type = s3db.pr_instance_type(pe_id)
             if instance_type == "org_organisation":
                 # Notify the Duty Number for the Organisation, not everyone in the Organisation!
                 otable = s3db.org_organisation

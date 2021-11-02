@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Resource Tree Builder (for scalable XML Exports)
 
-""" S3 Resource Tree Builder (for scalable XML Exports)
-
-    @copyright: 2021-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2021-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -44,14 +42,14 @@ from .query import FS, S3URLQuery
 from .resource import DEFAULT, MAXDEPTH
 
 # =============================================================================
-class S3ResourceTree(object):
+class S3ResourceTree:
     """ Resource Tree Builder """
 
     def __init__(self, resource, location_data=None, map_data=None):
         """
             Constructor
 
-            @param resource: the S3Resource to build the tree from
+            @param resource: the CRUDResource to build the tree from
             @param location_data: dictionary of location data which has been
                                   looked-up in bulk ready for xml.gis_encode()
             @param map_data: dictionary of options which can be read by the map
@@ -272,7 +270,7 @@ class S3ResourceTree(object):
         """
             Load the records in a resource and generate nodes for them
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param start: index of the first record to export (slicing)
             @param limit: maximum number of records to export (slicing)
 
@@ -508,7 +506,7 @@ class S3ResourceTree(object):
         """
             Load records in a resource
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param start: index of the first record to export (slicing)
             @param limit: maximum number of records to export (slicing)
 
@@ -601,7 +599,7 @@ class S3ResourceTree(object):
         """
             Establish fields to export for a resource
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param fields: the requested data fields
             @param references: the requested references
             @param mdata: look up fields/references from mobile schema
@@ -915,7 +913,7 @@ class S3ResourceTree(object):
         return target, target_ids, target_uids
 
 # =============================================================================
-class S3ResourceReference(object):
+class S3ResourceReference:
     """ A pending reference in a tree node """
 
     def __init__(self, table, fieldname, rtablename, pkey, value, multiple=False):
@@ -1005,7 +1003,7 @@ class S3ResourceReference(object):
         return Storage(entry)
 
 # =============================================================================
-class S3ResourceNode(object):
+class S3ResourceNode:
     """ A node in the resource tree, representing an exported record """
 
     def __init__(self,
@@ -1025,7 +1023,7 @@ class S3ResourceNode(object):
             Constructor
 
             @param tree: the S3ResourceTree
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param record: the record (Row)
             @param dfields: the data fields to export
             @param rfields: the reference fields to export

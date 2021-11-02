@@ -49,7 +49,7 @@ except ImportError:
 
 from gluon import current, HTTP
 
-from ...resource import S3Resource
+from ...resource import CRUDResource
 from ...tools import s3_str
 
 from ..codec import S3Codec
@@ -65,7 +65,7 @@ class S3PDFCard(S3Codec):
         """
             API Method to encode a resource as cards
 
-            @param resource: the S3Resource, or
+            @param resource: the CRUDResource, or
                              - the data items as list [{fieldname: representation, ...}, ...], or
                              - a callable that produces such a list of items
             @param attr: additional encoding parameters (see below)
@@ -100,8 +100,8 @@ class S3PDFCard(S3Codec):
             # FIXME is this the correct handling of a dependency failure?
             raise HTTP(503, "Python ReportLab library not installed")
 
-        # Do we operate on a S3Resource?
-        is_resource = isinstance(resource, S3Resource)
+        # Do we operate on a CRUDResource?
+        is_resource = isinstance(resource, CRUDResource)
 
         # The card layout
         layout = attr.get("layout")
@@ -195,7 +195,7 @@ class S3PDFCard(S3Codec):
         """
             Extract the data items from the given resource
 
-            @param resource: the resource (a filtered S3Resource)
+            @param resource: the resource (a filtered CRUDResource)
             @param fields: the fields to extract (array of field selectors)
             @param orderby: the orderby-expression
 
@@ -546,7 +546,7 @@ class S3PDFCardLayout(Flowable):
         c.drawCentredString(x, y, "Back" if self.backside else "Front")
 
         resource = self.resource
-        if isinstance(resource, S3Resource):
+        if isinstance(resource, CRUDResource):
             # Render the record ID if available
             item = self.item
             pid = str(resource._id)

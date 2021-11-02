@@ -2783,8 +2783,8 @@ class S3Config(Storage):
 
             The function may be of the form:
             custom_msg_notify_attachment(resource, data, meta_data), where
-            resource is the S3Resource, data: the data returned from
-            S3Resource.select and meta_data: the meta data for the notification
+            resource is the CRUDResource, data: the data returned from
+            CRUDResource.select and meta_data: the meta data for the notification
             (see S3Notifications for the metadata)
         """
 
@@ -2797,8 +2797,8 @@ class S3Config(Storage):
 
             The function should be of the form:
             custom_msg_notify_send_data(resource, data, meta_data), where
-            resource is the S3Resource, data: the data returned from
-            S3Resource.select and meta_data: the meta data for the notification
+            resource is the CRUDResource, data: the data returned from
+            CRUDResource.select and meta_data: the meta data for the notification
             (see S3Notifications for the metadata)
         """
 

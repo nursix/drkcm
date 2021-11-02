@@ -2011,7 +2011,7 @@ class ResourceDataAccessTests(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Confirm we have just one organisation row
-        # (using select instead of count to enforce S3Resource.select
+        # (using select instead of count to enforce CRUDResource.select
         # to count)
         query = (FS("name") == "DATestOrg")
         resource = s3db.resource("org_organisation", filter=query)

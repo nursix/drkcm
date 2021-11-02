@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
     S3 Microsoft Excel codec
 
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -142,7 +139,7 @@ class S3XLS(S3Codec):
 
             @param resource: the source of the data that is to be encoded
                              as a spreadsheet, can be either of:
-                                1) an S3Resource
+                                1) an CRUDResource
                                 2) an array of value dicts (dict of
                                    column labels as first item, list of
                                    field types as second item)
@@ -738,7 +735,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
                 }
 
 # =============================================================================
-class S3PivotTableXLS(object):
+class S3PivotTableXLS:
     """
         XLS encoder for S3PivotTables
 
@@ -1342,7 +1339,7 @@ class S3PivotTableXLS(object):
         return items
 
 # =============================================================================
-#class S3HTML2XLS(object):
+#class S3HTML2XLS:
 #    """
 #        Class that takes HTML in the form of web2py helper objects
 #        and converts it to XLS

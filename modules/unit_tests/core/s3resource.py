@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# S3Resource Unit Tests
+# CRUDResource Unit Tests
 #
 # To run this script use:
 # python web2py.py -S eden -M -R applications/eden/modules/unit_tests/s3/s3resource.py
@@ -762,7 +762,7 @@ class ResourceImportTests(unittest.TestCase):
 
 # =============================================================================
 class ResourceDataObjectAPITests (unittest.TestCase):
-    """ Test the S3Resource Data Object API """
+    """ Test the CRUDResource Data Object API """
 
     # -------------------------------------------------------------------------
     def testLoadStatusIndication(self):
@@ -1760,7 +1760,7 @@ class MergeReferenceListsTest(unittest.TestCase):
 
 # =============================================================================
 class ResourceGetTests(unittest.TestCase):
-    """ Test S3Resource.get """
+    """ Test CRUDResource.get """
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1855,7 +1855,7 @@ class ResourceGetTests(unittest.TestCase):
 
 # =============================================================================
 class ResourceSelectTests(unittest.TestCase):
-    """ Tests for S3Resource.select """
+    """ Tests for CRUDResource.select """
 
     test_data = (
         ("select0", "C"),
@@ -2880,7 +2880,7 @@ class ResourceFilteredComponentTests(unittest.TestCase):
     # -------------------------------------------------------------------------
     @unittest.skipIf(not current.deployment_settings.has_module("org"), "org module disabled")
     def testSelectWithFilteredComponent(self):
-        """ Test S3Resource.select with fields in a filtered component """
+        """ Test CRUDResource.select with fields in a filtered component """
 
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue

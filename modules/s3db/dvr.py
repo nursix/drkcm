@@ -6166,7 +6166,7 @@ def dvr_response_status_colors(resource, selector):
     """
         Get colors for response statuses
 
-        @param resource: the S3Resource the caller is looking at
+        @param resource: the CRUDResource the caller is looking at
         @param selector: the Field selector (usually "status_id")
 
         @returns: a dict with colors {field_value: "#RRGGBB", ...}

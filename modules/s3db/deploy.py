@@ -2674,7 +2674,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             Bulk lookups for cards
 
             @param resource: the resource
-            @param records: the records as returned from S3Resource.select
+            @param records: the records as returned from CRUDResource.select
         """
 
         db = current.db
@@ -2824,7 +2824,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -2839,7 +2839,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -3292,7 +3292,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             Render the body icon
 
             @param list_id: the list ID
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         tablename = resource.tablename
@@ -3321,7 +3321,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             Render the toolbox
 
             @param list_id: the HTML ID of the list
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param record: the record as dict
         """
 
@@ -3392,7 +3392,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
             @param item_id: the HTML element ID of the item
             @param rfield: the S3ResourceField for the column
-            @param record: the record (from S3Resource.select)
+            @param record: the record (from CRUDResource.select)
         """
 
         colname = rfield.colname

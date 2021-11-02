@@ -1730,7 +1730,7 @@ class S3PivotTable(object):
             pivot table from them with the given dimensions and
             computes the aggregated values for each cell.
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param rows: field selector for the rows dimension
             @param cols: field selector for the columns dimension
             @param facts: list of S3PivotTableFacts to compute

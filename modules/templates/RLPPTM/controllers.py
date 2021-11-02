@@ -2408,8 +2408,7 @@ class ocert(S3CustomController):
             sr = auth.get_system_roles()
             realms = user.realms.get(sr.ORG_ADMIN)
             if not realms:
-                from s3db.pr import pr_default_realms
-                realms = pr_default_realms(user.pe_id)
+                realms = s3db.pr_default_realms(user.pe_id)
             if realms:
                 # Look up managed organisations
                 otable = s3db.org_organisation

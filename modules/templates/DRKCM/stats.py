@@ -75,7 +75,7 @@ class PerformanceIndicators(object):
         """
             Export performance indicators
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param sheet: the XLS worksheet to write to
             @param title: the title for the export
             @param subtitle: an optional subtitle (e.g. start+end dates)
@@ -262,7 +262,7 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
         """
             Export performance indicators
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param sheet: the XLS worksheet to write to
             @param title: the title for the export
             @param subtitle: an optional subtitle (e.g. start+end dates)

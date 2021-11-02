@@ -28,11 +28,11 @@
 # DataModel.table = 2.91769790649 µs
 # DataModel.__getattr__ = 4.959856987 µs
 # DataModel.__getitem__ = 5.19830703735 µs
-# S3Resource.import_xml = 12.0009431839 ms (=83 rec/sec)
-# S3Resource.export (incl. DB extraction) = 3.75156188011 ms (=266 rec/sec)
-# S3Resource.export (w/o DB extraction) = 1.7192029953 ms (=581 rec/sec)
-# S3Resource.__init__ = 2.65161395073 ms
-# S3Resource.load = 5.55664610863 ms
+# CRUDResource.import_xml = 12.0009431839 ms (=83 rec/sec)
+# CRUDResource.export (incl. DB extraction) = 3.75156188011 ms (=266 rec/sec)
+# CRUDResource.export (w/o DB extraction) = 1.7192029953 ms (=581 rec/sec)
+# CRUDResource.__init__ = 2.65161395073 ms
+# CRUDResource.load = 5.55664610863 ms
 #
 # If you cannot achieve approximately these or even better results, then
 # it is recommendable to put effort into the optimization of the environment
@@ -150,29 +150,29 @@ class S3PerformanceTests(unittest.TestCase):
         info("DataModel.get_config = %s µs" % mlt)
         self.assertTrue(mlt<10)
 
-    def testS3ResourceInit(self):
+    def testCRUDResourceInit(self):
 
         info("")
         current.auth.override = True
         current.s3db.resource("pr_person")
         x = lambda: current.s3db.resource("pr_person")
         mlt = timeit.Timer(x).timeit(number=1000)
-        info("S3Resource.__init__ = %s ms" % mlt)
+        info("CRUDResource.__init__ = %s ms" % mlt)
         self.assertTrue(mlt<10)
         current.auth.override = False
 
-    def testS3ResourceLoad(self):
+    def testCRUDResourceLoad(self):
 
         info("")
         current.auth.override = True
         resource = current.s3db.resource("pr_person")
         x = lambda: resource.load(limit=1)
         mlt = timeit.Timer(x).timeit(number=1000)
-        info("S3Resource.load = %s ms" % mlt)
+        info("CRUDResource.load = %s ms" % mlt)
         self.assertTrue(mlt<10)
         current.auth.override = False
 
-    def testS3ResourceImportExport(self):
+    def testCRUDResourceImportExport(self):
 
         xmlstr = """
 <s3xml>
@@ -254,7 +254,7 @@ class S3PerformanceTests(unittest.TestCase):
             mlt += timeit.Timer(x).timeit(number=1)
             current.db.rollback()
         mlt *= 10
-        info("S3Resource.import_xml = %s ms (=%s rec/sec)" % (mlt, int(1000/mlt)))
+        info("CRUDResource.import_xml = %s ms (=%s rec/sec)" % (mlt, int(1000/mlt)))
         self.assertTrue(mlt<30)
 
         resource = current.s3db.resource("pr_person")
@@ -267,7 +267,7 @@ class S3PerformanceTests(unittest.TestCase):
                                             parent=parent,
                                             export_map=Storage())
         mlt = timeit.Timer(x).timeit(number=1000)
-        info("S3Resource.export (incl. DB extraction) = %s ms (=%s rec/sec)" % (mlt, int(1000/mlt)))
+        info("CRUDResource.export (incl. DB extraction) = %s ms (=%s rec/sec)" % (mlt, int(1000/mlt)))
         self.assertTrue(mlt<10)
 
         resource = current.s3db.resource("pr_person")
@@ -281,7 +281,7 @@ class S3PerformanceTests(unittest.TestCase):
                                             parent=parent,
                                             export_map=Storage())
         mlt = timeit.Timer(x).timeit(number=1000)
-        info("S3Resource.export (w/o DB extraction) = %s ms (=%s rec/sec)" % (mlt, int(1000/mlt)))
+        info("CRUDResource.export (w/o DB extraction) = %s ms (=%s rec/sec)" % (mlt, int(1000/mlt)))
         self.assertTrue(mlt<10)
 
         current.auth.override = False

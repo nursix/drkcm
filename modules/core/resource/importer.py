@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Data Import Tools
 
-""" Data Import Tools
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -50,10 +48,10 @@ from gluon.tools import callback
 
 from s3dal import Field
 
-from ..tools import s3_utc, s3_get_foreign_key, s3_has_foreign_key, s3_str, s3_format_datetime
+from ..tools import s3_format_datetime, s3_get_foreign_key, s3_has_foreign_key, s3_str, s3_utc
 
 # =============================================================================
-class XMLImporter(object):
+class XMLImporter:
     """ S3XML Importer Utility """
 
     # -------------------------------------------------------------------------
@@ -354,7 +352,7 @@ class XMLImporter(object):
         return elements if elements else None
 
 # =============================================================================
-class ImportResult(object):
+class ImportResult:
     """
         Result of an ImportJob
     """
@@ -569,7 +567,7 @@ class ImportJob():
             :param element: the element
             :param original: the original DB record (if already available,
                              will otherwise be looked-up by this function)
-            :param components: a dictionary of components (as in S3Resource)
+            :param components: a dictionary of components (as in CRUDResource)
                                to include in the job (defaults to all
                                defined components)
             :param parent: the parent item (if this is a component)
@@ -1264,7 +1262,7 @@ class ImportJob():
                 item.load_parent = None
 
 # =============================================================================
-class ImportItem(object):
+class ImportItem:
     """ Class representing an import item (=a single record) """
 
     METHOD = Storage(
@@ -1378,16 +1376,20 @@ class ImportItem(object):
 
         UID = xml.UID
 
-        from ..resource import S3Resource
+        from ..resource import CRUDResource
         if original is None:
-            original = S3Resource.original(table, element,
-                                           mandatory = self._mandatory_fields())
+            original = CRUDResource.original(table,
+                                             element,
+                                             mandatory = self._mandatory_fields(),
+                                             )
         elif isinstance(original, str) and UID in table.fields:
             # Single-component update in add-item => load the original now
             query = (table[UID] == original)
             pkeys = set(fname for fname in table.fields if table[fname].unique)
-            fields = S3Resource.import_fields(table, pkeys,
-                                              mandatory = self._mandatory_fields())
+            fields = CRUDResource.import_fields(table,
+                                                pkeys,
+                                                mandatory = self._mandatory_fields(),
+                                                )
             original = current.db(query).select(limitby=(0, 1), *fields).first()
         else:
             original = None
@@ -1437,7 +1439,7 @@ class ImportItem(object):
         if table is None or self.id:
             return
 
-        from ..resource import S3Resource
+        from ..resource import CRUDResource
 
         METHOD = self.METHOD
         CREATE = METHOD["CREATE"]
@@ -1460,10 +1462,10 @@ class ImportItem(object):
         if self.original is not None:
             original = self.original
         elif self.data:
-            original = S3Resource.original(table,
-                                           self.data,
-                                           mandatory=mandatory,
-                                           )
+            original = CRUDResource.original(table,
+                                             self.data,
+                                             mandatory = mandatory,
+                                             )
         else:
             original = None
 
@@ -1507,10 +1509,10 @@ class ImportItem(object):
 
             if self.id and self.method in (UPDATE, DELETE, MERGE):
                 # Retrieve the original
-                fields = S3Resource.import_fields(table,
-                                                  data,
-                                                  mandatory=mandatory,
-                                                  )
+                fields = CRUDResource.import_fields(table,
+                                                    data,
+                                                    mandatory = mandatory,
+                                                    )
                 original = current.db(table._id == self.id) \
                                   .select(limitby=(0, 1), *fields).first()
 
@@ -1546,9 +1548,11 @@ class ImportItem(object):
             self.accepted = True if self.id else False
         elif self.id:
             if not self.original:
-                from ..resource import S3Resource
-                fields = S3Resource.import_fields(self.table, self.data,
-                                        mandatory=self._mandatory_fields())
+                from ..resource import CRUDResource
+                fields = CRUDResource.import_fields(self.table,
+                                                    self.data,
+                                                    mandatory = self._mandatory_fields(),
+                                                    )
                 query = (self.table.id == self.id)
                 self.original = current.db(query).select(limitby=(0, 1),
                                                          *fields).first()
@@ -2510,9 +2514,11 @@ class ImportItem(object):
         else:
             self.table = table
             self.tablename = tablename
-        from ..resource import S3Resource
-        original = S3Resource.original(table, self.data,
-                                       mandatory=self._mandatory_fields())
+        from ..resource import CRUDResource
+        original = CRUDResource.original(table,
+                                         self.data,
+                                         mandatory = self._mandatory_fields(),
+                                         )
         if original is not None:
             self.original = original
             self.id = original[table._id.name]
@@ -2528,7 +2534,7 @@ class ImportItem(object):
         return True
 
 # =============================================================================
-class SyncPolicy(object):
+class SyncPolicy:
     """ Synchronization Policy """
 
     THIS   = "THIS"   # never update
@@ -2557,7 +2563,7 @@ class SyncPolicy(object):
         self.last_sync = last_sync
 
 # =============================================================================
-class ObjectReferences(object):
+class ObjectReferences:
     """
         Utility to discover and resolve references in a JSON object;
         handles both uuid- and tuid-based references
@@ -2695,7 +2701,7 @@ class ObjectReferences(object):
                 obj.pop(key, None)
 
 # =============================================================================
-class S3Duplicate(object):
+class S3Duplicate:
     """ Standard deduplicator method """
 
     def __init__(self,

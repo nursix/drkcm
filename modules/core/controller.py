@@ -41,7 +41,7 @@ from io import StringIO
 from gluon import current, redirect, A, HTTP, URL
 from gluon.storage import Storage
 
-from .resource import S3Resource
+from .resource import CRUDResource
 from .tools import s3_get_extension, s3_keep_messages, s3_store_last_record_id, s3_str
 
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
@@ -209,17 +209,17 @@ class CRUDRequest(object):
             approved, unapproved = True, False
 
         # Instantiate resource
-        self.resource = S3Resource(tablename,
-                                   id = self.id,
-                                   filter = current.response.s3.filter,
-                                   vars = url_query,
-                                   components = components,
-                                   approved = approved,
-                                   unapproved = unapproved,
-                                   include_deleted = include_deleted,
-                                   context = True,
-                                   filter_component = component_name,
-                                   )
+        self.resource = CRUDResource(tablename,
+                                     id = self.id,
+                                     filter = current.response.s3.filter,
+                                     vars = url_query,
+                                     components = components,
+                                     approved = approved,
+                                     unapproved = unapproved,
+                                     include_deleted = include_deleted,
+                                     context = True,
+                                     filter_component = component_name,
+                                     )
 
         resource = self.resource
         self.tablename = resource.tablename
@@ -1128,7 +1128,7 @@ def crud_request(*args, **kwargs):
 # -----------------------------------------------------------------------------
 def crud_controller(prefix=None, resourcename=None, **attr):
     """
-        Helper function to apply the S3Resource REST interface
+        Helper function to apply CRUD methods
 
         :param prefix: the application prefix
         :param resourcename: the resource name (without prefix)

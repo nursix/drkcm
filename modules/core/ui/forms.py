@@ -142,7 +142,7 @@ class S3SQLForm(object):
             Render/process the form. To be implemented in subclass.
 
             @param request: the CRUDRequest
-            @param resource: the target S3Resource
+            @param resource: the target CRUDResource
             @param record_id: the record ID
             @param readonly: render the form read-only
             @param message: message upon successful form submission
@@ -455,7 +455,7 @@ class S3SQLDefaultForm(S3SQLForm):
             Render/process the form.
 
             @param request: the CRUDRequest
-            @param resource: the target S3Resource
+            @param resource: the target CRUDResource
             @param record_id: the record ID
             @param readonly: render the form read-only
             @param message: message upon successful form submission
@@ -837,7 +837,7 @@ class S3SQLCustomForm(S3SQLForm):
             Render/process the form.
 
             @param request: the CRUDRequest
-            @param resource: the target S3Resource
+            @param resource: the target CRUDResource
             @param record_id: the record ID
             @param readonly: render the form read-only
             @param message: message upon successful form submission
@@ -1378,7 +1378,7 @@ class S3SQLCustomForm(S3SQLForm):
             Extract the current row from a single-component
 
             @param master_query: query for the master record
-            @param component: the single-component (S3Resource)
+            @param component: the single-component (CRUDResource)
             @param fields: list of field names to extract
         """
 
@@ -2243,7 +2243,7 @@ class S3SQLSubFormLayout(object):
         """
             Render this component read-only (table-style)
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param data: the data dict (as returned from extract())
         """
 
@@ -2277,7 +2277,7 @@ class S3SQLSubFormLayout(object):
         """
             Render this component read-only (list-style)
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param data: the data dict (as returned from extract())
         """
 
@@ -4307,7 +4307,7 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         """
             Find the target component and its linktable
 
-            @return: tuple of S3Resource instances (component, link)
+            @return: tuple of CRUDResource instances (component, link)
         """
 
         selector = self.selector
@@ -4351,7 +4351,7 @@ class S3WithIntro(S3SQLFormElement):
         """
             Override S3SQLFormElement.resolve() to map to widget
 
-            @param resource: the S3Resource to resolve this form element
+            @param resource: the CRUDResource to resolve this form element
                              against
         """
 

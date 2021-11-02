@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Bulk Importer Tool
 
-""" Bulk Importer Tool
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -46,7 +44,7 @@ from gluon.tools import callback, fetch
 from ..tools import IS_JSONS3
 
 # =============================================================================
-class S3BulkImporter(object):
+class S3BulkImporter:
     """
         Import CSV files of data to pre-populate the database.
         Suitable for use in Testing, Demos & Simulations
@@ -78,6 +76,20 @@ class S3BulkImporter(object):
         self.customised = []
         self.errorList = []
         self.resultList = []
+
+    # -------------------------------------------------------------------------
+    def perform_tasks(self, path):
+        """
+            Load and then execute the import jobs that are listed in the
+            descriptor file (tasks.cfg)
+        """
+
+        self.load_descriptor(path)
+        for task in self.tasks:
+            if task[0] == 1:
+                self.execute_import_task(task)
+            elif task[0] == 2:
+                self.execute_special_task(task)
 
     # -------------------------------------------------------------------------
     def load_descriptor(self, path):
@@ -360,35 +372,6 @@ class S3BulkImporter(object):
             current.log.debug(msg)
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def _lookup_pe(entity):
-        """
-            Convert an Entity to a pe_id
-            - helper for import_role
-            - assumes org_organisation.name unless specified
-            - entity needs to exist already
-        """
-
-        if "=" in entity:
-            pe_type, value =  entity.split("=")
-        else:
-            pe_type = "org_organisation.name"
-            value = entity
-        pe_tablename, pe_field =  pe_type.split(".")
-
-        table = current.s3db.table(pe_tablename)
-        record = current.db(table[pe_field] == value).select(table.pe_id,
-                                                             limitby = (0, 1)
-                                                             ).first()
-        try:
-            pe_id = record.pe_id
-        except AttributeError:
-            current.log.warning("import_role cannot find pe_id for %s" % entity)
-            pe_id = None
-
-        return pe_id
-
-    # -------------------------------------------------------------------------
     def import_role(self, filename):
         """
             Import Roles from CSV
@@ -400,36 +383,12 @@ class S3BulkImporter(object):
         except IOError:
             return "Unable to open file %s" % filename
 
-        auth = current.auth
-        acl = auth.permission
-        create_role = auth.s3_create_role
-
-        def parse_acl(acl_str):
-            permissions = acl_str.split("|")
-            acl_value = 0
-            for permission in permissions:
-                if permission == "READ":
-                    acl_value |= acl.READ
-                if permission == "CREATE":
-                    acl_value |= acl.CREATE
-                if permission == "UPDATE":
-                    acl_value |= acl.UPDATE
-                if permission == "DELETE":
-                    acl_value |= acl.DELETE
-                if permission == "REVIEW":
-                    acl_value |= acl.REVIEW
-                if permission == "APPROVE":
-                    acl_value |= acl.APPROVE
-                if permission == "PUBLISH":
-                    acl_value |= acl.PUBLISH
-                if permission == "ALL":
-                    acl_value |= acl.ALL
-            return acl_value
+        parse_permissions = self._parse_permissions
+        create_role = current.auth.s3_create_role
 
         reader = self.csv.DictReader(open_file)
-        roles = {}
-        acls = {}
-        args = {}
+
+        roles, acls, args = {}, {}, {}
         for row in reader:
             if row != None:
                 row_get = row.get
@@ -448,10 +407,10 @@ class S3BulkImporter(object):
                     rules["t"] = table
                 oacl = row_get("oacl")
                 if oacl:
-                    rules["oacl"] = parse_acl(oacl)
+                    rules["oacl"] = parse_permissions(oacl)
                 uacl = row_get("uacl")
                 if uacl:
-                    rules["uacl"] = parse_acl(uacl)
+                    rules["uacl"] = parse_permissions(uacl)
                 #org = row_get("org")
                 #if org:
                 #    rules["organisation"] = org
@@ -500,6 +459,8 @@ class S3BulkImporter(object):
                 create_role(rulelist[0],
                             rulelist[1],
                             *acls[rulelist[0]])
+
+        return None
 
     # -------------------------------------------------------------------------
     def import_user(self, filename):
@@ -568,7 +529,7 @@ class S3BulkImporter(object):
                      filename,
                      tablename,
                      idfield,
-                     imagefield
+                     imagefield,
                      ):
         """
             Import images, such as a logo or person image
@@ -855,7 +816,7 @@ class S3BulkImporter(object):
     def import_task(self,
                     task_name,
                     args_json = None,
-                    vars_json = None
+                    vars_json = None,
                     ):
         """
             Import a Scheduled Task
@@ -987,17 +948,65 @@ class S3BulkImporter(object):
         auth.rollback = False
 
     # -------------------------------------------------------------------------
-    def perform_tasks(self, path):
+    @staticmethod
+    def _lookup_pe(entity):
         """
-            Load and then execute the import jobs that are listed in the
-            descriptor file (tasks.cfg)
+            Convert an Entity to a pe_id
+            - helper for import_role
+            - assumes org_organisation.name unless specified
+            - entity needs to exist already
         """
 
-        self.load_descriptor(path)
-        for task in self.tasks:
-            if task[0] == 1:
-                self.execute_import_task(task)
-            elif task[0] == 2:
-                self.execute_special_task(task)
+        if "=" in entity:
+            pe_type, value = entity.split("=")
+        else:
+            pe_type = "org_organisation.name"
+            value = entity
+        pe_tablename, pe_field =  pe_type.split(".")
+
+        table = current.s3db.table(pe_tablename)
+        record = current.db(table[pe_field] == value).select(table.pe_id,
+                                                             limitby = (0, 1)
+                                                             ).first()
+        try:
+            pe_id = record.pe_id
+        except AttributeError:
+            current.log.warning("import_role cannot find pe_id for %s" % entity)
+            pe_id = None
+
+        return pe_id
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _parse_permissions(rule):
+        """
+            Convert a permissions rule into its binary representation
+
+            :param str rule: |-separated permission names
+            :returns int: the binary representation of the rule (bits)
+        """
+
+        permissions = current.auth.permission
+
+        bits = 0
+        for name in rule.split("|"):
+            if name == "READ":
+                bits |= permissions.READ
+            elif name == "CREATE":
+                bits |= permissions.CREATE
+            elif name == "UPDATE":
+                bits |= permissions.UPDATE
+            elif name == "DELETE":
+                bits |= permissions.DELETE
+            elif name == "REVIEW":
+                bits |= permissions.REVIEW
+            elif name == "APPROVE":
+                bits |= permissions.APPROVE
+            elif name == "PUBLISH":
+                bits |= permissions.PUBLISH
+            elif name == "ALL":
+                bits |= permissions.ALL
+
+        return bits
 
 # END =========================================================================

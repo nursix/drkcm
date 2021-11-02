@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Resource Filter
 
-""" Resource Filter
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -40,7 +38,7 @@ from s3dal import Rows
 from .query import S3ResourceQuery, S3Joins, S3URLQuery
 
 # =============================================================================
-class S3ResourceFilter(object):
+class S3ResourceFilter:
     """ Class representing a resource filter """
 
     def __init__(self,
@@ -54,7 +52,7 @@ class S3ResourceFilter(object):
         """
             Constructor
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param id: the record ID (or list of record IDs)
             @param uid: the record UID (or list of record UIDs)
             @param filter: a filter query (S3ResourceQuery or Query)

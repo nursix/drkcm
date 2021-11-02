@@ -238,7 +238,7 @@ class S3Notifications(object):
             requests to the respective resource.
 
             @param r: the CRUDRequest
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         _debug = current.log.debug
@@ -554,8 +554,8 @@ class S3Notifications(object):
         """
             Method to pre-render the contents for the message template
 
-            @param resource: the S3Resource
-            @param data: the data returned from S3Resource.select
+            @param resource: the CRUDResource
+            @param data: the data returned from CRUDResource.select
             @param meta_data: the meta data for the notification
             @param format: the contents format ("text" or "html")
         """

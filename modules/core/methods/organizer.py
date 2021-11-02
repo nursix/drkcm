@@ -567,7 +567,7 @@ class S3Organizer(S3Method):
         """
             Parse the resource configuration and add any fallbacks
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
 
             @returns: the resource organizer configuration, format:
                       {"start": S3ResourceField,

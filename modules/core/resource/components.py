@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Lazy Components Loader
 
-""" Lazy Components Loader
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -39,7 +37,7 @@ from .query import FS
 DEFAULT = lambda: None
 
 # =============================================================================
-class S3Components(object):
+class S3Components:
     """
         Lazy component loader
     """
@@ -48,7 +46,7 @@ class S3Components(object):
         """
             Constructor
 
-            @param master: the master resource (S3Resource)
+            @param master: the master resource (CRUDResource)
             @param expose: aliases of components to expose, defaults to
                            all configured components
         """
@@ -78,7 +76,7 @@ class S3Components(object):
             @param alias: the component alias
             @param default: default to return if the alias is not defined
 
-            @return: the component resource (S3Resource)
+            @return: the component resource (CRUDResource)
         """
 
         components = self._components
@@ -102,7 +100,7 @@ class S3Components(object):
 
             @param alias: the component alias
 
-            @return: the component resource (S3Resource)
+            @return: the component resource (CRUDResource)
 
             @raises: KeyError if the component is not defined
         """
@@ -232,15 +230,15 @@ class S3Components(object):
                 table = hook.table
 
             # Instantiate component resource
-            from .resource import S3Resource
-            component = S3Resource(table,
-                                   parent = master,
-                                   alias = alias,
-                                   linktable = hook.linktable,
-                                   include_deleted = master.include_deleted,
-                                   approved = master._approved,
-                                   unapproved = master._unapproved,
-                                   )
+            from .resource import CRUDResource
+            component = CRUDResource(table,
+                                     parent = master,
+                                     alias = alias,
+                                     linktable = hook.linktable,
+                                     include_deleted = master.include_deleted,
+                                     approved = master._approved,
+                                     unapproved = master._unapproved,
+                                     )
 
             if table_alias:
                 component.tablename = hook.tablename

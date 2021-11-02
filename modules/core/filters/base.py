@@ -88,7 +88,7 @@ class S3FilterWidget(object):
             Prototype method to render this widget as an instance of
             a web2py HTML helper class, to be implemented by subclasses.
 
-            @param resource: the S3Resource to render with widget for
+            @param resource: the CRUDResource to render with widget for
             @param values: the values for this widget from the URL query
         """
 
@@ -186,7 +186,7 @@ class S3FilterWidget(object):
         """
             Entry point for the form builder
 
-            @param resource: the S3Resource to render the widget for
+            @param resource: the CRUDResource to render the widget for
             @param get_vars: the GET vars (URL query vars) to prepopulate
                              the widget
             @param alias: the resource alias to use
@@ -323,7 +323,7 @@ class S3FilterWidget(object):
             Helper method to generate a filter query selector for the
             given field(s) in the given resource.
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param fields: the field selectors (as strings)
 
             @return: the field label and the filter query selector, or None
@@ -509,7 +509,7 @@ class S3RangeFilter(S3FilterWidget):
         """
             Method to Ajax-retrieve the current options of this widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         minimum, maximum = self._options(resource)
@@ -526,7 +526,7 @@ class S3RangeFilter(S3FilterWidget):
             Helper function to retrieve the current options for this
             filter widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         # Find only values linked to records the user is
@@ -752,7 +752,7 @@ class S3DateFilter(S3RangeFilter):
             Entry point for the form builder
             - subclassed from S3FilterWidget to handle 'available' selector
 
-            @param resource: the S3Resource to render the widget for
+            @param resource: the CRUDResource to render the widget for
             @param get_vars: the GET vars (URL query vars) to prepopulate
                              the widget
             @param alias: the resource alias to use
@@ -847,7 +847,7 @@ class S3DateFilter(S3RangeFilter):
         """
             Method to Ajax-retrieve the current options of this widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         # Introspective range?
@@ -875,7 +875,7 @@ class S3DateFilter(S3RangeFilter):
             Helper function to retrieve the current options for this
             filter widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param as_str: return date as ISO-formatted string not raw DateTime
 
             @ToDo: Update for negative
@@ -1264,7 +1264,7 @@ class S3SliderFilter(S3RangeFilter):
         """
             Method to Ajax-retrieve the current options of this widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         minimum, maximum = self._options(resource)[:2]
@@ -1281,7 +1281,7 @@ class S3SliderFilter(S3RangeFilter):
             Helper function to retrieve the current options for this
             filter widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         db = current.db
@@ -2157,7 +2157,7 @@ class S3LocationFilter(S3FilterWidget):
             Helper method to generate a filter query selector for the
             given field(s) in the given resource.
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param fields: the field selectors (as strings)
 
             @return: the field label and the filter query selector, or None if none of the
@@ -2499,7 +2499,7 @@ class S3OptionsFilter(S3FilterWidget):
         """
             Method to Ajax-retrieve the current options of this widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         opts = self.opts
@@ -2538,7 +2538,7 @@ class S3OptionsFilter(S3FilterWidget):
             Helper function to retrieve the current options for this
             filter widget
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         T = current.T
@@ -3095,7 +3095,7 @@ class S3FilterForm(object):
         """
             Render this filter form as HTML form.
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param get_vars: the request GET vars (URL query dict)
             @param target: the HTML element ID of the target object for
                            this filter form (e.g. a datatable)
@@ -3231,7 +3231,7 @@ class S3FilterForm(object):
             Render the filter widgets without FORM wrapper, e.g. to
             embed them as fieldset in another form.
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param get_vars: the request GET vars (URL query dict)
             @param alias: the resource alias to use in widgets
         """
@@ -3333,7 +3333,7 @@ class S3FilterForm(object):
         """
             Render the filter widgets
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param get_vars: the request GET vars (URL query dict)
             @param alias: the resource alias to use in widgets
             @param formstyle: the formstyle to use
@@ -3498,7 +3498,7 @@ class S3FilterForm(object):
         """
             Render this filter form as JSON (for Ajax requests)
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param get_vars: the request GET vars (URL query dict)
         """
 
@@ -3722,7 +3722,7 @@ class S3FilterString(object):
             Recursively render a human-readable representation of a
             S3ResourceQuery.
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param query: the S3ResourceQuery
             @param invert: invert the query
         """

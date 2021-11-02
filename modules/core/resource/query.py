@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    S3 Query Construction
 
-""" S3 Query Construction
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -54,7 +52,7 @@ ogetattr = object.__getattribute__
 TEXTTYPES = ("string", "text")
 
 # =============================================================================
-class S3FieldSelector(object):
+class S3FieldSelector:
     """ Helper class to construct a resource query """
 
     LOWER = "lower"
@@ -252,7 +250,7 @@ class S3FieldSelector(object):
 FS = S3FieldSelector
 
 # =============================================================================
-class S3FieldPath(object):
+class S3FieldPath:
     """ Helper class to parse field selectors """
 
     # -------------------------------------------------------------------------
@@ -261,7 +259,7 @@ class S3FieldPath(object):
         """
             Resolve a selector (=field path) against a resource
 
-            @param resource: the S3Resource to resolve against
+            @param resource: the CRUDResource to resolve against
             @param selector: the field selector string
             @param tail: tokens to append to the selector
 
@@ -328,7 +326,7 @@ class S3FieldPath(object):
         """
             Constructor - not to be called directly, use resolve() instead
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param table: the table
             @param tokens: the tokens as list
         """
@@ -509,7 +507,7 @@ class S3FieldPath(object):
             or free join), and the joins and left joins between the current
             resource and the linked table.
 
-            @param resource: the current S3Resource
+            @param resource: the current CRUDResource
             @param alias: the alias
 
             @return: tuple of (linked table, joins, left joins, multiple,
@@ -618,7 +616,7 @@ class S3FieldPath(object):
         return ktable, join, multiple, True
 
 # =============================================================================
-class S3ResourceField(object):
+class S3ResourceField:
     """ Helper class to resolve a field selector against a resource """
 
     # -------------------------------------------------------------------------
@@ -924,7 +922,7 @@ class S3ResourceField(object):
         return is_list
 
 # =============================================================================
-class S3Joins(object):
+class S3Joins:
     """ A collection of joins """
 
     def __init__(self, tablename, joins=None):
@@ -1210,7 +1208,7 @@ class S3Joins(object):
             raise RuntimeError("circular join dependency")
 
 # =============================================================================
-class S3ResourceQuery(object):
+class S3ResourceQuery:
     """
         Helper class representing a resource query
         - unlike DAL Query objects, these can be converted to/from URL filters
@@ -1337,7 +1335,7 @@ class S3ResourceQuery(object):
         """
             Split this query into a real query and a virtual one (AND)
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @return: tuple (DAL-translatable sub-query, virtual filter),
                      both S3ResourceQuery instances
         """
@@ -1413,7 +1411,7 @@ class S3ResourceQuery(object):
         """
             Placeholder for transformation method
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         # @todo: implement
@@ -2184,7 +2182,7 @@ class S3ResourceQuery(object):
             return (l.name, op, r, False)
 
 # =============================================================================
-class S3URLQuery(object):
+class S3URLQuery:
     """ URL Query Parser """
 
     FILTEROP = re.compile(r"__(?!link\.)([_a-z\!]+)$")
@@ -2195,7 +2193,7 @@ class S3URLQuery(object):
         """
             Construct a Storage of S3ResourceQuery from a Storage of get_vars
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param get_vars: the get_vars
             @return: Storage of S3ResourceQuery like {alias: query}, where
                      alias is the alias of the component the query concerns
@@ -2471,7 +2469,7 @@ class S3URLQuery(object):
         return q
 
 # =============================================================================
-class S3AIRegex(object):
+class S3AIRegex:
     """
         Helper class to construct quasi-accent-insensitive text search
         queries based on SQL regular expressions (REGEXP).
@@ -2591,7 +2589,7 @@ class S3AIRegex(object):
 combine = lambda x, y: x & y if x is not None else y
 
 # =============================================================================
-class S3URLQueryParser(object):
+class S3URLQueryParser:
     """ New-style URL Filter Parser """
 
     def __init__(self):

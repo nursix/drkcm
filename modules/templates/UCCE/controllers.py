@@ -32,7 +32,7 @@ def dc_target_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -63,7 +63,7 @@ def doc_document_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -150,7 +150,7 @@ def project_project_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """

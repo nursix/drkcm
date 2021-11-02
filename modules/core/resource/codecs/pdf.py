@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
     S3 Adobe PDF codec
 
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -732,7 +729,7 @@ class EdenDocTemplate(BaseDocTemplate):
         return (table, style)
 
 # =============================================================================
-class S3PDFList(object):
+class S3PDFList:
     """ Export resource data as list-style report """
 
     def __init__(self,
@@ -961,7 +958,7 @@ class S3PDFList(object):
         return styles
 
 # =============================================================================
-class S3PDFTable(object):
+class S3PDFTable:
     """
         Class to build a table that can then be placed in a pdf document
 

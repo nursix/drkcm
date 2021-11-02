@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Resource Export Tools
 
-""" Resource Export Tools
-
-    @see: U{B{I{S3XRC}} <http://eden.sahanafoundation.org/wiki/S3XRC>}
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -38,7 +32,7 @@ from gluon import current
 from .codec import S3Codec
 
 # =============================================================================
-class S3Exporter(object):
+class S3Exporter:
     """
         Exporter toolkit
     """

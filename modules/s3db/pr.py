@@ -10383,7 +10383,7 @@ def pr_address_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -10489,7 +10489,7 @@ def pr_contact_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -10592,7 +10592,7 @@ class pr_EmergencyContactListLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -10617,7 +10617,7 @@ class pr_EmergencyContactListLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -10668,7 +10668,7 @@ class pr_EmergencyContactListLayout(S3DataListLayout):
             Render the toolbox
 
             @param list_id: the HTML ID of the list
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param record: the record as dict
         """
 
@@ -10723,7 +10723,7 @@ class pr_PersonListLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -10753,7 +10753,7 @@ class pr_PersonListLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -10818,7 +10818,7 @@ class pr_PersonListLayout(S3DataListLayout):
             Render the toolbox
 
             @param list_id: the HTML ID of the list
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param record: the record as dict
         """
 
@@ -11014,7 +11014,7 @@ def pr_filter_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -11083,7 +11083,7 @@ def filter_actions(resource, url, filters):
     """
         Helper to construct the actions for a saved filter.
 
-        @param resource: the S3Resource
+        @param resource: the CRUDResource
         @param url: the filter page URL
         @param filters: the filter GET vars
     """
@@ -11148,7 +11148,7 @@ def summary_urls(resource, url, filters):
     """
         Helper to get URLs for summary tabs to use as Actions for a Saved Filter
 
-        @param resource: the S3Resource
+        @param resource: the CRUDResource
         @param url: the filter page URL
         @param filters: the filter GET vars
     """

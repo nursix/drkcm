@@ -240,7 +240,7 @@ class S3MobileSchema(object):
         """
             Constructor
 
-            @param resource - the S3Resource
+            @param resource - the CRUDResource
         """
 
         self.resource = resource
@@ -783,7 +783,7 @@ class S3MobileSchema(object):
         """
             Get the mobile form for a resource
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @returns: an S3SQLForm instance
         """
 
@@ -878,7 +878,7 @@ class S3MobileForm(object):
         """
             Constructor
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param form: an S3SQLForm instance to override settings
         """
 

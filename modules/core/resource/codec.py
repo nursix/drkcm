@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    S3 Encoder/Decoder Base Class
 
-""" S3 Encoder/Decoder Base Class
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -38,9 +36,9 @@ from gluon import current
 from ..tools import s3_str
 
 # =============================================================================
-class S3Codec(object):
+class S3Codec:
     """
-        Base class for converting S3Resources into/from external
+        Base class for converting CRUDResources into/from external
         data formats, for use with S3Importer/S3Exporter
     """
 
@@ -85,7 +83,7 @@ class S3Codec(object):
             API Method to encode a resource in the target format,
             to be implemented by the subclass (mandatory)
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
 
             @return: a handle to the output
         """
@@ -96,7 +94,7 @@ class S3Codec(object):
             API Method to decode a source into an S3XML ElementTree,
             to be implemented by the subclass (if the class does decode)
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param source: the source
 
             @return: an S3XML ElementTree

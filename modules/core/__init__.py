@@ -5,7 +5,7 @@
     This package is loaded in models/000_1st_run.py as "s3base",
     this namespace can be used to access all S3 classes, e.g.::
 
-        s3base.S3Resource()
+        s3base.CRUDResource()
 
     @see: U{B{I{S3 Developer Guidelines}} <http://eden.sahanafoundation.org/wiki/DeveloperGuidelinesS3>}
 

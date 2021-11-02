@@ -438,12 +438,12 @@ class DataModel(object):
     @staticmethod
     def resource(tablename, *args, **kwargs):
         """
-            Wrapper for the S3Resource constructor to realize
+            Wrapper for the CRUDResource constructor to realize
             the global s3db.resource() method
         """
 
-        from ..resource import S3Resource
-        return S3Resource(tablename, *args, **kwargs)
+        from ..resource import CRUDResource
+        return CRUDResource(tablename, *args, **kwargs)
 
     # -------------------------------------------------------------------------
     @classmethod

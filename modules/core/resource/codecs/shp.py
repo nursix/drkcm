@@ -241,7 +241,7 @@ class S3SHP(S3Codec):
         """
             Import data from a Shapefile
 
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
             @param source: the source
 
             @return: an S3XML ElementTree

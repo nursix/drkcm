@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Cascading Deletion/Archiving of Records
+"""
+    Cascading Deletion/Archiving of Records
 
     :copyright: 2018-2021 (c) Sahana Software Foundation
     :license: MIT
@@ -43,14 +42,14 @@ __all__ = ("DeleteProcess",
 DELETED = "deleted"
 
 # =============================================================================
-class DeleteProcess(object):
+class DeleteProcess:
     """
         Process to delete/archive records
     """
 
     def __init__(self, resource, archive=None, representation=None):
         """
-            :param S3Resource resource: the resource to delete records from
+            :param CRUDResource resource: the resource to delete records from
             :param bool archive: True|False to override global
                                  security.archive_not_delete setting
             :param str representation: the request format (for audit, optional)

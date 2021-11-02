@@ -347,7 +347,7 @@ def csvheader(parent, nodelist):
 def importxml(db, xmlinput):
     """
         Converts the XML to a CSV compatible with the import_from_csv_file of web2py
-        @ToDo: rewrite this to go via S3Resource for proper Auth checking, Audit.
+        @ToDo: rewrite this to go via CRUDResource for proper Auth checking, Audit.
 
         @todo: deprecate
     """

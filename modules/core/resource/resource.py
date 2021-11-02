@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    CRUD Resource
 
-""" CRUD Resource
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Resource",
+__all__ = ("CRUDResource",
            "MAXDEPTH",
            )
 
@@ -59,7 +57,7 @@ MAXDEPTH = 10
 DEFAULT = lambda: None
 
 # =============================================================================
-class S3Resource(object):
+class CRUDResource:
     """
         API for resources.
 
@@ -67,7 +65,7 @@ class S3Resource(object):
         references in certain related resources (components). A resource can
         be defined like:
 
-            resource = S3Resource(table)
+            resource = CRUDResource(table)
 
         A resource defined like this would include all records in the table.
         Further parameters for the resource constructor as well as methods
@@ -78,7 +76,8 @@ class S3Resource(object):
         S3 framework rules.
     """
 
-    def __init__(self, tablename,
+    def __init__(self,
+                 tablename,
                  id = None,
                  prefix = None,
                  uid = None,
@@ -97,7 +96,7 @@ class S3Resource(object):
                  extra_filters = None
                  ):
         """
-            :param tablename: tablename, Table, or an S3Resource instance
+            :param tablename: tablename, Table, or a CRUDResource instance
             :param prefix: prefix to use for the tablename
 
             :param id: record ID (or list of record IDs)
@@ -142,7 +141,7 @@ class S3Resource(object):
                     table = tablename
                     table_alias = table._tablename
                     tablename = table_alias
-                elif isinstance(tablename, S3Resource):
+                elif isinstance(tablename, CRUDResource):
                     table = tablename.table
                     table_alias = table._tablename
                     tablename = tablename.tablename
@@ -258,14 +257,14 @@ class S3Resource(object):
         elif linktable is not None:
             # This is a link-table component - attach the link table
             link_alias = "%s__link" % self.alias
-            self.link = S3Resource(linktable,
-                                   alias = link_alias,
-                                   parent = self.parent,
-                                   linked = self,
-                                   include_deleted = self.include_deleted,
-                                   approved = self._approved,
-                                   unapproved = self._unapproved,
-                                   )
+            self.link = CRUDResource(linktable,
+                                     alias = link_alias,
+                                     parent = self.parent,
+                                     linked = self,
+                                     include_deleted = self.include_deleted,
+                                     approved = self._approved,
+                                     unapproved = self._unapproved,
+                                     )
 
         # Export meta data ----------------------------------------------------
 
@@ -832,7 +831,8 @@ class S3Resource(object):
               duplicate_id,
               replace = None,
               update = None,
-              main = True):
+              main = True,
+              ):
         """ Merge two records, see also S3RecordMerger.merge """
 
         from ..methods import S3RecordMerger
@@ -840,7 +840,8 @@ class S3Resource(object):
                                           duplicate_id,
                                           replace = replace,
                                           update = update,
-                                          main = main)
+                                          main = main,
+                                          )
 
     # -------------------------------------------------------------------------
     # Exports
@@ -929,7 +930,8 @@ class S3Resource(object):
                  orderby = None,
                  distinct = False,
                  list_id = None,
-                 layout = None):
+                 layout = None,
+                 ):
         """
             Generate a data list of this resource
 
@@ -988,12 +990,13 @@ class S3Resource(object):
 
     # -------------------------------------------------------------------------
     def json(self,
-             fields=None,
-             start=0,
-             limit=None,
-             left=None,
-             distinct=False,
-             orderby=None):
+             fields = None,
+             start = 0,
+             limit = None,
+             left = None,
+             distinct = False,
+             orderby = None,
+             ):
         """
             Export a JSON representation of the resource.
 
@@ -1008,14 +1011,15 @@ class S3Resource(object):
                       dicts with {"tablename.fieldname":"value"}
         """
 
-        data = self.select(fields=fields,
-                           start=start,
-                           limit=limit,
-                           orderby=orderby,
-                           left=left,
-                           distinct=distinct)["rows"]
+        data = self.select(fields = fields,
+                           start = start,
+                           limit = limit,
+                           orderby = orderby,
+                           left = left,
+                           distinct = distinct,
+                           )
 
-        return json.dumps(data)
+        return json.dumps(data.rows)
 
     # -------------------------------------------------------------------------
     # Data Object API
@@ -1027,7 +1031,8 @@ class S3Resource(object):
              limit = None,
              orderby = None,
              virtual = True,
-             cacheable = False):
+             cacheable = False,
+             ):
         """
             Loads records from the resource, applying the current filters,
             and stores them in the instance.
@@ -1127,11 +1132,12 @@ class S3Resource(object):
             limit = 1
 
         rows = self.select(fields,
-                           start=start,
-                           limit=limit,
-                           orderby=orderby,
-                           virtual=virtual,
-                           as_rows=True)
+                           start = start,
+                           limit = limit,
+                           orderby = orderby,
+                           virtual = virtual,
+                           as_rows = True,
+                           )
 
         ids = self._ids = []
         new_id = ids.append
@@ -1390,9 +1396,9 @@ class S3Resource(object):
 
         if self._rows:
             ids = [r[pkey] for r in self]
-            return "<S3Resource %s %s>" % (self.tablename, ids)
+            return "<CRUDResource %s %s>" % (self.tablename, ids)
         else:
-            return "<S3Resource %s>" % self.tablename
+            return "<CRUDResource %s>" % self.tablename
 
     # -------------------------------------------------------------------------
     def __contains__(self, item):
@@ -1431,25 +1437,25 @@ class S3Resource(object):
     # XML Export
     # -------------------------------------------------------------------------
     def export_xml(self,
-                   start=None,
-                   limit=None,
-                   msince=None,
-                   fields=None,
-                   dereference=True,
-                   maxdepth=MAXDEPTH,
-                   mcomponents=DEFAULT,
-                   rcomponents=None,
-                   references=None,
-                   mdata=False,
-                   stylesheet=None,
-                   as_tree=False,
-                   as_json=False,
-                   maxbounds=False,
-                   filters=None,
-                   pretty_print=False,
-                   location_data=None,
-                   map_data=None,
-                   target=None,
+                   start = None,
+                   limit = None,
+                   msince = None,
+                   fields = None,
+                   dereference = True,
+                   maxdepth = MAXDEPTH,
+                   mcomponents = DEFAULT,
+                   rcomponents = None,
+                   references = None,
+                   mdata = False,
+                   stylesheet = None,
+                   as_tree = False,
+                   as_json = False,
+                   maxbounds = False,
+                   filters = None,
+                   pretty_print = False,
+                   location_data = None,
+                   map_data = None,
+                   target = None,
                    **args):
         """
             Export this resource as S3XML
@@ -1630,7 +1636,8 @@ class S3Resource(object):
                        only_last = False,
                        show_uids = False,
                        hierarchy = False,
-                       as_json = False):
+                       as_json = False,
+                       ):
         """
             Export field options of this resource as element tree
 
@@ -1650,7 +1657,8 @@ class S3Resource(object):
                                         only_last = only_last,
                                         show_uids = show_uids,
                                         hierarchy = hierarchy,
-                                        as_json = as_json)
+                                        as_json = as_json,
+                                        )
                 return tree
             else:
                 # If we get here, we've been called from the back-end,
@@ -1733,11 +1741,11 @@ class S3Resource(object):
             tree = xml.get_options(self.table,
                                    fields = fields,
                                    show_uids = show_uids,
-                                   hierarchy = hierarchy)
+                                   hierarchy = hierarchy,
+                                   )
 
             if as_json:
-                return xml.tree2json(tree, pretty_print=False,
-                                     native=True)
+                return xml.tree2json(tree, pretty_print=False, native=True)
             else:
                 return xml.tostring(tree, pretty_print=False)
 
@@ -1772,7 +1780,8 @@ class S3Resource(object):
                       references = False,
                       stylesheet = None,
                       as_json = False,
-                      as_tree = False):
+                      as_tree = False,
+                      ):
         """
             Get the structure of the resource
 
@@ -1957,10 +1966,12 @@ class S3Resource(object):
                     if ogetattr(table, f).readable and f != fkey]
 
     # -------------------------------------------------------------------------
-    def resolve_selectors(self, selectors,
-                          skip_components=False,
-                          extra_fields=True,
-                          show=True):
+    def resolve_selectors(self,
+                          selectors,
+                          skip_components = False,
+                          extra_fields = True,
+                          show = True,
+                          ):
         """
             Resolve a list of field selectors against this resource
 
@@ -2327,7 +2338,7 @@ class S3Resource(object):
             Helper method to find the component record ID for
             a particular link of a particular master record
 
-            :param link: the link (S3Resource)
+            :param link: the link (CRUDResource)
             :param master_id: the ID of the master record
             :param link_id: the ID of the link table entry
         """

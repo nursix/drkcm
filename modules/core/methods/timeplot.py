@@ -360,7 +360,7 @@ class S3TimePlot(S3Method):
             Read the relevant GET vars for the timeplot
 
             @param r: the CRUDRequest
-            @param resource: the target S3Resource
+            @param resource: the target CRUDResource
         """
 
         # Extract the relevant GET vars
@@ -1749,7 +1749,7 @@ class S3TimeSeriesFact(object):
         """
             Lookup the fact label from the timeplot options of resource
 
-            @param resource: the resource (S3Resource)
+            @param resource: the resource (CRUDResource)
             @param method: the aggregation method (string)
             @param base: the base field selector (string)
             @param slope: the slope field selector (string)

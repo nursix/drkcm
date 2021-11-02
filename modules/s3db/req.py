@@ -1489,11 +1489,10 @@ class RequestModel(DataModel):
 
             if settings.get_req_use_req_number() and not record.req_ref:
                 # Auto-generate req_ref
-                from s3db.supply import supply_get_shipping_code
-                code = supply_get_shipping_code(settings.get_req_shortname(),
-                                                record.site_id,
-                                                table.req_ref,
-                                                )
+                code = s3db.supply_get_shipping_code(settings.get_req_shortname(),
+                                                     record.site_id,
+                                                     table.req_ref,
+                                                     )
                 update["req_ref"] = code
 
             req_status = record.req_status
