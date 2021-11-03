@@ -10,7 +10,7 @@ import os
 
 from gluon import current, A, DIV, SPAN, URL
 
-from s3 import ICON
+from core import ICON
 
 # =============================================================================
 def case_read_multiple_orgs():
@@ -296,7 +296,7 @@ class PriorityRepresent(object):
     """
         Color-coded representation of priorities
 
-        @todo: generalize/move to s3utils?
+        @todo: generalize/move to core/tools?
     """
 
     def __init__(self, options, classes=None):

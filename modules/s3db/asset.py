@@ -43,7 +43,7 @@ import json
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 
 ASSET_TYPE_VEHICLE   = 1   # => Extra Tab(s) for Registration Documents, Fuel Efficiency
 #ASSET_TYPE_RADIO     = 2   # => Extra Tab(s) for Radio Channels/Frequencies
@@ -80,7 +80,7 @@ asset_log_status = {"SET_BASE" : ASSET_LOG_SET_BASE,
                     }
 
 # =============================================================================
-class S3AssetModel(S3Model):
+class S3AssetModel(DataModel):
     """
         Asset Management
     """
@@ -484,7 +484,7 @@ class S3AssetModel(S3Model):
         # =====================================================================
         # Asset Log
         #
-        asset_log_status_opts = {ASSET_LOG_SET_BASE : T("Base %(facility)s Set") % dict(facility = org_site_label),
+        asset_log_status_opts = {ASSET_LOG_SET_BASE : T("Base %(facility)s Set") % {"facility": org_site_label},
                                  ASSET_LOG_ASSIGN   : T("Assigned"),
                                  ASSET_LOG_RETURN   : T("Returned"),
                                  ASSET_LOG_CHECK    : T("Checked"),
@@ -511,7 +511,7 @@ $.filterOptionsS3({
  'fncRepresent': function(record,PrepResult){
   var InstanceTypeNice=%(instance_type_nice)s
   return record.name+" ("+InstanceTypeNice[record.instance_type]+")"
-}})''' % dict(instance_type_nice = site_types)
+}})''' % {"instance_type_nice": site_types}
         else:
             script = None
 
@@ -629,21 +629,17 @@ $.filterOptionsS3({
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return dict(asset_asset_id = asset_id,
-                    asset_represent = asset_represent,
-                    )
+        return {"asset_asset_id": asset_id,
+                "asset_represent": asset_represent,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Return safe defaults for names in case the model is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return dict(asset_asset_id = lambda **attr: dummy("asset_id"),
-                    )
+        return {"asset_asset_id": S3ReusableField.dummy("asset_id"),
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -836,7 +832,7 @@ $.filterOptionsS3({
             db(atable.id == asset_id).update(cond = form_vars.cond)
 
 # =============================================================================
-class S3AssetHRModel(S3Model):
+class S3AssetHRModel(DataModel):
     """
         Optionally link Assets to Human Resources
         - useful for staffing a vehicle
@@ -863,10 +859,10 @@ class S3AssetHRModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3AssetTeamModel(S3Model):
+class S3AssetTeamModel(DataModel):
     """
         Optionally link Assets to Teams
     """
@@ -892,10 +888,10 @@ class S3AssetTeamModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3AssetTelephoneModel(S3Model):
+class S3AssetTelephoneModel(DataModel):
     """
         Extend the Assset Module for Telephones:
             Usage Costs
@@ -957,7 +953,7 @@ class S3AssetTelephoneModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def asset_get_current_log(asset_id):
@@ -1135,7 +1131,7 @@ def asset_rheader(r):
                 tabs = [(T("Asset Details"), None, {"native": True}),
                         (T("Vehicle Details"), "vehicle"),
                         (STAFF, "human_resource"),
-                        (T("Assign %(staff)s") % dict(staff=STAFF), "assign"),
+                        (T("Assign %(staff)s") % {"staff": STAFF}, "assign"),
                         (T("Check-In"), "check-in"),
                         (T("Check-Out"), "check-out"),
                         (T("GPS Data"), "presence"),
@@ -1174,7 +1170,7 @@ def asset_rheader(r):
             #    asset_action_btns += [ A( T("Return"),
             #                              _href = URL(f=func,
             #                                          args = [record.id, "log", "create"],
-            #                                          vars = dict(status = ASSET_LOG_RETURN)
+            #                                          vars = {"status": ASSET_LOG_RETURN}
             #                                        ),
             #                              _class = "action-btn"
             #                            )
@@ -1253,7 +1249,7 @@ def asset_controller():
     s3.prep = prep
 
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Flag that this is an Import (to distinguish from Sync)
             @ToDo: Find Person records from their email addresses
@@ -1265,7 +1261,6 @@ def asset_controller():
         ctable = s3db.pr_contact
         ptable = s3db.pr_person
 
-        resource, tree = data
         elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
         persons = {}
         for element in elements:
@@ -1289,7 +1284,7 @@ def asset_controller():
                 uuid = ""
             element.text = uuid
             # Store in case we get called again with same value
-            persons[email] = dict(uuid=uuid)
+            persons[email] = {"uuid": uuid}
 
     s3.import_prep = import_prep
 
@@ -1309,10 +1304,9 @@ def asset_controller():
         return output
     s3.postp = postp
 
-    output = current.rest_controller("asset", "asset",
-                                     rheader = asset_rheader,
-                                     )
-    return output
+    return current.crud_controller("asset", "asset",
+                                   rheader = asset_rheader,
+                                   )
 
 # =============================================================================
 class asset_AssetRepresent(S3Represent):
@@ -1408,7 +1402,7 @@ class asset_AssetRepresent(S3Represent):
                                       # remove the .aaData extension in paginated views
                                       extension=""
                                       ))
-        k = s3_unicode(k)
+        k = s3_str(k)
         return A(v, _href=self.linkto.replace("[id]", k) \
                                      .replace("%5Bid%5D", k))
 

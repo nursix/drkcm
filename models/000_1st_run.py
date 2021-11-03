@@ -48,7 +48,7 @@ if update_check_needed:
     # NB This does not satisfy the goal of calling out all the setup errors
     #    at once - it will die on the first fatal error encountered.
     try:
-        import s3 as s3base
+        import core as s3base
     except Exception as e:
         errors.append(e.message)
 
@@ -79,6 +79,7 @@ if update_check_needed:
 # -----------------------------------------------------------------------------
 import os
 from collections import OrderedDict
+from functools import reduce
 from gluon import current
 from gluon.storage import Storage
 
@@ -97,12 +98,8 @@ current.cache = cache
 # NB This takes effect during the file renaming algorithm - the length of uploaded filenames is unaffected
 current.MAX_FILENAME_LENGTH = 255 # Defined early for use by S3Config.
 
-# Common compat imports (for controllers)
-from s3compat import basestring, long, reduce, xrange
-
 # Import S3Config
 import s3cfg
-settings = s3cfg.S3Config()
-current.deployment_settings = deployment_settings = settings
+current.deployment_settings = deployment_settings = settings = s3cfg.S3Config()
 
 # END =========================================================================

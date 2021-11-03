@@ -31,7 +31,7 @@ def ifrc24h():
     # Keep UX simple
     settings.pr.lookup_duplicates = False
 
-    return s3_rest_controller("assess", "24h")
+    return crud_controller("assess", "24h")
 
 # -----------------------------------------------------------------------------
 def building_marker_fn(record):
@@ -105,19 +105,19 @@ def building():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.assess_building_rheader)
+    return crud_controller(rheader=s3db.assess_building_rheader)
 
 # -----------------------------------------------------------------------------
 def canvass():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def need():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def needs():
@@ -190,6 +190,6 @@ def needs():
                    crud_form = crud_form,
                    )
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

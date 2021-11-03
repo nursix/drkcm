@@ -22,7 +22,7 @@ def alerting_authority():
         Alerting Authorities: RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def alert_history():
@@ -30,7 +30,7 @@ def alert_history():
         Alert History: RESTful CRUD controller
     """
 
-    return s3_rest_controller(rheader=s3db.cap_history_rheader)
+    return crud_controller(rheader=s3db.cap_history_rheader)
 
 # -----------------------------------------------------------------------------
 def alert_ack():
@@ -38,7 +38,7 @@ def alert_ack():
         Alert Acknowledgements: RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def info_prep(r):
@@ -105,7 +105,7 @@ def alert():
     tablename = "cap_alert"
 
     def prep(r):
-        from s3 import S3OptionsFilter
+        from core import S3OptionsFilter
         resource = r.resource
         table = r.table
         itable = s3db.cap_info
@@ -225,7 +225,7 @@ def alert():
                              vars = request.vars))
 
             if record.external != True:
-                from s3 import S3Represent
+                from core import S3Represent
                 table.addresses.represent = S3Represent(lookup = "pr_group",
                                                         fields = ["name"],
                                                         multiple = True,
@@ -724,7 +724,7 @@ def alert():
                             translate = False
                         if translate:
                             # Represent each row with local name if available
-                            from s3 import S3Represent
+                            from core import S3Represent
                             atable = s3db.cap_area
                             cap_area_options = cap_AreaRowOptionsBuilder(r.id,
                                                                          caller=r.method)
@@ -815,7 +815,7 @@ def alert():
                         translate = False
                     if translate:
                         # Represent each row with local name if available
-                        from s3 import S3Represent
+                        from core import S3Represent
                         cap_area_options = cap_AreaRowOptionsBuilder(r.id)
                         atable.name.represent = S3Represent(options=cap_area_options)
 
@@ -1018,10 +1018,9 @@ def alert():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cap", "alert",
-                                rheader = s3db.cap_rheader,
-                                )
-    return output
+    return crud_controller("cap", "alert",
+                           rheader = s3db.cap_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def info():
@@ -1085,7 +1084,7 @@ def info():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader=s3db.cap_rheader)
+    return crud_controller(rheader=s3db.cap_rheader)
 
 # -----------------------------------------------------------------------------
 def info_parameter():
@@ -1113,7 +1112,7 @@ def info_parameter():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def template():
@@ -1297,7 +1296,7 @@ def template():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("cap", "alert", rheader=s3db.cap_rheader)
+    return crud_controller("cap", "alert", rheader=s3db.cap_rheader)
 
 # -----------------------------------------------------------------------------
 def area():
@@ -1369,7 +1368,7 @@ def area():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("cap", "area", rheader=s3db.cap_rheader)
+    return crud_controller("cap", "area", rheader=s3db.cap_rheader)
 
 # -----------------------------------------------------------------------------
 def warning_priority():
@@ -1397,7 +1396,7 @@ def warning_priority():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def notify_approver():

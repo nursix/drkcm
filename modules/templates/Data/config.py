@@ -117,8 +117,6 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    # 8: Apply Controller, Function, Table ACLs, Entity Realm + Hierarchy and Delegations
-    #
     #settings.security.policy = 7 # Organisation-ACLs
 
     # This deployment exposes public data sets
@@ -161,10 +159,6 @@ def config(settings):
             access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
             module_type = None  # This item is handled separately for the menu
         )),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
-        #)),
         #("translate", Storage(
         #    name_nice = T("Translation Functionality"),
         #    #description = "Selective translation of strings based on module.",

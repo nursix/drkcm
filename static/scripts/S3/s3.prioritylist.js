@@ -1,8 +1,8 @@
 /**
- * Used by the S3PriorityListWidget (modules/s3/s3widgets.py)
+ * Used by the S3PriorityListWidget (core/ui/widgets)
  * This script is in Static to allow caching
  * Dynamic constants (e.g. Internationalised strings) are set in server-generated script
- * 
+ *
  * @ToDo: minified version
  */
 
@@ -32,7 +32,7 @@
             var noNeedButton = $('<input id="add-no-need" type="button" value="Do Not Send"/>').insertAfter(acceptingButton);
 
             /* Convert the JSON string into a dict e.g.:
-             * 
+             *
              * {"urgent": [ "pants", "shoes", "shovels" ],
              * "no": [ "blankets", "pasta" ],
              * "need": [ "AAA batteries", "twine", "peanut butter & jelly" ]}
@@ -86,18 +86,18 @@
             noNeedButton.click(function() {
                 self.addNeed( 'no' );
             });
-            
+
             acceptingButton.click(function() {
                 self.addNeed( 'need' );
             });
-            
+
             $( '.delete-need' ).live('click', function() {
                 self.deleteNeed( $(this).parent() );
             });
         },
-        
+
         // Move a new item to the appropriate list
-        addNeed: function( to ) {	
+        addNeed: function( to ) {
             var newNeed =  $('#new-need');
             var text = newNeed.val();
             var item = $('<li><span>' + text + '</span><a href="#" class="delete-need">x</a></li>');
@@ -105,8 +105,8 @@
             $('#' + to).append( item );
             self.moveNeed( item, null, to );
             newNeed.val('');
-        },		
-        
+        },
+
         // Update the JSON object of existing needs
         moveNeed: function( item, from, to ) {
             var itemText = item.children('span').text();
@@ -120,10 +120,10 @@
             self.updatedNeeds[to].push(itemText);
 
             self.updateForm();
-        },	
-        
+        },
+
         // Remove an item
-        deleteNeed: function( item ) {	
+        deleteNeed: function( item ) {
             var itemText = item.children('span').text();
             var from = item.parent('ul').attr('id');
 
@@ -131,7 +131,7 @@
             self._removeItem(self.updatedNeeds[from], itemText);
             item.remove();
             self.updateForm();
-        },		
+        },
 
         updateForm: function() {
             // Update the JSON data in the hidden form element

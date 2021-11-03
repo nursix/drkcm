@@ -32,8 +32,6 @@
          OTHER DEALINGS IN THE SOFTWARE.
 
     *********************************************************************** -->
-    <xsl:import href="adashi.xsl"/>
-
     <xsl:output method="xml" indent="yes"/>
 
     <xsl:include href="../xml/commons.xsl"/>
@@ -58,11 +56,6 @@
         <s3xml>
             <xsl:for-each select="//item">
                 <xsl:choose>
-                    <!-- ADASHI -->
-                    <xsl:when test="$source_type='adashi'">
-                        <xsl:call-template name="adashi"/>
-                    </xsl:when>
-
                     <!-- Cache -->
                     <xsl:when test="$name='cache'">
                         <xsl:call-template name="cache"/>
@@ -81,17 +74,6 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </xsl:for-each>
-            <xsl:if test="$source_type='adashi'">
-                <xsl:choose>
-                    <xsl:when test="$category='Incidents'">
-                        <xsl:call-template name="AdashiIncidentTypes"/>
-                        <xsl:apply-templates select="//item[resources/text()!='']" mode="generate-units"/>
-                    </xsl:when>
-                    <xsl:when test="$category='AVL'">
-                        <xsl:call-template name="AdashiCADStatuses"/>
-                    </xsl:when>
-                </xsl:choose>
-            </xsl:if>
         </s3xml>
     </xsl:template>
 

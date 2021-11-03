@@ -42,11 +42,11 @@ from gluon import *
 from gluon.html import *
 from gluon.tools import callback
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3DeploymentOrganisationModel(S3Model):
+class S3DeploymentOrganisationModel(DataModel):
     """
         Split into separate model to avoid circular deadlock in HRModel
     """
@@ -69,10 +69,10 @@ class S3DeploymentOrganisationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3DeploymentModel(S3Model):
+class S3DeploymentModel(DataModel):
 
     names = ("deploy_mission",
              "deploy_mission_id",
@@ -132,14 +132,13 @@ class S3DeploymentModel(S3Model):
                      # @ToDo: Link to event_type via event_id link table instead of duplicating
                      self.event_type_id(),
                      Field("code", length=24,
-                           represent = lambda v: s3_unicode(v) if v else NONE,
+                           represent = lambda v: s3_str(v) if v else NONE,
                            requires = IS_LENGTH(24),
                            ),
                      Field("status", "integer",
                            default = 2,
                            label = T("Status"),
-                           represent = lambda opt: \
-                                       mission_status_opts.get(opt, UNKNOWN_OPT),
+                           represent = represent_option(mission_status_opts),
                            requires = IS_IN_SET(mission_status_opts),
                            ),
                      # @todo: change into real fields written onaccept?
@@ -570,7 +569,8 @@ class S3DeploymentModel(S3Model):
         # Pass names back to global scope (s3.*)
         #
         return {"deploy_mission_id": mission_id,
-                "deploy_mission_status_opts": mission_status_opts,
+                # Currently only used by inactive IFRC template
+                #"deploy_mission_status_opts": mission_status_opts,
                 }
 
     # -------------------------------------------------------------------------
@@ -579,11 +579,7 @@ class S3DeploymentModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"deploy_mission_id": lambda **attr: dummy("mission_id"),
+        return {"deploy_mission_id": S3ReusableField.dummy("mission_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -846,7 +842,7 @@ class S3DeploymentModel(S3Model):
         s3db.resource("hrm_appraisal", id=link.appraisal_id).delete()
 
 # =============================================================================
-class S3DeploymentAlertModel(S3Model):
+class S3DeploymentAlertModel(DataModel):
 
     names = ("deploy_alert",
              "deploy_alert_recipient",
@@ -994,7 +990,7 @@ class S3DeploymentAlertModel(S3Model):
                        )
 
         # Custom method to send alerts
-        self.set_method("deploy", "alert",
+        self.set_method("deploy_alert",
                         method = "send",
                         action = self.deploy_alert_send,
                         )
@@ -1084,7 +1080,7 @@ class S3DeploymentAlertModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1362,7 +1358,7 @@ def deploy_availability_filter(r):
             - called from prep of the respective controller
             - adds resource filter for r.resource
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
     """
 
     get_vars = r.get_vars
@@ -1505,10 +1501,10 @@ def deploy_rheader(r, tabs=None, profile=False):
                                            _href = r.url(method="update"),
                                            )
 
-                label = lambda f, table=table, record=record, **attr: \
-                               TH("%s: " % table[f].label, **attr)
-                value = lambda f, table=table, record=record, **attr: \
-                               TD(table[f].represent(record[f]), **attr)
+                label = lambda f, t=table, r=record, **attr: \
+                               TH("%s: " % t[f].label, **attr)
+                value = lambda f, t=table, r=record, **attr: \
+                               TD(t[f].represent(r[f]), **attr)
                 if settings.has_module("event"):
                     row1 = TR(label("event_type_id"),
                               value("event_type_id"),
@@ -1684,7 +1680,7 @@ class deploy_Inbox(S3Method):
             Custom method for email inbox, provides a datatable with bulk-delete
             option
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: the controller attributes
         """
 
@@ -2071,7 +2067,7 @@ def deploy_apply(r, **attr):
             if filter_widgets:
 
                 # Where to retrieve filtered data from:
-                submit_url_vars = resource.crud._remove_filters(r.get_vars)
+                submit_url_vars = S3Method._remove_filters(r.get_vars)
                 filter_submit_url = r.url(vars=submit_url_vars)
 
                 # Where to retrieve updated filter options from:
@@ -2298,7 +2294,7 @@ def deploy_alert_select_recipients(r, **attr):
         if filter_widgets:
 
             # Where to retrieve filtered data from:
-            _vars = resource.crud._remove_filters(r.get_vars)
+            _vars = S3Method._remove_filters(r.get_vars)
             filter_submit_url = r.url(vars=_vars)
 
             # Where to retrieve updated filter options from:
@@ -2487,7 +2483,7 @@ def deploy_response_select_mission(r, **attr):
         action_vars = {"mission_id": "[id]"}
 
         # Can we identify the Member?
-        from ..s3.s3parser import S3Parsing
+        from core.msg.parser import S3Parsing
         from_address = record.from_address
         hr_id = S3Parsing().lookup_human_resource(from_address)
         if hr_id:
@@ -2518,7 +2514,7 @@ def deploy_response_select_mission(r, **attr):
         if filter_widgets:
 
             # Where to retrieve filtered data from:
-            submit_url_vars = resource.crud._remove_filters(get_vars)
+            submit_url_vars = S3Method._remove_filters(get_vars)
             filter_submit_url = r.url(vars=submit_url_vars)
 
             # Where to retrieve updated filter options from:
@@ -2678,7 +2674,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             Bulk lookups for cards
 
             @param resource: the resource
-            @param records: the records as returned from S3Resource.select
+            @param records: the records as returned from CRUDResource.select
         """
 
         db = current.db
@@ -2828,7 +2824,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -2843,7 +2839,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
             @param list_id: the HTML ID of the list
             @param item_id: the HTML ID of the item
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param rfields: the S3ResourceFields to render
             @param record: the record as dict
         """
@@ -3296,7 +3292,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             Render the body icon
 
             @param list_id: the list ID
-            @param resource: the S3Resource
+            @param resource: the CRUDResource
         """
 
         tablename = resource.tablename
@@ -3325,7 +3321,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             Render the toolbox
 
             @param list_id: the HTML ID of the list
-            @param resource: the S3Resource to render
+            @param resource: the CRUDResource to render
             @param record: the record as dict
         """
 
@@ -3396,7 +3392,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
             @param item_id: the HTML element ID of the item
             @param rfield: the S3ResourceField for the column
-            @param record: the record (from S3Resource.select)
+            @param record: the record (from CRUDResource.select)
         """
 
         colname = rfield.colname

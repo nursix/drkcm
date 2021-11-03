@@ -44,14 +44,14 @@ import json
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 NIGHT = 1
 DAY_AND_NIGHT = 2
 
 # =============================================================================
-class CRShelterModel(S3Model):
+class CRShelterModel(DataModel):
 
     names = ("cr_shelter_type",
              "cr_shelter",
@@ -73,7 +73,6 @@ class CRShelterModel(S3Model):
 
         messages = current.messages
         NONE = messages["NONE"]
-        OBSOLETE = messages.OBSOLETE
 
         add_components = self.add_components
         configure = self.configure
@@ -142,10 +141,10 @@ class CRShelterModel(S3Model):
                                           requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "cr_shelter_type.id",
                                                                   represent)),
-                                          comment=S3PopupLink(c = "cr",
-                                                              f = "shelter_type",
-                                                              label = ADD_SHELTER_TYPE,
-                                                              ),
+                                          comment = S3PopupLink(c = "cr",
+                                                                f = "shelter_type",
+                                                                label = ADD_SHELTER_TYPE,
+                                                                ),
                                           )
 
         # -------------------------------------------------------------------------
@@ -189,7 +188,7 @@ class CRShelterModel(S3Model):
                            # between grammatical moods or genders etc - so
                            # adding a context-comment for T() here to clarify
                            # which "Open" we mean (will not be rendered):
-                           2 : T("Open##the_shelter_is"),
+                           2 : T("Open##status"),
                            }
 
         day_and_night = settings.get_cr_day_and_night()
@@ -248,14 +247,35 @@ class CRShelterModel(S3Model):
                      shelter_environment_id(readable = False,
                                             writable = False,),# Enable in template if-required
                      location_id(),
+                     self.pr_person_id(
+                        label = T("Contact Person / Camp Owner"),
+                        ),
+                     # Alternative for person_id: simple name field
+                     Field("contact_name",
+                           label = T("Contact Name"),
+                           represent = lambda v, row=None: v if v else "-",
+                           readable = False,
+                           writable = False,
+                           ),
                      Field("phone",
                            label = T("Phone"),
                            requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
+                           represent = lambda v, row=None: v if v else "-",
                            ),
-                     Field("email", "string",
+                     Field("email",
                            label = T("Email"),
+                           requires = IS_EMPTY_OR(IS_EMAIL()),
+                           represent = lambda v, row=None: v if v else "-",
                            ),
-                     self.pr_person_id(label = T("Contact Person / Camp Owner")),
+                     Field("website",
+                           label = T("Website"),
+                           represent = s3_url_represent,
+                           requires = IS_EMPTY_OR(IS_URL(allowed_schemes = ["http", "https", None],
+                                                         prepend_scheme = "http",
+                                                         )),
+                           readable = False,
+                           writable = False,
+                           ),
                      #Static field
                      Field("population", "integer",
                            label = T("Estimated Population"),
@@ -332,7 +352,7 @@ class CRShelterModel(S3Model):
                      Field("status", "integer",
                            label = T("Status"),
                            default = 2, # Open
-                           represent = S3Represent(options = cr_shelter_opts),
+                           represent = represent_option(cr_shelter_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(cr_shelter_opts)
                                        ),
@@ -341,7 +361,7 @@ class CRShelterModel(S3Model):
                      Field("obsolete", "boolean",
                            default = False,
                            label = T("Obsolete"),
-                           represent = lambda opt: OBSOLETE if opt else NONE,
+                           represent = lambda opt: messages.OBSOLETE if opt else NONE,
                            readable = False,
                            writable = False,
                            ),
@@ -496,25 +516,25 @@ class CRShelterModel(S3Model):
                   )
 
         # Custom method to assign HRs
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "assign",
                    action = self.hrm_AssignMethod(component="human_resource_site"),
                    )
 
         # Check-in method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method="check-in",
                    action = self.org_SiteCheckInMethod,
                    )
 
         # Notification-dispatch method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "dispatch",
                    action = cr_notification_dispatcher,
                    )
 
         # Shelter Inspection method
-        set_method("cr", "shelter",
+        set_method("cr_shelter",
                    method = "inspection",
                    action = CRShelterInspection,
                    )
@@ -581,7 +601,7 @@ class CRShelterModel(S3Model):
                      s3_date(),
                      Field("status", "integer",
                            label = T("Status"),
-                           represent = S3Represent(options = cr_shelter_opts),
+                           represent = represent_option(cr_shelter_opts),
                            requires = IS_EMPTY_OR(
                                        IS_IN_SET(cr_shelter_opts)
                                        ),
@@ -870,11 +890,7 @@ class CRShelterModel(S3Model):
             Return safe defaults in case the model has been deactivated.
         """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"cr_shelter_id": lambda **attr: dummy("shelter_id"),
+        return {"cr_shelter_id": S3ReusableField.dummy("shelter_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -891,12 +907,15 @@ class CRShelterModel(S3Model):
         # Update Affiliation, record ownership and component ownership
         s3db.org_update_affiliations("cr_shelter", form_vars)
 
+        # @ToDo: Create a cr_shelter_status record
+
+        if current.response.s3.bulk:
+            # Import
+            return
+
         if current.deployment_settings.get_cr_shelter_population_dynamic():
             # Update population and available capacity
             cr_update_shelter_population(shelter_id)
-
-        # @ToDo: Create a cr_shelter_status record
-
 
         # Create an org_site_event record
         stable = s3db.cr_shelter
@@ -1011,7 +1030,7 @@ class CRShelterModel(S3Model):
         return current.messages["NONE"]
 
 # =============================================================================
-class CRShelterServiceModel(S3Model):
+class CRShelterServiceModel(DataModel):
     """ Model for Shelter Services """
 
     names = ("cr_shelter_service",
@@ -1108,16 +1127,11 @@ class CRShelterServiceModel(S3Model):
     #def defaults():
     #    """ Safe defaults for names in case the module is disabled """
 
-    #    dummy = S3ReusableField("dummy_id", "integer",
-    #                            readable = False,
-    #                            writable = False,
-    #                            )
-
-    #    return {"cr_shelter_service_id":  lambda **attr: dummy("service_id"),
+    #    return {"cr_shelter_service_id":  S3ReusableField.dummy("service_id"),
     #            }
 
 # =============================================================================
-class CRShelterInspectionModel(S3Model):
+class CRShelterInspectionModel(DataModel):
     """ Model for Shelter / Housing Unit Flags """
 
     names = ("cr_shelter_flag",
@@ -1172,7 +1186,7 @@ class CRShelterInspectionModel(S3Model):
                      Field("task_priority", "integer",
                            default = 3,
                            label = T("Priority"),
-                           represent = S3Represent(options=task_priority_opts),
+                           represent = represent_option(task_priority_opts),
                            requires = IS_IN_SET(task_priority_opts,
                                                 zero = None,
                                                 ),
@@ -1399,12 +1413,7 @@ class CRShelterInspectionModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"cr_shelter_flag_id":  lambda **attr: dummy("flag_id"),
+        return {"cr_shelter_flag_id":  S3ReusableField.dummy("flag_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1590,7 +1599,7 @@ class CRShelterInspectionModel(S3Model):
             link.update_record(task_id = None)
 
 # =============================================================================
-class CRShelterRegistrationModel(S3Model):
+class CRShelterRegistrationModel(DataModel):
 
     names = ("cr_shelter_allocation",
              "cr_shelter_registration",
@@ -1633,8 +1642,8 @@ class CRShelterRegistrationModel(S3Model):
                      Field("status", "integer",
                            default = 3,
                            label = T("Status"),
+                           represent = represent_option(allocation_status_opts),
                            requires = IS_IN_SET(allocation_status_opts),
-                           represent = S3Represent(options = allocation_status_opts),
                            ),
                      Field("group_size_day", "integer",
                            default = 0,
@@ -1708,8 +1717,7 @@ class CRShelterRegistrationModel(S3Model):
                      Field("day_or_night", "integer",
                            default = DAY_AND_NIGHT,
                            label = T("Presence in the shelter"),
-                           represent = S3Represent(options=cr_day_or_night_opts
-                                                   ),
+                           represent = represent_option(cr_day_or_night_opts),
                            requires = IS_IN_SET(cr_day_or_night_opts,
                                                 zero=None
                                                 ),
@@ -1729,7 +1737,7 @@ class CRShelterRegistrationModel(S3Model):
                      s3_comments(),
                      *s3_meta_fields())
 
-        registration_onaccept = self.shelter_registration_onaccept
+        registration_onaccept = self.cr_shelter_registration_onaccept
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("person_id",
                                                        "shelter_id",
@@ -1746,7 +1754,7 @@ class CRShelterRegistrationModel(S3Model):
                       )
 
         # Custom Methods
-        self.set_method("cr", "shelter_registration",
+        self.set_method("cr_shelter_registration",
                         method = "assign",
                         action = cr_AssignUnit())
 
@@ -1781,7 +1789,7 @@ class CRShelterRegistrationModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Pass variables back to global scope (response.s3.*)
-        return {"cr_shelter_population_onaccept": self.shelter_population_onaccept,
+        return {"cr_shelter_population_onaccept": self.cr_shelter_population_onaccept,
                 "cr_shelter_registration_status_opts": reg_status_opts,
                 }
 
@@ -1827,7 +1835,7 @@ class CRShelterRegistrationModel(S3Model):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def shelter_registration_onaccept(cls, form):
+    def cr_shelter_registration_onaccept(cls, form):
         """
             Registration onaccept: track status changes, update
             shelter population
@@ -1936,14 +1944,14 @@ class CRShelterRegistrationModel(S3Model):
                             s3db.dvr_update_last_seen(person_id)
 
         # Update population
-        cls.shelter_population_onaccept(form,
-                                        tablename = "cr_shelter_registration",
-                                        unit_id = unit_id,
-                                        )
+        cls.cr_shelter_population_onaccept(form,
+                                           tablename = "cr_shelter_registration",
+                                           unit_id = unit_id,
+                                           )
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def shelter_population_onaccept(form, tablename=None, unit_id=None):
+    def cr_shelter_population_onaccept(form, tablename=None, unit_id=None):
         """
             Update the shelter population, onaccept
 
@@ -2490,7 +2498,7 @@ class cr_AssignUnit(S3CRUD):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2706,7 +2714,7 @@ class CRShelterInspection(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -2747,7 +2755,7 @@ class CRShelterInspection(S3Method):
         """
             Generate the form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -2843,7 +2851,7 @@ class CRShelterInspection(S3Method):
         """
             Ajax-registration of shelter inspection
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 

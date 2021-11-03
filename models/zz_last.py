@@ -46,6 +46,20 @@ if auth.permission.format in ("html",):
     # Add breadcrumbs
     menu.breadcrumbs = S3OptionsMenu.breadcrumbs
 
+# Re-route controller
+c, f = request.controller, request.function
+if c == "custom":
+    # Must not be accessed directly
+    raise HTTP(404, 'invalid controller (%s/%s)' % (c, f))
+
+rest_controllers = settings.get_base_rest_controllers()
+if rest_controllers and (c, f) in rest_controllers:
+    request.args = [c, f] + request.args
+    request.controller = "custom"
+    request.function = "index" if f == "index" else "rest"
+
 # Set up plugins
-from plugins import PluginLoader
-PluginLoader.setup_all()
+#from plugins import PluginLoader
+#PluginLoader.setup_all()
+
+# END =========================================================================

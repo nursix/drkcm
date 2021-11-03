@@ -7,10 +7,10 @@ from collections import OrderedDict
 from gluon import current #, A, DIV,IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, SPAN, TAG, URL
 from gluon.storage import Storage
 
-#from s3 import FS, IS_ONE_OF
+#from core import FS, IS_ONE_OF
 from s3dal import original_tablename
 
-from templates.BRCMS.idcards import IDCardLayout
+#from templates.BRCMS.idcards import IDCardLayout
 
 # =============================================================================
 def config(settings):
@@ -25,7 +25,6 @@ def config(settings):
 
     # PrePopulate data
     settings.base.prepopulate.append("BRCMS")
-    settings.base.prepopulate_demo.append("BRCMS/Demo")
 
     # Theme (folder to use for views/layout.html)
     settings.base.theme = "BRCMS"
@@ -124,8 +123,6 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    # 8: Apply Controller, Function, Table ACLs, Entity Realm + Hierarchy and Delegations
-    #
     settings.security.policy = 7 # Hierarchical Realms
 
     # Version details on About-page require login
@@ -155,7 +152,7 @@ def config(settings):
     #settings.br.assistance_terminology = "Counseling"
 
     # ID Card Layout
-    settings.br.id_card_layout = IDCardLayout
+    #settings.br.id_card_layout = IDCardLayout
 
     # Roles with permission to generate beneficiary ID cards
     settings.br.id_card_export_roles = ["CASE_MANAGEMENT"]
@@ -169,6 +166,14 @@ def config(settings):
     # Document settings
     #
     settings.doc.mailmerge_fields = {}
+
+    # -------------------------------------------------------------------------
+    # Event Module Settings
+    #
+    #settings.event.label = "Disaster"
+    settings.event.incident = False
+    settings.event.types_hierarchical = False
+    settings.event.impact_tab = False
 
     # -------------------------------------------------------------------------
     # Human Resource Module Settings
@@ -378,10 +383,6 @@ def config(settings):
         #    access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
         #    module_type = None  # This item is handled separately for the menu
         #)),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
-        #)),
         #("translate", Storage(
         #    name_nice = T("Translation Functionality"),
         #    #description = "Selective translation of strings based on module.",
@@ -498,12 +499,12 @@ def config(settings):
         #    restricted = True,
         #    module_type = 10,
         #)),
-        #("event", Storage(
-        #   name_nice = T("Events"),
-        #   #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
-        #   restricted = True,
-        #   module_type = 10,
-        #)),
+        ("event", Storage(
+            name_nice = T("Events"),
+            #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
+            restricted = True,
+            module_type = 10,
+        )),
         #("security", Storage(
         #   name_nice = T("Security"),
         #   restricted = True,

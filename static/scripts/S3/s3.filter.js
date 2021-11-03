@@ -594,10 +594,10 @@ S3.search = {};
                 if (value) {
                     jsDate = $this.calendarWidget('getJSDate', end);
                     var urlValue = isoFormat(jsDate);
-                    if (end && $this.hasClass('end_date')) {
+                    if (end && $this.hasClass('end_date') || $this.hasClass('optional')) {
                         // end_date
                         var selector = urlVar.replace(FILTEROP, '');
-                        queries.push(['$filter', '(' + selector + ' ' + operator + ' "' + urlValue + '") or (' + selector + ' eq None)']);
+                        queries.push(['$filter', '(' + selector + ' ' + operator + ' "' + urlValue + '") or (' + selector + ' eq NONE)']);
                     } else {
                         // Single field or start_date
                         queries.push([urlVar, urlValue]);
@@ -2227,6 +2227,11 @@ S3.search = {};
         });
 
         // Set filter widgets to fire optionChanged event
+        $('.text-filter').on('keyup.autosubmit', function(e) {
+            if (e.keyCode == 27) { // Pressing ESC to clear text filter input
+                $(this).val('').closest('form').trigger('optionChanged');
+            }
+        });
         $('.text-filter, .range-filter-input').on('input.autosubmit', function() {
             $(this).closest('form').trigger('optionChanged');
         });

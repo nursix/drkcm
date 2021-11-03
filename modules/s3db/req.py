@@ -27,8 +27,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("RequestPriorityStatusModel",
-           "RequestModel",
+__all__ = ("RequestModel",
+           "RequestApproverModel",
            "RequestItemModel",
            "RequestSkillModel",
            "RequestRecurringModel",
@@ -47,25 +47,41 @@ __all__ = ("RequestPriorityStatusModel",
            "RequestNeedsResponseModel",
            "RequestNeedsResponseLineModel",
            "RequestNeedsResponseOrganisationModel",
+           "RequestOrderItemModel",
+           "RequestProjectModel",
            "RequestTagModel",
            "RequestTaskModel",
+           "RequestRequesterCategoryModel",
            "CommitModel",
            "CommitItemModel",
            "CommitPersonModel",
            "CommitSkillModel",
            #"req_CheckMethod",
-           "req_update_status",
-           "req_rheader",
-           "req_match",
            "req_add_from_template",
+           "req_approvers",
+           "req_create_form_mods",
+           "req_hide_quantities",
+           "req_inline_form",
+           #"req_is_approver",
+           "req_match",
+           "req_ref_represent",
+           "req_rheader",
+           "req_send_commit",
+           "req_tabs",
+           "req_update_status",
            "req_RequesterRepresent",
            "req_ReqItemRepresent",
            )
 
 from gluon import *
+from gluon.sqlhtml import StringWidget
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
+
+from .pr import OU
+
+DEFAULT = "DEFAULT"
 
 REQ_STATUS_NONE     = 0
 REQ_STATUS_PARTIAL  = 1
@@ -73,47 +89,42 @@ REQ_STATUS_COMPLETE = 2
 REQ_STATUS_CANCEL   = 3
 
 # =============================================================================
-class RequestPriorityStatusModel(S3Model):
-    """
-        Model for Request Priority & Status
-    """
+def req_priority_opts():
+    T = current.T
+    return {3: T("High"),
+            2: T("Medium"),
+            1: T("Low")
+            }
 
-    names = ("req_priority",
-             "req_priority_opts",
-             #"req_priority_represent",
-             "req_status",
-             "req_status_opts",
-             "req_timeframe",
-             "req_timeframe_opts",
-             )
+#def req_priority_represent(priority):
+#    """
+#        Represent request priority by a (color-coded) GIF image
+#        @ToDo: make CSS-only
+#    """
 
-    def model(self):
+#    src = URL(c = "static",
+#              f = "img",
+#              args = ["priority", "priority_%d.gif" % (priority or 4)],
+#              )
+#    return DIV(IMG(_src= src))
 
-        T = current.T
+def req_priority():
+    priority_opts = req_priority_opts()
+    return S3ReusableField("priority", "integer",
+                           default = 2,
+                           label = current.T("Priority"),
+                           #@ToDo: Colour code the priority text - red, orange, green
+                           #represent = req_priority_represent,
+                           represent = represent_option(priority_opts),
+                           requires = IS_EMPTY_OR(
+                                           IS_IN_SET(priority_opts)
+                                           ),
+                           )
 
-        # ---------------------------------------------------------------------
-        # Request Priority
-        #
-        req_priority_opts = {3: T("High"),
-                             2: T("Medium"),
-                             1: T("Low")
-                             }
-
-        req_priority = S3ReusableField("priority", "integer",
-                                       default = 2,
-                                       label = T("Priority"),
-                                       #@ToDo: Colour code the priority text - red, orange, green
-                                       represent = S3Represent(options = req_priority_opts),
-                                       #represent = self.req_priority_represent,
-                                       requires = IS_EMPTY_OR(
-                                                       IS_IN_SET(req_priority_opts))
-                                       )
-
-        # ---------------------------------------------------------------------
-        # Request Status
-        #
-        req_status_opts = {
-            REQ_STATUS_NONE:     SPAN(T("None"),
+# =============================================================================
+def req_status_opts():
+    T = current.T
+    return {REQ_STATUS_NONE:     SPAN(T("None"),
                                       _class = "req_status_none",
                                       ),
             REQ_STATUS_PARTIAL:  SPAN(T("Partial"),
@@ -124,85 +135,41 @@ class RequestPriorityStatusModel(S3Model):
                                       ),
             }
 
-        req_status = S3ReusableField("req_status", "integer",
-                                     default = REQ_STATUS_NONE,
-                                     label = T("Request Status"),
-                                     represent = S3Represent(options = req_status_opts),
-                                     requires = IS_EMPTY_OR(
-                                                    IS_IN_SET(req_status_opts,
-                                                              zero = None)),
-                                     )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return {"req_priority": req_priority,
-                "req_priority_opts": req_priority_opts,
-                #"req_priority_represent": self.req_priority_represent,
-                "req_status": req_status,
-                "req_status_opts": req_status_opts,
-                }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-        """
-            Safe defaults for model-global names if module is disabled
-        """
-
-        return {#"req_priority": req_priority,
-                #"req_priority_opts": req_priority_opts,
-                #"req_priority_represent": cls.req_priority_represent,
-                #"req_status": req_status,
-                #"req_status_opts": req_status_opts,
-                }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def mandatory():
-        """
-            Mandatory s3-global objects
-        """
-
-        T = current.T
-        timeframe_opts = {1: T("0-12 hours"),
-                          2: T("12-24 hours"),
-                          3: T("1-2 days"),
-                          4: T("2-4 days"),
-                          5: T("5-7 days"),
-                          6: T(">1 week"),
-                          }
-
-        timeframe = S3ReusableField("timeframe", "integer",
-                                    default = 3,
-                                    label = T("Timeframe"),
-                                    represent = S3Represent(options = timeframe_opts),
-                                    requires = IS_EMPTY_OR(
-                                                IS_IN_SET(timeframe_opts,
-                                                          zero = None)),
-                                    )
-
-        return {"req_timeframe": timeframe,
-                "req_timeframe_opts": timeframe_opts,
-                }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_priority_represent(priority):
-        """
-            Represent request priority by a (color-coded) GIF image
-
-            @todo: make CSS-only
-        """
-
-        src = URL(c = "static",
-                  f = "img",
-                  args = ["priority", "priority_%d.gif" % (priority or 4)],
-                  )
-        return DIV(IMG(_src= src))
+def req_status():
+    status_opts = req_status_opts()
+    return S3ReusableField("req_status", "integer",
+                           label = current.T("Request Status"),
+                           represent = represent_option(status_opts),
+                           requires = IS_EMPTY_OR(
+                                        IS_IN_SET(status_opts,
+                                                  zero = None,
+                                                  )
+                                        ),
+                           )
 
 # =============================================================================
-class RequestModel(S3Model):
+def req_timeframe():
+    T = current.T
+    timeframe_opts = {1: T("0-12 hours"),
+                      2: T("12-24 hours"),
+                      3: T("1-2 days"),
+                      4: T("2-4 days"),
+                      5: T("5-7 days"),
+                      6: T(">1 week"),
+                      }
+    return S3ReusableField("timeframe", "integer",
+                           default = 3,
+                           label = T("Timeframe"),
+                           represent = represent_option(timeframe_opts),
+                           requires = IS_EMPTY_OR(
+                                        IS_IN_SET(timeframe_opts,
+                                                  zero = None,
+                                                  ),
+                                        ),
+                           )
+
+# =============================================================================
+class RequestModel(DataModel):
     """
         Model for Requests
     """
@@ -210,12 +177,6 @@ class RequestModel(S3Model):
     names = ("req_req",
              "req_req_id",
              "req_req_ref",
-             "req_hide_quantities",
-             "req_inline_form",
-             "req_create_form_mods",
-             "req_prep",
-             "req_ref_represent",
-             "req_tabs",
              )
 
     def model(self):
@@ -237,6 +198,7 @@ class RequestModel(S3Model):
         super_link = self.super_link
 
         person_id = self.pr_person_id
+        req_status_field = req_status()
 
         # ---------------------------------------------------------------------
         # Model Options
@@ -251,6 +213,7 @@ class RequestModel(S3Model):
         transit_status =  settings.get_req_show_quantity_transit()
         use_commit = settings.get_req_use_commit()
         use_req_number = settings.get_req_use_req_number()
+        use_workflow = settings.get_req_workflow()
 
         # Request Types
         req_types_deployed = settings.get_req_req_type()
@@ -301,24 +264,35 @@ class RequestModel(S3Model):
                                        title = T("Create Facility"),
                                        )
 
+        # Workflow options
+        workflow_opts = {1: T("Draft"),
+                         2: T("Submitted for Approval"),
+                         3: T("Approved"),
+                         4: T("Completed"),
+                         5: T("Cancelled"),
+                         }
+        if use_workflow:
+            workflow_default = 1 # Draft
+        else:
+            # Don't make assumptions
+            workflow_default = None
+
         # ---------------------------------------------------------------------
         # Request Reference
         #
         req_ref = S3ReusableField("req_ref", "string",
                                   label = T("%(REQ)s Number") %
                                           {"REQ": settings.get_req_shortname()},
-                                  represent = self.req_ref_represent,
+                                  represent = req_ref_represent,
                                   writable = False,
                                   )
-
-        req_status = self.req_status
-        req_status_opts = self.req_status_opts
 
         # ---------------------------------------------------------------------
         # Requests
         #
         tablename = "req_req"
         self.define_table(tablename,
+                          # Instance
                           super_link("doc_id", "doc_entity"),
                           Field("type", "integer",
                                 default = default_type,
@@ -330,9 +304,11 @@ class RequestModel(S3Model):
                                 writable = not default_type,
                                 ),
                           req_ref(represent = lambda v, row=None: \
-                                              self.req_ref_represent(v, show_link=False),
+                                              req_ref_represent(v, show_link=False),
                                   readable = use_req_number,
                                   writable = use_req_number,
+                                  widget = lambda f, v: \
+                                    StringWidget.widget(f, v, _placeholder = T("Leave blank to have this autogenerated"))
                                   ),
                           s3_datetime(default = "now",
                                       label = T("Date Requested"),
@@ -343,7 +319,7 @@ class RequestModel(S3Model):
                                       #represent = "date",
                                       #widget = "date",
                                       ),
-                          self.req_priority(),
+                          req_priority()(),
                           # This is a component, so needs to be a super_link
                           # - can't override field name, ondelete or requires
                           super_link("site_id", "org_site",
@@ -438,7 +414,7 @@ class RequestModel(S3Model):
                                 writable = ask_security,
                                 ),
                           s3_datetime("date_recv",
-                                      label = T("Date Received"), # Could be T("Date Delivered") - make deployment_setting
+                                      label = T("Date Received"), # Could be T("Date Delivered") - make deployment_setting or just use Template
                                       past = 8760, # Hours, so 1 year
                                       future = 0,
                                       readable = False,
@@ -450,33 +426,53 @@ class RequestModel(S3Model):
                                     #default = auth.s3_logged_in_person(),
                                     label = T("Received By"),
                                     ),
+                          # Workflow Status
+                          Field("workflow_status", "integer",
+                                label = T("Status"),
+                                default = workflow_default,
+                                requires = IS_IN_SET(workflow_opts),
+                                represent = represent_option(workflow_opts),
+                                readable = use_workflow,
+                                writable = False,
+                                ),
                           # Simple Status
                           # - currently just enabled in customise_req_fields() workflow
-                          req_status(readable = False,
-                                     writable = False,
-                                     ),
+                          req_status_field(readable = False,
+                                           writable = False,
+                                           ),
                           # Detailed Status
-                          req_status("commit_status",
-                                     label = T("Commit Status"),
-                                     represent = self.req_commit_status_represent,
-                                     readable = use_commit,
-                                     writable = req_status_writable and use_commit,
-                                     ),
-                          req_status("transit_status",
-                                     label = T("Transit Status"),
-                                     readable = transit_status,
-                                     writable = req_status_writable and transit_status,
-                                     ),
-                          req_status("fulfil_status",
-                                     label = T("Fulfil. Status"),
-                                     writable = req_status_writable,
-                                     ),
+                          req_status_field("commit_status",
+                                           label = T("Commit Status"),
+                                           represent = self.req_commit_status_represent,
+                                           readable = use_commit,
+                                           writable = req_status_writable and use_commit,
+                                           ),
+                          req_status_field("transit_status",
+                                           label = T("Transit Status"),
+                                           readable = transit_status,
+                                           writable = req_status_writable and transit_status,
+                                           ),
+                          req_status_field("fulfil_status",
+                                           label = T("Fulfil. Status"),
+                                           writable = req_status_writable,
+                                           ),
+                          #req_status_field("filing_status",
+                          #                 label = T("Filing Status"),
+                          #                 comment = DIV(_class="tooltip",
+                          #                               _title="%s|%s" % (T("Filing Status"),
+                          #                                                 T("Have all the signed documents for this shipment been filed?"))),
+                          #                 readable = settings.get_req_document_filing(),
+                          #                 writable = False,
+                          #                 ),
                           Field("closed", "boolean",
                                 default = False,
                                 label = T("Closed"),
-                                comment = DIV(_class="tooltip",
-                                              _title="%s|%s" % (T("Closed"),
-                                                                T("No more items may be added to this request"))),
+                                readable = not use_workflow,
+                                writable = not use_workflow,
+                                comment = DIV(_class = "tooltip",
+                                              _title = "%s|%s" % (T("Closed"),
+                                                                  T("No more items may be added to this request"),
+                                                                  )),
                                 ),
                           Field("cancel", "boolean",
                                 default = False,
@@ -679,23 +675,37 @@ class RequestModel(S3Model):
                                 )
                             ),
                        super_entity = "doc_entity",
+                       # Leave this to templates
+                       # - reduce load on templates which don't need this
+                       #update_realm = True,
+                       realm_components = ("req_item",
+                                           "req_skill",
+                                           ),
                        )
 
         # Custom Methods
-        set_method("req", "req",
+        set_method("req_req",
                    method = "check",
                    action = req_CheckMethod())
 
-        set_method("req", "req",
+        set_method("req_req",
                    method = "commit_all",
                    action = self.req_commit_all)
 
-        set_method("req", "req",
+        set_method("req_req",
                    method = "copy_all",
                    action = self.req_copy_all)
 
+        set_method("req_req",
+                   method = "submit",
+                   action = self.req_submit)
+
+        set_method("req_req",
+                   method = "approve_req", # Don't clash with core approve method
+                   action = self.req_approve)
+
         # Print Forms
-        set_method("req", "req",
+        set_method("req_req",
                    method = "form",
                    action = self.req_form)
 
@@ -720,7 +730,21 @@ class RequestModel(S3Model):
                                                "joinby": "req_id",
                                                "key": "item_category_id",
                                                },
+                       # Approvers
+                       req_approver_req = {"name": "approver",
+                                           "joinby": "req_id",
+                                           },
 
+                       # Projects
+                       req_project_req = {"joinby": "req_id",
+                                          "multiple": False,
+                                          },
+                       project_project = {"link": "req_project_req",
+                                          "joinby": "req_id",
+                                          "key": "project_id",
+                                          "actuate": "hide",
+                                          "multiple": False,
+                                          },
                        **{# Scheduler Jobs (for recurring requests)
                           S3Task.TASK_TABLENAME: {"name": "job",
                                                   "joinby": "req_id",
@@ -734,14 +758,8 @@ class RequestModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {"req_create_form_mods": self.req_create_form_mods,
-                "req_hide_quantities": self.req_hide_quantities,
-                "req_inline_form": self.req_inline_form,
-                "req_prep": self.req_prep,
-                "req_req_id": req_id,
+        return {"req_req_id": req_id,
                 "req_req_ref": req_ref,
-                "req_ref_represent": self.req_ref_represent,
-                "req_tabs": self.req_tabs,
                 }
 
     # -------------------------------------------------------------------------
@@ -750,323 +768,11 @@ class RequestModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy", "string",
-                                readable = False,
-                                writable = False,
-                                )
+        dummy = S3ReusableField.dummy
 
-        return {"req_req_id": lambda **attr: dummy("req_id"),
-                "req_req_ref": lambda **attr: dummy("req_ref"),
+        return {"req_req_id": dummy("req_id"),
+                "req_req_ref": dummy("req_ref", "string"),
                 }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_create_form_mods():
-        """
-            Function to be called from REST prep functions
-             - main module & components (sites & events)
-        """
-
-        T = current.T
-        db = current.db
-        s3 = current.response.s3
-        settings = current.deployment_settings
-
-        # Hide fields which don't make sense in a Create form
-        table = db.req_req
-        table.req_ref.readable = False
-        table.commit_status.readable = table.commit_status.writable = False
-        table.transit_status.readable = table.transit_status.writable = False
-        table.fulfil_status.readable = table.fulfil_status.writable = False
-        table.cancel.readable = table.cancel.writable = False
-        table.closed.readable = table.closed.writable = False
-        table.date_recv.readable = table.date_recv.writable = False
-        table.recv_by_id.readable = table.recv_by_id.writable = False
-
-        if settings.get_req_requester_from_site():
-            # Filter the list of Contacts to those for the site
-            table.requester_id.widget = None
-            table.requester_id.comment = S3PopupLink(c = "pr",
-                                                     f = "person",
-                                                     vars = {"child": "requester_id",
-                                                             "parent": "req",
-                                                             },
-                                                     title = s3.crud_strings["pr_person"].label_create,
-                                                     )
-            s3.jquery_ready.append('''
-$.filterOptionsS3({
- 'trigger':'site_id',
- 'target':'requester_id',
- 'lookupResource':'staff',
- 'lookupURL':S3.Ap.concat('/hrm/staff_for_site/'),
- 'msgNoRecords':'%s',
- 'optional':true,
-})''' % T("No contacts yet defined for this site"))
-            #table.site_id.comment = A(T("Set as default Site"),
-            #                          _id="req_req_site_id_link",
-            #                          _target="_blank",
-            #                          _href=URL(c="default",
-            #                                    f="user",
-            #                                    args=["profile"]))
-
-        req_types = settings.get_req_req_type()
-        if "People" in req_types:
-            # Show the Required Until Field
-            # (gets turned-off by JS for other types)
-            table.date_required_until.writable = True
-
-        request = current.request
-        if "type" not in request.get_vars:
-            # Script to inject into Pages which include Request create forms
-            req_helptext = '''
-i18n.req_purpose="%s"
-i18n.req_site_id="%s"
-i18n.req_request_for_id="%s"
-i18n.req_recv_by_id="%s"
-i18n.req_items_purpose="%s"
-i18n.req_items_site_id="%s"
-i18n.req_items_recv_by_id="%s"
-i18n.req_people_purpose="%s"
-i18n.req_people_site_id="%s"
-i18n.req_people_recv_by_id="%s"
-i18n.req_next_msg="%s"
-i18n.req_other_msg="%s"
-i18n.req_details_mandatory="%s"''' % (table.purpose.label,
-                                      table.site_id.label,
-                                      table.request_for_id.label,
-                                      table.recv_by_id.label,
-                                      T("What the Items will be used for"),
-                                      T("Deliver To"),
-                                      T("Delivered To"),
-                                      T("Task Details"),
-                                      T("Report To"),
-                                      T("Reported To"),
-                                      T("Please enter the details on the next screen."),
-                                      T("Please enter request details here."),
-                                      T("Details field is required!"))
-            s3.js_global.append(req_helptext)
-            s3.scripts.append("/%s/static/scripts/S3/s3.req_create_variable.js" % request.application)
-
-        else:
-            s3.scripts.append("/%s/static/scripts/S3/s3.req_create.js" % request.application)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_inline_form(req_type, method):
-        """
-            Function to be called from REST prep functions
-             - to add req_item & req_skill components as inline forms
-
-            @param req_type: the request type (1=items, 3=skills)
-            @param method: the URL request method
-        """
-
-        T = current.T
-        s3db = current.s3db
-        table = s3db.req_req
-        s3 = current.response.s3
-        postprocess = s3.req_req_postprocess
-
-        if req_type == 1:
-
-            # Custom Form
-            settings = current.deployment_settings
-            fields = [#req_ref
-                      "site_id",
-                      #is_template
-                      "requester_id",
-                      "date",
-                      "priority",
-                      "date_required",
-                      S3SQLInlineComponent(
-                        "req_item",
-                        label = T("Items"),
-                        fields = ["item_id",
-                                  "item_pack_id",
-                                  "quantity",
-                                  "comments"
-                                  ]
-                      ),
-                      #purpose
-                      "comments",
-                      ]
-
-            if method in ("create", "update"):
-                # Dropdown not Autocomplete
-                itable = s3db.req_req_item
-                itable.item_id.widget = None
-
-                # Options-filter item=>pack
-                jquery_ready = s3.jquery_ready
-                jquery_ready.append('''
-$.filterOptionsS3({
- 'trigger':{'alias':'req_item','name':'item_id'},
- 'target':{'alias':'req_item','name':'item_pack_id'},
- 'scope':'row',
- 'lookupPrefix':'supply',
- 'lookupResource':'item_pack',
- 'msgNoRecords':i18n.no_packs,
- 'fncPrep':S3.supply.fncPrepItem,
- 'fncRepresent':S3.supply.fncRepresentItem
-})''')
-                if settings.get_req_requester_from_site():
-                    # Filter the list of Contacts to those for the site
-                    jquery_ready.append('''
-$.filterOptionsS3({
- 'trigger':'site_id',
- 'target':'requester_id',
- 'lookupResource':'staff',
- 'lookupURL':S3.Ap.concat('/hrm/staff_for_site/'),
- 'msgNoRecords':'%s',
- 'optional':true,
-})''' % T("No contacts yet defined for this site"))
-
-                    # Popup link to allow adding a contact (...for the site)
-                    table.requester_id.widget = None
-                    table.requester_id.comment = S3PopupLink(c = "pr",
-                                                             f = "person",
-                                                             vars = {"child": "requester_id",
-                                                                     "parent": "req",
-                                                                     },
-                                                             title = s3.crud_strings["pr_person"].label_create,
-                                                             )
-
-                    # Link to user profile to allow setting this site
-                    # as their current default site, so that they appear
-                    # in the dropdown themselves
-                    table.site_id.comment = A(T("Set as default Site"),
-                                              _id = "req_req_site_id_link",
-                                              _target = "_blank",
-                                              _href=URL(c = "default",
-                                                        f = "user",
-                                                        args = ["profile"],
-                                                        ),
-                                              )
-
-            if method in ("update", "read"):
-                # Append status details
-                status_fields = []
-                if settings.get_req_status_writable():
-                    if settings.get_req_use_commit():
-                        status_fields.append("commit_status")
-                    if settings.get_req_show_quantity_transit():
-                        status_fields.append("transit_status")
-                    status_fields.append("fulfil_status")
-                status_fields.append("date_recv")
-
-                fields.extend(status_fields)
-
-                # Show request number?
-                if settings.get_req_use_req_number():
-                    if settings.get_req_generate_req_number():
-                        table.req_ref.writable = False
-                    fields.insert(0, "req_ref")
-            else:
-                # Is-template flag can only be set during create
-                fields.insert(1, "is_template")
-
-            if settings.get_req_items_ask_purpose():
-                fields.insert(-1, "purpose")
-
-            if postprocess:
-                crud_form = S3SQLCustomForm(*fields, postprocess=postprocess)
-            else:
-                crud_form = S3SQLCustomForm(*fields)
-            s3db.configure("req_req",
-                           crud_form = crud_form,
-                           )
-
-        elif req_type == 3:
-            # Custom Form
-            stable = s3db.req_req_skill
-            stable.skill_id.label = T("Required Skills (optional)")
-            # Custom Form
-            settings = current.deployment_settings
-            fields = ["site_id",
-                      "requester_id",
-                      "date",
-                      "priority",
-                      "date_required",
-                      "date_required_until",
-                      "purpose",
-                      S3SQLInlineComponent(
-                        "req_skill",
-                        label = T("Skills"),
-                        fields = ["quantity",
-                                  "skill_id",
-                                  "comments"
-                                  ]
-                      ),
-                      "comments",
-                      ]
-            if method == "update":
-                if settings.get_req_status_writable():
-                    fields.insert(8, "fulfil_status")
-                    if settings.get_req_show_quantity_transit():
-                        fields.insert(8, "transit_status")
-                    if settings.get_req_use_commit():
-                        fields.insert(8, "commit_status")
-                fields.insert(8, "date_recv")
-
-                if settings.get_req_requester_from_site():
-                    # Filter the list of Contacts to those for the site
-                    table.requester_id.widget = None
-                    table.requester_id.comment = S3PopupLink(c = "pr",
-                                                             f = "person",
-                                                             vars = {"child": "requester_id",
-                                                                     "parent": "req",
-                                                                     },
-                                                             title = s3.crud_strings["pr_person"].label_create,
-                                                             )
-                    s3.jquery_ready.append('''
-$.filterOptionsS3({
- 'trigger':'site_id',
- 'target':'requester_id',
- 'lookupResource':'staff',
- 'lookupURL':S3.Ap.concat('/hrm/staff_for_site/'),
- 'msgNoRecords':'%s',
- 'optional':true,
-})''' % T("No contacts yet defined for this site"))
-                    table.site_id.comment = A(T("Set as default Site"),
-                                      _id="req_req_site_id_link",
-                                      _target="_blank",
-                                      _href=URL(c="default",
-                                                f="user",
-                                                args=["profile"]))
-
-            else:
-                fields.insert(1, "is_template")
-            if settings.get_req_use_req_number() and \
-               not settings.get_req_generate_req_number():
-                fields.insert(0, "req_ref")
-            if postprocess:
-                crud_form = S3SQLCustomForm(*fields, postprocess=postprocess)
-            else:
-                crud_form = S3SQLCustomForm(*fields)
-            s3db.configure("req_req",
-                           crud_form = crud_form,
-                           )
-
-        # Reset to standard submit button
-        s3.crud.submit_button = T("Save")
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_prep(r):
-        """
-            Function to be called from REST prep functions
-             - main module & components (sites)
-        """
-
-        if not r.component or r.component.name =="req":
-            default_type = current.db.req_req.type.default
-            if default_type:
-                T = current.T
-                req_submit_button = {1: T("Save and add Items"),
-                                     3: T("Save and add People"),
-                                     9: T("Save"),
-                                     }
-                current.response.s3.crud.submit_button = req_submit_button[default_type]
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1090,7 +796,7 @@ $.filterOptionsS3({
                 row = db(table.id == req_id).select(table.date,
                                                     table.req_ref,
                                                     table.site_id,
-                                                    limitby = (0, 1),
+                                                    limitby = (0, 1)
                                                     ).first()
         try:
             if row.req_ref:
@@ -1131,96 +837,8 @@ $.filterOptionsS3({
                         _class = "req_status_complete",
                         )
         else:
-            return current.s3db.req_status_opts.get(commit_status,
-                                                    current.messages.UNKNOWN_OPT)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_ref_represent(value, show_link=True, pdf=False):
-        """
-            Represent for the Request Reference
-            if show_link is True then it will generate a link to the record
-            if pdf is True then it will generate a link to the PDF
-
-            @todo: document parameters
-            @todo: S3Represent
-        """
-
-        if value:
-            if show_link:
-                db = current.db
-                table = db.req_req
-                req_row = db(table.req_ref == value).select(table.id,
-                                                            limitby=(0, 1),
-                                                            ).first()
-                if req_row:
-                    if pdf:
-                        args = [req_row.id, "form"]
-                    else:
-                        args = [req_row.id]
-                    return A(value,
-                             _href = URL(c="req", f="req",
-                                         args = args,
-                                         extension = "",
-                                         ),
-                             )
-            return B(value)
-
-        return current.messages["NONE"]
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_form(r, **attr):
-        """
-            Generate a PDF of a Request Form (custom REST method)
-        """
-
-        db = current.db
-        table = db.req_req
-        record = db(table.id == r.id).select(limitby=(0, 1)).first()
-
-        if record.type == 1:
-            pdf_componentname = "req_item"
-            list_fields = ["item_id",
-                           "item_pack_id",
-                           "quantity",
-                           "quantity_commit",
-                           "quantity_transit",
-                           "quantity_fulfil",
-                           ]
-        elif record.type == 3:
-            pdf_componentname = "req_skill"
-            list_fields = ["skill_id",
-                           "quantity",
-                           "quantity_commit",
-                           "quantity_transit",
-                           "quantity_fulfil",
-                           ]
-        else:
-            # Not Supported - redirect to normal PDF
-            redirect(URL(args=current.request.args[0], extension="pdf"))
-
-        if current.deployment_settings.get_req_use_req_number():
-            filename = record.req_ref
-        else:
-            filename = None
-
-        from s3.s3export import S3Exporter
-        exporter = S3Exporter().pdf
-        return exporter(r.resource,
-                        request=r,
-                        method = "list",
-                        pdf_title = current.deployment_settings.get_req_form_name(),
-                        pdf_filename = filename,
-                        list_fields = list_fields,
-                        pdf_hide_comments = True,
-                        pdf_componentname = pdf_componentname,
-                        pdf_header_padding = 12,
-                        #pdf_footer = inv_recv_pdf_footer,
-                        pdf_table_autogrow = "B",
-                        pdf_orientation = "Landscape",
-                        **attr
-                        )
+            return req_status_opts().get(commit_status,
+                                         current.messages.UNKNOWN_OPT)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1241,9 +859,9 @@ $.filterOptionsS3({
         # Make a copy of the request record
         if settings.get_req_use_req_number():
             code = s3db.supply_get_shipping_code(settings.get_req_shortname(),
-                                              record.site_id,
-                                              table.req_ref,
-                                              )
+                                                 record.site_id,
+                                                 table.req_ref,
+                                                 )
         else:
             code = None
         if record.date_required and record.date_required < now:
@@ -1308,8 +926,9 @@ $.filterOptionsS3({
                            comments = skill.comments,
                            )
 
-        redirect(URL(f="req", args=[new_req_id, "update"]))
-
+        redirect(URL(f = "req",
+                     args = [new_req_id, "update"],
+                     ))
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1332,17 +951,19 @@ $.filterOptionsS3({
         query = (table.req_id == req_id) & \
                 (table.deleted == False)
         exists = db(query).select(table.id,
-                                  limitby = (0, 1),
+                                  limitby = (0, 1)
                                   ).first()
         if exists:
             # Browse existing commitments
-            redirect(URL(f="req", args=[r.id, "commit"]))
+            redirect(URL(f = "req",
+                         args = [r.id, "commit"],
+                         ))
 
         req_type = record.type
 
         # Create the commitment
-        cid = table.insert(req_id=req_id,
-                           type=req_type,
+        cid = table.insert(req_id = req_id,
+                           type = req_type,
                            )
 
         if req_type == 1:
@@ -1366,9 +987,9 @@ $.filterOptionsS3({
                            comments = item.comments,
                            )
                     # Mark Item in the Request as Committed
-                    db(ritable.id == commit_item_id).update(quantity_commit=quantity)
+                    db(ritable.id == commit_item_id).update(quantity_commit = quantity)
             # Mark Request as Committed
-            db(s3db.req_req.id == req_id).update(commit_status=REQ_STATUS_COMPLETE)
+            db(s3db.req_req.id == req_id).update(commit_status = REQ_STATUS_COMPLETE)
             msg = T("You have committed to all items in this Request. Please check that all details are correct and update as-required.")
 
         elif req_type == 3:
@@ -1394,84 +1015,433 @@ $.filterOptionsS3({
                            comments = skill.comments,
                            )
                     # Mark Item in the Request as Committed
-                    db(rstable.id == commit_skill_id).update(quantity_commit=quantity)
+                    db(rstable.id == commit_skill_id).update(quantity_commit = quantity)
             # Mark Request as Committed
-            db(s3db.req_req.id == req_id).update(commit_status=REQ_STATUS_COMPLETE)
+            db(s3db.req_req.id == req_id).update(commit_status = REQ_STATUS_COMPLETE)
             msg = T("You have committed for all people in this Request. Please check that all details are correct and update as-required.")
 
         else:
             # Other
             # Mark Request as Committed
-            db(s3db.req_req.id == req_id).update(commit_status=REQ_STATUS_COMPLETE)
+            db(s3db.req_req.id == req_id).update(commit_status = REQ_STATUS_COMPLETE)
             msg = T("You have committed to this Request. Please check that all details are correct and update as-required.")
 
         if "send" in r.args:
-            redirect(URL(f="send_commit", args=[cid]))
+            redirect(URL(f = "send_commit",
+                         args = [cid],
+                         ))
 
         elif "assign" in r.args:
-            redirect(URL(f="commit", args=[cid, "assign"]))
+            redirect(URL(f = "commit",
+                         args = [cid, "assign"],
+                         ))
 
         else:
             current.session.confirmation = msg
-            redirect(URL(c="req", f="commit", args=[cid]))
+            redirect(URL(c="req", f="commit",
+                         args = [cid],
+                         ))
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def req_hide_quantities(table):
+    def req_form(r, **attr):
         """
-            Hide per-status quantity fields in Request create-forms
-
-            @param table: the Table (req_item or req_skill)
+            Generate a PDF of a Request Form (custom REST method)
         """
 
-        if not current.deployment_settings.get_req_item_quantities_writable():
-            table.quantity_commit.readable = \
-            table.quantity_commit.writable = False
-            table.quantity_transit.readable = \
-            table.quantity_transit.writable = False
-            table.quantity_fulfil.readable = \
-            table.quantity_fulfil.writable = False
+        record = r.record
+
+        if record.type == 1:
+            pdf_componentname = "req_item"
+            list_fields = ["item_id",
+                           "item_pack_id",
+                           "quantity",
+                           "quantity_commit",
+                           "quantity_transit",
+                           "quantity_fulfil",
+                           ]
+        elif record.type == 3:
+            pdf_componentname = "req_skill"
+            list_fields = ["skill_id",
+                           "quantity",
+                           "quantity_commit",
+                           "quantity_transit",
+                           "quantity_fulfil",
+                           ]
+        else:
+            # Not Supported - redirect to normal PDF
+            redirect(URL(args = current.request.args[0],
+                         extension = "pdf"))
+
+        if current.deployment_settings.get_req_use_req_number():
+            filename = record.req_ref
+        else:
+            filename = None
+
+        from core import S3Exporter
+        exporter = S3Exporter().pdf
+        return exporter(r.resource,
+                        request = r,
+                        method = "list",
+                        pdf_title = current.deployment_settings.get_req_form_name(),
+                        pdf_filename = filename,
+                        list_fields = list_fields,
+                        pdf_hide_comments = True,
+                        pdf_componentname = pdf_componentname,
+                        pdf_header_padding = 12,
+                        #pdf_footer = inv_recv_pdf_footer,
+                        pdf_table_autogrow = "B",
+                        pdf_orientation = "Landscape",
+                        **attr
+                        )
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def req_tabs(r, match=True):
+    def req_submit(r, **attr):
         """
-            Add a set of rheader tabs for a site's request management
-
-            @param r: the S3Request (for permission checking)
-            @param match: request matching is applicable for this type of site
-
-            @return: list of rheader tab definitions
+            Submit a Request for Approval (custom REST method)
         """
 
-        settings = current.deployment_settings
+        record = r.record
+        req_id = r.id
 
-        tabs = None
+        # Check we are the right place in the workflow
+        if record.workflow_status != 1:
+            current.session.error = current.T("Can only Submit Draft Requests")
+            redirect(URL(args = req_id))
 
-        if settings.get_org_site_inv_req_tabs():
+        s3db = current.s3db
+        rtable = s3db.req_req
 
-            has_permission = current.auth.s3_has_permission
-            if settings.has_module("req") and \
-               has_permission("read", "req_req", c="req"):
+        # Check we have permission to update the Request
+        if not current.auth.s3_has_permission("update", rtable, record_id=req_id):
+            r.unauthorised()
 
-                T = current.T
+        db = current.db
 
-                # Requests tab
-                tabs = [(T("Requests"), "req")]
+        # Lookup Approver(s)
+        site_id = record.site_id
+        stable = s3db.org_site
+        site_entity = db(stable.site_id == site_id).select(stable.instance_type,
+                                                           limitby = (0, 1)
+                                                           ).first()
+        itable = s3db.table(site_entity.instance_type)
+        site = db(itable.site_id == site_id).select(itable.name, # Needed later for Message construction
+                                                    itable.pe_id,
+                                                    limitby = (0, 1)
+                                                    ).first()
+        pe_id = site.pe_id
+        ancestors = s3db.pr_get_ancestors(pe_id)
+        pe_ids = ancestors + [pe_id]
+        atable = s3db.req_approver
+        ptable = s3db.pr_person
+        ltable = s3db.pr_person_user
+        utable = db.auth_user
+        query = (atable.pe_id.belongs(pe_ids)) & \
+                (atable.person_id == ptable.id) & \
+                (ptable.pe_id == ltable.pe_id) & \
+                (ltable.user_id == utable.id)
+        approvers = db(query).select(ptable.pe_id,
+                                     utable.language,
+                                     )
+        if not approvers:
+            current.session.error = current.T("No Request Approver defined")
+            redirect(URL(args = req_id))
 
-                # Match-tab if applicable for the use-case and user
-                # is permitted to match requests
-                if match and has_permission("read", "req_req",
-                                            c = r.controller,
-                                            f = "req_match",
-                                            ):
-                    tabs.append((T("Match Requests"), "req_match/"))
+        # Send Localised Mail(s)
+        T = current.T
+        languages = {}
+        for row in approvers:
+            language = row["auth_user.language"]
+            if language not in languages:
+                languages[language] = []
+            languages[language].append(row["pr_person.pe_id"])
+        session_s3 = current.session.s3
+        ui_language = session_s3.language
+        url = "%s%s" % (current.deployment_settings.get_base_public_url(),
+                        URL(c="req", f="req",
+                            args = req_id,
+                            ))
+        req_ref = record.req_ref
+        requester = record.requester_id
+        date_required = record.date_required
+        date_represent = S3DateTime.date_represent # We want Dates not datetime which table.date_required uses
+        site_name = site.name
+        send_email = current.msg.send_by_pe_id
+        subject_T = T("Request submitted for Approval")
+        message_T = T("A new Request, %(reference)s, has been submitted for Approval by %(person)s for delivery to %(site)s by %(date_required)s. Please review at: %(url)s")
+        for language in languages:
+            T.force(language)
+            session_s3.language = language # for date_represent
+            subject = "%s: %s" % (s3_str(subject_T), req_ref)
+            message = s3_str(message_T) % {"date_required": date_represent(date_required),
+                                           "reference": req_ref,
+                                           "person": requester,
+                                           "site": site_name,
+                                           "url": url,
+                                           }
+            users = languages[language]
+            for pe_id in users:
+                send_email(pe_id,
+                           subject = subject,
+                           message = message,
+                           )
+        # Restore language for UI
+        session_s3.language = ui_language
+        T.force(ui_language)
 
-                # Commit-tab if using commits
-                if settings.get_req_use_commit():
-                    tabs.append((T("Commit"), "commit"))
+        # Update the Status
+        db(rtable.id == req_id).update(workflow_status = 2) # Submitted
 
-        return tabs if tabs else []
+        current.session.confirmation = T("Request submitted for Approval")
+        redirect(URL(args = req_id))
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def req_approve(r, **attr):
+        """
+            Approve a Request (custom REST method)
+
+            NB This is currently hardcoded to Items Requests not Person Requests
+            NB This is currently hardcoded to RMS roles
+        """
+
+        record = r.record
+
+        # Check we are the right place in the workflow
+        if record.workflow_status != 2:
+            current.session.error = current.T("Can only Approve Submitted Requests")
+            redirect(URL(args = r.id))
+
+        s3db = current.s3db
+        rtable = s3db.req_req
+
+        req_id = r.id
+
+        approvers = req_approvers(record.site_id)
+        person_id = current.auth.s3_logged_in_person()
+
+        # Check we have permission to approve the Request
+        if person_id not in approvers:
+            r.unauthorised()
+
+        db = current.db
+
+        # Check if this person has already approved the Request
+        artable = s3db.req_approver_req
+        approved = db(artable.req_id == req_id).select(artable.person_id)
+        approved = [row.person_id for row in approved]
+        if person_id in approved:
+            current.session.warning = current.T("You have already Approved this Request")
+            redirect(URL(args = req_id))
+
+        ritable = s3db.req_req_item
+        query = (ritable.req_id == req_id) & \
+                (ritable.deleted == False)
+        request_items = db(query).select(ritable.id,
+                                         ritable.site_id,
+                                         )
+        site_ids = [row.site_id for row in request_items]
+
+        approver = approvers[person_id]
+
+        if approver["matcher"]:
+            # This person is responsible for Matching Items to Warehouses
+            if None in site_ids:
+                # Check for Purchases
+                unmatched_items = [row.id for row in request_items if row.site_id == None]
+                oitable = s3db.req_order_item
+                orders = db(oitable.req_item_id.belongs(unmatched_items)).select(oitable.id)
+                if len(unmatched_items) != len(orders):
+                    current.session.warning = current.T("You need to Match Items in this Request")
+                    redirect(URL(args = [req_id, "req_item"]))
+
+        # Add record to show that we have approved request
+        artable.insert(req_id = req_id,
+                       person_id = person_id,
+                       title = approver["title"],
+                       )
+
+        T = current.T
+        session = current.session
+
+        # Have all Approvers approved the Request?
+        if len(approvers) == len(approved) + 1:
+            # Update the Status
+            db(rtable.id == req_id).update(workflow_status = 3, # Approved
+                                           )
+            # Notify the Warehouse Operator(s)
+            session_s3 = session.s3
+            ui_language = session_s3.language
+            url = "%s%s" % (current.deployment_settings.get_base_public_url(),
+                            URL(c="req", f="req",
+                                args = [req_id, "req_item"],
+                                ))
+            req_ref = record.req_ref
+            date_required = record.date_required
+            date_represent = S3DateTime.date_represent # We want Dates not datetime which table.date_required uses
+            send_email = current.msg.send_by_pe_id
+            subject_T = T("Request Approved for Items from your Warehouse")
+            message_T = T("A new Request, %(reference)s, has been Approved for shipment from %(site)s by %(date_required)s. Please review at: %(url)s")
+
+            site_ids = set(site_ids)
+            stable = s3db.org_site
+            site_entities = db(stable.site_id.belongs(site_ids)).select(stable.site_id,
+                                                                        stable.instance_type,
+                                                                        )
+            # Sort by Instance Type
+            sites_by_type = {}
+            for row in site_entities:
+                instance_type = row.instance_type
+                if instance_type not in sites_by_type:
+                    sites_by_type[instance_type] = []
+                sites_by_type[instance_type].append(row.site_id)
+
+            # Lookup Names & PE IDs
+            sites = {}
+            for instance_type in sites_by_type:
+                itable = s3db.table(instance_type)
+                instances = db(itable.site_id.belongs(sites_by_type[instance_type])).select(itable.name,
+                                                                                            itable.pe_id,
+                                                                                            itable.site_id,
+                                                                                            )
+                for row in instances:
+                    sites[row.site_id] = {"name": row.name,
+                                          "pe_id": row.pe_id,
+                                          }
+            gtable = db.auth_group
+            mtable = db.auth_membership
+            utable = db.auth_user
+            ltable = s3db.pr_person_user
+
+            atable = s3db.pr_affiliation
+            rtable = s3db.pr_role
+
+            # Lookup realm for all wh_operator with default realm outside of loop
+            # NB The role name is specific to RMS template currently, which is the only one to use this workflow
+            # Incorporates a Bulk version of s3db.pr_realm()
+            query = (gtable.uuid == "wh_operator") & \
+                    (gtable.id == mtable.group_id) & \
+                    (mtable.pe_id == None) & \
+                    (mtable.deleted == False) & \
+                    (mtable.user_id == utable.id) & \
+                    (utable.id == ltable.user_id) & \
+                    (atable.pe_id == ltable.pe_id) & \
+                    (atable.deleted == False) & \
+                    (atable.role_id == rtable.id) & \
+                    (rtable.deleted == False) & \
+                    (rtable.role_type == OU)
+            wh_operators_default_realm = db(query).select(ltable.pe_id,
+                                                          utable.language,
+                                                          rtable.pe_id,
+                                                          )
+
+            for site_id in sites:
+
+                site = sites[site_id]
+                site_name = site["name"]
+                pe_id = site["pe_id"]
+
+                # Find the relevant wh_operator
+                # NB The role name is specific to RMS template currently, which is the only one to use this workflow
+                entities = s3db.pr_get_ancestors(pe_id)
+                entities.append(pe_id)
+
+                query = (gtable.uuid == "wh_operator") & \
+                        (gtable.id == mtable.group_id) & \
+                        (mtable.pe_id.belongs(entities)) & \
+                        (mtable.deleted == False) & \
+                        (mtable.user_id == utable.id) & \
+                        (utable.id == ltable.user_id)
+                operators = db(query).select(ltable.pe_id,
+                                             utable.language,
+                                             )
+                operators = list(operators)
+                for row in wh_operators_default_realm:
+                    if row["pr_role.pe_id"] in entities:
+                        operators.append(row)
+
+                if not operators:
+                    # Send to logs_manager instead
+                    # NB We lookup the ones with default realm inside the loop as we don't expect to his this often
+                    query = (gtable.uuid == "logs_manager") & \
+                            (gtable.id == mtable.group_id) & \
+                            ((mtable.pe_id.belongs(entities)) | \
+                             (mtable.pe_id == None)) & \
+                            (mtable.deleted == False) & \
+                            (mtable.user_id == utable.id) & \
+                            (utable.id == ltable.user_id)
+                    users = db(query).select(ltable.pe_id,
+                                             utable.language,
+                                             mtable.pe_id,
+                                             )
+                    operators = []
+                    default_realm_lookups = []
+                    for row in users:
+                        if row["auth_membership.pe_id"]:
+                            # Definite match
+                            operators.append(row)
+                        else:
+                            # Possible Match
+                            default_realm_lookups.append(row)
+
+                    user_pe_id = [row["pr_person_user.pe_id"] for row in default_realm_lookups]
+                    # Bulk version of s3db.pr_realm()
+                    query = (atable.deleted != True) & \
+                            (atable.role_id == rtable.id) & \
+                            (atable.pe_id.belongs(user_pe_id)) & \
+                            (rtable.deleted != True) & \
+                            (rtable.role_type == OU) & \
+                            (atable.pe_id == ltable.pe_id) & \
+                            (ltable.user_id == utable.id)
+                    logs_managers_default_realm = db(query).select(ltable.pe_id,
+                                                                   utable.language,
+                                                                   rtable.pe_id,
+                                                                   )
+                    for row in logs_managers_default_realm:
+                        if row["pr_role.pe_id"] in entities:
+                            operators.append(row)
+
+                    if not operators:
+                        # Send to ADMIN instead
+                        query = (gtable.uuid == "ADMIN") & \
+                                (gtable.id == mtable.group_id) & \
+                                (mtable.deleted == False) & \
+                                (mtable.user_id == utable.id) & \
+                                (utable.id == ltable.user_id)
+                        operators = db(query).select(ltable.pe_id,
+                                                     utable.language,
+                                                     )
+
+                # Send Localised Mail(s)
+                languages = {}
+                for row in operators:
+                    language = row["auth_user.language"]
+                    if language not in languages:
+                        languages[language] = []
+                    languages[language].append(row["pr_person_user.pe_id"])
+                for language in languages:
+                    T.force(language)
+                    session_s3.language = language # for date_represent
+                    subject = "%s: %s" % (s3_str(subject_T), req_ref)
+                    message = s3_str(message_T) % {"date_required": date_represent(date_required),
+                                                   "reference": req_ref,
+                                                   "site": site_name,
+                                                   "url": url,
+                                                   }
+                    users = languages[language]
+                    for pe_id in users:
+                        send_email(pe_id,
+                                   subject = subject,
+                                   message = message,
+                                   )
+
+            # Restore language for UI
+            session_s3.language = ui_language
+            T.force(ui_language)
+
+        session.confirmation = T("Request Approved")
+        redirect(URL(args = req_id))
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1491,63 +1461,82 @@ $.filterOptionsS3({
         db = current.db
         s3db = current.s3db
         settings = current.deployment_settings
+
         tablename = "req_req"
         table = s3db.req_req
-        form_vars = form.vars
 
-        record_id = form_vars.id
-        if form_vars.get("is_template", None):
+        req_id = form.vars.id
+        record = db(table.id == req_id).select(table.id,
+                                               table.type,
+                                               table.site_id,
+                                               table.requester_id,
+                                               table.is_template,
+                                               table.req_ref,
+                                               table.req_status,
+                                               table.commit_status,
+                                               table.fulfil_status,
+                                               table.cancel,
+                                               limitby = (0, 1)
+                                               ).first()
+        if record.is_template:
             is_template = True
             f = "req_template"
         else:
             is_template = False
             f = "req"
 
-            # If the req_ref is None then set it up
-            if settings.get_req_use_req_number():
-                record = db(table.id == record_id).select(table.req_ref,
-                                                          table.site_id,
-                                                          limitby = (0, 1),
-                                                          ).first()
-                if not record.req_ref:
-                    code = s3db.supply_get_shipping_code(settings.get_req_shortname(),
-                                                         record.site_id,
-                                                         table.req_ref,
-                                                         )
-                    db(table.id == record_id).update(req_ref = code)
+            update = {}
 
-        req_status = form_vars.get("req_status", None)
-        if req_status is not None:
-            # Translate Simple Status
-            req_status = int(req_status)
-            if req_status == REQ_STATUS_PARTIAL:
-                # read current status
-                record = db(table.id == record_id).select(table.commit_status,
-                                                          table.fulfil_status,
-                                                          limitby=(0, 1),
-                                                          ).first()
-                data = {"cancel": False}
-                if record.commit_status != REQ_STATUS_COMPLETE:
-                    data["commit_status"] = REQ_STATUS_PARTIAL
-                if record.fulfil_status == REQ_STATUS_COMPLETE:
-                    data["fulfil_status"] = REQ_STATUS_PARTIAL
-                db(table.id == record_id).update(**data)
-            elif req_status == REQ_STATUS_COMPLETE:
-                db(table.id == record_id).update(fulfil_status = REQ_STATUS_COMPLETE,
-                                                 cancel = False,
-                                                 )
-            elif req_status == REQ_STATUS_CANCEL:
-                db(table.id == record_id).update(cancel = True)
-            elif req_status == REQ_STATUS_NONE:
-                db(table.id == record_id).update(commit_status = REQ_STATUS_NONE,
-                                                 fulfil_status = REQ_STATUS_NONE,
-                                                 cancel = False,
-                                                 )
+            if settings.get_req_use_req_number() and not record.req_ref:
+                # Auto-generate req_ref
+                code = s3db.supply_get_shipping_code(settings.get_req_shortname(),
+                                                     record.site_id,
+                                                     table.req_ref,
+                                                     )
+                update["req_ref"] = code
+
+            req_status = record.req_status
+            if req_status is not None:
+                status_requires = table.req_status.requires
+                if hasattr(status_requires, "other"):
+                    status_requires = status_requires.other
+                opts = [opt[0] for opt in status_requires.options()]
+                if str(REQ_STATUS_CANCEL) in opts:
+                    # Cancel flag implied by simple status
+                    update["cancel"] = False
+                elif record.cancel:
+                    # Using explicit cancel flag
+                    update["workflow_status"] = 5
+
+                # Translate Simple Status
+                if req_status == REQ_STATUS_PARTIAL:
+                    if record.commit_status != REQ_STATUS_COMPLETE:
+                        update["commit_status"] = REQ_STATUS_PARTIAL
+                    if record.fulfil_status == REQ_STATUS_COMPLETE:
+                        update["fulfil_status"] = REQ_STATUS_PARTIAL
+
+                elif req_status == REQ_STATUS_COMPLETE:
+                    update["fulfil_status"] = REQ_STATUS_COMPLETE
+
+                elif req_status == REQ_STATUS_CANCEL:
+                    update["cancel"] = True
+                    update["workflow_status"] = 5
+
+                elif req_status == REQ_STATUS_NONE:
+                    update["commit_status"] = REQ_STATUS_NONE
+                    update["fulfil_status"] = REQ_STATUS_NONE
+
+            elif record.cancel:
+                # Using 3-tiered status (commit/transit/fulfill), and explicit cancel flag
+                update["workflow_status"] = 5
+
+            if update:
+                record.update_record(**update)
 
         if settings.get_req_requester_to_site():
-            requester_id = form_vars.get("requester_id", None)
+            requester_id = record.requester_id
             if requester_id:
-                site_id = form_vars.get("site_id", None)
+                site_id = record.site_id
                 # If the requester has no HR record, then create one
                 hrtable = s3db.hrm_human_resource
                 query = (hrtable.person_id == requester_id)
@@ -1555,14 +1544,14 @@ $.filterOptionsS3({
                                           hrtable.organisation_id,
                                           hrtable.site_id,
                                           hrtable.site_contact,
-                                          limitby = (0, 1),
+                                          limitby = (0, 1)
                                           ).first()
                 if exists:
                     if site_id and not exists.site_id:
                         # Check that the Request site belongs to this Org
                         stable = s3db.org_site
                         site = db(stable.site_id == site_id).select(stable.organisation_id,
-                                                                    limitby = (0, 1),
+                                                                    limitby = (0, 1)
                                                                     ).first()
                         # @ToDo: Think about branches
                         if site and site.organisation_id == exists.organisation_id:
@@ -1573,14 +1562,14 @@ $.filterOptionsS3({
                     # Lookup the Org for the site
                     stable = s3db.org_site
                     site = db(stable.site_id == site_id).select(stable.organisation_id,
-                                                                limitby = (0, 1),
+                                                                limitby = (0, 1)
                                                                 ).first()
                     # Is there already a site_contact for this site?
                     ltable = s3db.hrm_human_resource_site
                     query = (ltable.site_id == site_id) & \
                             (ltable.site_contact == True)
                     already = db(query).select(ltable.id,
-                                               limitby = (0, 1),
+                                               limitby = (0, 1)
                                                ).first()
                     if already:
                         site_contact = False
@@ -1591,58 +1580,69 @@ $.filterOptionsS3({
                                            site_id = site_id,
                                            site_contact = site_contact,
                                            )
-                    s3db.hrm_human_resource_onaccept(Storage(id=hr_id))
+                    s3db.hrm_human_resource_onaccept(Storage(id = hr_id))
+
+        # Update the Realm if the Requesting site changes
+        # - now left to templates
+        #if form.record:
+        #    if record.site_id != form.record.site_id:
+        #        realm_entity = current.auth.get_realm_entity(table, record)
+        #        record.update_record(realm_entity = realm_entity)
+        #        req_type = record.type
+        #        if req_type == 1:
+        #            db(s3db.req_req_item.req_id == req_id).update(realm_entity = realm_entity)
+        #        #elif req_type == 2:
+        #        #    db(s3db.req_req_asset.req_id == req_id).update(realm_entity = realm_entity)
+        #        elif req_type == 3:
+        #            db(s3db.req_req_skill.req_id == req_id).update(realm_entity = realm_entity)
+        #        #elif req_type == 4:
+        #        #    db(s3db.req_req_shelter.req_id == req_id).update(realm_entity = realm_entity)
 
         # Configure the next page to go to based on the request type
         inline_forms = settings.get_req_inline_forms()
         if inline_forms and is_template:
             s3db.configure(tablename,
-                           create_next = URL(c="req",
-                                             f=f,
-                                             args=["[id]", "job"]),
-                           update_next = URL(c="req",
-                                             f=f,
-                                             args=["[id]", "job"]))
+                           create_next = URL(c="req", f=f,
+                                             args = ["[id]", "job"],
+                                             ),
+                           update_next = URL(c="req", f=f,
+                                             args=["[id]", "job"],
+                                             ))
 
         elif not inline_forms:
-            if table.type.default:
-                req_type = table.type.default
-            elif "type" in form_vars:
-                req_type = int(form_vars.type)
-            else:
-                req_type = 1
+            req_type = record.type
             if req_type == 1 and settings.has_module("inv"):
                 s3db.configure(tablename,
-                               create_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_item"]),
-                               update_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_item"]))
-            elif req_type == 2 and settings.has_module("asset"):
-                s3db.configure(tablename,
-                               create_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_asset"]),
-                               update_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_asset"]))
+                               create_next = URL(c="req", f=f,
+                                                 args = ["[id]", "req_item"],
+                                                 ),
+                               update_next = URL(c="req", f=f,
+                                                 args=["[id]", "req_item"],
+                                                 ))
+            #elif req_type == 2 and settings.has_module("asset"):
+            #    s3db.configure(tablename,
+            #                   create_next = URL(c="req", f=f,
+            #                                     args = ["[id]", "req_asset"],
+            #                                     ),
+            #                   update_next = URL(c="req", f=f,
+            #                                     args = ["[id]", "req_asset"],
+            #                                     ))
             elif req_type == 3 and settings.has_module("hrm"):
                 s3db.configure(tablename,
-                               create_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_skill"]),
-                               update_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_skill"]))
-            elif req_type == 4 and settings.has_module("cr"):
-                s3db.configure(tablename,
-                               create_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_shelter"]),
-                               update_next = URL(c="req",
-                                                 f=f,
-                                                 args=["[id]", "req_shelter"]))
+                               create_next = URL(c="req", f=f,
+                                                 args = ["[id]", "req_skill"],
+                                                 ),
+                               update_next = URL(c="req", f=f,
+                                                 args = ["[id]", "req_skill"],
+                                                 ))
+            #elif req_type == 4 and settings.has_module("cr"):
+            #    s3db.configure(tablename,
+            #                   create_next = URL(c="req", f=f,
+            #                                     args = ["[id]", "req_shelter"],
+            #                                     ),
+            #                   update_next = URL(c="req", f=f,
+            #                                     args = ["[id]", "req_shelter"],
+            #                                     ))
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1661,7 +1661,94 @@ $.filterOptionsS3({
         db(query).delete()
 
 # =============================================================================
-class RequestItemModel(S3Model):
+class RequestApproverModel(DataModel):
+    """
+        Model for request approvers
+    """
+
+    names = ("req_approver",
+             "req_approver_req",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        define_table = self.define_table
+
+        person_id = self.pr_person_id
+
+        # -----------------------------------------------------------------
+        # Request Approvers
+        #
+        instance_types = ["org_organisation"] + list(current.auth.org_site_types.keys())
+        entity_represent = self.pr_PersonEntityRepresent(show_type = False)
+
+        tablename = "req_approver"
+        define_table(tablename,
+                     # Could be a Site or Organisation
+                     self.super_link("pe_id", "pr_pentity",
+                                     label = T("Organization/Site"),
+                                     empty = False,
+                                     filterby = "instance_type", # Not using instance_types as not a Super-Entity
+                                     filter_opts = instance_types,
+                                     represent = entity_represent,
+                                     readable = True,
+                                     writable = True,
+                                     # @ToDo: Widget
+                                     #widget = S3PentityWidget(),
+                                     ),
+                     Field("title", # 'position' is a Reserved word in SQL
+                           label = T("Position"),
+                           ),
+                     person_id(),
+                     Field("matcher", "boolean",
+                           default = False,
+                           label = T("Matcher"),
+                           represent = s3_yes_no_represent,
+                           comment = DIV(_class = "tooltip",
+                                         _title = "%s|%s" % (T("Matcher"),
+                                                             T("Is this person the one to match request items to specific warehouses &/or purchase them."),
+                                                             ))
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields(),
+                     )
+
+        # CRUD strings
+        current.response.s3.crud_strings[tablename] = Storage(
+            label_create = T("Add Approver"),
+            title_display = T("Approver Details"),
+            title_list = T("Request Approvers"),
+            title_update = T("Edit Approver"),
+            label_list_button = T("List Approvers"),
+            label_delete_button = T("Delete Approver"),
+            msg_record_created = T("Approver added"),
+            msg_record_modified = T("Approver updated"),
+            msg_record_deleted = T("Approver deleted"),
+            msg_list_empty = T("No Approvers currently registered"))
+
+        # -----------------------------------------------------------------
+        # Link Approvers <> Requests
+        #
+        tablename = "req_approver_req"
+        define_table(tablename,
+                     self.req_req_id(),
+                     Field("title", # 'position' is a Reserved word in SQL
+                           label = T("Position"),
+                           ),
+                     person_id(),
+                     #s3_comments(),
+                     *s3_meta_fields(),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+# =============================================================================
+class RequestItemModel(DataModel):
     """
         Model for requested items
     """
@@ -1691,7 +1778,7 @@ class RequestItemModel(S3Model):
         #
         tablename = "req_req_item"
         define_table(tablename,
-                     req_id(empty=False),
+                     req_id(empty = False),
                      self.supply_item_entity_id(),
                      self.supply_item_id(),
                      self.supply_item_pack_id(),
@@ -1709,6 +1796,7 @@ class RequestItemModel(S3Model):
                      # @ToDo: Move this into a Currency Widget for the pack_value field
                      s3_currency(readable = track_pack_values,
                                  writable = track_pack_values),
+                     # Requested from:
                      self.org_site_id(),
                      Field("quantity_commit", "double",
                            default = 0,
@@ -1739,7 +1827,8 @@ class RequestItemModel(S3Model):
                            writable = quantities_writable,
                            ),
                      Field.Method("pack_quantity",
-                                  self.supply_item_pack_quantity(tablename=tablename)),
+                                  self.supply_item_pack_quantity(tablename=tablename)
+                                  ),
                      s3_comments(),
                      *s3_meta_fields(),
                      on_define = lambda table: \
@@ -1770,11 +1859,12 @@ class RequestItemModel(S3Model):
                                                     IS_ONE_OF(db,
                                                               "req_req_item.id",
                                                               req_item_represent,
-                                                              orderby="req_req_item.id",
-                                                              sort=True)),
-                                      comment = DIV(_class="tooltip",
-                                                    _title="%s|%s" % (T("Request Item"),
-                                                                      T("Select Items from the Request"))),
+                                                              orderby = "req_req_item.id",
+                                                              sort = True)),
+                                      comment = DIV(_class = "tooltip",
+                                                    _title = "%s|%s" % (T("Request Item"),
+                                                                        T("Select Items from the Request")),
+                                                                        ),
                                       script = '''
 $.filterOptionsS3({
  'trigger':'req_item_id',
@@ -1790,14 +1880,13 @@ $.filterOptionsS3({
         if settings.get_req_prompt_match():
             # Shows the inventory items which match a requested item
             # @ToDo: Make this page a component of req_item
-            create_next = URL(c="req",
-                              f="req_item_inv_item",
-                              args=["[id]"])
+            create_next = URL(c="req", f="req_item_inv_item",
+                              args = ["[id]"],
+                              )
         else:
             create_next = None
 
-        list_fields = ["id",
-                       "item_id",
+        list_fields = ["item_id",
                        "item_pack_id",
                        ]
         lappend = list_fields.append
@@ -1814,13 +1903,13 @@ $.filterOptionsS3({
         filter_widgets = [
             S3OptionsFilter("req_id$fulfil_status",
                             label = T("Status"),
-                            options = self.req_status_opts,
+                            options = req_status_opts,
                             cols = 3,
                             ),
             S3OptionsFilter("req_id$priority",
                             # Better to default (easier to customise/consistency)
                             #label = T("Priority"),
-                            options = self.req_priority_opts,
+                            options = req_priority_opts,
                             cols = 3,
                             ),
             S3LocationFilter("req_id$site_id$location_id",
@@ -1836,8 +1925,14 @@ $.filterOptionsS3({
                        list_fields = list_fields,
                        onaccept = self.req_item_onaccept,
                        ondelete = self.req_item_ondelete,
+                       # @ToDo: default realm to that of the req_id
+                       #realm_entity = self.req_item_realm_entity,
                        super_entity = "supply_item_entity",
                        )
+
+        self.add_components(tablename,
+                            req_order_item = "req_item_id",
+                            )
 
         # ---------------------------------------------------------------------
         #
@@ -1865,11 +1960,7 @@ $.filterOptionsS3({
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"req_item_id": lambda **attr: dummy("req_item_id"),
+        return {"req_item_id": S3ReusableField.dummy("req_item_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1893,7 +1984,7 @@ $.filterOptionsS3({
             record_id = form_vars.get("id")
             table = current.s3db.req_req_item
             record = db(table.id == record_id).select(table.req_id,
-                                                      limitby = (0, 1),
+                                                      limitby = (0, 1)
                                                       ).first()
             if record:
                 req_id = record.req_id
@@ -1906,7 +1997,7 @@ $.filterOptionsS3({
         req_update_status(req_id)
 
         # Update req_item_category link table
-        item_id = form_vars.get("item_id", None)
+        item_id = form_vars.get("item_id")
         citable = db.supply_catalog_item
         cats = db(citable.item_id == item_id).select(citable.item_category_id)
         rictable = db.req_req_item_category
@@ -1916,7 +2007,7 @@ $.filterOptionsS3({
                     (rictable.req_id == req_id) & \
                     (rictable.item_category_id == item_category_id)
             exists = db(query).select(rictable.id,
-                                      limitby = (0, 1),
+                                      limitby = (0, 1)
                                       )
             if not exists:
                 rictable.insert(req_id = req_id,
@@ -1939,7 +2030,7 @@ $.filterOptionsS3({
         sitable = db.supply_item
         ritable = db.req_req_item
         item = db(ritable.id == row.id).select(ritable.deleted_fk,
-                                               limitby = (0, 1),
+                                               limitby = (0, 1)
                                                ).first()
         fks = json.loads(item.deleted_fk)
         req_id = fks["req_id"]
@@ -1953,7 +2044,9 @@ $.filterOptionsS3({
                     (ritable.req_id == req_id) & \
                     (ritable.item_id == sitable.id) & \
                     (sitable.item_category_id == item_category_id)
-            others = db(query).select(ritable.id, limitby=(0, 1)).first()
+            others = db(query).select(ritable.id,
+                                      limitby = (0, 1)
+                                      ).first()
             if not others:
                 # Delete req_item_category link table
                 rictable = db.req_req_item_category
@@ -2006,7 +2099,7 @@ $.filterOptionsS3({
             This callback will be called when importing records. It will look
             to see if the record being imported is a duplicate.
 
-            @param item: An S3ImportItem object which includes all the details
+            @param item: An ImportItem object which includes all the details
                          of the record being imported
 
             If the record is a duplicate then it will set the item method to update
@@ -2044,13 +2137,15 @@ $.filterOptionsS3({
         else:
             return
 
-        duplicate = db(query).select(itable.id, limitby=(0, 1)).first()
+        duplicate = db(query).select(itable.id,
+                                     limitby = (0, 1)
+                                     ).first()
         if duplicate:
             item.id = duplicate.id
             item.method = item.METHOD.UPDATE
 
 # =============================================================================
-class RequestSkillModel(S3Model):
+class RequestSkillModel(DataModel):
     """
         Modell for requested skills
     """
@@ -2161,12 +2256,12 @@ class RequestSkillModel(S3Model):
         filter_widgets = [
             S3OptionsFilter("req_id$fulfil_status",
                             label = T("Status"),
-                            options = self.req_status_opts,
+                            options = req_status_opts,
                             cols = 3,
                             ),
             S3OptionsFilter("req_id$priority",
                             label = T("Priority"),
-                            options = self.req_priority_opts,
+                            options = req_priority_opts,
                             cols = 3,
                             ),
             S3LocationFilter("req_id$site_id$location_id",
@@ -2182,6 +2277,8 @@ class RequestSkillModel(S3Model):
                        filter_widgets = filter_widgets,
                        list_fields = list_fields,
                        onaccept = self.req_skill_onaccept,
+                       # @ToDo: default realm to that of the req_id
+                       #realm_entity = self.req_skill_realm_entity,
                        )
 
         # ---------------------------------------------------------------------
@@ -2218,7 +2315,7 @@ class RequestSkillModel(S3Model):
             record_id = form_vars.get("id")
             table = s3db.req_req_item
             record = db(table.id == record_id).select(table.req_id,
-                                                      limitby = (0, 1),
+                                                      limitby = (0, 1)
                                                       ).first()
             if record:
                 req_id = record.req_id
@@ -2229,7 +2326,9 @@ class RequestSkillModel(S3Model):
 
         rtable = s3db.req_req
         query = (rtable.id == req_id)
-        record = db(query).select(rtable.purpose, limitby=(0, 1)).first()
+        record = db(query).select(rtable.purpose,
+                                  limitby = (0, 1)
+                                  ).first()
 
         table = s3db.req_req_skill
         query = (table.req_id == req_id)
@@ -2286,18 +2385,19 @@ class RequestSkillModel(S3Model):
                                       rtable.requester_id,
                                       rtable.site_id,
                                       otable.location_id,
-                                      limitby = (0, 1),
+                                      limitby = (0, 1)
                                       ).first()
             if not record:
                 return
 
             name = record.req_req.req_ref or "Req: %s" % req_id
             table = s3db.project_task
-            task = table.insert(name=name,
-                                description=record.req_req.purpose,
-                                priority=record.req_req.priority,
-                                location_id=record.org_site.location_id,
-                                site_id=record.req_req.site_id)
+            task = table.insert(name = name,
+                                description = record.req_req.purpose,
+                                priority = record.req_req.priority,
+                                location_id = record.org_site.location_id,
+                                site_id = record.req_req.site_id,
+                                )
 
             # Add the Request as a Component to the Task
             table = s3db.table("req_task_req", None)
@@ -2323,14 +2423,16 @@ class RequestSkillModel(S3Model):
         hstable = db.hrm_skill
         query = (rstable.id == record_id) & \
                 (rstable.skill_id == hstable.id)
-        record = db(query).select(hstable.name, limitby=(0, 1)).first()
+        record = db(query).select(hstable.name,
+                                  limitby = (0, 1)
+                                  ).first()
         try:
             return record.name
         except AttributeError:
             return current.messages.UNKNOWN_OPT
 
 # =============================================================================
-class RequestRecurringModel(S3Model):
+class RequestRecurringModel(DataModel):
     """
         Adjuvant model to support request generation by scheduler
     """
@@ -2366,14 +2468,14 @@ class RequestRecurringModel(S3Model):
             msg_no_match = T("No jobs configured"))
 
         # Custom Methods
-        self.set_method("req", "req",
-                        component_name = "job",
+        self.set_method("req_req",
+                        component = "job",
                         method = "reset",
                         action = req_job_reset,
                         )
 
-        self.set_method("req", "req",
-                        component_name = "job",
+        self.set_method("req_req",
+                        component = "job",
                         method = "run",
                         action = req_job_run,
                         )
@@ -2381,10 +2483,10 @@ class RequestRecurringModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsModel(S3Model):
+class RequestNeedsModel(DataModel):
     """
         Simple Requests Management System
         - Starts as Simple free text Needs
@@ -2423,7 +2525,7 @@ class RequestNeedsModel(S3Model):
                                       readable = False,
                                       writable = False,
                                       ),
-                          self.req_priority(),
+                          req_priority()(),
                           Field("name", notnull = True,
                                 length = 64,
                                 label = T("Summary of Needs"),
@@ -2435,9 +2537,9 @@ class RequestNeedsModel(S3Model):
                                       label = T("Description"),
                                       comment = None,
                                       ),
-                          self.req_status("status",
-                                          label = T("Fulfilment Status"),
-                                          ),
+                          req_status()("status",
+                                       label = T("Fulfilment Status"),
+                                       ),
                           s3_comments(),
                           *s3_meta_fields())
 
@@ -2504,7 +2606,7 @@ class RequestNeedsModel(S3Model):
                             )
 
         # Custom Methods
-        self.set_method("req", "need",
+        self.set_method("req_need",
                         method = "assign",
                         action = self.pr_AssignMethod(component="need_person"))
 
@@ -2537,16 +2639,11 @@ class RequestNeedsModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy", "string",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"req_need_id": lambda **attr: dummy("need_id"),
+        return {"req_need_id": S3ReusableField.dummy("need_id"),
                 }
 
 # =============================================================================
-class RequestNeedsActivityModel(S3Model):
+class RequestNeedsActivityModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Activities (Activity created to respond to Need)
@@ -2578,10 +2675,10 @@ class RequestNeedsActivityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsContactModel(S3Model):
+class RequestNeedsContactModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Contacts (People)
@@ -2617,10 +2714,10 @@ class RequestNeedsContactModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsDemographicsModel(S3Model):
+class RequestNeedsDemographicsModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Demographics
@@ -2660,7 +2757,7 @@ class RequestNeedsDemographicsModel(S3Model):
                                           empty = False,
                                           comment = parameter_id_comment,
                                           ),
-                          self.req_timeframe(),
+                          req_timeframe()(),
                           Field("value", "double",
                                 label = T("Number"),
                                 #label = T("Number in Need"),
@@ -2714,10 +2811,10 @@ class RequestNeedsDemographicsModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsItemsModel(S3Model):
+class RequestNeedsItemsModel(DataModel):
     """
         Simple Requests Management System
         - optional extension to support Items, but still not using Inventory-linked Requests
@@ -2753,7 +2850,7 @@ $.filterOptionsS3({
                                               widget = None,
                                               ),
                           self.supply_item_pack_id(),
-                          self.req_timeframe(),
+                          req_timeframe()(),
                           Field("quantity", "double",
                                 label = T("Quantity"),
                                 #label = T("Quantity Requested"),
@@ -2795,11 +2892,11 @@ $.filterOptionsS3({
                                 # Normally set automatically
                                 writable = False,
                                 ),
-                          self.req_priority(),
+                          req_priority()(),
                           s3_comments(),
-                          self.req_status("status",
-                                          label = T("Fulfilment Status"),
-                                          ),
+                          req_status()("status",
+                                       label = T("Fulfilment Status"),
+                                       ),
                           *s3_meta_fields())
 
         self.configure(tablename,
@@ -2812,10 +2909,10 @@ $.filterOptionsS3({
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsSkillsModel(S3Model):
+class RequestNeedsSkillsModel(DataModel):
     """
         Simple Requests Management System
         - optional extension to support Skills, but still not using normal Requests
@@ -2853,11 +2950,11 @@ class RequestNeedsSkillsModel(S3Model):
                                 requires = IS_EMPTY_OR(
                                             IS_FLOAT_AMOUNT(minimum=1.0)),
                                 ),
-                          self.req_priority(),
+                          req_priority()(),
                           s3_comments(),
-                          self.req_status("status",
-                                          label = T("Fulfilment Status"),
-                                          ),
+                          req_status()("status",
+                                       label = T("Fulfilment Status"),
+                                       ),
                           *s3_meta_fields())
 
         self.configure(tablename,
@@ -2885,10 +2982,10 @@ class RequestNeedsSkillsModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsLineModel(S3Model):
+class RequestNeedsLineModel(DataModel):
     """
         Simple Requests Management System
         - optional extension to support Demographics & Items within a single Line
@@ -3003,7 +3100,7 @@ $.filterOptionsS3({
                                 requires = IS_EMPTY_OR(
                                             IS_FLOAT_AMOUNT(minimum=1.0)),
                                 ),
-                          self.req_timeframe(),
+                          req_timeframe()(),
                           Field("quantity_committed", "double",
                                 label = T("Quantity Committed"),
                                 represent = lambda v: \
@@ -3038,9 +3135,9 @@ $.filterOptionsS3({
                                 writable = False,
                                 ),
                           #s3_comments(),
-                          self.req_status("status",
-                                          label = T("Fulfilment Status"),
-                                          ),
+                          req_status()("status",
+                                       label = T("Fulfilment Status"),
+                                       ),
                           *s3_meta_fields())
 
         # Components
@@ -3070,7 +3167,7 @@ $.filterOptionsS3({
 
 
 # =============================================================================
-class RequestNeedsOrganisationModel(S3Model):
+class RequestNeedsOrganisationModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Organisations
@@ -3112,10 +3209,10 @@ class RequestNeedsOrganisationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsPersonModel(S3Model):
+class RequestNeedsPersonModel(DataModel):
     """
         Simple Requests Management System
         - optional link to People (used for assignments to Skills)
@@ -3149,7 +3246,7 @@ class RequestNeedsPersonModel(S3Model):
                           Field("status", "integer",
                                 default = 4, # Invited
                                 label = T("Status"),
-                                represent = S3Represent(options=status_opts),
+                                represent = represent_option(status_opts),
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(status_opts)),
                                 ),
@@ -3180,10 +3277,10 @@ class RequestNeedsPersonModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsSectorModel(S3Model):
+class RequestNeedsSectorModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Sectors
@@ -3215,10 +3312,10 @@ class RequestNeedsSectorModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsSiteModel(S3Model):
+class RequestNeedsSiteModel(DataModel):
     """
         Simple Requests Management System
         - optional link to Sites
@@ -3258,10 +3355,10 @@ class RequestNeedsSiteModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsTagModel(S3Model):
+class RequestNeedsTagModel(DataModel):
     """
         Needs Tags
     """
@@ -3308,10 +3405,10 @@ class RequestNeedsTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsResponseModel(S3Model):
+class RequestNeedsResponseModel(DataModel):
     """
         A Response to a Need
         - a group of Activities
@@ -3417,16 +3514,11 @@ class RequestNeedsResponseModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy", "string",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"req_need_response_id": lambda **attr: dummy("need_response_id"),
+        return {"req_need_response_id": S3ReusableField.dummy("need_response_id"),
                 }
 
 # =============================================================================
-class RequestNeedsResponseLineModel(S3Model):
+class RequestNeedsResponseLineModel(DataModel):
     """
         A Line within a Response to a Need
         - an Activity
@@ -3441,7 +3533,7 @@ class RequestNeedsResponseLineModel(S3Model):
     def model(self):
 
         T = current.T
-        db = current.db
+        #db = current.db
 
         modality_opts = {1: T("Cash"),
                          2: T("In-kind"),
@@ -3472,7 +3564,7 @@ class RequestNeedsResponseLineModel(S3Model):
                           self.org_sector_id(),
                           Field("modality", "integer",
                                 label = T("Modality"),
-                                represent = S3Represent(options = modality_opts),
+                                represent = represent_option(modality_opts),
                                 requires = IS_IN_SET(modality_opts),
                                 ),
                           s3_date(label = T("Date Planned")),
@@ -3537,10 +3629,10 @@ $.filterOptionsS3({
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestNeedsResponseOrganisationModel(S3Model):
+class RequestNeedsResponseOrganisationModel(DataModel):
     """
         Organisations involved in Activity Groups
     """
@@ -3577,7 +3669,7 @@ class RequestNeedsResponseOrganisationModel(S3Model):
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(project_organisation_roles)
                                             ),
-                                represent = S3Represent(options=project_organisation_roles),
+                                represent = represent_option(project_organisation_roles),
                                 ),
                           s3_comments(),
                           *s3_meta_fields())
@@ -3593,10 +3685,10 @@ class RequestNeedsResponseOrganisationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class RequestTagModel(S3Model):
+class RequestTagModel(DataModel):
     """
         Request Tags
     """
@@ -3636,15 +3728,118 @@ class RequestTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class RequestTaskModel(S3Model):
+class RequestOrderItemModel(DataModel):
+    """
+        Simple Item Ordering for Requests
+        - for when Procurement model isn't being used
+    """
+
+    names = ("req_order_item",
+             )
+
+    def model(self):
+
+        T = current.T
+        NONE = current.messages["NONE"]
+
+        # -----------------------------------------------------------------
+        # Request Item Ordering
+        #
+        tablename = "req_order_item"
+        self.define_table(tablename,
+                          self.req_item_id(empty = False,
+                                           readable = False, # Hidden
+                                           writable = False,
+                                           ),
+                          self.req_req_id(empty = False,
+                                          writable = False, # Auto-populated
+                                          ),
+                          self.supply_item_id(empty = False,
+                                              writable = False, # Auto-populated
+                                              ),
+                          self.supply_item_pack_id(writable = False, # Auto-populated
+                                                   ),
+                          Field("quantity", "double", notnull=True,
+                                default = 0.0,
+                                label = T("Quantity"),
+                                represent = lambda v: \
+                                    IS_FLOAT_AMOUNT.represent(v, precision=2),
+                                #requires = IS_FLOAT_AMOUNT(minimum=0.0),
+                                writable = False, # Auto-populated
+                                ),
+                          Field("purchase_ref",
+                                label = T("%(PO)s Number") % \
+                                    {"PO": current.deployment_settings.get_proc_shortname()},
+                                represent = lambda v: v if v else NONE,
+                                ),
+                          self.inv_recv_id(label = T("Received Shipment"),
+                                           ),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       insertable = False,
+                       )
+
+        # CRUD strings
+        current.response.s3.crud_strings[tablename] = Storage(
+            #label_create = T("Create Purchase Item"),
+            title_display = T("Purchase Item Details"),
+            title_list = T("Purchase Items"),
+            title_update = T("Edit Purchase Item"),
+            label_list_button = T("List Purchase Items"),
+            label_delete_button = T("Delete Purchase Item"),
+            #msg_record_created = T("Purchase Item Added"),
+            msg_record_modified = T("Purchase Item Updated"),
+            msg_record_deleted = T("Purchase Item Deleted"),
+            msg_list_empty = T("No Purchase Items"))
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+# =============================================================================
+class RequestProjectModel(DataModel):
+    """
+        Link Requests to Projects
+    """
+
+    names = ("req_project_req",
+             )
+
+    def model(self):
+
+        # -----------------------------------------------------------------
+        # Link Skill Requests to Tasks
+        #
+        tablename = "req_project_req"
+        self.define_table(tablename,
+                          self.project_project_id(empty = False),
+                          self.req_req_id(empty = False),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("project_id",
+                                                            "req_id",
+                                                            ),
+                                                 ),
+                       )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+# =============================================================================
+class RequestTaskModel(DataModel):
     """
         Link Requests for Skills to Tasks
     """
 
-    names = ("req_task",
+    names = ("req_task_req",
              )
 
     def model(self):
@@ -3670,10 +3865,49 @@ class RequestTaskModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CommitModel(S3Model):
+class RequestRequesterCategoryModel(DataModel):
+    """
+        Model to control which types of requester can request which items
+        - used by RLPPTM
+    """
+
+    names = ("req_requester_category",
+             )
+
+    def model(self):
+
+        # -----------------------------------------------------------------
+        # Link supply item categories to requester attributes (e.g. org type)
+        #
+        tablename = "req_requester_category"
+        self.define_table(tablename,
+                          self.supply_item_category_id(
+                              empty = False,
+                              ondelete = "CASCADE",
+                              ),
+                          self.org_organisation_type_id(
+                              empty = False,
+                              ondelete = "CASCADE",
+                              ),
+                          *s3_meta_fields())
+
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary = ("item_category_id",
+                                                            "organisation_type_id",
+                                                            ),
+                                                 ),
+                       )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+# =============================================================================
+class CommitModel(DataModel):
     """
         Model for commits (pledges)
     """
@@ -3894,7 +4128,7 @@ class CommitModel(S3Model):
                        )
 
         # Custom Method to Assign HRs
-        self.set_method("req", "commit",
+        self.set_method("req_commit",
                         method = "assign",
                         action = self.hrm_AssignMethod(component="commit_person",
                                                        next_tab="commit_person",
@@ -3934,7 +4168,7 @@ class CommitModel(S3Model):
             # Set location_id to location of site
             stable = s3db.org_site
             site = db(stable.site_id == site_id).select(stable.location_id,
-                                                        limitby = (0, 1),
+                                                        limitby = (0, 1)
                                                         ).first()
             if site and site.location_id:
                 cdata["location_id"] = site.location_id
@@ -3947,7 +4181,7 @@ class CommitModel(S3Model):
                                rtable.type,
                                rtable.req_status,
                                rtable.commit_status,
-                               limitby = (0, 1),
+                               limitby = (0, 1)
                                ).first()
         if not req:
             return
@@ -3974,14 +4208,14 @@ class CommitModel(S3Model):
         # Find the request
         ctable = s3db.req_commit
         fks = db(ctable.id == commit_id).select(ctable.deleted_fk,
-                                                limitby = (0, 1),
+                                                limitby = (0, 1)
                                                 ).first().deleted_fk
         req_id = json.loads(fks)["req_id"]
         rtable = s3db.req_req
         req = db(rtable.id == req_id).select(rtable.id,
                                              rtable.type,
                                              rtable.commit_status,
-                                             limitby = (0, 1),
+                                             limitby = (0, 1)
                                              ).first()
         if not req:
             return
@@ -3990,13 +4224,12 @@ class CommitModel(S3Model):
         req_update_commit_quantities_and_status(req)
 
 # =============================================================================
-class CommitItemModel(S3Model):
+class CommitItemModel(DataModel):
     """
         Model for committed (pledged) items
     """
 
     names = ("req_commit_item",
-             "req_send_commit"
              )
 
     def model(self):
@@ -4046,7 +4279,6 @@ class CommitItemModel(S3Model):
         #
         return {# Used by commit_req() controller (TODO make module-global then?)
                 "req_commit_item_onaccept": self.commit_item_onaccept,
-                "req_send_commit": self.req_send_commit,
                 }
 
     # -------------------------------------------------------------------------
@@ -4075,7 +4307,7 @@ class CommitItemModel(S3Model):
                                rtable.type,
                                rtable.req_status,
                                rtable.commit_status,
-                               limitby = (0, 1),
+                               limitby = (0, 1)
                                ).first()
         if not req:
             return
@@ -4096,7 +4328,7 @@ class CommitItemModel(S3Model):
         # Get the commit_id
         table = s3db.req_commit_item
         row = db(table.id == row.id).select(table.deleted_fk,
-                                            limitby = (0, 1),
+                                            limitby = (0, 1)
                                             ).first()
         try:
             deleted_fk = json.loads(row.deleted_fk)
@@ -4113,110 +4345,13 @@ class CommitItemModel(S3Model):
                                    rtable.type,
                                    rtable.req_status,
                                    rtable.commit_status,
-                                   limitby = (0, 1),
+                                   limitby = (0, 1)
                                    ).first()
             if req:
                 req_update_commit_quantities_and_status(req)
 
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def req_send_commit():
-        """
-            Controller function to create a Shipment containing all
-            items in a commitment (interactive)
-        """
-
-        # Get the commit record
-        try:
-            commit_id = current.request.args[0]
-        except KeyError:
-            redirect(URL(c="req", f="commit"))
-
-        db = current.db
-        s3db = current.s3db
-
-        req_table = db.req_req
-        rim_table = db.req_req_item
-        com_table = db.req_commit
-        cim_table = db.req_commit_item
-
-        send_table = s3db.inv_send
-        tracktable = s3db.inv_track_item
-
-        query = (com_table.id == commit_id) & \
-                (com_table.req_id == req_table.id) & \
-                (com_table.deleted == False)
-        record = db(query).select(com_table.committer_id,
-                                  com_table.site_id,
-                                  com_table.organisation_id,
-                                  req_table.requester_id,
-                                  req_table.site_id,
-                                  req_table.req_ref,
-                                  limitby = (0, 1),
-                                  ).first()
-
-        # @ToDo: Identify if we have stock items which match the commit items
-        # If we have a single match per item then proceed automatically (as-now) & then decrement the stock quantity
-        # If we have no match then warn the user & ask if they should proceed anyway
-        # If we have mulitple matches then provide a UI to allow the user to select which stock items to use
-
-        # Create an inv_send and link to the commit
-        form_vars = Storage(sender_id = record.req_commit.committer_id,
-                            site_id = record.req_commit.site_id,
-                            recipient_id = record.req_req.requester_id,
-                            to_site_id = record.req_req.site_id,
-                            req_ref = record.req_req.req_ref,
-                            status = 0,
-                            )
-        send_id = send_table.insert(**form_vars)
-        form_vars.id = send_id
-
-        # Get all of the committed items
-        query = (cim_table.commit_id == commit_id) & \
-                (cim_table.req_item_id == rim_table.id) & \
-                (cim_table.deleted == False)
-        records = db(query).select(rim_table.id,
-                                   rim_table.item_id,
-                                   rim_table.item_pack_id,
-                                   rim_table.currency,
-                                   rim_table.quantity,
-                                   rim_table.quantity_transit,
-                                   rim_table.quantity_fulfil,
-                                   cim_table.quantity,
-                                   )
-        # Create inv_track_items for each commit item
-        insert = tracktable.insert
-        for row in records:
-            rim = row.req_req_item
-            # Now done as a VirtualField instead (looks better & updates closer to real-time, so less of a race condition)
-            #quantity_shipped = max(rim.quantity_transit, rim.quantity_fulfil)
-            #quantity_needed = rim.quantity - quantity_shipped
-            insert(req_item_id = rim.id,
-                   track_org_id = record.req_commit.organisation_id,
-                   send_id = send_id,
-                   status = 1,
-                   item_id = rim.item_id,
-                   item_pack_id = rim.item_pack_id,
-                   currency = rim.currency,
-                   #req_quantity = quantity_needed,
-                   quantity = row.req_commit_item.quantity,
-                   recv_quantity = row.req_commit_item.quantity,
-                   )
-
-        # Create the Waybill
-        form = Storage()
-        form.vars = form_vars
-        s3db.inv_send_onaccept(form)
-
-        # Redirect to inv_send for the send id just created
-        redirect(URL(#c = "inv", or "req"
-                     f = "send",
-                     #args = [send_id, "track_item"]
-                     args = [send_id]
-                     ))
-
 # =============================================================================
-class CommitPersonModel(S3Model):
+class CommitPersonModel(DataModel):
     """
         Commit a named individual to a Request
 
@@ -4272,7 +4407,7 @@ class CommitPersonModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4310,7 +4445,7 @@ class CommitPersonModel(S3Model):
         #req_skill_onaccept(None)
 
 # =============================================================================
-class CommitSkillModel(S3Model):
+class CommitSkillModel(DataModel):
     """
         Commit anonymous people to a Request
 
@@ -4357,7 +4492,7 @@ class CommitSkillModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4385,7 +4520,7 @@ class CommitSkillModel(S3Model):
                                rtable.type,
                                rtable.req_status,
                                rtable.commit_status,
-                               limitby = (0, 1),
+                               limitby = (0, 1)
                                ).first()
         if not req:
             return
@@ -4407,7 +4542,7 @@ class CommitSkillModel(S3Model):
         # Get the commit_id
         table = s3db.req_commit_skill
         row = db(table.id == row.id).select(table.deleted_fk,
-                                            limitby = (0, 1),
+                                            limitby = (0, 1)
                                             ).first()
         try:
             deleted_fk = json.loads(row.deleted_fk)
@@ -4425,12 +4560,85 @@ class CommitSkillModel(S3Model):
                                    rtable.type,
                                    rtable.req_status,
                                    rtable.commit_status,
-                                   limitby = (0, 1),
+                                   limitby = (0, 1)
                                    ).first()
             if req:
                 req_update_commit_quantities_and_status(req)
 
 # =============================================================================
+def req_ref_represent(value, show_link=True, pdf=False):
+    """
+        Represent for the Request Reference
+        if show_link is True then it will generate a link to the record
+        if pdf is True then it will generate a link to the PDF
+
+        @todo: document parameters
+        @todo: S3Represent
+    """
+
+    if value:
+        if show_link:
+            db = current.db
+            table = db.req_req
+            req_row = db(table.req_ref == value).select(table.id,
+                                                        limitby = (0, 1)
+                                                        ).first()
+            if req_row:
+                if pdf:
+                    args = [req_row.id, "form"]
+                else:
+                    args = [req_row.id]
+                return A(value,
+                         _href = URL(c="req", f="req",
+                                     args = args,
+                                     extension = "",
+                                     ),
+                         )
+        return B(value)
+
+    return current.messages["NONE"]
+
+# -------------------------------------------------------------------------
+def req_tabs(r, match=True):
+    """
+        Add a set of rheader tabs for a site's request management
+
+        @param r: the CRUDRequest (for permission checking)
+        @param match: request matching is applicable for this type of site
+
+        @return: list of rheader tab definitions
+    """
+
+    settings = current.deployment_settings
+
+    tabs = []
+
+    if settings.get_org_site_inv_req_tabs():
+
+        has_permission = current.auth.s3_has_permission
+        if settings.has_module("req") and \
+           has_permission("read", "req_req", c="req"):
+
+            T = current.T
+
+            # Requests tab
+            tabs = [(T("Requests"), "req")]
+
+            # Match-tab if applicable for the use-case and user
+            # is permitted to match requests
+            if match and has_permission("read", "req_req",
+                                        c = r.controller,
+                                        f = "req_match",
+                                        ):
+                tabs.append((T("Match Requests"), "req_match/"))
+
+            # Commit-tab if using commits
+            if settings.get_req_use_commit():
+                tabs.append((T("Commit"), "commit"))
+
+    return tabs
+
+# -----------------------------------------------------------------------------
 def req_update_status(req_id):
     """
         Update the request committed/in-transit/fulfilled statuses from the
@@ -4646,8 +4854,7 @@ def req_update_commit_quantities_and_status(req):
                 # If quantity_commit has changed => update it in the DB
                 if quantity_commit != req_skill_set["committed"]:
                     # Update committed quantity
-                    db(rstable.id == req_skill_set["id"]).update(
-                                      quantity_commit = quantity_commit)
+                    db(rstable.id == req_skill_set["id"]).update(quantity_commit = quantity_commit)
 
                 if requested_quantity > quantity_commit:
                     complete = False
@@ -4662,7 +4869,7 @@ def req_update_commit_quantities_and_status(req):
                 commit_status = REQ_STATUS_PARTIAL
 
         if commit_status != req.commit_status:
-            req.update_record(commit_status=commit_status)
+            req.update_record(commit_status = commit_status)
 
     elif req_type == 9: # Other
 
@@ -4786,8 +4993,9 @@ def req_rheader(r, check_page=False):
         s3 = current.response.s3
         settings = current.deployment_settings
 
-        use_commit = settings.get_req_use_commit()
         is_template = record.is_template
+        use_commit = settings.get_req_use_commit()
+        use_workflow = settings.get_req_workflow()
 
         rtype = record.type
         if rtype == 1 and settings.has_module("inv"):
@@ -4800,6 +5008,9 @@ def req_rheader(r, check_page=False):
             items = False
             people = False
 
+        site_id = record.site_id
+        workflow_status = record.workflow_status
+
         tabs = [(T("Edit Details"), None)]
         if items:
             if settings.get_req_multiple_req_items():
@@ -4809,35 +5020,70 @@ def req_rheader(r, check_page=False):
             tabs.append((req_item_tab_label, "req_item"))
         elif people:
             tabs.append((T("Skills"), "req_skill"))
+        #if settings.get_req_document_filing():
         tabs.append((T("Documents"), "document"))
         if is_template:
             tabs.append((T("Schedule"), "job"))
         else:
             # Hide these if no Items/Skills on one of these requests yet
+            auth = current.auth
+            req_id = record.id
             if items:
-                user = current.auth.user
-                site_id = user.site_id if user else None
+                user = auth.user
+                user_site_id = user.site_id if user else None
                 ritable = s3db.req_req_item
-                probably_complete = db(ritable.req_id == record.id).select(
-                                            ritable.id,
-                                            limitby = (0, 1),
-                                            )
+                possibly_complete = db(ritable.req_id == req_id).select(ritable.id,
+                                                                        limitby = (0, 1)
+                                                                        )
             elif people:
-                user = current.auth.user
+                user = auth.user
                 organisation_id = user.organisation_id if user else None
                 rstable = s3db.req_req_skill
-                probably_complete = db(rstable.req_id == record.id).select(
-                                            rstable.id,
-                                            limitby = (0, 1),
-                                            )
+                possibly_complete = db(rstable.req_id == req_id).select(rstable.id,
+                                                                        limitby = (0, 1)
+                                                                        )
             else:
-                probably_complete = True
-            if probably_complete:
+                possibly_complete = True
+            if possibly_complete:
                 if use_commit:
                     tabs.append((T("Commitments"), "commit"))
-                if (items and site_id) or \
+                if (items and user_site_id) or \
                    (people and organisation_id and settings.get_req_commit_people()):
                     tabs.append((T("Check"), "check"))
+                if use_workflow:
+                    if workflow_status == 1: # Draft
+                        submit_btn = A(T("Submit for Approval"),
+                                       _href = URL(c = "req",
+                                                   f = "req",
+                                                   args = [req_id, "submit"]
+                                                   ),
+                                       _id = "req-submit",
+                                       _class = "action-btn",
+                                       )
+                        s3.jquery_ready.append('''S3.confirmClick('#req-submit','%s')''' \
+                                % T("Are you sure you want to submit this request?"))
+                        s3.rfooter = TAG[""](submit_btn)
+                    elif workflow_status == 2: # Submitted
+                        if req_is_approver(site_id):
+                            # Have they already approved?
+                            atable = s3db.req_approver_req
+                            query = (atable.req_id == req_id) & \
+                                    (atable.person_id == auth.s3_logged_in_person())
+                            approved = db(query).select(atable.id,
+                                                        limitby = (0, 1)
+                                                        )
+                            if not approved:
+                                approve_btn = A(T("Approve"),
+                                               _href = URL(c = "req",
+                                                           f = "req",
+                                                           args = [req_id, "approve_req"]
+                                                           ),
+                                               _id = "req-approve",
+                                               _class = "action-btn",
+                                               )
+                                s3.jquery_ready.append('''S3.confirmClick('#req-approve','%s')''' \
+                                        % T("Are you sure you want to approve this request?"))
+                                s3.rfooter = TAG[""](approve_btn)
 
         if not check_page:
             rheader_tabs = s3_rheader_tabs(r, tabs)
@@ -4851,45 +5097,44 @@ def req_rheader(r, check_page=False):
                             _href = URL(f = "send_commit",
                                         args = [r.component_id]
                                         ),
-                            _id = "send_commit",
-                            _class = "action-btn"
+                            _id = "send-commit",
+                            _class = "action-btn",
                             )
             s3.rfooter = TAG[""](prepare_btn)
 
-        site_id = record.site_id
         if site_id:
             stable = s3db.org_site
-        if settings.get_req_show_quantity_transit() and not is_template:
-            transit_status = s3db.req_status_opts.get(record.transit_status,
-                                                      "")
-            try:
-                if site_id and \
-                   record.transit_status in [REQ_STATUS_PARTIAL, REQ_STATUS_COMPLETE] and \
-                   record.fulfil_status in [None, REQ_STATUS_NONE, REQ_STATUS_PARTIAL]:
-                    pass
-                    # @ToDo: Create this function!
-                    #site_record = db(stable.site_id == site_id).select(stable.uuid,
-                    #                                                   stable.instance_type,
-                    #                                                   limitby=(0, 1)).first()
-                    #instance_type = site_record.instance_type
-                    #table = s3db[instance_type]
-                    #query = (table.uuid == site_record.uuid)
-                    #instance_id = db(query).select(table.id,
-                    #                               limitby=(0, 1)).first().id
-                    #transit_status = SPAN(transit_status,
-                    #                      A(T("Incoming Shipments"),
-                    #                        _href = URL(c = instance_type.split("_")[0],
-                    #                                    f = "incoming",
-                    #                                    vars = {"viewing" : "%s.%s" % (instance_type, instance_id)}
-                    #                                    )
-                    #                        )
-                    #                      )
-            except:
-                pass
+        if use_workflow and workflow_status in (1, 2, 5): # Draft/Submitted/Cancelled
+            transit_status = ("",)
+        elif settings.get_req_show_quantity_transit() and not is_template:
+            transit_status = req_status_opts().get(record.transit_status,
+                                                   "")
+            # @ToDo: Create the 'incoming' function if we need this!
+            #if site_id and \
+            #   record.transit_status in [REQ_STATUS_PARTIAL, REQ_STATUS_COMPLETE] and \
+            #   record.fulfil_status in [None, REQ_STATUS_NONE, REQ_STATUS_PARTIAL]:
+            #   site_record = db(stable.site_id == site_id).select(stable.uuid,
+            #                                                      stable.instance_type,
+            #                                                      limitby = (0, 1)
+            #                                                      ).first()
+            #   instance_type = site_record.instance_type
+            #   table = s3db[instance_type]
+            #   query = (table.uuid == site_record.uuid)
+            #   instance_id = db(query).select(table.id,
+            #                                  limitby = (0, 1)
+            #                                  ).first().id
+            #   transit_status = SPAN(transit_status,
+            #                         A(T("Incoming Shipments"),
+            #                           _href = URL(c = instance_type.split("_")[0],
+            #                                       f = "incoming",
+            #                                       vars = {"viewing" : "%s.%s" % (instance_type, instance_id)}
+            #                                       )
+            #                           )
+            #                      )
             transit_status = (TH("%s: " % T("Transit Status")),
                               transit_status)
         else:
-            transit_status = ("")
+            transit_status = ("",)
 
         table = r.table
 
@@ -4899,32 +5144,42 @@ def req_rheader(r, check_page=False):
                           )
         else:
             headerTR = TR(TD(settings.get_req_form_name(),
-                          _colspan=2, _class="pdf_title"),
+                             _colspan = 2,
+                             _class = "pdf_title",
+                             ),
                           )
         if site_id:
             org_id = db(stable.site_id == site_id).select(stable.organisation_id,
-                                                          limitby = (0, 1),
+                                                          limitby = (0, 1)
                                                           ).first().organisation_id
             logo = s3db.org_organisation_logo(org_id)
             if logo:
-                headerTR.append(TD(logo, _colspan=2))
+                headerTR.append(TD(logo,
+                                   _colspan = 2,
+                                   ))
 
         if is_template:
-            commit_status = ("")
-            fulfil_status = ("")
             row1 = ""
             row3 = ""
         else:
-            if use_commit:
-                commit_status = (TH("%s: " % table.commit_status.label),
-                                 table.commit_status.represent(record.commit_status))
+            if use_workflow and workflow_status in (1, 2, 5): # Draft/Submitted/Cancelled
+                row1_status = (TH("%s: " % table.workflow_status.label),
+                               table.workflow_status.represent(workflow_status),
+                               )
+                fulfil_status = ("",)
             else:
-                commit_status = ("")
-            fulfil_status = (TH("%s: " % table.fulfil_status.label),
-                             table.fulfil_status.represent(record.fulfil_status))
+                if use_commit:
+                    row1_status = (TH("%s: " % table.commit_status.label),
+                                   table.commit_status.represent(record.commit_status),
+                                   )
+                else:
+                    row1_status = ("",)
+                fulfil_status = (TH("%s: " % table.fulfil_status.label),
+                                 table.fulfil_status.represent(record.fulfil_status),
+                                 )
             row1 = TR(TH("%s: " % table.date.label),
                       table.date.represent(record.date),
-                      *commit_status
+                      *row1_status
                       )
             row3 = TR(TH("%s: " % table.date_required.label),
                       table.date_required.represent(record.date_required),
@@ -4937,15 +5192,17 @@ def req_rheader(r, check_page=False):
                                table.site_id.represent(site_id),
                                *transit_status
                                ),
+                            row3,
                             TR(TH("%s: " % table.requester_id.label),
                                table.requester_id.represent(record.requester_id),
                                ),
-                            row3,
                             TR(TH("%s: " % table.purpose.label),
-                               record.purpose
+                               record.purpose or current.messages["NONE"],
                                ),
                             TR(TH("%s: " % table.comments.label),
-                               TD(record.comments or "", _colspan=3)
+                               TD(record.comments or "",
+                                  _colspan = 3,
+                                  ),
                                ),
                             ),
                       rheader_tabs,
@@ -4975,7 +5232,7 @@ def req_rheader(r, check_page=False):
     return rheader
 
 # =============================================================================
-def req_match(rheader=None):
+def req_match(rheader = None):
     """
         Generic controller to display all requests a site could potentially
         fulfill as a tab of that site instance
@@ -5015,7 +5272,7 @@ def req_match(rheader=None):
 
     table = s3db[tablename]
     row = current.db(table.id == record_id).select(table.site_id,
-                                                   limitby = (0, 1),
+                                                   limitby = (0, 1)
                                                    ).first()
     if row:
         site_id = row.site_id
@@ -5074,8 +5331,10 @@ def req_match(rheader=None):
 
     # Pre-process
     def prep(r):
-        # Plugin OrgRoleManager when appropriate
-        S3OrgRoleManager.set_method(r, entity=tablename, record_id=record_id)
+        if settings.get_req_workflow():
+            # Only show Approved Requests
+            r.resource.add_filter(FS("workflow_status") == 3)
+
         return True
     s3.prep = prep
 
@@ -5086,10 +5345,103 @@ def req_match(rheader=None):
         return output
     s3.postp = postp
 
-    output = current.rest_controller("req", "req",
-                                     rheader = rheader,
-                                     )
-    return output
+    return current.crud_controller("req", "req", rheader=rheader)
+
+# =============================================================================
+def req_send_commit():
+    """
+        Controller function to create a Shipment containing all
+        items in a commitment (interactive)
+    """
+
+    # Get the commit record
+    try:
+        commit_id = current.request.args[0]
+    except KeyError:
+        redirect(URL(c="req", f="commit"))
+
+    db = current.db
+    s3db = current.s3db
+
+    req_table = db.req_req
+    rim_table = db.req_req_item
+    com_table = db.req_commit
+    cim_table = db.req_commit_item
+
+    send_table = s3db.inv_send
+    tracktable = s3db.inv_track_item
+
+    query = (com_table.id == commit_id) & \
+            (com_table.req_id == req_table.id) & \
+            (com_table.deleted == False)
+    record = db(query).select(com_table.committer_id,
+                              com_table.site_id,
+                              com_table.organisation_id,
+                              req_table.requester_id,
+                              req_table.site_id,
+                              req_table.req_ref,
+                              limitby = (0, 1)
+                              ).first()
+
+    # @ToDo: Identify if we have stock items which match the commit items
+    # If we have a single match per item then proceed automatically (as-now) & then decrement the stock quantity
+    # If we have no match then warn the user & ask if they should proceed anyway
+    # If we have mulitple matches then provide a UI to allow the user to select which stock items to use
+
+    # Create an inv_send and link to the commit
+    form_vars = Storage(sender_id = record.req_commit.committer_id,
+                        site_id = record.req_commit.site_id,
+                        recipient_id = record.req_req.requester_id,
+                        to_site_id = record.req_req.site_id,
+                        req_ref = record.req_req.req_ref,
+                        status = 0,
+                        )
+    send_id = send_table.insert(**form_vars)
+    form_vars.id = send_id
+
+    # Get all of the committed items
+    query = (cim_table.commit_id == commit_id) & \
+            (cim_table.req_item_id == rim_table.id) & \
+            (cim_table.deleted == False)
+    records = db(query).select(rim_table.id,
+                               rim_table.item_id,
+                               rim_table.item_pack_id,
+                               rim_table.currency,
+                               rim_table.quantity,
+                               rim_table.quantity_transit,
+                               rim_table.quantity_fulfil,
+                               cim_table.quantity,
+                               )
+    # Create inv_track_items for each commit item
+    insert = tracktable.insert
+    for row in records:
+        rim = row.req_req_item
+        # Now done as a VirtualField instead (looks better & updates closer to real-time, so less of a race condition)
+        #quantity_shipped = max(rim.quantity_transit, rim.quantity_fulfil)
+        #quantity_needed = rim.quantity - quantity_shipped
+        insert(req_item_id = rim.id,
+               track_org_id = record.req_commit.organisation_id,
+               send_id = send_id,
+               status = 1,
+               item_id = rim.item_id,
+               item_pack_id = rim.item_pack_id,
+               currency = rim.currency,
+               #req_quantity = quantity_needed,
+               quantity = row.req_commit_item.quantity,
+               recv_quantity = row.req_commit_item.quantity,
+               )
+
+    # Create the Waybill
+    form = Storage()
+    form.vars = form_vars
+    s3db.inv_send_onaccept(form)
+
+    # Redirect to inv_send for the send id just created
+    redirect(URL(#c = "inv", or "req"
+                 f = "send",
+                 #args = [send_id, "track_item"]
+                 args = [send_id]
+                 ))
 
 # =============================================================================
 class req_CheckMethod(S3Method):
@@ -5103,7 +5455,7 @@ class req_CheckMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -5169,8 +5521,8 @@ class req_CheckMethod(S3Method):
             #if use_commit:
             #    row.insert(3, TH(table.quantity_commit.label))
             items = TABLE(THEAD(row),
-                          _id="list",
-                          _class="dataTable display",
+                          _id = "list",
+                          _class = "dataTable display",
                           )
             if site_id:
                 stable = s3db.org_site
@@ -5179,13 +5531,13 @@ class req_CheckMethod(S3Method):
                         (stable.location_id == ltable.id)
                 location_r = db(query).select(ltable.lat,
                                               ltable.lon,
-                                              limitby = (0, 1),
+                                              limitby = (0, 1)
                                               ).first()
                 query = (stable.id == r.record.site_id ) & \
                         (stable.location_id == ltable.id)
                 req_location_r = db(query).select(ltable.lat,
                                                   ltable.lon,
-                                                  limitby = (0, 1),
+                                                  limitby = (0, 1)
                                                   ).first()
 
                 try:
@@ -5610,7 +5962,7 @@ class req_ReqItemRepresent(S3Represent):
         rows = current.db(query).select(ritable.id,
                                         sitable.name,
                                         left = left,
-                                        limitby = (0, count),
+                                        limitby = (0, count)
                                         )
         self.queries += 1
         return rows
@@ -5665,7 +6017,7 @@ class req_CommitRepresent(S3Represent):
                                         table.date,
                                         table.organisation_id,
                                         table.site_id,
-                                        limitby = (0, count),
+                                        limitby = (0, count)
                                         )
         self.queries += 1
 
@@ -5794,7 +6146,9 @@ def req_add_from_template(req_id):
     fields = [table[field] for field in fieldnames]
 
     # Load Template
-    template = db(table.id == req_id).select(limitby=(0, 1), *fields).first()
+    template = db(table.id == req_id).select(limitby = (0, 1),
+                                             *fields
+                                             ).first()
     data = {"is_template": False}
     try:
         for field in fieldnames:
@@ -5849,5 +6203,405 @@ def req_add_from_template(req_id):
             table.insert(**data)
 
     return new_req_id
+
+# =============================================================================
+def req_is_approver(site_id):
+    """
+        Check if User has permission to Approve a Request
+    """
+
+    auth = current.auth
+
+    # Will cause issues
+    #if auth.s3_has_role("ADMIN"):
+    #    return True
+
+    db = current.db
+    s3db = current.s3db
+    atable = s3db.req_approver
+    query = (atable.person_id == auth.s3_logged_in_person()) & \
+            (atable.deleted == False)
+    entities = db(query).select(atable.pe_id)
+    if not entities:
+        # Not an Approver for any
+        return False
+
+    pe_ids = [row.pe_id for row in entities]
+
+    stable = s3db.org_site
+    site_entity = db(stable.site_id == site_id).select(stable.instance_type,
+                                                       limitby = (0, 1)
+                                                       ).first()
+    itable = s3db.table(site_entity.instance_type)
+    site = db(itable.site_id == site_id).select(itable.pe_id,
+                                                limitby = (0, 1)
+                                                ).first()
+
+    pe_id = site.pe_id
+    if pe_id in pe_ids:
+        # Directly permitted
+        return True
+
+    # Check for child entities
+    entity_types = ["org_organisation"] + list(auth.org_site_types.keys())
+    child_pe_ids = s3db.pr_get_descendants(pe_ids, entity_types=entity_types)
+    if pe_id in child_pe_ids:
+        # Permitted via child entity
+        return True
+
+    return False
+
+# =============================================================================
+def req_approvers(site_id):
+    """
+        Return people permitted to Approve a Request
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    stable = s3db.org_site
+    site_entity = db(stable.site_id == site_id).select(stable.instance_type,
+                                                       limitby = (0, 1)
+                                                       ).first()
+    itable = s3db.table(site_entity.instance_type)
+    site = db(itable.site_id == site_id).select(itable.pe_id,
+                                                limitby = (0, 1)
+                                                ).first()
+
+    pe_id = site.pe_id
+    entities = s3db.pr_get_ancestors(pe_id)
+    entities.append(pe_id)
+
+    atable = s3db.req_approver
+    query = (atable.pe_id.belongs(entities)) & \
+            (atable.deleted == False)
+    approvers = db(query).select(atable.person_id,
+                                 atable.title,
+                                 atable.matcher,
+                                 )
+
+    return {row.person_id: {"title": row.title,
+                            "matcher": row.matcher,
+                            } for row in approvers}
+
+# =============================================================================
+def req_create_form_mods():
+    """
+        Function to be called from REST prep functions
+         - main module & components (sites & events)
+    """
+
+    T = current.T
+    db = current.db
+    s3 = current.response.s3
+    settings = current.deployment_settings
+
+    table = db.req_req
+
+    if not settings.get_req_inline_forms():
+        # Amend the Save button
+        default_type = table.type.default
+        if default_type:
+            req_submit_button = {1: T("Save and add Items"),
+                                 3: T("Save and add People"),
+                                 9: T("Save"),
+                                 }
+            s3.crud.submit_button = req_submit_button[default_type]
+
+    # Hide fields which don't make sense in a Create form
+    table.req_ref.readable = False
+    table.commit_status.readable = table.commit_status.writable = False
+    table.transit_status.readable = table.transit_status.writable = False
+    table.fulfil_status.readable = table.fulfil_status.writable = False
+    table.workflow_status.readable = table.workflow_status.writable = False
+    table.cancel.readable = table.cancel.writable = False
+    table.closed.readable = table.closed.writable = False
+    table.date_recv.readable = table.date_recv.writable = False
+    table.recv_by_id.readable = table.recv_by_id.writable = False
+
+    if settings.get_req_requester_from_site():
+        # Filter the list of Contacts to those for the site
+        table.requester_id.widget = None
+        table.requester_id.comment = S3PopupLink(c = "pr",
+                                                 f = "person",
+                                                 vars = {"child": "requester_id",
+                                                         "parent": "req",
+                                                         },
+                                                 title = s3.crud_strings["pr_person"].label_create,
+                                                 )
+        s3.jquery_ready.append('''
+$.filterOptionsS3({
+'trigger':'site_id',
+'target':'requester_id',
+'lookupResource':'staff',
+'lookupURL':S3.Ap.concat('/hrm/staff_for_site/'),
+'msgNoRecords':'%s',
+'optional':true,
+})''' % T("No contacts yet defined for this site"))
+        #table.site_id.comment = A(T("Set as default Site"),
+        #                          _id="req_req_site_id_link",
+        #                          _target="_blank",
+        #                          _href=URL(c="default",
+        #                                    f="user",
+        #                                    args=["profile"]))
+
+    req_types = settings.get_req_req_type()
+    if "People" in req_types:
+        # Show the Required Until Field
+        # (gets turned-off by JS for other types)
+        table.date_required_until.writable = True
+
+    request = current.request
+    if "type" not in request.get_vars:
+        # Script to inject into Pages which include Request create forms
+        req_helptext = '''
+i18n.req_purpose="%s"
+i18n.req_site_id="%s"
+i18n.req_request_for_id="%s"
+i18n.req_recv_by_id="%s"
+i18n.req_items_purpose="%s"
+i18n.req_items_site_id="%s"
+i18n.req_items_recv_by_id="%s"
+i18n.req_people_purpose="%s"
+i18n.req_people_site_id="%s"
+i18n.req_people_recv_by_id="%s"
+i18n.req_next_msg="%s"
+i18n.req_other_msg="%s"
+i18n.req_details_mandatory="%s"''' % (table.purpose.label,
+                                  table.site_id.label,
+                                  table.request_for_id.label,
+                                  table.recv_by_id.label,
+                                  T("What the Items will be used for"),
+                                  T("Deliver To"),
+                                  T("Delivered To"),
+                                  T("Task Details"),
+                                  T("Report To"),
+                                  T("Reported To"),
+                                  T("Please enter the details on the next screen."),
+                                  T("Please enter request details here."),
+                                  T("Details field is required!"))
+        s3.js_global.append(req_helptext)
+        s3.scripts.append("/%s/static/scripts/S3/s3.req_create_variable.js" % request.application)
+
+    else:
+        s3.scripts.append("/%s/static/scripts/S3/s3.req_create.js" % request.application)
+
+# =============================================================================
+def req_hide_quantities(table):
+    """
+        Hide per-status quantity fields in Request create-forms
+
+        @param table: the Table (req_item or req_skill)
+    """
+
+    if not current.deployment_settings.get_req_item_quantities_writable():
+        table.quantity_commit.readable = \
+        table.quantity_commit.writable = False
+        table.quantity_transit.readable = \
+        table.quantity_transit.writable = False
+        table.quantity_fulfil.readable = \
+        table.quantity_fulfil.writable = False
+
+# =============================================================================
+def req_inline_form(req_type, method):
+    """
+        Function to be called from REST prep functions
+         - to add req_item & req_skill components as inline forms
+
+        @param req_type: the request type (1=items, 3=skills)
+        @param method: the URL request method
+    """
+
+    T = current.T
+    s3db = current.s3db
+    table = s3db.req_req
+    s3 = current.response.s3
+    postprocess = s3.req_req_postprocess
+
+    if req_type == 1:
+
+        # Custom Form
+        settings = current.deployment_settings
+        fields = [#req_ref
+                  "site_id",
+                  #is_template
+                  "requester_id",
+                  "date",
+                  "priority",
+                  "date_required",
+                  S3SQLInlineComponent(
+                    "req_item",
+                    label = T("Items"),
+                    fields = ["item_id",
+                              "item_pack_id",
+                              "quantity",
+                              "comments"
+                              ]
+                  ),
+                  #purpose
+                  "comments",
+                  ]
+
+        if method in ("create", "update"):
+            # Dropdown not Autocomplete
+            itable = s3db.req_req_item
+            itable.item_id.widget = None
+
+            # Options-filter item=>pack
+            jquery_ready = s3.jquery_ready
+            jquery_ready.append('''
+$.filterOptionsS3({
+'trigger':{'alias':'req_item','name':'item_id'},
+'target':{'alias':'req_item','name':'item_pack_id'},
+'scope':'row',
+'lookupPrefix':'supply',
+'lookupResource':'item_pack',
+'msgNoRecords':i18n.no_packs,
+'fncPrep':S3.supply.fncPrepItem,
+'fncRepresent':S3.supply.fncRepresentItem
+})''')
+            if settings.get_req_requester_from_site():
+                # Filter the list of Contacts to those for the site
+                jquery_ready.append('''
+$.filterOptionsS3({
+'trigger':'site_id',
+'target':'requester_id',
+'lookupResource':'staff',
+'lookupURL':S3.Ap.concat('/hrm/staff_for_site/'),
+'msgNoRecords':'%s',
+'optional':true,
+})''' % T("No contacts yet defined for this site"))
+
+                # Popup link to allow adding a contact (...for the site)
+                table.requester_id.widget = None
+                table.requester_id.comment = S3PopupLink(c = "pr",
+                                                         f = "person",
+                                                         vars = {"child": "requester_id",
+                                                                 "parent": "req",
+                                                                 },
+                                                         title = s3.crud_strings["pr_person"].label_create,
+                                                         )
+
+                # Link to user profile to allow setting this site
+                # as their current default site, so that they appear
+                # in the dropdown themselves
+                table.site_id.comment = A(T("Set as default Site"),
+                                          _id = "req_req_site_id_link",
+                                          _target = "_blank",
+                                          _href = URL(c = "default",
+                                                      f = "user",
+                                                      args = ["profile"],
+                                                      ),
+                                          )
+
+        if method in ("update", "read"):
+            # Append status details
+            status_fields = []
+            if settings.get_req_status_writable():
+                if settings.get_req_use_commit():
+                    status_fields.append("commit_status")
+                if settings.get_req_show_quantity_transit():
+                    status_fields.append("transit_status")
+                status_fields.append("fulfil_status")
+            status_fields.append("date_recv")
+
+            fields.extend(status_fields)
+
+            # Show request number?
+            if settings.get_req_use_req_number():
+                if settings.get_req_generate_req_number():
+                    table.req_ref.writable = False
+                fields.insert(0, "req_ref")
+        else:
+            # Is-template flag can only be set during create
+            fields.insert(1, "is_template")
+
+        if settings.get_req_items_ask_purpose():
+            fields.insert(-1, "purpose")
+
+        if postprocess:
+            crud_form = S3SQLCustomForm(*fields, postprocess=postprocess)
+        else:
+            crud_form = S3SQLCustomForm(*fields)
+        s3db.configure("req_req",
+                       crud_form = crud_form,
+                       )
+
+    elif req_type == 3:
+        # Custom Form
+        stable = s3db.req_req_skill
+        stable.skill_id.label = T("Required Skills (optional)")
+        # Custom Form
+        settings = current.deployment_settings
+        fields = ["site_id",
+                  "requester_id",
+                  "date",
+                  "priority",
+                  "date_required",
+                  "date_required_until",
+                  "purpose",
+                  S3SQLInlineComponent(
+                    "req_skill",
+                    label = T("Skills"),
+                    fields = ["quantity",
+                              "skill_id",
+                              "comments"
+                              ]
+                  ),
+                  "comments",
+                  ]
+        if method == "update":
+            if settings.get_req_status_writable():
+                fields.insert(8, "fulfil_status")
+                if settings.get_req_show_quantity_transit():
+                    fields.insert(8, "transit_status")
+                if settings.get_req_use_commit():
+                    fields.insert(8, "commit_status")
+            fields.insert(8, "date_recv")
+
+            if settings.get_req_requester_from_site():
+                # Filter the list of Contacts to those for the site
+                table.requester_id.widget = None
+                table.requester_id.comment = S3PopupLink(c = "pr",
+                                                         f = "person",
+                                                         vars = {"child": "requester_id",
+                                                                 "parent": "req",
+                                                                 },
+                                                         title = s3.crud_strings["pr_person"].label_create,
+                                                         )
+                s3.jquery_ready.append('''
+$.filterOptionsS3({
+'trigger':'site_id',
+'target':'requester_id',
+'lookupResource':'staff',
+'lookupURL':S3.Ap.concat('/hrm/staff_for_site/'),
+'msgNoRecords':'%s',
+'optional':true,
+})''' % T("No contacts yet defined for this site"))
+                table.site_id.comment = A(T("Set as default Site"),
+                                          _id = "req_req_site_id_link",
+                                          _target = "_blank",
+                                          _href = URL(c="default",
+                                                      f="user",
+                                                      args = ["profile"],
+                                                      ),
+                                          )
+
+        else:
+            fields.insert(1, "is_template")
+        if settings.get_req_use_req_number() and \
+           not settings.get_req_generate_req_number():
+            fields.insert(0, "req_ref")
+        if postprocess:
+            crud_form = S3SQLCustomForm(*fields, postprocess=postprocess)
+        else:
+            crud_form = S3SQLCustomForm(*fields)
+        s3db.configure("req_req",
+                       crud_form = crud_form,
+                       )
+
+    # Reset to standard submit button
+    s3.crud.submit_button = T("Save")
 
 # END =========================================================================

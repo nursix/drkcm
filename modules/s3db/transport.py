@@ -34,11 +34,11 @@ __all__ = ("S3TransportModel",
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from ..s3layouts import S3PopupLink
 
 # =============================================================================
-class S3TransportModel(S3Model):
+class S3TransportModel(DataModel):
     """
         http://eden.sahanafoundation.org/wiki/BluePrint/Transport
     """
@@ -305,7 +305,7 @@ class S3TransportModel(S3Model):
                      Field("obsolete", "boolean",
                            default = False,
                            label = T("Obsolete"),
-                           represent = S3Represent(options=obsolete_options),
+                           represent = represent_option(obsolete_options),
                            readable = False,
                            writable = False,
                            ),
@@ -378,7 +378,7 @@ class S3TransportModel(S3Model):
                      Field("obsolete", "boolean",
                            default = False,
                            label = T("Obsolete"),
-                           represent = S3Represent(options=obsolete_options),
+                           represent = represent_option(obsolete_options),
                            readable = False,
                            writable = False,
                            ),
@@ -572,7 +572,7 @@ class S3TransportModel(S3Model):
                      Field("obsolete", "boolean",
                            default = False,
                            label = T("Obsolete"),
-                           represent = S3Represent(options=obsolete_options),
+                           represent = represent_option(obsolete_options),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -624,7 +624,7 @@ class S3TransportModel(S3Model):
                      ),
                      Field("status",
                            default = "OPEN",
-                           represent = S3Represent(options = dict(border_crossing_status)),
+                           represent = represent_option(dict(border_crossing_status)),
                            requires = IS_IN_SET(border_crossing_status,
                                                 zero = None,
                                                 sort = False,
@@ -771,7 +771,7 @@ class S3TransportModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

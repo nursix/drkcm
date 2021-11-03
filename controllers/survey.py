@@ -149,8 +149,7 @@ def template():
                    #deletable=False,
                    )
 
-    output = s3_rest_controller(rheader=s3db.survey_template_rheader)
-    return output
+    return crud_controller(rheader=s3db.survey_template_rheader)
 
 # -----------------------------------------------------------------------------
 def template_read():
@@ -181,7 +180,7 @@ def template_read():
                    deletable=False,
                    )
 
-    r = s3_request("survey", "template", args=[template_id])
+    r = crud_request("survey", "template", args=[template_id])
     output = r(method="read", rheader=s3db.survey_template_rheader)
     return output
 
@@ -217,10 +216,10 @@ def template_summary():
                    deletable=False,
                    )
 
-    output = s3_rest_controller("survey", "template",
-                                method = "list",
-                                rheader=s3db.survey_template_rheader,
-                                )
+    output = crud_controller("survey", "template",
+                             method = "list",
+                             rheader=s3db.survey_template_rheader,
+                             )
     s3.actions = None
     return output
 
@@ -290,8 +289,7 @@ def series():
                    deletable = False,
                    )
 
-    output = s3_rest_controller(rheader=s3db.survey_series_rheader)
-    return output
+    return crud_controller(rheader=s3db.survey_series_rheader)
 
 # -----------------------------------------------------------------------------
 def series_export_formatted():
@@ -303,9 +301,9 @@ def series_export_formatted():
     try:
         series_id = request.args[0]
     except:
-        output = s3_rest_controller(module, "series",
-                                    rheader = s3db.survey_series_rheader)
-        return output
+        return crud_controller(module, "series",
+                               rheader = s3db.survey_series_rheader,
+                               )
 
     # Load Model
     table = s3db.survey_series
@@ -372,9 +370,9 @@ def series_export_formatted():
         content_type = ".rtf"
 
     else:
-        output = s3_rest_controller(module, "series",
-                                    rheader = s3db.survey_series_rheader)
-        return output
+        return crud_controller(module, "series",
+                               rheader = s3db.survey_series_rheader,
+                               )
 
     from gluon.contenttype import contenttype
 
@@ -454,7 +452,7 @@ def series_export_word(widget_list, lang_dict, title, logo):
     """
 
     import gluon.contrib.pyrtf as pyrtf
-    from s3compat import BytesIO
+    from io import BytesIO
 
     output  = BytesIO()
     doc     = pyrtf.Document(default_language=pyrtf.Languages.EnglishUK)
@@ -508,19 +506,19 @@ def series_export_spreadsheet(matrix, matrix_answers, logo):
         import xlwt
     except ImportError:
         response.error = T("xlwt not installed, so cannot export as a Spreadsheet")
-        output = s3_rest_controller(module, "survey_series",
-                                    rheader=s3db.survey_series_rheader)
-        return output
+        return crud_controller(module, "survey_series",
+                               rheader = s3db.survey_series_rheader,
+                               )
 
     import math
-    from s3compat import BytesIO
+    from io import BytesIO
 
     # -------------------------------------------------------------------------
     def wrap_text(sheet, cell, style):
         row = cell.row
         col = cell.col
         try:
-            text = s3_unicode(cell.text)
+            text = s3_str(cell.text)
         except:
             text = cell.text
         width = 16
@@ -753,7 +751,7 @@ def series_export_spreadsheet(matrix, matrix_answers, logo):
                                        cell.row + cell.mergeV,
                                        cell.col,
                                        cell.col + cell.mergeH,
-                                       s3_unicode(cell.text),
+                                       s3_str(cell.text),
                                        joined_style,
                                        )
                 except Exception as msg:
@@ -767,13 +765,13 @@ def series_export_spreadsheet(matrix, matrix_answers, logo):
             else:
                 sheet1.write(cell.row,
                              cell.col,
-                             s3_unicode(cell.text),
+                             s3_str(cell.text),
                              style,
                              )
     CELL_WIDTH = 480 # approximately 2 characters
     if max_col > 255:
         max_col = 255
-    for col in xrange(max_col + 1):
+    for col in range(max_col + 1):
         sheet1.col(col).width = CELL_WIDTH
 
     sheet2.write(0, 0, "Question Code")
@@ -784,7 +782,7 @@ def series_export_spreadsheet(matrix, matrix_answers, logo):
         style = merge_styles(style_list, cell.styleList)
         sheet2.write(cell.row,
                      cell.col,
-                     s3_unicode(cell.text),
+                     s3_str(cell.text),
                      style,
                      )
 
@@ -797,7 +795,7 @@ def series_export_spreadsheet(matrix, matrix_answers, logo):
         sheet2.col(i).width = 0
     sheet2.write(0,
                  26,
-                 s3_unicode(T("Please do not remove this sheet")),
+                 s3_str(T("Please do not remove this sheet")),
                  style_header,
                  )
     sheet2.col(26).width = 12000
@@ -863,10 +861,9 @@ def section():
         return output
     #s3.postp = postp
 
-    output = s3_rest_controller(# Undefined
-                                #rheader=s3db.survey_section_rheader
-                                )
-    return output
+    return crud_controller(# Undefined
+                           #rheader=s3db.survey_section_rheader
+                           )
 
 # -----------------------------------------------------------------------------
 def question():
@@ -879,31 +876,27 @@ def question():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(# Undefined
-                                #rheader=s3db.survey_section_rheader
-                                )
-    return output
+    return crud_controller(# Undefined
+                           #rheader=s3db.survey_section_rheader
+                           )
 
 # -----------------------------------------------------------------------------
 def question_list():
     """ RESTful CRUD controller """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def formatter():
     """ RESTful CRUD controller """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def question_metadata():
     """ RESTful CRUD controller """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def new_assessment():
@@ -978,11 +971,10 @@ def new_assessment():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller(module, "complete",
-                                method = "create",
-                                rheader = s3db.survey_series_rheader
-                                )
-    return output
+    return crud_controller(module, "complete",
+                           method = "create",
+                           rheader = s3db.survey_series_rheader
+                           )
 
 # -----------------------------------------------------------------------------
 def complete():
@@ -1025,7 +1017,7 @@ def complete():
             Import Assessment Spreadsheet
         """
 
-        from s3compat import BytesIO
+        from io import BytesIO
 
         if series_id is None:
             response.error = T("Series details missing")
@@ -1047,7 +1039,7 @@ def complete():
                          vars={"viewing": "survey_series.%s" % series_id}))
         header = ""
         body = ""
-        for row in xrange(1, sheetM.nrows):
+        for row in range(1, sheetM.nrows):
             header += ',"%s"' % sheetM.cell_value(row, 0)
             code = sheetM.cell_value(row, 0)
             qstn = s3.survey_getQuestionFromCode(code, series_id)
@@ -1119,15 +1111,13 @@ def complete():
 
     s3.xls_parser = import_xls
 
-    output = s3_rest_controller(csv_extra_fields = csv_extra_fields)
-    return output
+    return crud_controller(csv_extra_fields=csv_extra_fields)
 
 # -----------------------------------------------------------------------------
 def answer():
     """ RESTful CRUD controller """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def analysis():
@@ -1142,8 +1132,7 @@ def analysis():
                    listadd = False,
                    )
 
-    output = s3_rest_controller(module, "complete")
-    return output
+    return crud_controller(module, "complete")
 
 # -----------------------------------------------------------------------------
 def admin():

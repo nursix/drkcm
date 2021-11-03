@@ -105,7 +105,7 @@ if site_type == "active":
     #        sys.stderr.write("Could not auto-register repository, please register manually\n")
 
     # Resources
-    sync_policies = s3base.S3ImportItem.POLICY
+    sync_policies = s3base.ImportItem.POLICY
     sync_task = db.sync_task
     for resource_name in resources:
         task = Storage(resource_name=resource_name,

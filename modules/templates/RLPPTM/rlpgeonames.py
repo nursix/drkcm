@@ -1,6 +1,7 @@
-from functools import partial
+# -*- coding: utf-8 -*-
 
-from s3compat import urlencode
+from functools import partial
+from urllib.parse import urlencode
 
 try:
     from geopy.geocoders import GeoNames

@@ -36,8 +36,8 @@ import re
 from gluon import current, URL
 from gluon.storage import Storage
 
-from s3 import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import M, MM, MOA, S3BreadcrumbsLayout, SEP
+from core import IS_ISO639_2_LANGUAGE_CODE
+from s3layouts import M, MM, MP, ML, MA, OM, MOA, S3BreadcrumbsLayout
 
 # =============================================================================
 class S3MainMenu(object):
@@ -48,18 +48,14 @@ class S3MainMenu(object):
     def menu(cls):
 
         main_menu = MM()(
-
-            # Modules-menu, align-left
             cls.menu_modules(),
-
-            # Service menus, align-right
-            # Note: always define right-hand items in reverse order!
-            cls.menu_help(right = True),
-            cls.menu_lang(right = True),
-            cls.menu_gis(right = True),
-            cls.menu_auth(right = True),
-            cls.menu_admin(right = True),
         )
+
+        # Additional menus
+        current.menu.personal = cls.menu_personal()
+        current.menu.lang = cls.menu_lang()
+        current.menu.about = cls.menu_about()
+        current.menu.org = cls.menu_org()
 
         return main_menu
 
@@ -133,82 +129,46 @@ class S3MainMenu(object):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def menu_org(cls):
+        """ Organisation Logo and Name """
+
+        return OM()
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def menu_lang(cls, **attr):
-        """ Language menu """
+        """ Language Selector """
 
-        settings = current.deployment_settings
-        if not settings.get_L10n_display_toolbar():
-            return None
-
-        request = current.request
-        languages = settings.get_L10n_languages()
+        languages = current.deployment_settings.get_L10n_languages()
         represent_local = IS_ISO639_2_LANGUAGE_CODE.represent_local
 
-        menu_lang = MM("Language", **attr)
-        for language in languages:
-            # Show Language in it's own Language
-            menu_lang.append(MM(represent_local(language),
-                                r = request,
-                                translate = False,
-                                selectable = False,
-                                vars = {"_language": language},
-                                ltr = True
-                                ))
+        menu_lang = ML("Language", right=True)
+
+        for code in languages:
+            # Show each language name in its own language
+            lang_name = represent_local(code)
+            menu_lang(
+                ML(lang_name,
+                   translate = False,
+                   lang_code = code,
+                   lang_name = lang_name,
+                   )
+            )
+
         return menu_lang
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_help(cls, **attr):
-        """ Help Menu """
-
-        menu_help = MM("Help", c="default", f="help", **attr)(
-            MM("Contact us", f="contact"),
-            MM("About", f="about")
-        )
-
-        # -------------------------------------------------------------------
-        # Now add the available guided tours to the help menu
-
-        # check that a guided_tour is enabled
-        if current.deployment_settings.get_base_guided_tour():
-            # load the guided tour configuration from the database
-            table = current.s3db.tour_config
-            logged_in = current.auth.is_logged_in()
-            if logged_in:
-                query = (table.deleted == False) &\
-                        (table.role != "")
-            else:
-                query = (table.deleted == False) &\
-                        (table.role == "")
-            tours = current.db(query).select(table.id,
-                                             table.name,
-                                             table.controller,
-                                             table.function,
-                                             table.role,
-                                             )
-            if len(tours) > 0:
-                menu_help.append(SEP())
-            for row in tours:
-                menu_help.append(MM(row.name,
-                                    c = row.controller,
-                                    f = row.function,
-                                    vars = {"tour": row.id},
-                                    restrict = row.role
-                                    )
-                                 )
-
-        return menu_help
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def menu_auth(cls, **attr):
-        """ Auth Menu """
+    def menu_personal(cls):
+        """ Personal Menu """
 
         auth = current.auth
-        logged_in = auth.is_logged_in()
+        #s3 = current.response.s3
         settings = current.deployment_settings
 
-        if not logged_in:
+        ADMIN = current.auth.get_system_roles().ADMIN
+
+        if not auth.is_logged_in():
             request = current.request
             login_next = URL(args=request.args, vars=request.vars)
             if request.controller == "default" and \
@@ -216,176 +176,54 @@ class S3MainMenu(object):
                "_next" in request.get_vars:
                 login_next = request.get_vars["_next"]
 
-            self_registration = settings.get_security_registration_visible()
-            if self_registration == "index":
-                register = MM("Register", c="default", f="index", m="register",
-                               vars={"_next": login_next},
-                               check=self_registration)
-            else:
-                register = MM("Register", m="register",
-                               vars={"_next": login_next},
-                               check=self_registration)
-
-            if settings.get_auth_password_changes() and \
-               settings.get_auth_password_retrieval():
-                lost_pw = MM("Lost Password", m="retrieve_password")
-            else:
-                lost_pw = None
-
-            menu_auth = MM("Login", c="default", f="user", m="login",
-                           _id="auth_menu_login",
-                           vars={"_next": login_next}, **attr)(
-                                MM("Login", m="login",
-                                   vars={"_next": login_next}),
-                                register,
-                                lost_pw,
-                                )
-        else:
-            # Logged-in
-
-            if settings.get_auth_password_changes():
-                change_pw = MM("Change Password", m="change_password")
-            else:
-                change_pw = None
-
-            menu_auth = MM(auth.user.email, c="default", f="user",
-                           translate=False, link=False, _id="auth_menu_email",
-                           **attr)(
-                            MM("Logout", m="logout", _id="auth_menu_logout"),
-                            MM("User Profile", m="profile"),
-                            MM("Personal Data", c="default", f="person", m="update"),
-                            MM("Contact Details", c="pr", f="person",
-                                args="contact",
-                                vars={"person.pe_id" : auth.user.pe_id}),
-                            #MM("Subscriptions", c="pr", f="person",
-                            #    args="pe_subscription",
-                            #    vars={"person.pe_id" : auth.user.pe_id}),
-                            change_pw,
-                            SEP(),
-                            MM({"name": current.T("Rapid Data Entry"),
-                               "id": "rapid_toggle",
-                               "value": current.session.s3.rapid_data_entry is True},
-                               f="rapid"),
+            self_registration = settings.get_security_self_registration()
+            menu_personal = MP()(
+                        MP("Register", c="default", f="user",
+                           m = "register",
+                           check = self_registration,
+                           ),
+                        MP("Login", c="default", f="user",
+                           m = "login",
+                           vars = {"_next": login_next},
+                           ),
                         )
-
-        return menu_auth
+            if settings.get_auth_password_retrieval():
+                menu_personal(MP("Lost Password", c="default", f="user",
+                                 m = "retrieve_password",
+                                 ),
+                              )
+        else:
+            s3_has_role = auth.s3_has_role
+            is_org_admin = lambda i: s3_has_role("ORG_ADMIN", include_admin=False)
+            menu_personal = MP()(
+                        MP("Administration", c="admin", f="index",
+                           restrict = ADMIN,
+                           ),
+                        MP("Administration", c="admin", f="user",
+                           check = is_org_admin,
+                           ),
+                        MP("Profile", c="default", f="person"),
+                        MP("Change Password", c="default", f="user",
+                           m = "change_password",
+                           ),
+                        MP("Logout", c="default", f="user",
+                           m = "logout",
+                           ),
+            )
+        return menu_personal
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_admin(cls, **attr):
-        """ Administrator Menu """
+    def menu_about(cls):
 
-        has_role = current.auth.s3_has_role
-        settings = current.deployment_settings
-        name_nice = settings.modules["admin"].name_nice
-
-        if has_role("ADMIN"):
-            translate = settings.has_module("translate")
-            menu_admin = MM(name_nice, c="admin", **attr)(
-                                MM("Setup", c="setup"),
-                                MM("Settings", f="setting"),
-                                MM("Users", f="user"),
-                                MM("Person Registry", c="pr"),
-                                MM("CMS", c="cms", f="post"),
-                                MM("Database", c="appadmin", f="index"),
-                                MM("Error Tickets", f="errors"),
-                                MM("Synchronization", c="sync", f="index"),
-                                MM("Translation", c="admin", f="translate",
-                                   check=translate),
-                                #MM("Test Results", f="result"),
-                            )
-        elif has_role("ORG_ADMIN"):
-            menu_admin = MM(name_nice, c="admin", f="user", **attr)()
-        else:
-            menu_admin = None
-
-        return menu_admin
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def menu_gis(cls, **attr):
-        """ GIS Config Menu """
-
-        settings = current.deployment_settings
-        if not settings.get_gis_menu():
-            return None
-
-        T = current.T
-        db = current.db
-        auth = current.auth
-        s3db = current.s3db
-        request = current.request
-        s3 = current.session.s3
-        _config = s3.gis_config_id
-
-        # See if we need to switch config before we decide which
-        # config item to mark as active:
-        if "_config" in request.get_vars:
-            # The user has just selected a config from the GIS menu
-            try:
-                config = int(request.get_vars._config)
-            except ValueError:
-                # Manually-crafted URL?
-                pass
-            else:
-                if _config is None or _config != config:
-                    # Set this as the current config
-                    s3.gis_config_id = config
-                    cfg = current.gis.get_config()
-                    s3.location_filter = cfg.region_location_id
-                    if settings.has_module("event"):
-                        # See if this config is associated with an Incident
-                        table = s3db.event_config
-                        query = (table.config_id == config)
-                        incident = db(query).select(table.incident_id,
-                                                    limitby=(0, 1)).first()
-                        if incident:
-                            s3.incident = incident.incident_id
-                        else:
-                            s3.incident = None
-            # Don't use the outdated cache for this call
-            cache = None
-        else:
-            cache = s3db.cache
-
-        # Check if there are multiple GIS Configs for the user to switch between
-        table = s3db.gis_menu
-        ctable = s3db.gis_config
-        query = (table.pe_id == None)
-        if auth.is_logged_in():
-            # @ToDo: Search for OUs too (API call)
-            query |= (table.pe_id == auth.user.pe_id)
-        query &= (table.config_id == ctable.id)
-        configs = db(query).select(ctable.id, ctable.name, cache=cache)
-
-        gis_menu = MM(settings.get_gis_menu(),
-                      c=request.controller,
-                      f=request.function,
-                      **attr)
-        args = request.args
-        if len(configs):
-            # Use short names for the site and personal configs else they'll wrap.
-            # Provide checkboxes to select between pages
-            gis_menu(
-                    MM({"name": T("Default"),
-                        "id": "gis_menu_id_0",
-                        # @ToDo: Show when default item is selected without having
-                        # to do a DB query to read the value
-                        #"value": _config is 0,
-                        "request_type": "load"
-                       }, args=args, vars={"_config": 0}
-                    )
-                )
-            for config in configs:
-                gis_menu(
-                    MM({"name": config.name,
-                        "id": "gis_menu_id_%s" % config.id,
-                        "value": _config == config.id,
-                        "request_type": "load"
-                       }, args=args, vars={"_config": config.id}
-                    )
-                )
-        return gis_menu
+        menu_about = MA(c="default")(
+            MA("Help", f="help"),
+            MA("Contact", f="contact"),
+            #MA("Privacy", f="index", args=["privacy"]),
+            #MA("Legal Notice", f="index", args=["legal"]),
+            MA("Version", f="about", restrict = ("ORG_GROUP_ADMIN")),
+        )
+        return menu_about
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -515,13 +353,13 @@ class S3OptionsMenu(object):
                       #args=[request.application]),
                     M("Translation", c="admin", f="translate", check=translate)(
                        M("Select Modules for translation", c="admin", f="translate",
-                         m="create", vars=dict(opt="1")),
+                         m="create", vars={"opt": "1"}),
                        M("Upload translated files", c="admin", f="translate",
-                         m="create", vars=dict(opt="2")),
+                         m="create", vars={"opt": "2"}),
                        M("View Translation Percentage", c="admin", f="translate",
-                         m="create", vars=dict(opt="3")),
+                         m="create", vars={"opt": "3"}),
                        M("Add strings manually", c="admin", f="translate",
-                         m="create", vars=dict(opt="4"))
+                         m="create", vars={"opt": "4"})
                     ),
                     #M("View Test Result Reports", c="admin", f="result"),
                     #M("Portable App", c="admin", f="portable")
@@ -805,33 +643,11 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def delphi():
-        """ DELPHI / Delphi Decision Maker """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="delphi")(
-                    M("Active Problems", f="problem")(
-                        M("Create", m="create"),
-                    ),
-                    M("Groups", f="group")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Solutions", f="solution"),
-                    #M("Administration", restrict=[ADMIN])(
-                        #M("Groups", f="group"),
-                        #M("Group Memberships", f="membership"),
-                        #M("Problems", f="problem"),
-                    #)
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def deploy():
         """ Deployments """
 
         deploy_team = current.deployment_settings.get_deploy_team_label()
-        team_menu = "%(team)s Members" % dict(team=deploy_team)
+        team_menu = "%(team)s Members" % {"team": deploy_team}
 
         return M()(M("Missions",
                      c="deploy", f="mission", m="summary")(
@@ -931,10 +747,10 @@ class S3OptionsMenu(object):
                         M("List unidentified",
                           vars={"identification.status": "None"}),
                         M("Report by Age/Gender", m="report",
-                          vars=dict(rows="age_group",
-                                    cols="gender",
-                                    fact="count(pe_label)",
-                                    ),
+                          vars={"rows": "age_group",
+                                "cols": "gender",
+                                "fact": "count(pe_label)",
+                                },
                           ),
                     ),
                     M("Missing Persons", f="person")(
@@ -982,22 +798,6 @@ class S3OptionsMenu(object):
                     ),
                     M("Beneficiary Types", f="beneficiary_type")(
                       M("Create", m="create"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def edu():
-        """ Education Module """
-
-        return M()(
-                    M("Schools", c="edu", f="school")(
-                        M("Create", m="create"),
-                        M("Import", m="import", p="create"),
-                    ),
-                    M("School Types", c="edu", f="school_type")(
-                        M("Create", m="create"),
-                        M("Import", m="import", p="create"),
                     ),
                 )
 
@@ -1053,18 +853,8 @@ class S3OptionsMenu(object):
         """ FINANCES """
 
         return M(c="fin")(
-                    # TODO activate via deployment setting:
-                    M("Payment Services", f="payment_service")(
+                    M("Expenses", f="expense")(
                         M("Create", m="create"),
-                        ),
-                    # TODO activate via deployment setting:
-                    M("Products", f="product")(
-                        M("Create", m="create"),
-                        ),
-                    # TODO activate via deployment setting:
-                    M("Subscriptions", link=False)(
-                        M("Plans", f="subscription_plan"),
-                        M("Subscriptions", f="subscription"),
                         ),
                     )
 
@@ -1173,9 +963,9 @@ class S3OptionsMenu(object):
                     ),
                     M("PoIs", c="gis", f="poi", check=pois)(),
                     #M("Population Report", f="location", m="report",
-                    # vars=dict(rows="name",
-                    #           fact="sum(population)",
-                    #           ),
+                    # vars={"rows": name",
+                    #       "fact": "sum(population)",
+                    #       },
                     # ),
                     M("Configuration", c="gis", f="config", args=config_args(),
                       _id="gis_menu_config",
@@ -1382,15 +1172,15 @@ class S3OptionsMenu(object):
                     M("Reports", c="inv", f="inv_item")(
                         M("Warehouse Stock", f="inv_item", m="report"),
                         M("Expiration Report", c="inv", f="track_item",
-                          vars=dict(report="exp")),
+                          vars={"report": "exp"}),
                         M("Monetization Report", c="inv", f="inv_item",
-                          vars=dict(report="mon")),
+                          vars={"report": "mon"}),
                         M("Utilization Report", c="inv", f="track_item",
-                          vars=dict(report="util")),
+                          vars={"report": "util"}),
                         M("Summary of Incoming Supplies", c="inv", f="track_item",
-                          vars=dict(report="inc")),
+                          vars={"report": "inc"}),
                         M("Summary of Releases", c="inv", f="track_item",
-                          vars=dict(report="rel")),
+                          vars={"report": "rel"}),
                     ),
                     M(inv_recv_list, c="inv", f="recv", translate=False)( # Already T()
                         M("Create", m="create"),
@@ -1703,55 +1493,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def po():
-        """ PO / Population Outreach """
-
-        due_followups = current.s3db.po_due_followups()
-        DUE_FOLLOWUPS = current.T("Due Follow-ups")
-        if due_followups:
-            follow_up_label = "%s (%s)" % (DUE_FOLLOWUPS, due_followups)
-        else:
-            follow_up_label = DUE_FOLLOWUPS
-
-        return M(c="po")(
-                    M("Overview", f="index"),
-                    M("Households", f="household", m="summary")(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
-                    ),
-                    M(follow_up_label, f="due_followups",
-                      translate=False,
-                      ),
-                    M("Areas", f="area")(
-                        M("Create", m="create"),
-                    ),
-                    M("Referral Agencies", f="organisation")(
-                        M("Create", m="create"),
-                    ),
-                    M("Emotional Needs", f="emotional_need")(
-                        M("Create", m="create"),
-                    ),
-                    M("Practical Needs", f="practical_need")(
-                        M("Create", m="create"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def police():
-        """ Police """
-
-        return M(c="police")(
-                    M("Police Stations", f="station")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Station Types", f="station_type")(
-                    #    M("Create", m="create"),
-                    #),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def pr():
         """ PR / Person Registry """
 
@@ -2029,93 +1770,11 @@ class S3OptionsMenu(object):
                 )
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def stdm():
-        """ Social Tenure Domain Model """
-        ADMIN = current.session.s3.system_roles.ADMIN
-        has_role = current.auth.s3_has_role
-
-        informal = lambda i: has_role("INFORMAL_SETTLEMENT")
-        gov = lambda i: has_role("LOCAL_GOVERNMENT")
-        rural = lambda i: has_role("RURAL_AGRICULTURE")
-
-        return M(c="stdm")(
-                    M("Administrative Units", c="gis", f="location",
-                                              vars={"~.level__ne": None},
-                      restrict=ADMIN)(
-                        M("Create", m="create",
-                                    vars={"~.level__ne": None}),
-                    ),
-                    #M("Spatial Units", c="gis", f="location",
-                    #                   vars={"~.level": None})(
-                    #    M("Create", m="create", vars={"~.level": None}),
-                    #),
-                    M("Gardens", f="garden",
-                      check=rural)(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
-                    ),
-                    M("Parcels", f="parcel",
-                      check=gov)(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
-                    ),
-                    M("Structures", f="structure",
-                      check=informal)(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
-                    ),
-                    M("Parties")(
-                        M("People", f="person"),
-                        M("Groups", f="group"),
-                        M("Farmers", f="farmer", check=rural),
-                        M("Planners", f="planner", check=gov),
-                        M("Surveyors", f="surveyor", check=gov),
-                    ),
-                    M("Surveys", f="gov_survey", check=gov)(
-                        M("Create", m="create"),
-                    ),
-                    M("Surveys", f="rural_survey", check=rural)(
-                        M("Create", m="create"),
-                    ),
-                    M("Tenures", f="tenure")(
-                        M("Create", m="create"),
-                    ),
-                    M("Lookup Lists", restrict=ADMIN)(
-                        M("Disputes", f="dispute"),
-                        M("Household Relations", f="group_member_role"),
-                        M("Input Services", f="input_service"),
-                        M("Land Uses", f="landuse"),
-                        M("Officer Ranks", f="job_title"),
-                        M("Ownership Types", f="ownership_type"),
-                        M("Parcel Types", f="parcel_type"),
-                        M("Socio-economic Impacts", f="socioeconomic_impact"),
-                        M("Tenure Types", f="tenure_type"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
     def sync(self):
         """ SYNC menu """
 
         # Use admin menu
         return self.admin()
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def tour():
-        """ Guided Tour """
-
-        ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="tour")(
-                    M("Configuration", f="config", restrict=[ADMIN])(
-                        M("Import", m="import", restrict=[ADMIN]),
-                        ),
-                    M("Detail", f="details", restrict=[ADMIN]),
-                    M("User", f="user", restrict=[ADMIN]),
-                )
-
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2166,21 +1825,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def vulnerability():
-        """ Vulnerability """
-
-        return M(c="vulnerability")(
-                    M("Indicators", f="indicator")(
-                        M("Create", m="create"),
-                    ),
-                    M("Data", f="data")(
-                        M("Create", m="create"),
-                        M("Import", m="import"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def water():
         """ Water: Floods, etc """
 
@@ -2204,29 +1848,6 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                         M("Map", m="map"),
                         #M("Import", m="import"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def work():
-        """ WORK: Simple Volunteer Jobs Management """
-
-        return M(c="work")(
-                    # @todo: my jobs
-                    M("Joblist", f="job", m="datalist"),
-                    M("Jobs", f="job")(
-                        M("Create", m="create"),
-                    ),
-                    M("Assignments", f="assignment")(
-                        M("Create", m="create"),
-                    ),
-                    # Hide until implemented:
-                    #M("Contexts", f="context")(
-                    #    M("Create", m="create"),
-                    #),
-                    M("Job Types", f="job_type")(
-                        M("Create", m="create"),
                     ),
                 )
 

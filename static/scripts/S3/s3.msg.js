@@ -1,5 +1,5 @@
 /**
- * Used by the Compose function in Messaging (modules/s3msg.py)
+ * Used by the Compose function in Messaging (modules/core/msg)
  * This script is in Static to allow caching
  * Dynamic constants (e.g. Internationalised strings) are set in server-generated script
  */

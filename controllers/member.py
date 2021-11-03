@@ -34,8 +34,7 @@ def membership_type():
     if not auth.s3_has_role("ADMIN"):
         s3.filter = auth.filter_by_root_org(s3db.member_membership_type)
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def membership():
@@ -48,7 +47,7 @@ def membership():
             if s3.rtl:
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
-                from s3 import s3_phone_represent, S3PhoneWidget
+                from core import s3_phone_represent, S3PhoneWidget
                 f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
                 f.represent = s3_phone_represent
                 f.widget = S3PhoneWidget()
@@ -78,7 +77,7 @@ def membership():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.member_rheader)
+    return crud_controller(rheader=s3db.member_rheader)
 
 # =============================================================================
 def person():
@@ -104,52 +103,47 @@ def person():
 
     # Custom Method for Contacts
     set_method = s3db.set_method
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
     # Custom Method for CV
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "cv",
                # @ToDo: Allow Members to have a CV without enabling HRM?
                action = s3db.hrm_CV)
 
-    # Upload for configuration (add replace option)
-    s3.importerPrep = lambda: \
-        dict(ReplaceOption=T("Remove existing data before import"))
-
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Deletes all Member records of the organisation/branch
             before processing a new data import
         """
-        resource, tree = data
-        xml = current.xml
-        tag = xml.TAG
-        att = xml.ATTRIBUTE
-        if s3.import_replace:
-            if tree is not None:
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        mtable = s3db.member_membership
-                        otable = s3db.org_organisation
-                        query = (otable.name == org_name) & \
-                                (mtable.organisation_id == otable.id)
-                        resource = s3db.resource("member_membership", filter=query)
-                        # Use cascade=True so that the deletion gets
-                        # rolled back if the import fails:
-                        resource.delete(format="xml", cascade=True)
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
+
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    mtable = s3db.member_membership
+                    otable = s3db.org_organisation
+                    query = (otable.name == org_name) & \
+                            (mtable.organisation_id == otable.id)
+                    resource = s3db.resource("member_membership", filter=query)
+                    # Use cascade=True so that the deletion gets
+                    # rolled back if the import fails:
+                    resource.delete(format="xml", cascade=True)
 
     s3.import_prep = import_prep
 
@@ -159,7 +153,7 @@ def person():
             if s3.rtl:
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
-                from s3 import s3_phone_represent, S3PhoneWidget
+                from core import s3_phone_represent, S3PhoneWidget
                 f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
                 f.represent = s3_phone_represent
                 f.widget = S3PhoneWidget()
@@ -195,11 +189,11 @@ def person():
 
     def postp(r, output):
         if r.interactive:
-            if not r.component and "buttons" in output:
+            if not r.component and isinstance(output, dict) and "buttons" in output:
                 # Provide correct list-button (non-native controller)
                 buttons = output["buttons"]
                 if "list_btn" in buttons:
-                    crud_button = r.resource.crud.crud_button
+                    crud_button = s3base.S3CRUD.crud_button
                     buttons["list_btn"] = crud_button(None,
                                                 tablename="member_membership",
                                                 name="label_list_button",
@@ -208,10 +202,9 @@ def person():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("pr", resourcename,
-                                replace_option = T("Remove existing data before import"),
-                                rheader = s3db.member_rheader,
-                                )
-    return output
+    return crud_controller("pr", resourcename,
+                           replace_option = T("Remove existing data before import"),
+                           rheader = s3db.member_rheader,
+                           )
 
 # END =========================================================================

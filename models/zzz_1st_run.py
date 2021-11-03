@@ -133,6 +133,9 @@ if len(pop_list) > 0:
     #ORG_ADMIN = system_roles.ORG_ADMIN
     #ORG_GROUP_ADMIN = system_roles.ORG_GROUP_ADMIN
 
+    # Create indexes for permission table
+    auth.permission.create_indexes()
+
     # =========================================================================
     # Configure Scheduled Tasks
     #
@@ -231,10 +234,6 @@ if len(pop_list) > 0:
     # Budget Module
     if has_module("budget"):
         db.budget_parameter.insert() # Defaults are fine
-
-    # Climate Module
-    if has_module("climate"):
-        s3db.climate_first_run()
 
     # Incident Reporting System
     if has_module("irs"):
@@ -381,13 +380,6 @@ if len(pop_list) > 0:
         start = datetime.datetime.now()
         s3db.stats_demographic_rebuild_all_aggregates()
         duration("Demographic Data aggregation completed", start)
-
-    if has_module("vulnerability"):
-        # Populate vulnerability_aggregate (disabled during prepop)
-        # - needs to be done after locations
-        start = datetime.datetime.now()
-        s3db.vulnerability_rebuild_all_aggregates()
-        duration("Vulnerability data aggregation completed", start)
 
     duration("\nPre-populate complete", grandTotalStart)
 

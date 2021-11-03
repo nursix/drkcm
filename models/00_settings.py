@@ -22,16 +22,6 @@ s3.base_url = "%s/%s" % (settings.get_base_public_url(),
 s3.download_url = "%s/default/download" % s3.base_url
 
 # -----------------------------------------------------------------------------
-# Client tests
-
-# Check whether browser is Mobile & store result in session
-# - commented-out until we make use of it
-#if session.s3.mobile is None:
-#    session.s3.mobile = s3base.s3_is_mobile_client(request)
-#if session.s3.browser is None:
-#    session.s3.browser = s3base.s3_populate_browser_compatibility(request)
-
-# -----------------------------------------------------------------------------
 # Global variables
 
 # Strings to i18n
@@ -57,11 +47,11 @@ for u in messages:
         globals()[u] = T(messages[u])
 
 # CRUD Labels
-s3.crud_labels = Storage(READ=READ,
-                         UPDATE=UPDATE,
-                         DELETE=DELETE,
-                         COPY=COPY,
-                         NONE=NONE,
+s3.crud_labels = Storage(READ = READ,
+                         UPDATE = UPDATE,
+                         DELETE = DELETE,
+                         COPY = COPY,
+                         NONE = NONE,
                          )
 
 # Error Messages
@@ -91,6 +81,7 @@ s3.scripts = []
 s3.scripts_modules = []
 s3.js_global = []
 s3.jquery_ready = []
+#s3.js_foundation = None
 
 # -----------------------------------------------------------------------------
 # Languages
@@ -255,7 +246,7 @@ session.warning = []
 #ORG_GROUP_ADMIN = system_roles.ORG_GROUP_ADMIN
 
 if s3.debug:
-    # Add the developer toolbar from modules/s3/s3utils.py
+    # Add the developer toolbar from core/tools
     s3.toolbar = s3base.s3_dev_toolbar
 
 # -----------------------------------------------------------------------------
@@ -305,6 +296,7 @@ s3.crud_strings = Storage(
     title_update = T("Edit Record"),
     title_map = T("Map"),
     title_report = T("Report"),
+    title_upload = T("Import Records"),
     label_list_button = T("List Records"),
     label_delete_button = T("Delete Record"),
     msg_record_created = T("Record added"),

@@ -87,10 +87,10 @@ def project():
         if r.interactive:
             htable = s3db.table("hrm_human_resource")
             if htable:
-                htable.person_id.comment = DIV(_class="tooltip",
-                                               _title="%s|%s" % (T("Person"),
-                                                                 T("Select the person assigned to this role for this project."),
-                                                                 )
+                htable.person_id.comment = DIV(_class = "tooltip",
+                                               _title = "%s|%s" % (T("Person"),
+                                                                   T("Select the person assigned to this role for this project."),
+                                                                   )
                                                )
 
             if not component:
@@ -117,7 +117,7 @@ def project():
                         field.readable = field.writable = False
 
                 elif r.method == "details":
-                    # Until we can automate this inside s3profile
+                    # Until we can automate this inside methods/profile
                     # - remove the fkey from the list_fields
                     configure = s3db.configure
                     get_config = s3db.get_config
@@ -146,7 +146,8 @@ def project():
                     stable = s3db.project_status
                     status = get_vars.get("project.status_id")
                     row = db(stable.name == status).select(stable.id,
-                                                           limitby=(0, 1)).first()
+                                                           limitby = (0, 1)
+                                                           ).first()
                     if row:
                         r.table.status_id.default = row.id
                         r.table.status_id.writable = False
@@ -165,7 +166,8 @@ def project():
                             (otable.role == lead_role) & \
                             (otable.deleted != True)
                     row = db(query).select(otable.id,
-                                           limitby=(0, 1)).first()
+                                           limitby = (0, 1)
+                                           ).first()
                     if row:
                         # Project has already a lead organisation
                         # => exclude lead_role in component add-form
@@ -286,7 +288,7 @@ def project():
 
                 # Have a filter for indicator in indicator data report
                 #if r.method == "report":
-                #    from s3 import S3OptionsFilter
+                #    from core import S3OptionsFilter
                 #    filter_widgets = [S3OptionsFilter("indicator_id",
                 #                                      label = T("Indicator"),
                 #                                      ),
@@ -413,7 +415,7 @@ def project():
 
                 # @ToDo:
                 #if settings.has_module("budget"):
-                #    from s3 import S3SQLCustomForm, S3SQLInlineComponent
+                #    from core import S3SQLCustomForm, S3SQLInlineComponent
                 #    field = s3db.budget_allocation.budget_entity_id
                 #    field.readable = field.writable = True
                 #    field.represent = S3Represent(lookup="budget_budget", key="budget_entity_id")
@@ -489,14 +491,14 @@ def project():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(module, "project",
-                              csv_template = "project",
-                              hide_filter = {None: False,
-                                             #"indicator_data": False,
-                                             "_default": True,
-                                             },
-                              rheader = s3db.project_rheader,
-                              )
+    return crud_controller(module, "project",
+                           csv_template = "project",
+                           hide_filter = {None: False,
+                                          #"indicator_data": False,
+                                          "_default": True,
+                                          },
+                           rheader = s3db.project_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def open_tasks_for_project():
@@ -527,9 +529,7 @@ def open_tasks_for_project():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(module, "project",
-                              hide_filter = False,
-                              )
+    return crud_controller(module, "project", hide_filter=False)
 
 # -----------------------------------------------------------------------------
 def set_theme_requires(sector_ids):
@@ -591,19 +591,19 @@ def set_activity_type_requires(tablename, sector_ids):
 def sector():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("org", "sector")
+    return crud_controller("org", "sector")
 
 # -----------------------------------------------------------------------------
 def status():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def theme():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def theme_project():
@@ -612,7 +612,7 @@ def theme_project():
         - not normally exposed to users via a menu
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def theme_sector():
@@ -628,21 +628,21 @@ def theme_sector():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def hazard():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def framework():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller(dtargs = {"dt_text_maximum_len": 160},
-                              hide_filter = True,
-                              )
+    return crud_controller(dtargs = {"dt_text_maximum_len": 160},
+                           hide_filter = True,
+                           )
 
 # =============================================================================
 def organisation():
@@ -661,8 +661,8 @@ def organisation():
         #                      args="report", vars=get_vars),
         #             _class="action-btn")
 
-        return s3_rest_controller(#list_btn=list_btn,
-                                  )
+        return crud_controller(#list_btn=list_btn,
+                               )
 
     else:
         # e.g. DRRPP
@@ -671,15 +671,13 @@ def organisation():
                 (T("Contacts"), "human_resource"),
                 ]
         rheader = lambda r: s3db.org_rheader(r, tabs)
-        return s3_rest_controller("org", resourcename,
-                                  rheader = rheader,
-                                  )
+        return crud_controller("org", resourcename, rheader=rheader)
 
 # =============================================================================
 def beneficiary_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def beneficiary():
@@ -713,14 +711,13 @@ def beneficiary():
     #    return True
     #s3.prep = prep
 
-    return s3_rest_controller(hide_filter = False,
-                              )
+    return crud_controller(hide_filter=False)
 
 # =============================================================================
 def activity_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def activity_type_sector():
@@ -736,7 +733,7 @@ def activity_type_sector():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def activity_organisation():
@@ -752,7 +749,7 @@ def activity_organisation():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(module, "activity_organisation")
+    return crud_controller(module, "activity_organisation")
 
 # -----------------------------------------------------------------------------
 def activity():
@@ -794,11 +791,11 @@ def activity():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("project", "activity",
-                              csv_template = "activity",
-                              #hide_filter = False,
-                              rheader = s3db.project_rheader,
-                              )
+    return crud_controller("project", "activity",
+                           csv_template = "activity",
+                           #hide_filter = False,
+                           rheader = s3db.project_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def distribution():
@@ -920,17 +917,17 @@ def location():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(interactive_report = True,
-                              csv_template = "location",
-                              hide_filter = False,
-                              rheader = s3db.project_rheader,
-                              )
+    return crud_controller(interactive_report = True,
+                           csv_template = "location",
+                           hide_filter = False,
+                           rheader = s3db.project_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def demographic():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller("stats", "demographic")
+    return crud_controller("stats", "demographic")
 
 # -----------------------------------------------------------------------------
 def demographic_data():
@@ -942,8 +939,7 @@ def demographic_data():
 def location_contact():
     """ RESTful CRUD controller for Community Contacts """
 
-    return s3_rest_controller(hide_filter = False,
-                              )
+    return crud_controller(hide_filter=False)
 
 # -----------------------------------------------------------------------------
 def report():
@@ -953,7 +949,7 @@ def report():
         @ToDo: Why is this needed? To have no rheader?
     """
 
-    return s3_rest_controller(module, "activity")
+    return crud_controller(module, "activity")
 
 # -----------------------------------------------------------------------------
 def partners():
@@ -1007,7 +1003,7 @@ def task_project():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def task_activity():
@@ -1023,7 +1019,7 @@ def task_activity():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def task_milestone():
@@ -1039,7 +1035,7 @@ def task_milestone():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def task_tag():
@@ -1052,19 +1048,19 @@ def task_tag():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def role():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def member():
     """ RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def milestone():
@@ -1076,13 +1072,13 @@ def milestone():
         field.writable = False
         field.comment = None
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def tag():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def time():
@@ -1144,8 +1140,7 @@ def time():
         delta = month * months
         s3.filter = (table.date > (now - delta))
 
-    return s3_rest_controller(hide_filter = hide_filter,
-                              )
+    return crud_controller(hide_filter=hide_filter)
 
 # =============================================================================
 # Programmes
@@ -1153,20 +1148,20 @@ def time():
 def programme():
     """ RESTful controller for Programmes """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def programme_project():
     """ RESTful controller for Programmes <> Projects """
 
     s3.prep = lambda r: r.method == "options" and r.representation == "s3json"
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def strategy():
     """ RESTful controller for Strategies """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Planning
@@ -1174,17 +1169,17 @@ def strategy():
 def goal():
     """ RESTful controller for Goals """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def outcome():
     """ RESTful controller for Outcomes """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def output():
     """ RESTful controller for Outputs """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def indicator():
     """ RESTful CRUD controller """
@@ -1235,7 +1230,7 @@ def indicator():
                                                 P(record.verification),
                                                 _class="profile-header",
                                                 ),
-                           profile_title = "%s : %s" % (s3_unicode(s3.crud_strings["project_indicator"].title_display),
+                           profile_title = "%s : %s" % (s3_str(s3.crud_strings["project_indicator"].title_display),
                                                         code),
                            profile_widgets = profile_widgets,
                            )
@@ -1262,12 +1257,12 @@ def indicator():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def indicator_data():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def person():
     """ RESTful controller for Community Volunteers """
@@ -1288,7 +1283,7 @@ def volunteer():
 def window():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Comments
@@ -1376,15 +1371,15 @@ def comments():
     field.default = task_id
     field.writable = field.readable = False
 
-    # Create S3Request for S3SQLForm
-    r = s3_request(prefix = "project",
-                   name = "comment",
-                   # Override task_id
-                   args = [],
-                   vars = None,
-                   # Override .loads
-                   extension = "html",
-                   )
+    # Create CRUDRequest for S3SQLForm
+    r = crud_request(prefix = "project",
+                     name = "comment",
+                     # Override task_id
+                     args = [],
+                     vars = None,
+                     # Override .loads
+                     extension = "html",
+                     )
 
     # Customise resource
     r.customise_resource()
@@ -1434,7 +1429,7 @@ $('#submit_record__row input').click(function(){
 def comment():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Campaigns
@@ -1442,31 +1437,31 @@ def comment():
 def campaign():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def campaign_keyword():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def campaign_message():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def campaign_response():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def campaign_response_summary():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def human_resource_project():
@@ -1484,6 +1479,6 @@ def human_resource_project():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

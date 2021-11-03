@@ -20,7 +20,7 @@ def index():
 def debris_basin():
     """ Debris Basins, RESTful controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def gauge():
@@ -53,26 +53,24 @@ def gauge():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller()
-
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def river():
     """ Rivers, RESTful controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def zone():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def zone_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

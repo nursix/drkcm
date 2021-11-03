@@ -43,7 +43,6 @@ def index2():
     if s3.debug:
         # Start of TEST CODE for multiple dataTables,
         #this also required views/inv/index.html to be modified
-        from s3.s3data import S3DataTable
         representation = request.extension
         if representation == "html" or get_vars.id == "warehouse_list_1":
             resource = s3db.resource("inv_warehouse")
@@ -70,7 +69,7 @@ def index2():
                 totalrows = filteredrows
             rfields = data["rfields"]
             rows = data["rows"]
-            dt = S3DataTable(rfields, rows)
+            dt = s3base.S3DataTable(rfields, rows)
             dt.defaultActionButtons(resource)
             if representation == "html":
                 warehouses = dt.html(totalrows,
@@ -146,10 +145,7 @@ def index2():
                                        represent = True)
                 rfields = data["rfields"]
                 rows = data["rows"]
-                dt = S3DataTable(rfields,
-                                 rows,
-                                 orderby = orderby,
-                                 )
+                dt = s3base.S3DataTable(rfields, rows, orderby = orderby)
                 custom_actions = [{"label": s3_str(T("Warehouse")),
                                    "_class": "action-icon",
                                    "img": "/%s/static/img/markers/gis_marker.image.Agri_Commercial_Food_Distribution_Center_S1.png" % appname,
@@ -215,8 +211,7 @@ def index2():
                                    pdf_groupby = "site_id",
                                    )
                     s3.filter = filter
-                    r = s3_request("inv", "inv_item",
-                                   vars={"orderby" : orderby})
+                    r = crud_request("inv", "inv_item", vars={"orderby" : orderby})
                     r.resource = resource
                     output = r(pdf_groupby = "site_id",
                                dt_group = 1,
@@ -244,7 +239,7 @@ def index2():
             rows = data["rows"]
             rfields = data["rfields"]
             numrows = data["numrows"]
-            dt = S3DataTable(rfields, rows)
+            dt = s3base.S3DataTable(rfields, rows)
             dt.defaultActionButtons(resource)
             if representation == "html":
                 supply_items = dt.html(numrows,
@@ -266,7 +261,7 @@ def index2():
                                        dt_action_col = 1,
                                        )
                 return supply_items
-        r = s3_request(prefix = "inv", name = "inv_item")
+        r = crud_request(prefix = "inv", name = "inv_item")
         return {"module_name": module_name,
                 "warehouses": warehouses,
                 "inventory": inventory,
@@ -335,7 +330,6 @@ def warehouse():
                 s3db.org_site_staff_config(r)
 
             elif component_name == "req":
-                s3db.req_prep(r)
                 if r.method != "update" and r.method != "read":
                     # Hide fields which don't make sense in a Create form
                     # inc list_create (list_fields over-rides)
@@ -414,21 +408,20 @@ def warehouse():
     else:
         native = False
 
-    output = s3_rest_controller(module, resourcename,
-                                #hide_filter = {"inv_item": False,
-                                #               "_default": True,
-                                #               },
-                                # Extra fields for CSV uploads:
-                                #csv_extra_fields = [
-                                #         dict(label="Organisation",
-                                #         field=s3db.org_organisation_id(comment=None))
-                                #]
-                                csv_stylesheet = csv_stylesheet,
-                                csv_template = resourcename,
-                                native = native,
-                                rheader = s3db.inv_rheader,
-                                )
-    return output
+    return crud_controller(module, resourcename,
+                           #hide_filter = {"inv_item": False,
+                           #               "_default": True,
+                           #               },
+                           ## Extra fields for CSV uploads:
+                           #csv_extra_fields = [{"label": "Organisation",
+                           #                     "field": s3db.org_organisation_id(comment=None)),
+                           #                     },
+                           #                    ],
+                           csv_stylesheet = csv_stylesheet,
+                           csv_template = resourcename,
+                           native = native,
+                           rheader = s3db.inv_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def warehouse_type():
@@ -436,7 +429,7 @@ def warehouse_type():
         RESTful CRUD controller
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def supplier():
@@ -553,55 +546,52 @@ def inv_item():
     s3.prep = prep
 
     # Import pre-process
-    def import_prep(data):
+    def import_prep(tree):
         """
             Deletes all Stock records of the organisation/branch
             before processing a new data import
         """
-        resource, tree = data
-        xml = current.xml
-        tag = xml.TAG
-        att = xml.ATTRIBUTE
-        if s3.importerReplace:
-            if tree is not None:
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                otable = s3db.org_organisation
-                stable = s3db.org_site
-                itable = s3db.inv_inv_item
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        query = (otable.name == org_name) & \
-                                (stable.organisation_id == otable.id) & \
-                                (itable.site_id == stable.id)
-                        resource = s3db.resource("inv_inv_item", filter=query)
-                        # Use cascade=True so that the deletion gets
-                        # rolled back if the import fails:
-                        resource.delete(format="xml", cascade=True)
-            resource.skip_import = True
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
+
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            otable = s3db.org_organisation
+            stable = s3db.org_site
+            itable = s3db.inv_inv_item
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    query = (otable.name == org_name) & \
+                            (stable.organisation_id == otable.id) & \
+                            (itable.site_id == stable.id)
+                    resource = s3db.resource("inv_inv_item", filter=query)
+                    # Use cascade=True so that the deletion gets
+                    # rolled back if the import fails:
+                    resource.delete(format="xml", cascade=True)
+
     s3.import_prep = import_prep
 
-    # Upload for configuration (add replace option)
-    s3.importerPrep = lambda: {"ReplaceOption": T("Remove existing data before import")}
-
-    output = s3_rest_controller(#csv_extra_fields = [{"label": "Organisation",
-                                #                     "field": s3db.org_organisation_id(comment = None)
-                                #                     },
-                                #                    ],
-                                pdf_orientation = "Landscape",
-                                pdf_table_autogrow = "B",
-                                pdf_groupby = "site_id, item_id",
-                                pdf_orderby = "expiry_date, supply_org_id",
-                                rheader = s3db.inv_rheader,
-                                )
+    output = crud_controller(#csv_extra_fields = [{"label": "Organisation",
+                             #                     "field": s3db.org_organisation_id(comment = None)
+                             #                     },
+                             #                    ],
+                             pdf_orientation = "Landscape",
+                             pdf_table_autogrow = "B",
+                             pdf_groupby = "site_id, item_id",
+                             pdf_orderby = "expiry_date, supply_org_id",
+                             replace_option = T("Remove existing data before import"),
+                             rheader = s3db.inv_rheader,
+                             )
 
     if not settings.get_inv_direct_stock_edits() and \
        isinstance(output, dict) and \
@@ -634,9 +624,9 @@ def track_movement():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller("inv", "track_item",
-                                rheader = s3db.inv_rheader,
-                                )
+    output = crud_controller("inv", "track_item",
+                             rheader = s3db.inv_rheader,
+                             )
     if isinstance(output, dict) and \
        "add_btn" in output:
         del output["add_btn"]
@@ -913,13 +903,13 @@ def set_recv_attr(status):
     """
 
     recvtable = s3db.inv_recv
-    ship_status = s3db.inv_ship_status
     recvtable.sender_id.readable = recvtable.sender_id.writable = False
     recvtable.grn_status.readable = recvtable.grn_status.writable = False
     recvtable.cert_status.readable = recvtable.cert_status.writable = False
     recvtable.eta.readable = False
     recvtable.req_ref.writable = True
-    if status == ship_status["IN_PROCESS"]:
+    inv_ship_status = s3db.inv_ship_status
+    if status == inv_ship_status["IN_PROCESS"]:
         recvtable.send_ref.writable = True
         recvtable.recv_ref.readable = False
         recvtable.sender_id.readable = False
@@ -927,7 +917,7 @@ def set_recv_attr(status):
         # Make all fields writable False
         for field in recvtable.fields:
             recvtable[field].writable = False
-    if status == ship_status["SENT"]:
+    if status == inv_ship_status["SENT"]:
         recvtable.date.writable = True
         recvtable.recipient_id.readable = recvtable.recipient_id.writable = True
         recvtable.comments.writable = True
@@ -946,7 +936,7 @@ def recv():
     auth.permitted_facilities(table=recvtable, error_msg=error_msg)
 
     tracktable = s3db.inv_track_item
-    atable = s3db.inv_adj_item
+    #atable = s3db.inv_adj_item
 
     # The inv_recv record might be created when the shipment is send and so it
     # might not have the recipient identified. If it is null then set it to
@@ -962,19 +952,19 @@ def recv():
         except:
             pass
 
-    status = s3db.inv_ship_status
-    SHIP_STATUS_IN_PROCESS = status["IN_PROCESS"]
-    SHIP_STATUS_SENT = status["SENT"]
-    SHIP_STATUS_RECEIVED = status["RECEIVED"]
-    SHIP_STATUS_CANCEL = status["CANCEL"]
+    inv_ship_status = s3db.inv_ship_status
+    SHIP_STATUS_IN_PROCESS = inv_ship_status["IN_PROCESS"]
+    SHIP_STATUS_SENT = inv_ship_status["SENT"]
+    SHIP_STATUS_RECEIVED = inv_ship_status["RECEIVED"]
+    SHIP_STATUS_CANCEL = inv_ship_status["CANCEL"]
 
-    status = s3db.inv_tracking_status
-    TRACK_STATUS_UNKNOWN    = status["UNKNOWN"]
-    TRACK_STATUS_PREPARING  = status["IN_PROCESS"]
-    TRACK_STATUS_TRANSIT    = status["SENT"]
-    TRACK_STATUS_UNLOADING  = status["UNLOADING"]
-    TRACK_STATUS_ARRIVED    = status["RECEIVED"]
-    TRACK_STATUS_CANCELED   = status["CANCEL"]
+    inv_tracking_status = s3db.inv_tracking_status
+    TRACK_STATUS_UNKNOWN    = inv_tracking_status["UNKNOWN"]
+    TRACK_STATUS_PREPARING  = inv_tracking_status["IN_PROCESS"]
+    TRACK_STATUS_TRANSIT    = inv_tracking_status["SENT"]
+    TRACK_STATUS_UNLOADING  = inv_tracking_status["UNLOADING"]
+    TRACK_STATUS_ARRIVED    = inv_tracking_status["RECEIVED"]
+    TRACK_STATUS_CANCELED   = inv_tracking_status["CANCEL"]
 
     def set_track_attr(status):
         # By default Make all fields writable False
@@ -1046,32 +1036,40 @@ def recv():
                            editable = False,
                            listadd = False,
                            )
-        component = r.component
-        if record and component and component.name == "track_item":
-            # Can only create or delete track items for a recv record
-            # if the status is preparing:
-            if r.method == "create" or r.method == "delete":
-                if record.status != SHIP_STATUS_IN_PROCESS:
-                    return False
 
-            # Configure which fields in track_item are readable/writable
-            # depending on status:
-            if r.component_id:
-                track_record = db(tracktable.id == r.component_id).select(tracktable.status,
-                                                                          limitby = (0, 1)
-                                                                          ).first()
-                set_track_attr(track_record.status)
-            else:
-                set_track_attr(TRACK_STATUS_PREPARING)
-                tracktable.status.readable = False
+        if record and r.component:
+            if r.component_name == "track_item":
+                # Can only create or delete track items for a recv record
+                # if the status is preparing:
+                if r.method == "create" or r.method == "delete":
+                    if record.status != SHIP_STATUS_IN_PROCESS:
+                        return False
 
-            # Adjust CRUD strings
-            if record.status == SHIP_STATUS_IN_PROCESS:
-                s3.crud_strings.inv_recv.title_update = \
-                s3.crud_strings.inv_recv.title_display = T("Process Received Shipment")
+                # Configure which fields in track_item are readable/writable
+                # depending on status:
+                if r.component_id:
+                    track_record = db(tracktable.id == r.component_id).select(tracktable.status,
+                                                                              limitby = (0, 1)
+                                                                              ).first()
+                    set_track_attr(track_record.status)
+                else:
+                    set_track_attr(TRACK_STATUS_PREPARING)
+                    tracktable.status.readable = False
 
-            # Default the Supplier/Donor to the Org sending the shipment
-            tracktable.supply_org_id.default = record.organisation_id
+                # Adjust CRUD strings
+                if record.status == SHIP_STATUS_IN_PROCESS:
+                    s3.crud_strings.inv_recv.title_update = \
+                    s3.crud_strings.inv_recv.title_display = T("Process Received Shipment")
+
+                # Default the Supplier/Donor to the Org sending the shipment
+                tracktable.supply_org_id.default = record.organisation_id
+
+            elif r.component_name == "document":
+                # Simplify a little
+                table = s3db.doc_document
+                table.file.required = True
+                table.url.readable = table.url.writable = False
+                table.date.readable = table.date.writable = False
         else:
             # Configure which fields in inv_recv are readable/writable
             # depending on status
@@ -1086,6 +1084,7 @@ def recv():
                 if r.method and r.method != "read":
                     # Don't want to see in Create forms
                     recvtable.status.readable = False
+
         return True
     s3.prep = prep
 
@@ -1124,9 +1123,7 @@ def recv():
                            listadd = False,
                            )
 
-    output = s3_rest_controller(rheader = s3db.inv_recv_rheader,
-                                )
-    return output
+    return crud_controller(rheader=s3db.inv_recv_rheader)
 
 # -----------------------------------------------------------------------------
 def req_items_for_inv(site_id, quantity_type):
@@ -1225,7 +1222,7 @@ def recv_process():
     """ Receive a Shipment """
 
     try:
-        recv_id = long(request.args[0])
+        recv_id = int(request.args[0])
     except (IndexError, ValueError):
         # recv_id missing from URL or invalid
         redirect(URL(f="recv"))
@@ -1277,7 +1274,7 @@ def recv_process():
 
     # Customise the inv_track_item so templates can customise the onaccept
     tracktable = db.inv_track_item
-    r = s3_request("inv", "track_item", args=[], vars={})
+    r = crud_request("inv", "track_item", args=[], vars={})
     r.customise_resource("inv_track_item")
 
     # Lookup the send_id from a track item of this recv
@@ -1522,9 +1519,7 @@ def track_item():
                        )
         s3.filter = (FS("expiry_date") != None)
 
-    output = s3_rest_controller(rheader = s3db.inv_rheader,
-                                )
-    return output
+    return crud_controller(rheader=s3db.inv_rheader)
 
 # =============================================================================
 def adj():
@@ -1624,9 +1619,7 @@ def adj():
                        listadd = False,
                        )
 
-    output = s3_rest_controller(rheader = s3db.inv_adj_rheader,
-                                )
-    return output
+    return crud_controller(rheader=s3db.inv_adj_rheader)
 
 # -----------------------------------------------------------------------------
 def adj_close():
@@ -1721,6 +1714,7 @@ def recv_item_json():
     except:
         raise HTTP(400, current.xml.json_message(False, 400, "No value provided!"))
 
+    inv_ship_status = s3db.inv_ship_status
     stable = s3db.org_site
     rtable = s3db.inv_recv
     ittable = s3db.inv_track_item
@@ -1730,16 +1724,17 @@ def recv_item_json():
     query = (ittable.req_item_id == item_id) & \
             (rtable.id == ittable.recv_id) & \
             (rtable.site_id == stable.id) & \
-            (rtable.status == s3db.inv_ship_status["RECEIVED"]) & \
+            (rtable.status == inv_ship_status["RECEIVED"]) & \
             (ittable.deleted == False)
     records = db(query).select(rtable.id,
                                rtable.date,
                                stable.name,
-                               ittable.quantity)
+                               ittable.quantity,
+                               )
 
-    output = "[%s,%s" % (json.dumps(dict(id = str(T("Received")),
-                                         quantity = "#"
-                                         )),
+    output = "[%s,%s" % (json.dumps({"id": s3_str(T("Received")),
+                                     "quantity": "#",
+                                     }),
                          records.json()[1:])
 
     response.headers["Content-Type"] = "application/json"
@@ -1758,10 +1753,10 @@ def send_item_json():
     except:
         raise HTTP(400, current.xml.json_message(False, 400, "No value provided!"))
 
+    inv_ship_status = s3db.inv_ship_status
     stable = s3db.org_site
     istable = s3db.inv_send
     ittable = s3db.inv_track_item
-    inv_ship_status = s3db.inv_ship_status
 
     istable.date.represent = lambda dt: dt[:10]
 
@@ -1774,12 +1769,14 @@ def send_item_json():
     records = db(query).select(istable.id,
                                istable.date,
                                stable.name,
-                               ittable.quantity)
+                               ittable.quantity,
+                               )
 
-    output = "[%s,%s" % (json.dumps(dict(id = str(T("Sent")),
-                                         quantity = "#"
-                                         )),
-                         records.json()[1:])
+    output = "[%s,%s" % (json.dumps({"id": s3_str(T("Sent")),
+                                     "quantity": "#",
+                                     }),
+                         records.json()[1:],
+                         )
 
     response.headers["Content-Type"] = "application/json"
     return output
@@ -1787,8 +1784,7 @@ def send_item_json():
 # -----------------------------------------------------------------------------
 def kitting():
 
-    return s3_rest_controller(rheader = s3db.inv_rheader,
-                              )
+    return crud_controller(rheader=s3db.inv_rheader)
 
 # -----------------------------------------------------------------------------
 def facility():
@@ -1802,7 +1798,36 @@ def facility():
 
 # -----------------------------------------------------------------------------
 def facility_type():
-    return s3_rest_controller("org")
+    return crud_controller("org")
+
+# -----------------------------------------------------------------------------
+def project():
+    """
+        Simpler version of Projects for use within Inventory module
+    """
+
+    # Load default Model
+    s3db.project_project
+
+    crud_form = s3base.S3SQLCustomForm("organisation_id",
+                                       "code",
+                                       "name",
+                                       "end_date",
+                                       )
+
+    list_fields = ["organisation_id",
+                   "code",
+                   "name",
+                   "end_date",
+                   ]
+
+    s3db.configure("project_project",
+                   crud_form = crud_form,
+                   filter_widgets = None,
+                   list_fields = list_fields,
+                   )
+
+    return crud_controller("project")
 
 # -----------------------------------------------------------------------------
 def incoming():

@@ -216,8 +216,10 @@ body.rtl .username i.icon, body.rtl .username i.fa {
 #poweredby {
   margin-right: 0.5rem;
   text-align: right;
+  color: #999;
+  font-size: 0.8rem;
 }
-/* line 184, ../../default/scss/theme/_page.scss */
+/* line 186, ../../default/scss/theme/_page.scss */
 #poweredby a {
   color: #999;
   text-decoration: none;
@@ -225,24 +227,24 @@ body.rtl .username i.icon, body.rtl .username i.fa {
   margin-left: 0.2rem;
 }
 
-/* line 192, ../../default/scss/theme/_page.scss */
+/* line 194, ../../default/scss/theme/_page.scss */
 body.rtl #poweredby {
   text-align: left;
 }
 
-/* line 198, ../../default/scss/theme/_page.scss */
+/* line 200, ../../default/scss/theme/_page.scss */
 .sub-nav.about-menu {
   color: #999;
   text-align: left;
   margin-left: 0;
   margin-right: 0;
 }
-/* line 200, ../../default/scss/theme/_page.scss */
+/* line 202, ../../default/scss/theme/_page.scss */
 .sub-nav.about-menu a {
   color: #999;
 }
 
-/* line 208, ../../default/scss/theme/_page.scss */
+/* line 210, ../../default/scss/theme/_page.scss */
 body.rtl .about-menu {
   text-align: right;
 }

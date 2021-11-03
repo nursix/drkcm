@@ -16,7 +16,7 @@ def drk_cr_rheader(r, tabs=None):
         # Resource headers only used in interactive views
         return None
 
-    from s3 import s3_rheader_resource, S3ResourceHeader
+    from core import s3_rheader_resource, S3ResourceHeader
 
     tablename, record = s3_rheader_resource(r)
     if tablename != r.tablename:
@@ -58,9 +58,9 @@ def drk_dvr_rheader(r, tabs=None):
         # Resource headers only used in interactive views
         return None
 
-    from s3 import s3_rheader_resource, \
-                   S3ResourceHeader, \
-                   s3_fullname
+    from core import s3_rheader_resource, \
+                     S3ResourceHeader, \
+                     s3_fullname
     from .uioptions import get_ui_options
 
     tablename, record = s3_rheader_resource(r)
@@ -273,7 +273,7 @@ def drk_dvr_rheader(r, tabs=None):
                             )
 
             # Add profile picture
-            from s3 import s3_avatar_represent
+            from core import s3_avatar_represent
             rheader.insert(0, A(s3_avatar_represent(record_id,
                                                     "pr_person",
                                                     _class = "rheader-avatar",
@@ -315,7 +315,7 @@ def drk_org_rheader(r, tabs=None):
         # Resource headers only used in interactive views
         return None
 
-    from s3 import s3_rheader_resource, s3_rheader_tabs, S3ResourceHeader
+    from core import s3_rheader_resource, s3_rheader_tabs, S3ResourceHeader
     from .uioptions import get_ui_options
 
     s3db = current.s3db

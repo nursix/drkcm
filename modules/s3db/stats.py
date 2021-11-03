@@ -46,12 +46,11 @@ import json
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
-from s3compat import basestring, xrange
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3StatsModel(S3Model):
+class S3StatsModel(DataModel):
     """
         Statistics Data
     """
@@ -87,10 +86,7 @@ class S3StatsModel(S3Model):
                            # @ToDo; Deprecate
                            stats_people_type = T("Types of People"),
                            supply_distribution_item = T("Distribution Item"),
-                           vulnerability_indicator = T("Vulnerability Indicator"),
-                           vulnerability_aggregated_indicator = T("Vulnerability Aggregated Indicator"),
                            #survey_question_type = T("Survey Question Type"),
-                           #climate_parameter = T("Climate Parameter"),
                            )
 
         tablename = "stats_parameter"
@@ -124,9 +120,7 @@ class S3StatsModel(S3Model):
                            # @ToDo: Deprecate
                            stats_people = T("People"),
                            supply_distribution = T("Distribution"),
-                           vulnerability_data = T("Vulnerability Data"),
                            #survey_answer = T("Survey Answer"),
-                           #climate_data = T("Climate Data"),
                            )
 
         accuracy_opts = {1 : T("Official Measurement"),
@@ -237,7 +231,7 @@ class S3StatsModel(S3Model):
                 }
 
 # =============================================================================
-class S3StatsDemographicModel(S3Model):
+class S3StatsDemographicModel(DataModel):
     """
         Baseline Demographics
 
@@ -555,10 +549,7 @@ class S3StatsDemographicModel(S3Model):
     def defaults(self):
         """ Safe defaults if module is disabled """
 
-        return {"stats_demographic_id": S3ReusableField("parameter_id", "integer",
-                                                        readable = False,
-                                                        writable = False,
-                                                        ),
+        return {"stats_demographic_id": S3ReusableField.dummy("parameter_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -685,7 +676,7 @@ class S3StatsDemographicModel(S3Model):
         (last_period, year_end) = aggregated_period(None)
 
         # Test to see which date format we have based on how we were called
-        if isinstance(records, basestring):
+        if isinstance(records, str):
             from_json = True
             from dateutil.parser import parse
             records = json.loads(records)
@@ -1182,8 +1173,7 @@ def stats_demographic_data_controller():
     request = current.request
     if "options.s3json" in request.args:
         # options.s3json lookups for AddResourceLink
-        output = current.rest_controller("stats", "demographic_data")
-        return output
+        return current.crud_controller("stats", "demographic_data")
 
     # Only viewing is valid
     get_vars = request.get_vars
@@ -1224,14 +1214,12 @@ def stats_demographic_data_controller():
     else:
         rheader = None
 
-    output = current.rest_controller("stats", "demographic_data",
-                                     rheader = rheader,
-                                     )
-
-    return output
+    return current.crud_controller("stats", "demographic_data",
+                                   rheader = rheader,
+                                   )
 
 # =============================================================================
-class S3StatsImpactModel(S3Model):
+class S3StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
@@ -1363,7 +1351,7 @@ class S3StatsImpactModel(S3Model):
                 }
 
 # =============================================================================
-class S3StatsPeopleModel(S3Model):
+class S3StatsPeopleModel(DataModel):
     """
         Used to record people in the CRMT (Community Resilience Mapping Tool) template
 
@@ -1519,7 +1507,7 @@ class S3StatsPeopleModel(S3Model):
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def stats_quantile(data, q):
@@ -1596,7 +1584,7 @@ def stats_year(row, tablename):
     elif start_date is NOT_PRESENT or not start_date :
         return [end_date.year]
     else:
-        return list(xrange(start_date.year, end_date.year + 1))
+        return list(range(start_date.year, end_date.year + 1))
 
 # =============================================================================
 def stats_year_options(tablename):
@@ -1653,7 +1641,7 @@ def stats_year_options(tablename):
     if not start_year or not end_year:
         return {start_year:start_year} or {end_year:end_year}
     years = {}
-    for year in xrange(start_year, end_year + 1):
+    for year in range(start_year, end_year + 1):
         years[year] = year
     return years
 

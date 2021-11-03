@@ -308,19 +308,12 @@ body.rtl {
     border: 1px solid #EEE;
     background-color: #ec9;
 }
-.auth_register {
-    .subheading {
-        background-color: #EEE;
-        font-size: 1rem;
-        border-top: solid 1px #ccc;
-        border-left: solid 1px #ccc;
-        margin: 0.7rem 0;
-        padding: 0.5rem 0.3rem 0.3rem 0.5rem;
-    }
+.auth_register,
+.result-register {
     .subheading,
-    .consent-widget,
-    .controls {
-        max-width: 48rem;
+    .form-row,
+    .consent-widget {
+        max-width: 48rem!important;
     }
     padding: 1rem!important;
 }
@@ -397,9 +390,125 @@ body.rtl {
 .service-list {
     font-size: 0.8rem;
     list-style-type: disc;
-    list-style-position: inside;
+    list-style-position: outside;
     padding: 0;
     margin: 0;
+    vertical-align: top;
+    li {
+        margin: 0 0 0 0.4rem;
+    }
+}
+.approve-form {
+    select {
+        margin: 0;
+    }
+}
+.approve-workflow {
+    &.workflow-red {
+        color: #c42626;
+    }
+    &.workflow-amber {
+        color: #ec8d27;
+    }
+    &.workflow-green {
+        color: green;
+    }
+    &.workflow-advice {
+        border: 1px solid #c42626;
+        background-color: #ffdede;
+        padding: 0.3rem 0.7rem;
+    }
+    .fa {
+        margin-right: 0.2rem;
+    }
+    margin-left: 0.5rem;
+}
+
+.text-body.cms-item-body {
+    background-color: #FFF8E6;
+    padding: 0.7rem;
+    max-width: 48rem;
+}
+
+.form-row .cwa-details,
+.form-row .cwa-qrcode {
+    display: inline-block;
+    vertical-align: top;
+}
+.form-row .cwa-details {
+    table {
+        border: none;
+        margin-right: 2.5rem;
+        tr td {
+            padding: 0.5rem;
+            &.cwa-data {
+                font-weight: bold;
+            }
+        }
+    }
+}
+.form-row .cwa-qrcode {
+    margin: 1px solid black;
+    padding-bottom: 0.2rem;
+    .cwa-qrcode-title {
+        width: 100%;
+        text-align: center;
+    }
+}
+.charge-warn {
+    color: $alert-color;
+    font-weight: bold;
+    i.fa {
+        margin-left: 0.2rem;
+    }
+}
+.free-hint {
+    color: #C0C0C0;
+}
+#site-intro {
+    margin-top: 2rem;
+    .callout-box {
+        margin: 1rem 0;
+        font-size: 0.9rem;
+        line-height: 1.2rem;
+        border: 2px solid #668b99;
+        padding: 0.8rem;
+    }
+}
+#site-actions {
+    .button i.fa {
+        font-size: 1.2rem;
+        margin: 0 0.5rem;
+    }
+}
+
+.overview-totals,
+.overview-intro,
+.overview-charts,
+.overview-table {
+    text-align: center;
+    h2 {
+        font-size: 1.2rem !important;
+        background-color: transparent !important;
+    }
+}
+
+.overview-totals p {
+    font-size: 2.7rem;
+    line-height: 3.5rem;
+    font-weight: bold;
+    color: #406080;
+}
+.olFramedCloudPopupContent ul {
+    list-style-type: disc;
+    list-style-position: outside;
+    .mpinfo {
+        font-size: 0.8rem;
+    }
+    .mptitle {
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
 }
 
 // END ========================================================================

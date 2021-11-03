@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import current
-from s3 import *
+from core import *
 from s3layouts import *
 try:
     from .layouts import *
@@ -278,7 +278,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Overviews", c=("dvr", "pr"), link=False)(
                         M("Current Cases", f="person", t="dvr_case",
                           vars = {"closed": "0"},
-                          check = case_collaboration,
+                          check = not case_collaboration,
                           ),
                         M("All Cases", f="person", t="dvr_case"),
                         M("All Activities", f="case_activity", t="dvr_case_activity"),

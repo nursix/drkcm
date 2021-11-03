@@ -3,10 +3,10 @@
 import os
 import sys
 
+from importlib import reload
+
 from gluon import current
 from gluon.storage import Storage
-
-from s3compat import reload
 
 __all__ = ("PluginLoader",
            )

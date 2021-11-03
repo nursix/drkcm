@@ -63,10 +63,11 @@ import string
 import sys
 import time
 
+from collections import OrderedDict
+
 from gluon import *
 
-from ..s3 import *
-from s3compat import basestring
+from ..core import *
 
 TIME_FORMAT = "%b %d %Y %H:%M:%S"
 MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
@@ -88,7 +89,7 @@ INSTANCE_TYPES = {1: "prod",
                   }
 
 # =============================================================================
-class S3DNSModel(S3Model):
+class S3DNSModel(DataModel):
     """
         Domain Name System (DNS) Providers
         - super-entity
@@ -201,7 +202,7 @@ class S3GandiDNSModel(S3DNSModel):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
 class S3GoDaddyDNSModel(S3DNSModel):
@@ -250,10 +251,10 @@ class S3GoDaddyDNSModel(S3DNSModel):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
 # =============================================================================
-class S3CloudModel(S3Model):
+class S3CloudModel(DataModel):
     """
         Clouds
         - super-entity
@@ -385,7 +386,7 @@ class S3AWSCloudModel(S3CloudModel):
                            default = "eu-west-2", # Europe (London)
                            #label = T("Region"),
                            #requires = IS_IN_SET(aws_regions),
-                           #represent = S3Represent(options = aws_regions)
+                           #represent = represent_option(aws_regions)
                            ),
                      Field("instance_type",
                            default = "t3.micro",
@@ -417,7 +418,7 @@ class S3AWSCloudModel(S3CloudModel):
                   )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -450,6 +451,10 @@ class S3AWSCloudModel(S3CloudModel):
                                       stable.name,
                                       limitby = (0, 1)
                                       ).first()
+
+        if not deployment:
+            # Not a Cloud deployment
+            return
 
         server_name = deployment["setup_server.name"]
         cloud = deployment["setup_aws_cloud"]
@@ -568,7 +573,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                            #requires = IS_IN_SET(openstack_instance_types), # Varies by Deployment
                            ),
                      Field("image",
-                           default = "Debian 10.1", # Varies by Deployment, this matches OSUOSL
+                           default = "Debian 10.7", # Varies by Deployment, this matches OSUOSL
                            #label = T("Image"), # Image Name or ID
                            ),
                      Field("volume_size", "integer",
@@ -587,7 +592,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                            default = "RegionOne", # Varies by Deployment, this matches OSUOSL
                            #label = T("Region"),
                            #requires = IS_IN_SET(openstack_regions), # Varies by Deployment
-                           #represent = S3Represent(options = aws_regions)
+                           #represent = represent_option(aws_regions)
                            ),
                      Field("availability_zone",
                            default = "nova", # Varies by Deployment, this matches OSUOSL
@@ -600,7 +605,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                   )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -674,7 +679,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                                      )
 
 # =============================================================================
-class S3EmailProviderModel(S3Model):
+class S3EmailProviderModel(DataModel):
     """
         Email Providers (we just use Groups currently)
         - super-entity
@@ -824,7 +829,7 @@ class S3GoogleEmailModel(S3EmailProviderModel):
                   )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -878,7 +883,7 @@ class S3GoogleEmailModel(S3EmailProviderModel):
         os.unlink(creds_path)
 
 # =============================================================================
-class S3SMTPModel(S3Model):
+class S3SMTPModel(DataModel):
     """
         SMTP Smart Hosts
         - tested with:
@@ -956,7 +961,7 @@ class S3SMTPModel(S3Model):
                 }
 
 # =============================================================================
-class S3SetupDeploymentModel(S3Model):
+class S3SetupDeploymentModel(DataModel):
 
     names = ("setup_deployment",
              "setup_deployment_id",
@@ -1030,7 +1035,7 @@ class S3SetupDeploymentModel(S3Model):
                      Field("webserver_type", "integer",
                            default = 3,
                            label = T("Web Server"),
-                           represent = S3Represent(options = WEB_SERVERS),
+                           represent = represent_option(WEB_SERVERS),
                            requires = IS_IN_SET(WEB_SERVERS),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Web Server"),
@@ -1041,7 +1046,7 @@ class S3SetupDeploymentModel(S3Model):
                      Field("db_type", "integer",
                            default = 2,
                            label = T("Database"),
-                           represent = S3Represent(options = DB_SERVERS),
+                           represent = represent_option(DB_SERVERS),
                            requires = IS_IN_SET(DB_SERVERS),
                            writable = False,
                            comment = DIV(_class="tooltip",
@@ -1117,7 +1122,7 @@ class S3SetupDeploymentModel(S3Model):
                        setup_setting = "deployment_id",
                        )
 
-        set_method("setup", "deployment",
+        set_method("setup_deployment",
                    method = "wizard",
                    action = self.setup_server_wizard)
 
@@ -1177,7 +1182,7 @@ class S3SetupDeploymentModel(S3Model):
                      Field("role", "integer",
                            default = 1,
                            label = T("Role"),
-                           represent = S3Represent(options = SERVER_ROLES),
+                           represent = represent_option(SERVER_ROLES),
                            requires = IS_IN_SET(SERVER_ROLES),
                            writable = False,
                            comment = DIV(_class="tooltip",
@@ -1258,15 +1263,15 @@ class S3SetupDeploymentModel(S3Model):
                                     sortby = "name",
                                     )
 
-        set_method("setup", "server",
+        set_method("setup_server",
                    method = "enable",
                    action = setup_monitor_server_enable_interactive)
 
-        set_method("setup", "server",
+        set_method("setup_server",
                    method = "disable",
                    action = setup_monitor_server_disable_interactive)
 
-        set_method("setup", "server",
+        set_method("setup_server",
                    method = "check",
                    action = setup_monitor_server_check)
 
@@ -1276,7 +1281,7 @@ class S3SetupDeploymentModel(S3Model):
         # @ToDo: Allow a Test instance to source Prod data from a different deployment
         #        - to allow it to be run on different hosts (or even different cloud)
         #
-        type_represent = S3Represent(options = INSTANCE_TYPES)
+        type_represent = represent_option(INSTANCE_TYPES)
 
         tablename = "setup_instance"
         define_table(tablename,
@@ -1394,38 +1399,38 @@ class S3SetupDeploymentModel(S3Model):
                   update_onaccept = self.setup_instance_update_onaccept,
                   )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "deploy",
                    action = self.setup_instance_deploy,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "settings",
                    action = self.setup_instance_settings,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "start",
                    action = self.setup_instance_start,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "stop",
                    action = self.setup_instance_stop,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "clean",
                    action = self.setup_instance_clean,
                    )
 
-        set_method("setup", "deployment",
-                   component_name = "instance",
+        set_method("setup_deployment",
+                   component = "instance",
                    method = "wizard",
                    action = self.setup_instance_wizard,
                    )
@@ -1479,8 +1484,8 @@ class S3SetupDeploymentModel(S3Model):
             msg_record_deleted = T("Setting deleted"),
             msg_list_empty = T("No Settings currently registered"))
 
-        set_method("setup", "deployment",
-                   component_name = "setting",
+        set_method("setup_deployment",
+                   component = "setting",
                    method = "apply",
                    action = self.setup_setting_apply_interactive,
                    )
@@ -1758,7 +1763,7 @@ class S3SetupDeploymentModel(S3Model):
         server = current.db(table.id == row.id).select(table.host_ip,
                                                        limitby = (0, 1)
                                                        ).first()
-        if server.host_ip != "127.0.0.1":
+        if server.host_ip not in ("127.0.0.1", None):
             # Cleanup known_hosts as it will change for a new deployment
             import subprocess
             command = ["ssh-keygen",
@@ -1824,7 +1829,7 @@ dropdown.change(function() {
 
         from gluon import DIV, IS_IN_SET, SQLFORM
         from gluon.sqlhtml import RadioWidget
-        from s3 import s3_mark_required
+        from core import s3_mark_required
         from s3dal import Field
 
         T = current.T
@@ -1842,7 +1847,7 @@ dropdown.change(function() {
             module = page.get("module")
             if not module or has_module(module):
                 aappend(page)
-        
+
         current_page = int(r.get_vars.get("page", 1))
         last_page = len(active_pages)
 
@@ -2276,7 +2281,7 @@ dropdown.change(function() {
                      )
 
 # =============================================================================
-class S3SetupMonitorModel(S3Model):
+class S3SetupMonitorModel(DataModel):
 
     names = ("setup_monitor_server",
              "setup_monitor_check",
@@ -2508,15 +2513,15 @@ class S3SetupMonitorModel(S3Model):
                        setup_monitor_run = "task_id",
                        )
 
-        set_method("setup", "monitor_task",
+        set_method("setup_monitor_task",
                    method = "enable",
                    action = setup_monitor_task_enable_interactive)
 
-        set_method("setup", "monitor_task",
+        set_method("setup_monitor_task",
                    method = "disable",
                    action = setup_monitor_task_disable_interactive)
 
-        set_method("setup", "monitor_task",
+        set_method("setup_monitor_task",
                    method = "check",
                    action = setup_monitor_task_run)
 
@@ -2587,7 +2592,7 @@ class S3SetupMonitorModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3752,7 +3757,7 @@ def setup_instance_deploy(deployment_id, instance_id, folder):
                 access_key = cloud.access_key
                 secret_key = cloud.secret_key
                 cloud_server = server["setup_aws_server"]
-                
+
             elif cloud_type == "setup_openstack_cloud":
                 auth = {"auth_url": cloud.auth_url,
                         "username": cloud.username,
@@ -4306,7 +4311,7 @@ output = json""" % region)
     # Link scheduled task to current record
     # = allows us to monitor deployment progress
     db(itable.id == instance_id).update(task_id = task_id)
-    
+
 # =============================================================================
 def setup_instance_settings_read(instance_id, deployment_id):
     """
@@ -4367,7 +4372,7 @@ def setup_instance_settings_read(instance_id, deployment_id):
     from gluon.serializers import json as jsons # Need support for T()
     for setting in file_settings:
         current_value = file_settings[setting]
-        if not isinstance(current_value, basestring):
+        if not isinstance(current_value, str):
             # NB Storage & OrderedDict will come out as dict
             current_value = jsons(current_value)
         s = db_get(setting)

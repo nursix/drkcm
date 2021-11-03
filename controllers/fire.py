@@ -58,13 +58,13 @@ def index():
 def zone():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def zone_type():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def station():
@@ -101,9 +101,9 @@ def station():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = fire_rheader,
-                              csv_extra_fields = csv_extra_fields,
-                              )
+    return crud_controller(rheader = fire_rheader,
+                           csv_extra_fields = csv_extra_fields,
+                           )
 
 # -----------------------------------------------------------------------------
 def station_vehicle():
@@ -111,31 +111,31 @@ def station_vehicle():
 
     s3.prep = lambda r: r.method == "import"
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def water_source():
     """ Water Sources """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def hazard_point():
     """ Hazard Points """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person():
     """ Person Controller for Ajax Requests """
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def ireport_vehicle():
     """ REST controller """
 
-    return s3_rest_controller("irs", "ireport_vehicle")
+    return crud_controller("irs", "ireport_vehicle")
 
 # -----------------------------------------------------------------------------
 def fire_rheader(r, tabs=[]):

@@ -58,8 +58,6 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    # 8: Apply Controller, Function, Table ACLs, Entity Realm + Hierarchy and Delegations
-
     settings.security.policy = 6 # Controller, Function, Table ACLs and Entity Realm
 
     # L10n settings
@@ -157,10 +155,6 @@ def config(settings):
         #    restricted = True,
         #    access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
         #    module_type = None  # This item is handled separately for the menu
-        #)),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
         #)),
         #("translate", Storage(
         #    name_nice = T("Translation Functionality"),
@@ -283,7 +277,7 @@ def config(settings):
                 query = (ttable.template_id == row.id) & \
                         (ltable.target_id == ttable.id) & \
                         (ltable.project_id == ptable.id)
-                
+
             project = current.db(query).select(ptable.realm_entity,
                                                limitby = (0, 1)
                                                ).first()
@@ -310,7 +304,7 @@ def config(settings):
 
         # Need to use this format as otherwise req_match?viewing=org_office.x
         # doesn't have an rheader
-        from s3 import s3_rheader_resource, s3_rheader_tabs
+        from core import s3_rheader_resource, s3_rheader_tabs
         tablename, record = s3_rheader_resource(r)
 
         if record is None:
@@ -424,7 +418,7 @@ def config(settings):
             languages = []
 
             # Use translated language names
-            from s3 import IS_ISO639_2_LANGUAGE_CODE, s3_str
+            from core import IS_ISO639_2_LANGUAGE_CODE, s3_str
             represent = IS_ISO639_2_LANGUAGE_CODE.represent_local
 
             # Look up the languages
@@ -454,7 +448,7 @@ def config(settings):
     def customise_dc_question_resource(r, tablename):
 
         from gluon import IS_IN_SET
-        from s3 import S3Represent, S3SQLCustomForm
+        from core import S3Represent, S3SQLCustomForm
 
         crud_form = S3SQLCustomForm((T("Type"), "field_type"),
                                     (T("Question"), "name"),
@@ -496,16 +490,16 @@ def config(settings):
         from templates.UCCE.controllers import dc_QuestionSave
 
         set_method = current.s3db.set_method
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "create_json",
                    action = dc_QuestionCreate())
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "image_delete",
                    action = dc_QuestionImageDelete())
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "image_upload",
                    action = dc_QuestionImageUpload())
-        set_method("dc", "question",
+        set_method("dc_question",
                    method = "update_json",
                    action = dc_QuestionSave())
 
@@ -605,7 +599,7 @@ def config(settings):
     def customise_dc_target_resource(r, tablename):
 
         from gluon import IS_EMPTY_OR, URL
-        from s3 import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
+        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
 
         from templates.UCCE.controllers import dc_target_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -681,28 +675,28 @@ def config(settings):
         from templates.UCCE.controllers import dc_TargetReportFilters
 
         set_method = current.s3db.set_method
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "activate",
                    action = dc_TargetActivate())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "deactivate",
                    action = dc_TargetDeactivate())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "delete_confirm",
                    action = dc_TargetDelete())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "edit_confirm",
                    action = dc_TargetEdit())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "name",
                    action = dc_TargetName())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "l10n",
                    action = dc_TargetL10n())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "report_custom",
                    action = dc_TargetReport())
-        set_method("dc", "target",
+        set_method("dc_target",
                    method = "report_filters",
                    action = dc_TargetReportFilters())
 
@@ -719,7 +713,7 @@ def config(settings):
 
             if r.method == "datalist":
                 # Filter out Draft Surveys
-                from s3 import FS
+                from core import FS
                 r.resource.add_filter(FS("status") != 1)
 
             return result
@@ -792,19 +786,19 @@ def config(settings):
         from templates.UCCE.controllers import dc_TemplateSave
 
         set_method = s3db.set_method
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "editor",
                    action = dc_TemplateEditor())
 
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "export_l10n",
                    action = dc_TemplateExportL10n())
 
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "upload_l10n",
                    action = dc_TemplateImportL10n())
 
-        set_method("dc", "template",
+        set_method("dc_template",
                    method = "update_json",
                    action = dc_TemplateSave())
 
@@ -900,7 +894,7 @@ def config(settings):
     def customise_doc_document_resource(r, tablename):
 
         from gluon import URL
-        from s3 import S3SQLCustomForm, S3TextFilter
+        from core import S3SQLCustomForm, S3TextFilter
 
         from templates.UCCE.controllers import doc_document_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -962,7 +956,7 @@ def config(settings):
             if r.method == "datalist":
                 if "showadd_btn" in output:
                     from gluon import A, SPAN, URL
-                    from s3 import ICON
+                    from core import ICON
                     output["showadd_btn"] = A(ICON("plus"),
                                               SPAN(T("New guide")),
                                               _class = "add-btn no-link s3_modal",
@@ -1092,7 +1086,7 @@ def config(settings):
     def customise_project_project_resource(r, tablename):
 
         from gluon import IS_EMPTY_OR, URL
-        from s3 import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
+        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
 
         from templates.UCCE.controllers import project_project_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -1173,7 +1167,7 @@ def config(settings):
         from templates.UCCE.controllers import dc_ProjectDelete
 
         s3db = current.s3db
-        s3db.set_method("project", "project",
+        s3db.set_method("project_project",
                         method = "delete_confirm",
                         action = dc_ProjectDelete())
 
@@ -1190,10 +1184,7 @@ def config(settings):
 
             if r.id and not r.component and r.representation == "xls":
                 # Custom XLS Exporter to include all Responses.
-                r.set_handler("read", s3db.dc_TargetXLS(),
-                              http = ("GET", "POST"),
-                              representation = "xls"
-                              )
+                r.custom_action = s3db.dc_TargetXLS
             elif r.component_name == "target":
                 ltable = s3db.project_l10n
                 l10n = current.db(ltable.project_id == r.id).select(ltable.language,
@@ -1201,7 +1192,7 @@ def config(settings):
                                                                     ).first()
                 if l10n:
                     s3db.dc_target_l10n.language.default = l10n.language
-            
+
             elif r.method == "datalist":
                 # Over-ride list_fields set in default prep
                 s3db.configure("project_project",
@@ -1229,7 +1220,7 @@ def config(settings):
             if r.method == "datalist":
                 if "showadd_btn" in output:
                     from gluon import A, SPAN, URL
-                    from s3 import ICON
+                    from core import ICON
                     output["showadd_btn"] = A(ICON("plus"),
                                               SPAN(T("New project")),
                                               _class = "add-btn no-link s3_modal",

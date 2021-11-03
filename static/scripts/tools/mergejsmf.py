@@ -78,8 +78,6 @@ import re
 import os
 import sys
 
-PY2 = sys.version_info[0] == 2
-
 SUFFIX_JAVASCRIPT = ".js"
 
 RE_REQUIRE = "@requires (.*)\n" # TODO: Ensure in comment?
@@ -198,12 +196,8 @@ def getFiles(configDict, configFile = None):
         else:
             filekey = "."
         fullpath = os.path.join(configDict[filekey], filepath)
-        if PY2:
-            with open(fullpath, "U") as infile:
-                content = infile.read()
-        else:
-            with open(fullpath, "rt", encoding="utf-8") as infile:
-                content = infile.read()
+        with open(fullpath, "rt", encoding="utf-8") as infile:
+            content = infile.read()
         #content = open(fullpath, "U").read() # TODO: Ensure end of line @ EOF?
         files[filepath] = SourceFile(filepath, content) # TODO: Chop path?
 
@@ -239,12 +233,8 @@ def getFiles(configDict, configFile = None):
                     else:
                         filekey = "."
                     fullpath = os.path.join(configDict[filekey], filepath)
-                    if PY2:
-                        with open(fullpath, "U") as infile:
-                            content = infile.read()
-                    else:
-                        with open(fullpath, "rt", encoding="utf-8") as infile:
-                            content = infile.read()
+                    with open(fullpath, "rt", encoding="utf-8") as infile:
+                        content = infile.read()
                     #content = open(fullpath, "U").read() # TODO: Ensure end of line @ EOF?
                     files[filepath] = SourceFile(filepath, content) # TODO: Chop path?
 

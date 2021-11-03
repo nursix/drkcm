@@ -31,14 +31,14 @@ def config():
     s3.postp = postp
 
     # Can't do anything else than update here
-    r = s3_request(args=[str(record_id), "update"], extension="html")
+    r = crud_request(args=[str(record_id), "update"], extension="html")
     return r()
 
 # -----------------------------------------------------------------------------
 def repository():
     """ Repository Management Controller """
 
-    s3db.set_method("sync", "repository",
+    s3db.set_method("sync_repository",
                     method = "register",
                     action = current.sync,
                     )
@@ -203,7 +203,7 @@ def repository():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("sync", "repository", rheader=s3db.sync_rheader)
+    return crud_controller("sync", "repository", rheader=s3db.sync_rheader)
 
 # -----------------------------------------------------------------------------
 def dataset():
@@ -268,7 +268,7 @@ def dataset():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.sync_rheader)
+    return crud_controller(rheader=s3db.sync_rheader)
 
 # -----------------------------------------------------------------------------
 def sync():
@@ -296,11 +296,11 @@ def sync():
 
         # Request
         prefix, name = tablename.split("_", 1)
-        r = s3_request(prefix = prefix,
-                       name = name,
-                       args = ["sync"],
-                       get_vars = get_vars_new,
-                       )
+        r = crud_request(prefix = prefix,
+                         name = name,
+                         args = ["sync"],
+                         get_vars = get_vars_new,
+                         )
 
         # Response
         return r(mixed=mixed)
@@ -328,11 +328,11 @@ def log():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("sync", "log",
-                              subtitle=None,
-                              rheader=s3base.S3SyncLog.rheader,
-                              list_btn=list_btn,
-                              )
+    return crud_controller("sync", "log",
+                           subtitle = None,
+                           rheader = s3base.S3SyncLog.rheader,
+                           list_btn = list_btn,
+                           )
 
 # -----------------------------------------------------------------------------
 def task():
@@ -351,7 +351,7 @@ def task():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def resource_filter():
@@ -370,6 +370,6 @@ def resource_filter():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

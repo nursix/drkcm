@@ -71,275 +71,87 @@ def index():
                 # No Custom Page available, continue with the next option, or default
                 # @ToDo: cache this result in session
                 #import sys
-                #current.log.warning("Custom homepage cannot be loaded",
-                                    #sys.exc_info()[1])
+                #current.log.warning("Custom homepage cannot be loaded", sys.exc_info()[1])
                 continue
             else:
                 if hasattr(custom, "index"):
                     output = custom.index()()
                     return output
 
-    # Default Homepage
-    title = settings.get_system_name()
-    response.title = title
-
-    # CMS Contents for homepage
-    item = ""
-    #has_module = settings.has_module
-    if settings.has_module("cms"):
-        table = s3db.cms_post
-        ltable = s3db.cms_post_module
-        query = (ltable.module == "default") & \
-                ((ltable.resource == None) | (ltable.resource == "index")) & \
-                (ltable.post_id == table.id) & \
-                (table.deleted != True)
-        item = db(query).select(table.body,
-                                limitby = (0, 1)
-                                ).first()
-        if item:
-            item = DIV(XML(item.body))
-        else:
-            item = ""
-
-    # Menu boxes
-    from s3layouts import S3HomepageMenuLayout as HM
-
-    sit_menu = HM("Situation Awareness")(
-        HM("Map", c="gis", f="index", icon="map-marker"),
-        HM("Incidents", c="event", f="incident_report", icon="incident"),
-        HM("Alerts", c="cap", f="alert", icon="alert"),
-        HM("Assessments", c="survey", f="series", icon="assessment"),
-    )
-    org_menu = HM("Who is doing What and Where")(
-        HM("Organizations", c="org", f="organisation", icon="organisation"),
-        HM("Facilities", c="org", f="facility", icon="facility"),
-        HM("Activities", c="project", f="activity", icon="activity"),
-        HM("Projects", c="project", f="project", icon="project"),
-    )
-    res_menu = HM("Manage Resources")(
-        HM("Staff", c="hrm", f="staff", t="hrm_human_resource", icon="staff"),
-        HM("Volunteers", c="vol", f="volunteer", t="hrm_human_resource", icon="volunteer"),
-        HM("Relief Goods", c="inv", f="inv_item", icon="goods"),
-        HM("Assets", c="asset", f="asset", icon="asset"),
-    )
-    aid_menu = HM("Manage Aid")(
-        HM("Requests", c="req", f="req", icon="request"),
-        HM("Commitments", c="req", f="commit", icon="commit"),
-        HM("Sent Shipments", c="inv", f="send", icon="shipment"),
-        HM("Received Shipments", c="inv", f="recv", icon="delivery"),
-    )
-
-    # @todo: re-integrate or deprecate (?)
-    #if has_module("cr"):
-    #    table = s3db.cr_shelter
-    #    SHELTERS = s3.crud_strings["cr_shelter"].title_list
-    #else:
-    #    SHELTERS = ""
-    #facility_box = HM("Facilities", _id="facility_box")(
-    #    HM("Facilities", c="org", f="facility"),
-    #    HM("Hospitals", c="hms", f="hospital"),
-    #    HM("Offices", c="org", f="office"),
-    #    HM(SHELTERS, c="cr", f="shelter"),
-    #    HM("Warehouses", c="inv", f="warehouse"),
-    #    HM("Map", c="gis", f="index",
-    #       icon="/%s/static/img/map_icon_128.png" % appname,
-    #       ),
-    #)
-
-    # Check logged in AND permissions
-    roles = session.s3.roles
-    table = s3db.org_organisation
-    has_permission = auth.s3_has_permission
-    AUTHENTICATED = auth.get_system_roles().AUTHENTICATED
-    if AUTHENTICATED in roles and has_permission("read", table):
-
-        org_items = organisation()
-        datatable_ajax_source = "/%s/default/organisation.aadata" % appname
-
-        # List of Organisations
-        if has_permission("create", table):
-            create = A(T("Create Organization"),
-                       _href = URL(c = "org",
-                                   f = "organisation",
-                                   args = ["create"],
-                                   ),
-                       _id = "add-org-btn",
-                       _class = "action-btn",
-                       )
-        else:
-            create = ""
-        org_box = DIV(create,
-                      H3(T("Organizations")),
-                      org_items,
-                      _id = "org-box",
-                      _class = "menu-box"
-                      )
-
-        s3.actions = None
-        response.view = "default/index.html"
-
-        # Quick Access Box for Sites
-        permission = auth.permission
-        permission.controller = "org"
-        permission.function = "site"
-        permitted_facilities = auth.permitted_facilities(redirect_on_error = False)
-
-        if permitted_facilities:
-            facilities = s3db.org_SiteRepresent().bulk(permitted_facilities,
-                                                       include_blank = False,
-                                                       )
-            facility_list = [(fac, facilities[fac]) for fac in facilities]
-            facility_list = sorted(facility_list, key=lambda fac: fac[1])
-            facility_opts = [OPTION(fac[1], _value=fac[0])
-                             for fac in facility_list]
-
-            manage_facility_box = DIV(H3(T("Manage Your Facilities")),
-                                      SELECT(_id = "manage-facility-select",
-                                             *facility_opts
-                                             ),
-                                      A(T("Go"),
-                                        _href = URL(c="default", f="site",
-                                                    args=[facility_list[0][0]],
-                                                    ),
-                                        _id = "manage-facility-btn",
-                                        _class = "action-btn"
-                                        ),
-                                      _id = "manage-facility-box",
-                                      _class = "menu-box"
-                                      )
-
-            s3.jquery_ready.append('''$('#manage-facility-select').change(function(){
- $('#manage-facility-btn').attr('href',S3.Ap.concat('/default/site/',$('#manage-facility-select').val()))})
-$('#manage-facility-btn').click(function(){
-if (($('#manage-facility-btn').attr('href').toString())===S3.Ap.concat('/default/site/None'))
-{$("#manage-facility-box").append("<div class='alert alert-error'>%s</div>")
-return false}})''' % (T("Please Select a Facility")))
-
-        else:
-            manage_facility_box = ""
-
-    else:
-        datatable_ajax_source = ""
-        manage_facility_box = ""
-        org_box = ""
-
-    # Login/Registration forms
-    self_registration = settings.get_security_registration_visible()
-    registered = False
+    # Default homepage
     login_form = None
     login_div = None
-    register_form = None
-    register_div = None
-    if AUTHENTICATED not in roles:
-        # This user isn't yet logged-in
-        if "registered" in request.cookies:
-            # This browser has logged-in before
-            registered = True
+    announcements = None
+    announcements_title = None
 
-        # Provide a login box on front page
+    roles = current.session.s3.roles
+    sr = auth.get_system_roles()
+    if sr.AUTHENTICATED in roles:
+        # Logged-in user
+        # => display announcements
+        from core import S3DateTime
+        dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
+
+        filter_roles = roles if sr.ADMIN not in roles else None
+        posts = s3db.cms_announcements(roles=filter_roles)
+
+        # Render announcements list
+        announcements = UL(_class="announcements")
+        if posts:
+            announcements_title = T("Announcements")
+            priority_classes = {2: "announcement-important",
+                                3: "announcement-critical",
+                                }
+            priority_icons = {2: "fa-exclamation-circle",
+                              3: "fa-exclamation-triangle",
+                              }
+            for post in posts:
+                # The header
+                header = H4(post.name)
+
+                # Priority
+                priority = post.priority
+                # Add icon to header?
+                icon_class = priority_icons.get(post.priority)
+                if icon_class:
+                    header = TAG[""](I(_class="fa %s announcement-icon" % icon_class),
+                                       header,
+                                       )
+                # Priority class for the box
+                prio = priority_classes.get(priority, "")
+
+                row = LI(DIV(DIV(DIV(dtrepr(post.date),
+                                     _class = "announcement-date",
+                                     ),
+                                 _class="fright",
+                                 ),
+                                 DIV(DIV(header,
+                                         _class = "announcement-header",
+                                         ),
+                                     DIV(XML(post.body),
+                                         _class = "announcement-body",
+                                         ),
+                                     _class="announcement-text",
+                                 ),
+                                 _class = "announcement-box %s" % prio,
+                                 ),
+                             )
+                announcements.append(row)
+    else:
+        # Anonymous user
+        # => provide a login box
+        login_div = DIV(H3(T("Login")))
         auth.messages.submit_button = T("Login")
-        login_form = auth.login(inline = True)
-        login_div = DIV(H3(T("Login")),
-                        P(XML(T("Registered users can %(login)s to access the system") % \
-                              {"login": B(T("login"))})))
+        login_form = auth.login(inline=True)
 
-        if self_registration:
-            # Provide a Registration box on front page
-            register_form = auth.register()
-            register_div = DIV(H3(T("Register")),
-                               P(XML(T("If you would like to help, then please %(sign_up_now)s") % \
-                                        {"sign_up_now": B(T("sign-up now"))})))
-
-            if request.env.request_method == "POST":
-                if login_form.errors:
-                    hide, show = "#register_form", "#login_form"
-                else:
-                    hide, show = "#login_form", "#register_form"
-                post_script = \
-'''$('%s').addClass('hide')
-$('%s').removeClass('hide')''' % (hide, show)
-            else:
-                post_script = ""
-            register_script = \
-'''$('#register-btn').attr('href','#register')
-$('#login-btn').attr('href','#login')
-%s
-$('#register-btn').click(function(){
- $('#register_form').removeClass('hide')
- $('#login_form').addClass('hide')
-})
-$('#login-btn').click(function(){
- $('#register_form').addClass('hide')
- $('#login_form').removeClass('hide')
-})''' % post_script
-            s3.jquery_ready.append(register_script)
-
-    # Feed Control
-    rss = settings.frontpage.rss
-    if rss:
-        s3.external_stylesheets.append("//www.google.com/uds/solutions/dynamicfeed/gfdynamicfeedcontrol.css")
-        s3.scripts.append("//www.google.com/jsapi?key=notsupplied-wizard")
-        s3.scripts.append("//www.google.com/uds/solutions/dynamicfeed/gfdynamicfeedcontrol.js")
-
-        feeds = ["{title:'%s',url:'%s'}" % (feed["title"], feed["url"])
-                 for feed in rss
-                 ]
-        feeds = ",".join(feeds)
-
-        # feedCycleTime: milliseconds before feed is reloaded (5 minutes)
-        feed_control = "".join(('''
-function LoadDynamicFeedControl(){
- var feeds=[
-  ''', feeds, '''
- ]
- var options={
-  feedCycleTime:300000,
-  numResults:5,
-  stacked:true,
-  horizontal:false,
-  title:"''', s3_str(T("News")), '''"
- }
- new GFdynamicFeedControl(feeds,'feed-control',options)
-}
-google.load('feeds','1')
-google.setOnLoadCallback(LoadDynamicFeedControl)'''))
-
-        s3.js_global.append(feed_control)
-
-    # Output dict for the view
-    output = {"title": title,
-
-              # CMS Contents
-              "item": item,
-
-              # Menus
-              "sit_menu": sit_menu,
-              "org_menu": org_menu,
-              "res_menu": res_menu,
-              "aid_menu": aid_menu,
-              #"facility_box": facility_box,
-
-              # Quick Access Boxes
-              "manage_facility_box": manage_facility_box,
-              "org_box": org_box,
-
-              # Login Form
-              "login_div": login_div,
+    output = {"login_div": login_div,
               "login_form": login_form,
-
-              # Registration Form
-              "register_div": register_div,
-              "register_form": register_form,
-
-              # Control Data
-              "self_registration": self_registration,
-              "registered": registered,
-              "r": None, # Required for dataTable to work
-              "datatable_ajax_source": datatable_ajax_source,
+              "announcements": announcements,
+              "announcements_title": announcements_title,
               }
 
-    if get_vars.tour:
-        output = s3db.tour_builder(output)
+    # Custom view and homepage styles
+    s3.stylesheets.append("../themes/default/homepage.css")
 
     return output
 
@@ -374,7 +186,7 @@ def about():
                     }
 
         if item:
-            from s3 import S3XMLContents
+            from core import S3XMLContents
             contents = S3XMLContents(item.body)
             if ADMIN:
                 item = DIV(contents,
@@ -590,7 +402,7 @@ def audit():
         - used e.g. for Site Activity
     """
 
-    return s3_rest_controller("s3", "audit")
+    return crud_controller("s3", "audit")
 
 # -----------------------------------------------------------------------------
 #def call():
@@ -637,8 +449,7 @@ def contact():
             return True
         s3.prep = prep
 
-        output = s3_rest_controller(prefix, resourcename)
-        return output
+        return crud_controller(prefix, resourcename)
 
     templates = settings.get_template()
     if templates != "default":
@@ -766,7 +577,7 @@ def group():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "group")
+    return crud_controller("pr", "group")
 
 # -----------------------------------------------------------------------------
 def help():
@@ -854,7 +665,7 @@ def masterkey():
 
     # If successfully logged-in, provide context information for
     # the master key (e.g. project UUID + title, master key UUID)
-    from s3.s3masterkey import S3MasterKey
+    from core.auth.masterkey import S3MasterKey
     return S3MasterKey.context()
 
 # -----------------------------------------------------------------------------
@@ -908,7 +719,7 @@ def organisation():
     rfields = data["rfields"]
     data = data["rows"]
 
-    dt = S3DataTable(rfields, data)
+    dt = s3base.S3DataTable(rfields, data)
     dt.defaultActionButtons(resource)
     s3.no_formats = True
 
@@ -972,7 +783,7 @@ def page():
         raise HTTP(404, "Page not found in CMS")
 
     if row.body:
-        from s3compat import StringIO
+        from io import StringIO
         try:
             body = current.response.render(StringIO(row.body), {})
         except:
@@ -1010,25 +821,39 @@ def person():
 
     # Get person_id of current user
     if auth.s3_logged_in():
-        user_person_id = str(auth.s3_logged_in_person())
+        person_id = str(auth.s3_logged_in_person())
     else:
-        user_person_id = None
+        person_id = None
 
     # Fix request args:
     # - leave as-is if this is an options/validate Ajax-request
-    # - otherwise, make sure user_person_id is the first argument
+    # - otherwise, make sure person_id is the first argument
     request_args = request.args
     if not request_args or \
-       request_args[0] != user_person_id and \
+       request_args[0] != person_id and \
        request_args[-1] not in ("options.s3json", "validate.json"):
-        if not user_person_id:
+        if not person_id:
             # Call to profile before login (e.g. from link in welcome email)
             # => redirect to login, then return here
             redirect(URL(f = "user",
                          args = ["login"],
                          vars = {"_next": URL(f="person", args=request_args)},
                          ))
-        request.args = [user_person_id]
+        request.args = [person_id]
+
+    if settings.get_auth_profile_controller() == "hrm":
+        table = s3db.hrm_human_resource
+        query = (table.person_id == person_id) & \
+                (table.deleted == False)
+        hr = db(query).select(table.id,
+                              limitby = (0, 1)
+                              )
+        if hr:
+            # Use the HRM controller/rheader
+            request.get_vars["profile"] = 1
+            return s3db.hrm_person_controller()
+
+    # Use the PR controller/rheader
 
     set_method = s3db.set_method
 
@@ -1048,7 +873,10 @@ def person():
 
         next = URL(c = "default",
                    f = "person",
-                   args = [user_person_id, "user_profile"])
+                   args = [person_id,
+                           "user_profile",
+                           ],
+                   )
         onaccept = lambda form: auth.s3_approve_user(form.vars),
         auth.configure_user_fields()
         form = auth.profile(next = next,
@@ -1059,12 +887,12 @@ def person():
                 "form": form,
                 }
 
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "user_profile",
                action = auth_profile_method)
 
     # Custom Method for Contacts
-    set_method("pr", "person",
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
@@ -1275,9 +1103,9 @@ def person():
             (T("My Maps"), "config"),
             ]
 
-    return s3_rest_controller("pr", "person",
-                              rheader = lambda r, tabs=tabs: \
-                                                s3db.pr_rheader(r, tabs=tabs))
+    return crud_controller("pr", "person",
+                           rheader = lambda r, t=tabs: s3db.pr_rheader(r, tabs=t),
+                           )
 
 # -----------------------------------------------------------------------------
 def privacy():
@@ -1352,7 +1180,7 @@ def skill():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("hrm", "skill")
+    return crud_controller("hrm", "skill")
 
 # -----------------------------------------------------------------------------
 def tables():
@@ -1360,11 +1188,11 @@ def tables():
         RESTful CRUD Controller for Dynamic Table Models
     """
 
-    return s3_rest_controller("s3", "table",
-                              rheader = s3db.s3_table_rheader,
-                              csv_template = ("s3", "table"),
-                              csv_stylesheet = ("s3", "table.xsl"),
-                              )
+    return crud_controller("s3", "table",
+                           rheader = s3db.s3_table_rheader,
+                           csv_template = ("s3", "table"),
+                           csv_stylesheet = ("s3", "table.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 def table():
@@ -1378,7 +1206,7 @@ def table():
 
     args = request.args
     if len(args):
-        return s3_rest_controller(dynamic = args[0].rsplit(".", 1)[0])
+        return crud_controller(dynamic = args[0].rsplit(".", 1)[0])
     else:
         raise HTTP(400, "No resource specified")
 
@@ -1498,7 +1326,7 @@ def user():
 
     elif arg == "options.s3json":
         # Used when adding organisations from registration form
-        return s3_rest_controller(prefix="auth", resourcename="user")
+        return crud_controller(prefix="auth", resourcename="user")
 
     else:
         # logout or verify_email

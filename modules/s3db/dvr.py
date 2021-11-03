@@ -75,12 +75,11 @@ from collections import OrderedDict
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
-from s3compat import basestring
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class DVRCaseModel(S3Model):
+class DVRCaseModel(DataModel):
     """
         Model for DVR Cases
 
@@ -325,24 +324,24 @@ class DVRCaseModel(S3Model):
                                ),
 
                      # Case type and reference number
-                     FieldS3("case_type_id", "reference dvr_case_type",
-                             label = T("Case Type"),
-                             represent = case_type_represent,
-                             requires = IS_EMPTY_OR(IS_ONE_OF(
+                     Field("case_type_id", "reference dvr_case_type",
+                           label = T("Case Type"),
+                           represent = case_type_represent,
+                           requires = IS_EMPTY_OR(IS_ONE_OF(
                                                 db, "dvr_case_type.id",
                                                 case_type_represent,
                                                 )),
-                             sortby = "name",
-                             comment = S3PopupLink(c = "dvr",
-                                                   f = "case_type",
-                                                   title = ADD_CASE_TYPE,
-                                                   tooltip = T("Choose the case type from the drop-down, or click the link to create a new type"),
-                                                   # Always look up options from dvr/case
-                                                   # (required if inline in person form):
-                                                   vars = {"parent": "case",
-                                                           },
-                                                   ),
-                             ),
+                           sortby = "name",
+                           comment = S3PopupLink(c = "dvr",
+                                                 f = "case_type",
+                                                 title = ADD_CASE_TYPE,
+                                                 tooltip = T("Choose the case type from the drop-down, or click the link to create a new type"),
+                                                 # Always look up options from dvr/case
+                                                 # (required if inline in person form):
+                                                 vars = {"parent": "case",
+                                                         },
+                                                 ),
+                           ),
                      # @todo: rename into "code"?
                      # @ToDo: Option to autogenerate these, like Waybills, et al
                      # @ToDo: Deprecate: We use pe_label as primary ID and Tags for any additional IDs to cross-reference to 3rd-party systems
@@ -355,7 +354,7 @@ class DVRCaseModel(S3Model):
                      Field("priority", "integer",
                            default = 2,
                            label = T("Priority"),
-                           represent = S3Represent(options=dict(case_priority_opts)),
+                           represent = represent_option(dict(case_priority_opts)),
                            requires = IS_IN_SET(case_priority_opts,
                                                 sort = False,
                                                 zero = None,
@@ -364,7 +363,7 @@ class DVRCaseModel(S3Model):
                      Field("disclosure_consent", "string", length=8,
                            label = T("Consenting to Data Disclosure"),
                            requires = IS_EMPTY_OR(IS_IN_SET(consent_opts)),
-                           represent = S3Represent(options=consent_opts),
+                           represent = represent_option(consent_opts),
                            readable = False,
                            writable = False,
                            ),
@@ -594,7 +593,7 @@ class DVRCaseModel(S3Model):
                      Field("quality",
                            default = "N",
                            label = T("Quality/Mode"),
-                           represent = S3Represent(options=dict(lang_quality_opts)),
+                           represent = represent_option(dict(lang_quality_opts)),
                            requires = IS_IN_SET(lang_quality_opts,
                                                 sort = False,
                                                 zero = None,
@@ -667,15 +666,10 @@ class DVRCaseModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
+        dummy = S3ReusableField.dummy
 
-        return {"dvr_case_id": lambda name="case_id", **attr: \
-                               dummy(name, **attr),
-                "dvr_case_status_id": lambda name="status_id", **attr: \
-                                      dummy(name, **attr),
+        return {"dvr_case_id": dummy("case_id"),
+                "dvr_case_status_id": dummy("status_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -876,7 +870,7 @@ class DVRCaseModel(S3Model):
                 dvr_case_household_size(row.id)
 
 # =============================================================================
-class DVRCaseFlagModel(S3Model):
+class DVRCaseFlagModel(DataModel):
     """ Model for Case Flags """
 
     names = ("dvr_case_flag",
@@ -1078,17 +1072,11 @@ class DVRCaseFlagModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"dvr_case_flag_id": lambda name="flag_id", **attr: \
-                                    dummy(name, **attr),
+        return {"dvr_case_flag_id": S3ReusableField.dummy("flag_id"),
                 }
 
 # =============================================================================
-class DVRNeedsModel(S3Model):
+class DVRNeedsModel(DataModel):
     """ Model for Needs """
 
     names = ("dvr_need",
@@ -1224,17 +1212,11 @@ class DVRNeedsModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"dvr_need_id": lambda name="need_id", **attr: \
-                               dummy(name, **attr),
+        return {"dvr_need_id": S3ReusableField.dummy("need_id"),
                 }
 
 # =============================================================================
-class DVRNotesModel(S3Model):
+class DVRNotesModel(DataModel):
     """
         Model for Notes
     """
@@ -1338,10 +1320,10 @@ class DVRNotesModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class DVRReferralModel(S3Model):
+class DVRReferralModel(DataModel):
     """
         Data model for case referrals (both incoming and outgoing)
     """
@@ -1413,17 +1395,11 @@ class DVRReferralModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"dvr_referral_type_id": lambda name="referral_type_id", **attr: \
-                                               dummy(name, **attr),
+        return {"dvr_referral_type_id": S3ReusableField.dummy("referral_type_id"),
                 }
 
 # =============================================================================
-class DVRResponseModel(S3Model):
+class DVRResponseModel(DataModel):
     """ Model representing responses to case needs """
 
     names = ("dvr_response_action",
@@ -1934,19 +1910,14 @@ class DVRResponseModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField("dummy_id", "integer",
-                                #readable = False,
-                                #writable = False,
-                                #)
-
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2389,7 +2360,7 @@ class DVRResponseModel(S3Model):
             action.update_record(response_theme_ids = theme_ids)
 
 # =============================================================================
-class DVRCaseActivityModel(S3Model):
+class DVRCaseActivityModel(DataModel):
     """ Model for Case Activities """
 
     names = ("dvr_activity",
@@ -2668,13 +2639,13 @@ class DVRCaseActivityModel(S3Model):
                              label = T("End Date"),
                              ),
                      Field("period", length=4,
-                           represent = S3Represent(options=period_opts),
+                           represent = represent_option(period_opts),
                            requires = IS_EMPTY_OR(IS_IN_SET(period_opts)),
                            ),
                      Field("modality", length=4,
                            label = T("Modality"),
                            default = "E",
-                           represent = S3Represent(options=dict(modality_opts)),
+                           represent = represent_option(dict(modality_opts)),
                            requires = IS_IN_SET(modality_opts, zero=None),
                            readable = False,
                            writable = False,
@@ -2704,7 +2675,7 @@ class DVRCaseActivityModel(S3Model):
                            ),
                      Field("gender", length=4,
                            label = T("Gender"),
-                           represent = S3Represent(options=dict(gender_opts)),
+                           represent = represent_option(dict(gender_opts)),
                            requires = IS_EMPTY_OR(IS_IN_SET(gender_opts,
                                                             sort = False,
                                                             )),
@@ -2967,7 +2938,7 @@ class DVRCaseActivityModel(S3Model):
                            ),
                      Field("priority", "integer",
                            label = T("Priority"),
-                           represent = S3Represent(options=dict(priority_opts)),
+                           represent = represent_option(dict(priority_opts)),
                            requires = IS_IN_SET(priority_opts, sort=False),
                            default = 2, # normal
                            readable = False,
@@ -3358,15 +3329,10 @@ class DVRCaseActivityModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
+        dummy = S3ReusableField.dummy
 
-        return {"dvr_activity_id": lambda name="activity_id", **attr: \
-                                          dummy(name, **attr),
-                "dvr_case_activity_id": lambda name="case_activity_id", **attr: \
-                                               dummy(name, **attr),
+        return {"dvr_activity_id": dummy("activity_id"),
+                "dvr_case_activity_id": dummy("case_activity_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -3536,7 +3502,7 @@ class DVRCaseActivityModel(S3Model):
             activity.update_record(end_date = None)
 
 # =============================================================================
-class DVRCaseEffortModel(S3Model):
+class DVRCaseEffortModel(DataModel):
     """ Effort Log for Case / Case Activities """
 
     names = ("dvr_case_effort",
@@ -3607,19 +3573,14 @@ class DVRCaseEffortModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField("dummy_id", "integer",
-        #                        readable = False,
-        #                        writable = False,
-        #                        )
-
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3669,7 +3630,7 @@ class DVRCaseEffortModel(S3Model):
                     effort.update_record(person_id = activity.person_id)
 
 # =============================================================================
-class DVRCaseAppointmentModel(S3Model):
+class DVRCaseAppointmentModel(DataModel):
     """ Model for Case Appointments """
 
     names = ("dvr_case_appointment",
@@ -3832,8 +3793,7 @@ class DVRCaseAppointmentModel(S3Model):
                            requires = IS_IN_SET(appointment_status_opts,
                                                 zero = None,
                                                 ),
-                           represent = S3Represent(options = appointment_status_opts,
-                                                   ),
+                           represent = represent_option(appointment_status_opts),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -3853,7 +3813,7 @@ class DVRCaseAppointmentModel(S3Model):
             )
 
         # Custom methods
-        self.set_method("dvr", "case_appointment",
+        self.set_method("dvr_case_appointment",
                         method = "manage",
                         action = DVRManageAppointments,
                         )
@@ -3883,14 +3843,8 @@ class DVRCaseAppointmentModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
         return {"dvr_appointment_status_opts": {},
-                "dvr_appointment_type_id": lambda name="type_id", **attr: \
-                                           dummy(name, **attr),
+                "dvr_appointment_type_id": S3ReusableField.dummy("type_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -4021,11 +3975,11 @@ class DVRCaseAppointmentModel(S3Model):
                 for case in cases:
                     if has_permission("update", ctable, record_id=case.id):
                         # Customise case resource
-                        r = S3Request("dvr", "case",
-                                      current.request,
-                                      args = [],
-                                      get_vars = {},
-                                      )
+                        r = CRUDRequest("dvr", "case",
+                                        current.request,
+                                        args = [],
+                                        get_vars = {},
+                                        )
                         r.customise_resource("dvr_case")
                         # Update case status + run onaccept
                         case.update_record(status_id = status_id)
@@ -4063,7 +4017,7 @@ class DVRCaseAppointmentModel(S3Model):
                     dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRHouseholdModel(S3Model):
+class DVRHouseholdModel(DataModel):
     """
         Model to document the household situation of a case
         - used by STL (DRK use pr_group_membership, SCPHIMS use DVRHouseholdMemberModel)
@@ -4268,18 +4222,12 @@ class DVRHouseholdModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"dvr_beneficiary_type_id": lambda name="beneficiary_type_id", **attr: \
-                                           dummy(name, **attr),
+        return {"dvr_beneficiary_type_id": S3ReusableField.dummy("beneficiary_type_id"),
                 }
 
 
 # =============================================================================
-class DVRHouseholdMembersModel(S3Model):
+class DVRHouseholdMembersModel(DataModel):
     """
         Model to document the household situation of a case
         - used by SCPHIMS (DRK use pr_group_membership, STL use DVRHouseholdModel)
@@ -4330,10 +4278,10 @@ class DVRHouseholdMembersModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class DVRCaseEconomyInformationModel(S3Model):
+class DVRCaseEconomyInformationModel(DataModel):
     """ Model for Household Economy Information """
 
     names = ("dvr_economy",
@@ -4445,20 +4393,20 @@ class DVRCaseEconomyInformationModel(S3Model):
                                       label = T("Case Number"),
                                       ondelete = "CASCADE",
                                       ),
-                     FieldS3("housing_type_id", "reference dvr_housing_type",
-                             label = T("Housing Type"),
-                             represent = housing_type_represent,
-                             requires = IS_EMPTY_OR(IS_ONE_OF(
-                                                db, "dvr_housing_type.id",
-                                                housing_type_represent,
-                                                )),
-                             sortby = "name",
-                             comment = S3PopupLink(c = "dvr",
-                                                   f = "housing_type",
-                                                   title = ADD_HOUSING_TYPE,
-                                                   tooltip = T("Choose the housing type from the drop-down, or click the link to create a new type"),
-                                                   ),
-                             ),
+                     Field("housing_type_id", "reference dvr_housing_type",
+                           label = T("Housing Type"),
+                           represent = housing_type_represent,
+                           requires = IS_EMPTY_OR(IS_ONE_OF(
+                                            db, "dvr_housing_type.id",
+                                            housing_type_represent,
+                                            )),
+                           sortby = "name",
+                           comment = S3PopupLink(c = "dvr",
+                                                 f = "housing_type",
+                                                 title = ADD_HOUSING_TYPE,
+                                                 tooltip = T("Choose the housing type from the drop-down, or click the link to create a new type"),
+                                                 ),
+                           ),
                      Field("monthly_costs", "double",
                            label = T("Monthly Costs"),
                            represent = float_represent,
@@ -4548,17 +4496,17 @@ class DVRCaseEconomyInformationModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
 # =============================================================================
-class DVRLegalStatusModel(S3Model):
+class DVRLegalStatusModel(DataModel):
     """ Models to document the legal status of a beneficiary """
 
     names = ("dvr_residence_status_type",
@@ -4712,22 +4660,17 @@ class DVRLegalStatusModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField("dummy_id", "integer",
-        #                        readable = False,
-        #                        writable = False,
-        #                        )
-
-        return {}
+        return None
 
 # =============================================================================
-class DVRCaseAllowanceModel(S3Model):
+class DVRCaseAllowanceModel(DataModel):
     """ Model for Allowance Management """
 
     names = ("dvr_allowance",
@@ -4790,8 +4733,7 @@ class DVRCaseAllowanceModel(S3Model):
                            requires = IS_IN_SET(allowance_status_opts,
                                                 zero = None,
                                                 ),
-                           represent = S3Represent(options=allowance_status_opts,
-                                                   ),
+                           represent = represent_option(allowance_status_opts),
                            widget = S3GroupedOptionsWidget(cols = 4,
                                                            multiple = False,
                                                            ),
@@ -4836,11 +4778,11 @@ class DVRCaseAllowanceModel(S3Model):
                   onvalidation = self.allowance_onvalidation,
                   )
 
-        set_method("dvr", "allowance",
+        set_method("dvr_allowance",
                    method = "register",
                    action = DVRRegisterPayment,
                    )
-        set_method("dvr", "allowance",
+        set_method("dvr_allowance",
                    method = "manage",
                    action = DVRManageAllowance,
                    )
@@ -4944,7 +4886,7 @@ class DVRCaseAllowanceModel(S3Model):
                     dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRCaseEventModel(S3Model):
+class DVRCaseEventModel(DataModel):
     """ Model representing monitoring events for cases """
 
     names = ("dvr_case_event_type",
@@ -5231,7 +5173,7 @@ class DVRCaseEventModel(S3Model):
                   )
 
         # Custom method for event registration
-        self.set_method("dvr", "case_event",
+        self.set_method("dvr_case_event",
                         method = "register",
                         action = DVRRegisterCaseEvent,
                         )
@@ -5239,14 +5181,14 @@ class DVRCaseEventModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -5424,11 +5366,11 @@ class DVRCaseEventModel(S3Model):
                                                                )
                     if permitted:
                         # Customise appointment resource
-                        r = S3Request("dvr", "case_appointment",
-                                      current.request,
-                                      args = [],
-                                      get_vars = {},
-                                      )
+                        r = CRUDRequest("dvr", "case_appointment",
+                                        current.request,
+                                        args = [],
+                                        get_vars = {},
+                                        )
                         r.customise_resource("dvr_case_appointment")
                         # Update appointment
                         success = update.update_record(**data)
@@ -5470,7 +5412,7 @@ class DVRCaseEventModel(S3Model):
                 dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRCaseEvaluationModel(S3Model):
+class DVRCaseEvaluationModel(DataModel):
     """
         Evaluation of Cases
         - Flexible Questions (Dynamic Data Model)
@@ -5581,16 +5523,16 @@ class DVRCaseEvaluationModel(S3Model):
                      )
 
         # Custom Report Method
-        #self.set_method("org", "capacity_assessment_data",
+        #self.set_method("org_capacity_assessment_data",
         #                method = "custom_report",
         #                action = org_CapacityReport())
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class DVRVulnerabilityModel(S3Model):
+class DVRVulnerabilityModel(DataModel):
     """ Targeted vulnerabilities for activities """
 
     names = ("dvr_vulnerability_type",
@@ -5724,10 +5666,10 @@ class DVRVulnerabilityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class DVRActivityFundingModel(S3Model):
+class DVRActivityFundingModel(DataModel):
     """ Model to manage funding needs for cases """
 
     names = ("dvr_activity_funding",
@@ -5785,10 +5727,10 @@ class DVRActivityFundingModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class DVRServiceContactModel(S3Model):
+class DVRServiceContactModel(DataModel):
     """ Model to track external service contacts of beneficiaries """
 
     names = ("dvr_service_contact",
@@ -5912,22 +5854,17 @@ class DVRServiceContactModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField("dummy_id", "integer",
-        #                        readable = False,
-        #                        writable = False,
-        #                        )
-
-        return {}
+        return None
 
 # =============================================================================
-class DVRSiteActivityModel(S3Model):
+class DVRSiteActivityModel(DataModel):
     """ Model to record the activity of a site over time """
 
     names = ("dvr_site_activity",
@@ -6032,14 +5969,14 @@ class DVRSiteActivityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -6229,7 +6166,7 @@ def dvr_response_status_colors(resource, selector):
     """
         Get colors for response statuses
 
-        @param resource: the S3Resource the caller is looking at
+        @param resource: the CRUDResource the caller is looking at
         @param selector: the Field selector (usually "status_id")
 
         @returns: a dict with colors {field_value: "#RRGGBB", ...}
@@ -6316,10 +6253,10 @@ def dvr_due_followups(human_resource_id=None):
     """
 
     # Generate a request for case activities and customise it
-    r = S3Request("dvr", "case_activity",
-                  args = ["count_due_followups"],
-                  get_vars = {},
-                  )
+    r = CRUDRequest("dvr", "case_activity",
+                    args = ["count_due_followups"],
+                    get_vars = {},
+                    )
     r.customise_resource()
     resource = r.resource
 
@@ -7258,7 +7195,7 @@ class DVRManageAppointments(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
+                    _vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Where to retrieve updated filter options from:
@@ -7329,7 +7266,7 @@ class DVRManageAllowance(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7353,7 +7290,7 @@ class DVRManageAllowance(S3Method):
         """
             Method to bulk-update status of allowance payments
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7609,7 +7546,7 @@ class DVRRegisterCaseEvent(S3Method):
         """
             Main entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7641,7 +7578,7 @@ class DVRRegisterCaseEvent(S3Method):
         """
             Render and process the registration form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
         """
 
@@ -7950,7 +7887,7 @@ class DVRRegisterCaseEvent(S3Method):
         """
             Helper function to process the form
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param form: the FORM
             @param event_type: the event_type (Row)
         """
@@ -7991,7 +7928,7 @@ class DVRRegisterCaseEvent(S3Method):
                  t: the event type code
                  }
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
 
             @return: JSON response, structure:
@@ -8259,11 +8196,11 @@ class DVRRegisterCaseEvent(S3Method):
             case_id = None
 
         # Customise event resource
-        r = S3Request("dvr", "case_event",
-                      current.request,
-                      args = [],
-                      get_vars = {},
-                      )
+        r = CRUDRequest("dvr", "case_event",
+                        current.request,
+                        args = [],
+                        get_vars = {},
+                        )
         r.customise_resource("dvr_case_event")
 
         data = {"person_id": person_id,
@@ -8576,12 +8513,12 @@ class DVRRegisterCaseEvent(S3Method):
 
             first_name, last_name = None, None
             if "first_name" in data:
-                first_name = s3_unicode(data["first_name"]).lower()
-                if s3_unicode(person.first_name).lower() != first_name:
+                first_name = s3_str(data["first_name"]).lower()
+                if s3_str(person.first_name).lower() != first_name:
                     data_match = False
             if "last_name" in data:
-                last_name = s3_unicode(data["last_name"]).lower()
-                if s3_unicode(person.last_name).lower() != last_name:
+                last_name = s3_str(data["last_name"]).lower()
+                if s3_str(person.last_name).lower() != last_name:
                     data_match = False
 
             if not data_match:
@@ -8631,8 +8568,8 @@ class DVRRegisterCaseEvent(S3Method):
 
         elif "first_name" in data and "last_name" in data:
 
-            first_name = s3_unicode(data["first_name"]).lower()
-            last_name = s3_unicode(data["last_name"]).lower()
+            first_name = s3_str(data["first_name"]).lower()
+            last_name = s3_str(data["last_name"]).lower()
 
             # Search by names
             query = (FS("pe_label") != None)
@@ -8912,7 +8849,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to process the form
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param form: the FORM
             @param event_type: the event_type (Row)
         """
@@ -8965,7 +8902,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
                  d: the payment data (raw data, which payments to update)
                  }
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller parameters
 
             @return: JSON response, structure:
@@ -9238,7 +9175,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
             @return: tuple (updated, failed), number of records
         """
 
-        if isinstance(payments, basestring):
+        if isinstance(payments, str):
             try:
                 payments = json.loads(payments)
             except (ValueError, TypeError):
@@ -9260,11 +9197,11 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         failed = 0
 
         # Customise allowance resource
-        r = S3Request("dvr", "allowance",
-                      current.request,
-                      args = [],
-                      get_vars = {},
-                      )
+        r = CRUDRequest("dvr", "allowance",
+                        current.request,
+                        args = [],
+                        get_vars = {},
+                        )
         r.customise_resource("dvr_allowance")
         onaccept = current.s3db.onaccept
 
@@ -9332,7 +9269,7 @@ class dvr_AssignMethod(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -9483,7 +9420,7 @@ class dvr_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = resource.crud._remove_filters(r.get_vars)
+                    _vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Default Filters (before selecting data!)

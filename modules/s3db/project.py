@@ -27,45 +27,43 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division
-
-__all__ = ("S3ProjectModel",
-           "S3ProjectActivityModel",
-           "S3ProjectActivityDemographicsModel",
-           "S3ProjectActivityItemModel",
-           "S3ProjectActivityTypeModel",
-           "S3ProjectActivityPersonModel",
-           "S3ProjectActivityOrganisationModel",
-           "S3ProjectActivityOrganisationGroupModel",
-           "S3ProjectActivitySectorModel",
-           "S3ProjectActivityTagModel",
-           "S3ProjectAnnualBudgetModel",
-           "S3ProjectBeneficiaryModel",
-           "S3ProjectCampaignModel",
-           "S3ProjectFrameworkModel",
-           "S3ProjectHazardModel",
-           "S3ProjectHRModel",
-           #"S3ProjectIndicatorModel",
-           "S3ProjectL10nModel",
-           "S3ProjectLocationModel",
-           "S3ProjectMasterKeyModel",
-           "S3ProjectOrganisationModel",
-           "S3ProjectPlanningModel",
-           "S3ProjectProgrammeModel",
-           "S3ProjectProgrammeProjectModel",
-           "S3ProjectSectorModel",
-           "S3ProjectStatusModel",
-           "S3ProjectStrategyModel",
-           "S3ProjectTagModel",
-           "S3ProjectThemeModel",
-           "S3ProjectDRRModel",
-           "S3ProjectDRRPPModel",
-           "S3ProjectTargetModel",
-           "S3ProjectTaskModel",
-           "S3ProjectTaskForumModel",
-           "S3ProjectTaskHRMModel",
-           "S3ProjectTaskTagModel",
-           "S3ProjectWindowModel",
+__all__ = ("ProjectModel",
+           "ProjectActivityModel",
+           "ProjectActivityDemographicsModel",
+           "ProjectActivityItemModel",
+           "ProjectActivityTypeModel",
+           "ProjectActivityPersonModel",
+           "ProjectActivityOrganisationModel",
+           "ProjectActivityOrganisationGroupModel",
+           "ProjectActivitySectorModel",
+           "ProjectActivityTagModel",
+           "ProjectAnnualBudgetModel",
+           "ProjectBeneficiaryModel",
+           "ProjectCampaignModel",
+           "ProjectFrameworkModel",
+           "ProjectHazardModel",
+           "ProjectHRModel",
+           #"ProjectIndicatorModel",
+           "ProjectL10nModel",
+           "ProjectLocationModel",
+           "ProjectMasterKeyModel",
+           "ProjectOrganisationModel",
+           "ProjectPlanningModel",
+           "ProjectProgrammeModel",
+           "ProjectProgrammeProjectModel",
+           "ProjectSectorModel",
+           "ProjectStatusModel",
+           "ProjectStrategyModel",
+           "ProjectTagModel",
+           "ProjectThemeModel",
+           "ProjectDRRModel",
+           "ProjectDRRPPModel",
+           "ProjectTargetModel",
+           "ProjectTaskModel",
+           "ProjectTaskForumModel",
+           "ProjectTaskHRMModel",
+           "ProjectTaskTagModel",
+           "ProjectWindowModel",
            "project_ActivityRepresent",
            "project_activity_year_options",
            "project_ckeditor",
@@ -89,19 +87,21 @@ import datetime
 import json
 
 from collections import OrderedDict
+from io import BytesIO
 
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
-from s3compat import BytesIO, xrange
+from ..core import *
 from s3layouts import S3PopupLink
+
+from .req import req_timeframe
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3ProjectModel(S3Model):
+class ProjectModel(DataModel):
     """
         Project Model
 
@@ -397,7 +397,7 @@ class S3ProjectModel(S3Model):
             cappend(S3SQLInlineLink("hazard",
                                     label = T("Hazards"),
                                     field = "hazard_id",
-                                    help_field = self.project_hazard_help_fields,
+                                    help_field = project_hazard_help_fields,
                                     cols = 4,
                                     translate = True,
                                     ))
@@ -409,7 +409,7 @@ class S3ProjectModel(S3Model):
             cappend(S3SQLInlineLink("theme",
                                     label = T("Themes"),
                                     field = "theme_id",
-                                    help_field = self.project_theme_help_fields,
+                                    help_field = project_theme_help_fields,
                                     cols = 4,
                                     translate = True,
                                     # Filter Theme by Sector
@@ -433,7 +433,7 @@ class S3ProjectModel(S3Model):
             rappend("sum(total_organisation_amount)")
             rappend("avg(total_organisation_amount)")
         if budget_monitoring:
-            # @ToDo: Add the defaulting from RMSAmericas/config.py
+            # @ToDo: Add the defaulting from RMS/config.py
             #cappend(S3SQLInlineComponent("budget",
             #                             label = T("Budget"),
             #                             #link = False,
@@ -535,39 +535,39 @@ class S3ProjectModel(S3Model):
             )
 
         # Custom Methods
-        set_method("project", "project",
+        set_method("project_project",
                    method = "assign",
                    action = self.hrm_AssignMethod(component="human_resource"))
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "details",
                    action = project_Details)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "map",
                    action = self.project_map)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "timeline",
                    action = self.project_timeline)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "summary_report",
                    action = project_SummaryReport)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "indicator_summary_report",
                    action = project_IndicatorSummaryReport)
 
-        set_method("project", "project",
+        set_method("project_project",
                    method = "project_progress_report",
                    action = project_ProgressReport)
 
-        #set_method("project", "project",
+        #set_method("project_project",
         #           method = "budget_progress_report",
         #           action = project_BudgetProgressReport)
 
-        #set_method("project", "project",
+        #set_method("project_project",
         #           method = "indicator_progress_report",
         #           action = project_IndicatorProgressReport)
 
@@ -690,6 +690,12 @@ class S3ProjectModel(S3Model):
                        req_project_needs = {"joinby": "project_id",
                                             "multiple": False,
                                             },
+                       # Requests
+                       req_req = {"link": "req_project_req",
+                                  "joinby": "project_id",
+                                  "key": "req_id",
+                                  "actuate": "hide",
+                                  },
                        )
 
         if multi_orgs:
@@ -734,11 +740,7 @@ class S3ProjectModel(S3Model):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"project_project_id": lambda **attr: dummy("project_id"),
+        return {"project_project_id": S3ReusableField.dummy("project_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1089,7 +1091,7 @@ class S3ProjectModel(S3Model):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class S3ProjectActivityModel(S3Model):
+class ProjectActivityModel(DataModel):
     """
         Project Activity Model
 
@@ -1399,7 +1401,7 @@ class S3ProjectActivityModel(S3Model):
         # This component no longer has a case_id in it
         #if settings.has_module("dvr"):
         #    # Custom Method to Assign Cases
-        #    self.set_method("project", "activity",
+        #    self.set_method("project_activity",
         #                    method = "assign",
         #                    action = self.dvr_AssignMethod(component="case_activity"),
         #                    )
@@ -1565,11 +1567,7 @@ class S3ProjectActivityModel(S3Model):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"project_activity_id": lambda **attr: dummy("activity_id"),
+        return {"project_activity_id": S3ReusableField.dummy("activity_id"),
                 }
 
     # ---------------------------------------------------------------------
@@ -1616,7 +1614,7 @@ class S3ProjectActivityModel(S3Model):
         elif not start_date:
             return [end_date.year]
         else:
-            return list(xrange(start_date.year, end_date.year + 1))
+            return list(range(start_date.year, end_date.year + 1))
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -1701,7 +1699,7 @@ class S3ProjectActivityModel(S3Model):
             return None
 
 # =============================================================================
-class S3ProjectActivityTypeModel(S3Model):
+class ProjectActivityTypeModel(DataModel):
     """
         Project Activity Type Model
 
@@ -1860,7 +1858,7 @@ class S3ProjectActivityTypeModel(S3Model):
                 }
 
 # =============================================================================
-class S3ProjectActivityPersonModel(S3Model):
+class ProjectActivityPersonModel(DataModel):
     """
         Project Activity Person Model
 
@@ -1922,10 +1920,10 @@ class S3ProjectActivityPersonModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectActivityOrganisationModel(S3Model):
+class ProjectActivityOrganisationModel(DataModel):
     """
         Project Activity Organisation Model
 
@@ -1989,10 +1987,10 @@ class S3ProjectActivityOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectActivityOrganisationGroupModel(S3Model):
+class ProjectActivityOrganisationGroupModel(DataModel):
     """
         Project Activity Organisation Group Model
 
@@ -2029,10 +2027,10 @@ class S3ProjectActivityOrganisationGroupModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectActivityDemographicsModel(S3Model):
+class ProjectActivityDemographicsModel(DataModel):
     """
         Project Activity Demographics Model
 
@@ -2074,7 +2072,7 @@ class S3ProjectActivityDemographicsModel(S3Model):
                                           empty = False,
                                           comment = parameter_id_comment,
                                           ),
-                          self.req_timeframe(),
+                          req_timeframe()(),
                           Field("target_value", "integer",
                                 label = T("Target Value"),
                                 represent = IS_INT_AMOUNT.represent,
@@ -2095,10 +2093,10 @@ class S3ProjectActivityDemographicsModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectActivityItemModel(S3Model):
+class ProjectActivityItemModel(DataModel):
     """
         Project Activity Item Model
 
@@ -2137,7 +2135,7 @@ $.filterOptionsS3({
                                               widget = None,
                                               ),
                           self.supply_item_pack_id(),
-                          self.req_timeframe(),
+                          req_timeframe()(),
                           Field("target_value", "integer",
                                 label = T("Target Value"),
                                 represent = IS_INT_AMOUNT.represent,
@@ -2158,10 +2156,10 @@ $.filterOptionsS3({
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectActivitySectorModel(S3Model):
+class ProjectActivitySectorModel(DataModel):
     """
         Project Activity Sector Model
 
@@ -2196,10 +2194,10 @@ class S3ProjectActivitySectorModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectActivityTagModel(S3Model):
+class ProjectActivityTagModel(DataModel):
     """
         Activity Tags
     """
@@ -2239,10 +2237,10 @@ class S3ProjectActivityTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectAnnualBudgetModel(S3Model):
+class ProjectAnnualBudgetModel(DataModel):
     """
         Project Budget Model
 
@@ -2315,10 +2313,10 @@ class S3ProjectAnnualBudgetModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectBeneficiaryModel(S3Model):
+class ProjectBeneficiaryModel(DataModel):
     """
         Project Beneficiary Model
         - depends on Stats module
@@ -2335,7 +2333,7 @@ class S3ProjectBeneficiaryModel(S3Model):
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Project Beneficiary Model needs Stats module enabling")
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -2685,7 +2683,7 @@ class S3ProjectBeneficiaryModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2740,7 +2738,7 @@ class S3ProjectBeneficiaryModel(S3Model):
                 )
 
 # =============================================================================
-class S3ProjectCampaignModel(S3Model):
+class ProjectCampaignModel(DataModel):
     """
         Project Campaign Model
         - used for TERA integration:
@@ -2760,7 +2758,7 @@ class S3ProjectCampaignModel(S3Model):
         if not current.deployment_settings.has_module("stats"):
             # Campaigns Model needs Stats module enabling
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -3018,10 +3016,10 @@ class S3ProjectCampaignModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectFrameworkModel(S3Model):
+class ProjectFrameworkModel(DataModel):
     """
         Project Framework Model
     """
@@ -3162,10 +3160,10 @@ class S3ProjectFrameworkModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectHazardModel(S3Model):
+class ProjectHazardModel(DataModel):
     """
         Project Hazard Model
     """
@@ -3263,7 +3261,7 @@ class S3ProjectHazardModel(S3Model):
                 }
 
 # =============================================================================
-class S3ProjectHRModel(S3Model):
+class ProjectHRModel(DataModel):
     """
         Optionally link Projects <> Human Resources
     """
@@ -3335,7 +3333,7 @@ class S3ProjectHRModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3360,7 +3358,7 @@ class S3ProjectHRModel(S3Model):
             form.errors.human_resource_id = current.T("Record already exists")
 
 # =============================================================================
-class S3ProjectIndicatorModel(S3Model):
+class ProjectIndicatorModel(DataModel):
     """
         Project Indicator Model
         - depends on Stats module
@@ -3376,7 +3374,7 @@ class S3ProjectIndicatorModel(S3Model):
         if not current.deployment_settings.has_module("stats"):
             current.log.warning("Project Indicator Model needs Stats module enabling")
             #return self.defaults()
-            return {}
+            return None
 
         T = current.T
         db = current.db
@@ -3624,10 +3622,10 @@ class S3ProjectIndicatorModel(S3Model):
                   )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectL10nModel(S3Model):
+class ProjectL10nModel(DataModel):
     """
         Project L10n Model
 
@@ -3650,10 +3648,10 @@ class S3ProjectL10nModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectLocationModel(S3Model):
+class ProjectLocationModel(DataModel):
     """
         Project Location Model
         - these can simply be ways to display a Project on the Map
@@ -4020,12 +4018,7 @@ class S3ProjectLocationModel(S3Model):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"project_location_id": lambda **attr: dummy("project_location_id"),
+        return {"project_location_id": S3ReusableField.dummy("project_location_id"),
                 "project_location_represent": lambda v, row=None: "",
                 }
 
@@ -4083,7 +4076,7 @@ class S3ProjectLocationModel(S3Model):
                 person.update_record(realm_entity = realm_entity)
 
 # =============================================================================
-class S3ProjectMasterKeyModel(S3Model):
+class ProjectMasterKeyModel(DataModel):
     """
         Link Projects to Master Keys for Mobile Data Entry
     """
@@ -4107,10 +4100,10 @@ class S3ProjectMasterKeyModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectOrganisationModel(S3Model):
+class ProjectOrganisationModel(DataModel):
     """
         Project Organisation Model
     """
@@ -4225,7 +4218,7 @@ class S3ProjectOrganisationModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4343,7 +4336,7 @@ class S3ProjectOrganisationModel(S3Model):
             return None
 
 # =============================================================================
-class S3ProjectPlanningModel(S3Model):
+class ProjectPlanningModel(DataModel):
     """
         Project Planning Model:
             Goals (Objectives)
@@ -5230,7 +5223,7 @@ class S3ProjectPlanningModel(S3Model):
                      indicator_id(readable = False,
                                   writable = False,
                                   ),
-                     # Used as linktable for RMSAmericas HNRC for their UI
+                     # Used as linktable for RMS HNRC for their UI
                      indicator_activity_id(),
                      # Populated Automatically
                      # Used for Timeplot &, in future, to ease changing the monitoring frequency
@@ -6537,7 +6530,7 @@ class S3ProjectPlanningModel(S3Model):
         record = db(table.id == record_id).select(table.indicator_id,
                                                   table.start_date,
                                                   table.end_date,
-                                                  limitby=(0, 1)
+                                                  limitby = (0, 1)
                                                   ).first()
         try:
             indicator_id = record.indicator_id
@@ -6553,8 +6546,8 @@ class S3ProjectPlanningModel(S3Model):
                 (table.end_date < end_date)
         date_field = table.end_date
         record = db(query).select(date_field,
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record[date_field] != start_date:
             # Update this record's start_date
@@ -6567,8 +6560,8 @@ class S3ProjectPlanningModel(S3Model):
         record = db(query).select(table.id,
                                   table.start_date,
                                   date_field, # Needed for orderby on Postgres
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record.start_date != end_date:
             # Update that record's start_date
@@ -6610,7 +6603,7 @@ class S3ProjectPlanningModel(S3Model):
         record = db(table.id == record_id).select(table.deleted_fk,
                                                   table.start_date,
                                                   table.end_date,
-                                                  limitby=(0, 1)
+                                                  limitby = (0, 1)
                                                   ).first()
         try:
             fks = json.loads(record.deleted_fk)
@@ -6627,8 +6620,8 @@ class S3ProjectPlanningModel(S3Model):
                 (table.end_date < end_date)
         date_field = table.end_date
         record = db(query).select(date_field,
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record[date_field] != start_date:
             # Update this record's start_date
@@ -6641,8 +6634,8 @@ class S3ProjectPlanningModel(S3Model):
         record = db(query).select(table.id,
                                   table.start_date,
                                   date_field, # Needed for orderby on Postgres
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record.start_date != end_date:
             # Update that record's start_date
@@ -6652,7 +6645,7 @@ class S3ProjectPlanningModel(S3Model):
         # Update Statuses
         table = s3db.project_indicator
         row = db(table.id == indicator_id).select(table.project_id,
-                                                  limitby=(0, 1)
+                                                  limitby = (0, 1)
                                                   ).first()
         try:
             project_id = row.project_id
@@ -6879,8 +6872,8 @@ class S3ProjectPlanningModel(S3Model):
                 (table.end_date < end_date)
         date_field = table.end_date
         record = db(query).select(date_field,
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record[date_field] != start_date:
             # Update this record's start_date
@@ -6893,8 +6886,8 @@ class S3ProjectPlanningModel(S3Model):
         record = db(query).select(table.id,
                                   table.start_date,
                                   date_field, # Needed for orderby on Postgres
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record.start_date != end_date:
             # Update that record's start_date
@@ -6931,7 +6924,7 @@ class S3ProjectPlanningModel(S3Model):
         record = db(table.id == record_id).select(table.deleted_fk,
                                                   table.start_date,
                                                   table.end_date,
-                                                  limitby=(0, 1)
+                                                  limitby = (0, 1)
                                                   ).first()
         try:
             fks = json.loads(record.deleted_fk)
@@ -6954,8 +6947,8 @@ class S3ProjectPlanningModel(S3Model):
                 (table.end_date < end_date)
         date_field = table.end_date
         record = db(query).select(date_field,
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record[date_field] != start_date:
             # Update this record's start_date
@@ -6968,8 +6961,8 @@ class S3ProjectPlanningModel(S3Model):
         record = db(query).select(table.id,
                                   table.start_date,
                                   date_field, # Needed for orderby on Postgres
-                                  limitby=(0, 1),
-                                  orderby=date_field,
+                                  limitby = (0, 1),
+                                  orderby = date_field,
                                   ).first()
         if record and record.start_date != end_date:
             # Update that record's start_date
@@ -6978,7 +6971,7 @@ class S3ProjectPlanningModel(S3Model):
         # Update Statuses
         table = s3db.project_indicator_activity
         row = db(table.id == indicator_activity_id).select(table.project_id,
-                                                           limitby=(0, 1)
+                                                           limitby = (0, 1)
                                                            ).first()
         try:
             project_id = row.project_id
@@ -7137,7 +7130,7 @@ class project_SummaryReport(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -8160,7 +8153,7 @@ class project_SummaryReport(S3Method):
         #                        table.value,
         #                        table.target_value,
         #                        #table.comments,
-        #                        #orderby=table.end_date,
+        #                        #orderby = table.end_date,
         #                        )
         #for row in rows:
         #    date = row.end_date # Old: We just want to store the last
@@ -8343,7 +8336,7 @@ class project_SummaryReport(S3Method):
             -the actual report
         """
 
-        from s3.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
 
         T = current.T
         db = current.db
@@ -8404,7 +8397,7 @@ class project_SummaryReport(S3Method):
                 (ltable.hazard_id == htable.id)
         hazards = db(query).select(htable.name)
         if hazards:
-            hazards = ", ".join([s3_unicode(T(h.name)) for h in hazards])
+            hazards = ", ".join([s3_str(T(h.name)) for h in hazards])
         else:
             hazards = NONE
 
@@ -8414,7 +8407,7 @@ class project_SummaryReport(S3Method):
                 (ltable.sector_id == stable.id)
         sectors = db(query).select(stable.name)
         if sectors:
-            sectors = ", ".join([s3_unicode(T(s.name)) for s in sectors])
+            sectors = ", ".join([s3_str(T(s.name)) for s in sectors])
         else:
             sectors = NONE
 
@@ -8424,7 +8417,7 @@ class project_SummaryReport(S3Method):
                 (ltable.theme_id == ttable.id)
         themes = db(query).select(ttable.name)
         if themes:
-            themes = ", ".join([s3_unicode(T(t.name)) for t in themes])
+            themes = ", ".join([s3_str(T(t.name)) for t in themes])
         else:
             themes = NONE
 
@@ -8703,7 +8696,7 @@ class project_IndicatorSummaryReport(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -8753,11 +8746,11 @@ class project_IndicatorSummaryReport(S3Method):
                                 table[status_field],
                                 )
         for row in rows:
-            goals[row.id] = dict(code = row.code,
-                                 name = row.name,
-                                 outcomes = {},
-                                 status = row[status_field],
-                                 )
+            goals[row.id] = {"code": row.code,
+                             "name": row.name,
+                             "outcomes": {},
+                             "status": row[status_field],
+                             }
 
         # Outcomes
         table = s3db.project_outcome
@@ -8789,11 +8782,11 @@ class project_IndicatorSummaryReport(S3Method):
                                 )
         for row in rows:
             goals[row.goal_id]["outcomes"][row.outcome_id]["outputs"][row.id] = \
-                dict(code = row.code,
-                     name = row.name,
-                     indicators = {},
-                     status = row[status_field],
-                     )
+                {"code": row.code,
+                 "name": row.name,
+                 "indicators": {},
+                 "status": row[status_field],
+                 }
 
         # Indicators
         indicators = {}
@@ -8813,19 +8806,19 @@ class project_IndicatorSummaryReport(S3Method):
             goal_id = row.goal_id
             outcome_id = row.outcome_id
             output_id = row.output_id
-            indicators[indicator_id] = dict(goal = goal_id,
-                                            outcome = outcome_id,
-                                            output = output_id,
-                                            )
+            indicators[indicator_id] = {"goal": goal_id,
+                                        "outcome": outcome_id,
+                                        "output": output_id,
+                                        }
             goals[goal_id]["outcomes"][outcome_id]["outputs"][output_id]["indicators"][indicator_id] = \
-                dict(code = row.code,
-                     name = row.name,
-                     dates = {},
-                     years = {},
-                     status = row[status_field],
-                     target = 0,
-                     actual = 0,
-                     )
+                {"code": row.code,
+                 "name": row.name,
+                 "dates": {},
+                 "years": {},
+                 "status": row[status_field],
+                 "target": 0,
+                 "actual": 0,
+                 }
 
         # Indicator Data
         table = s3db.project_indicator_data
@@ -8836,7 +8829,7 @@ class project_IndicatorSummaryReport(S3Method):
                                 table.end_date,
                                 table.target_value,
                                 table.value,
-                                orderby=table.end_date,
+                                orderby = table.end_date,
                                 )
         dates = []
         dappend = dates.append
@@ -8858,9 +8851,9 @@ class project_IndicatorSummaryReport(S3Method):
                 indicator["actual"] += actual
             elif actual is None:
                 actual = NONE
-            indicator["dates"][date] = dict(target = target,
-                                            actual = actual,
-                                            )
+            indicator["dates"][date] = {"target": target,
+                                        "actual": actual,
+                                        }
             iyears = indicator["years"]
             if year in iyears:
                 if target:
@@ -8868,9 +8861,9 @@ class project_IndicatorSummaryReport(S3Method):
                 if actual != NONE:
                     iyears[year]["actual"] += actual
             else:
-                iyears[year] = dict(target = target,
-                                    actual = actual,
-                                    )
+                iyears[year] = {"target": target,
+                                "actual": actual,
+                                }
 
         # Uniquify
         dates = set(dates)
@@ -8910,20 +8903,20 @@ class project_IndicatorSummaryReport(S3Method):
         colspan = (2 * len(dates)) + (2 * len(years)) + 3
 
         header_row = TR(TD(T("Number"),
-                           _rowspan=2,
-                           _class="tal",
+                           _rowspan = 2,
+                           _class = "tal",
                            ),
                         TD(T("Indicators"),
-                           _rowspan=2,
-                           _class="tal",
+                           _rowspan = 2,
+                           _class = "tal",
                            ),
                         TD(T("Total Target"),
-                           _rowspan=2,
+                           _rowspan = 2,
                            ),
                         )
         if not years:
             item = TABLE(header_row,
-                         _class="indicator_summary_report"
+                         _class = "indicator_summary_report"
                          )
             response.warning = T("No Indicator Data available")
         else:
@@ -8935,25 +8928,25 @@ class project_IndicatorSummaryReport(S3Method):
             for d in dates:
                 if d.year != year:
                     happend(TD(year,
-                               _colspan=2,
+                               _colspan = 2,
                                ))
                     y += 1
                     year = years[y]
                 happend(TD(represent(d),
-                           _colspan=2,
+                           _colspan = 2,
                            ))
             happend(TD(year,
-                       _colspan=2,
+                       _colspan = 2,
                        ))
 
             happend(TD(T("Actual Total"),
-                       _rowspan=2,
+                       _rowspan = 2,
                        ))
             happend(TD(T("% Achieved"),
-                       _rowspan=2,
+                       _rowspan = 2,
                        ))
             item = TABLE(header_row,
-                         _class="indicator_summary_report"
+                         _class = "indicator_summary_report"
                          )
             iappend = item.append
             row_2 = TR()
@@ -8971,54 +8964,54 @@ class project_IndicatorSummaryReport(S3Method):
             for goal_id in goals:
                 goal = goals[goal_id]
                 row = TR(TD("%s: %s" % (T("Goal"), goal["code"]),
-                            _class="tal",
+                            _class = "tal",
                             ),
                          TD(goal["name"],
-                            _class="tal",
-                            _colspan=colspan,
+                            _class = "tal",
+                            _colspan = colspan,
                             ),
                          TD(project_status_represent(goal["status"])),
-                         _class="project_goal",
+                         _class = "project_goal",
                          )
                 iappend(row)
                 outcomes = goal["outcomes"]
                 for outcome_id in outcomes:
                     outcome = outcomes[outcome_id]
                     row = TR(TD("%s: %s" % (T("Outcome"), outcome["code"]),
-                                _class="tal",
+                                _class = "tal",
                                 ),
                              TD(outcome["name"],
-                                _class="tal",
-                                _colspan=colspan,
+                                _class = "tal",
+                                _colspan = colspan,
                                 ),
                              TD(project_status_represent(outcome["status"])),
-                             _class="project_outcome",
+                             _class = "project_outcome",
                              )
                     iappend(row)
                     outputs = outcome["outputs"]
                     for output_id in outputs:
                         output = outputs[output_id]
                         row = TR(TD("%s: %s" % (T("Output"), output["code"]),
-                                    _class="tal",
+                                    _class = "tal",
                                     ),
                                  TD(output["name"],
-                                    _class="tal",
-                                    _colspan=colspan,
+                                    _class = "tal",
+                                    _colspan = colspan,
                                     ),
                                  TD(project_status_represent(output["status"])),
-                                 _class="project_output",
+                                 _class = "project_output",
                                  )
                         iappend(row)
                         indicators = output["indicators"]
                         for i in indicators:
                             indicator = indicators[i]
                             row = TR(TD("%s: %s" % (T("Indicator"), indicator["code"]),
-                                        _class="tal",
+                                        _class = "tal",
                                         ),
                                      TD(indicator["name"],
-                                        _class="tal",
+                                        _class = "tal",
                                         ),
-                                     _class="project_indicator",
+                                     _class = "project_indicator",
                                      )
                             rappend = row.append
                             rappend(TD(indicator["target"]))
@@ -9054,8 +9047,8 @@ class project_IndicatorSummaryReport(S3Method):
                             iappend(row)
 
             iappend(TR(TD(T(self.project_status_label),
-                          _colspan=colspan + 1,
-                          _class="tar",
+                          _colspan = colspan + 1,
+                          _class = "tar",
                           ),
                        TD(project_status_represent(record[self.status_field])),
                        ))
@@ -9068,10 +9061,10 @@ class project_IndicatorSummaryReport(S3Method):
             #                                         ),
             #                            },
             #                    ),
-            #                _class="list_formats",
+            #                _class = "list_formats",
             #                ),
-            #           _class="tar",
-            #           _colspan=colspan + 5,
+            #           _class = "tar",
+            #           _colspan = colspan + 5,
             #           ))
 
         output = dict(item=item)
@@ -9096,7 +9089,7 @@ class project_IndicatorSummaryReport(S3Method):
             XLS Representation
         """
 
-        from s3.codecs.xls import S3XLS
+        from core.resource.codecs.xls import S3XLS
 
         try:
             import xlwt
@@ -9118,9 +9111,9 @@ class project_IndicatorSummaryReport(S3Method):
 
         date_represent = s3db.project_indicator_data.end_date.represent
 
-        labels11 = [s3_unicode(T("Number")),
-                    s3_unicode(T("Indicators")),
-                    s3_unicode(T("Total Target")),
+        labels11 = [s3_str(T("Number")),
+                    s3_str(T("Indicators")),
+                    s3_str(T("Total Target")),
                     ]
         labels12 = []
         lappend = labels12.append
@@ -9133,16 +9126,16 @@ class project_IndicatorSummaryReport(S3Method):
                 year = years[y]
             lappend(date_represent(d))
         lappend(str(year))
-        labels13 = [s3_unicode(T("Actual Total")),
-                    s3_unicode(T("% Achieved")),
+        labels13 = [s3_str(T("Actual Total")),
+                    s3_str(T("% Achieved")),
                     ]
 
         labels22 = []
         lappend = labels22.append
         y = 0
         year = years[y]
-        TARGET = s3_unicode(T("Target"))
-        ACTUAL = s3_unicode(T("Actual"))
+        TARGET = s3_str(T("Target"))
+        ACTUAL = s3_str(T("Actual"))
         for d in dates:
             if d.year != year:
                 lappend(TARGET)
@@ -9169,7 +9162,7 @@ class project_IndicatorSummaryReport(S3Method):
         book = xlwt.Workbook(encoding="utf-8")
 
         # Add sheet
-        sheet = book.add_sheet(s3_unicode(T("Report")))
+        sheet = book.add_sheet(s3_str(T("Report")))
 
         # Set column Widths
         col_index = 0
@@ -9182,7 +9175,7 @@ class project_IndicatorSummaryReport(S3Method):
             col_index += 1
 
         # 1st row => Report Title
-        title = s3_unicode(T("Summary of Progress Indicators for Outcomes and Indicators"))
+        title = s3_str(T("Summary of Progress Indicators for Outcomes and Indicators"))
         current_row = sheet.row(0)
         current_row.height = 500
         current_row.write(0, title, large_header_style)
@@ -9359,7 +9352,7 @@ class project_IndicatorSummaryReport(S3Method):
                         row_index += 1
 
         current_row = sheet.row(row_index)
-        label = s3_unicode(T(self.project_status_label))
+        label = s3_str(T(self.project_status_label))
         # Fix the size of the column to display the label
         if len(label) * COL_WIDTH_MULTIPLIER > sheet.col(colspan).width:
             sheet.col(colspan).width = len(label) * COL_WIDTH_MULTIPLIER
@@ -9417,11 +9410,11 @@ def project_ProgressReport(r, **attr):
                                     table.actual_progress_by_activities,
                                     )
             for row in rows:
-                goals[row.id] = dict(code = row.code,
-                                     name = row.name,
-                                     outcomes = {},
-                                     status = row.actual_progress_by_activities,
-                                     )
+                goals[row.id] = {"code": row.code,
+                                 "name": row.name,
+                                 "outcomes": {},
+                                 "status": row.actual_progress_by_activities,
+                                 }
 
             # Outcomes
             table = s3db.project_outcome
@@ -9466,11 +9459,11 @@ def project_ProgressReport(r, **attr):
                 outcome_id = row.outcome_id
                 append(outcome_id)
                 goals[row.goal_id]["outcomes"][outcome_id]["outputs"][row.id] = \
-                    dict(code = row.code,
-                         name = row.name,
-                         indicators = {},
-                         status = row.actual_progress_by_activities,
-                         )
+                    {"code": row.code,
+                     "name": row.name,
+                     "indicators": {},
+                     "status": row.actual_progress_by_activities,
+                     }
             outcomes_without_outputs = number_of_outcomes - len(set(outcomes_with_outputs))
 
             # Indicators
@@ -9495,13 +9488,13 @@ def project_ProgressReport(r, **attr):
                 output_id = row.output_id
                 append(output_id)
                 goals[goal_id]["outcomes"][outcome_id]["outputs"][output_id]["indicators"][row.id] = \
-                    dict(code = row.code,
-                         name = row.name,
-                         dates = {},
-                         status = row.actual_progress_by_activities,
-                         target = 0,
-                         actual = 0,
-                         )
+                    {"code": row.code,
+                     "name": row.name,
+                     "dates": {},
+                     "status": row.actual_progress_by_activities,
+                     "target": 0,
+                     "actual": 0,
+                     }
             outputs_without_indicators = number_of_outputs - len(set(outputs_with_indicators))
 
         else:
@@ -9518,11 +9511,11 @@ def project_ProgressReport(r, **attr):
                                     table.overall_status_by_indicators,
                                     )
             for row in rows:
-                goals[row.id] = dict(code = row.code,
-                                     name = row.name,
-                                     outcomes = {},
-                                     status = row.overall_status_by_indicators,
-                                     )
+                goals[row.id] = {"code": row.code,
+                                 "name": row.name,
+                                 "outcomes": {},
+                                 "status": row.overall_status_by_indicators,
+                                 }
 
             # Outcomes
             table = s3db.project_outcome
@@ -9541,11 +9534,11 @@ def project_ProgressReport(r, **attr):
                 number_of_outcomes += 1
                 goal_id = row.goal_id
                 append(goal_id)
-                goals[goal_id]["outcomes"][row.id] = dict(code = row.code,
-                                                          name = row.name,
-                                                          outputs = {},
-                                                          status = row.overall_status_by_indicators,
-                                                          )
+                goals[goal_id]["outcomes"][row.id] = {"code": row.code,
+                                                      "name": row.name,
+                                                      "outputs": {},
+                                                      "status": row.overall_status_by_indicators,
+                                                      }
             goals_without_outcomes = len(goals) - len(set(goals_with_outcomes))
 
             # Outputs
@@ -9567,11 +9560,11 @@ def project_ProgressReport(r, **attr):
                 outcome_id = row.outcome_id
                 append(outcome_id)
                 goals[row.goal_id]["outcomes"][outcome_id]["outputs"][row.id] = \
-                    dict(code = row.code,
-                         name = row.name,
-                         indicators = {},
-                         status = row.overall_status_by_indicators,
-                         )
+                    {"code": row.code,
+                     "name": row.name,
+                     "indicators": {},
+                     "status": row.overall_status_by_indicators,
+                     }
             outcomes_without_outputs = number_of_outcomes - len(set(outcomes_with_outputs))
 
             # Indicators
@@ -9596,13 +9589,13 @@ def project_ProgressReport(r, **attr):
                 output_id = row.output_id
                 append(output_id)
                 goals[goal_id]["outcomes"][outcome_id]["outputs"][output_id]["indicators"][row.id] = \
-                    dict(code = row.code,
-                         name = row.name,
-                         dates = {},
-                         status = row.overall_status_by_indicators,
-                         target = 0,
-                         actual = 0,
-                         )
+                    {"code": row.code,
+                     "name": row.name,
+                     "dates": {},
+                     "status": row.overall_status_by_indicators,
+                     "target": 0,
+                     "actual": 0,
+                     }
             outputs_without_indicators = number_of_outputs - len(set(outputs_with_indicators))
 
         # Sort
@@ -9622,10 +9615,10 @@ def project_ProgressReport(r, **attr):
         item = TABLE(_class="project_progress_report")
         rows = []
         row = TR(TD(T("Project"),
-                    _rowspan=number_of_rows,
+                    _rowspan = number_of_rows,
                     ),
                  TD(project_status_represent(project_status),
-                    _rowspan=number_of_rows,
+                    _rowspan = number_of_rows,
                     ),
                  )
         rows.append(row)
@@ -9647,18 +9640,18 @@ def project_ProgressReport(r, **attr):
 
             if first_goal:
                 row.append(TD("%s: %s" % (T("Goal"), goal["code"]),
-                              _rowspan=rowspan,
+                              _rowspan = rowspan,
                               ))
                 row.append(TD(project_status_represent(goal["status"]),
-                              _rowspan=rowspan,
+                              _rowspan = rowspan,
                               ))
                 first_goal = False
             else:
                 row = TR(TD("%s: %s" % (T("Goal"), goal["code"]),
-                            _rowspan=rowspan,
+                            _rowspan = rowspan,
                             ),
                          TD(project_status_represent(goal["status"]),
-                            _rowspan=rowspan,
+                            _rowspan = rowspan,
                             ))
                 rows.append(row)
 
@@ -9675,18 +9668,18 @@ def project_ProgressReport(r, **attr):
 
                 if first_outcome:
                     row.append(TD("%s: %s" % (T("Outcome"), outcome["code"]),
-                                  _rowspan=rowspan,
+                                  _rowspan = rowspan,
                                   ))
                     row.append(TD(project_status_represent(outcome["status"]),
-                                  _rowspan=rowspan,
+                                  _rowspan = rowspan,
                                   ))
                     first_outcome = False
                 else:
                     row = TR(TD("%s: %s" % (T("Outcome"), outcome["code"]),
-                                _rowspan=rowspan,
+                                _rowspan = rowspan,
                                 ),
                              TD(project_status_represent(outcome["status"]),
-                                _rowspan=rowspan,
+                                _rowspan = rowspan,
                                 ))
                     rows.append(row)
 
@@ -9700,18 +9693,18 @@ def project_ProgressReport(r, **attr):
 
                     if first_output:
                         row.append(TD("%s: %s" % (T("Output"), output["code"]),
-                                      _rowspan=rowspan,
+                                      _rowspan = rowspan,
                                       ))
                         row.append(TD(project_status_represent(output["status"]),
-                                      _rowspan=rowspan,
+                                      _rowspan = rowspan,
                                       ))
                         first_output = False
                     else:
                         row = TR(TD("%s: %s" % (T("Output"), output["code"]),
-                                    _rowspan=rowspan,
+                                    _rowspan = rowspan,
                                     ),
                                  TD(project_status_represent(output["status"]),
-                                    _rowspan=rowspan,
+                                    _rowspan = rowspan,
                                     ))
                         rows.append(row)
 
@@ -9734,13 +9727,15 @@ def project_ProgressReport(r, **attr):
                             rows.append(row)
 
                     if output_number < number_of_outputs:
-                        rows.append(TR(TD(_colspan=11),
-                                       _class="spacer"))
+                        rows.append(TR(TD(_colspan = 11),
+                                       _class = "spacer",
+                                       ))
 
         for row in rows:
             item.append(row)
 
-        output = dict(item=item)
+        output = {"item": item,
+                  }
         output["title"] = T("Total Project Progress")
         output["subtitle"] = "%s: %s" % (T("Project"), r.record.name)
         # @ToDo: Add "On Date"
@@ -9776,7 +9771,8 @@ def project_ProgressReport(r, **attr):
 #        # Format Data
 #        item = TABLE(_class="budget_progress_report")
 #
-#        output = dict(item=item)
+#        output = {"item": item,
+#                  }
 #        output["title"] = T("Total Budget Progress")
 #        output["subtitle"] = "%s: %s" % (T("Project"), r.record.name)
 #        # @ToDo: Add "On Date"
@@ -9812,7 +9808,8 @@ def project_ProgressReport(r, **attr):
 #        # Format Data
 #        item = TABLE(_class="project_indicator_progress_report")
 #
-#        output = dict(item=item)
+#        output = {"item": item,
+#                  }
 #        output["title"] = T("Monthly Progress by Indicator")
 #        output["subtitle"] = "%s: %s" % (T("Project"), r.record.name)
 #        # @ToDo: Add "On Date"
@@ -9830,7 +9827,7 @@ def project_ProgressReport(r, **attr):
 #        r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class S3ProjectProgrammeModel(S3Model):
+class ProjectProgrammeModel(DataModel):
     """
         Programmes Model
     """
@@ -9941,15 +9938,11 @@ class S3ProjectProgrammeModel(S3Model):
     def defaults():
         """ Safe defaults for names if module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"project_programme_id": lambda **attr: dummy("programme_id"),
+        return {"project_programme_id": S3ReusableField.dummy("programme_id"),
                 }
 
 # =============================================================================
-class S3ProjectProgrammeProjectModel(S3Model):
+class ProjectProgrammeProjectModel(DataModel):
     """
         Project Programme<>Project Model
     """
@@ -9971,10 +9964,10 @@ class S3ProjectProgrammeProjectModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectSectorModel(S3Model):
+class ProjectSectorModel(DataModel):
     """
         Project Sector Model
     """
@@ -10014,10 +10007,10 @@ class S3ProjectSectorModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectStatusModel(S3Model):
+class ProjectStatusModel(DataModel):
     """
         Project Status Model
         - used by both Projects & Activities
@@ -10088,16 +10081,11 @@ class S3ProjectStatusModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy", "string",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"project_status_id": lambda **attr: dummy("status_id"),
+        return {"project_status_id": S3ReusableField.dummy("status_id"),
                 }
 
 # =============================================================================
-class S3ProjectStrategyModel(S3Model):
+class ProjectStrategyModel(DataModel):
     """
         Project Strategy Model
         - currently just used by IFRC to hold AoF/SFI (& then only for (Training) Events for Bangkok CCST)
@@ -10169,15 +10157,11 @@ class S3ProjectStrategyModel(S3Model):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"project_strategy_id": lambda **attr: dummy("strategy_id"),
+        return {"project_strategy_id": S3ReusableField.dummy("strategy_id"),
                 }
 
 # =============================================================================
-class S3ProjectTagModel(S3Model):
+class ProjectTagModel(DataModel):
     """
         Project Tags
     """
@@ -10217,10 +10201,10 @@ class S3ProjectTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectThemeModel(S3Model):
+class ProjectThemeModel(DataModel):
     """
         Project Theme Model
     """
@@ -10518,7 +10502,7 @@ class S3ProjectThemeModel(S3Model):
                                  percentage = percentages[theme_id])
 
 # =============================================================================
-class S3ProjectDRRModel(S3Model):
+class ProjectDRRModel(DataModel):
     """
         Models for DRR (Disaster Risk Reduction) extensions
     """
@@ -10550,7 +10534,7 @@ class S3ProjectDRRModel(S3Model):
                           *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -10571,7 +10555,7 @@ class S3ProjectDRRModel(S3Model):
         return ", ".join(vals)
 
 # =============================================================================
-class S3ProjectDRRPPModel(S3Model):
+class ProjectDRRPPModel(DataModel):
     """
         Models for DRR Project Portal extensions
         - injected into custom Project CRUD forms
@@ -10725,7 +10709,7 @@ class S3ProjectDRRPPModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -10792,7 +10776,7 @@ class S3ProjectDRRPPModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class S3ProjectTargetModel(S3Model):
+class ProjectTargetModel(DataModel):
     """
         Project Target Model
     """
@@ -10832,10 +10816,10 @@ class S3ProjectTargetModel(S3Model):
         )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectTaskModel(S3Model):
+class ProjectTaskModel(DataModel):
     """
         Project Task Model
 
@@ -10999,7 +10983,7 @@ class S3ProjectTaskModel(S3Model):
                      Field("priority", "integer",
                            default = 3,
                            label = T("Priority"),
-                           represent = S3Represent(options = project_task_priority_opts),
+                           represent = represent_option(project_task_priority_opts),
                            requires = IS_IN_SET(project_task_priority_opts,
                                                 zero = None),
                            ),
@@ -11008,14 +10992,14 @@ class S3ProjectTaskModel(S3Model):
                                 readable = staff,
                                 writable = staff,
                                 label = T("Assigned to"),
-                                filterby = "instance_type",
+                                filterby = "instance_type", # Not using instance_types as not a Super-Entity
                                 filter_opts = ("pr_person", "pr_group", "org_organisation"),
                                 represent = assignee_represent,
                                 # @ToDo: Widget
                                 #widget = S3PentityWidget(),
-                                #comment = DIV(_class="tooltip",
-                                #              _title="%s|%s" % (T("Assigned to"),
-                                #                                messages.AUTOCOMPLETE_HELP))
+                                #comment = DIV(_class = "tooltip",
+                                #              _title = "%s|%s" % (T("Assigned to"),
+                                #                                  messages.AUTOCOMPLETE_HELP))
                                 ),
                      s3_datetime("date_due",
                                  label = T("Date Due"),
@@ -11049,7 +11033,7 @@ class S3ProjectTaskModel(S3Model):
                      Field("status", "integer",
                            default = 2,
                            label = T("Status"),
-                           represent = S3Represent(options = project_task_status_opts),
+                           represent = represent_option(project_task_status_opts),
                            requires = IS_IN_SET(project_task_status_opts,
                                                 zero = None),
                            readable = staff,
@@ -11310,15 +11294,15 @@ class S3ProjectTaskModel(S3Model):
         project_task_represent_w_project = project_TaskRepresent(show_project=True)
 
         # Custom Methods
-        set_method("project", "task",
+        set_method("project_task",
                    method = "share",
                    action = self.project_task_share)
 
-        set_method("project", "task",
+        set_method("project_task",
                    method = "unshare",
                    action = self.project_task_unshare)
 
-        set_method("project", "task",
+        set_method("project_task",
                    method = "dispatch",
                    action = self.project_task_dispatch)
 
@@ -11684,11 +11668,7 @@ class S3ProjectTaskModel(S3Model):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
-
-        return {"project_task_id": lambda **attr: dummy("task_id"),
+        return {"project_task_id": S3ReusableField.dummy("task_id"),
                 "project_task_active_statuses": [],
                 }
 
@@ -11905,7 +11885,7 @@ class S3ProjectTaskModel(S3Model):
 
             if changed:
                 table = db.project_comment
-                text = s3_auth_user_represent(current.auth.user.id)
+                text = s3db.auth_UserRepresent(show_link = False)(current.auth.user.id)
                 for var in changed:
                     text = "%s\n%s" % (text, changed[var])
                 table.insert(task_id = task_id,
@@ -12206,7 +12186,7 @@ class S3ProjectTaskModel(S3Model):
             db(query).update(time_actual = hours)
 
 # =============================================================================
-class S3ProjectTaskForumModel(S3Model):
+class ProjectTaskForumModel(DataModel):
     """
         Shares for Tasks
     """
@@ -12243,10 +12223,10 @@ class S3ProjectTaskForumModel(S3Model):
         #    msg_list_empty = T("No Tasks currently shared"))
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectTaskHRMModel(S3Model):
+class ProjectTaskHRMModel(DataModel):
     """
         Project Task HRM Model
 
@@ -12292,10 +12272,10 @@ class S3ProjectTaskHRMModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectTaskTagModel(S3Model):
+class ProjectTaskTagModel(DataModel):
     """
         Task Tags
     """
@@ -12334,10 +12314,10 @@ class S3ProjectTaskTagModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
-class S3ProjectWindowModel(S3Model):
+class ProjectWindowModel(DataModel):
     """
         Project Window Model
 
@@ -12369,7 +12349,7 @@ class S3ProjectWindowModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def multi_theme_percentage_represent(record_id):
@@ -12851,12 +12831,12 @@ def project_activity_year_options():
     if not start_year or not end_year:
         return {start_year:start_year} or {end_year:end_year}
     years = {}
-    for year in xrange(start_year, end_year + 1):
+    for year in range(start_year, end_year + 1):
         years[year] = year
     return years
 
 # =============================================================================
-class S3ProjectThemeVirtualFields(object):
+class ProjectThemeVirtualFields(object):
     """
         Virtual fields for the project table
 
@@ -13238,7 +13218,7 @@ def project_rheader(r):
 
         if record.created_by:
             creator = TR(TH("%s: " % T("Created By")),
-                         s3_auth_user_represent(record.created_by),
+                         s3db.auth_UserRepresent(show_link = False)(record.created_by),
                          )
         else:
             creator = ""
@@ -13519,7 +13499,7 @@ def project_task_controller():
     else:
         hide_filter = None
 
-    return current.rest_controller("project", "task",
+    return current.crud_controller("project", "task",
                                    hide_filter = hide_filter,
                                    rheader = s3db.project_rheader,
                                    )
@@ -13755,7 +13735,7 @@ def project_project_list_layout(list_id, item_id, resource, rfields, record,
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -13861,7 +13841,7 @@ def project_activity_list_layout(list_id, item_id, resource, rfields, record,
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -13972,7 +13952,7 @@ def project_task_list_layout(list_id, item_id, resource, rfields, record,
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -14147,7 +14127,7 @@ class project_Details(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

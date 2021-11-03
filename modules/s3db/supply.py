@@ -51,8 +51,7 @@ import re
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
-from s3compat import xrange
+from ..core import *
 from s3dal import Row
 from s3layouts import S3PopupLink
 
@@ -66,7 +65,7 @@ um_patterns = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
                )
 
 # =============================================================================
-class S3SupplyModel(S3Model):
+class S3SupplyModel(DataModel):
     """
         Generic Supply functionality such as catalogs and items that is used
         across multiple modules.
@@ -110,6 +109,11 @@ class S3SupplyModel(S3Model):
         super_link = self.super_link
 
         float_represent = IS_FLOAT_AMOUNT.represent
+        translate = settings.get_L10n_translate_supply_item()
+        if translate:
+            translate_represent = T
+        else:
+            translate_represent = None
 
         NONE = current.messages["NONE"]
         YES = T("Yes")
@@ -180,6 +184,7 @@ class S3SupplyModel(S3Model):
         define_table(tablename,
                      Field("name", length=128, notnull=True, unique=True,
                            label = T("Name"),
+                           represent = translate_represent,
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(128),
                                        IS_NOT_ONE_OF(db,
@@ -217,7 +222,7 @@ class S3SupplyModel(S3Model):
         else:
             comment = None
 
-        represent = S3Represent(lookup=tablename)
+        represent = S3Represent(lookup=tablename, translate=translate)
         catalog_id = S3ReusableField("catalog_id", "reference %s" % tablename,
             default = 1,
             label = T("Catalog"),
@@ -251,9 +256,9 @@ class S3SupplyModel(S3Model):
         telephone = settings.get_asset_telephones()
         vehicle = settings.has_module("vehicle")
 
-        item_category_represent = supply_ItemCategoryRepresent()
+        item_category_represent = supply_ItemCategoryRepresent(translate=translate)
         item_category_represent_nocodes = \
-            supply_ItemCategoryRepresent(use_code=False)
+            supply_ItemCategoryRepresent(translate=translate, use_code=False)
 
         if format == "xls":
             parent_represent = item_category_represent_nocodes
@@ -282,6 +287,7 @@ class S3SupplyModel(S3Model):
                            ),
                      Field("name", length=128,
                            label = T("Name"),
+                           represent = translate_represent,
                            requires = IS_LENGTH(128),
                            ),
                      Field("can_be_asset", "boolean",
@@ -358,6 +364,8 @@ $.filterOptionsS3({
 
         configure(tablename,
                   deduplicate = self.supply_item_category_duplicate,
+                  #hierarchy = "parent_item_category_id",
+                  #hierarchy_link = "parent",
                   onvalidation = self.supply_item_category_onvalidate,
                   )
 
@@ -378,6 +386,7 @@ $.filterOptionsS3({
                                       ),
                      Field("name", length=128, notnull=True,
                            label = T("Name"),
+                           represent = translate_represent,
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(128),
                                        ],
@@ -390,6 +399,7 @@ $.filterOptionsS3({
                      Field("um", length=128, notnull=True,
                            default = "piece",
                            label = T("Unit of Measure"),
+                           represent = translate_represent,
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(128),
                                        ],
@@ -484,7 +494,8 @@ $.filterOptionsS3({
             msg_no_match = T("No Matching Items")
             )
 
-        supply_item_represent = supply_ItemRepresent(show_link = True)
+        supply_item_represent = supply_ItemRepresent(show_link = True,
+                                                     translate = translate)
 
         # Reusable Field
         supply_item_tooltip = T("Type the name of an existing catalog item OR Click 'Create Item' to add an item which is not in the catalog.")
@@ -689,6 +700,7 @@ $.filterOptionsS3({
                            notnull=True, # Ideally this would reference another table for normalising Pack names
                            default = T("piece"),
                            label = T("Name"),
+                           represent = translate_represent,
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(128),
                                        ],
@@ -729,7 +741,8 @@ $.filterOptionsS3({
 
         # ---------------------------------------------------------------------
         # Reusable Field
-        item_pack_represent = supply_ItemPackRepresent(lookup="supply_item_pack")
+        item_pack_represent = supply_ItemPackRepresent(lookup = "supply_item_pack",
+                                                       translate = translate)
         item_pack_id = S3ReusableField("item_pack_id", "reference %s" % tablename,
                     label = T("Pack"),
                     ondelete = "RESTRICT",
@@ -945,15 +958,12 @@ $.filterOptionsS3({
     def defaults():
         """ Return safe defaults for names in case the model is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
+        dummy = S3ReusableField.dummy
 
-        return {"supply_item_id": lambda **attr: dummy("item_id"),
-                "supply_item_category_id": lambda **attr: dummy("item_category_id"),
-                "supply_item_entity_id": lambda **attr: dummy("item_entity_id"),
-                "supply_item_pack_id": lambda **attr: dummy("item_pack_id"),
+        return {"supply_item_id": dummy("item_id"),
+                "supply_item_category_id": dummy("item_category_id"),
+                "supply_item_entity_id": dummy("item_entity_id"),
+                "supply_item_pack_id": dummy("item_pack_id"),
                 "supply_item_pack_quantity": lambda tablename: lambda row: 0,
                 }
 
@@ -1043,7 +1053,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1090,7 +1100,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1121,7 +1131,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1149,7 +1159,7 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the S3ImportItem to check
+            @param item: the ImportItem to check
         """
 
         data = item.data
@@ -1180,32 +1190,56 @@ $.filterOptionsS3({
         """
 
         db = current.db
+        s3db = current.s3db
+
+        sitable = s3db.supply_item
+        citable = s3db.supply_catalog_item
 
         form_vars = form.vars
         item_id = form_vars.id
-        catalog_id = form_vars.catalog_id
-        catalog_item_id = None
 
-        citable = db.supply_catalog_item
+        item_category_id = form_vars.get("item_category_id")
+
+        catalog_id = None
+        if "catalog_id" in form_vars:
+            catalog_id = form_vars.catalog_id
+        elif item_category_id:
+            # Look up the catalog from the category
+            ictable = s3db.supply_item_category
+            query = (ictable.id == item_category_id) & \
+                    (ictable.deleted == False)
+            row = db(query).select(ictable.catalog_id,
+                                   limitby = (0, 1),
+                                   ).first()
+            if row:
+                catalog_id = row.catalog_id
+        if not catalog_id:
+            # Check for default catalog
+            catalog_id = sitable.catalog_id.default
+
+        # Look up existing catalog item, if one exists
         query = (citable.item_id == item_id) & \
                 (citable.deleted == False)
         rows = db(query).select(citable.id)
         if not len(rows):
-            # Create supply_catalog_item
-            catalog_item_id = \
-                citable.insert(catalog_id = catalog_id,
-                               item_category_id = form_vars.item_category_id,
-                               item_id = item_id
-                               )
+            # Create new catalog item
+            catalog_item = {"catalog_id": catalog_id,
+                            "item_category_id": item_category_id,
+                            "item_id": item_id,
+                            }
+            catalog_item["id"] = citable.insert(**catalog_item)
+            current.auth.s3_set_record_owner(citable, catalog_item)
+            s3db.onaccept(citable, catalog_item, method="create")
+
         elif len(rows) == 1:
-            # Update if the catalog/category has changed - if there is only supply_catalog_item
-            catalog_item_id = rows.first().id
-            catalog_item_id = \
-                db(citable.id == catalog_item_id).update(catalog_id = catalog_id,
-                                                         item_category_id = form_vars.item_category_id,
-                                                         item_id = item_id,
-                                                         )
-        #current.auth.s3_set_record_owner(citable, catalog_item_id, force_update=True)
+            # Update the existing catalog item if the catalog/category has
+            # changed (if there is only one catalog item)
+            catalog_item = rows.first()
+            catalog_item.update_record(catalog_id = catalog_id,
+                                       item_category_id = item_category_id,
+                                       item_id = item_id,
+                                       )
+            #current.auth.s3_set_record_owner(citable, catalog_item, force_update=True)
 
         # Update UM
         um = form_vars.um or db.supply_item.um.default
@@ -1230,7 +1264,7 @@ $.filterOptionsS3({
                                    )
 
 # =============================================================================
-class S3SupplyDistributionModel(S3Model):
+class S3SupplyDistributionModel(DataModel):
     """
         Supply Distribution Model
         - depends on Stats module
@@ -1426,7 +1460,7 @@ class S3SupplyDistributionModel(S3Model):
             if not start_year or not end_year:
                 return {start_year:start_year} or {end_year:end_year}
             years = {}
-            for year in xrange(start_year, end_year + 1):
+            for year in range(start_year, end_year + 1):
                 years[year] = year
             return years
 
@@ -1604,13 +1638,7 @@ class S3SupplyDistributionModel(S3Model):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False,
-                                )
-
-        return {"supply_distribution_id": lambda name="distribution_id", **attr: \
-                                                 dummy(name, **attr),
+        return {"supply_distribution_id": S3ReusableField.dummy("distribution_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1723,10 +1751,10 @@ class S3SupplyDistributionModel(S3Model):
         elif not date:
             return [end_date.year]
         else:
-            return list(xrange(date.year, end_date.year + 1))
+            return list(range(date.year, end_date.year + 1))
 
 # =============================================================================
-class S3SupplyDistributionDVRActivityModel(S3Model):
+class S3SupplyDistributionDVRActivityModel(DataModel):
     """
         Model to link distributions to DVR activities / case activities
     """
@@ -1753,10 +1781,10 @@ class S3SupplyDistributionDVRActivityModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class S3SupplyPersonModel(S3Model):
+class S3SupplyPersonModel(DataModel):
     """
         Link table between People & Items
         - e.g. Donations
@@ -1855,7 +1883,7 @@ class S3SupplyPersonModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 class supply_ItemRepresent(S3Represent):
@@ -1985,8 +2013,8 @@ class supply_ItemPackRepresent(S3Represent):
                                 table.name,
                                 table.quantity,
                                 itable.um,
-                                left=left,
-                                limitby=(0, qty),
+                                left = left,
+                                limitby = (0, qty)
                                 )
         self.queries += 1
 
@@ -2028,23 +2056,28 @@ class supply_ItemCategoryRepresent(S3Represent):
     def __init__(self,
                  translate = False,
                  show_link = False,
+                 show_catalog = None,
                  use_code = True,
                  multiple = False,
                  ):
 
-        self.catalog_multi = catalog_multi = current.deployment_settings.get_supply_catalog_multi()
+        if show_catalog is None:
+            show_catalog = current.deployment_settings.get_supply_catalog_multi()
+        self.show_catalog = show_catalog
+
         self.use_code = use_code
 
         # Need a custom lookup to join with Parent/Catalog
         fields = ["supply_item_category.id",
                   "supply_item_category.name",
-                  # Always-included since used as fallback if no name
-                  "supply_item_category.code",
+                  "supply_item_category.code", # Always-included since used as fallback if no name
                   "supply_parent_item_category.name",
+                  "supply_parent_item_category.code", # Always-included since used as fallback if no name
                   "supply_grandparent_item_category.name",
+                  "supply_grandparent_item_category.code", # Always-included since used as fallback if no name
                   "supply_grandparent_item_category.parent_item_category_id",
                   ]
-        if catalog_multi:
+        if show_catalog:
             fields.append("supply_catalog.name")
 
         super(supply_ItemCategoryRepresent,
@@ -2073,7 +2106,7 @@ class supply_ItemCategoryRepresent(S3Represent):
         left = [ptable.on(ptable.id == table.parent_item_category_id),
                 gtable.on(gtable.id == ptable.parent_item_category_id),
                 ]
-        if self.catalog_multi:
+        if self.show_catalog:
             ctable = db.supply_catalog
             left.append(ctable.on(ctable.id == table.catalog_id))
 
@@ -2099,27 +2132,49 @@ class supply_ItemCategoryRepresent(S3Represent):
             @param row: the supply_item_category Row
         """
 
-        use_code = self.use_code
-
         name = row["supply_item_category.name"]
         code = row["supply_item_category.code"]
-        catalog = row.get("supply_catalog.name")
-        parent = row["supply_parent_item_category.name"]
 
+        translate = self.translate
+        if translate:
+            T = current.T
+
+        use_code = self.use_code
         if use_code:
             name = code
         elif not name:
             name = code
+        elif translate:
+            name = T(name)
 
-        if parent:
+        parent_name = row["supply_parent_item_category.name"]
+        parent_code = row["supply_parent_item_category.code"]
+        if parent_name or parent_code:
             if use_code:
                 # Compact format
                 sep = "-"
+                parent = parent_code
             else:
                 sep = " - "
+                if not parent_name:
+                    parent = parent_code
+                else:
+                    parent = parent_name
+                    if translate:
+                        parent = T(parent)
             name = "%s%s%s" % (name, sep, parent)
-            grandparent = row["supply_grandparent_item_category.name"]
-            if grandparent:
+            grandparent_name = row["supply_grandparent_item_category.name"]
+            grandparent_code = row["supply_grandparent_item_category.code"]
+            if grandparent_name or grandparent_code:
+                if use_code:
+                    grandparent = grandparent_code
+                else:
+                    if not grandparent_name:
+                        grandparent = grandparent_code
+                    else:
+                        grandparent = grandparent_name
+                        if translate:
+                            grandparent = T(grandparent)
                 name = "%s%s%s" % (name, sep, grandparent)
                 # Check for Great-grandparent
                 # Trade-off "all in 1 row" vs "too many joins"
@@ -2142,26 +2197,45 @@ class supply_ItemCategoryRepresent(S3Represent):
                               gtable.code,
                               ]
                     row = db(query).select(*fields,
-                                           left=left,
-                                           limitby=(0, 1)).first()
+                                           left = left,
+                                           limitby = (0, 1)
+                                           ).first()
                     if row:
                         if use_code:
                             greatgrandparent = row["supply_item_category.code"]
                             greatgreatgrandparent = row["supply_parent_item_category.code"]
                         else:
-                            greatgrandparent = row["supply_item_category.name"] or row["supply_item_category.code"]
-                            greatgreatgrandparent = row["supply_parent_item_category.name"] or row["supply_parent_item_category.code"]
+                            greatgrandparent = row["supply_item_category.name"]
+                            if greatgrandparent:
+                                if translate:
+                                    greatgrandparent = T(greatgrandparent)
+                            else:
+                                greatgrandparent = row["supply_item_category.code"]
+                            greatgreatgrandparent = row["supply_parent_item_category.name"]
+                            if greatgreatgrandparent:
+                                if translate:
+                                    greatgreatgrandparent = T(greatgreatgrandparent)
+                            else:
+                                greatgreatgrandparent = row["supply_parent_item_category.code"]
                         name = "%s%s%s" % (name, sep, greatgrandparent)
                         if greatgreatgrandparent:
                             name = "%s%s%s" % (name, sep, greatgreatgrandparent)
                             if use_code:
                                 greatgreatgreatgrandparent = row["supply_grandparent_item_category.code"]
                             else:
-                                greatgreatgreatgrandparent = row["supply_grandparent_item_category.name"] or row["supply_grandparent_item_category.code"]
+                                greatgreatgreatgrandparent = row["supply_grandparent_item_category.name"]
+                                if greatgreatgreatgrandparent:
+                                    if translate:
+                                        greatgreatgreatgrandparent = T(greatgreatgreatgrandparent)
+                                else:
+                                    greatgreatgreatgrandparent = row["supply_grandparent_item_category.code"]
                             if greatgreatgreatgrandparent:
                                 name = "%s%s%s" % (name, sep, greatgreatgreatgrandparent)
 
+        catalog = row.get("supply_catalog.name")
         if catalog:
+            if translate:
+                catalog = T(catalog)
             name = "%s > %s" % (catalog, name)
 
         return s3_str(name)
@@ -2663,7 +2737,7 @@ def supply_item_controller():
         return True
     s3.prep = prep
 
-    return current.rest_controller("supply", "item",
+    return current.crud_controller("supply", "item",
                                    rheader = supply_item_rheader,
                                    )
 
@@ -2917,10 +2991,7 @@ $('#organisation_dropdown').change(function(){
         return output
     s3.postp = postp
 
-    output = current.rest_controller("supply", "item_entity",
-                                     hide_filter = True,
-                                    )
-    return output
+    return current.crud_controller("supply", "item_entity", hide_filter=True)
 
 # -----------------------------------------------------------------------------
 def supply_get_shipping_code(doctype, site_id, field):

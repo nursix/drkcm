@@ -22,7 +22,8 @@ $form_error_bgcolor: #c60f13 !default;
 form {
     font-size: 0.8rem;
     .form-row {
-        margin-top: 0.5rem !important;
+        padding: 0 0.3rem;
+        margin-top: 0.75rem !important;
         .button {
             margin-right: 0.5rem;
             i.fa {
@@ -75,13 +76,20 @@ form {
     }
     .error {
         display: block;
-        padding: 0.375rem 0.5625rem 0.5625rem;
-        margin-top: -1px;
-        margin-bottom: 1rem;
+        padding: 0.2rem 0 0 0.2rem;
+        margin-top: 0;
+        margin-bottom: 0.2rem;
         font-size: 0.75rem;
         font-style: italic;
-        background: $form_error_bgcolor;
-        color: white;
+        background: transparent;
+        color: #c60f13;
+    }
+    .error_top .error {
+        margin-top: 1.4rem;
+        padding: 0;
+    }
+    .invalidinput {
+        border: 1px solid #c60f13;
     }
     .date-clear-btn {
         font-size: 0.75rem;
@@ -133,6 +141,14 @@ form {
             .postfix.calendar-clear-btn {
                 margin-top: 0;
             }
+            input[type="text"],
+            .s3-upload-widget {
+                font-size: 0.8rem;
+                max-width: 14rem;
+            }
+            textarea {
+                font-size: 0.8rem;
+            }
             &.single td:only-child {
                 padding: 0;
                 div.form-row {
@@ -151,12 +167,30 @@ form {
             .zoom img {
                 max-height: 8rem;
             }
+            td {
+                font-size: 0.8rem;
+                max-width: 21rem;
+                white-space: pre-line;
+            }
         }
     }
     .inline-open-add {
         display: inline-block;
         margin-bottom: 1.25rem;
         margin-left: 0;
+    }
+    .subheading {
+        background-color: #FFEDCB;
+        font-size: 0.9rem;
+        font-weight: bold;
+        border-top: solid 1px #FFD7A3;
+        border-left: solid 1px #FFD7A3;
+        margin: 1.5rem 0 0.75rem;
+        &:first-of-type {
+            margin-top: 0;
+        }
+        padding: 0.5rem 0.25rem 0.25rem 0.75rem;
+        max-width: 80%;
     }
 
     // Login-form on homepage
@@ -190,6 +224,9 @@ select {
   padding: 0.25rem!important; // override widget.css
   display: inline-block;
   font-weight: normal;
+  &:focus {
+    background-color: #fffbe0;
+  }
 }
 input[type="text"],
 input[type="password"],
@@ -204,6 +241,7 @@ input[type="search"],
 input[type="tel"],
 input[type="time"],
 input[type="url"],
+input[type="file"],
 select {
     width: auto !important;
     max-width: 100%;
@@ -211,6 +249,8 @@ select {
 textarea {
     resize: both;
     max-width: 100%;
+    vertical-align: top;
+    font-size: 0.8rem;
 }
 input.datetimepicker {
     max-width: 8rem;
@@ -220,6 +260,9 @@ select {
 }
 
 /* Form and Item containers */
+.form-info {
+    min-height: 1.2rem;
+}
 #last_update,
 #markDuplicate {
     float: right;
@@ -227,7 +270,8 @@ select {
     text-align: right;
 }
 #markDuplicate {
-    margin-bottom: 1rem;
+    margin-bottom: 0;
+    margin-top: -0.5rem;
 }
 body.rtl {
     #last_update,
@@ -254,9 +298,16 @@ body.rtl {
     overflow: inherit;
     .controls {
         display: inline-block;
+        min-height: 1.7rem;
         &:not(.columns) {
             max-width: 100%;
         }
+        padding: 0 0.1rem;
+    }
+    .no-options-available {
+        color: #aaa;
+        font-style: italic;
+        padding-left: 0.7rem;
     }
 }
 .form-container {
@@ -271,9 +322,12 @@ body.rtl {
         .ui-multiselect {
             max-width: 100%;
             display: inline-block!important;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin-right: 0.3rem;
         }
         &:not(.filter-form):not(.auth_login):not(.auth_register):not(.rm-form) {
-            input[type="text"]:not(.double):not(.datetimepicker):not(.date):not(.hours):not(.dms-input) {
+            input[type="text"]:not(.integer):not(.double):not(.datetimepicker):not(.date):not(.hours):not(.dms-input) {
                 width: 20rem !important;
             }
         }
@@ -282,7 +336,7 @@ body.rtl {
 
 .item-container .controls {
     background: $item_container_controls_bgcolor;
-    padding: 0.35rem;
+    padding: 0.3rem;
     min-height: 1.7rem;
 }
 
@@ -296,9 +350,6 @@ body.rtl {
     }
     table.s3-groupedopts-widget {
         display: inline-block;
-    }
-    .inline-tooltip {
-        padding-top: 0.2rem;
     }
     label.inline {
         line-height: normal;
@@ -318,17 +369,38 @@ body.rtl {
     display: inline-block;
     vertical-align: top;
     padding-left: 0.75rem;
-    .tooltip,
-    .tooltipbody,
-    .stickytip,
-    .ajaxtip {
-        display: block;
-        padding: 0;
-        width: 60px;
-    }
     .s3_add_resource_link {
         display: inline-block;
-        margin: -3px 0 -3px 5px;
+        margin: -3px 0 -3px 0.7rem;
+        padding-right: 0.3rem;
+    }
+}
+.tooltip,
+.tooltipbody,
+.stickytip,
+.ajaxtip,
+.htmltip {
+    display: inline-block;
+    position: static;
+    &.inline-tooltip {
+        margin-left: 1rem;
+    }
+    padding: 0;
+    text-transform: uppercase;
+    height: 20px;
+    background: none;
+    &:before {
+        content: "\f29c";
+        color: #AAA;
+        font: normal normal normal 14px/1 FontAwesome;
+        font-size: 1.2rem;
+        text-rendering: auto;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    &:hover {
+        background: none;
+        cursor: help;
     }
 }
 

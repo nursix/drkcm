@@ -7,95 +7,21 @@
 module = request.controller
 
 # -----------------------------------------------------------------------------
-# Options Menu (available in all Functions' Views)
-def s3_menu_postp():
-    # Unused
-    # @todo: rewrite this for new framework?
-    menu_selected = []
-    group_id = s3base.s3_get_last_record_id("pr_group")
-    if group_id:
-        group = s3db.pr_group
-        query = (group.id == group_id)
-        record = db(query).select(group.id, group.name, limitby=(0, 1)).first()
-        if record:
-            name = record.name
-            menu_selected.append(["%s: %s" % (T("Group"), name), False,
-                                  URL(f="group",
-                                      args=[record.id])])
-    person_id = s3base.s3_get_last_record_id("pr_person")
-    if person_id:
-        person = s3db.pr_person
-        query = (person.id == person_id)
-        record = db(query).select(person.id, limitby=(0, 1)).first()
-        if record:
-            name = s3db.pr_person_id().represent(record.id)
-            menu_selected.append(["%s: %s" % (T("Person"), name), False,
-                                  URL(f="person",
-                                      args=[record.id])])
-    if menu_selected:
-        menu_selected = [T("Open recent"), True, None, menu_selected]
-        response.menu_options.append(menu_selected)
-
-# -----------------------------------------------------------------------------
 def index():
     """ Module's Home Page """
 
-    module_name = settings.modules[module].get("name_nice", T("Person Registry"))
+    return settings.customise_home(module, alt_function="index_alt")
 
-    # Load Model
-    s3db.table("pr_address")
+# -----------------------------------------------------------------------------
+def index_alt():
+    """ Default Module Homepage """
 
-    def prep(r):
-        if r.representation == "html":
-            if r.id or r.method:
-               redirect(URL(f="person", args=request.args))
-        return True
-    s3.prep = prep
+    from gluon import current
+    if current.auth.s3_has_permission("read", "pr_person", c="pr", f="person"):
+        # Just redirect to person list
+        s3_redirect_default(URL(f="person"))
 
-    def postp(r, output):
-        if isinstance(output, dict):
-            # Add information for Dashboard
-            pr_gender_opts = s3db.pr_gender_opts
-            table = db.pr_person
-            gender = []
-            for g_opt in pr_gender_opts:
-                query = (table.deleted == False) & \
-                        (table.gender == g_opt)
-                count = db(query).count()
-                gender.append([str(pr_gender_opts[g_opt]), int(count)])
-
-            pr_age_group_opts = s3db.pr_age_group_opts
-            dtable = db.pr_physical_description
-            age = []
-            for a_opt in pr_age_group_opts:
-                query = (table.deleted == False) & \
-                        (table.pe_id == dtable.pe_id) & \
-                        (dtable.age_group == a_opt)
-                count = db(query).count()
-                age.append([str(pr_age_group_opts[a_opt]), int(count)])
-
-            total = int(db(table.deleted == False).count())
-            output.update(module_name=module_name,
-                          gender=json.dumps(gender),
-                          age=json.dumps(age),
-                          total=total)
-        if r.interactive:
-            if not r.component:
-                label = READ
-            else:
-                label = UPDATE
-            linkto = r.resource.crud._linkto(r)("[id]")
-            s3.actions = [
-                dict(label=str(label), _class="action-btn", url=str(linkto))
-            ]
-        r.next = None
-        return output
-    s3.postp = postp
-
-    output = s3_rest_controller("pr", "person")
-    response.view = "pr/index.html"
-    response.title = module_name
-    return output
+    return {"module_name": settings.modules[module].get("name_nice")}
 
 # -----------------------------------------------------------------------------
 def person():
@@ -130,6 +56,7 @@ def person():
 
                 # S3SQLCustomForm breaks popup return, so disable
                 s3db.clear_config("pr_person", "crud_form")
+
             if r.component:
                 component_name = r.component_name
                 if component_name == "config":
@@ -167,27 +94,26 @@ def person():
 
     # Contacts Tabs
     contacts_tabs = []
-    resourcename = request.function
     set_method = s3db.set_method
     setting = settings.get_pr_contacts_tabs()
     if "all" in setting:
-        s3db.set_method(module, resourcename,
-                        method = "contacts",
-                        action = s3db.pr_Contacts)
+        set_method("pr_person",
+                   method = "contacts",
+                   action = s3db.pr_Contacts)
         contacts_tabs.append((settings.get_pr_contacts_tab_label("all"),
                               "contacts",
                               ))
     if "public" in setting:
-        s3db.set_method(module, resourcename,
-                        method = "public_contacts",
-                        action = s3db.pr_Contacts)
+        set_method("pr_person",
+                   method = "public_contacts",
+                   action = s3db.pr_Contacts)
         contacts_tabs.append((settings.get_pr_contacts_tab_label("public_contacts"),
                               "public_contacts",
                               ))
     if "private" in setting and auth.is_logged_in():
-        s3db.set_method(module, resourcename,
-                        method = "private_contacts",
-                        action = s3db.pr_Contacts)
+        set_method("pr_person",
+                   method = "private_contacts",
+                   action = s3db.pr_Contacts)
         contacts_tabs.append((settings.get_pr_contacts_tab_label("private_contacts"),
                               "private_contacts",
                               ))
@@ -214,12 +140,10 @@ def person():
                    listadd = False,
                    )
 
-    output = s3_rest_controller(main = "first_name",
-                                extra = "last_name",
-                                rheader = lambda r: \
-                                            s3db.pr_rheader(r, tabs=tabs))
-
-    return output
+    return crud_controller(main = "first_name",
+                           extra = "last_name",
+                           rheader = lambda r: s3db.pr_rheader(r, tabs=tabs),
+                           )
 
 # -----------------------------------------------------------------------------
 def address():
@@ -274,8 +198,7 @@ def address():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def contact():
@@ -328,7 +251,7 @@ def contact():
                 # @ToDo: Document which workflow uses this?
                 field.label = T("Entity")
                 field.readable = field.writable = True
-                from s3 import S3TextFilter, S3OptionsFilter
+                from core import S3TextFilter, S3OptionsFilter
                 filter_widgets = [S3TextFilter(["value",
                                                 "comments",
                                                 ],
@@ -344,7 +267,7 @@ def contact():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def contact_emergency():
@@ -394,8 +317,7 @@ def contact_emergency():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -406,7 +328,7 @@ def person_search():
     """
 
     s3.prep = lambda r: r.method == "search_ac"
-    return s3_rest_controller(module, "person")
+    return crud_controller(module, "person")
 
 # -----------------------------------------------------------------------------
 def forum():
@@ -418,7 +340,7 @@ def forum():
             # No restrictions
             return True
 
-        from s3 import FS
+        from core import FS
         if r.id:
             if r.method == "join":
                 # Only possible for Public Groups
@@ -446,17 +368,14 @@ def forum():
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader = s3db.pr_rheader)
-    return output
+    return crud_controller(rheader = s3db.pr_rheader)
 
 # -----------------------------------------------------------------------------
 #def forum_membership():
 #    """ RESTful CRUD controller """
 #
-#    output = s3_rest_controller()
+#    return crud_controller()
 #
-#    return output
-
 # -----------------------------------------------------------------------------
 def group():
     """ RESTful CRUD controller """
@@ -481,27 +400,25 @@ def group():
                                    (T("Members"), "group_membership")
                                    ])
 
-    output = s3_rest_controller(rheader = rheader)
-
-    return output
+    return crud_controller(rheader = rheader)
 
 # -----------------------------------------------------------------------------
 def group_member_role():
     """ Group Member Roles: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def group_status():
     """ Group Statuses: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def image():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def education():
@@ -519,13 +436,13 @@ def education():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def education_level():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def language():
@@ -543,19 +460,19 @@ def language():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def occupation_type():
     """ Occupation Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def religion():
     """ Religions: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 #def contact():
@@ -567,7 +484,7 @@ def religion():
 #    table.pe_id.readable = True
 #    table.pe_id.writable = True
 #
-#    return s3_rest_controller()
+#    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def presence():
@@ -589,7 +506,7 @@ def presence():
     table.presence_condition.readable = False
     # @ToDo: Add Skills
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def pentity():
@@ -599,37 +516,37 @@ def pentity():
     """
 
     s3.prep = lambda r: r.method == "search_ac"
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def affiliation():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def role():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def slot():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def date_formula():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def time_formula():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def tooltip():
@@ -664,8 +581,7 @@ def filter():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def subscription():
@@ -674,8 +590,7 @@ def subscription():
         - to allow Admins to control subscriptions for people
     """
 
-    output = s3_rest_controller()
-    return output
+    return crud_controller()
 
 # =============================================================================
 def human_resource():
@@ -695,7 +610,7 @@ def human_resource():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("hrm", "human_resource")
+    return crud_controller("hrm", "human_resource")
 
 # =============================================================================
 # Messaging

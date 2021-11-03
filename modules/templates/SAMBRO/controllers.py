@@ -14,7 +14,7 @@ from gluon import current
 from gluon.html import *
 from gluon.storage import Storage
 
-from s3 import FS, S3CustomController, S3FilterForm, S3DateFilter, S3LocationFilter, S3OptionsFilter, s3_str
+from core import FS, S3CustomController, S3FilterForm, S3DateFilter, S3LocationFilter, S3OptionsFilter, s3_str
 
 THEME = "SAMBRO"
 
@@ -183,7 +183,7 @@ class index(S3CustomController):
                                         pagesize = 5
                                         )
         # Truncate body
-        #from s3 import s3_trunk8
+        #from core import s3_trunk8
         #s3_trunk8(lines=8)
 
         #filter_widgets = [#S3LocationFilter("location_id",
@@ -275,7 +275,7 @@ class subscriptions(S3CustomController):
 
         if current.request.get_vars["option"] == "manage_recipient" and \
            has_role("ADMIN"):
-            from s3 import S3Represent
+            from core import S3Represent
             recipient_filters = [S3OptionsFilter("id",
                                        label = T("People"),
                                        represent = S3Represent(lookup="auth_user",
@@ -370,7 +370,7 @@ class subscriptions(S3CustomController):
         """
 
         from gluon import redirect, IS_IN_SET
-        from s3 import S3GroupedOptionsWidget, S3MultiSelectWidget
+        from core import S3GroupedOptionsWidget, S3MultiSelectWidget
         from s3layouts import S3PopupLink
         # Uses Default Eden formstyle
         from s3theme import formstyle_foundation_2col as formstyle

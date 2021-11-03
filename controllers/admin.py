@@ -35,24 +35,11 @@ def role():
     def prep(r):
         if r.representation not in ("html", "aadata", "csv", "json"):
             return False
-
-        # Configure REST methods
-        methods = ("read",
-                   "list",
-                   "create",
-                   "update",
-                   "delete",
-                   "users",
-                   "copy",
-                   "datatable",
-                   "datalist",
-                   "import",
-                   )
-        r.set_handler(methods, s3base.S3RoleManager)
+        r.custom_action = s3base.S3RoleManager
         return True
     s3.prep = prep
 
-    return s3_rest_controller("auth", "group")
+    return crud_controller("auth", "group")
 
 # -----------------------------------------------------------------------------
 def user():
@@ -186,19 +173,19 @@ def user():
 
     # Custom Methods
     set_method = s3db.set_method
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "roles",
-               action = s3base.S3RoleManager)   # s3roles.py
+               action = s3base.S3RoleManager)
 
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "disable",
                action = disable_user)
 
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "approve",
                action = approve_user)
 
-    set_method("auth", "user",
+    set_method("auth_user",
                method = "link",
                action = link_user)
 
@@ -460,12 +447,11 @@ def user():
 
     s3.import_prep = auth.s3_import_prep
 
-    output = s3_rest_controller("auth", "user",
-                                csv_stylesheet = ("auth", "user.xsl"),
-                                csv_template = ("auth", "user"),
-                                rheader = rheader,
-                                )
-    return output
+    return crud_controller("auth", "user",
+                           csv_stylesheet = ("auth", "user.xsl"),
+                           csv_template = ("auth", "user"),
+                           rheader = rheader,
+                           )
 
 # =============================================================================
 def group():
@@ -498,7 +484,7 @@ def group():
         )
 
     s3db.configure(tablename, main="role")
-    return s3_rest_controller("auth", "group")
+    return crud_controller("auth", "group")
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -525,7 +511,7 @@ def organisation():
         msg_list_empty = T("No Organization Domains currently registered")
         )
 
-    return s3_rest_controller("auth", "organisation")
+    return crud_controller("auth", "organisation")
 
 # -----------------------------------------------------------------------------
 def user_create_onvalidation (form):
@@ -536,40 +522,63 @@ def user_create_onvalidation (form):
     return True
 
 # =============================================================================
+# Audit
+#
+@auth.s3_requires_membership(1)
+def audit():
+    """ Audit Logs: RESTful CRUD Controller """
+
+    # Ensure table is visible
+    settings.security.audit_write = True
+    from core import S3Audit
+    S3Audit().__init__()
+
+    # Represent the user_id column
+    db.s3_audit.user_id.represent = s3db.auth_UserRepresent()
+
+    return crud_controller("s3", "audit")
+
+# =============================================================================
 # Consent Tracking
 #
 @auth.s3_requires_membership(1)
 def processing_type():
     """ Types of Data Processing: RESTful CRUD Controller """
 
-    return s3_rest_controller("auth", "processing_type",
-                              csv_template = ("auth", "processing_type"),
-                              csv_stylesheet = ("auth", "processing_type.xsl"),
-                              )
+    return crud_controller("auth", "processing_type",
+                           csv_template = ("auth", "processing_type"),
+                           csv_stylesheet = ("auth", "processing_type.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
 def consent_option():
     """ Consent Options: RESTful CRUD Controller """
 
+    ctable = s3db.auth_consent
+    atable = s3db.auth_consent_assertion
+
     def prep(r):
 
         resource = r.resource
         table = resource.table
 
-        # Make hash-fields writable while no consent reference exists
-        editable = False
-        if not r.record:
-            editable = True
-        else:
-            ctable = s3db.auth_consent
-            query = (ctable.option_id == r.id) & (ctable.deleted == False)
-            editable = db(query).count() == 0
+        editable = True
+        if r.record:
+            # Make hash-fields writable only when not referenced by any
+            # consent / consent assertion record
+            for t in (ctable, atable):
+                query = (t.option_id == r.id) & (t.deleted == False)
+                row = db(query).select(t.id, limitby=(0, 1)).first()
+                if row:
+                    editable = False
+                    break
         if editable:
             for fn in s3db.auth_consent_option_hash_fields:
                 table[fn].writable = True
         else:
-            # Prevent deletion when referenced in consent record
+            # Prevent deletion when referenced in a consent
+            # or consent assertion record
             resource.configure(deletable=False)
 
         return True
@@ -582,15 +591,20 @@ def consent_option():
             s3_action_buttons(r, deletable=False)
 
             # Add delete-button only for options not yet referenced
-            # by any consent record:
+            # by any consent / consent assertion record:
             table = r.table
-            ctable = s3db.auth_consent
-            left = ctable.on(table.id == ctable.option_id)
-            consent_count = ctable.id.count()
+            left = [ctable.on((ctable.option_id == table.id) & \
+                              (ctable.deleted == False)),
+                    atable.on((atable.option_id == table.id) & \
+                              (atable.deleted == False)),
+                    ]
+            ccount = ctable.id.count()
+            acount = atable.id.count()
             rows = db(table.deleted == False).select(table.id,
-                                                     consent_count,
+                                                     ccount,
+                                                     acount,
                                                      groupby = table.id,
-                                                     having = consent_count == 0,
+                                                     having = (ccount == 0) & (acount == 0),
                                                      left = left,
                                                      )
             deletable = [str(row.auth_consent_option.id) for row in rows]
@@ -602,10 +616,10 @@ def consent_option():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("auth", "consent_option",
-                              csv_template = ("auth", "consent_option"),
-                              csv_stylesheet = ("auth", "consent_option.xsl"),
-                              )
+    return crud_controller("auth", "consent_option",
+                           csv_template = ("auth", "consent_option"),
+                           csv_stylesheet = ("auth", "consent_option.xsl"),
+                           )
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
@@ -706,8 +720,7 @@ def acl():
         next = request.vars._next
         s3db.configure(tablename, delete_next=next)
 
-    output = s3_rest_controller("s3", "permission")
-    return output
+    return crud_controller("s3", "permission")
 
 # -----------------------------------------------------------------------------
 def acl_represent(acl, options):
@@ -1000,7 +1013,7 @@ def translate():
         if opt == "1":
             # Select modules for Translation
             from math import ceil
-            from s3.s3translate import TranslateAPI, Strings
+            from core.tools.translate import TranslateAPI, Strings
             if form.accepts(request.vars, session):
                 modlist = []
                 form_request_vars_get = form.request_vars.get
@@ -1189,7 +1202,7 @@ def translate():
             if form.accepts(request.vars, session):
                 # Retrieve the translation percentage for each module
                 from math import ceil
-                from s3.s3translate import TranslateReportStatus
+                from core.tools.translate import TranslateReportStatus
                 code = form.request_vars.code
                 S = TranslateReportStatus()
 
@@ -1237,7 +1250,7 @@ def translate():
 
             else:
                 # Display the form to view translated percentage
-                from s3.s3translate import TranslateAPI
+                from core.tools.translate import TranslateAPI
                 A = TranslateAPI()
                 langlist = sorted(A.get_langcodes())
                 # Drop-down for selecting language codes
@@ -1281,7 +1294,7 @@ def translate():
                     strings.append(line)
 
                 # Update the file containing user strings
-                from s3.s3translate import TranslateReadFiles
+                from core.tools.translate import TranslateReadFiles
                 TranslateReadFiles.merge_user_strings_file(strings)
 
                 response.confirmation = T("File uploaded")
@@ -1291,11 +1304,42 @@ def translate():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("translate", "language")
-    return output
+    return crud_controller("translate", "language")
 
 # =============================================================================
-# Selenium Test Results
+@auth.s3_requires_membership(1)
+def task():
+    """
+        Scheduler tasks: RESTful CRUD controller
+    """
+
+    s3db.add_components("scheduler_task",
+                        scheduler_run = "task_id",
+                        )
+    def prep(r):
+
+        if r.component_name == "run":
+
+            component = r.component
+
+            ctable = component.table
+
+            field = ctable.traceback
+            from core import s3_text_represent
+            field.represent = s3_text_represent
+
+            component.configure(insertable = False,
+                                editable = False,
+                                )
+
+        s3task.configure_tasktable_crud(task="", status_writable=True)
+        return True
+    s3.prep = prep
+
+    return crud_controller("scheduler", "task",
+                           rheader = s3db.s3_scheduler_rheader,
+                           )
+
 # =============================================================================
 def result():
     """
@@ -1357,40 +1401,6 @@ def result():
     return output
 
 # =============================================================================
-@auth.s3_requires_membership(1)
-def task():
-    """
-        Scheduler tasks: RESTful CRUD controller
-    """
-
-    s3db.add_components("scheduler_task",
-                        scheduler_run = "task_id",
-                        )
-    def prep(r):
-
-        if r.component_name == "run":
-
-            component = r.component
-
-            ctable = component.table
-
-            field = ctable.traceback
-            from s3 import s3_text_represent
-            field.represent = s3_text_represent
-
-            component.configure(insertable = False,
-                                editable = False,
-                                )
-
-        s3task.configure_tasktable_crud(task="", status_writable=True)
-        return True
-    s3.prep = prep
-
-    return s3_rest_controller("scheduler", "task",
-                              rheader = s3db.s3_scheduler_rheader,
-                              )
-
-# =============================================================================
 # Configurations
 # =============================================================================
 def dashboard():
@@ -1398,6 +1408,6 @@ def dashboard():
         Dashboard Configurations
     """
 
-    return s3_rest_controller("s3", "dashboard")
+    return crud_controller("s3", "dashboard")
 
 # END =========================================================================

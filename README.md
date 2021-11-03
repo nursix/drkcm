@@ -1,14 +1,15 @@
-# Sahana Eden
+# Eden ASP
 
-Sahana Eden is an Emergency Development Environment - an Open Source framework to rapidly build powerful applications for Emergency Management.
+Eden ASP is a RAD (Rapid Application Development) Kit to build
+web based applications for Humanitarian and Emergency Management,
+originally derived from the Sahana Eden Humanitarian Management
+Platform.
 
-It is a web based collaboration tool that addresses the common coordination problems during a disaster from finding missing people, managing aid, managing volunteers, tracking camps effectively between Government groups, the civil society (NGOs) and the victims themselves.
+# Who is Eden ASP for?
 
-Please see the website for more details: 
-+ http://eden.sahanafoundation.org/
+Eden ASP is for application developers and service providers.
 
-Note to developers -- get started here:
-+ http://eden.sahanafoundation.org/wiki/Develop
+# What about documentation?
 
-Before your first pull request, sign the Contributor's License Agreement, which protects your rights to your code, while allowing it to be distributed and used in Sahana Eden:
-+ http://bit.ly/SSF-eCLA
+The developer handbook is included in the repository, or you can
+read it on [ReadTheDocs](https://eden-asp.readthedocs.io).

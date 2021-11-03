@@ -22,7 +22,7 @@ def index():
 def disease():
     """ Disease Information Controller """
 
-    return s3_rest_controller(rheader = s3db.disease_rheader)
+    return crud_controller(rheader=s3db.disease_rheader)
 
 # -----------------------------------------------------------------------------
 def case():
@@ -81,7 +81,7 @@ def case():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.disease_rheader)
+    return crud_controller(rheader=s3db.disease_rheader)
 
 # -----------------------------------------------------------------------------
 def person():
@@ -114,10 +114,10 @@ def person():
                     r.error(404, current.ERROR.BAD_RECORD)
 
                 # Update the request
-                request = s3base.S3Request("pr", "person",
-                                           args = [str(row.person_id)],
-                                           vars = {},
-                                           )
+                request = s3base.CRUDRequest("pr", "person",
+                                             args = [str(row.person_id)],
+                                             vars = {},
+                                             )
                 r.resource = resource = request.resource
                 r.record = request.record
                 r.id = request.id
@@ -128,7 +128,7 @@ def person():
                 name_fields = [fn for fn in keys if fn in NAMES]
 
                 # Fields in form
-                from s3 import S3SQLInlineComponent
+                from core import S3SQLInlineComponent
                 crud_fields = name_fields + \
                               ["gender",
                                "date_of_birth",
@@ -173,9 +173,9 @@ def person():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("pr", "person",
-                              rheader = s3db.disease_rheader,
-                              )
+    return crud_controller("pr", "person",
+                           rheader = s3db.disease_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def tracing():
@@ -197,30 +197,63 @@ def tracing():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.disease_rheader)
+    return crud_controller(rheader=s3db.disease_rheader)
+
+# -----------------------------------------------------------------------------
+def demographic():
+    """ Disease Demographic: RESTful CRUD Controller """
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def testing_report():
+    """ Testing Site Daily Summary Report: RESTful CRUD Controller """
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def testing_demographic():
+    """ Testing Reports by Demographic: RESTful CRUD Controller """
+
+    def prep(r):
+        r.resource.configure(# Only reporting in this controller
+                             insertable = False,
+                             editable = False,
+                             deletable = False,
+                             )
+        return True
+    s3.prep = prep
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def testing_device():
+    """ Testing Device Registry: RESTful CRUD Controller """
+
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def case_diagnostics():
     """ Diagnostic Tests: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def statistic():
     """ RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def stats_data():
     """ RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def stats_aggregate():
     """ RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

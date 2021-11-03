@@ -8,7 +8,7 @@
 
 from gluon import current, A, URL, XML
 
-from s3 import FS, S3DateFilter, S3OptionsFilter, S3Represent, s3_fullname
+from core import FS, S3DateFilter, S3OptionsFilter, S3Represent, s3_fullname
 
 # =============================================================================
 def rlp_active_deployments(ctable, from_date=None, to_date=None):
@@ -139,10 +139,10 @@ def rlp_deployment_sites(managed_orgs=False, organisation_id=None):
         orgs = None
 
     if not orgs:
-        # Sites of all organisations except MSAGD
-        from .config import MSAGD
+        # Sites of all organisations except MWG
+        from .config import MWG
         otable = current.s3db.org_organisation
-        query = (otable.name != MSAGD) & (otable.deleted == False)
+        query = (otable.name != MWG) & (otable.deleted == False)
         orgs = [row.id for row in db(query).select(otable.id)]
 
     if not orgs:

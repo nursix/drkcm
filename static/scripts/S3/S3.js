@@ -25,51 +25,51 @@ S3.JSONRequest = {}; // Used to store and abort JSON requests
 
 S3.queryString = {
     // From https://github.com/sindresorhus/query-string
-	parse: function(str) {
-		if (typeof str !== 'string') {
-			return {};
-		}
+    parse: function(str) {
+        if (typeof str !== 'string') {
+            return {};
+        }
 
-		str = str.trim().replace(/^(\?|#)/, '');
+        str = str.trim().replace(/^(\?|#)/, '');
 
-		if (!str) {
-			return {};
-		}
+        if (!str) {
+            return {};
+        }
 
-		return str.trim().split('&').reduce(function (ret, param) {
-			var parts = param.replace(/\+/g, ' ').split('=');
-			var key = parts[0];
-			var val = parts[1];
+        return str.trim().split('&').reduce(function (ret, param) {
+            var parts = param.replace(/\+/g, ' ').split('=');
+            var key = parts[0];
+            var val = parts[1];
 
-			key = decodeURIComponent(key);
-			// missing `=` should be `null`:
-			// http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
-			val = val === undefined ? null : decodeURIComponent(val);
+            key = decodeURIComponent(key);
+            // missing `=` should be `null`:
+            // http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
+            val = val === undefined ? null : decodeURIComponent(val);
 
-			if (!ret.hasOwnProperty(key)) {
-				ret[key] = val;
-			} else if (Array.isArray(ret[key])) {
-				ret[key].push(val);
-			} else {
-				ret[key] = [ret[key], val];
-			}
+            if (!ret.hasOwnProperty(key)) {
+                ret[key] = val;
+            } else if (Array.isArray(ret[key])) {
+                ret[key].push(val);
+            } else {
+                ret[key] = [ret[key], val];
+            }
 
-			return ret;
-		}, {});
-	},
-	stringify: function(obj) {
-		return obj ? Object.keys(obj).map(function (key) {
-			var val = obj[key];
+            return ret;
+        }, {});
+    },
+    stringify: function(obj) {
+        return obj ? Object.keys(obj).map(function (key) {
+            var val = obj[key];
 
-			if (Array.isArray(val)) {
-				return val.map(function (val2) {
-					return encodeURIComponent(key) + '=' + encodeURIComponent(val2);
-				}).join('&');
-			}
+            if (Array.isArray(val)) {
+                return val.map(function (val2) {
+                    return encodeURIComponent(key) + '=' + encodeURIComponent(val2);
+                }).join('&');
+            }
 
-			return encodeURIComponent(key) + '=' + encodeURIComponent(val);
-		}).join('&') : '';
-	}
+            return encodeURIComponent(key) + '=' + encodeURIComponent(val);
+        }).join('&') : '';
+    }
 };
 
 S3.uid = function() {
@@ -134,11 +134,11 @@ S3.addTooltips = function() {
     $('.tooltipbody').cluetip({activation: 'hover', sticky: false, splitTitle: '|', showTitle: false});
     var tipCloseText = '<img src="' + S3.Ap.concat('/static/img/cross2.png') + '" alt="close" />';
     $('.stickytip').cluetip({
-    	activation: 'hover',
-    	sticky: true,
-    	closePosition: 'title',
-    	closeText: tipCloseText,
-    	splitTitle: '|'
+        activation: 'hover',
+        sticky: true,
+        closePosition: 'title',
+        closeText: tipCloseText,
+        splitTitle: '|'
     });
     $('.errortip').cluetip({
         activation: 'click',
@@ -148,11 +148,11 @@ S3.addTooltips = function() {
         splitTitle: '|'
     });
     $('.ajaxtip').cluetip({
-    	activation: 'click',
-    	sticky: true,
-    	closePosition: 'title',
-    	closeText: tipCloseText,
-    	width: 380
+        activation: 'click',
+        sticky: true,
+        closePosition: 'title',
+        closeText: tipCloseText,
+        width: 380
     });
     $('.htmltip').cluetip({
         activation: 'hover',
@@ -343,18 +343,18 @@ $.widget('custom.iconselectmenu', $.ui.selectmenu, {
 // - called from Auth.login()
 S3.getClientLocation = function(targetfield) {
    if (navigator.geolocation) {
-    	navigator.geolocation.getCurrentPosition(function(position) {
-			var clientlocation = position.coords.latitude + '|' + position.coords.longitude + '|' + position.coords.accuracy;
-			targetfield.val(clientlocation);
-    	});
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var clientlocation = position.coords.latitude + '|' + position.coords.longitude + '|' + position.coords.accuracy;
+            targetfield.val(clientlocation);
+        });
     }
 };
 
 // ============================================================================
 S3.confirmClick = function(ElementID, Message) {
-	// @param ElementID: the ID of the element which will be clicked
-	// @param Message: the Message displayed in the confirm dialog
-	if (S3.interactive) {
+    // @param ElementID: the ID of the element which will be clicked
+    // @param Message: the Message displayed in the confirm dialog
+    if (S3.interactive) {
         $(ElementID).click( function(event) {
             if (confirm(Message)) {
                 return true;
@@ -438,7 +438,7 @@ S3.showHidden = function(controlField, affectedFields, tablename) {
 
 // ============================================================================
 S3.trunk8 = function(selector, lines, more) {
-    // Line-truncation, see s3utils.s3_trunk8
+    // Line-truncation, see s3_trunk8
     var settings = {
         fill: '&hellip; <a class="s3-truncate-more" href="#">' + more + '</a>'
         // Not yet working for me
@@ -544,7 +544,7 @@ var S3EnableNavigateAwayConfirm = function() {
             // If there are errors, ensure the unsaved form is still protected
             S3SetNavigateAwayConfirm();
         }
-        var form = $('form:not(.filter-form,.pt-form)');
+        var form = $('form:not(.dt-wrapper,.filter-form,.pt-form)');
 
         $('input, textarea', form).on('keypress', S3SetNavigateAwayConfirm);
                                   // This gets triggered by browsers' Autofill:
@@ -886,6 +886,7 @@ S3.hideAlerts = function(alerts) {
 S3.fieldError = function(selector, error) {
     // @ToDo: Are we using a Bootstrap or normal Theme?
     // Display the Error
+    // @ToDo: .addClass('invalidinput') when we ensure this is cleared when new content is provided
     $(selector).after('<div class="error" style="display: block;">' + error + '</div>');
 };
 

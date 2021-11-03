@@ -56,7 +56,8 @@ location_names = {# GN
 import string
 import xlrd
 
-from s3compat import urlopen, urlparse
+from urllib import parse as urlparse
+from urllib.request import urlopen
 
 # Open the file from the remote server
 # @todo write the remote file to a temp file and then pass to load_workbook
@@ -261,7 +262,7 @@ import csv
 import os
 split = os.path.split
 
-from s3 import s3_str
+from core import s3_str
 
 with open(OUTPUT_CSV, "w", newline="") as new_file:
     new_csv = csv.writer(new_file, delimiter=",", quotechar='"')
@@ -300,7 +301,7 @@ auth.override = True
 stylesheet = os.path.join(request.folder, "static", "formats", "s3csv", "disease", "stats_data.xsl")
 resource = s3db.resource("disease_stats_data")
 File = open(OUTPUT_CSV, "rb")
-resource.import_xml(File, format="csv", stylesheet=stylesheet)
+resource.import_xml(File, source_type="csv", stylesheet=stylesheet)
 db.commit()
 
 if len(rejected_loc) or len(rejected_data) or len(suspect_data) or len(new_org):

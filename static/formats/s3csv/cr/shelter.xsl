@@ -225,8 +225,12 @@
                     <data field="capacity_day"><xsl:value-of select="$Capacity"/></data>
                 </xsl:when>
                 <xsl:otherwise>
-                    <data field="capacity_day"><xsl:value-of select="col[@field='Capacity Day']"/></data>
-                    <data field="capacity_night"><xsl:value-of select="col[@field='Capacity Night']"/></data>
+                    <xsl:if test="col[@field='Capacity Day']!=''">
+                        <data field="capacity_day"><xsl:value-of select="col[@field='Capacity Day']"/></data>
+                    </xsl:if>
+                    <xsl:if test="col[@field='Capacity Night']!=''">
+                        <data field="capacity_night"><xsl:value-of select="col[@field='Capacity Night']"/></data>
+                    </xsl:if>
                 </xsl:otherwise>
             </xsl:choose>
             <xsl:if test="col[@field='Population']!=''">
@@ -261,18 +265,20 @@
             </reference>
 
             <!-- Link to Organisation -->
-            <reference field="organisation_id" resource="org_organisation">
-                <xsl:attribute name="tuid">
-                    <xsl:choose>
-                        <xsl:when test="$BranchName!=''">
-                            <xsl:value-of select="concat($OrgName, $BranchName)"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="$OrgName"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:attribute>
-            </reference>
+            <xsl:if test="$OrgName!=''">
+                <reference field="organisation_id" resource="org_organisation">
+                    <xsl:attribute name="tuid">
+                        <xsl:choose>
+                            <xsl:when test="$BranchName!=''">
+                                <xsl:value-of select="concat($OrgName, $BranchName)"/>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <xsl:value-of select="$OrgName"/>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                    </xsl:attribute>
+                </reference>
+            </xsl:if>
 
             <!-- Link to Shelter Type -->
             <reference field="shelter_type_id" resource="cr_shelter_type">

@@ -83,12 +83,13 @@ __all__ = ("S3SurveyTemplateModel",
 
 import json
 
+from io import BytesIO, StringIO
+
 from gluon import *
 from gluon.storage import Storage
 from gluon.sqlhtml import *
 
-from ..s3 import *
-from s3compat import BytesIO, StringIO, xrange
+from ..core import *
 from s3chart import S3Chart
 
 DEBUG = False
@@ -101,7 +102,7 @@ else:
     _debug = lambda m: None
 
 # =============================================================================
-class S3SurveyTemplateModel(S3Model):
+class S3SurveyTemplateModel(DataModel):
     """
         Template model
 
@@ -223,8 +224,8 @@ class S3SurveyTemplateModel(S3Model):
                             survey_translate = "template_id",
                             )
 
-        self.set_method("survey", "template",
-                        component_name = "translate",
+        self.set_method("survey_template",
+                        component = "translate",
                         method = "translate_download",
                         action = survey_TranslateDownload,
                         )
@@ -686,7 +687,7 @@ def survey_build_template_summary(template_id):
                             the summary is to be built
     """
 
-    from s3.s3data import S3DataTable
+    from core import S3DataTable
     T = current.T
 
     table = TABLE(_id="template_summary",
@@ -764,7 +765,7 @@ def survey_build_template_summary(template_id):
     return form
 
 # =============================================================================
-class S3SurveyQuestionModel(S3Model):
+class S3SurveyQuestionModel(DataModel):
     """
         Question Model
     """
@@ -1230,7 +1231,7 @@ def survey_updateMetaData(record, qtype, metadata):
         widget_obj.insertChildren(record, metadata_list)
 
 # =============================================================================
-class S3SurveyFormatterModel(S3Model):
+class S3SurveyFormatterModel(DataModel):
     """
         The survey_formatter table defines the order in which the questions
         will be laid out when a formatted presentation is used.
@@ -1306,7 +1307,7 @@ class S3SurveyFormatterModel(S3Model):
                        )
 
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1401,7 +1402,7 @@ def survey_getQstnLayoutRules(template_id, section_id, method = 1):
     return row_list
 
 # =============================================================================
-class S3SurveySeriesModel(S3Model):
+class S3SurveySeriesModel(DataModel):
     """
         Series Model
 
@@ -1539,15 +1540,15 @@ class S3SurveySeriesModel(S3Model):
                                     )
 
         # Custom Methods
-        set_method("survey", "series", method="summary", # NB This conflicts with the global summary method!
+        set_method("survey_series", method="summary", # NB This conflicts with the global summary method!
                    action = self.seriesSummary)
-        set_method("survey", "series", method="graph",
+        set_method("survey_series", method="graph",
                    action = self.seriesGraph)
-        set_method("survey", "series", method="map", # NB This conflicts with the global map method!
+        set_method("survey_series", method="map", # NB This conflicts with the global map method!
                    action = self.seriesMap)
-        set_method("survey", "series", method="series_chart_download",
+        set_method("survey_series", method="series_chart_download",
                    action = self.seriesChartDownload)
-        set_method("survey", "series", method="export_responses",
+        set_method("survey_series", method="export_responses",
                    action = survey_ExportResponses)
 
         # ---------------------------------------------------------------------
@@ -1623,7 +1624,7 @@ class S3SurveySeriesModel(S3Model):
                             question_ids.append(str(question.question_id))
                 items = buildCompletedList(series_id, question_ids)
                 if r.representation == "xls":
-                    from ..s3.codecs.xls import S3XLS
+                    from core.resource.codecs.xls import S3XLS
                     exporter = S3XLS()
                     return exporter.encode(items,
                                            title=crud_strings.title_selected,
@@ -2073,7 +2074,7 @@ $('#chart_btn').click(function(){
                 output["legend"] = legend
 
             if len(response_locations) > 0:
-                for i in xrange(len(response_locations)):
+                for i in range(len(response_locations)):
                     location = response_locations[i]
                     complete_id = location.complete_id
                     # Insert how we want this to appear on the map
@@ -2333,7 +2334,7 @@ def buildSeriesSummary(series_id, posn_offset):
         each question in the template
     """
 
-    from s3.s3data import S3DataTable
+    from core import S3DataTable
     T = current.T
 
     table = TABLE(_id="series_summary",
@@ -2401,7 +2402,7 @@ def buildSeriesSummary(series_id, posn_offset):
     return form
 
 # =============================================================================
-class S3SurveyCompleteModel(S3Model):
+class S3SurveyCompleteModel(DataModel):
     """
         Completed Surveys Model
     """
@@ -2647,7 +2648,7 @@ class S3SurveyCompleteModel(S3Model):
                            "survey",
                            "answer.xsl")
         resource = current.s3db.resource("survey_answer")
-        resource.import_xml(bio, stylesheet=xsl, format="csv")
+        resource.import_xml(bio, stylesheet=xsl, source_type="csv")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2706,7 +2707,7 @@ class S3SurveyCompleteModel(S3Model):
                            "gis",
                            "location.xsl")
         resource = current.s3db.resource("gis_location")
-        resource.import_xml(bio, stylesheet = xsl, format="csv")
+        resource.import_xml(bio, stylesheet = xsl, source_type="csv")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3080,7 +3081,7 @@ def getLocationList(series_id):
     return response_locations
 
 # =============================================================================
-class S3SurveyTranslateModel(S3Model):
+class S3SurveyTranslateModel(DataModel):
     """
         Translations Model
     """
@@ -3132,7 +3133,7 @@ class S3SurveyTranslateModel(S3Model):
                        onaccept = self.translate_onaccept,
                        )
         # ---------------------------------------------------------------------
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3191,7 +3192,7 @@ class S3SurveyTranslateModel(S3Model):
                 strings = read_dict(lang_filename)
             except IOError:
                 strings = {}
-            for row in xrange(1, language_sheet.nrows):
+            for row in range(1, language_sheet.nrows):
                 original = language_sheet.cell_value(row, 0)
                 translation = language_sheet.cell_value(row, 1)
                 if (original not in strings) or translation != "":
@@ -3237,7 +3238,7 @@ class survey_TranslateDownload(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -3313,10 +3314,10 @@ class survey_TranslateDownload(S3Method):
 
         for text in original_list:
             row += 1
-            original = s3_unicode(text)
+            original = s3_str(text)
             sheet.write(row, 0, original)
             if (original in strings):
-                sheet.write(row, 1, s3_unicode(strings[original]))
+                sheet.write(row, 1, s3_str(strings[original]))
 
         book.save(output)
 
@@ -3340,7 +3341,7 @@ class survey_ExportResponses(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -3385,17 +3386,17 @@ class survey_ExportResponses(S3Method):
                     sheets[sheet_name] = book.add_sheet(sheet_name)
                     cols[sheet_name] = 0
         else:
-            sheet = book.add_sheet(s3_unicode(T("Responses")))
+            sheet = book.add_sheet(s3_str(T("Responses")))
         for qstn in question_list:
             if section_break:
                 sheet_name = qstn["section"].split(" ")[0]
                 sheet = sheets[sheet_name]
                 col = cols[sheet_name]
             row = 0
-            sheet.write(row, col, s3_unicode(qstn["code"]))
+            sheet.write(row, col, s3_str(qstn["code"]))
             row += 1
             widget_obj = s3db.survey_getWidgetFromQuestion(qstn["qstn_id"])
-            sheet.write(row, col, s3_unicode(widget_obj.fullName()))
+            sheet.write(row, col, s3_str(widget_obj.fullName()))
             # For each question get the response
             all_responses = s3db.survey_getAllAnswersForQuestionInSeries(qstn["qstn_id"],
                                                                          series_id)
@@ -3408,7 +3409,7 @@ class survey_ExportResponses(S3Method):
                     complete_row[complete_id] = next_row
                     row = next_row
                     next_row += 1
-                sheet.write(row, col, s3_unicode(value))
+                sheet.write(row, col, s3_str(value))
             col += 1
             if section_break:
                 cols[sheet_name] += 1
@@ -3841,8 +3842,8 @@ class survey_DataMatrix():
         """ @todo: docstring """
 
         repr = ""
-        for row in xrange(self.lastRow+1):
-            for col in xrange(self.lastCol+1):
+        for row in range(self.lastRow+1):
+            for col in range(self.lastCol+1):
                 posn = survey_MatrixElement.getPosn(row, col)
                 if posn in self.matrix:
                     cell = self.matrix[posn]
@@ -3916,8 +3917,8 @@ class survey_DataMatrix():
         styleList = []
         row = rootElement.row
         col = rootElement.col
-        for v in xrange(rootElement.mergeV + 1):
-            for h in xrange(rootElement.mergeH + 1):
+        for v in range(rootElement.mergeV + 1):
+            for h in range(rootElement.mergeH + 1):
                 newPosn = "%s,%s" % (row + v, col + h)
                 styleList += self.matrix[newPosn].styleList
         return styleList
@@ -3935,8 +3936,8 @@ class survey_DataMatrix():
         row = rootElement.row
         col = rootElement.col
         posn = rootElement.posn()
-        for v in xrange(rootElement.mergeV + 1):
-            for h in xrange(rootElement.mergeH + 1):
+        for v in range(rootElement.mergeV + 1):
+            for h in range(rootElement.mergeH + 1):
                 newPosn = "%s,%s" % (row + v, col + h)
                 if newPosn == posn:
                     continue
@@ -3964,7 +3965,7 @@ class survey_DataMatrix():
             @todo: parameter description
         """
 
-        for r in xrange(startrow, endrow):
+        for r in range(startrow, endrow):
             posn = "%s,%s" % (r, startcol)
             if posn in self.matrix:
                 self.matrix[posn].styleList.append("boxL%s"%width)
@@ -3976,7 +3977,7 @@ class survey_DataMatrix():
             else:
                 self.addElement(survey_MatrixElement(r, endcol, "", "boxR%s"%width))
 
-        for c in xrange(startcol, endcol + 1):
+        for c in range(startcol, endcol + 1):
             posn = "%s,%s" % (startrow, c)
             if posn in self.matrix:
                 self.matrix[posn].styleList.append("boxT%s"%width)
@@ -5257,7 +5258,7 @@ class S3QuestionTypeDateWidget(S3QuestionTypeAbstractWidget):
     def display(self, **attr):
 
         S3QuestionTypeAbstractWidget.initDisplay(self, **attr)
-        from s3.s3widgets import S3DateWidget
+        from core.ui.widgets import S3DateWidget
         widget = S3DateWidget()
         value = self.getAnswer()
         self.attr["_id"] = self.question.code
@@ -5438,7 +5439,7 @@ class S3QuestionTypeOptionWidget(S3QuestionTypeAbstractWidget):
             raise Exception("Need to have the options specified")
         l = []
         lappend = l.append
-        for i in xrange(int(length)):
+        for i in range(int(length)):
             lappend(self.get(str(i + 1)))
         return l
 
@@ -6006,10 +6007,10 @@ class S3QuestionTypeGridWidget(S3QuestionTypeAbstractWidget):
         height = 1
         codeNum = self.qstnNo
         labelWidth = maxWidth/2
-        for line in xrange(int(self.rowCnt)):
+        for line in range(int(self.rowCnt)):
             label = survey_T(self.rows[line], self.langDict)
             (lwidth, lheight) = (labelWidth, len(label) / (4 * labelWidth / 3) + 1)
-            for cell in xrange(int(self.colCnt)):
+            for cell in range(int(self.colCnt)):
                 code = "%s%s" % (self.question["code"], codeNum)
                 codeNum += 1
                 childWidget = self.getChildWidget(code)
@@ -6057,7 +6058,7 @@ class S3QuestionTypeGridWidget(S3QuestionTypeAbstractWidget):
                                     )
         cell.merge(labelWidth - 1, 0)
         matrix.addElement(cell)
-        for line in xrange(int(self.rowCnt)):
+        for line in range(int(self.rowCnt)):
             # Add the label
             label = survey_T(self.rows[line], self.langDict)
             (lwidth, lheight) = (labelWidth, len(label)/(4 * labelWidth / 3) + 1)
@@ -6070,7 +6071,7 @@ class S3QuestionTypeGridWidget(S3QuestionTypeAbstractWidget):
             matrix.addElement(cell)
             maxrow = row + lheight
             endcol = col + lwidth
-            for cell in xrange(int(self.colCnt)):
+            for cell in range(int(self.colCnt)):
                 code = "%s%s" % (self.question["code"], codeNum)
                 codeNum += 1
                 childWidget = self.getChildWidget(code)

@@ -36,6 +36,7 @@ __all__ = ("CMSContentModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
            "cms_index",
+           "cms_announcements",
            "cms_documentation",
            "cms_rheader",
            "cms_configure_newsfeed_post_fields",
@@ -52,14 +53,14 @@ import re
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class CMSContentModel(S3Model):
+class CMSContentModel(DataModel):
     """
         Content Management System
     """
@@ -90,7 +91,6 @@ class CMSContentModel(S3Model):
         # Series
         # - lists of Posts displaying in recent-first mode
         #
-
         tablename = "cms_series"
         define_table(tablename,
                      Field("name", length=255, notnull=True, unique=True,
@@ -113,7 +113,7 @@ class CMSContentModel(S3Model):
                            represent = s3_yes_no_represent,
                            ),
                      Field("richtext", "boolean",
-                           default = True,
+                           default = False,
                            label = T("Rich Text?"),
                            represent = s3_yes_no_represent,
                            ),
@@ -502,31 +502,31 @@ class CMSContentModel(S3Model):
                        )
 
         # Custom Methods
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "add_bookmark",
                    action = self.cms_add_bookmark)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "remove_bookmark",
                    action = self.cms_remove_bookmark)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "add_tag",
                    action = self.cms_add_tag)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "remove_tag",
                    action = self.cms_remove_tag)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "share",
                    action = self.cms_share)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "unshare",
                    action = self.cms_unshare)
 
-        set_method("cms", "post",
+        set_method("cms_post",
                    method = "calendar",
                    action = cms_Calendar)
 
@@ -603,7 +603,7 @@ class CMSContentModel(S3Model):
                                  )
 
         # Custom Methods
-        set_method("cms", "tag",
+        set_method("cms_tag",
                    method = "tag_list",
                    action = cms_TagList)
 
@@ -665,9 +665,9 @@ class CMSContentModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return dict(cms_post_id = post_id,
-                    cms_tag_id = tag_id,
-                    )
+        return {"cms_post_id": post_id,
+                "cms_tag_id": tag_id,
+                }
 
     # -------------------------------------------------------------------------
     def defaults(self):
@@ -675,13 +675,11 @@ class CMSContentModel(S3Model):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField("dummy_id", "integer",
-                                readable = False,
-                                writable = False)
+        dummy = S3ReusableField.dummy
 
-        return dict(cms_post_id = lambda **attr: dummy("post_id"),
-                    cms_tag_id = lambda **attr: dummy("tag_id"),
-                    )
+        return {"cms_post_id": dummy("post_id"),
+                "cms_tag_id": dummy("tag_id"),
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -832,7 +830,7 @@ class CMSContentModel(S3Model):
                     data = json.loads(exists.deleted_fk)
                     data["deleted"] = False
                 else:
-                    data = dict(deleted=False)
+                    data = {"deleted": False}
                 db(ltable.id == link_id).update(**data)
         else:
             link_id = ltable.insert(post_id = post_id,
@@ -904,7 +902,7 @@ class CMSContentModel(S3Model):
                     data = json.loads(exists.deleted_fk)
                     data["deleted"] = False
                 else:
-                    data = dict(deleted=False)
+                    data = {"deleted": False}
                 db(ttable.id == tag_id).update(**data)
         else:
             tag_id = ttable.insert(name=tag)
@@ -921,7 +919,7 @@ class CMSContentModel(S3Model):
                     data = json.loads(exists.deleted_fk)
                     data["deleted"] = False
                 else:
-                    data = dict(deleted=False)
+                    data = {"deleted": False}
                 db(ltable.id == exists.id).update(**data)
         else:
             ltable.insert(post_id = post_id,
@@ -1062,7 +1060,7 @@ class CMSContentModel(S3Model):
         return output
 
 # =============================================================================
-class CMSContentForumModel(S3Model):
+class CMSContentForumModel(DataModel):
     """
         Link Posts to Forums to allow Users to Share posts
     """
@@ -1085,10 +1083,10 @@ class CMSContentForumModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentMapModel(S3Model):
+class CMSContentMapModel(DataModel):
     """
         Use of the CMS to provide extra data about Map Layers
     """
@@ -1109,10 +1107,10 @@ class CMSContentMapModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentOrgModel(S3Model):
+class CMSContentOrgModel(DataModel):
     """
         Link Posts to Organisations
     """
@@ -1137,10 +1135,10 @@ class CMSContentOrgModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentOrgGroupModel(S3Model):
+class CMSContentOrgGroupModel(DataModel):
     """
         Link Posts to Organisation Groups (Coalitions/Networks)
     """
@@ -1161,10 +1159,10 @@ class CMSContentOrgGroupModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentTeamModel(S3Model):
+class CMSContentTeamModel(DataModel):
     """
         Link Posts to Teams
     """
@@ -1189,10 +1187,10 @@ class CMSContentTeamModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentUserModel(S3Model):
+class CMSContentUserModel(DataModel):
     """
         Link Posts to Users to allow Users to Bookmark posts
     """
@@ -1213,10 +1211,10 @@ class CMSContentUserModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
-class CMSContentRoleModel(S3Model):
+class CMSContentRoleModel(DataModel):
     """
         Link CMS posts to user roles
         - for role-specific announcements
@@ -1252,7 +1250,7 @@ class CMSContentRoleModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
 # =============================================================================
 def cms_rheader(r, tabs=None):
@@ -1419,7 +1417,7 @@ def cms_documentation(r, default_page, default_url):
     """
         Render an online documentation page, to be called from prep
 
-        @param r: the S3Request
+        @param r: the CRUDRequest
         @param default_page: the default page name
         @param default_url: the default URL if no contents found
     """
@@ -1443,16 +1441,62 @@ def cms_documentation(r, default_page, default_url):
         else:
             # No CMS contents for module homepage found at all
             # => redirect to default page (preserving all errors)
-            from s3 import s3_redirect_default
+            from core import s3_redirect_default
             s3_redirect_default(default_url)
 
     # Render the page
-    from s3 import S3XMLContents
+    from core import S3XMLContents
     return {"bypass": True,
             "output": {"title": row.title,
                        "contents": S3XMLContents(row.body),
                        },
             }
+
+# =============================================================================
+def cms_announcements(roles=None):
+    """
+        Get current announcements
+
+        @param roles: filter announcement by these roles
+
+        @returns: any announcements (Rows)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Look up all announcements
+    ptable = s3db.cms_post
+    stable = s3db.cms_series
+    join = stable.on((stable.id == ptable.series_id) & \
+                     (stable.name == "Announcements") & \
+                     (stable.deleted == False))
+    query = (ptable.date <= current.request.utcnow) & \
+            (ptable.expired == False) & \
+            (ptable.deleted == False)
+
+    if roles:
+        # Filter posts by roles
+        ltable = s3db.cms_post_role
+        q = (ltable.group_id.belongs(roles)) & \
+            (ltable.deleted == False)
+        rows = db(q).select(ltable.post_id,
+                            cache = s3db.cache,
+                            groupby = ltable.post_id,
+                            )
+        post_ids = {row.post_id for row in rows}
+        query = (ptable.id.belongs(post_ids)) & query
+
+    posts = db(query).select(ptable.name,
+                             ptable.body,
+                             ptable.date,
+                             ptable.priority,
+                             join = join,
+                             orderby = (~ptable.priority, ~ptable.date),
+                             limitby = (0, 5),
+                             )
+
+    return posts
 
 # =============================================================================
 class S3CMS(S3Method):
@@ -1463,10 +1507,10 @@ class S3CMS(S3Method):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point to apply cms method to S3Requests
+            Entry point to apply cms method to CRUDRequests
             - produces a full page with a Richtext widget
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: dictionary of parameters for the method handler
 
             @return: output object to send to the view
@@ -1482,7 +1526,7 @@ class S3CMS(S3Method):
             S3Summary
 
             @param method: the widget method
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller attributes
 
             @ToDo: Support comments
@@ -1597,7 +1641,8 @@ def cms_configure_newsfeed_post_fields():
 
     contact_field = settings.get_cms_person()
     if contact_field == "created_by":
-        table.created_by.represent = s3_auth_user_represent_name
+        table.created_by.represent = s3db.auth_UserRepresent(show_email = False,
+                                                             show_link = False)
     elif contact_field == "person_id":
         field = table.person_id
         field.readable = True
@@ -1691,7 +1736,7 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -1953,7 +1998,7 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
                                      "record": record_id}
                                ),
                      _class="s3_modal",
-                     _title=T("Edit %(type)s") % dict(type=series_title),
+                     _title=T("Edit %(type)s") % {"type": series_title},
                      )
     else:
         edit_btn = ""
@@ -2144,7 +2189,7 @@ class cms_Calendar(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 
@@ -2265,7 +2310,7 @@ class cms_Calendar(S3Method):
                     rappend(TD())
             item.append(data_row)
 
-        output = dict(item=item)
+        output = {"item": item}
         output["title"] = T("Weekly Schedule")
 
         # Maintain RHeader for consistency
@@ -2314,7 +2359,7 @@ class cms_TagList(S3Method):
         """
             Entry point for REST API
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller arguments
         """
 

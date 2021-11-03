@@ -33,10 +33,6 @@ def config(settings):
     # Theme (folder to use for views/layout.html)
     #settings.base.theme = "default"
 
-    # Enable Guided Tours
-    # - defaults to module enabled or not
-    #settings.base.guided_tour = True
-
     # Authentication settings
     # These settings should be changed _after_ the 1st (admin) user is
     # registered in order to secure the deployment
@@ -139,6 +135,8 @@ def config(settings):
     #settings.auth.ignore_levels_for_presence = ("L0", "L1", "L2", "L3")
     # Uncomment this to enable the creation of new locations if a user logs in from an unknown location. Warning: This may lead to many useless location entries
     #settings.auth.create_unknown_locations = True
+    # Uncomment this to have the /default/person User Profile use the HRM controller
+    #settings.auth.profile_controller = "hrm"
 
     # -------------------------------------------------------------------------
     # Setup
@@ -487,8 +485,6 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    # 8: Apply Controller, Function, Table ACLs, Entity Realm + Hierarchy and Delegations
-
     settings.security.policy = 5 # Controller, Function & Table ACLs
 
     # Ownership-rule for records without owner:
@@ -701,6 +697,10 @@ def config(settings):
     #settings.br.assistance_activity_autolink = True
     # Disable tracking of effort (=hours spent) for assistance measures
     #settings.br.assistance_track_effort = False
+
+    # --- Offers of Assistance ---
+    # Disable reference numbers in offers of assistance
+    #settings.br.assistance_offer_refno = False
 
     # -------------------------------------------------------------------------
     # CMS
@@ -1342,10 +1342,6 @@ def config(settings):
             access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
             module_type = None  # This item is handled separately for the menu
         )),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
-        #)),
         ("translate", Storage(
             name_nice = T("Translation"),
             #description = "Selective translation of strings based on module.",
@@ -1480,11 +1476,6 @@ def config(settings):
         #    #description = "Helps to track cases and trace contacts in disease outbreaks",
         #    module_type = 10
         #)),
-        #("edu", Storage(
-        #    name_nice = T("Schools"),
-        #    #description = "Helps to monitor status of schools",
-        #    module_type = 10
-        #)),
         #("fire", Storage(
         #   name_nice = T("Fire Stations"),
         #   #description = "Fire Station Management",
@@ -1504,26 +1495,10 @@ def config(settings):
         #    #description = "Tracking of Patients",
         #    module_type = 10
         #)),
-        #("po", Storage(
-        #    name_nice = T("Population Outreach"),
-        #    #description = "Population Outreach",
-        #    module_type = 10
-        #)),
         #("security", Storage(
         #   name_nice = T("Security"),
         #   #description = "Security Management System",
         #   module_type = 10,
-        #)),
-        #("vulnerability", Storage(
-        #    name_nice = T("Vulnerability"),
-        #    #description = "Manages vulnerability indicators",
-        #    module_type = 10,
-        # )),
-        #("work", Storage(
-        #   name_nice = T("Jobs"),
-        #   #description = "Simple Volunteer Jobs Management",
-        #   restricted = False,
-        #   module_type = None,
         #)),
         # Deprecated: Replaced by BR
         #("dvr", Storage(
@@ -1560,18 +1535,6 @@ def config(settings):
         #   #description = "Helps to report and search for missing persons",
         #   module_type = 10,
         #)),
-        # Requires RPy2 & PostgreSQL
-        #("climate", Storage(
-        #    name_nice = T("Climate"),
-        #    #description = "Climate data portal",
-        #    module_type = 10,
-        #)),
-        #("delphi", Storage(
-        #    name_nice = T("Delphi Decision Maker"),
-        #    #description = "Supports the decision making of large groups of Crisis Management Experts by helping the groups create ranked list.",
-        #    restricted = False,
-        #    module_type = 10,
-        #)),
         # @ToDo: Port these Assessments to the Survey module
         #("building", Storage(
         #    name_nice = T("Building Assessments"),
@@ -1589,12 +1552,6 @@ def config(settings):
         #    name_nice = T("Impacts"),
         #    #description = "Used by Assess",
         #    module_type = None,
-        #)),
-        #("ocr", Storage(
-        #   name_nice = T("Optical Character Recognition"),
-        #   #description = "Optical Character Recognition for reading the scanned handwritten paper forms.",
-        #   restricted = False,
-        #   module_type = None,
         #)),
     ])
 

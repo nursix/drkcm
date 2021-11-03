@@ -37,14 +37,14 @@ import json
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3IRSModel(S3Model):
+class S3IRSModel(DataModel):
 
     names = ("irs_icategory",
              "irs_ireport",
@@ -209,8 +209,11 @@ class S3IRSModel(S3Model):
         define_table(tablename,
                      Field("code",
                            label = T("Category"),
-                           requires = IS_IN_SET_LAZY(lambda: \
-                                      sort_dict_by_values(irs_incident_type_opts)),
+                           requires = IS_IN_SET_LAZY(
+                                lambda: sorted(irs_incident_type_opts.items(),
+                                               key = lambda item: item[1],
+                                               ),
+                                ),
                            represent = lambda opt: \
                                        irs_incident_type_opts.get(opt, opt)),
                      *s3_meta_fields())
@@ -250,8 +253,11 @@ class S3IRSModel(S3Model):
                            label = T("Category"),
                            # The full set available to Admins & Imports/Exports
                            # (users use the subset by over-riding this in the Controller)
-                           requires = IS_EMPTY_OR(IS_IN_SET_LAZY(lambda: \
-                                      sort_dict_by_values(irs_incident_type_opts))),
+                           requires = IS_EMPTY_OR(IS_IN_SET_LAZY(
+                                        lambda: sorted(irs_incident_type_opts.items(),
+                                                       key = lambda item: item[1],
+                                                       ),
+                                        )),
                            # Use this instead if a simpler set of Options required
                            #requires = IS_EMPTY_OR(IS_IN_SET(irs_incident_type_opts)),
                            represent = lambda opt: \
@@ -471,15 +477,15 @@ class S3IRSModel(S3Model):
                                      )
 
         # Custom Methods
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "dispatch",
                    action=self.irs_dispatch)
 
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "timeline",
                    action = self.irs_timeline)
 
-        set_method("irs", "ireport",
+        set_method("irs_ireport",
                    method = "ushahidi",
                    action = self.irs_ushahidi_import)
 
@@ -517,9 +523,9 @@ class S3IRSModel(S3Model):
             - used by events module
                     & legacy assess & impact modules
         """
-        ireport_id = S3ReusableField("ireport_id", "integer",
-                                     readable=False, writable=False)
-        return {"irs_ireport_id": ireport_id}
+
+        return {"irs_ireport_id": S3ReusableField.dummy("ireport_id"),
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -960,23 +966,23 @@ S3.timeline.now="''', now.isoformat(), '''"
                     ignore_errors = formvars.get("ignore_errors")
                     resource = r.resource
                     try:
-                        success = resource.import_xml(ushahidi_url,
-                                                      stylesheet = stylesheet,
-                                                      ignore_errors = ignore_errors,
-                                                      )
+                        result = resource.import_xml(ushahidi_url,
+                                                     stylesheet = stylesheet,
+                                                     ignore_errors = ignore_errors,
+                                                     )
                     except:
                         import sys
                         response.error = sys.exc_info()[1]
                     else:
-                        if success:
-                            count = resource.import_count
+                        if result.success:
+                            count = result.count
                             if count:
                                 response.confirmation = "%(number)s reports successfully imported." % \
                                                         {"number": count}
                             else:
                                 response.information = T("No reports available.")
                         else:
-                            response.error = resource.error
+                            response.error = result.error
 
 
             response.view = "create.html"
@@ -986,7 +992,7 @@ S3.timeline.now="''', now.isoformat(), '''"
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class S3IRSResponseModel(S3Model):
+class S3IRSResponseModel(DataModel):
     """
         Tables used when responding to Incident Reports
         - with HRMs &/or Vehicles
@@ -1072,7 +1078,7 @@ class S3IRSResponseModel(S3Model):
                               ])
 
         if not settings.has_module("vehicle"):
-            return {}
+            return None
 
         # ---------------------------------------------------------------------
         # Vehicles assigned to an Incident
@@ -1149,7 +1155,7 @@ class S3IRSResponseModel(S3Model):
         # ---------------------------------------------------------------------
         # Return model-global names to s3db.*
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod

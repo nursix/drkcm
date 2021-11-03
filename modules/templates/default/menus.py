@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import *
-from s3 import *
+from core import *
 from s3layouts import *
 try:
     from .layouts import *

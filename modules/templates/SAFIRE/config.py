@@ -65,8 +65,6 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    # 8: Apply Controller, Function, Table ACLs, Entity Realm + Hierarchy and Delegations
-
     settings.security.policy = 5 # Controller, Function & Table ACLs
 
     # -------------------------------------------------------------------------
@@ -103,10 +101,6 @@ def config(settings):
             access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
             module_type = None  # This item is handled separately for the menu
         )),
-        #("tour", Storage(
-        #    name_nice = T("Guided Tour Functionality"),
-        #    module_type = None,
-        #)),
         #("translate", Storage(
         #    name_nice = T("Translation Functionality"),
         #    #description = "Selective translation of strings based on module.",
@@ -260,7 +254,7 @@ def config(settings):
         if record and r.representation == "html":
 
             from gluon import A, DIV, TABLE, TR, TH
-            from s3 import s3_rheader_tabs
+            from core import s3_rheader_tabs
 
             name = r.name
             if name == "incident":
@@ -382,7 +376,7 @@ def config(settings):
                                                 limitby = (0, 1)
                                                 ).first()
                 if link:
-                    from s3 import S3Represent
+                    from core import S3Represent
                     represent = S3Represent(lookup="event_incident", show_link=True)
                     rheader = DIV(TABLE(TR(TH("%s: " % ltable.incident_id.label),
                                            represent(link.incident_id),
@@ -514,7 +508,7 @@ def config(settings):
             method = r.method
             if method in (None, "create"):
                 current.s3db.gis_location.addr_street.label = T("Street Address or Location Details")
-                from s3 import S3SQLCustomForm
+                from core import S3SQLCustomForm
                 crud_form = S3SQLCustomForm((T("What is it?"), "name"),
                                             "incident_type_id",
                                             (T("Who am I speaking with?"), "reported_by"),
@@ -571,7 +565,7 @@ def config(settings):
             incident_type_id = form_vars_get("incident_type_id")
             ittable = s3db.event_incident_type
             incident_type = db(ittable.id == incident_type_id).select(ittable.name,
-                                                                      limitby = (0,1)
+                                                                      limitby = (0, 1)
                                                                       ).first().name
             if incident_type == "Chemical Hazard":
                 itable = s3db.event_incident
@@ -588,6 +582,7 @@ def config(settings):
                                     limitby = (0, 1)
                                     ).first()
             if duty:
+                # @ToDo: i18n
                 current.msg.send_sms_via_api(duty.value,
                     "You have been assigned an Incident: %s%s" % (settings.get_base_public_url(),
                                                                   URL(c="event", f= "incident",
@@ -597,7 +592,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_event_incident_resource(r, tablename):
 
-        from s3 import S3LocationSelector
+        from core import S3LocationSelector
 
         s3db = current.s3db
 
@@ -645,7 +640,8 @@ def config(settings):
 
             # Redirect to action plan after create
             resource.configure(create_next = URL(c="event", f="incident",
-                                                 args = ["[id]", "plan"]),
+                                                 args = ["[id]", "plan"]
+                                                 ),
                                )
 
             method = r.method
@@ -657,7 +653,7 @@ def config(settings):
                     # - copy incident type and location from report
                     # - onaccept: link the incident report to the incident
                     if r.http == "GET":
-                        from s3 import s3_truncate
+                        from core import s3_truncate
                         rtable = s3db.event_incident_report
                         incident_report = current.db(rtable.id == incident_report_id).select(rtable.name,
                                                                                              rtable.incident_type_id,
@@ -706,7 +702,7 @@ def config(settings):
         table.asset_id.label = T("Specific Item")
         # DateTime
         from gluon import IS_EMPTY_OR
-        from s3 import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
+        from core import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
         for f in (table.start_date, table.end_date):
             f.requires = IS_EMPTY_OR(IS_UTC_DATETIME())
             f.represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
@@ -835,6 +831,7 @@ def config(settings):
                 label = T("Ticket")
             else:
                 label = T("Incident")
+            # @ToDo: i18n
             current.msg.send_by_pe_id(pe_id,
                                       subject = "",
                                       message = "You have been assigned to an %s: %s%s" % \
@@ -843,7 +840,8 @@ def config(settings):
                                          URL(c="event", f= "incident",
                                              args = [incident_id, "human_resource", link_id]),
                                              ),
-                                      contact_method = "SMS")
+                                      contact_method = "SMS"
+                                      )
 
     # -------------------------------------------------------------------------
     def customise_event_human_resource_resource(r, tablename):
@@ -852,7 +850,7 @@ def config(settings):
         table = s3db.event_human_resource
         # DateTime
         from gluon import IS_EMPTY_OR
-        from s3 import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
+        from core import IS_UTC_DATETIME, S3CalendarWidget, S3DateTime
         for f in (table.start_date, table.end_date):
             f.requires = IS_EMPTY_OR(IS_UTC_DATETIME())
             f.represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
@@ -1017,15 +1015,15 @@ def config(settings):
                                                     ),
                             )
 
-        from s3 import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink, \
-                       IS_EMPTY_OR, IS_PHONE_NUMBER_MULTI, S3PhoneWidget, s3_phone_represent
+        from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink, \
+                         IS_EMPTY_OR, IS_PHONE_NUMBER_MULTI, S3PhoneWidget, s3_phone_represent
 
         # Individual settings for specific tag components
         components_get = s3db.resource(tablename).components.get
 
         duty = components_get("duty")
         f = duty.table.value
-        f.represent = s3_phone_represent,
+        f.represent = s3_phone_represent
         f.requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI())
         f.widget = S3PhoneWidget()
 
@@ -1153,6 +1151,7 @@ def config(settings):
 
         if pe_id:
             # Notify Assignee
+            # @ToDo: i18n
             message = "You have been assigned a Task: %s%s" % \
                         (settings.get_base_public_url(),
                          URL(c="event", f= "incident",

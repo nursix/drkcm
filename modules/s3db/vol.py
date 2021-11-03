@@ -44,14 +44,14 @@ from collections import OrderedDict
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class VolunteerModel(S3Model):
+class VolunteerModel(DataModel):
 
     names = ("vol_details",)
 
@@ -102,7 +102,7 @@ class VolunteerModel(S3Model):
         return output
 
 # =============================================================================
-class VolunteerActivityModel(S3Model):
+class VolunteerActivityModel(DataModel):
     """
         Currently used by CRMADA
     """
@@ -499,7 +499,7 @@ $.filterOptionsS3({
                      *s3_meta_fields())
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
 # =============================================================================
 def vol_activity_hours_month(row):
@@ -586,7 +586,7 @@ def vol_activity_hours_onaccept(form):
                           active = active)
 
 # =============================================================================
-class VolunteerAwardModel(S3Model):
+class VolunteerAwardModel(DataModel):
 
     names = ("vol_award",
              "vol_volunteer_award",
@@ -711,7 +711,7 @@ class VolunteerAwardModel(S3Model):
                        )
 
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -738,7 +738,7 @@ class VolunteerAwardModel(S3Model):
             return current.messages["NONE"]
 
 # =============================================================================
-class VolunteerClusterModel(S3Model):
+class VolunteerClusterModel(DataModel):
     """
         Fucntionality to support the Philippines Red Cross
     """
@@ -929,11 +929,7 @@ $.filterOptionsS3({
             deployment_settings.
         """
 
-        return {"vol_cluster_id": S3ReusableField("vol_cluster_id",
-                                                  "integer",
-                                                  readable = False,
-                                                  writable = False,
-                                                  ),
+        return {"vol_cluster_id": S3ReusableField.dummy("vol_cluster_id"),
                 }
 
 # =============================================================================
@@ -1296,7 +1292,7 @@ def vol_service_record(r, **attr):
 
         return output
 
-    from s3.s3export import S3Exporter
+    from core import S3Exporter
     exporter = S3Exporter().pdf
     pdf_title = "%s - %s" % (s3_str(vol_name),
                              s3_str(T("Volunteer Service Record")),
@@ -1443,15 +1439,15 @@ def vol_volunteer_controller():
                     if settings.get_hrm_use_code() is not True:
                         table.code.readable = table.code.writable = False
                     # Organisation Dependent Fields
-                    # @ToDo: Move these to the IFRC Template & make Lazy settings
-                    set_org_dependent_field = settings.set_org_dependent_field
-                    set_org_dependent_field("pr_person_details", "father_name")
-                    set_org_dependent_field("pr_person_details", "mother_name")
-                    set_org_dependent_field("pr_person_details", "affiliations")
-                    set_org_dependent_field("pr_person_details", "company")
-                    set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_type_id")
-                    set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_id")
-                    set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_position_id")
+                    # - deprecated (IFRC template only)
+                    #set_org_dependent_field = settings.set_org_dependent_field
+                    #set_org_dependent_field("pr_person_details", "father_name")
+                    #set_org_dependent_field("pr_person_details", "mother_name")
+                    #set_org_dependent_field("pr_person_details", "affiliations")
+                    #set_org_dependent_field("pr_person_details", "company")
+                    #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_type_id")
+                    #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_id")
+                    #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_position_id")
                     # Label for "occupation"
                     s3db.pr_person_details.occupation.label = T("Normal Job")
                     # Assume staff only between 12-81
@@ -1483,7 +1479,7 @@ def vol_volunteer_controller():
         return output
     s3.postp = postp
 
-    return current.rest_controller("hrm", "human_resource")
+    return current.crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def vol_person_controller():
@@ -1501,23 +1497,22 @@ def vol_person_controller():
     s3 = response.s3
     session = current.session
     settings = current.deployment_settings
-    resourcename = "person"
 
     configure = s3db.configure
     set_method = s3db.set_method
 
     # Custom Method for Contacts
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "contacts",
                action = s3db.pr_Contacts)
 
     # Custom Method for CV
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "cv",
                action = s3db.hrm_CV)
 
     # Custom Method for HR Record
-    set_method("pr", resourcename,
+    set_method("pr_person",
                method = "record",
                action = s3db.hrm_Record)
 
@@ -1600,55 +1595,49 @@ def vol_person_controller():
             title_upload = T("Import Volunteers"),
             )
 
-    # Upload for configuration (add replace option)
-    s3.importerPrep = lambda: {"ReplaceOption": T("Remove existing data before import")}
-
     # Import pre-process
-    def import_prep(data, group=group):
+    def import_prep(tree, group=group):
         """
             Deletes all HR records (of the given group) of the organisation
             before processing a new data import, used for the import_prep
             hook in response.s3
         """
-        resource, tree = data
-        xml = current.xml
-        tag = xml.TAG
-        att = xml.ATTRIBUTE
-        if s3.import_replace:
-            if tree is not None:
-                if group == "staff":
-                    group = 1
-                elif group == "volunteer":
-                    group = 2
-                else:
-                    return # don't delete if no group specified
+        if s3.import_replace and tree is not None:
+            xml = current.xml
+            tag = xml.TAG
+            att = xml.ATTRIBUTE
 
-                root = tree.getroot()
-                expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
-                       (tag.root, tag.resource, att.name, tag.data, att.field)
-                orgs = root.xpath(expr)
-                for org in orgs:
-                    org_name = org.get("value", None) or org.text
-                    if org_name:
-                        try:
-                            org_name = json.loads(xml.xml_decode(org_name))
-                        except:
-                            pass
-                    if org_name:
-                        htable = s3db.hrm_human_resource
-                        otable = s3db.org_organisation
-                        query = (otable.name == org_name) & \
-                                (htable.organisation_id == otable.id) & \
-                                (htable.type == group)
-                        resource = s3db.resource("hrm_human_resource", filter=query)
-                        resource.delete(format="xml", cascade=True)
+            if group == "staff":
+                group = 1
+            elif group == "volunteer":
+                group = 2
+            else:
+                return # don't delete if no group specified
+
+            root = tree.getroot()
+            expr = "/%s/%s[@%s='org_organisation']/%s[@%s='name']" % \
+                    (tag.root, tag.resource, att.name, tag.data, att.field)
+            orgs = root.xpath(expr)
+            for org in orgs:
+                org_name = org.get("value", None) or org.text
+                if org_name:
+                    try:
+                        org_name = json.loads(xml.xml_decode(org_name))
+                    except:
+                        pass
+                if org_name:
+                    htable = s3db.hrm_human_resource
+                    otable = s3db.org_organisation
+                    query = (otable.name == org_name) & \
+                            (htable.organisation_id == otable.id) & \
+                            (htable.type == group)
+                    resource = s3db.resource("hrm_human_resource", filter=query)
+                    resource.delete(format="xml", cascade=True)
+
     s3.import_prep = import_prep
 
     # CRUD pre-process
     def prep(r):
-
-        # Plug-in role matrix for Admins/OrgAdmins
-        S3PersonRoleManager.set_method(r, entity="pr_person")
 
         method = r.method
         if r.representation == "s3json":
@@ -1675,15 +1664,15 @@ def vol_person_controller():
                 s3db.pr_person_details.occupation.label = T("Normal Job")
 
                 # Organisation Dependent Fields
-                # @ToDo: Move these to the IFRC Template & make Lazy settings
-                set_org_dependent_field = settings.set_org_dependent_field
-                set_org_dependent_field("pr_person", "middle_name")
-                set_org_dependent_field("pr_person_details", "father_name")
-                set_org_dependent_field("pr_person_details", "grandfather_name")
-                set_org_dependent_field("pr_person_details", "mother_name")
-                set_org_dependent_field("pr_person_details", "year_of_birth")
-                set_org_dependent_field("pr_person_details", "affiliations")
-                set_org_dependent_field("pr_person_details", "company")
+                # - deprecated (IFRC template only)
+                #set_org_dependent_field = settings.set_org_dependent_field
+                #set_org_dependent_field("pr_person", "middle_name")
+                #set_org_dependent_field("pr_person_details", "father_name")
+                #set_org_dependent_field("pr_person_details", "grandfather_name")
+                #set_org_dependent_field("pr_person_details", "mother_name")
+                #set_org_dependent_field("pr_person_details", "year_of_birth")
+                #set_org_dependent_field("pr_person_details", "affiliations")
+                #set_org_dependent_field("pr_person_details", "company")
 
             else:
                 component_name = r.component_name
@@ -1760,11 +1749,11 @@ def vol_person_controller():
                 #    field.readable = field.writable = False
 
                 # Organisation Dependent Fields
-                # @ToDo: Move these to the IFRC Template & make Lazy settings
-                set_org_dependent_field = settings.set_org_dependent_field
-                set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_type_id")
-                set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_id")
-                set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_position_id")
+                # - deprecated (IFRC template only)
+                #set_org_dependent_field = settings.set_org_dependent_field
+                #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_type_id")
+                #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_id")
+                #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_position_id")
 
             elif method == "cv" or r.component_name == "training":
                 list_fields = ["course_id",
@@ -1869,7 +1858,7 @@ def vol_person_controller():
     # REST Interface
     #orgname = session.s3.hrm.orgname
 
-    return current.rest_controller("pr", resourcename,
+    return current.crud_controller("pr", "person",
                                    csv_template = ("hrm", "volunteer"),
                                    csv_stylesheet = ("hrm", "person.xsl"),
                                    csv_extra_fields = [

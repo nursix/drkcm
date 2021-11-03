@@ -32,11 +32,11 @@ __all__ = ("S3SituationModel",
 
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 #from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3SituationModel(S3Model):
+class S3SituationModel(DataModel):
     """
         Situation Super Entity & Presence tables for Trackable resources
     """

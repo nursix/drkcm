@@ -36,7 +36,7 @@ def person():
     s3db.br_case_default_status()
 
     # Set contacts-method for tab
-    s3db.set_method("pr", "person",
+    s3db.set_method("pr_person",
                     method = "contacts",
                     action = s3db.pr_Contacts,
                     )
@@ -122,8 +122,8 @@ def person():
         s3.crud_strings["pr_person"] = crud_strings
 
         # Configure Anonymizer
-        from s3 import S3Anonymize
-        s3db.set_method("pr", "person",
+        from core import S3Anonymize
+        s3db.set_method("pr_person",
                         method = "anonymize",
                         action = S3Anonymize,
                         )
@@ -152,7 +152,7 @@ def person():
         if not r.component:
 
             # Module-specific field and form configuration
-            from s3 import S3SQLInlineComponent
+            from core import S3SQLInlineComponent
 
             # Adapt fields to module context
             table = resource.table
@@ -287,7 +287,7 @@ def person():
 
             # Filter Widgets
             if not record:
-                from s3 import S3TextFilter, S3DateFilter, S3OptionsFilter
+                from core import S3TextFilter, S3DateFilter, S3OptionsFilter
                 filter_widgets = [
                     S3TextFilter(name_fields + ["pe_label", "case.comments"],
                                  label = T("Search"),
@@ -319,7 +319,7 @@ def person():
                 resource.configure(filter_widgets = filter_widgets)
 
             # Autocomplete search-method
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "search_ac",
                             action = s3db.pr_PersonSearchAutocomplete(name_fields),
                             )
@@ -439,7 +439,8 @@ def person():
 
             # Represent the note author by their name (rather than email)
             ntable = r.component.table
-            ntable.modified_by.represent = s3base.s3_auth_user_represent_name
+            ntable.modified_by.represent = s3db.auth_UserRepresent(show_email = False,
+                                                                   show_link = False)
 
         return True
     s3.prep = prep
@@ -455,7 +456,7 @@ def person():
                 buttons = output["buttons"]
 
             # Anonymize-button
-            from s3 import S3AnonymizeWidget
+            from core import S3AnonymizeWidget
             anonymize = S3AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
 
             # ID-Card button
@@ -478,10 +479,9 @@ def person():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("pr", "person",
-                                rheader = s3db.br_rheader,
-                                )
-    return output
+    return crud_controller("pr", "person",
+                           rheader = s3db.br_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -507,14 +507,14 @@ def person_search():
 
         # Autocomplete search-method including pe_label
         search_fields = tuple(name_fields) + ("pe_label",)
-        s3db.set_method("pr", "person",
+        s3db.set_method("pr_person",
                         method = "search_ac",
                         action = s3db.pr_PersonSearchAutocomplete(search_fields),
                         )
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # -----------------------------------------------------------------------------
 def group_membership():
@@ -538,7 +538,7 @@ def group_membership():
             if vtablename == "pr_person":
 
                 # Set contacts-method to retain the tab
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "contacts",
                                 action = s3db.pr_Contacts,
                                 )
@@ -573,7 +573,7 @@ def group_membership():
                 group_ids = set()
 
             # Add-Person widget to use BR controller and expose pe_label
-            from s3 import S3AddPersonWidget
+            from core import S3AddPersonWidget
             field = table.person_id
             field.represent = s3db.pr_PersonRepresent(show_link=True)
             field.widget = S3AddPersonWidget(controller = "br",
@@ -666,9 +666,9 @@ def group_membership():
     settings.pr.request_home_phone = False
     settings.hrm.email_required = False
 
-    return s3_rest_controller("pr", "group_membership",
-                              rheader = s3db.br_rheader,
-                              )
+    return crud_controller("pr", "group_membership",
+                           rheader = s3db.br_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def document():
@@ -702,7 +702,7 @@ def document():
                 r.unauthorised()
 
             # Set contacts-method to retain the tab
-            s3db.set_method("pr", "person",
+            s3db.set_method("pr_person",
                             method = "contacts",
                             action = s3db.pr_Contacts,
                             )
@@ -827,9 +827,9 @@ def document():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("doc", "document",
-                              rheader = s3db.br_rheader,
-                              )
+    return crud_controller("doc", "document",
+                           rheader = s3db.br_rheader,
+                           )
 
 # =============================================================================
 # Case Activities
@@ -885,10 +885,10 @@ def case_activity():
                 s3db.br_case_activity_default_status()
 
             # Filter widgets
-            from s3 import S3DateFilter, \
-                           S3OptionsFilter, \
-                           S3TextFilter, \
-                           s3_get_filter_opts
+            from core import S3DateFilter, \
+                             S3OptionsFilter, \
+                             S3TextFilter, \
+                             s3_get_filter_opts
 
             text_filter_fields = ["person_id$pe_label",
                                   "person_id$first_name",
@@ -1018,7 +1018,115 @@ def case_activity():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
+
+# =============================================================================
+def activities():
+    """
+        Separate CRUD controller for case activities
+        - can be used for shared (site-wide) perspectives on case activites
+        - not normally including case details (but care needs to be taken)
+        - normally read-only
+    """
+
+    def prep(r):
+
+        resource = r.resource
+        table = resource.table
+
+        labels = s3db.br_terminology()
+
+        if not r.record:
+
+            # Enable bigtable features for better performance
+            settings.base.bigtable = True
+
+            get_vars = r.get_vars
+            crud_strings = response.s3.crud_strings["br_case_activity"]
+
+            # Adapt list title when filtering for priority 0 (Emergency)
+            if get_vars.get("~.priority") == "0":
+                crud_strings.title_list = T("Emergencies")
+
+            case_activity_status = settings.get_br_case_activity_status()
+            case_activity_need = settings.get_br_case_activity_need()
+
+            # Default status
+            if case_activity_status:
+                s3db.br_case_activity_default_status()
+
+            # Filter widgets
+            from core import S3DateFilter, \
+                             S3OptionsFilter, \
+                             S3TextFilter, \
+                             s3_get_filter_opts
+
+            filter_widgets = []
+
+            text_filter_fields = []
+            if settings.get_br_case_activity_subject():
+                text_filter_fields.append("subject")
+            if settings.get_br_case_activity_need_details():
+                text_filter_fields.append("need_details")
+
+            if text_filter_fields:
+                filter_widgets.append(S3TextFilter(text_filter_fields,
+                                                   label = T("Search"),
+                                                   ))
+
+            multiple_orgs = s3db.br_case_read_orgs()[0]
+            if multiple_orgs:
+                filter_widgets.append(S3OptionsFilter("person_id$case.organisation_id"))
+
+            if case_activity_status:
+                stable = s3db.br_case_activity_status
+                query = (stable.deleted == False)
+                rows = db(query).select(stable.id,
+                                        stable.name,
+                                        stable.is_closed,
+                                        cache = s3db.cache,
+                                        orderby = stable.workflow_position,
+                                        )
+                status_filter_options = OrderedDict((row.id, T(row.name)) for row in rows)
+                status_filter_defaults = [row.id for row in rows if not row.is_closed]
+                filter_widgets.append(S3OptionsFilter("status_id",
+                                                      options = status_filter_options,
+                                                      default = status_filter_defaults,
+                                                      cols = 3,
+                                                      hidden = True,
+                                                      sort = False,
+                                                      ))
+
+            filter_widgets.extend([S3DateFilter("date",
+                                                hidden = True,
+                                                ),
+                                   ])
+
+            if case_activity_need:
+                org_specific_needs = settings.get_br_needs_org_specific()
+                filter_widgets.append(S3OptionsFilter("need_id",
+                                                      hidden = True,
+                                                      header = True,
+                                                      options = lambda: \
+                                                                s3_get_filter_opts(
+                                                                  "br_need",
+                                                                  org_filter = org_specific_needs,
+                                                                  translate = True,
+                                                                  ),
+                                                      ))
+
+            resource.configure(filter_widgets=filter_widgets)
+
+        # Make read-only
+        resource.configure(insertable = False,
+                           editable = False,
+                           deletable = False,
+                           )
+
+        return True
+    s3.prep = prep
+
+    return crud_controller("br", "case_activity")
 
 # =============================================================================
 # Assistance
@@ -1026,19 +1134,48 @@ def case_activity():
 def assistance_status():
     """ Assistance Statuses: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def assistance_theme():
     """ Assistance Themes: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def assistance_type():
     """ Types of Assistance: RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def assistance_offer():
+    """ Offers of Assistance: RESTful CRUD controller """
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def offers():
+    """
+        Separate CRUD controller for assistance offers
+        - can be used for shared (site-wide) perspectives on offers
+        - not normally including provider details (but care needs to be taken)
+        - normally read-only
+    """
+
+    def prep(r):
+
+        resource = r.resource
+
+        # Make read-only
+        resource.configure(insertable = False,
+                           editable = False,
+                           deletable = False,
+                           )
+        return True
+    s3.prep = prep
+
+    return crud_controller("br", "assistance_offer")
 
 # -----------------------------------------------------------------------------
 def assistance_measure():
@@ -1174,7 +1311,7 @@ def assistance_measure():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Look-up Tables
@@ -1191,36 +1328,36 @@ def case_status():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def case_activity_status():
     """ Activity Statuses: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def case_activity_update_type():
     """ Activity Update Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def need():
     """ Needs: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def note_type():
     """ Note Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def service_contact_type():
     """ Service Contact Types: RESTful CRUD Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # END =========================================================================

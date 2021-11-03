@@ -684,10 +684,9 @@ class OrgDeduplicationTests(unittest.TestCase):
         result = resource.import_xml(xmltree, ignore_errors=True)
 
         # Verify that we have an error reported for the import item
-        result = json.loads(result)
-        msg = result["message"]
+        msg = json.loads(result.json_message())["message"]
 
-        error_tree = resource.error_tree
+        error_tree = result.error_tree
         assertNotEqual(error_tree, None)
 
         elements = error_tree.xpath("resource[data[@field='name']/text()='DeDupBranch3']")
@@ -793,10 +792,9 @@ class OrgDeduplicationTests(unittest.TestCase):
         result = resource.import_xml(xmltree, ignore_errors=True)
 
         # Verify that we have an error reported for the import item
-        result = json.loads(result)
-        msg = result["message"]
+        msg = json.loads(result.json_message())["message"]
 
-        error_tree = resource.error_tree
+        error_tree = result.error_tree
         assertNotEqual(error_tree, None)
 
         elements = error_tree.xpath("resource[data[@field='name']/text()='DeDupBranch2']")

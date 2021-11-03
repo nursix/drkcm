@@ -10,7 +10,7 @@ module = request.controller
 def forms():
     """ Controller to download form list and individual forms """
 
-    from s3 import S3XForms
+    from core import S3XForms
 
     if request.env.request_method != "GET":
         raise HTTP(405, current.ERROR.BAD_METHOD)
@@ -31,11 +31,10 @@ def forms():
         method = ["xform.%s" % extension]
         if len(args) > 1:
             method.insert(0, args[1])
-        r = s3_request(prefix, name,
-                       args = method,
-                       extension = None,
-                       )
-        r.set_handler("xform", S3XForms)
+        r = crud_request(prefix, name,
+                         args = method,
+                         extension = None,
+                         )
         output = r()
     else:
         # Form list
@@ -348,12 +347,12 @@ def csvheader(parent, nodelist):
 def importxml(db, xmlinput):
     """
         Converts the XML to a CSV compatible with the import_from_csv_file of web2py
-        @ToDo: rewrite this to go via S3Resource for proper Auth checking, Audit.
+        @ToDo: rewrite this to go via CRUDResource for proper Auth checking, Audit.
 
         @todo: deprecate
     """
 
-    from s3compat import StringIO
+    from io import StringIO
     import xml.dom.minidom
 
     try:
@@ -417,7 +416,7 @@ def submission():
     if not auth.s3_logged_in():
         auth.permission.fail()
 
-    from s3compat import StringIO
+    from io import StringIO
     import cgi
     from lxml import etree
 
@@ -428,7 +427,7 @@ def submission():
         else:
             xmlinput = source.value
 
-        if isinstance(xmlinput, basestring):
+        if isinstance(xmlinput, str):
             xmlinput = StringIO(xmlinput)
     elif request.env.request_method == "HEAD":
         raise HTTP(204)

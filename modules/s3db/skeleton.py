@@ -20,7 +20,7 @@
 # mandatory __all__ statement:
 #
 # - all classes in the name list will be initialized with the
-#   module prefix as only parameter. Subclasses of S3Model
+#   module prefix as only parameter. Subclasses of DataModel
 #   support this automatically, and run the model() method
 #   if the module is enabled in deployment_settings, otherwise
 #   the default() method.
@@ -34,22 +34,22 @@ __all__ = ("SkeletonDataModel",
 
 # The following import statements are needed in almost every model
 # (you may need more than this in your particular case). To
-# import classes from s3, use from + relative path like below
+# import classes from core, use from + relative path like below
 #
 from gluon import *
 from gluon.storage import Storage
-from ..s3 import *
+from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-# Define a new class as subclass of S3Model
+# Define a new class as subclass of DataModel
 # => you can define multiple of these classes within the same module, each
 #    of them will be initialized only when one of the declared names gets
 #    requested from s3db
 # => remember to list all model classes in __all__, otherwise they won't ever
 #    be loaded.
 #
-class S3SkeletonDataModel(S3Model):
+class SkeletonDataModel(DataModel):
 
     # Declare all the names this model can auto-load, i.e. all tablenames
     # and all response.s3 names which are defined here. If you omit the "names"
@@ -121,9 +121,8 @@ class S3SkeletonDataModel(S3Model):
                                                                       "skeleton_example.id")))
 
         # Pass names back to global scope (s3.*)
-        return dict(
-            skeleton_example_id=skeleton_example_id,
-        )
+        return {"skeleton_example_id": skeleton_example_id,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -136,12 +135,8 @@ class S3SkeletonDataModel(S3Model):
             You don't need this function in case your model is mandatory anyway.
         """
 
-        return dict(
-            skeleton_example_id = S3ReusableField("skeleton_example_id",
-                                                  "integer",
-                                                  readable=False,
-                                                  writable=False),
-        )
+        return {"skeleton_example_id": S3ReusableField.dummy("skeleton_example_id"),
+                }
 
 
     # ---------------------------------------------------------------------

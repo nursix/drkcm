@@ -69,38 +69,38 @@ def index():
 # -----------------------------------------------------------------------------
 def aws_cloud():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def openstack_cloud():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def gandi_dns():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def godaddy_dns():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def smtp():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def google_email():
 
-    return s3_rest_controller(#rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(#rheader = s3db.setup_rheader,
+                           )
 
 # -----------------------------------------------------------------------------
 def deployment():
@@ -135,7 +135,7 @@ def deployment():
                 cname = r.component.name
                 if cname == "server":
 
-                    from s3 import S3SQLCustomForm
+                    from core import S3SQLCustomForm
 
                     deployment = r.record
 
@@ -276,7 +276,7 @@ def deployment():
                     deployment = r.record
                     if deployment.email_id:
                         # Assume Google for now
-                        from s3 import S3SQLCustomForm
+                        from core import S3SQLCustomForm
                         crud_form = S3SQLCustomForm("type",
                                                     "url",
                                                     "start",
@@ -374,7 +374,7 @@ def deployment():
                     db(stable.deployment_id == deployment_id).update(**server_vars)
 
                 # Include Production Instance & Server details in main form
-                from s3 import S3SQLCustomForm
+                from core import S3SQLCustomForm
                 crud_form = S3SQLCustomForm((T("Production URL"), "production.url"),
                                             "country",
                                             "template",
@@ -542,8 +542,7 @@ def deployment():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # -----------------------------------------------------------------------------
 def server():
@@ -566,7 +565,7 @@ def server():
             # No Cloud in create form:
             # 'External' servers just added for Monitoring
             # - we don't deploy Servers except within Deployments
-            from s3 import S3SQLCustomForm
+            from core import S3SQLCustomForm
             f = s3db.setup_server.host_ip
             f.requires = f.requires.other # IP is required
             f.comment = DIV(_class="tooltip",
@@ -653,20 +652,19 @@ def server():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # -----------------------------------------------------------------------------
 #def instance():
 
-#    return s3_rest_controller(#rheader = s3db.setup_rheader,
-#                              )
+#    return crud_controller(#rheader = s3db.setup_rheader,
+#                           )
 
 # -----------------------------------------------------------------------------
 #def setting():
 
-#    return s3_rest_controller(#rheader = s3db.setup_rheader,
-#                              )
+#    return crud_controller(#rheader = s3db.setup_rheader,
+#                           )
 
 # -----------------------------------------------------------------------------
 def monitor_check():
@@ -699,8 +697,7 @@ def monitor_check():
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # -----------------------------------------------------------------------------
 def monitor_run():
@@ -708,12 +705,12 @@ def monitor_run():
         Logs
     """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def monitor_task():
 
-    from s3 import S3OptionsFilter, s3_set_default_filter
+    from core import S3OptionsFilter, s3_set_default_filter
 
     tablename = "setup_monitor_task"
 
@@ -768,7 +765,6 @@ def monitor_task():
         return output
     s3.postp = postp
 
-    return s3_rest_controller(rheader = s3db.setup_rheader,
-                              )
+    return crud_controller(rheader=s3db.setup_rheader)
 
 # END =========================================================================

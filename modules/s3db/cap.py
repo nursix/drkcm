@@ -52,13 +52,15 @@ import datetime
 import os
 
 from collections import OrderedDict
+from io import StringIO
+from urllib import request as urllib2
+from urllib.error import HTTPError, URLError
 from uuid import uuid4
 
 from gluon import *
 from gluon.storage import Storage
 
-from ..s3 import *
-from s3compat import HTTPError, StringIO, URLError, basestring, urllib2
+from ..core import *
 from s3layouts import S3PopupLink
 
 OIDPATTERN = r"^[^,<&\s]+$"
@@ -308,7 +310,7 @@ def get_cap_options():
     return cap_options
 
 # =============================================================================
-class CAPAlertModel(S3Model):
+class CAPAlertModel(DataModel):
     """ Model for the cap:alert container object """
 
     names = ("cap_alert",
@@ -327,8 +329,6 @@ class CAPAlertModel(S3Model):
         crud_strings = current.response.s3.crud_strings
 
         define_table = self.define_table
-        set_method = self.set_method
-
         cap_options = get_cap_options()
 
         incident_types = cap_options["incident_types"]
@@ -445,7 +445,7 @@ $.filterOptionsS3({
                      Field("status",
                            default = "Draft",
                            label = T("Status"),
-                           represent = S3Represent(options=status_opts),
+                           represent = represent_option(status_opts),
                            requires = IS_IN_SET(status_opts),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Denotes the appropriate handling of the alert message"),
@@ -456,7 +456,7 @@ $.filterOptionsS3({
                      Field("msg_type",
                            label = T("Message Type"),
                            default = "Alert",
-                           #represent = S3Represent(options=msg_types),
+                           #represent = represent_option(msg_types),
                            requires = IS_IN_SET(msg_types),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("The nature of the alert message"),
@@ -586,17 +586,18 @@ $.filterOptionsS3({
                             )
 
         # Resource-specific REST Methods
-        set_method("cap", "alert",
+        set_method = self.set_method
+        set_method("cap_alert",
                    method = "import_feed",
                    action = cap_ImportAlert,
                    )
 
-        set_method("cap", "alert",
+        set_method("cap_alert",
                    method = "assign",
                    action = cap_AssignArea,
                    )
 
-        set_method("cap", "alert",
+        set_method("cap_alert",
                    method = "clone",
                    action = cap_CloneAlert,
                    )
@@ -785,10 +786,7 @@ $.filterOptionsS3({
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"cap_alert_id": S3ReusableField("alert_id", "integer",
-                                                readable = False,
-                                                writable = False,
-                                                ),
+        return {"cap_alert_id": S3ReusableField.dummy("alert_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1010,7 +1008,7 @@ $.filterOptionsS3({
         return repr_str
 
 # =============================================================================
-class CAPInfoModel(S3Model):
+class CAPInfoModel(DataModel):
 
     names = ("cap_info",
              "cap_info_id",
@@ -1134,8 +1132,7 @@ $.filterOptionsS3({
                          ),
                      Field("urgency",
                            label = T("Urgency"),
-                           represent = S3Represent(options = cap_options["urgency"],
-                                                   ),
+                           represent = represent_option(cap_options["urgency"]),
                            # Empty For Template, checked onvalidation hook
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(cap_options["urgency"])),
@@ -1147,8 +1144,7 @@ $.filterOptionsS3({
                            ),
                      Field("severity",
                            label = T("Severity"),
-                           represent = S3Represent(options = cap_options["severity"],
-                                                   ),
+                           represent = represent_option(cap_options["severity"]),
                            # Empty For Template, checked onvalidation hook
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(cap_options["severity"])),
@@ -1160,8 +1156,7 @@ $.filterOptionsS3({
                            ),
                      Field("certainty",
                            label = T("Certainty"),
-                           represent = S3Represent(options = cap_options["certainty"],
-                                                   ),
+                           represent = represent_option(cap_options["certainty"]),
                            # Empty For Template, checked onvalidation hook
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(cap_options["certainty"])),
@@ -1417,7 +1412,7 @@ $.filterOptionsS3({
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1597,7 +1592,7 @@ $.filterOptionsS3({
         """
             Duplicate detection for info-segments
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         data = item.data
@@ -1708,7 +1703,7 @@ $.filterOptionsS3({
         return "[%s]" % sanitized
 
 # =============================================================================
-class CAPAreaModel(S3Model):
+class CAPAreaModel(DataModel):
 
     names = ("cap_area",
              "cap_area_represent",
@@ -2132,7 +2127,7 @@ class CAPAreaModel(S3Model):
         """
             Detect an area duplicate
 
-            @param item: the S3ImportItem
+            @param item: the ImportItem
         """
 
         data = item.data
@@ -2303,7 +2298,7 @@ class CAPAreaModel(S3Model):
                     #s3db.onaccept(ltable, link)
 
 # =============================================================================
-class CAPResourceModel(S3Model):
+class CAPResourceModel(DataModel):
 
     names = ("cap_resource",
              )
@@ -2483,7 +2478,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2492,7 +2487,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2563,7 +2558,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                 db(db.cap_resource.id == form_vars.id).update(alert_id=alert_id)
 
 # =============================================================================
-class CAPWarningPriorityModel(S3Model):
+class CAPWarningPriorityModel(DataModel):
 
     names = ("cap_warning_priority",
              "cap_warning_priority_id",
@@ -2728,10 +2723,7 @@ class CAPWarningPriorityModel(S3Model):
         """
 
 
-        return {"cap_warning_priority_id": S3ReusableField("priority", "integer",
-                                                           readable = False,
-                                                           writable = False,
-                                                           ),
+        return {"cap_warning_priority_id": S3ReusableField.dummy("priority"),
                 }
 
     # -------------------------------------------------------------------------
@@ -2831,7 +2823,7 @@ class CAPWarningPriorityModel(S3Model):
         return output
 
 # =============================================================================
-class CAPHistoryModel(S3Model):
+class CAPHistoryModel(DataModel):
     """ TODO docstring (what is this used for?) """
 
     names = ("cap_alert_history",
@@ -2921,7 +2913,7 @@ class CAPHistoryModel(S3Model):
                      s3_datetime("sent"),
                      Field("status",
                            label = T("Status"),
-                           represent = S3Represent(options=status_opts),
+                           represent = represent_option(status_opts),
                            requires = IS_IN_SET(status_opts),
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Denotes the appropriate handling of the alert message"),
@@ -2931,7 +2923,7 @@ class CAPHistoryModel(S3Model):
                            ),
                      Field("msg_type",
                            label = T("Message Type"),
-                           represent = S3Represent(options=msg_types),
+                           represent = represent_option(msg_types),
                            requires = IS_EMPTY_OR(IS_IN_SET(msg_types)),
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("The nature of the alert message"),
@@ -2949,7 +2941,7 @@ class CAPHistoryModel(S3Model):
                            ),
                      Field("scope",
                            label = T("Scope"),
-                           represent = S3Represent(options=scopes),
+                           represent = represent_option(scopes),
                            requires = IS_EMPTY_OR(IS_IN_SET(scopes)),
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Denotes the intended distribution of the alert message"),
@@ -3181,7 +3173,7 @@ class CAPHistoryModel(S3Model):
                            ),
                      Field("urgency",
                            label = T("Urgency"),
-                           represent = S3Represent(options=urgency_opts),
+                           represent = represent_option(urgency_opts),
                            requires = IS_IN_SET(urgency_opts),
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Urgency"),
@@ -3191,7 +3183,7 @@ class CAPHistoryModel(S3Model):
                            ),
                      Field("severity",
                            label = T("Severity"),
-                           represent = S3Represent(options=severity_opts),
+                           represent = represent_option(severity_opts),
                            requires = IS_IN_SET(severity_opts),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Severity"),
@@ -3201,7 +3193,7 @@ class CAPHistoryModel(S3Model):
                            ),
                      Field("certainty",
                            label = T("Certainty"),
-                           represent = S3Represent(options=certainty_opts),
+                           represent = represent_option(certainty_opts),
                            requires = IS_IN_SET(certainty_opts),
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Certainty"),
@@ -3711,7 +3703,7 @@ class CAPHistoryModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3720,10 +3712,10 @@ class CAPHistoryModel(S3Model):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
 # =============================================================================
-class CAPAlertingAuthorityModel(S3Model):
+class CAPAlertingAuthorityModel(DataModel):
     """
         Model for known Alerting Authorities
             - see http://alerting.worldweather.org
@@ -3882,7 +3874,7 @@ class CAPAlertingAuthorityModel(S3Model):
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3891,10 +3883,10 @@ class CAPAlertingAuthorityModel(S3Model):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
 # =============================================================================
-class CAPMessageModel(S3Model):
+class CAPMessageModel(DataModel):
     """ Link Alerts to Messages """
 
     names = ("cap_alert_message",
@@ -3918,7 +3910,7 @@ class CAPMessageModel(S3Model):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {}
+        return None
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3927,7 +3919,7 @@ class CAPMessageModel(S3Model):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {}
+        return None
 
 # =============================================================================
 def list_string_represent(value, fmt=lambda v: v):
@@ -3942,7 +3934,7 @@ def list_string_represent(value, fmt=lambda v: v):
 
     if isinstance(value, list):
         output = ", ".join([fmt(i) for i in value])
-    elif isinstance(value, basestring):
+    elif isinstance(value, str):
         try:
             output = ", ".join([fmt(i) for i in value[1:-1].split("|")])
         except IndexError:
@@ -4402,7 +4394,7 @@ def cap_alert_list_layout(list_id, item_id, resource, rfields, record):
 
         @param list_id: the HTML ID of the list
         @param item_id: the HTML ID of the item
-        @param resource: the S3Resource to render
+        @param resource: the CRUDResource to render
         @param rfields: the S3ResourceFields to render
         @param record: the record as dict
     """
@@ -4604,7 +4596,7 @@ class cap_ImportAlert(S3Method):
         """
             Apply method.
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -4795,22 +4787,22 @@ class cap_ImportAlert(S3Method):
         if resource is None:
             resource = s3db.resource("cap_alert")
         try:
-            resource.import_xml(tree,
-                                stylesheet = stylesheet,
-                                ignore_errors = ignore_errors,
-                                )
+            result = resource.import_xml(tree,
+                                         stylesheet = stylesheet,
+                                         ignore_errors = ignore_errors,
+                                         )
         except (IOError, SyntaxError):
             import sys
             error = "CAP import error: %s" % sys.exc_info()[1]
         else:
-            if resource.error:
+            if result.error:
                 # Import validation error
-                errors = current.xml.collect_errors(resource.error_tree)
-                error = "%s\n%s" % (resource.error, "\n".join(errors))
+                errors = current.xml.collect_errors(result.error_tree)
+                error = "%s\n%s" % (result.error, "\n".join(errors))
             else:
                 error = None
 
-            if resource.import_count == 0:
+            if result.count == 0:
                 if not error:
                     # No error, but nothing imported either
                     error = "No CAP alerts found in source"
@@ -4818,8 +4810,7 @@ class cap_ImportAlert(S3Method):
                 # Success
                 error = None
                 msg = "%s new CAP alerts imported, %s alerts updated" % (
-                        len(resource.import_created),
-                        len(resource.import_updated))
+                        len(result.created), len(result.updated))
 
         return error, msg
 
@@ -4931,8 +4922,9 @@ class cap_ImportAlert(S3Method):
         # Pre-emptive basic auth
         if preemptive_auth and username and password:
             import base64
-            base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
-            addheaders.append(("Authorization", "Basic %s" % base64string))
+            credentials = "%s:%s" % (username, password)
+            encoded = base64.b64encode(credentials.encode("utf-8"))
+            addheaders.append(("Authorization", "Basic %s" % encoded.decode("utf-8")))
 
         if addheaders:
             opener.addheaders = addheaders
@@ -4948,7 +4940,7 @@ class cap_AssignArea(S3Method):
     def apply_method(self, r, **attr):
         """
             Apply method.
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -5112,7 +5104,7 @@ class cap_AssignArea(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    get_vars = aresource.crud._remove_filters(r.get_vars)
+                    get_vars = S3Method._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=get_vars)
 
                     # Where to retrieve updated filter options from:
@@ -5277,7 +5269,7 @@ class cap_CloneAlert(S3Method):
         """
             Apply method
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
             @param attr: controller options for this request
         """
 
@@ -5296,7 +5288,7 @@ def clone(r, record=None, **attr):
     """
         Clone the cap_alert
 
-        @param r: the S3Request instance
+        @param r: the CRUDRequest instance
         @param record: the record row
         @param attr: controller attributes
     """

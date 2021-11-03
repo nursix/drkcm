@@ -6,14 +6,17 @@
     @license: MIT
 """
 
-from gluon import current, Field, \
+import json
+
+from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
-from s3 import ICON, IS_FLOAT_AMOUNT, S3DateTime, S3Method, S3Represent, \
-               s3_fullname, s3_mark_required, s3_str
+from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
+                 S3Method, S3Represent, s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact
+
 # =============================================================================
 def get_role_realms(role):
     """
@@ -49,6 +52,46 @@ def get_role_realms(role):
         role_realms = user.realms.get(role_id, role_realms)
 
     return role_realms
+
+# =============================================================================
+def get_managed_facilities(role="ORG_ADMIN", public_only=True):
+    """
+        Get test stations managed by the current user
+
+        @param role: the user role to consider
+        @param public_only: only include sites with PUBLIC=Y tag
+
+        @returns: list of site_ids
+    """
+
+
+    s3db = current.s3db
+
+    ftable = s3db.org_facility
+    query = (ftable.obsolete == False) & \
+            (ftable.deleted == False)
+
+    realms = get_role_realms(role)
+    if realms:
+        query = (ftable.realm_entity.belongs(realms)) & query
+    elif realms is not None:
+        # User does not have the required role, or at least not for any realms
+        return realms
+
+    if public_only:
+        ttable = s3db.org_site_tag
+        join = ttable.on((ttable.site_id == ftable.site_id) & \
+                         (ttable.tag == "PUBLIC") & \
+                         (ttable.deleted == False))
+        query &= (ttable.value == "Y")
+    else:
+        join = None
+
+    sites = current.db(query).select(ftable.site_id,
+                                     cache = s3db.cache,
+                                     join = join,
+                                     )
+    return [s.site_id for s in sites]
 
 # =============================================================================
 def get_org_accounts(organisation_id):
@@ -126,7 +169,8 @@ def get_role_users(role_uid, pe_id=None, organisation_id=None):
         pe_id = organisation.pe_id if organisation else None
 
     # Get all users with this realm as direct OU ancestor
-    users = s3db.pr_realm_users(pe_id) if pe_id else None
+    from s3db.pr import pr_realm_users
+    users = pr_realm_users(pe_id) if pe_id else None
     if users:
         # Look up those among the realm users who have
         # the role for either pe_id or for their default realm
@@ -222,6 +266,26 @@ def get_role_hrs(role_uid, pe_id=None, organisation_id=None):
         hr_ids = list(set(row.id for row in rows))
 
     return hr_ids if hr_ids else None
+
+# -----------------------------------------------------------------------------
+def restrict_data_formats(r):
+    """
+        Restrict data exports (prevent S3XML/S3JSON of records)
+
+        @param r: the CRUDRequest
+    """
+
+    settings = current.deployment_settings
+    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
+    if r.record:
+        allowed += ("card",)
+    if r.method in ("report", "timeplot", "filter", "lookup", "info"):
+        allowed += ("json",)
+    elif r.method == "options":
+        allowed += ("s3json",)
+    settings.ui.export_formats = ("pdf", "xls")
+    if r.representation not in allowed:
+        r.error(403, current.ERROR.NOT_PERMITTED)
 
 # -----------------------------------------------------------------------------
 def assign_pending_invoices(billing_id, organisation_id=None, invoice_id=None):
@@ -337,6 +401,8 @@ def get_stats_projects():
         Find all projects the current user can report test results, i.e.
         - projects marked as STATS=Y where
         - the current user has the VOUCHER_PROVIDER role for a partner organisation
+
+        @status: obsolete, test results shall be reported for all projects
     """
 
     permitted_realms = current.auth.permission.permitted_realms
@@ -389,7 +455,6 @@ def can_cancel_debit(debit):
     """
 
     auth = current.auth
-    s3db = current.s3db
 
     user = auth.user
     if user:
@@ -397,7 +462,7 @@ def can_cancel_debit(debit):
         gtable = auth.settings.table_group
         query = (gtable.uuid == "VOUCHER_PROVIDER")
         role = current.db(query).select(gtable.id,
-                                        cache = s3db.cache,
+                                        cache = current.s3db.cache,
                                         limitby = (0, 1),
                                         ).first()
         if not role:
@@ -415,7 +480,7 @@ def can_cancel_debit(debit):
             # User has a site-wide VOUCHER_PROVIDER role, however
             # for cancellation of debits they must be affiliated
             # with the debit owner organisation
-            role_realms = s3db.pr_realm(user["pe_id"])
+            role_realms = current.s3db.pr_default_realms(user["pe_id"])
 
         return debit.pe_id in role_realms
 
@@ -428,7 +493,7 @@ def configure_binary_tags(resource, tag_components):
     """
         Configure representation of binary tags
 
-        @param resource: the S3Resource
+        @param resource: the CRUDResource
         @param tag_components: tuple|list of filtered tag component aliases
     """
 
@@ -446,6 +511,373 @@ def configure_binary_tags(resource, tag_components):
             field.represent = lambda v, row=None: binary_tag_opts.get(v, "-")
 
 # -----------------------------------------------------------------------------
+def workflow_tag_represent(options):
+    """
+        Color-coded and icon-supported representation of
+        facility approval workflow tags
+
+        @param options: the tag options as dict {value: label}
+    """
+
+    icons = {"REVISE": "fa fa-exclamation-triangle",
+             "REVIEW": "fa fa-hourglass",
+             "APPROVED": "fa fa-check",
+             "N": "fa fa-minus-circle",
+             "Y": "fa fa-check",
+             }
+    css_classes = {"REVISE": "workflow-red",
+                   "REVIEW": "workflow-amber",
+                   "APPROVED": "workflow-green",
+                   "N": "workflow-red",
+                   "Y": "workflow-green",
+                   }
+
+    def represent(value, row=None):
+
+        label = DIV(_class="approve-workflow")
+        color = css_classes.get(value)
+        if color:
+            label.add_class(color)
+        icon = icons.get(value)
+        if icon:
+            label.append(I(_class=icon))
+        label.append(options.get(value, "-"))
+
+        return label
+
+    return represent
+
+# -----------------------------------------------------------------------------
+def configure_workflow_tags(resource, role="applicant", record_id=None):
+    """
+        Configure facility approval workflow tags
+
+        @param resource: the org_facility resource
+        @param role: the user's role in the workflow (applicant|approver)
+        @param record_id: the facility record ID
+
+        @returns: the list of visible workflow tags [(label, selector)]
+    """
+
+    T = current.T
+    components = resource.components
+
+    visible_tags = []
+
+    # Configure STATUS tag
+    status_tag_opts = {"REVISE": T("Completion/Adjustment Required"),
+                       "READY": T("Ready for Review"),
+                       "REVIEW": T("Review Pending"),
+                       "APPROVED": T("Approved##actionable"),
+                       }
+    selectable = None
+    status_visible = False
+    review_tags_visible = False
+
+    if role == "applicant" and record_id:
+        # Check current status
+        db = current.db
+        s3db = current.s3db
+        ftable = s3db.org_facility
+        ttable = s3db.org_site_tag
+        join = ftable.on((ftable.site_id == ttable.site_id) & \
+                         (ftable.id == record_id))
+        query = (ttable.tag == "STATUS") & (ttable.deleted == False)
+        row = db(query).select(ttable.value, join=join, limitby=(0, 1)).first()
+        if row:
+            if row.value == "REVISE":
+                review_tags_visible = True
+                selectable = (row.value, "READY")
+            elif row.value == "REVIEW":
+                review_tags_visible = True
+        status_visible = True
+
+    component = components.get("status")
+    if component:
+        ctable = component.table
+        field = ctable.value
+        field.default = "REVISE"
+        field.readable = status_visible
+        if status_visible:
+            if selectable:
+                selectable_statuses = [(status, status_tag_opts[status])
+                                       for status in selectable]
+                field.requires = IS_IN_SET(selectable_statuses, zero=None)
+                field.writable = True
+            else:
+                field.writable = False
+            visible_tags.append((T("Processing Status"), "status.value"))
+        field.represent = workflow_tag_represent(status_tag_opts)
+
+    # Configure review tags
+    review_tag_opts = (("REVISE", T("Completion/Adjustment Required")),
+                       ("REVIEW", T("Review Pending")),
+                       ("APPROVED", T("Approved##actionable")),
+                       )
+    selectable = review_tag_opts if role == "approver" else None
+
+    review_tags = (("mpav", T("MPAV Qualification")),
+                   ("hygiene", T("Hygiene Plan")),
+                   ("layout", T("Facility Layout Plan")),
+                   )
+    for cname, label in review_tags:
+        component = components.get(cname)
+        if component:
+            ctable = component.table
+            field = ctable.value
+            field.default = "REVISE"
+            if selectable:
+                field.requires = IS_IN_SET(selectable, zero=None, sort=False)
+                field.readable = field.writable = True
+            else:
+                field.readable = review_tags_visible
+                field.writable = False
+            if field.readable:
+                visible_tags.append((label, "%s.value" % cname))
+            field.represent = workflow_tag_represent(dict(review_tag_opts))
+
+    # Configure PUBLIC tag
+    binary_tag_opts = {"Y": T("Yes"),
+                       "N": T("No"),
+                       }
+    selectable = binary_tag_opts if role == "approver" else None
+
+    component = resource.components.get("public")
+    if component:
+        ctable = component.table
+        field = ctable.value
+        field.default = "N"
+        if selectable:
+            field.requires = IS_IN_SET(selectable, zero=None)
+            field.writable = True
+        else:
+            field.requires = IS_IN_SET(binary_tag_opts, zero=None)
+            field.writable = False
+        field.represent = workflow_tag_represent(binary_tag_opts)
+    visible_tags.append((T("In Public Registry"), "public.value"))
+    visible_tags.append("site_details.authorisation_advice")
+
+    return visible_tags
+
+# -----------------------------------------------------------------------------
+def facility_approval_workflow(site_id):
+    """
+        Update facility approval workflow tags
+
+        @param site_id: the site ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    workflow = ("STATUS", "MPAV", "HYGIENE", "LAYOUT", "PUBLIC")
+    review = ("MPAV", "HYGIENE", "LAYOUT")
+
+    # Get all tags for site
+    ttable = s3db.org_site_tag
+    query = (ttable.site_id == site_id) & \
+            (ttable.tag.belongs(workflow)) & \
+            (ttable.deleted == False)
+    rows = db(query).select(ttable.id,
+                            ttable.tag,
+                            ttable.value,
+                            )
+    tags = {row.tag: row.value for row in rows}
+
+    if any(k not in tags for k in workflow):
+        ftable = s3db.org_facility
+        facility = db(ftable.site_id == site_id).select(ftable.id,
+                                                        limitby = (0, 1),
+                                                        ).first()
+        if facility:
+            add_facility_default_tags(facility)
+            facility_approval_workflow(site_id)
+
+    update = {}
+    notify = False
+
+    status = tags.get("STATUS")
+    if status == "REVISE":
+        if all(tags[k] == "APPROVED" for k in review):
+            update["PUBLIC"] = "Y"
+            update["STATUS"] = "APPROVED"
+            notify = True
+        elif any(tags[k] == "REVIEW" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVIEW"
+        else:
+            update["PUBLIC"] = "N"
+            # Keep status REVISE
+
+    elif status == "READY":
+        update["PUBLIC"] = "N"
+        if all(tags[k] == "APPROVED" for k in review):
+            for k in review:
+                update[k] = "REVIEW"
+        else:
+            for k in review:
+                if tags[k] == "REVISE":
+                    update[k] = "REVIEW"
+        update["STATUS"] = "REVIEW"
+
+    elif status == "REVIEW":
+        if all(tags[k] == "APPROVED" for k in review):
+            update["PUBLIC"] = "Y"
+            update["STATUS"] = "APPROVED"
+            notify = True
+        elif any(tags[k] == "REVIEW" for k in review):
+            update["PUBLIC"] = "N"
+            # Keep status REVIEW
+        elif any(tags[k] == "REVISE" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVISE"
+            notify = True
+
+    elif status == "APPROVED":
+        if any(tags[k] == "REVIEW" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVIEW"
+        elif any(tags[k] == "REVISE" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVISE"
+            notify = True
+
+    for row in rows:
+        key = row.tag
+        if key in update:
+            row.update_record(value=update[key])
+
+    T = current.T
+
+    public = update.get("PUBLIC")
+    if public and public != tags["PUBLIC"]:
+        if public == "Y":
+            msg = T("Facility added to public registry")
+        else:
+            msg = T("Facility removed from public registry pending review")
+        current.response.information = msg
+
+    # Send Notifications
+    if notify:
+        tags.update(update)
+        msg = facility_review_notification(site_id, tags)
+        if msg:
+            current.response.warning = \
+                T("Test station could not be notified: %(error)s") % {"error": msg}
+        else:
+            current.response.flash = \
+                T("Test station notified")
+
+# -----------------------------------------------------------------------------
+def facility_review_notification(site_id, tags):
+    """
+        Notify the OrgAdmin of a test station about the status of the review
+
+        @param site_id: the test facility site ID
+        @param tags: the current workflow tags
+
+        @returns: error message on error, else None
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Lookup the facility
+    ftable = s3db.org_facility
+    query = (ftable.site_id == site_id) & \
+            (ftable.deleted == False)
+    facility = db(query).select(ftable.id,
+                                ftable.name,
+                                ftable.organisation_id,
+                                limitby = (0, 1),
+                                ).first()
+    if not facility:
+        return "Facility not found"
+
+    organisation_id = facility.organisation_id
+    if not organisation_id:
+        return "Organisation not found"
+
+    # Find the OrgAdmin email addresses
+    email = get_role_emails("ORG_ADMIN",
+                            organisation_id = organisation_id,
+                            )
+    if not email:
+        return "No Organisation Administrator found"
+
+    # Data for the notification email
+    data = {"name": facility.name,
+            "url": URL(c = "org",
+                       f = "organisation",
+                       args = [organisation_id, "facility", facility.id],
+                       host = True,
+                       ),
+            }
+
+    status = tags.get("STATUS")
+
+    if status == "REVISE":
+        template = "FacilityReview"
+
+        # Add advice
+        dtable = s3db.org_site_details
+        query = (dtable.site_id == site_id) & \
+                (dtable.deleted == False)
+        details = db(query).select(dtable.authorisation_advice,
+                                   limitby = (0, 1),
+                                   ).first()
+        if details and details.authorisation_advice:
+            data["advice"] = details.authorisation_advice
+
+        # Add explanations for relevant requirements
+        review = (("MPAV", "FacilityMPAVRequirements"),
+                  ("HYGIENE", "FacilityHygienePlanRequirements"),
+                  ("LAYOUT", "FacilityLayoutRequirements"),
+                  )
+        ctable = s3db.cms_post
+        ltable = s3db.cms_post_module
+        join = ltable.on((ltable.post_id == ctable.id) & \
+                         (ltable.module == "org") & \
+                         (ltable.resource == "facility") & \
+                         (ltable.deleted == False))
+        explanations = []
+        for tag, requirements in review:
+            if tags.get(tag) == "REVISE":
+                query = (ctable.name == requirements) & \
+                        (ctable.deleted == False)
+                row = db(query).select(ctable.body,
+                                       join = join,
+                                       limitby = (0, 1),
+                                       ).first()
+                if row:
+                    explanations.append(row.body)
+        data["explanations"] = "\n\n".join(explanations) if explanations else "-"
+
+    elif status == "APPROVED":
+        template = "FacilityApproved"
+
+    else:
+        # No notifications for this status
+        return "invalid status"
+
+    # Lookup email address of current user
+    from .notifications import CMSNotifications
+    auth = current.auth
+    if auth.user:
+        cc = CMSNotifications.lookup_contact(auth.user.pe_id)
+    else:
+        cc = None
+
+    # Send CMS Notification FacilityReview
+    return CMSNotifications.send(email,
+                                 template,
+                                 data,
+                                 module = "org",
+                                 resource = "facility",
+                                 cc = cc,
+                                 )
+
+# -----------------------------------------------------------------------------
 def add_organisation_default_tags(organisation_id):
     """
         Add default tags to a new organisation
@@ -459,20 +891,20 @@ def add_organisation_default_tags(organisation_id):
     # Add default tags
     otable = s3db.org_organisation
     ttable = s3db.org_organisation_tag
-    rttable = ttable.with_alias("requester")
+    dttable = ttable.with_alias("delivery")
     ittable = ttable.with_alias("orgid")
 
-    left = [rttable.on((rttable.organisation_id == otable.id) & \
-                        (rttable.tag == "REQUESTER") & \
-                        (rttable.deleted == False)),
+    left = [dttable.on((dttable.organisation_id == otable.id) & \
+                       (dttable.tag == "DELIVERY") & \
+                       (dttable.deleted == False)),
             ittable.on((ittable.organisation_id == otable.id) & \
-                        (ittable.tag == "OrgID") & \
-                        (ittable.deleted == False)),
+                       (ittable.tag == "OrgID") & \
+                       (ittable.deleted == False)),
             ]
     query = (otable.id == organisation_id)
     row = db(query).select(otable.id,
                            otable.uuid,
-                           rttable.id,
+                           dttable.id,
                            ittable.id,
                            left = left,
                            limitby = (0, 1),
@@ -480,13 +912,13 @@ def add_organisation_default_tags(organisation_id):
     if row:
         org = row.org_organisation
 
-        # Add REQUESTER-tag
-        rtag = row.requester
-        if not rtag.id:
+        # Add DELIVERY-tag
+        dtag = row.delivery
+        if not dtag.id:
             ttable.insert(organisation_id = org.id,
-                            tag = "REQUESTER",
-                            value = "N",
-                            )
+                          tag = "DELIVERY",
+                          value = "DIRECT",
+                          )
 
         # Add OrgID-tag
         itag = row.orgid
@@ -498,9 +930,9 @@ def add_organisation_default_tags(organisation_id):
                 uid = int(uuid.uuid4().urn[9:14], 16)
             value = "%06d%04d" % (uid, org.id)
             ttable.insert(organisation_id = org.id,
-                            tag = "OrgID",
-                            value = value,
-                            )
+                          tag = "OrgID",
+                          value = value,
+                          )
 
 # -----------------------------------------------------------------------------
 def add_facility_default_tags(facility_id, approve=False):
@@ -514,30 +946,152 @@ def add_facility_default_tags(facility_id, approve=False):
     db = current.db
     s3db = current.s3db
 
-    # Add default tag
     ftable = s3db.org_facility
     ttable = s3db.org_site_tag
 
-    left = ttable.on((ttable.site_id == ftable.site_id) & \
-                        (ttable.tag == "PUBLIC") & \
-                        (ttable.deleted == False))
-    query = (ftable.id == facility_id)
-    row = db(query).select(ftable.id,
-                           ftable.site_id,
-                           ttable.id,
-                           left = left,
-                           limitby = (0, 1),
-                           ).first()
-    if row:
-        facility = row.org_facility
+    workflow = ("PUBLIC", "MPAV", "HYGIENE", "LAYOUT", "STATUS")
 
-        # Add PUBLIC-tag
-        tag = row.org_site_tag
-        if not tag.id:
-            ttable.insert(site_id = facility.site_id,
-                          tag = "PUBLIC",
-                          value = "Y" if approve else "N",
-                          )
+    left = ttable.on((ttable.site_id == ftable.site_id) & \
+                     (ttable.tag.belongs(workflow)) & \
+                     (ttable.deleted == False))
+    query = (ftable.id == facility_id)
+    rows = db(query).select(ftable.site_id,
+                            ttable.id,
+                            ttable.tag,
+                            ttable.value,
+                            left = left,
+                            )
+    if not rows:
+        return
+    else:
+        site_id = rows.first().org_facility.site_id
+
+    existing = {row.org_site_tag.tag: row.org_site_tag.value
+                    for row in rows if row.org_site_tag.id}
+    public = existing.get("PUBLIC") == "Y" or approve
+
+    review = ("MPAV", "HYGIENE", "LAYOUT")
+    for tag in workflow:
+        if tag in existing:
+            continue
+        elif tag == "PUBLIC":
+            default = "Y" if public else "N"
+        elif tag == "STATUS":
+            if any(existing[t] == "REVISE" for t in review):
+                default = "REVISE"
+            elif any(existing[t] == "REVIEW" for t in review):
+                default = "REVIEW"
+            else:
+                default = "APPROVED" if public else "REVIEW"
+        else:
+            default = "APPROVED" if public else "REVISE"
+        ttable.insert(site_id = site_id,
+                      tag = tag,
+                      value = default,
+                      )
+        existing[tag] = default
+
+# -----------------------------------------------------------------------------
+def set_facility_code(facility_id):
+    """
+        Generate and set a unique facility code
+
+        @param facility_id: the facility ID
+
+        @returns: the facility code
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.org_facility
+    query = (table.id == facility_id)
+
+    facility = db(query).select(table.id,
+                                table.uuid,
+                                table.code,
+                                limitby = (0, 1),
+                                ).first()
+
+    if not facility or facility.code:
+        return None
+
+    try:
+        uid = int(facility.uuid[9:14], 16) % 1000000
+    except (TypeError, ValueError):
+        import uuid
+        uid = int(uuid.uuid4().urn[9:14], 16) % 1000000
+
+    # Generate code
+    import random
+    suffix = "".join(random.choice("ABCFGHKLNPRSTWX12456789") for _ in range(3))
+    code = "%06d-%s" % (uid, suffix)
+
+    facility.update_record(code=code)
+
+    return code
+
+# -----------------------------------------------------------------------------
+def applicable_org_types(organisation_id, group=None, represent=False):
+    """
+        Look up organisation types by OrgGroup-tag
+
+        @param organisation_id: the record ID of an existing organisation
+        @param group: alternatively, the organisation group name
+        @param represent: include type labels in the result
+
+        @returns: a list of organisation type IDs, for filtering,
+                  or a dict {type_id: label}, for selecting
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ttable = s3db.org_organisation_type_tag
+
+    if organisation_id:
+        # Look up the org groups of this record
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        join = gtable.on(gtable.id == mtable.group_id)
+        query = (mtable.organisation_id == organisation_id) & \
+                (mtable.deleted == False)
+        rows = db(query).select(gtable.name, join=join)
+        groups = {row.name for row in rows}
+        q = (ttable.value.belongs(groups))
+
+        # Look up the org types the record is currently linked to
+        ltable = s3db.org_organisation_organisation_type
+        query = (ltable.organisation_id == organisation_id) & \
+                (ltable.deleted == False)
+        rows = db(query).select(ltable.organisation_type_id)
+        current_types = {row.organisation_type_id for row in rows}
+
+    elif group:
+        # Use group name as-is
+        q = (ttable.value == group)
+
+    # Look up all types tagged for this group
+    query = (ttable.tag == "OrgGroup") & q & \
+            (ttable.deleted == False)
+    rows = db(query).select(ttable.organisation_type_id,
+                            cache = s3db.cache,
+                            )
+    type_ids = {row.organisation_type_id for row in rows}
+
+    if organisation_id:
+        # Add the org types the record is currently linked to
+        type_ids |= current_types
+
+    if represent:
+        labels = ttable.organisation_type_id.represent
+        if hasattr(labels, "bulk"):
+            labels.bulk(list(type_ids))
+        output = {str(t): labels(t) for t in type_ids}
+    else:
+        output = list(type_ids)
+
+    return output
 
 # =============================================================================
 def facility_map_popup(record):
@@ -620,6 +1174,223 @@ def facility_map_popup(record):
     return DIV(title, details, _class="map-popup")
 
 # =============================================================================
+def update_daily_report(site_id, result_date, disease_id):
+    """
+        Update daily testing activity report (without subtotals per demographic)
+        - called when a new individual test result is registered
+
+        @param site_id: the test station site ID
+        @param result_date: the result date of the test
+        @param disease_id: the disease ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.disease_case_diagnostics
+
+    # Count records grouped by result
+    query = (table.site_id == site_id) & \
+            (table.disease_id == disease_id) & \
+            (table.result_date == result_date) & \
+            (table.deleted == False)
+    cnt = table.id.count()
+    rows = db(query).select(table.result,
+                            cnt,
+                            groupby = table.result,
+                            )
+    total = positive = 0
+    for row in rows:
+        num = row[cnt]
+        total += num
+        if row.disease_case_diagnostics.result == "POS":
+            positive += num
+
+    # Look up the daily report
+    rtable = s3db.disease_testing_report
+    query = (rtable.site_id == site_id) & \
+            (rtable.disease_id == disease_id) & \
+            (rtable.date == result_date) & \
+            (rtable.deleted == False)
+    report = db(query).select(rtable.id,
+                              rtable.tests_total,
+                              rtable.tests_positive,
+                              limitby = (0, 1),
+                              ).first()
+
+    if report:
+        # Update report if actual numbers are greater
+        if report.tests_total < total or report.tests_positive < positive:
+            report.update_record(tests_total = total,
+                                 tests_positive = positive,
+                                 )
+    else:
+        # Create report
+        report = {"site_id": site_id,
+                  "disease_id": disease_id,
+                  "date": result_date,
+                  "tests_total": total,
+                  "tests_positive": positive,
+                  }
+        report_id = rtable.insert(**report)
+        if report_id:
+            current.auth.s3_set_record_owner(rtable, report_id)
+            report["id"] = report_id
+            s3db.onaccept(rtable, report, method="create")
+
+# -----------------------------------------------------------------------------
+def update_daily_report_by_demographic(site_id, result_date, disease_id):
+    """
+        Update daily testing activity report (with subtotals per demographic)
+        - called when a new individual test result is registered
+
+        @param site_id: the test station site ID
+        @param result_date: the result date of the test
+        @param disease_id: the disease ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+    set_record_owner = current.auth.s3_set_record_owner
+
+    table = s3db.disease_case_diagnostics
+    rtable = s3db.disease_testing_report
+    dtable = s3db.disease_testing_demographic
+
+    # Count individual results by demographic and result
+    query = (table.site_id == site_id) & \
+            (table.disease_id == disease_id) & \
+            (table.result_date == result_date) & \
+            (table.deleted == False)
+    cnt = table.id.count()
+    rows = db(query).select(table.demographic_id,
+                            table.result,
+                            cnt,
+                            groupby = (table.demographic_id, table.result),
+                            )
+
+    # Generate recorded-subtotals matrix
+    subtotals = {}
+    total = positive = 0
+    for row in rows:
+        record = row.disease_case_diagnostics
+        demographic_id = record.demographic_id
+        item = subtotals.get(demographic_id)
+        if not item:
+            item = subtotals[demographic_id] = {"tests_total": 0,
+                                                "tests_positive": 0,
+                                                }
+        num = row[cnt]
+        total += num
+        item["tests_total"] += num
+        if record.result == "POS":
+            positive += num
+            item["tests_positive"] += num
+
+    # Look up the daily report
+    query = (rtable.site_id == site_id) & \
+            (rtable.disease_id == disease_id) & \
+            (rtable.date == result_date) & \
+            (rtable.deleted == False)
+    report = db(query).select(rtable.id,
+                              rtable.tests_total,
+                              rtable.tests_positive,
+                              limitby = (0, 1),
+                              ).first()
+
+    if not report:
+        # Create a report with the recorded totals
+        report = {"site_id": site_id,
+                  "disease_id": disease_id,
+                  "date": result_date,
+                  "tests_total": total,
+                  "tests_positive": positive,
+                  }
+        report["id"] = report_id = rtable.insert(**report)
+        if report_id:
+            set_record_owner(rtable, report_id)
+            s3db.onaccept(rtable, report, method="create")
+
+            # Add subtotals per demographic
+            for demographic_id, item in subtotals.items():
+                subtotal = {"report_id": report_id,
+                            "demographic_id": demographic_id,
+                            "tests_total": item["tests_total"],
+                            "tests_positive": item["tests_positive"]
+                            }
+                subtotal_id = subtotal["id"] = dtable.insert(**subtotal)
+                set_record_owner(dtable, subtotal_id)
+                # We've already set the correct totals in the report:
+                #s3db.onaccept(dtable, subtotal, method="create")
+
+    else:
+        # Update the existing report with revised subtotals
+        report_id = report.id
+
+        # Get all current (reported) subtotals of this report
+        query = (dtable.report_id == report_id) & \
+                (dtable.deleted == False)
+        rows = db(query).select(dtable.id,
+                                dtable.demographic_id,
+                                dtable.tests_total,
+                                dtable.tests_positive,
+                                orderby = ~dtable.modified_on,
+                                )
+
+        # For each demographic, determine the recorded and reported subtotals
+        for demographic_id, item in subtotals.items():
+
+            # Recorded totals
+            recorded_total = item["tests_total"]
+            recorded_positive = item["tests_positive"]
+
+            # Reported totals
+            last_report = None
+            reported_total = reported_positive = 0
+            for row in rows:
+                if row.demographic_id == demographic_id:
+                    reported_total += row.tests_total
+                    reported_positive += row.tests_positive
+                    if not last_report:
+                        last_report = row
+
+            if not last_report:
+                # No subtotal for this demographic yet => create one
+                subtotal = {"report_id": report_id,
+                            "demographic_id": demographic_id,
+                            "tests_total": recorded_total,
+                            "tests_positive": recorded_positive,
+                            }
+                subtotal_id = subtotal["id"] = dtable.insert(**subtotal)
+                set_record_owner(dtable, subtotal_id)
+                # We do this in-bulk at the end:
+                #s3db.onaccept(dtable, subtotal, method="create")
+
+            elif reported_total < recorded_total or \
+                 reported_positive < recorded_positive:
+                # Update the last subtotal with the differences
+                last_report.update_record(
+                    tests_total = last_report.tests_total + \
+                                  max(recorded_total - reported_total, 1),
+                    tests_positive = last_report.tests_positive + \
+                                     max(recorded_positive - reported_positive, 0),
+                    )
+
+        # Get subtotals for all demographics under this report
+        query = (dtable.report_id == report_id) & \
+                (dtable.deleted == False)
+        total = dtable.tests_total.sum()
+        positive = dtable.tests_positive.sum()
+        row = db(query).select(total, positive).first()
+
+        # Update the overall report
+        query = (rtable.id == report_id) & \
+                (rtable.deleted == False)
+        db(query).update(tests_total = row[total],
+                         tests_positive = row[positive],
+                         )
+
+# =============================================================================
 class ServiceListRepresent(S3Represent):
 
     always_list = True
@@ -651,6 +1422,111 @@ class ServiceListRepresent(S3Represent):
             html.append(LI(label))
 
         return html
+
+# =============================================================================
+class OrganisationRepresent(S3Represent):
+    """
+        Custom representation of organisations showing the organisation type
+        - relevant for facility approval
+    """
+
+    def __init__(self, show_type=True, show_link=True):
+
+        super(OrganisationRepresent, self).__init__(lookup = "org_organisation",
+                                                    fields = ["name",],
+                                                    show_link = show_link,
+                                                    )
+        self.show_type = show_type
+        self.org_types = {}
+        self.type_names = {}
+
+    # -------------------------------------------------------------------------
+    def lookup_rows(self, key, values, fields=None):
+        """
+            Custom lookup method for organisation rows, does a
+            left join with the parent organisation. Parameters
+            key and fields are not used, but are kept for API
+            compatibility reasons.
+
+            @param values: the organisation IDs
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        otable = s3db.org_organisation
+
+        count = len(values)
+        if count == 1:
+            query = (otable.id == values[0])
+        else:
+            query = (otable.id.belongs(values))
+
+        rows = db(query).select(otable.id,
+                                otable.name,
+                                limitby = (0, count),
+                                )
+
+        if self.show_type:
+            ltable = s3db.org_organisation_organisation_type
+            if count == 1:
+                query = (ltable.organisation_id == values[0])
+            else:
+                query = (ltable.organisation_id.belongs(values))
+            query &= (ltable.deleted == False)
+            types = db(query).select(ltable.organisation_id,
+                                     ltable.organisation_type_id,
+                                     )
+
+            all_types = set()
+            org_types = self.org_types = {}
+
+            for t in types:
+
+                type_id = t.organisation_type_id
+                all_types.add(type_id)
+
+                organisation_id = t.organisation_id
+                if organisation_id not in org_types:
+                    org_types[organisation_id] = {type_id}
+                else:
+                    org_types[organisation_id].add(type_id)
+
+            if all_types:
+                ttable = s3db.org_organisation_type
+                query = ttable.id.belongs(all_types)
+                types = db(query).select(ttable.id,
+                                         ttable.name,
+                                         limitby = (0, len(all_types)),
+                                         )
+                self.type_names = {t.id: t.name for t in types}
+
+        return rows
+
+    # -------------------------------------------------------------------------
+    def represent_row(self, row, prefix=None):
+        """
+            Represent a single Row
+
+            @param row: the org_organisation Row
+            @param prefix: the hierarchy prefix (unused here)
+        """
+
+        name = s3_str(row.name)
+
+        if self.show_type:
+
+            T = current.T
+
+            type_ids = self.org_types.get(row.id)
+            if type_ids:
+                type_names = self.type_names
+                types = [s3_str(T(type_names[t]))
+                         for t in type_ids if t in type_names
+                         ]
+                name = "%s (%s)" % (name, ", ".join(types))
+
+        return name
 
 # =============================================================================
 class ContactRepresent(pr_PersonRepresentContact):
@@ -709,7 +1585,7 @@ class InviteUserOrg(S3Method):
         """
             Page-render entry point for REST interface.
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -732,7 +1608,7 @@ class InviteUserOrg(S3Method):
         """
             Prepare and process invitation form
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -758,7 +1634,7 @@ class InviteUserOrg(S3Method):
         if active or disabled:
             response.error = T("There are already user accounts registered for this organization")
 
-            from s3 import s3_format_fullname
+            from core import s3_format_fullname
 
             fullname = lambda user: s3_format_fullname(fname = user.first_name,
                                                     lname = user.last_name,
@@ -951,7 +1827,7 @@ class InvoicePDF(S3Method):
         """
             Generate a PDF of an Invoice
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -965,7 +1841,7 @@ class InvoicePDF(S3Method):
         # Filename to include invoice number if available
         invoice_no = r.record.invoice_no
 
-        from s3.s3export import S3Exporter
+        from core import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(r.resource,
                         request = r,
@@ -988,7 +1864,7 @@ class InvoicePDF(S3Method):
         """
             Generate the invoice header
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1033,7 +1909,7 @@ class InvoicePDF(S3Method):
         """
             Generate the invoice body
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1099,7 +1975,7 @@ class InvoicePDF(S3Method):
         """
             Generate the invoice footer
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1268,7 +2144,7 @@ class ClaimPDF(S3Method):
         """
             Generate a PDF of a Claim
 
-            @param r: the S3Request instance
+            @param r: the CRUDRequest instance
             @param attr: controller attributes
         """
 
@@ -1282,7 +2158,7 @@ class ClaimPDF(S3Method):
         # Filename to include invoice number if available
         invoice_no = self.invoice_number(r.record)
 
-        from s3.s3export import S3Exporter
+        from core import S3Exporter
         exporter = S3Exporter().pdf
         return exporter(r.resource,
                         request = r,
@@ -1323,7 +2199,7 @@ class ClaimPDF(S3Method):
         """
             Generate the claim header
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1372,7 +2248,7 @@ class ClaimPDF(S3Method):
         """
             Generate the claim body
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1438,7 +2314,7 @@ class ClaimPDF(S3Method):
         """
             Generate the claim footer
 
-            @param r: the S3Request
+            @param r: the CRUDRequest
         """
 
         T = current.T
@@ -1607,5 +2483,232 @@ class ClaimPDF(S3Method):
             data = {}
 
         return data
+
+# =============================================================================
+class TestFacilityInfo(S3Method):
+    """
+        REST Method to report details/activities of a test facility
+    """
+
+    def apply_method(self, r, **attr):
+        """
+            Report test facility information
+
+            @param r: the CRUDRequest instance
+            @param attr: controller attributes
+        """
+
+        if r.http == "POST":
+            if r.representation == "json":
+                output = self.facility_info(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def facility_info(r, **attr):
+        """
+            Respond to a POST .json request, request body format:
+
+                {"client": "CLIENT",        - the client identity (ocert)
+                 "appkey": "APPKEY",        - the client app key (ocert)
+                 "code": "FACILITY-CODE",   - the facility code
+                 "report": ["start","end"], - the date interval to report
+                                              activities for (optional)
+                                              (ISO-format dates YYYY-MM-DD)
+                }
+
+            Output format:
+                {"code": "FACILITY-CODE",   - echoed from input
+                 "name": "FACILITY-NAME",   - the facility name
+                 "phone": "phone #",        - the facility phone number
+                 "email": "email",          - the facility email address
+                 "organisation":
+                    {"id": "ORG-ID",        - the organisation ID tag
+                     "name": "ORG-NAME",    - the organisation name
+                     "type": "ORG-TYPE",    - the organisation type
+                     "website": "URL"       - the organisation website URL
+                     },
+                 "location":
+                    {"L1": "L1-NAME",       - the L1 name (state)
+                     "L2": "L2-NAME",       - the L2 name (district)
+                     "L3": "L3-NAME",       - the L3 name (commune/city)
+                     "L4": "L4-NAME",       - the L4 name (village/town)
+                     "address": "STREET",   - the street address
+                     "postcode": "XXXXX"    - the postcode
+                     },
+                 "report": ["start","end"], - echoed from input, ISO-format dates YYYY-MM-DD
+                 "activity":
+                    {"tests": NN            - the total number of tests reported for the period
+                    }
+                 }
+        """
+
+        settings = current.deployment_settings
+
+        # Get the configured, permitted clients
+        ocert = settings.get_custom("ocert")
+        if not ocert:
+            r.error(501, current.ERROR.METHOD_DISABLED)
+
+        # Read the body JSON of the request
+        body = r.body
+        body.seek(0)
+        try:
+            s = body.read().decode("utf-8")
+        except (ValueError, AttributeError, UnicodeDecodeError):
+            r.error(400, current.ERROR.BAD_REQUEST)
+        try:
+            ref = json.loads(s)
+        except JSONERRORS:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        # Verify the client
+        client = ref.get("client")
+        if not client or client not in ocert:
+            r.error(403, current.ERROR.NOT_PERMITTED)
+        key, _ = ocert.get(client)
+        if key:
+            appkey = ref.get("appkey")
+            if not appkey or appkey.upper() != key.upper():
+                r.error(403, current.ERROR.NOT_PERMITTED)
+
+        # Identify the facility
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.org_facility
+        record = r.record
+        if record:
+            query = (table.id == record.id)
+        else:
+            code = ref.get("code")
+            if not code:
+                r.error(400, current.ERROR.BAD_REQUEST)
+            query = (table.code.upper() == code.upper())
+
+        query &= (table.deleted == False)
+        facility = db(query).select(table.code,
+                                    table.name,
+                                    table.phone1,
+                                    table.email,
+                                    table.website,
+                                    table.organisation_id,
+                                    table.location_id,
+                                    table.site_id,
+                                    limitby = (0, 1),
+                                    ).first()
+
+        if not facility:
+            r.error(404, current.ERROR.BAD_RECORD)
+
+        # Prepare facility info
+        output = {"code": facility.code,
+                  "name": facility.name,
+                  "phone": facility.phone1,
+                  "email": facility.email,
+                  }
+
+        # Look up organisation data
+        otable = s3db.org_organisation
+        ttable = s3db.org_organisation_type
+        ltable = s3db.org_organisation_organisation_type
+        ottable = s3db.org_organisation_tag
+        left = [ttable.on((ltable.organisation_id == otable.id) & \
+                          (ltable.deleted == False) & \
+                          (ttable.id == ltable.organisation_type_id)),
+                ottable.on((ottable.organisation_id == otable.id) & \
+                           (ottable.tag == "OrgID") & \
+                           (ottable.deleted == False)),
+                ]
+        query = (otable.id == facility.organisation_id) & \
+                (otable.deleted == False)
+        row = db(query).select(otable.name,
+                               otable.website,
+                               ttable.name,
+                               ottable.value,
+                               left = left,
+                               limitby = (0, 1),
+                               ).first()
+        if row:
+            organisation = row.org_organisation
+            orgtype = row.org_organisation_type
+            orgid = row.org_organisation_tag
+            orgdata = {"id": orgid.value,
+                       "name": organisation.name,
+                       "type": orgtype.name,
+                       "website": organisation.website,
+                       }
+            output["organisation"] = orgdata
+
+        # Look up location data
+        ltable = s3db.gis_location
+        query = (ltable.id == facility.location_id) & \
+                (ltable.deleted == False)
+        row = db(query).select(ltable.L1,
+                               ltable.L2,
+                               ltable.L3,
+                               ltable.L4,
+                               ltable.addr_street,
+                               ltable.addr_postcode,
+                               limitby = (0, 1),
+                               ).first()
+        if row:
+            locdata = {"L1": row.L1,
+                       "L2": row.L2,
+                       "L3": row.L3,
+                       "L4": row.L4,
+                       "address": row.addr_street,
+                       "postcode": row.addr_postcode,
+                       }
+            output["location"] = locdata
+
+        # Look up activity data
+        report = ref.get("report")
+        if report:
+            if isinstance(report, list) and len(report) == 2:
+
+                start, end = report
+
+                # Parse the dates, if any
+                parse_date = current.calendar.parse_date
+                start = parse_date(start) if start else False
+                end = parse_date(end) if end else False
+                if start is None or end is None:
+                    r.error(400, "Invalid date format in report parameter")
+                if start and end and start > end:
+                    start, end = end, start
+
+                # Extract the totals from the database
+                table = s3db.disease_testing_report
+                query = (table.site_id == facility.site_id)
+                if start:
+                    query &= (table.date >= start)
+                if end:
+                    query &= (table.date <= end)
+                query &= (table.deleted == False)
+                total = table.tests_total.sum()
+                row = db(query).select(total).first()
+                tests_total = row[total]
+                if not tests_total:
+                    tests_total = 0
+
+                # Add to output
+                output["report"] = [start.isoformat() if start else None,
+                                    end.isoformat() if end else None,
+                                    ]
+                output["activity"] = {"tests": tests_total}
+            else:
+                r.error(400, "Invalid report parameter format")
+
+        # Return as JSON
+        response = current.response
+        if response:
+            response.headers["Content-Type"] = "application/json; charset=utf-8"
+        return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
 
 # END =========================================================================

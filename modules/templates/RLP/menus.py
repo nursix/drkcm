@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from gluon import current
-from s3 import IS_ISO639_2_LANGUAGE_CODE
+from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import MM, M
 try:
     from .layouts import *
@@ -233,7 +233,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         pending_label = current.T("Pending Requests")
         if current.auth.s3_has_role("COORDINATOR"):
-            from s3 import FS
+            from core import FS
             query = (FS("end_date") >= current.request.utcnow) & \
                     (FS("status") == "REQ")
             resource = current.s3db.resource("hrm_delegation",

@@ -34,45 +34,87 @@ def series():
 
     # Pre-process
     def prep(r):
-        if r.component:
-            # Settings are defined at the series level
-            table = s3db.cms_post
-            _avatar = table.avatar
-            _avatar.readable = _avatar.writable = False
-            _avatar.default = r.record.avatar
-            _location = table.location_id
-            if not r.record.location:
-                _location.readable = _location.writable = False
-            _replies = table.replies
-            _replies.readable = _replies.writable = False
-            _replies.default = r.record.replies
-            _roles_permitted = table.roles_permitted
-            _roles_permitted.readable = _roles_permitted.writable = False
-            _roles_permitted.default = r.record.roles_permitted
-            if r.record.richtext:
-                table.body.represent = lambda body: XML(body)
-                table.body.widget = s3_richtext_widget
+
+        record = r.record
+
+        if record and r.component_name == "post":
+
+            component = r.component
+            ctable = component.table
+
+            ctable.name.comment = None
+
+            # Apply series settings
+            field = ctable.avatar
+            field.readable = field.writable = False
+            field.default = record.avatar
+
+            field = ctable.replies
+            field.readable = field.writable = False
+            field.default = record.replies
+
+            field = ctable.roles_permitted
+            field.readable = field.writable = False
+            field.default = record.roles_permitted
+
+            field = ctable.location_id
+            field.readable = field.writable = bool(record.location)
+
+            if record.richtext:
+                ctable.body.represent = lambda body: XML(body)
+                ctable.body.widget = s3_richtext_widget
             else:
-                table.body.represent = lambda body: XML(s3_URLise(body))
-                table.body.widget = None
-            # Titles do show up
-            table.name.comment = ""
+                ctable.body.represent = lambda body: XML(s3base.s3_URLise(body))
+                ctable.body.widget = None
+
+            # Special-purpose series
+            if record.name == "Announcements":
+                # Homepage announcements for logged-in users
+
+                field = ctable.priority
+                field.readable = field.writable = True
+
+                from core import S3SQLCustomForm, S3SQLInlineLink
+
+                crud_fields = ["name",
+                               "body",
+                               "priority",
+                               "date",
+                               "expired",
+                               S3SQLInlineLink("roles",
+                                               label = T("Roles"),
+                                               field = "group_id",
+                                               ),
+                               ]
+                list_fields = ["date",
+                               "priority",
+                               "name",
+                               "body",
+                               "post_role.group_id",
+                               "expired",
+                               ]
+
+                component.configure(crud_form = S3SQLCustomForm(*crud_fields),
+                                    list_fields = list_fields,
+                                    orderby = "cms_post.date desc",
+                                    )
+
         return True
     s3.prep = prep
 
-    return s3_rest_controller(rheader=s3db.cms_rheader)
+    return crud_controller(rheader=s3db.cms_rheader)
 
 # -----------------------------------------------------------------------------
 def status():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def tag():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def blog():
@@ -96,8 +138,7 @@ def blog():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cms", "series")
-    return output
+    return crud_controller("cms", "series")
 
 # -----------------------------------------------------------------------------
 def post():
@@ -109,7 +150,7 @@ def post():
     #s3.filter = (table.series_id == None)
 
     # Custom Method to add Comments
-    s3db.set_method("cms", "post",
+    s3db.set_method("cms_post",
                     method = "discuss",
                     action = discuss)
 
@@ -125,7 +166,7 @@ def post():
                     # Lookup ID
                     stable = db.cms_series
                     row = db(stable.name == series).select(stable.id,
-                                                           limitby=(0, 1)
+                                                           limitby = (0, 1)
                                                            ).first()
                     if row:
                         field = table.series_id
@@ -146,7 +187,7 @@ def post():
                         query = (table.name == page) & \
                                 (table.deleted == False)
                         record = current.db(query).select(table.id,
-                                                          limitby=(0, 1)
+                                                          limitby = (0, 1)
                                                           ).first()
                         if record:
                             record_id = record.id
@@ -242,17 +283,18 @@ def post():
                     modules = {}
                     _modules = current.deployment_settings.modules
                     for module in _modules:
-                        if module in ("appadmin", "errors", "ocr"):
+                        if module in ("appadmin", "errors"):
                             continue
                         modules[module] = _modules[module].get("name_nice")
-                    s3db.cms_post_module.field.requires = \
-                        IS_IN_SET_LAZY(lambda: sort_dict_by_values(modules))
+                    s3db.cms_post_module.field.requires = IS_IN_SET_LAZY(
+                        # Sort modules by human-readable name
+                        lambda: sorted(modules.items(), key=lambda item: item[1]),
+                        )
 
         return True
     s3.prep = prep
 
-    output = s3_rest_controller(rheader=s3db.cms_rheader)
-    return output
+    return crud_controller(rheader=s3db.cms_rheader)
 
 # -----------------------------------------------------------------------------
 def page():
@@ -267,7 +309,9 @@ def page():
         table = s3db.cms_post
         query = (table.name == get_vars.name) & \
                 (table.deleted != True)
-        row = db(query).select(table.id, limitby=(0, 1)).first()
+        row = db(query).select(table.id,
+                               limitby = (0, 1)
+                               ).first()
         if row:
             request.args.append(str(row.id))
         else:
@@ -315,8 +359,7 @@ function comment_reply(id){
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cms", "post")
-    return output
+    return crud_controller("cms", "post")
 
 # -----------------------------------------------------------------------------
 def cms_post_age(row):
@@ -386,7 +429,7 @@ def newsfeed():
 
     hidden = not settings.get_cms_filter_open()
 
-    from s3.s3filter import S3TextFilter, S3OptionsFilter, S3LocationFilter, S3DateFilter
+    from core import S3TextFilter, S3OptionsFilter, S3LocationFilter, S3DateFilter
     filter_widgets = [S3TextFilter(["body"],
                                    label = T("Search"),
                                    _class = "filter-search",
@@ -564,7 +607,7 @@ def newsfeed():
             field = table.body
             field.label = T("Description")
             # Plain text not Rich
-            from s3.s3widgets import s3_comments_widget
+            from core import s3_comments_widget
             field.widget = s3_comments_widget
             #table.comments.readable = table.comments.writable = False
 
@@ -572,7 +615,7 @@ def newsfeed():
             #    # Don't override card layout for News Feed/Homepage
             #    return True
 
-            from s3.s3forms import S3SQLCustomForm, S3SQLInlineComponent
+            from core import S3SQLCustomForm, S3SQLInlineComponent
 
             # Filter from a Profile page?
             # If so, then default the fields we know
@@ -659,7 +702,8 @@ def newsfeed():
 
         elif r.representation == "xls":
             table.body.represent = None
-            table.created_by.represent = s3base.s3_auth_user_represent_name
+            table.created_by.represent = s3db.auth_UserRepresent(show_email = False,
+                                                                 show_link = False)
             #table.created_on.represent = datetime_represent
             utable = auth.settings.table_user
             utable.organisation_id.represent = s3db.org_organisation_represent
@@ -689,10 +733,11 @@ def newsfeed():
         elif r.representation == "plain":
             # Map Popups
             table.location_id.represent = s3db.gis_LocationRepresent(sep=" | ")
-            table.created_by.represent = s3base.s3_auth_user_represent_name
+            table.created_by.represent = s3db.auth_UserRepresent(show_email = False,
+                                                                 show_link = False)
             # Used by default popups
             series = table.series_id.represent(r.record.series_id)
-            s3.crud_strings["cms_post"].title_display = "%(series)s Details" % dict(series=series)
+            s3.crud_strings["cms_post"].title_display = "%(series)s Details" % {"series": series}
             s3db.configure("cms_post",
                            popup_url = "",
                            )
@@ -721,8 +766,7 @@ def newsfeed():
         return output
     s3.postp = postp
 
-    output = s3_rest_controller("cms", "post")
-    return output
+    return crud_controller("cms", "post")
 
 # =============================================================================
 # Comments
@@ -730,7 +774,7 @@ def newsfeed():
 def comment():
     """ RESTful CRUD controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def discuss(r, **attr):

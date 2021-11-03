@@ -110,28 +110,8 @@ settings.auth.hmac_key = "akeytochange"
 # Daily Limit on Sending of emails
 #settings.mail.limit = 1000
 
-# Frontpage settings
-# RSS feeds
-settings.frontpage.rss = [
-    {"title": "Eden",
-     # Trac timeline
-     "url": "http://eden.sahanafoundation.org/timeline?ticket=on&changeset=on&milestone=on&wiki=on&max=50&daysback=90&format=rss"
-    },
-    {"title": "Twitter",
-     # @SahanaFOSS
-     #"url": "https://search.twitter.com/search.rss?q=from%3ASahanaFOSS" # API v1 deprecated, so doesn't work, need to use 3rd-party service, like:
-     "url": "http://www.rssitfor.me/getrss?name=@SahanaFOSS"
-     # Hashtag
-     #url: "http://search.twitter.com/search.atom?q=%23eqnz" # API v1 deprecated, so doesn't work, need to use 3rd-party service, like:
-     #url: "http://api2.socialmention.com/search?q=%23eqnz&t=all&f=rss"
-    }
-]
-
 # Uncomment to restrict to specific country/countries
 #settings.gis.countries= ("LK",)
-
-# Uncomment to enable a guided tour
-#settings.base.guided_tour = True
 
 # Bing API Key (for Map layers)
 # http://www.microsoft.com/maps/create-a-bing-maps-key.aspx
@@ -242,11 +222,12 @@ settings.import_template()
 #settings.security.policy = 7 # Organisation-ACLs
 # Enable Additional Module(s)
 #from gluon.storage import Storage
-#settings.modules["delphi"] = Storage(
-#        name_nice = T("Delphi Decision Maker"),
-#        restricted = False,
-#        module_type = 10,
-#    )
+#settings.modules["budget"] = Storage(
+#    name_nice = T("Budgeting Module"),
+#    #description = "Allows a Budget to be drawn up",
+#    restricted = True,
+#    module_type = 10
+#)
 # Disable a module which is normally used by the template
 # - NB Only templates with adaptive menus will work nicely with this!
 #del settings.modules["irs"]

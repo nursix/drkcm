@@ -184,7 +184,7 @@ def staff():
         return output
     s3.postp = postp
 
-    return s3_rest_controller("hrm", "human_resource")
+    return crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def person():
@@ -200,7 +200,7 @@ def person():
 def trainee():
     """
         HR Controller
-        - used by RMSAmericas to be able to filter to 'External Trainees'
+        - used by RMS to be able to filter to 'External Trainees'
     """
 
     return s3db.hrm_human_resource_controller()
@@ -209,7 +209,7 @@ def trainee():
 def trainee_person():
     """
         Person Controller
-        - used by RMSAmericas to be able to configure for 'External Trainees'
+        - used by RMS to be able to configure for 'External Trainees'
     """
 
     return s3db.hrm_person_controller()
@@ -224,7 +224,7 @@ def profile():
     request.args = [str(auth.s3_logged_in_person())]
 
     # Custom Method for Contacts
-    s3db.set_method("pr", "profile",
+    s3db.set_method("pr_profile",
                     method = "contacts",
                     action = s3db.pr_Contacts)
 
@@ -284,9 +284,7 @@ def profile():
             return False
     s3.prep = prep
 
-    return s3_rest_controller("pr", "person",
-                              rheader = s3db.hrm_rheader,
-                              )
+    return crud_controller("pr", "person", rheader=s3db.hrm_rheader)
 
 # -----------------------------------------------------------------------------
 def hr_search():
@@ -305,7 +303,7 @@ def hr_search():
 
     s3.prep = lambda r: r.method == "search_ac"
 
-    return s3_rest_controller("hrm", "human_resource")
+    return crud_controller("hrm", "human_resource")
 
 # -----------------------------------------------------------------------------
 def person_search():
@@ -324,7 +322,7 @@ def person_search():
 
     s3.prep = lambda r: r.method == "search_ac"
 
-    return s3_rest_controller("pr", "person")
+    return crud_controller("pr", "person")
 
 # =============================================================================
 # Teams
@@ -369,10 +367,10 @@ def group_membership():
         return True
     s3.prep = prep
 
-    return s3_rest_controller("pr", "group_membership",
-                              csv_stylesheet = ("hrm", "group_membership.xsl"),
-                              csv_template = "group_membership",
-                              )
+    return crud_controller("pr", "group_membership",
+                           csv_stylesheet = ("hrm", "group_membership.xsl"),
+                           csv_template = "group_membership",
+                           )
 
 # =============================================================================
 # Jobs
@@ -383,7 +381,7 @@ def department():
     if not auth.s3_has_role("ADMIN"):
         s3.filter = auth.filter_by_root_org(s3db.hrm_department)
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def job_title():
@@ -395,13 +393,15 @@ def job_title():
             current.messages["NONE"] = ""
             table = s3db.hrm_job_title
             table.organisation_id.represent = \
-                s3db.org_OrganisationRepresent(acronym=False,
-                                               parent=False)
+                s3db.org_OrganisationRepresent(acronym = False,
+                                               parent = False)
             table.organisation_id.label = None
             table.type.label = None
             table.comments.label = None
             table.comments.represent = lambda v: v or ""
-        elif r.get_vars.get("caller") in ("event_human_resource_job_title_id", "event_scenario_human_resource_job_title_id"):
+        elif r.get_vars.get("caller") in ("event_human_resource_job_title_id",
+                                          "event_scenario_human_resource_job_title_id",
+                                          ):
             # Default / Hide type
             f = s3db.hrm_job_title.type
             f.default = 4 # Deployment
@@ -409,12 +409,17 @@ def job_title():
         return True
     s3.prep = prep
 
-    s3.filter = FS("type").belongs((1, 3))
+    if settings.get_hrm_mix_staff():
+        # Only show non-Deployment Job Titles
+        s3.filter = FS("type").belongs((1, 2, 3))
+    else:
+        # Only show Job Titles for Staff (or Both)
+        s3.filter = FS("type").belongs((1, 3))
 
     if not auth.s3_has_role("ADMIN"):
         s3.filter &= auth.filter_by_root_org(s3db.hrm_job_title)
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Skills
@@ -422,25 +427,25 @@ def job_title():
 def skill():
     """ Skills Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def skill_type():
     """ Skill Types Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def competency_rating():
     """ Competency Rating for Skill Types Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def skill_provision():
     """ Skill Provisions Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def course():
@@ -455,14 +460,13 @@ def course():
     if not auth.s3_has_role("ADMIN") and not s3.filter:
         s3.filter = auth.filter_by_root_org(s3db.hrm_course)
 
-    return s3_rest_controller(rheader = s3db.hrm_rheader,
-                              )
+    return crud_controller(rheader=s3db.hrm_rheader)
 
 # -----------------------------------------------------------------------------
 def course_certificate():
     """ Courses to Certificates Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def certificate():
@@ -472,8 +476,7 @@ def certificate():
        not auth.s3_has_role("ADMIN"):
         s3.filter = auth.filter_by_root_org(s3db.hrm_certificate)
 
-    return s3_rest_controller(rheader = s3db.hrm_rheader,
-                              )
+    return crud_controller(rheader=s3db.hrm_rheader)
 
 # -----------------------------------------------------------------------------
 def certification():
@@ -496,20 +499,19 @@ def certification():
        not auth.s3_has_role("ADMIN"):
         s3.filter = auth.filter_by_root_org(s3db.hrm_certificate)
 
-    return s3_rest_controller(rheader = s3db.hrm_rheader,
-                              )
+    return crud_controller(rheader=s3db.hrm_rheader)
 
 # -----------------------------------------------------------------------------
 def certificate_skill():
     """ Certificates to Skills Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def event_type():
     """ Event Types Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def facility():
@@ -716,18 +718,18 @@ def staff_for_site():
 def programme():
     """ Programmes Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def programme_hours():
     """ Programme Hours Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 def strategy():
     """ Strategies Controller """
 
-    return s3_rest_controller("project")
+    return crud_controller("project")
 
 # =============================================================================
 # Salaries
@@ -735,13 +737,13 @@ def strategy():
 def staff_level():
     """ Staff Levels Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def salary_grade():
     """ Salary Grade Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Insurance Information
@@ -749,7 +751,7 @@ def salary_grade():
 def insurance():
     """ Insurance Information Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Awards
@@ -757,13 +759,13 @@ def insurance():
 def award_type():
     """ Award Type Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def award():
     """ Awards Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Disciplinary Record
@@ -771,13 +773,13 @@ def award():
 def disciplinary_type():
     """ Disciplinary Type Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def disciplinary_action():
     """ Disciplinary Action Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Shifts
@@ -794,7 +796,7 @@ def shift():
             s3db.hrm_human_resource_shift.human_resource_id.label = T("Currently Assigned")
 
             # Default Filters
-            from s3 import s3_set_default_filter
+            from core import s3_set_default_filter
             tablename = "hrm_human_resource"
             record = r.record
             job_title_id = record.job_title_id
@@ -819,12 +821,12 @@ def shift():
 
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 def shift_template():
     """ Shift Templates Controller """
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Delegations
@@ -856,7 +858,7 @@ def delegation():
         return True
     s3.prep = prep
 
-    return s3_rest_controller()
+    return crud_controller()
 
 # =============================================================================
 # Messaging
