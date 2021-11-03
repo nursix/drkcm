@@ -12,7 +12,7 @@ from gluon import current
 # Default UI options
 #
 UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
-               "case_collaboration": False,
+               "case_collaboration": True,
                "case_document_templates": False,
                "case_header_protection_themes": False,
                "case_hide_default_org": False,
