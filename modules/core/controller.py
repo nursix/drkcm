@@ -1101,15 +1101,17 @@ def crud_request(*args, **kwargs):
     except (AttributeError, SyntaxError):
         if catch_errors is False:
             raise
-        error = 400
+        error, message = 400, sys.exc_info()[1]
     except KeyError:
         if catch_errors is False:
             raise
-        error = 404
+        error, message = 404, sys.exc_info()[1]
     if error:
-        message = sys.exc_info()[1]
         if hasattr(message, "message"):
             message = message.message
+        elif hasattr(message, "args"):
+            message = message.args[0] if message.args else None
+        message = s3_str(message) if message else "Unknown Error (%s)" % error
         if current.auth.permission.format == "html":
             current.session.error = message
             redirect(URL(f="index"))

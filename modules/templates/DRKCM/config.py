@@ -295,6 +295,28 @@ def config(settings):
                     realm_entity = s3db.pr_get_pe_id("org_organisation",
                                                     user_org_id,
                                                     )
+
+        elif tablename == "doc_document":
+
+            # Inherit the realm entity from case or case activity if
+            # linked to one (otherwise default)
+            table = s3db.doc_document
+            ctable = s3db.dvr_case
+            atable = s3db.dvr_case_activity
+            left = [ctable.on(ctable.doc_id == table.doc_id),
+                    atable.on(atable.doc_id == table.doc_id),
+                    ]
+            ref = db(table.id == row.id).select(ctable.realm_entity,
+                                                atable.realm_entity,
+                                                left = left,
+                                                limitby = (0, 1),
+                                                ).first()
+            if ref:
+                realm_entity = ref.dvr_case.realm_entity or \
+                               ref.dvr_case_activity.realm_entity
+                if not realm_entity:
+                    realm_entity = 0
+
         return realm_entity
 
     settings.auth.realm_entity = drk_realm_entity

@@ -415,12 +415,9 @@ def document():
         table = r.table
         resource = r.resource
 
-        get_vars = r.get_vars
-        if "viewing" in get_vars:
-            try:
-                vtablename, record_id = get_vars["viewing"].split(".")
-            except ValueError:
-                return False
+        viewing = r.viewing
+        if viewing:
+            vtablename, record_id = viewing
         else:
             return False
 
@@ -450,6 +447,7 @@ def document():
 
         # Get the case doc_id
         case = db(query).select(ctable.doc_id,
+                                ctable.organisation_id,
                                 limitby = (0, 1),
                                 orderby = ~ctable.modified_on,
                                 ).first()
@@ -458,6 +456,9 @@ def document():
         else:
             # No case found
             r.error(404, "Case not found")
+
+        # Set default organisation_id to case org
+        table.organisation_id.default = case.organisation_id
 
         # Include case groups
         if include_group_docs:
