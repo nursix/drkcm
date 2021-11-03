@@ -361,6 +361,8 @@ class PerformanceIndicatorExport(S3Method):
             @param pitype: the performance indicator set
         """
 
+        super(PerformanceIndicatorExport, self).__init__()
+
         indicators = self.PISETS.get(pitype) if pitype else None
 
         if indicators:
