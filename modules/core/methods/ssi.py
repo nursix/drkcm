@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Interactive Spreadsheet Importer
 
-""" Spreadsheet Importer
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -43,7 +41,7 @@ from s3dal import Field
 
 from ..tools import s3_mark_required, s3_str, s3_addrow
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # Supported spreadsheet formats {extension:format}
 FORMATS = {"csv": "csv",
@@ -53,11 +51,12 @@ FORMATS = {"csv": "csv",
            }
 
 # =============================================================================
-class SpreadsheetImporter(S3Method):
+class SpreadsheetImporter(CRUDMethod):
     """
         Interactive Spreadsheet Importer
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Full-page method

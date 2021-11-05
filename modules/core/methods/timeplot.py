@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    TimePlot Report
 
-""" S3 TimePlot Reports Method
-
-    @copyright: 2013-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2013-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -53,7 +51,7 @@ from gluon.sqlhtml import OptionsWidget
 from ..resource import FS
 from ..tools import s3_decode_iso_datetime, s3_utc, s3_flatlist, s3_represent_value, s3_str, S3MarkupStripper
 
-from .base import S3Method
+from .base import CRUDMethod
 from .report import S3Report, S3ReportForm
 
 tp_datetime = lambda year, *t: datetime.datetime(year, *t, tzinfo=dateutil.tz.tzutc())
@@ -79,7 +77,7 @@ FACT = re.compile(r"([a-zA-Z]+)\(([a-zA-Z0-9_.$:\,~]+)\),*(.*)\Z")
 SELECTOR = re.compile(r"^[a-zA-Z0-9_.$:\~]+\Z")
 
 # =============================================================================
-class S3TimePlot(S3Method):
+class S3TimePlot(CRUDMethod):
     """ RESTful method for time plot reports """
 
     # -------------------------------------------------------------------------
@@ -639,7 +637,7 @@ class S3TimePlotForm(S3ReportForm):
                                     )
 
 # =============================================================================
-class S3TimeSeries(object):
+class S3TimeSeries:
     """ Class representing a time series """
 
     def __init__(self,
@@ -1320,7 +1318,7 @@ class S3TimeSeries(object):
         return s3_utc(dt)
 
 # =============================================================================
-class S3TimeSeriesEvent(object):
+class S3TimeSeriesEvent:
     """ Class representing an event """
 
     def __init__(self,
@@ -1430,7 +1428,7 @@ class S3TimeSeriesEvent(object):
         return result
 
 # =============================================================================
-class S3TimeSeriesFact(object):
+class S3TimeSeriesFact:
     """ Class representing a fact layer """
 
     #: Supported aggregation methods
@@ -1819,7 +1817,7 @@ class S3TimeSeriesFact(object):
         return "%s (%s)" % (field_label, method_label)
 
 # =============================================================================
-class S3TimeSeriesPeriod(object):
+class S3TimeSeriesPeriod:
     """
         Class representing a single time period (slot) in an event frame,
         within which events will be grouped and facts aggregated
@@ -2104,7 +2102,7 @@ class S3TimeSeriesPeriod(object):
             return None
 
 # =============================================================================
-class S3TimeSeriesEventFrame(object):
+class S3TimeSeriesEventFrame:
     """ Class representing the whole time frame of a time plot """
 
     def __init__(self, start, end, slots=None):

@@ -1778,7 +1778,7 @@ class S3SetupDeploymentModel(DataModel):
     @staticmethod
     def setup_server_wizard(r, **attr):
         """
-            Custom S3Method to select an Instance to Configure
+            Custom CRUD method to select an Instance to Configure
         """
 
         db = current.db
@@ -1820,7 +1820,7 @@ dropdown.change(function() {
     # -------------------------------------------------------------------------
     def setup_instance_wizard(self, r, **attr):
         """
-            Custom S3Method to Configure an Instance
+            Custom CRUD method to Configure an Instance
 
             @ToDo: Support remote servers/instances
             @ToDo: Option to Propagate settings from Prod to Demo &/or Test
@@ -1955,7 +1955,7 @@ dropdown.change(function() {
     @staticmethod
     def setup_instance_deploy(r, **attr):
         """
-            Custom S3Method to Deploy an Instance
+            Custom CRUD method to Deploy an Instance
         """
 
         instance_id = r.component_id
@@ -1972,7 +1972,7 @@ dropdown.change(function() {
     @staticmethod
     def setup_instance_settings(r, **attr):
         """
-            Custom interactive S3Method to Read the Settings for an instance
+            Custom interactive CRUD method to Read the Settings for an instance
             from models/000_config.py
         """
 
@@ -1990,7 +1990,7 @@ dropdown.change(function() {
     @staticmethod
     def setup_instance_start(r, **attr):
         """
-            Custom interactive S3Method to Start an Instance
+            Custom interactive CRUD method to Start an Instance
         """
 
         setup_instance_method(r.component_id)
@@ -2005,7 +2005,7 @@ dropdown.change(function() {
     @staticmethod
     def setup_instance_stop(r, **attr):
         """
-            Custom interactive S3Method to Stop an Instance
+            Custom interactive CRUD method to Stop an Instance
         """
 
         setup_instance_method(r.component_id, "stop")
@@ -2020,7 +2020,7 @@ dropdown.change(function() {
     @staticmethod
     def setup_instance_clean(r, **attr):
         """
-            Custom interactive S3Method to Clean an Instance
+            Custom interactive CRUD method to Clean an Instance
         """
 
         setup_instance_method(r.component_id, "clean")
@@ -2265,7 +2265,7 @@ dropdown.change(function() {
     @staticmethod
     def setup_setting_apply_interactive(r, **attr):
         """
-            Custom interactive S3Method to Apply a Setting to an instance
+            Custom interactive CRUD method to Apply a Setting to an instance
             via models/000_config.py
         """
 
@@ -2684,7 +2684,7 @@ def setup_monitor_server_enable(monitor_server_id):
         Enable Monitoring for a Server
         - Schedule all enabled Tasks
 
-        CLI API for shell scripts & to be called by S3Method
+        CLI API for shell scripts & to be called by CRUDMethod
     """
 
     db = current.db
@@ -2738,7 +2738,7 @@ def setup_monitor_server_enable_interactive(r, **attr):
         Enable Monitoring for a Server
         - Schedule all enabled Tasks
 
-        S3Method for interactive requests
+        CRUD method for interactive requests
     """
 
     server_id = r.id
@@ -2761,7 +2761,7 @@ def setup_monitor_server_disable(monitor_server_id):
         Disable Monitoring for a Server
         - Remove all related Tasks
 
-        CLI API for shell scripts & to be called by S3Method
+        CLI API for shell scripts & to be called by CRUDMethod
     """
 
     db = current.db
@@ -2808,7 +2808,7 @@ def setup_monitor_server_disable_interactive(r, **attr):
         Disable Monitoring for a Server
         - Remove all related Tasks
 
-        S3Method for interactive requests
+        CRUD method for interactive requests
     """
 
     table = current.s3db.setup_monitor_server
@@ -2825,7 +2825,7 @@ def setup_monitor_server_check(r, **attr):
     """
         Run all enabled Tasks for this server
 
-        S3Method for interactive requests
+        CRUD method for interactive requests
     """
 
     server_id = r.id
@@ -2851,7 +2851,7 @@ def setup_monitor_task_enable(task_id):
         Enable a Task
         - Schedule Check (if server enabled)
 
-        CLI API for shell scripts & to be called by S3Method
+        CLI API for shell scripts & to be called by CRUDMethod
     """
 
     db = current.db
@@ -2903,7 +2903,7 @@ def setup_monitor_task_enable_interactive(r, **attr):
         Enable a Task
         - Schedule Check
 
-        S3Method for interactive requests
+        CRUD method for interactive requests
     """
 
     result = setup_monitor_task_enable(r.id)
@@ -2916,7 +2916,7 @@ def setup_monitor_task_disable(task_id):
         Disable a Check
         - Remove Schedule for Check
 
-        CLI API for shell scripts & to be called by S3Method
+        CLI API for shell scripts & to be called by CRUDMethod
     """
 
     db = current.db
@@ -2954,7 +2954,7 @@ def setup_monitor_task_disable_interactive(r, **attr):
         Disable a Task
         - Remove Schedule for Check
 
-        S3Method for interactive requests
+        CRUD method for interactive requests
     """
 
     result = setup_monitor_task_disable(r.id)
@@ -2966,7 +2966,7 @@ def setup_monitor_task_restart():
     """
         Restart all Enabled Monitor Tasks
 
-        CLI API for shell scripts & to be called by S3Method
+        CLI API for shell scripts & to be called by CRUDMethod
     """
 
     db = current.db
@@ -3007,7 +3007,7 @@ def setup_monitor_task_run(r, **attr):
     """
         Run a Task
 
-        S3Method for interactive requests
+        CRUD method for interactive requests
     """
 
     task_id = r.id
@@ -4696,7 +4696,7 @@ def setup_setting_apply(setting_id):
     """
         Apply a Setting to an instance via models/000_config.py
 
-        CLI API for shell scripts & to be called by S3Method
+        CLI API for shell scripts & to be called by CRUDMethod
     """
 
     db = current.db

@@ -4585,7 +4585,7 @@ class cap_AreaRepresent(S3Represent):
         return s3_str(name) if name else self.default
 
 # =============================================================================
-class cap_ImportAlert(S3Method):
+class cap_ImportAlert(CRUDMethod):
     """
         Simple interactive CAP-XML Alert importer
         - designed as REST method for the cap_alert resource
@@ -4932,11 +4932,12 @@ class cap_ImportAlert(S3Method):
         return opener
 
 # -----------------------------------------------------------------------------
-class cap_AssignArea(S3Method):
+class cap_AssignArea(CRUDMethod):
     """
         Assign CAP area to an alert, allows (multi-)selection of Predefined areas
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -5104,7 +5105,7 @@ class cap_AssignArea(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    get_vars = S3Method._remove_filters(r.get_vars)
+                    get_vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=get_vars)
 
                     # Where to retrieve updated filter options from:
@@ -5259,7 +5260,7 @@ class cap_AssignArea(S3Method):
         return area_id
 
 # -----------------------------------------------------------------------------
-class cap_CloneAlert(S3Method):
+class cap_CloneAlert(CRUDMethod):
     """
         Clone the cap_alert
     """

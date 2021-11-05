@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Type Conversion Utilities
 
-""" Type Conversion Utilities
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -42,7 +38,7 @@ from gluon.languages import lazyT
 from .calendar import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime
 
 # =============================================================================
-class S3TypeConverter(object):
+class S3TypeConverter:
     """ Universal data type converter """
 
     @classmethod

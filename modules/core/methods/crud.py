@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Interactive CRUD
 
-""" S3 RESTful CRUD Methods
-
-    @see: U{B{I{S3XRC}} <http://eden.sahanafoundation.org/wiki/S3XRC>}
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-    @requires: U{B{I{lxml}} <http://codespeak.net/lxml>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -49,13 +42,13 @@ from ..resource import S3Exporter
 from ..tools import S3DateTime, s3_decode_iso_datetime, s3_str, s3_validate, s3_represent_value, s3_set_extension
 from ..ui import S3EmbeddedComponentWidget, S3Selector, ICON, S3SQLDefaultForm
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3CRUD(S3Method):
+class S3CRUD(CRUDMethod):
     """
         Interactive CRUD Method Handler
     """

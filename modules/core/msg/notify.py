@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Notifications
 
-""" S3 Notifications
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -46,7 +44,7 @@ from gluon import current, TABLE, THEAD, TBODY, TR, TD, TH, XML
 from ..tools import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc, s3_str, s3_truncate
 
 # =============================================================================
-class S3Notifications(object):
+class S3Notifications:
     """ Framework to send notifications about subscribed events """
 
     # -------------------------------------------------------------------------

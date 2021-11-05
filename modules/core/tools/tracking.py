@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Simple Generic Location Tracking System
 
-""" Simple Generic Location Tracking System
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -46,7 +44,7 @@ LOCATION = "gis_location"   # location tablename
 PRESENCE = "sit_presence"   # presence tablename
 
 # =============================================================================
-class S3Trackable(object):
+class S3Trackable:
     """
         Trackable types instance(s)
     """
@@ -681,7 +679,7 @@ class S3Trackable(object):
             current.db(self.table.track_id == track_id).update(track_timestmp=timestamp)
 
 # =============================================================================
-class S3Tracker(object):
+class S3Tracker:
     """
         S3 Tracking system, can be instantiated once as global 's3tracker' object
     """

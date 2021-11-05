@@ -18,7 +18,7 @@ import uuid
 from gluon import current, Field, IS_EMPTY_OR, IS_IN_SET, SQLFORM, URL, \
                   BUTTON, DIV, FORM, H5, INPUT, TABLE, TD, TR
 
-from core import IS_ONE_OF, S3CustomController, S3Method, \
+from core import IS_ONE_OF, S3CustomController, CRUDMethod, \
                  s3_date, s3_mark_required, s3_qrcode_represent, \
                  JSONERRORS
 
@@ -30,7 +30,7 @@ CWA = {"system": "RKI / Corona-Warn-App",
        }
 
 # =============================================================================
-class TestResultRegistration(S3Method):
+class TestResultRegistration(CRUDMethod):
     """ REST Method to Register Test Results """
 
     # -------------------------------------------------------------------------

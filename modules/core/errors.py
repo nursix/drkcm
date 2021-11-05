@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    S3 Exceptions and Error Handlers
 
-""" S3 Exceptions and Error Handlers
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation

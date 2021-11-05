@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Hierarchy Toolkit
 
-""" S3 Hierarchy Toolkit
-
-    @copyright: 2013-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
+    Copyright: 2013-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -42,7 +38,7 @@ from .convert import s3_str
 DEFAULT = lambda: None
 
 # =============================================================================
-class S3Hierarchy(object):
+class S3Hierarchy:
     """ Class representing an object hierarchy """
 
     # -------------------------------------------------------------------------

@@ -1580,7 +1580,7 @@ def send_commit():
     """
         Send a Shipment containing all items in a Commitment
 
-        @ToDo: Rewrite as S3Method
+        @ToDo: Rewrite as CRUDMethod
                 - means that permissions are better-controlled
     """
 
@@ -1702,7 +1702,7 @@ def send_req():
         arg: req_id
         vars: site_id
 
-        @ToDo: Rewrite as S3Method
+        @ToDo: Rewrite as CRUDMethod
                 - means that permissions are better-controlled
     """
 

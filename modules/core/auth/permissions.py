@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Permission Handling
 
-""" Permission Handling
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -45,7 +41,7 @@ from ..errors import S3PermissionError
 from ..tools import s3_get_extension
 
 # =============================================================================
-class S3Permission(object):
+class S3Permission:
     """ S3 Class to handle permissions """
 
     TABLENAME = "s3_permission"

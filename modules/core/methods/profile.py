@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Profile (Multi-perspective single-record view)
 
-""" S3 Profile
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -51,7 +49,7 @@ class S3Profile(S3CRUD):
         Configure widgets using s3db.configure(tablename, profile_widgets=[])
 
         @ToDo: Make more configurable:
-           * Currently uses internal widgets rather than S3Method widgets
+           * Currently uses internal widgets rather than CRUDMethod widgets
 
         @todo:
             - unify datalist and datatable methods with the superclass

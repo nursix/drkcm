@@ -3547,9 +3547,10 @@ class fin_VoucherBilling(object):
         db.commit()
 
 # =============================================================================
-class fin_VoucherCancelDebit(S3Method):
+class fin_VoucherCancelDebit(CRUDMethod):
     """ RESTful method to cancel a debit """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST API

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    CRUD Access Methods
 
-""" CRUD Access Methods
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Method",
+__all__ = ("CRUDMethod",
            )
 
 import os
@@ -37,7 +35,7 @@ from gluon import current
 from gluon.storage import Storage
 
 # =============================================================================
-class S3Method(object):
+class CRUDMethod:
     """
         CRUD Access Method
 

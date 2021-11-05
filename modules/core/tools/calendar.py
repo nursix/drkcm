@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Date/Time and Calendar Toolkit
 
-""" S3 Date/Time Toolkit
-
-    @copyright: 2015-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
+    Copyright: 2015-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -68,7 +64,7 @@ RELATIVE = re.compile(r"([+-]{0,1})([0-9]*)([YMDhms])")
 SECONDS = {"D": 86400, "h": 3600, "m": 60, "s": 1}
 
 # =============================================================================
-class S3DateTime(object):
+class S3DateTime:
     """
         Toolkit for date+time parsing/representation
     """
@@ -322,7 +318,7 @@ class S3DateTime(object):
         return sign * (3600 * offset_hrs + 60 * offset_min)
 
 # =============================================================================
-class S3Calendar(object):
+class S3Calendar:
     """
         Calendar Base Class (implementing the Gregorian Calendar)
 
@@ -1200,7 +1196,7 @@ class S3NepaliCalendar(S3Calendar):
         return cls.NEPALI_CALENDAR_DATA.get(year, default)
 
 # =============================================================================
-class S3DateTimeParser(object):
+class S3DateTimeParser:
     """ Date/Time Parser for non-Gregorian calendars """
 
     def __init__(self, calendar, dtfmt=None):
@@ -1493,7 +1489,7 @@ class S3DateTimeParser(object):
         return rules
 
 # =============================================================================
-class S3DateTimeFormatter(object):
+class S3DateTimeFormatter:
     """ Date/Time Formatter for non-Gregorian calendars """
 
     def __init__(self, calendar):

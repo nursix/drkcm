@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from .calendar import *
 from .convert import *
 from .hierarchy import *

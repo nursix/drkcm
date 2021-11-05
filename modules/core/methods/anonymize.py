@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Record Anonymizing
 
-""" S3 Person Record Anonymizing
-
-    @copyright: 2018-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2018-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -36,7 +34,7 @@ from s3dal import original_tablename
 
 from ..tools import JSONERRORS, s3_str
 
-from .base import S3Method
+from .base import CRUDMethod
 
 __all__ = ("S3Anonymize",
            "S3AnonymizeWidget",
@@ -45,12 +43,13 @@ __all__ = ("S3Anonymize",
            )
 
 # =============================================================================
-class S3Anonymize(S3Method):
+class S3Anonymize(CRUDMethod):
     """
         REST Method to Anonymize a Record
         - usually pr_person
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST API
@@ -360,7 +359,7 @@ class S3Anonymize(S3Method):
                 onaccept(table, data, method="update")
 
 # =============================================================================
-class S3AnonymizeWidget(object):
+class S3AnonymizeWidget:
     """
         GUI widget for S3Anonymize
         - popup

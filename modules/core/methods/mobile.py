@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Mobile Forms API
 
-""" S3 Mobile Forms API
-
-    @copyright: 2016-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2016-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,8 +23,6 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-
-    @todo: integrate S3XForms API
 """
 
 __all__ = ("S3MobileFormList",
@@ -45,7 +41,7 @@ from ..tools import s3_get_foreign_key, s3_str, SEPARATORS, s3_parse_datetime, \
 from ..ui import S3SQLCustomForm, S3SQLDummyField, S3SQLField, \
                  S3SQLForm, S3SQLInlineInstruction, S3SQLSectionBreak
 
-from .base import S3Method
+from .base import CRUDMethod
 
 DEFAULT = lambda: None
 
@@ -56,7 +52,7 @@ DEFAULT = lambda: None
 PREPROCESS_OPTS = []
 
 # =============================================================================
-class S3MobileFormList(object):
+class S3MobileFormList:
     """
         Form List Generator
     """
@@ -215,7 +211,7 @@ class S3MobileFormList(object):
         return json.dumps(self.formlist, separators=SEPARATORS)
 
 # =============================================================================
-class S3MobileSchema(object):
+class S3MobileSchema:
     """
         Table schema for a mobile resource
     """
@@ -869,7 +865,7 @@ class S3MobileSchema(object):
         return row.uuid or None if row else None
 
 # =============================================================================
-class S3MobileForm(object):
+class S3MobileForm:
     """
         Mobile representation of an S3SQLForm
     """
@@ -1248,7 +1244,7 @@ class S3MobileForm(object):
         return super_entities
 
 # =============================================================================
-class S3MobileCRUD(S3Method):
+class S3MobileCRUD(CRUDMethod):
     """
         Mobile Data Handler
 

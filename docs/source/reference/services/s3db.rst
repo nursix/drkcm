@@ -169,7 +169,7 @@ URL Method Handlers
 
 .. tip::
 
-   If a S3Method class is specified as action, it will be instantiated
+   If a CRUDMethod class is specified as action, it will be instantiated
    when the method is called (lazy instantiation).
 
 .. function:: s3db.get_method(tablename, component=None, method=None)

@@ -592,7 +592,7 @@ class S3DeploymentModel(DataModel):
         # Check permission only here, i.e. when the summary is
         # actually being rendered:
         if current.auth.s3_has_permission("create", r.tablename):
-            return A(S3Method.crud_string(r.tablename, "label_create"),
+            return A(CRUDMethod.crud_string(r.tablename, "label_create"),
                      _href = r.url(method="create", id=0, vars={}),
                      _class = "action-btn",
                      )
@@ -1486,7 +1486,7 @@ def deploy_rheader(r, tabs=None, profile=False):
         if not profile and not r.component:
             rheader = ""
         else:
-            crud_string = S3Method.crud_string
+            crud_string = CRUDMethod.crud_string
             record = r.record
             title = crud_string(r.tablename, "title_display")
             if record:
@@ -1673,8 +1673,9 @@ def deploy_member_filters(status=False):
     return widgets
 
 # =============================================================================
-class deploy_Inbox(S3Method):
+class deploy_Inbox(CRUDMethod):
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Custom method for email inbox, provides a datatable with bulk-delete
@@ -2067,7 +2068,7 @@ def deploy_apply(r, **attr):
             if filter_widgets:
 
                 # Where to retrieve filtered data from:
-                submit_url_vars = S3Method._remove_filters(r.get_vars)
+                submit_url_vars = CRUDMethod._remove_filters(r.get_vars)
                 filter_submit_url = r.url(vars=submit_url_vars)
 
                 # Where to retrieve updated filter options from:
@@ -2294,7 +2295,7 @@ def deploy_alert_select_recipients(r, **attr):
         if filter_widgets:
 
             # Where to retrieve filtered data from:
-            _vars = S3Method._remove_filters(r.get_vars)
+            _vars = CRUDMethod._remove_filters(r.get_vars)
             filter_submit_url = r.url(vars=_vars)
 
             # Where to retrieve updated filter options from:
@@ -2514,7 +2515,7 @@ def deploy_response_select_mission(r, **attr):
         if filter_widgets:
 
             # Where to retrieve filtered data from:
-            submit_url_vars = S3Method._remove_filters(get_vars)
+            submit_url_vars = CRUDMethod._remove_filters(get_vars)
             filter_submit_url = r.url(vars=submit_url_vars)
 
             # Where to retrieve updated filter options from:
@@ -3355,7 +3356,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
                              )
 
         has_permission = current.auth.s3_has_permission
-        crud_string = S3Method.crud_string
+        crud_string = CRUDMethod.crud_string
 
         toolbox = DIV(_class="edit-bar fright")
 

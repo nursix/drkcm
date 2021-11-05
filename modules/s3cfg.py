@@ -2451,7 +2451,7 @@ class S3Config(Storage):
                         {
                             "method": "datatable",  # widget method, either a
                                                     # name that resolves into
-                                                    # a S3Method, or a callable
+                                                    # a CRUDMethod, or a callable
                                                     # to render the widget
 
                             "filterable": True,     # Whether the widget can

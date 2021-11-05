@@ -805,7 +805,7 @@ class CMSContentModel(DataModel):
         """
             Bookmark a Post
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         post_id = r.id
@@ -847,7 +847,7 @@ class CMSContentModel(DataModel):
         """
             Remove a Bookmark for a Post
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         post_id = r.id
@@ -878,7 +878,7 @@ class CMSContentModel(DataModel):
         """
             Add a Tag to a Post
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called as an afterTagAdded callback to tag-it.js
         """
 
@@ -936,7 +936,7 @@ class CMSContentModel(DataModel):
         """
             Remove a Tag from a Post
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called as an afterTagRemoved callback to tag-it.js
         """
 
@@ -974,7 +974,7 @@ class CMSContentModel(DataModel):
         """
             Share a Post to a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -1024,7 +1024,7 @@ class CMSContentModel(DataModel):
         """
             Unshare a Post from a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -1499,7 +1499,7 @@ def cms_announcements(roles=None):
     return posts
 
 # =============================================================================
-class S3CMS(S3Method):
+class S3CMS(CRUDMethod):
     """
         Class to generate a Rich Text widget to embed in a page
     """
@@ -2172,7 +2172,7 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
     return item
 
 # =============================================================================
-class cms_Calendar(S3Method):
+class cms_Calendar(CRUDMethod):
     """
         Display Posts on a Calendar format
 
@@ -2348,7 +2348,7 @@ class cms_Calendar(S3Method):
                    )
 
 # =============================================================================
-class cms_TagList(S3Method):
+class cms_TagList(CRUDMethod):
     """
         Return a list of available Tags
         - suitable for use in Tag-It's AutoComplete

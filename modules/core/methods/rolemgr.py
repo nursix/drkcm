@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    User Roles Management
 
-""" S3 User Roles Management
-
-    @copyright: 2018-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2018-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -44,11 +42,11 @@ from ..resource import FS, SEPARATORS
 from ..tools import s3_str, s3_mark_required, JSONERRORS
 from ..ui import s3_comments_widget
 
-from .base import S3Method
+from .base import CRUDMethod
 from .crud import S3CRUD
 
 # =============================================================================
-class S3RoleManager(S3Method):
+class S3RoleManager(CRUDMethod):
     """ REST Method to manage user roles and permission rules """
 
     # -------------------------------------------------------------------------
@@ -1327,7 +1325,7 @@ class S3RoleManager(S3Method):
         return output.read()
 
 # =============================================================================
-class S3PermissionWidget(object):
+class S3PermissionWidget:
     """
         Form widget to modify permissions of a role
     """
@@ -1689,7 +1687,7 @@ class S3PermissionWidget(object):
         current.response.s3.js_global.append("\n".join(strings))
 
 # =============================================================================
-class S3RolesWidget(object):
+class S3RolesWidget:
     """
         Form widget to assign roles to users
     """
@@ -1908,7 +1906,7 @@ class S3RolesWidget(object):
         current.response.s3.js_global.append("\n".join(strings))
 
 # =============================================================================
-class S3RolesExport(object):
+class S3RolesExport:
     """
         Roles Exporter
     """

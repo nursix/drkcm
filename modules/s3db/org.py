@@ -5986,12 +5986,13 @@ class org_SiteRepresent(S3Represent):
         return s3_str(name)
 
 # =============================================================================
-class org_SiteCheckInMethod(S3Method):
+class org_SiteCheckInMethod(CRUDMethod):
     """
         Custom Method to allow a trackable resource to check-in/out to a Site
         e.g. using a Barcode scanner (for the person's pe_label)
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for the REST API
@@ -8408,7 +8409,7 @@ class org_OrganisationDuplicate(object):
         return parent_id, parent_uid, parent_item
 
 # =============================================================================
-class org_AssignMethod(S3Method):
+class org_AssignMethod(CRUDMethod):
     """
         Custom Method to allow organisations to be assigned to something
         e.g. Organisation Group
@@ -8419,8 +8420,11 @@ class org_AssignMethod(S3Method):
             @param component: the Component in which to create records
         """
 
+        super(org_AssignMethod, self).__init__()
+
         self.component = component
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -8585,7 +8589,7 @@ class org_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = S3Method._remove_filters(r.get_vars)
+                    _vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Where to retrieve updated filter options from:
@@ -8644,11 +8648,12 @@ class org_AssignMethod(S3Method):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class org_CapacityReport(S3Method):
+class org_CapacityReport(CRUDMethod):
     """
         Custom Report Method for Organisation Capacity Assessment Data
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.

@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Interactive Record Merger
 
-""" S3 Record Merger
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -40,10 +36,10 @@ from ..resource import FS
 from ..tools import s3_get_foreign_key, s3_represent_value, s3_str, IS_ONE_OF
 from ..ui import S3DataTable, S3AddPersonWidget, S3LocationSelector, S3LocationAutocompleteWidget
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # =============================================================================
-class S3Merge(S3Method):
+class S3Merge(CRUDMethod):
     """ Interactive Record Merger """
 
     DEDUPLICATE = "deduplicate"
@@ -778,7 +774,7 @@ class S3Merge(S3Method):
         return inp
 
 # =============================================================================
-class S3RecordMerger(object):
+class S3RecordMerger:
     """ Record Merger """
 
     def __init__(self, resource):

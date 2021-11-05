@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Asynchronous Task Execution
+"""
+    Asynchronous Task Execution
     - falls back to Synchronous if no workers are alive
 
     To run a worker node: python web2py.py -K eden
@@ -14,10 +13,7 @@
 
     Old screencast: http://www.vimeo.com/27478796
 
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -53,7 +49,7 @@ from .calendar import S3DateTime
 from .validators import IS_UTC_DATETIME
 
 # -----------------------------------------------------------------------------
-class S3Task(object):
+class S3Task:
     """ Asynchronous Task Execution """
 
     TASK_TABLENAME = "scheduler_task"

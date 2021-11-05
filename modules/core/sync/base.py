@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Synchronization between Eden instances
 
-""" S3 Synchronization
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -37,16 +35,16 @@ from gluon import current, URL, DIV
 from gluon.storage import Storage
 
 from ..resource import S3URLQuery, SyncPolicy
-from ..methods import S3Method, S3CRUD
+from ..methods import CRUDMethod, S3CRUD
 from ..tools import s3_parse_datetime, s3_utc, s3_str
 
 # =============================================================================
-class S3Sync(S3Method):
+class S3Sync(CRUDMethod):
     """ Synchronization Handler """
 
     def __init__(self):
 
-        S3Method.__init__(self)
+        super(S3Sync, self).__init__()
 
         self.log = S3SyncLog()
         self._config = None
@@ -802,7 +800,7 @@ class S3Sync(S3Method):
         return filters
 
 # =============================================================================
-class S3SyncLog(S3Method):
+class S3SyncLog(CRUDMethod):
     """ Synchronization Logger """
 
     TABLENAME = "sync_log"
@@ -936,7 +934,7 @@ class S3SyncLog(S3Method):
             return None
 
 # =============================================================================
-class S3SyncRepository(object):
+class S3SyncRepository:
     """ Class representation of a peer repository """
 
     def __init__(self, repository):
@@ -1022,7 +1020,7 @@ class S3SyncRepository(object):
         self.archives = {}
 
 # =============================================================================
-class S3SyncBaseAdapter(object):
+class S3SyncBaseAdapter:
     """
         Sync Adapter (base class) - interface providing standard
         synchronization methods for the respective repository type.
@@ -1157,7 +1155,7 @@ class S3SyncBaseAdapter(object):
         raise NotImplementedError
 
 # =============================================================================
-class S3SyncDataArchive(object):
+class S3SyncDataArchive:
     """
         Simple abstraction layer for (compressed) data archives, currently
         based on zipfile (Python standard library). Compression additionally
