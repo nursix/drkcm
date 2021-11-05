@@ -138,18 +138,18 @@ class S3Task:
             field.readable = field.writable = False
 
         # Args and vars
+        field = table.args
         if isinstance(args, list):
-            field = table.args
             field.default = json.dumps(args)
             field.readable = field.writable = False
         else:
             field.default = "[]"
+        field = table.vars
         if isinstance(vars, dict):
-            field = table.vars
             field.default = json.dumps(vars)
             field.readable = field.writable = False
         else:
-            field.default = {}
+            field.default = "{}"
 
         # Fields which are always editable
         field = table.repeats
