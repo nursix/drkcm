@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Navigation Module
 
-""" S3 Navigation Module
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,13 +23,6 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-
-    @todo: - refine check_selected (e.g. must be False if link=False)
-           - implement collapse-flag (render only components in a TAG[""])
-           - implement convenience methods for breadcrumbs (+renderer))
-           - add site-map generator and renderer (easy)
-           - rewrite action buttons/links as S3NavigationItems
-           - ...and any todo's in the code
 """
 
 __all__ = ("S3NavigationItem",
@@ -47,7 +38,7 @@ from gluon.storage import Storage
 from ..tools import s3_str
 
 # =============================================================================
-class S3NavigationItem(object):
+class S3NavigationItem:
     """
         Base class and API for navigation items.
 
@@ -1379,7 +1370,7 @@ def s3_rheader_tabs(r, tabs=None):
     return rheader_tabs.render(r)
 
 # =============================================================================
-class S3ComponentTabs(object):
+class S3ComponentTabs:
     """ Class representing a row of component tabs """
 
     def __init__(self, tabs=None):
@@ -1580,7 +1571,7 @@ class S3ComponentTabs(object):
                     tabs.insert(position, tab)
 
 # =============================================================================
-class S3ComponentTab(object):
+class S3ComponentTab:
     """ Class representing a single Component Tab """
 
     def __init__(self, tab):
@@ -1759,7 +1750,7 @@ class S3ScriptItem(S3NavigationItem):
         return ""
 
 # =============================================================================
-class S3ResourceHeader(object):
+class S3ResourceHeader:
     """ Simple Generic Resource Header for tabbed component views """
 
     def __init__(self, fields=None, tabs=None, title=None):

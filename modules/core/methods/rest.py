@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Default REST API
 
-""" REST API
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -39,10 +37,10 @@ from gluon.storage import Storage
 
 from ..tools import s3_parse_datetime
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # =============================================================================
-class RESTful(S3Method):
+class RESTful(CRUDMethod):
     """ REST API """
 
     # -------------------------------------------------------------------------

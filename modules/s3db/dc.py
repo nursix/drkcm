@@ -1526,7 +1526,7 @@ class DataCollectionModel(DataModel):
                 s3.scripts.append("/%s/static/scripts/S3/s3.dc_answer.min.js" % r.application)
 
 # =============================================================================
-class dc_TargetReport(S3Method):
+class dc_TargetReport(CRUDMethod):
     """
         Display a Summary of the Target (i.e. collection of Responses)
 
@@ -1884,8 +1884,9 @@ class dc_TargetReport(S3Method):
         return doc.output.getvalue()
 
 # =============================================================================
-class dc_TargetXLS(S3Method):
+class dc_TargetXLS(CRUDMethod):
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
 
         from core.resource.codecs.xls import S3XLS

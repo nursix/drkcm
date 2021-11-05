@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Summary (Multi-paradigm multi-record view)
 
-""" Resource Summary Pages
-
-    @copyright: 2013-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
+    Copyright: 2013-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -33,11 +29,11 @@ from gluon import current, A, DIV, LI, UL
 
 from ..filters import S3FilterForm
 
-from .base import S3Method
+from .base import CRUDMethod
 from .crud import S3CRUD
 
 # =============================================================================
-class S3Summary(S3Method):
+class S3Summary(CRUDMethod):
     """ Resource Summary Pages """
 
     # -------------------------------------------------------------------------

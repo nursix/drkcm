@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Pivot Table Reports
 
-""" S3 Pivot Table Reports Method
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{Python 2.6}} <http://www.python.org>}
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -53,7 +49,7 @@ from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 from ..resource import FS, S3XMLFormat, S3Joins
 from ..tools import s3_flatlist, s3_has_foreign_key, s3_str, S3MarkupStripper, s3_represent_value, JSONERRORS, IS_NUMBER
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # Compact JSON encoding
 DEFAULT = lambda: None
@@ -64,7 +60,7 @@ FACT = re.compile(r"([a-zA-Z]+)\(([a-zA-Z0-9_.$:\,~]+)\),*(.*)\Z")
 SELECTOR = re.compile(r"^[a-zA-Z0-9_.$:\~]+\Z")
 
 # =============================================================================
-class S3Report(S3Method):
+class S3Report(CRUDMethod):
     """ RESTful method for pivot table reports """
 
     # -------------------------------------------------------------------------
@@ -771,7 +767,7 @@ class S3Report(S3Method):
             scripts_append("/%s/static/scripts/d3/nv.d3.min.js" % appname)
 
 # =============================================================================
-class S3ReportForm(object):
+class S3ReportForm:
     """ Helper class to render a report form """
 
     def __init__(self, resource):
@@ -1311,7 +1307,7 @@ class S3ReportForm(object):
                         **attr)
 
 # =============================================================================
-class S3ReportRepresent(object):
+class S3ReportRepresent:
     """
         Method to represent the contributing records in a pivot table
         cell (cell explore)
@@ -1422,7 +1418,7 @@ class S3ReportRepresent(object):
         return represent
 
 # =============================================================================
-class S3PivotTableFact(object):
+class S3PivotTableFact:
     """ Class representing a fact layer """
 
     #: Supported aggregation methods
@@ -1721,7 +1717,7 @@ class S3PivotTableFact(object):
         return label
 
 # =============================================================================
-class S3PivotTable(object):
+class S3PivotTable:
     """ Class representing a pivot table of a resource """
 
     def __init__(self, resource, rows, cols, facts, strict=True, precision=None):
@@ -2975,7 +2971,7 @@ class S3PivotTable(object):
         return axisfilter
 
 # =============================================================================
-class S3AxisFilter(object):
+class S3AxisFilter:
     """
         Helper to extract filter values for pivot table axis fields
     """

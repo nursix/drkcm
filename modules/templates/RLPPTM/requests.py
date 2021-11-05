@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from gluon import current, redirect, URL, A, B
 
-from core import S3Method, S3Represent, s3_str
+from core import CRUDMethod, S3Represent, s3_str
 
 # =============================================================================
 def delivery_tag_opts():
@@ -348,13 +348,14 @@ def direct_delivery(site_id):
     return bool(row)
 
 # =============================================================================
-class RegisterShipment(S3Method):
+class RegisterShipment(CRUDMethod):
     """
         RESTful method to register a shipment for a request
         - side-step the mandatory commit stage implemented in req
         - side-step any stock checks and manipulations
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST interface.

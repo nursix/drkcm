@@ -13,7 +13,7 @@ from gluon import current, Field, URL, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
 from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
-                 S3Method, S3Represent, s3_fullname, s3_mark_required, s3_str
+                 CRUDMethod, S3Represent, s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact
 
@@ -1577,7 +1577,7 @@ class ContactRepresent(pr_PersonRepresentContact):
         return output
 
 # =============================================================================
-class InviteUserOrg(S3Method):
+class InviteUserOrg(CRUDMethod):
     """ Custom Method Handler to invite User Organisations """
 
     # -------------------------------------------------------------------------
@@ -1817,12 +1817,13 @@ class InviteUserOrg(S3Method):
         return str(crypt(code.upper())[0])
 
 # =============================================================================
-class InvoicePDF(S3Method):
+class InvoicePDF(CRUDMethod):
     """
         REST Method to generate an invoice PDF
         - for external accounting archives
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Generate a PDF of an Invoice
@@ -2134,12 +2135,13 @@ class InvoicePDF(S3Method):
         return data
 
 # =============================================================================
-class ClaimPDF(S3Method):
+class ClaimPDF(CRUDMethod):
     """
         REST Method to generate a claim PDF
         - for external accounting archives
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Generate a PDF of a Claim
@@ -2485,11 +2487,12 @@ class ClaimPDF(S3Method):
         return data
 
 # =============================================================================
-class TestFacilityInfo(S3Method):
+class TestFacilityInfo(CRUDMethod):
     """
         REST Method to report details/activities of a test facility
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Report test facility information

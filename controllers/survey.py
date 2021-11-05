@@ -295,7 +295,7 @@ def series():
 def series_export_formatted():
     """
         Download a Spreadsheet which can be filled-in offline & uploaded
-        @ToDo: rewrite as S3Method handler
+        @ToDo: rewrite as CRUDMethod handler
     """
 
     try:
@@ -448,7 +448,7 @@ def series_prepare_matrix(series_id, series, logo, lang_dict, justified=False):
 def series_export_word(widget_list, lang_dict, title, logo):
     """
         Export a Series in RTF Format
-        @ToDo: rewrite as S3Method handler
+        @ToDo: rewrite as CRUDMethod handler
     """
 
     import gluon.contrib.pyrtf as pyrtf

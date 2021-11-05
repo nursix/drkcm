@@ -5380,7 +5380,6 @@ class HRDelegationModel(DataModel):
 
         T = current.T
 
-        db = current.db
         s3 = current.response.s3
 
         define_table = self.define_table
@@ -5706,7 +5705,7 @@ def hrm_programme_hours_onaccept(form):
                           )
 
 # =============================================================================
-class hrm_AssignMethod(S3Method):
+class hrm_AssignMethod(CRUDMethod):
     """
         Custom Method to allow human resources to be assigned to something
         e.g. Incident, Project, Site, Vehicle
@@ -5731,6 +5730,8 @@ class hrm_AssignMethod(S3Method):
             @param list_fields: a custom list of Fields to show
             @param rheader: an rheader to show
         """
+
+        super(hrm_AssignMethod, self).__init__()
 
         self.component = component
         self.next_tab = next_tab
@@ -6004,7 +6005,7 @@ class hrm_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = S3Method._remove_filters(r.get_vars)
+                    submit_url_vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars = submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -6754,7 +6755,7 @@ def hrm_compose():
     """
         Send message to people/teams/participants
 
-        @ToDo: Better rewritten as an S3Method
+        @ToDo: Better rewritten as an CRUDMethod
     """
 
     s3db = current.s3db
@@ -9346,7 +9347,7 @@ def hrm_xls_list_fields(r, staff=True, vol=True):
     return list_fields
 
 # =============================================================================
-class hrm_CV(S3Method):
+class hrm_CV(CRUDMethod):
     """
         Curriculum Vitae, custom profile page with multiple DataTables:
             * Awards
@@ -9363,6 +9364,8 @@ class hrm_CV(S3Method):
             @param form: widget config to inject at the top of the CV,
                          or a callable to produce such a widget config
         """
+
+        super(hrm_CV, self).__init__()
 
         self.form = form
 
@@ -9652,7 +9655,7 @@ class hrm_CV(S3Method):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class hrm_Medical(S3Method):
+class hrm_Medical(CRUDMethod):
     """
         HR Medical Tab, custom profile page with multiple elements:
             * Physical Description
@@ -9750,7 +9753,7 @@ class hrm_Medical(S3Method):
         return output
 
 # =============================================================================
-class hrm_Record(S3Method):
+class hrm_Record(CRUDMethod):
     """
         HR Record, custom profile page with multiple DataTables:
             * Human Resource
@@ -9777,6 +9780,8 @@ class hrm_Record(S3Method):
             @param other_experience: show widget with Other Experience, can
                                      be a dict with overrides for widget defaults
         """
+
+        super(hrm_Record, self).__init__()
 
         self.salary = salary
         self.awards = awards

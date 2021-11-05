@@ -5444,13 +5444,14 @@ def req_send_commit():
                  ))
 
 # =============================================================================
-class req_CheckMethod(S3Method):
+class req_CheckMethod(CRUDMethod):
     """
         Check to see if you can match a Request
             - Using the Inventory of your Site if this is an Items request
             - Using the Skills of your HRs if this is a Skills request
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.

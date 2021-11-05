@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Map Layer Configuration
 
-""" Map Layer Configuration
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -51,7 +49,7 @@ from .marker import Marker
 from .projection import Projection
 
 # =============================================================================
-class Layer(object):
+class Layer:
     """
         Abstract base class for Layers from Catalogue
     """
@@ -230,7 +228,7 @@ class Layer(object):
             return ""
 
     # -------------------------------------------------------------------------
-    class SubLayer(object):
+    class SubLayer:
         def __init__(self, record, openlayers):
             # Ensure all attributes available (even if Null)
             self.__dict__.update(record)

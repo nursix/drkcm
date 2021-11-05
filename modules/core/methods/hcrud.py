@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Hierarchy Toolkit
 
-""" S3 Hierarchy Toolkit
-
-    @copyright: 2013-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
+    Copyright: 2013-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -38,10 +34,10 @@ from gluon import current, DIV, FORM
 
 from ..tools import SEPARATORS, S3Hierarchy
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # =============================================================================
-class S3HierarchyCRUD(S3Method):
+class S3HierarchyCRUD(CRUDMethod):
     """ Method handler for hierarchical CRUD """
 
     # -------------------------------------------------------------------------

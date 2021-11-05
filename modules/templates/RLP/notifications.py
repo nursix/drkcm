@@ -7,7 +7,7 @@ import sys
 from gluon import current, Field, SQLFORM, URL, \
                   A, DIV, FIELDSET, H6, INPUT, LABEL, LEGEND, P, TEXTAREA
 
-from core import s3_fullname, s3_str, S3Method, JSONERRORS
+from core import s3_fullname, s3_str, CRUDMethod, JSONERRORS
 from core.ui.forms import S3SQLSubForm
 
 PLACEHOLDER = re.compile(r"\{([^{}]+)\}")
@@ -524,11 +524,12 @@ class DeploymentNotifications(object):
                      )
 
 # =============================================================================
-class InlineNotificationsData(S3Method):
+class InlineNotificationsData(CRUDMethod):
     """
         Ajax-method to compose the notification messages for a delegation
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST interface.

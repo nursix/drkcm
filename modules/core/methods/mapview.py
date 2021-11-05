@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Map View/Widget with Search Result Layer
 
-""" Map View/Widget with Search Result Layer
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-    @requires: U{B{I{shapely}} <http://trac.gispython.org/lab/wiki/Shapely>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -33,10 +28,10 @@ from gluon import current, URL
 
 from ..filters import S3FilterForm
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # =============================================================================
-class S3Map(S3Method):
+class S3Map(CRUDMethod):
     """
         Class to generate a Map linked to Search filters
     """

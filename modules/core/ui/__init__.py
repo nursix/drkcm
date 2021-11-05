@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from .dashboard import *
 from .datalist import *
 from .datatable import *

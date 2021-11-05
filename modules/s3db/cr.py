@@ -2704,7 +2704,7 @@ class ShelterInspectionRepresent(S3Represent):
         return rows
 
 # =============================================================================
-class CRShelterInspection(S3Method):
+class CRShelterInspection(CRUDMethod):
     """
         Mobile-optimized UI for shelter inspection
     """

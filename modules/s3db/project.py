@@ -7118,7 +7118,7 @@ def project_status_represent(value):
                 )
 
 # =============================================================================
-class project_SummaryReport(S3Method):
+class project_SummaryReport(CRUDMethod):
     """
         Display a Summary of the Project
 
@@ -8682,7 +8682,7 @@ class project_SummaryReport(S3Method):
         return doc.output.getvalue()
 
 # =============================================================================
-class project_IndicatorSummaryReport(S3Method):
+class project_IndicatorSummaryReport(CRUDMethod):
     """
         Display a Summary of the Indicator Statuses for the Project
 
@@ -11990,7 +11990,7 @@ class ProjectTaskModel(DataModel):
         """
             Share a Task to a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -12040,7 +12040,7 @@ class ProjectTaskModel(DataModel):
         """
             Unshare a Task from a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -14102,7 +14102,7 @@ def project_task_list_layout(list_id, item_id, resource, rfields, record,
     return item
 
 # =============================================================================
-class project_Details(S3Method):
+class project_Details(CRUDMethod):
     """
         Custom profile page with multiple DataTables:
             * Organisations
@@ -14119,6 +14119,8 @@ class project_Details(S3Method):
             @param form: widget config to inject at the top of the page,
                          or a callable to produce such a widget config
         """
+
+        super(project_Details, self).__init__()
 
         self.form = form
 

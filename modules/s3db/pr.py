@@ -3523,7 +3523,7 @@ class PRForumModel(DataModel):
         """
             Join a (Public) Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         forum_id = r.id
@@ -3574,7 +3574,7 @@ class PRForumModel(DataModel):
         """
             Leave a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         forum_id = r.id
@@ -3618,7 +3618,7 @@ class PRForumModel(DataModel):
         """
             Request to Join a (Private) Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         forum_id = r.id
@@ -8043,7 +8043,7 @@ def pr_nationality_prepresent(code):
 # Custom Resource Methods
 # =============================================================================
 #
-class pr_AssignMethod(S3Method):
+class pr_AssignMethod(CRUDMethod):
     """
         Custom Method to allow people to be assigned to something
         e.g. Team, Forum
@@ -8072,6 +8072,8 @@ class pr_AssignMethod(S3Method):
             @param rheader: an rheader to show
             @param title: an alternative page title
         """
+
+        super(pr_AssignMethod, self).__init__()
 
         self.component = component
         if next_tab:
@@ -8311,7 +8313,7 @@ class pr_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = S3Method._remove_filters(r.get_vars)
+                    submit_url_vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars = submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -8408,7 +8410,7 @@ def pr_compose():
     """
         Send message to people/teams/forums
 
-        @ToDo: Better rewritten as an S3Method
+        @ToDo: Better rewritten as an CRUDMethod
     """
 
     get_vars = current.request.get_vars
@@ -8471,7 +8473,7 @@ def pr_compose():
     return output
 
 # =============================================================================
-class pr_Contacts(S3Method):
+class pr_Contacts(CRUDMethod):
     """ Custom Method to edit person contacts """
 
     # Priority Order of Contact Methods
@@ -8492,6 +8494,7 @@ class pr_Contacts(S3Method):
                 "BLOG": 15,
                 }
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST API
@@ -8851,13 +8854,14 @@ class pr_Contacts(S3Method):
         return form
 
 # =============================================================================
-class pr_Templates(S3Method):
+class pr_Templates(CRUDMethod):
     """
         Custom Method to select a Word Template to merge Person data into
 
         - used by DRKCM
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -8911,13 +8915,14 @@ class pr_Templates(S3Method):
         return output
 
 # =============================================================================
-class pr_Template(S3Method):
+class pr_Template(CRUDMethod):
     """
         Custom Method to merge Person data into a Word Template
 
         - used by DRKCM
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -10688,7 +10693,7 @@ class pr_EmergencyContactListLayout(S3DataListLayout):
                          )
 
         has_permission = current.auth.s3_has_permission
-        crud_string = S3Method.crud_string
+        crud_string = CRUDMethod.crud_string
 
         if has_permission("update", table, record_id=record_id):
             btn = A(ICON("edit"),
@@ -10846,15 +10851,15 @@ class pr_PersonListLayout(S3DataListLayout):
             btn = A(ICON("edit"),
                     _href = update_url,
                     _class = "s3_modal",
-                    _title = S3Method.crud_string(resource.tablename,
-                                                  "title_update")
+                    _title = CRUDMethod.crud_string(resource.tablename,
+                                                    "title_update")
                     )
             toolbox.append(btn)
 
         return toolbox
 
 # =============================================================================
-class pr_PersonSearchAutocomplete(S3Method):
+class pr_PersonSearchAutocomplete(CRUDMethod):
     """
         Alternative search method for S3PersonAutocompleteWidget with
         configurable search fields (thus allowing e.g. pe_label to be
@@ -10877,6 +10882,8 @@ class pr_PersonSearchAutocomplete(S3Method):
 
             @param search_fields: tuple|list of field selectors
         """
+
+        super(pr_PersonSearchAutocomplete, self).__init__()
 
         if search_fields is None:
             self.search_fields = ("first_name",

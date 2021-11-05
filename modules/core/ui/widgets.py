@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    UI Widgets
 
-""" Custom UI Widgets
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,9 +23,6 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-
-    NB Widgets are processed upon form submission (before form validation)
-       in addition to when generating new forms (so are often processed twice)
 """
 
 __all__ = ("S3ACLWidget",
@@ -9140,7 +9133,7 @@ def search_ac(r, **attr):
     return json.dumps(output, separators=SEPARATORS)
 
 # =============================================================================
-class S3XMLContents(object):
+class S3XMLContents:
     """
         Renderer for db-stored XML contents (e.g. CMS)
 

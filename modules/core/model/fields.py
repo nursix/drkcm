@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Reusable fields
 
-""" S3 Extensions for gluon.dal.Field, reusable fields
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -74,7 +70,7 @@ def s3_fieldmethod(name, f, represent=None, search_field=None):
         fieldmethod = Field.Method(name, f)
 
     else:
-        class Handler(object):
+        class Handler:
             def __init__(self, method, row):
                 self.method=method
                 self.row=row
@@ -95,7 +91,7 @@ def s3_fieldmethod(name, f, represent=None, search_field=None):
     return fieldmethod
 
 # =============================================================================
-class S3ReusableField(object):
+class S3ReusableField:
     """
         DRY Helper for reusable fields:
 
@@ -210,7 +206,7 @@ ALL_META_FIELD_NAMES = ("uuid",
                         )
 
 # -----------------------------------------------------------------------------
-class S3MetaFields(object):
+class S3MetaFields:
     """ Class to standardize meta-fields """
 
     # -------------------------------------------------------------------------

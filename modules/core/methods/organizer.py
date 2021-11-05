@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Organizer (Calendar-based CRUD)
 
-""" S3 Organizer (Calendar-based CRUD)
-
-    @copyright: 2018-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2018-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -49,10 +47,10 @@ from gluon.storage import Storage
 from ..tools import s3_decode_iso_datetime, S3DateTime, s3_str, JSONERRORS
 from ..ui import S3DateWidget
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # =============================================================================
-class S3Organizer(S3Method):
+class S3Organizer(CRUDMethod):
     """ Calendar-based CRUD Method """
 
     # -------------------------------------------------------------------------
@@ -784,7 +782,7 @@ class S3Organizer(S3Method):
         return formatted
 
 # =============================================================================
-class S3OrganizerWidget(object):
+class S3OrganizerWidget:
     """ Helper to configure and render the organizer UI widget """
 
     def __init__(self, resources):

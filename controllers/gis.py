@@ -872,7 +872,7 @@ def hdata():
 # -----------------------------------------------------------------------------
 def s3_gis_location_parents(r, **attr):
     """
-        Custom S3Method
+        Custom CRUD method
 
         Return a list of Parents for a Location
     """
@@ -3121,7 +3121,7 @@ def display_features():
             URL generated server-side
         Shows all locations matching a query.
         @ToDo: Most recent location is marked using a bigger Marker.
-        @ToDo: Move to S3Method (will then use AAA etc).
+        @ToDo: Move to CRUDMethod (will then use AAA etc).
     """
 
     ltable = s3db.gis_location

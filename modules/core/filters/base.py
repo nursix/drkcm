@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Interactive filters
 
-""" Framework for filtered REST requests
-
-    @copyright: 2013-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
+    Copyright: 2013-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -70,7 +66,7 @@ from ..resource import FS, S3ResourceField, S3ResourceQuery, S3URLQuery
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3FilterWidget(object):
+class S3FilterWidget:
     """ Filter widget for interactive search forms (base class) """
 
     #: the HTML class for the widget type
@@ -3067,7 +3063,7 @@ class S3EmptyFilter(S3FilterWidget):
         return INPUT(**attr)
 
 # =============================================================================
-class S3FilterForm(object):
+class S3FilterForm:
     """ Helper class to construct and render a filter form for a resource """
 
     def __init__(self, widgets, **attr):
@@ -3633,7 +3629,7 @@ class S3FilterForm(object):
         return default_filters
 
 # =============================================================================
-class S3FilterString(object):
+class S3FilterString:
     """
         Helper class to render a human-readable representation of a
         filter query, as representation method of JSON-serialized

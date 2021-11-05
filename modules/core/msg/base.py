@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Messaging API
+"""
+    Messaging Framework
 
     API to send & receive messages:
     - currently SMS, Email, RSS & Twitter
@@ -8,8 +7,7 @@
     Messages get sent to the Outbox (& Log)
     From there, the Scheduler tasks collect them & send them
 
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -68,7 +66,7 @@ TWITTER_HAS_PREV_PREFIX = u'\u2026 '
 SENDER = re.compile(r"(.*)\s*\<(.+@.+)\>\s*")
 
 # =============================================================================
-class S3Msg(object):
+class S3Msg:
     """ Messaging framework """
 
     def __init__(self,

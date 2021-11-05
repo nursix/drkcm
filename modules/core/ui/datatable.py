@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
     Data Table
 
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -42,7 +39,7 @@ from s3dal import Expression, S3DAL
 from ..tools import s3_orderby_fields, s3_set_extension, s3_str
 
 # =============================================================================
-class S3DataTable(object):
+class S3DataTable:
     """ Class representing a data table """
 
     # The dataTable id if no explicit value has been provided

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Asynchronous Task Execution
+"""
+    Asynchronous Task Execution
     - falls back to Synchronous if no workers are alive
 
     To run a worker node: python web2py.py -K eden
@@ -14,10 +13,7 @@
 
     Old screencast: http://www.vimeo.com/27478796
 
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -53,7 +49,7 @@ from .calendar import S3DateTime
 from .validators import IS_UTC_DATETIME
 
 # -----------------------------------------------------------------------------
-class S3Task(object):
+class S3Task:
     """ Asynchronous Task Execution """
 
     TASK_TABLENAME = "scheduler_task"
@@ -133,7 +129,7 @@ class S3Task(object):
             task = str(uuid4())
         field = table.task_name
         field.default = task
-        field.readable = field.writable = False
+        field.readable = field.writable = True
 
         # Function (default+hide if specified as parameter)
         if function:
@@ -142,18 +138,18 @@ class S3Task(object):
             field.readable = field.writable = False
 
         # Args and vars
+        field = table.args
         if isinstance(args, list):
-            field = table.args
             field.default = json.dumps(args)
             field.readable = field.writable = False
         else:
             field.default = "[]"
+        field = table.vars
         if isinstance(vars, dict):
-            field = table.vars
             field.default = json.dumps(vars)
             field.readable = field.writable = False
         else:
-            field.default = {}
+            field.default = "{}"
 
         # Fields which are always editable
         field = table.repeats

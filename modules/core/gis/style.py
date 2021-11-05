@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Layer Styles
 
-""" Layer Styles
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-    @requires: U{B{I{shapely}} <http://trac.gispython.org/lab/wiki/Shapely>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -41,7 +36,7 @@ from .marker import Marker
 from .layers import CLUSTER_DISTANCE, CLUSTER_THRESHOLD
 
 # =============================================================================
-class Style(object):
+class Style:
     """
         Represents a Map Style
     """

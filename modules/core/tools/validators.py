@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Validators
 
-""" Custom Validators
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -354,7 +350,7 @@ class IS_LAT_LON(Validator):
         return value
 
 # =============================================================================
-class IS_NUMBER(object):
+class IS_NUMBER:
     """
         Used by s3data.py to wrap IS_INT_AMOUNT & IS_FLOAT_AMOUNT
     """

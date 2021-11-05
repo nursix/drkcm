@@ -3229,11 +3229,12 @@ def survey_getAllTranslationsForSeries(series_id):
     return survey_getAllTranslationsForTemplate(template_id)
 
 # =============================================================================
-class survey_TranslateDownload(S3Method):
+class survey_TranslateDownload(CRUDMethod):
     """
         Download a Translation Template
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST API
@@ -3332,11 +3333,12 @@ class survey_TranslateDownload(S3Method):
         return output.read()
 
 # =============================================================================
-class survey_ExportResponses(S3Method):
+class survey_ExportResponses(CRUDMethod):
     """
         Download all responses in a Spreadsheet
     """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Entry point for REST API

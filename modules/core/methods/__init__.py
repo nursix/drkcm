@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
 from .base import *
-
 from .anonymize import *
 from .cico import *
 from .crud import *

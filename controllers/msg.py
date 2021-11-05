@@ -1604,7 +1604,7 @@ def twitter_search():
 
             restrict_k = [str(record.id) for record in records]
 
-            # @ToDo: Make these S3Methods rather than additional controllers
+            # @ToDo: Make these CRUDMethods rather than additional controllers
             s3.actions += [{"label": s3_str(T("Search")),
                             "restrict": restrict_s,
                             "url": URL(args=["[id]", "poll"]),

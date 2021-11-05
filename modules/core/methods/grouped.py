@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Grouped Items Report
 
-""" S3 Grouped Items Report Method
-
-    @copyright: 2015-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2015-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -40,7 +38,7 @@ from gluon import current, DIV, H2, INPUT, SPAN, TABLE, TBODY, TD, TFOOT, TH, TH
 
 from ..tools import s3_strip_markup, s3_str
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -48,7 +46,7 @@ SEPARATORS = (",", ":")
 DEFAULT = lambda: None
 
 # =============================================================================
-class S3GroupedItemsReport(S3Method):
+class S3GroupedItemsReport(CRUDMethod):
     """
         REST Method Handler for Grouped Items Reports
 
@@ -537,7 +535,7 @@ class S3GroupedItemsReport(S3Method):
         s3.jquery_ready.append(script)
 
 # =============================================================================
-class S3GroupedItemsTable(object):
+class S3GroupedItemsTable:
     """
         Helper class to render representations of a grouped items report
     """
@@ -1046,7 +1044,7 @@ class S3GroupedItemsTable(object):
         return H2(title)
 
 # =============================================================================
-class S3GroupedItems(object):
+class S3GroupedItems:
     """
         Helper class representing dict-like items grouped by
         attribute values, used by S3GroupedItemsReport
@@ -1456,7 +1454,7 @@ class S3GroupedItems(object):
         return output
 
 # =============================================================================
-class S3GroupAggregate(object):
+class S3GroupAggregate:
     """ Class representing aggregated values """
 
     def __init__(self, method, key, values):

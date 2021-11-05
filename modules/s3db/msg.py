@@ -180,7 +180,7 @@ class S3ChannelModel(DataModel):
             - Schedule a Poll for new messages
             - Enable all associated Parsers
 
-            CLI API for shell scripts & to be called by S3Method
+            CLI API for shell scripts & to be called by CRUDMethod
         """
 
         db = current.db
@@ -231,7 +231,7 @@ class S3ChannelModel(DataModel):
             Enable a Channel
             - Schedule a Poll for new messages
 
-            S3Method for interactive requests
+            CRUD m´ethod for interactive requests
         """
 
         tablename = r.tablename
@@ -248,7 +248,7 @@ class S3ChannelModel(DataModel):
             - Remove schedule for Polling for new messages
             - Disable all associated Parsers
 
-            CLI API for shell scripts & to be called by S3Method
+            CLI API for shell scripts & to be called by CRUDMethod
         """
 
         db = current.db
@@ -293,7 +293,7 @@ class S3ChannelModel(DataModel):
             Disable a Channel
             - Remove schedule for Polling for new messages
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         tablename = r.tablename
@@ -332,7 +332,7 @@ class S3ChannelModel(DataModel):
         """
             Poll a Channel for new messages
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         tablename = r.tablename
@@ -1267,7 +1267,7 @@ class S3ParsingModel(DataModel):
         """
             Parse unparsed messages
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         record = r.record
@@ -1302,7 +1302,7 @@ class S3ParsingModel(DataModel):
             Enable a Parser
             - Connect a Parser to a Channel
 
-            CLI API for shell scripts & to be called by S3Method
+            CLI API for shell scripts & to be called by CRUDMethod
 
             @ToDo: Ensure only 1 Parser is connected to any Channel at a time
         """
@@ -1349,7 +1349,7 @@ class S3ParsingModel(DataModel):
             Enable a Parser
             - Connect a Parser to a Channel
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         result = current.s3db.msg_parser_enable(r.id)
@@ -1363,7 +1363,7 @@ class S3ParsingModel(DataModel):
             Disable a Parser
             - Disconnect a Parser from a Channel
 
-            CLI API for shell scripts & to be called by S3Method
+            CLI API for shell scripts & to be called by CRUDMethod
         """
 
         db = current.db
@@ -1401,7 +1401,7 @@ class S3ParsingModel(DataModel):
             Disable a Parser
             - Disconnect a Parser from a Channel
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         result = current.s3db.msg_parser_disable(r.id)
@@ -2384,7 +2384,7 @@ class S3TwitterSearchModel(S3ChannelModel):
         """
             Perform a Search of Twitter
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         id = r.id
@@ -2402,7 +2402,7 @@ class S3TwitterSearchModel(S3ChannelModel):
         """
             Prcoess Search Results with KeyGraph
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         tablename = r.tablename

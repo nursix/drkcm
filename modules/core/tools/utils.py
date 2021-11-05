@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Utilities
 
-""" Utilities
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -791,7 +787,7 @@ def s3_set_extension(url, extension=None):
                                 u.fragment))
 
 # =============================================================================
-class Traceback(object):
+class Traceback:
     """ Generate the traceback for viewing error Tickets """
 
     def __init__(self, text):
@@ -899,7 +895,7 @@ def URL2(a=None, c=None, r=None):
     return url
 
 # =============================================================================
-class S3CustomController(object):
+class S3CustomController:
     """
         Common helpers for custom controllers (template/controllers.py)
 
@@ -931,7 +927,7 @@ class S3CustomController(object):
             raise HTTP(404, msg)
 
 # =============================================================================
-class StringTemplateParser(object):
+class StringTemplateParser:
     """
         Helper to parse string templates with named keys
 

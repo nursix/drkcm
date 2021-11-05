@@ -4,7 +4,7 @@ from io import BytesIO
 
 from gluon import current, HTTP
 
-from core import S3Method, s3_decode_iso_datetime, s3_str
+from core import CRUDMethod, s3_decode_iso_datetime, s3_str
 from core.resource.codecs.xls import S3XLS
 
 # =============================================================================
@@ -347,7 +347,7 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
                 rowindex += 1
 
 # =============================================================================
-class PerformanceIndicatorExport(S3Method):
+class PerformanceIndicatorExport(CRUDMethod):
     """ REST Method to produce a response statistics data sheet """
 
     # Custom Performance Indicator Sets

@@ -9,7 +9,7 @@ from io import StringIO
 from gluon import *
 from gluon.storage import Storage
 
-from core import json, s3_str, ICON, S3CustomController, S3DateTime, S3Method
+from core import json, s3_str, ICON, S3CustomController, S3DateTime, CRUDMethod
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -436,7 +436,7 @@ def project_project_list_layout(list_id, item_id, resource, rfields, record):
     return item
 
 # =============================================================================
-class dc_QuestionCreate(S3Method):
+class dc_QuestionCreate(CRUDMethod):
     """
         Create a Question
     """
@@ -485,7 +485,7 @@ class dc_QuestionCreate(S3Method):
         return output
 
 # =============================================================================
-class dc_QuestionImageDelete(S3Method):
+class dc_QuestionImageDelete(CRUDMethod):
     """
         Delete an Image for a Question
     """
@@ -529,7 +529,7 @@ class dc_QuestionImageDelete(S3Method):
         return output
 
 # =============================================================================
-class dc_QuestionImageUpload(S3Method):
+class dc_QuestionImageUpload(CRUDMethod):
     """
         Upload an Image for a Question
     """
@@ -579,7 +579,7 @@ class dc_QuestionImageUpload(S3Method):
         return output
 
 # =============================================================================
-class dc_QuestionSave(S3Method):
+class dc_QuestionSave(CRUDMethod):
     """
         Save a Question
     """
@@ -669,7 +669,7 @@ class dc_QuestionSave(S3Method):
         return output
 
 # =============================================================================
-class dc_TargetActivate(S3Method):
+class dc_TargetActivate(CRUDMethod):
     """
         Activate a Survey
     """
@@ -883,7 +883,7 @@ class dc_TargetActivate(S3Method):
                                                          mobile_form = True)
 
 # =============================================================================
-class dc_TargetDeactivate(S3Method):
+class dc_TargetDeactivate(CRUDMethod):
     """
         Deactivate a Survey
     """
@@ -933,7 +933,7 @@ class dc_TargetDeactivate(S3Method):
         return output
 
 # =============================================================================
-class dc_TargetEdit(S3Method):
+class dc_TargetEdit(CRUDMethod):
     """
         Edit a non-Draft Survey
     """
@@ -1067,7 +1067,7 @@ class dc_TargetEdit(S3Method):
             template.update_record(settings = settings)
 
 # =============================================================================
-class dc_TargetDelete(S3Method):
+class dc_TargetDelete(CRUDMethod):
     """
         Delete a Survey
             - confirmation popup
@@ -1181,7 +1181,7 @@ class dc_TargetDelete(S3Method):
         return output
 
 # =============================================================================
-class dc_TargetName(S3Method):
+class dc_TargetName(CRUDMethod):
     """
         Rename a Survey
     """
@@ -1238,7 +1238,7 @@ class dc_TargetName(S3Method):
         return output
 
 # =============================================================================
-class dc_TargetL10n(S3Method):
+class dc_TargetL10n(CRUDMethod):
     """
         Change the language of a Survey
 
@@ -1319,7 +1319,7 @@ class dc_TargetL10n(S3Method):
         return output
 
 # =============================================================================
-class dc_TargetReport(S3Method):
+class dc_TargetReport(CRUDMethod):
     """
         Survey Report
     """
@@ -2095,7 +2095,7 @@ class dc_TargetReport(S3Method):
         return doc.output.getvalue()
 
 # =============================================================================
-class dc_TargetReportFilters(S3Method):
+class dc_TargetReportFilters(CRUDMethod):
     """
         Survey Report Filters
         - select which fields are used as filters in the Report
@@ -2283,7 +2283,7 @@ class dc_TargetReportFilters(S3Method):
             r.error(404, current.ERROR.BAD_RESOURCE)
 
 # =============================================================================
-class dc_TemplateEditor(S3Method):
+class dc_TemplateEditor(CRUDMethod):
     """
         Survey Template Editor
     """
@@ -2680,7 +2680,7 @@ class dc_TemplateEditor(S3Method):
         return output
 
 # =============================================================================
-class dc_TemplateExportL10n(S3Method):
+class dc_TemplateExportL10n(CRUDMethod):
     """
         Export the Strings from a Survey to be localised
     """
@@ -2951,7 +2951,7 @@ class dc_TemplateExportL10n(S3Method):
         return output
 
 # =============================================================================
-class dc_TemplateImportL10n(S3Method):
+class dc_TemplateImportL10n(CRUDMethod):
     """
         Import the Strings to localise a Survey
     """
@@ -3155,7 +3155,7 @@ class dc_TemplateImportL10n(S3Method):
         return output
 
 # =============================================================================
-class dc_TemplateSave(S3Method):
+class dc_TemplateSave(CRUDMethod):
     """
         Save a Survey
     """
@@ -3194,7 +3194,7 @@ class dc_TemplateSave(S3Method):
         return output
 
 # =============================================================================
-class dc_ProjectDelete(S3Method):
+class dc_ProjectDelete(CRUDMethod):
     """
         Delete a Project
             - confirmation popup

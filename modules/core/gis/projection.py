@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Map Projections
 
-""" GIS Module
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-    @requires: U{B{I{shapely}} <http://trac.gispython.org/lab/wiki/Shapely>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,8 +22,6 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-
-    @status: partially fixed for Py3, needs more work
 """
 
 from gluon import current
@@ -37,7 +30,7 @@ from gluon.storage import Storage
 from .base import GIS
 
 # =============================================================================
-class Projection(object):
+class Projection:
     """
         Represents a Map Projection
     """

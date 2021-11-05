@@ -1528,7 +1528,7 @@ def sync_now(r, **attr):
     return output
 
 # =============================================================================
-class sync_CreateArchive(S3Method):
+class sync_CreateArchive(CRUDMethod):
     """ Method to create an archive of a dataset """
 
     # -------------------------------------------------------------------------

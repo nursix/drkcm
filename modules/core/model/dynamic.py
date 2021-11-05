@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Dynamic Table Models
 
-""" Dynamic Table Models
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -59,7 +57,7 @@ SERIALIZABLE_OPTS = ("autosync",
 DEFAULT = lambda: None
 
 # =============================================================================
-class DynamicTableModel(object):
+class DynamicTableModel:
     """
         Class representing a dynamic table model
     """

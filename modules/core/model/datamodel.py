@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Data Models
 
-""" Data Models
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -47,7 +45,7 @@ DEFAULT = lambda: None
 MODULE_TYPE = type(sys)
 
 # =============================================================================
-class DataModel(object):
+class DataModel:
     """ Base class for data models """
 
     _edenmodel = True

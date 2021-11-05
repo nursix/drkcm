@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Extensible Generic CRUD Controller
 
-""" Extensible Generic CRUD Controller
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -47,7 +45,7 @@ from .tools import s3_get_extension, s3_keep_messages, s3_store_last_record_id, 
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
 
 # =============================================================================
-class CRUDRequest(object):
+class CRUDRequest:
     """
         Class to handle CRUD requests
     """

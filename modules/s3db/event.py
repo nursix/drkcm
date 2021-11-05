@@ -625,7 +625,7 @@ class S3EventModel(DataModel):
         """
             Bookmark an Event
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         event_id = r.id
@@ -668,7 +668,7 @@ class S3EventModel(DataModel):
         """
             Remove a Bookmark for an Event
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         event_id = r.id
@@ -699,7 +699,7 @@ class S3EventModel(DataModel):
         """
             Add a CMS Tag to an Event
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called as an afterTagAdded callback to tag-it.js
         """
 
@@ -759,7 +759,7 @@ class S3EventModel(DataModel):
         """
             Remove a CMS Tag from an Event
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called as an afterTagRemoved callback to tag-it.js
         """
 
@@ -799,7 +799,7 @@ class S3EventModel(DataModel):
         """
             Share an Event to a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -849,7 +849,7 @@ class S3EventModel(DataModel):
         """
             Unshare an Event from a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -1803,7 +1803,7 @@ class S3IncidentModel(DataModel):
         """
             Bookmark an Incident
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         incident_id = r.id
@@ -1846,7 +1846,7 @@ class S3IncidentModel(DataModel):
         """
             Remove a Bookmark for an Incident
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
         """
 
         incident_id = r.id
@@ -1877,7 +1877,7 @@ class S3IncidentModel(DataModel):
         """
             Add a CMS Tag to an Incident
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called as an afterTagAdded callback to tag-it.js
         """
 
@@ -1936,7 +1936,7 @@ class S3IncidentModel(DataModel):
         """
             Remove a CMS Tag from an Incident
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called as an afterTagRemoved callback to tag-it.js
         """
 
@@ -1975,7 +1975,7 @@ class S3IncidentModel(DataModel):
         """
             Share an Incident to a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -2025,7 +2025,7 @@ class S3IncidentModel(DataModel):
         """
             Unshare an Incident from a Forum
 
-            S3Method for interactive requests
+            CRUD method for interactive requests
             - designed to be called via AJAX
         """
 
@@ -5285,7 +5285,7 @@ event_set_event_from_incident = set_event_from_incident
 # Custom Resource Methods
 
 # =============================================================================
-class event_ActionPlan(S3Method):
+class event_ActionPlan(CRUDMethod):
     """
         Custom profile page with multiple DataTables:
             * Tasks
@@ -5301,6 +5301,8 @@ class event_ActionPlan(S3Method):
             @param form: widget config to inject at the top of the page,
                          or a callable to produce such a widget config
         """
+
+        super(event_ActionPlan, self).__init__()
 
         if not form:
             form = {"type": "form",
@@ -5540,7 +5542,7 @@ class event_ActionPlan(S3Method):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class event_ScenarioActionPlan(S3Method):
+class event_ScenarioActionPlan(CRUDMethod):
     """
         Custom profile page with multiple DataTables:
             * Tasks
@@ -5556,6 +5558,8 @@ class event_ScenarioActionPlan(S3Method):
             @param form: widget config to inject at the top of the page,
                          or a callable to produce such a widget config
         """
+
+        super(event_ScenarioActionPlan, self).__init__()
 
         if not form:
             form = {"type": "form",
@@ -5793,7 +5797,7 @@ class event_ScenarioActionPlan(S3Method):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class event_ApplyScenario(S3Method):
+class event_ApplyScenario(CRUDMethod):
     """
         Populate an Incident with a Scenario's:
             * Tasks
@@ -5913,18 +5917,19 @@ class event_ApplyScenario(S3Method):
         return output
 
 # =============================================================================
-class event_EventAssignMethod(S3Method):
+class event_EventAssignMethod(CRUDMethod):
     """
         Custom Method to allow things to be assigned to an Event
         e.g. Incident
     """
 
-    def __init__(self, component=None, next_tab=None
-                 ):
+    def __init__(self, component=None, next_tab=None):
         """
             @param component: the Component in which to create records
             @param next_tab: the component/method to redirect to after assigning
         """
+
+        super(event_EventAssignMethod, self).__init__()
 
         self.component = component
         if next_tab:
@@ -5932,6 +5937,7 @@ class event_EventAssignMethod(S3Method):
         else:
             self.next_tab = component
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -6210,7 +6216,7 @@ class event_EventAssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = S3Method._remove_filters(r.get_vars)
+                    submit_url_vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)
@@ -6307,18 +6313,19 @@ class event_EventAssignMethod(S3Method):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class event_IncidentAssignMethod(S3Method):
+class event_IncidentAssignMethod(CRUDMethod):
     """
         Custom Method to allow things to be assigned to an Incident
         e.g. Incident Report
     """
 
-    def __init__(self, component, next_tab=None
-                 ):
+    def __init__(self, component, next_tab=None):
         """
             @param component: the Component in which to create records
             @param next_tab: the component/method to redirect to after assigning
         """
+
+        super(event_IncidentAssignMethod, self).__init__()
 
         self.component = component
         if next_tab:
@@ -6328,6 +6335,7 @@ class event_IncidentAssignMethod(S3Method):
 
         self.next = None
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -6595,7 +6603,7 @@ class event_IncidentAssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    submit_url_vars = S3Method._remove_filters(r.get_vars)
+                    submit_url_vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=submit_url_vars)
 
                     # Default Filters (before selecting data!)

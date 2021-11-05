@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Representation Methods and Tools
 
-""" Representation Methods and Tools
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -65,7 +61,7 @@ URLSCHEMA = re.compile(r"((?:(())(www\.([^/?#\s]*))|((http(s)?|ftp):)"
                        r"(//([^/?#\s]*)))([^?#\s]*)(\?([^#\s]*))?(#([^\s]*))?)")
 
 # =============================================================================
-class S3Represent(object):
+class S3Represent:
     """
         Scalable universal field representation for option fields and
         foreign keys. Can be subclassed and tailored to the particular
@@ -656,7 +652,7 @@ class S3Represent(object):
         return result
 
 # =============================================================================
-class S3RepresentLazy(object):
+class S3RepresentLazy:
     """
         Lazy Representation of a field value, utilizes the bulk-feature
         of S3Represent-style representation methods
@@ -760,7 +756,7 @@ class S3RepresentLazy(object):
             return
 
 # =============================================================================
-class S3PriorityRepresent(object):
+class S3PriorityRepresent:
     """
         Color-coded representation of priorities
     """

@@ -7047,9 +7047,10 @@ class dvr_DocEntityRepresent(S3Represent):
         return link
 
 # =============================================================================
-class DVRManageAppointments(S3Method):
+class DVRManageAppointments(CRUDMethod):
     """ Custom method to bulk-manage appointments """
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
 
         T = current.T
@@ -7195,7 +7196,7 @@ class DVRManageAppointments(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = S3Method._remove_filters(r.get_vars)
+                    _vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Where to retrieve updated filter options from:
@@ -7258,7 +7259,7 @@ class DVRManageAppointments(S3Method):
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class DVRManageAllowance(S3Method):
+class DVRManageAllowance(CRUDMethod):
     """ Method handler to bulk-update allowance payments status """
 
     # -------------------------------------------------------------------------
@@ -7535,7 +7536,7 @@ def dvr_get_household_size(person_id, dob=False, formatted=True):
     return details
 
 # =============================================================================
-class DVRRegisterCaseEvent(S3Method):
+class DVRRegisterCaseEvent(CRUDMethod):
     """ Method handler to register case events """
 
     # Action to check flag restrictions for
@@ -9248,7 +9249,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         return output
 
 # =============================================================================
-class dvr_AssignMethod(S3Method):
+class dvr_AssignMethod(CRUDMethod):
     """
         Custom Method to allow beneficiaries (cases) to be assigned to something
         e.g. Project, Activity, Distribution
@@ -9261,10 +9262,13 @@ class dvr_AssignMethod(S3Method):
             @param next_tab: the component/method to redirect to after assigning
         """
 
+        super(dvr_AssignMethod, self).__init__()
+
         self.component = component
         self.next_tab = next_tab
         self.types = types
 
+    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Apply method.
@@ -9420,7 +9424,7 @@ class dvr_AssignMethod(S3Method):
                 if filter_widgets:
 
                     # Where to retrieve filtered data from:
-                    _vars = S3Method._remove_filters(r.get_vars)
+                    _vars = CRUDMethod._remove_filters(r.get_vars)
                     filter_submit_url = r.url(vars=_vars)
 
                     # Default Filters (before selecting data!)

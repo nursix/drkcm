@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
     Data Card List
 
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -37,7 +34,7 @@ from itertools import islice
 from gluon import current, A, DIV, INPUT, LABEL, SPAN, TAG
 
 # =============================================================================
-class S3DataList(object):
+class S3DataList:
     """
         Class representing a list of data cards
         - client-side implementation in static/scripts/S3/s3.dataLists.js
@@ -150,8 +147,8 @@ class S3DataList(object):
                          ]
 
             if empty is None:
-                from ..methods import S3Method
-                empty = S3Method.crud_string(resource.tablename, "msg_no_match")
+                from ..methods import CRUDMethod
+                empty = CRUDMethod.crud_string(resource.tablename, "msg_no_match")
             empty = DIV(empty, _class="dl-empty")
             if self.total > 0:
                 empty.update(_style="display:none")
@@ -251,7 +248,7 @@ class S3DataList(object):
         return
 
 # =============================================================================
-class S3DataListLayout(object):
+class S3DataListLayout:
     """ DataList default layout """
 
     item_class = "thumbnail"

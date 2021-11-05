@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Dashboards
 
-""" Dashboards
-
-    @copyright: 2016-2021 (c) Sahana Software Foundation
-    @license: MIT
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
+    Copyright: 2016-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,8 +23,6 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
-
-    @status: experimental, work in progress
 """
 
 __all__ = ("S3Dashboard",
@@ -49,7 +43,7 @@ DEFAULT = lambda: None
 DEFAULT_FORMAT = "html"
 
 # =============================================================================
-class S3DashboardContext(object):
+class S3DashboardContext:
     """ Context data for a dashboard """
 
     def __init__(self, r=None, dashboard=None):
@@ -213,7 +207,7 @@ class S3DashboardContext(object):
         self.representation = s3_get_extension(request) or DEFAULT_FORMAT
 
 # =============================================================================
-class S3DashboardConfig(object):
+class S3DashboardConfig:
     """
         Dashboard Configuration
     """
@@ -385,7 +379,7 @@ class S3DashboardConfig(object):
         return version
 
 # =============================================================================
-class S3DashboardChannel(object):
+class S3DashboardChannel:
     """
         A dashboard channel
         (=a section of the dashboard where widgets can be added)
@@ -449,7 +443,7 @@ class S3DashboardChannel(object):
         return total
 
 # =============================================================================
-class S3DashboardLayout(object):
+class S3DashboardLayout:
     """
         Base class for dashboard layouts, can be subclassed
         to implement custom layouts
@@ -622,7 +616,7 @@ class S3DashboardGridLayout(S3DashboardLayout):
     pass
 
 # =============================================================================
-class S3Dashboard(object):
+class S3Dashboard:
     """
         Class to build and manage dashboards
 
@@ -970,7 +964,7 @@ class S3Dashboard(object):
 
 
 # =============================================================================
-class delegated(object):
+class delegated:
     """
         Decorator for widget methods that shall be exposed in the web API.
 
@@ -1018,7 +1012,7 @@ class delegated(object):
         return output
 
 # =============================================================================
-class S3DashboardAgent(object):
+class S3DashboardAgent:
     """
         Object serving a dashboard widget
 
@@ -1245,7 +1239,7 @@ class S3DashboardAgent(object):
                 }
 
 # =============================================================================
-class S3DashboardWidget(object):
+class S3DashboardWidget:
     """
         Base class for dashboard widgets
     """

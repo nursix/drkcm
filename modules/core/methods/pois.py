@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    POI Import/Export
 
-""" POI Import/Export
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-    @requires: U{B{I{shapely}} <http://trac.gispython.org/lab/wiki/Shapely>}
-
-    @copyright: (c) 2010-2021 Sahana Software Foundation
-    @license: MIT
+    Copyright: (c) 2010-2021 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -41,10 +36,10 @@ from ..gis import GIS
 from ..resource import S3ResourceTree
 from ..tools import s3_format_datetime, s3_parse_datetime
 
-from .base import S3Method
+from .base import CRUDMethod
 
 # =============================================================================
-class S3ExportPOI(S3Method):
+class S3ExportPOI(CRUDMethod):
     """ Export point-of-interest resources for a location """
 
     # -------------------------------------------------------------------------
@@ -249,7 +244,7 @@ class S3ExportPOI(S3Method):
         resource.add_filter(query)
 
 # =============================================================================
-class S3ImportPOI(S3Method):
+class S3ImportPOI(CRUDMethod):
     """
         Import point-of-interest resources for a location
     """
