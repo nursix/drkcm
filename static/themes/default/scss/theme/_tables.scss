@@ -182,6 +182,30 @@ table.dataTable {
         }
     }
 }
+
+.system-info {
+    width: 100%;
+    margin-top: 0.8rem;
+    table {
+        margin: auto;
+        border: 2px solid $primary-color;
+        td {
+            font-size: 0.8rem;
+            line-height: 0.8rem;
+            background-color: $datatables_bgcolor_even;
+            &:nth-child(2) {
+                font-size: 0.7rem;
+            }
+        }
+    }
+    .about-subheader td {
+        background-color: $datatables_bgcolor_odd_highlight;
+        font-size: 0.9rem;
+        font-weight: bold;
+        line-height: 0.9rem;
+    }
+}
+
 body.rtl {
     .dt-export-options,
     .list_formats div {
