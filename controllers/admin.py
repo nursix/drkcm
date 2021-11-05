@@ -1332,7 +1332,7 @@ def task():
                                 editable = False,
                                 )
 
-        s3task.configure_tasktable_crud(task="", status_writable=True)
+        s3task.configure_tasktable_crud(status_writable=True)
         return True
     s3.prep = prep
 

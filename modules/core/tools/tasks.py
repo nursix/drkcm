@@ -129,7 +129,7 @@ class S3Task:
             task = str(uuid4())
         field = table.task_name
         field.default = task
-        field.readable = field.writable = False
+        field.readable = field.writable = True
 
         # Function (default+hide if specified as parameter)
         if function:
