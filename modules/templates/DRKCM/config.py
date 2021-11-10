@@ -2719,7 +2719,7 @@ def config(settings):
         s3db = current.s3db
 
         ttable = s3db.dvr_response_theme
-        query = None
+        query = (ttable.obsolete == False) | (ttable.obsolete == None)
 
         # Limit themes to the themes of the case root organisation
         if not case_root_org:
@@ -2727,7 +2727,7 @@ def config(settings):
             if not case_root_org:
                 case_root_org = current.auth.root_org()
         if case_root_org:
-            query = (ttable.organisation_id == case_root_org)
+            query = (ttable.organisation_id == case_root_org) & query
 
         themes_needs = settings.get_dvr_response_themes_needs()
         if ui_options.get("activity_use_need") and themes_needs:
@@ -2746,7 +2746,7 @@ def config(settings):
                 need_id = None
             if need_id:
                 q = (ttable.need_id == need_id)
-                query = query & q if query else q
+                query = q & query if query else q
 
         dbset = db(query) if query else db
 
@@ -3010,6 +3010,7 @@ def config(settings):
                         field.label = T("Subject")
                         show_as = "subject"
 
+
                     represent = s3db.dvr_CaseActivityRepresent(show_as=show_as,
                                                                show_link=True,
                                                                )
@@ -3018,12 +3019,18 @@ def config(settings):
                     # Make activity selectable if not auto-linking, and
                     # filter options to case
                     if not ui_options_get("response_activity_autolink"):
+                        db = current.db
+                        represent = s3db.dvr_CaseActivityRepresent(show_as=show_as,
+                                                                   show_link=True,
+                                                                   show_date=True,
+                                                                   )
                         field.writable = True
-                        field.requires = IS_ONE_OF(current.db,
-                                                   "dvr_case_activity.id",
+                        field.requires = IS_ONE_OF(db, "dvr_case_activity.id",
                                                    represent,
                                                    filterby = "person_id",
                                                    filter_opts = (person_id,),
+                                                   orderby = ~db.dvr_case_activity.start_date,
+                                                   sort = False,
                                                    )
                     else:
                         field.writable = False
