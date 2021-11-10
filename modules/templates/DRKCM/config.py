@@ -439,7 +439,7 @@ def config(settings):
             return
 
         db = current.db
-        s3db = current.s3db
+        #s3db = current.s3db
 
         table = db.doc_document
         row = db(table.id == record_id).select(table.id,
