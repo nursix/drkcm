@@ -28,6 +28,7 @@
 from gluon import current, A, DIV, LI, UL
 
 from ..filters import S3FilterForm
+from ..tools import get_crud_string
 
 from .base import CRUDMethod
 from .crud import S3CRUD
@@ -41,8 +42,9 @@ class S3Summary(CRUDMethod):
         """
             Entry point for REST interface
 
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: controller attributes
         """
 
         if "w" in r.get_vars:
@@ -57,8 +59,9 @@ class S3Summary(CRUDMethod):
         """
             Render the summary page
 
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: controller attributes
         """
 
         output = {}
@@ -70,8 +73,7 @@ class S3Summary(CRUDMethod):
         config = self._get_config(resource)
 
         # Page title
-        crud_string = self.crud_string
-        title = crud_string(self.tablename, "title_list")
+        title = get_crud_string(self.tablename, "title_list")
         output["title"] = title
 
         # Tabs
@@ -294,8 +296,9 @@ class S3Summary(CRUDMethod):
         """
             Render a specific widget for pulling-in via AJAX
 
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: controller attributes
         """
 
         # Get Summary Page Configuration
@@ -332,7 +335,8 @@ class S3Summary(CRUDMethod):
         """
             Get the summary page configuration
 
-            @param resource: the target CRUDResource
+            Args:
+                resource: the target CRUDResource
         """
 
         get_config = resource.get_config

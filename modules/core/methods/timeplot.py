@@ -49,7 +49,8 @@ from gluon.validators import IS_IN_SET
 from gluon.sqlhtml import OptionsWidget
 
 from ..resource import FS
-from ..tools import s3_decode_iso_datetime, s3_utc, s3_flatlist, s3_represent_value, s3_str, S3MarkupStripper
+from ..tools import get_crud_string, s3_decode_iso_datetime, s3_utc, \
+                    s3_flatlist, s3_represent_value, s3_str, S3MarkupStripper
 
 from .base import CRUDMethod
 from .report import S3Report, S3ReportForm
@@ -85,8 +86,9 @@ class S3TimePlot(CRUDMethod):
         """
             Page-render entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes for the request
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes for the request
         """
 
         if r.http == "GET":
@@ -100,11 +102,12 @@ class S3TimePlot(CRUDMethod):
         """
             Widget-render entry point for S3Summary.
 
-            @param r: the CRUDRequest
-            @param method: the widget method
-            @param widget_id: the widget ID
-            @param visible: whether the widget is initially visible
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                method: the widget method
+                widget_id: the widget ID
+                visible: whether the widget is initially visible
+                attr: controller attributes
         """
 
         # Get the target resource
@@ -194,8 +197,9 @@ class S3TimePlot(CRUDMethod):
         """
             Time plot report page
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes for the request
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes for the request
         """
 
         output = {}
@@ -264,7 +268,7 @@ class S3TimePlot(CRUDMethod):
         if r.representation in ("html", "iframe"):
             # Page load
 
-            output["title"] = self.crud_string(tablename, "title_report")
+            output["title"] = get_crud_string(tablename, "title_report")
 
             # Filter widgets
             if show_filter_form:
@@ -310,7 +314,7 @@ class S3TimePlot(CRUDMethod):
                                                    widget_id = widget_id,
                                                    )
 
-            output["title"] = self.crud_string(tablename, "title_report")
+            output["title"] = get_crud_string(tablename, "title_report")
             output["report_type"] = "timeplot"
 
             # Detect and store theme-specific inner layout
@@ -334,7 +338,8 @@ class S3TimePlot(CRUDMethod):
         """
             Identify the target resource
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         # Fallback
@@ -357,8 +362,9 @@ class S3TimePlot(CRUDMethod):
         """
             Read the relevant GET vars for the timeplot
 
-            @param r: the CRUDRequest
-            @param resource: the target CRUDResource
+            Args:
+                r: the CRUDRequest
+                resource: the target CRUDResource
         """
 
         # Extract the relevant GET vars
@@ -398,7 +404,8 @@ class S3TimePlot(CRUDMethod):
         """
             Parse timestamp expression
 
-            @param timestamp: the timestamp expression
+            Args:
+                timestamp: the timestamp expression
         """
 
         if timestamp:
@@ -436,8 +443,9 @@ class S3TimePlotForm(S3ReportForm):
         """
             Render the form for the report
 
-            @param get_vars: the GET vars if the request (as dict)
-            @param widget_id: the HTML element base ID for the widgets
+            Args:
+                get_vars: the GET vars if the request (as dict)
+                widget_id: the HTML element base ID for the widgets
         """
 
         T = current.T
@@ -532,8 +540,9 @@ class S3TimePlotForm(S3ReportForm):
         """
             Render the widgets for the report options form
 
-            @param get_vars: the GET vars if the request (as dict)
-            @param widget_id: the HTML element base ID for the widgets
+            Args:
+                get_vars: the GET vars if the request (as dict)
+                widget_id: the HTML element base ID for the widgets
         """
 
         T = current.T
@@ -653,23 +662,18 @@ class S3TimeSeries:
                  baseline=None,
                  title=None):
         """
-            Constructor
-
-            @param resource: the resource
-            @param start: the start of the series (datetime or string expression)
-            @param end: the end of the time series (datetime or string expression)
-            @param slots: the slot size (string expression)
-
-            @param event_start: the event start field (field selector)
-            @param event_end: the event end field (field selector)
-
-            @param rows: the rows axis for event grouping (field selector)
-            @param cols: the columns axis for event grouping (field selector)
-            @param facts: an array of facts (S3TimeSeriesFact)
-
-            @param baseline: the baseline field (field selector)
-
-            @param title: the time series title
+            Args:
+                resource: the resource
+                start: the start of the series (datetime or string expression)
+                end: the end of the time series (datetime or string expression)
+                slots: the slot size (string expression)
+                event_start: the event start field (field selector)
+                event_end: the event end field (field selector)
+                rows: the rows axis for event grouping (field selector)
+                cols: the columns axis for event grouping (field selector)
+                facts: an array of facts (S3TimeSeriesFact)
+                baseline: the baseline field (field selector)
+                title: the time series title
         """
 
         self.resource = resource
@@ -795,8 +799,9 @@ class S3TimeSeries:
         """
             Represent and sort the values of a pivot axis (rows or cols)
 
-            @param rfield: the axis rfield
-            @param values: iterable of values
+            Args:
+                rfield: the axis rfield
+                values: iterable of values
         """
 
         if rfield.virtual:
@@ -841,7 +846,8 @@ class S3TimeSeries:
         """
             Get the representation method for a field in the report
 
-            @param field: the field selector
+            Args:
+                field: the field selector
         """
 
         rfields = self.rfields
@@ -882,11 +888,13 @@ class S3TimeSeries:
         """
             Create an event frame for this report
 
-            @param start: the start date/time (string, date or datetime)
-            @param end: the end date/time (string, date or datetime)
-            @param slots: the slot length (string)
+            Args:
+                start: the start date/time (string, date or datetime)
+                end: the end date/time (string, date or datetime)
+                slots: the slot length (string)
 
-            @return: the event frame
+            Returns:
+                the event frame
         """
 
         resource = self.resource
@@ -1150,8 +1158,9 @@ class S3TimeSeries:
         """
             Resolve the event_start and event_end field selectors
 
-            @param event_start: the field selector for the event start field
-            @param event_end: the field selector for the event end field
+            Args:
+                event_start: the field selector for the event start field
+                event_end: the field selector for the event end field
         """
 
         resource = self.resource
@@ -1187,7 +1196,8 @@ class S3TimeSeries:
         """
             Resolve the baseline field selector
 
-            @param baseline: the baseline selector
+            Args:
+                baseline: the baseline selector
         """
 
         resource = self.resource
@@ -1215,8 +1225,9 @@ class S3TimeSeries:
         """
             Resolve the grouping axes field selectors
 
-            @param rows: the rows field selector
-            @param cols: the columns field selector
+            Args:
+                rows: the rows field selector
+                cols: the columns field selector
         """
 
         resource = self.resource
@@ -1247,8 +1258,9 @@ class S3TimeSeries:
         """
             Parse a string for start/end date(time) of an interval
 
-            @param timestr: the time string
-            @param start: the start datetime to relate relative times to
+            Args:
+                timestr: the time string
+                start: the start datetime to relate relative times to
         """
 
         if start is None:
@@ -1329,15 +1341,14 @@ class S3TimeSeriesEvent:
                  row=DEFAULT,
                  col=DEFAULT):
         """
-            Constructor
-
-            @param event_id: a unique identifier for the event (e.g. record ID)
-            @param start: start time of the event (datetime.datetime)
-            @param end: end time of the event (datetime.datetime)
-            @param values: a dict of key-value pairs with the attribute
-                           values for the event
-            @param row: the series row for this event
-            @param col: the series column for this event
+            Args:
+                event_id: a unique identifier for the event (e.g. record ID)
+                start: start time of the event (datetime.datetime)
+                end: end time of the event (datetime.datetime)
+                values: a dict of key-value pairs with the attribute
+                        values for the event
+                row: the series row for this event
+                col: the series column for this event
         """
 
         self.event_id = event_id
@@ -1386,7 +1397,8 @@ class S3TimeSeriesEvent:
         """
             Convert a field value into a set of series keys
 
-            @param value: the field value
+            Args:
+                value: the field value
         """
 
         if value is DEFAULT:
@@ -1404,7 +1416,8 @@ class S3TimeSeriesEvent:
         """
             Access attribute values of this event
 
-            @param field: the attribute field name
+            Args:
+                field: the attribute field name
         """
 
         return self.values.get(field, None)
@@ -1414,7 +1427,8 @@ class S3TimeSeriesEvent:
         """
             Comparison method to allow sorting of events
 
-            @param other: the event to compare to
+            Args:
+                other: the event to compare to
         """
 
         this = self.start
@@ -1442,12 +1456,11 @@ class S3TimeSeriesFact:
 
     def __init__(self, method, base, slope=None, interval=None, label=None):
         """
-            Constructor
-
-            @param method: the aggregation method
-            @param base: column name of the (base) field
-            @param slope: column name of the slope field (for cumulate method)
-            @param interval: time interval expression for the slope
+            Args:
+                method: the aggregation method
+                base: column name of the (base) field
+                slope: column name of the slope field (for cumulate method)
+                interval: time interval expression for the slope
         """
 
         if method not in self.METHODS:
@@ -1473,8 +1486,9 @@ class S3TimeSeriesFact:
         """
             Aggregate values from events
 
-            @param period: the period
-            @param events: the events
+            Args:
+                period: the period
+                events: the events
         """
 
         values = []
@@ -1561,7 +1575,8 @@ class S3TimeSeriesFact:
         """
             Aggregate a list of values.
 
-            @param values: iterable of values
+            Args:
+                values: iterable of values
         """
 
         if values is None:
@@ -1608,7 +1623,8 @@ class S3TimeSeriesFact:
         """
             Parse fact expression
 
-            @param fact: the fact expression
+            Args:
+                fact: the fact expression
         """
 
         if isinstance(fact, list):
@@ -1671,7 +1687,8 @@ class S3TimeSeriesFact:
         """
             Resolve the base and slope selectors against resource
 
-            @param resource: the resource
+            Args:
+                resource: the resource
         """
 
         self.resource = None
@@ -1747,11 +1764,12 @@ class S3TimeSeriesFact:
         """
             Lookup the fact label from the timeplot options of resource
 
-            @param resource: the resource (CRUDResource)
-            @param method: the aggregation method (string)
-            @param base: the base field selector (string)
-            @param slope: the slope field selector (string)
-            @param interval: the interval expression (string)
+            Args:
+                resource: the resource (CRUDResource)
+                method: the aggregation method (string)
+                base: the base field selector (string)
+                slope: the slope field selector (string)
+                interval: the interval expression (string)
         """
 
         fact_opts = None
@@ -1793,8 +1811,9 @@ class S3TimeSeriesFact:
         """
             Generate a default fact label
 
-            @param rfield: the S3ResourceField (alternatively the field label)
-            @param method: the aggregation method
+            Args:
+                rfield: the S3ResourceField (alternatively the field label)
+                method: the aggregation method
         """
 
         T = current.T
@@ -1825,10 +1844,9 @@ class S3TimeSeriesPeriod:
 
     def __init__(self, start, end=None):
         """
-            Constructor
-
-            @param start: the start of the time period (datetime)
-            @param end: the end of the time period (datetime)
+            Args:
+                start: the start of the time period (datetime)
+                end: the end of the time period (datetime)
         """
 
         self.start = tp_tzsafe(start)
@@ -1864,7 +1882,8 @@ class S3TimeSeriesPeriod:
         """
             Add a current event to this period
 
-            @param event: the S3TimeSeriesEvent
+            Args:
+                event: the S3TimeSeriesEvent
         """
 
         self.cevents[event.event_id] = event
@@ -1874,7 +1893,8 @@ class S3TimeSeriesPeriod:
         """
             Add a previous event to this period
 
-            @param event: the S3TimeSeriesEvent
+            Args:
+                event: the S3TimeSeriesEvent
         """
 
         self.pevents[event.event_id] = event
@@ -1884,9 +1904,10 @@ class S3TimeSeriesPeriod:
         """
             Convert the aggregated results into a JSON-serializable dict
 
-            @param rows: the row keys for the result
-            @param cols: the column keys for the result
-            @param isoformat: convert datetimes into ISO-formatted strings
+            Args:
+                rows: the row keys for the result
+                cols: the column keys for the result
+                isoformat: convert datetimes into ISO-formatted strings
         """
 
         # Start and end datetime
@@ -1933,7 +1954,8 @@ class S3TimeSeriesPeriod:
         """
             Group events by their row and col axis values
 
-            @param cumulative: include previous events
+            Args:
+                cumulative: include previous events
         """
 
         event_sets = [self.cevents]
@@ -1970,7 +1992,8 @@ class S3TimeSeriesPeriod:
         """
             Group and aggregate the events in this period
 
-            @param facts: list of facts to aggregate
+            Args:
+                facts: list of facts to aggregate
         """
 
         # Reset
@@ -2050,8 +2073,9 @@ class S3TimeSeriesPeriod:
             Compute the total duration of the given event before the end
             of this period, in number of interval
 
-            @param event: the S3TimeSeriesEvent
-            @param interval: the interval expression (string)
+            Args:
+                event: the S3TimeSeriesEvent
+                interval: the interval expression (string)
         """
 
         if event.end is None or event.end > self.end:
@@ -2075,9 +2099,10 @@ class S3TimeSeriesPeriod:
             Convert a time slot string expression into a dateutil rrule
             within the context of a time period
 
-            @param start: the start of the time period (datetime)
-            @param end: the end of the time period (datetime)
-            @param interval: time interval expression, like "days" or "2 weeks"
+            Args:
+                start: the start of the time period (datetime)
+                end: the end of the time period (datetime)
+                interval: time interval expression, like "days" or "2 weeks"
         """
 
         match = re.match(r"\s*(\d*)\s*([hdwmy]{1}).*", interval)
@@ -2107,13 +2132,12 @@ class S3TimeSeriesEventFrame:
 
     def __init__(self, start, end, slots=None):
         """
-            Constructor
-
-            @param start: start of the time frame (datetime.datetime)
-            @param end: end of the time frame (datetime.datetime)
-            @param slot: length of time slots within the event frame,
-                         format: "{n }[hour|day|week|month|year]{s}",
-                         examples: "1 week", "3 months", "years"
+            Args:
+                start: start of the time frame (datetime.datetime)
+                end: end of the time frame (datetime.datetime)
+                slot: length of time slots within the event frame,
+                      format: "{n }[hour|day|week|month|year]{s}",
+                      examples: "1 week", "3 months", "years"
         """
 
         # Start time is required
@@ -2151,10 +2175,11 @@ class S3TimeSeriesEventFrame:
         """
             Extend this time frame with events
 
-            @param events: iterable of events
+            Args:
+                events: iterable of events
 
-            @todo: integrate in constructor
-            @todo: handle self.rule == None
+            TODO integrate in constructor
+            TODO handle self.rule == None
         """
 
         if not events:

@@ -64,9 +64,11 @@ class S3MasterKey:
         """
             Check a token ID; deletes the token if found
 
-            @param token_id: the token ID
+            Args:
+                token_id: the token ID
 
-            @returns: the token string if found, otherwise None
+            Returns:
+                the token string if found, otherwise None
         """
 
         # Drop all expired tokens
@@ -95,7 +97,8 @@ class S3MasterKey:
         """
             Generate a new token for master key authentication
 
-            @returns: tuple (token_id, token)
+            Returns:
+                a tuple (token_id, token)
         """
 
         # Drop all expired tokens
@@ -154,8 +157,9 @@ class S3MasterKey:
             Extract the access key for master key auth from the Authorization
             header in the current request
 
-            @returns: the access key as str, or None if no master key
-                      authorization header was found
+            Returns:
+                the access key as str, or None if no master key
+                authorization header was found
         """
 
         header = current.request.env.http_authorization
@@ -171,10 +175,12 @@ class S3MasterKey:
         """
             Get the master key matching a keyhash
 
-            @param keyhash: the key hash from the Authorization header
-            @param token: the master key auth token
+            Args
+                keyhash: the key hash from the Authorization header
+                token: the master key auth token
 
-            @returns: the master key Row
+            Returns:
+                the master key Row
         """
 
         # Get all valid master keys
@@ -215,9 +221,11 @@ class S3MasterKey:
             Attempt to authenticate with an access key; logs in the user
             associated with the master key represented by the access key
 
-            @param access_key: the access key, format: "TokenID:KeyHash"
+            Args:
+                access_key: the access key, format: "TokenID:KeyHash"
 
-            @returns: True|False whether the login was successful
+            Returns:
+                True|False whether the login was successful
         """
 
         log = current.log
@@ -257,9 +265,10 @@ class S3MasterKey:
             Get context for the master key the current user is logged-in
             with (auth.user.masterkey_id)
 
-            @returns: JSON (as string); for verification: if the user is
-                      logged-in with a valid master key, the JSON object
-                      will always contain a non-null masterkey_uuid attribute
+            Returns:
+                JSON (as string); for verification: if the user is
+                logged-in with a valid master key, the JSON object
+                will always contain a non-null masterkey_uuid attribute
         """
 
         auth = current.auth

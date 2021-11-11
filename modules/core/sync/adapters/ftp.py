@@ -49,7 +49,8 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         """
             Register this site at the peer repository
 
-            @return: True to indicate success, otherwise False
+            Returns:
+                True to indicate success, otherwise False
         """
 
         # No registration required
@@ -60,7 +61,8 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         """
             Login at the peer repository
 
-            @return: None if successful, otherwise the error
+            Returns:
+                None if successful, otherwise the error
         """
 
         repository = self.repository
@@ -93,7 +95,8 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             Fetch updates from the repository and import them
             into the local database (Active Pull)
 
-            @param task: the task (sync_task Row)
+            Args:
+                task: the task (sync_task Row)
         """
 
         repository = self.repository
@@ -119,11 +122,13 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             Extract new updates from the local database and send
             them to the peer repository (active push)
 
-            @param task: the synchronization task (sync_task Row)
+            Args:
+                task: the synchronization task (sync_task Row)
 
-            @return: tuple (error, mtime), with error=None if successful,
-                     else error=message, and mtime=modification timestamp
-                     of the youngest record sent
+            Returns
+                tuple (error, mtime), with error=None if successful,
+                else error=message, and mtime=modification timestamp
+                of the youngest record sent
         """
 
         repository = self.repository

@@ -55,7 +55,7 @@ __all__ = ("S3MainMenuDefaultLayout",
 from gluon import current, URL, \
                   A, DIV, FORM, H3, IMG, INPUT, LABEL, LI, OPTION, SELECT, SPAN, TAG, UL
 
-from core import S3NavigationItem, S3CRUD, ICON
+from core import S3NavigationItem, ICON, get_crud_string
 from s3theme import NAV, SECTION
 
 # =============================================================================
@@ -628,10 +628,10 @@ class S3PopupLink(S3NavigationItem):
                 t = "%s_%s" % (c, f)
             if m == "create":
                 # Fall back to label_create
-                label = S3CRUD.crud_string(t, "label_create")
+                label = get_crud_string(t, "label_create")
             elif m == "update":
                 # Fall back to label_update
-                label = S3CRUD.crud_string(t, "label_update")
+                label = get_crud_string(t, "label_update")
 
         super(S3PopupLink, self).__init__(label,
                                           c=c, f=f, t=t,

@@ -46,8 +46,8 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(comment.method, "create")
 
         # Label should fall back to CRUD string
-        from core import S3CRUD
-        crud_string = S3CRUD.crud_string("pr_person", "label_create")
+        from core import get_crud_string
+        crud_string = get_crud_string("pr_person", "label_create")
         self.assertEqual(comment.label, crud_string)
 
         if "inv" in deployment_settings.modules:

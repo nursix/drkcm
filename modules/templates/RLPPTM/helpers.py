@@ -1504,12 +1504,11 @@ class OrganisationRepresent(S3Represent):
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
             Represent a single Row
 
             @param row: the org_organisation Row
-            @param prefix: the hierarchy prefix (unused here)
         """
 
         name = s3_str(row.name)

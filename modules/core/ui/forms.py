@@ -68,10 +68,9 @@ class S3SQLForm:
     # -------------------------------------------------------------------------
     def __init__(self, *elements, **attributes):
         """
-            Constructor to define the form and its elements.
-
-            @param elements: the form elements
-            @param attributes: form attributes
+            Args:
+                elements: the form elements
+                attributes: form attributes
         """
 
         self.elements = []
@@ -139,15 +138,17 @@ class S3SQLForm:
         """
             Render/process the form. To be implemented in subclass.
 
-            @param request: the CRUDRequest
-            @param resource: the target CRUDResource
-            @param record_id: the record ID
-            @param readonly: render the form read-only
-            @param message: message upon successful form submission
-            @param format: data format extension (for audit)
-            @param options: keyword options for the form
+            Args:
+                request: the CRUDRequest
+                resource: the target CRUDResource
+                record_id: the record ID
+                readonly: render the form read-only
+                message: message upon successful form submission
+                format: data format extension (for audit)
+                options: keyword options for the form
 
-            @return: a FORM instance
+            Returns:
+                a FORM instance
         """
 
         return None
@@ -156,9 +157,7 @@ class S3SQLForm:
     # Utility functions
     # -------------------------------------------------------------------------
     def __len__(self):
-        """
-            Support len(crud_form)
-        """
+        """ Support len(crud_form) """
 
         return len(self.elements)
 
@@ -167,8 +166,9 @@ class S3SQLForm:
         """
             Get a configuration setting for the current table
 
-            @param key: the setting key
-            @param default: fallback value if the setting is not available
+            Args:
+                key: the setting key
+                default: fallback value if the setting is not available
         """
 
         tablename = self.tablename
@@ -183,8 +183,11 @@ class S3SQLForm:
         """
             Render submit buttons
 
-            @param readonly: render the form read-only
-            @return: list of submit buttons
+            Args:
+                readonly: render the form read-only
+
+            Returns:
+                list of submit buttons
         """
 
         T = current.T
@@ -256,11 +259,12 @@ class S3SQLForm:
         """
             Insert subheadings into forms
 
-            @param form: the form
-            @param tablename: the tablename
-            @param formstyle: the formstyle
-            @param subheadings:
-                {"fieldname": "Heading"} or {"fieldname": ["Heading1", "Heading2"]}
+            Args:
+                form: the form
+                tablename: the tablename
+                formstyle: the formstyle
+                subheadings: - {"fieldname": "Heading"}, or
+                             - {"fieldname": ["Heading1", "Heading2"]}
         """
 
         if not subheadings:
@@ -359,11 +363,12 @@ class S3SQLForm:
             Pre-populate the form with values from a previous record or
             controller-submitted data
 
-            @param from_table: the table to copy the data from
-            @param from_record: the record to copy the data from
-            @param map_fields: field selection/mapping
-            @param data: the data to prepopulate the form with
-            @param format: the request format extension
+            Args:
+                from_table: the table to copy the data from
+                from_record: the record to copy the data from
+                map_fields: field selection/mapping
+                data: the data to prepopulate the form with
+                format: the request format extension
         """
 
         table = self.table
@@ -452,17 +457,19 @@ class S3SQLDefaultForm(S3SQLForm):
         """
             Render/process the form.
 
-            @param request: the CRUDRequest
-            @param resource: the target CRUDResource
-            @param record_id: the record ID
-            @param readonly: render the form read-only
-            @param message: message upon successful form submission
-            @param format: data format extension (for audit)
-            @param options: keyword options for the form
+            Args:
+                request: the CRUDRequest
+                resource: the target CRUDResource
+                record_id: the record ID
+                readonly: render the form read-only
+                message: message upon successful form submission
+                format: data format extension (for audit)
+                options: keyword options for the form
 
-            @todo: describe keyword arguments
+            TODO describe keyword arguments
 
-            @return: a FORM instance
+            Returns:
+                a FORM instance
         """
 
         if resource is None:
@@ -596,8 +603,9 @@ class S3SQLDefaultForm(S3SQLForm):
             Change to update if this request attempts to create a
             duplicate entry in a link table
 
-            @param request: the request
-            @param record_id: the record ID
+            Args:
+                request: the request
+                record_id: the record ID
         """
 
         linked = self.resource.linked
@@ -653,14 +661,15 @@ class S3SQLDefaultForm(S3SQLForm):
         """
             Process the form
 
-            @param form: FORM instance
-            @param vars: request POST variables
-            @param onvalidation: callback(function) upon successful form validation
-            @param onaccept: callback(function) upon successful form acceptance
-            @param hierarchy: the data for the hierarchy link to create
-            @param link: component link
-            @param http: HTTP method
-            @param format: request extension
+            Args:
+                form: FORM instance
+                vars: request POST variables
+                onvalidation: callback(function) upon successful form validation
+                onaccept: callback(function) upon successful form acceptance
+                hierarchy: the data for the hierarchy link to create
+                link: component link
+                http: HTTP method
+                format: request extension
 
         """
 
@@ -834,15 +843,17 @@ class S3SQLCustomForm(S3SQLForm):
         """
             Render/process the form.
 
-            @param request: the CRUDRequest
-            @param resource: the target CRUDResource
-            @param record_id: the record ID
-            @param readonly: render the form read-only
-            @param message: message upon successful form submission
-            @param format: data format extension (for audit)
-            @param options: keyword options for the form
+            Args:
+                request: the CRUDRequest
+                resource: the target CRUDResource
+                record_id: the record ID
+                readonly: render the form read-only
+                message: message upon successful form submission
+                format: data format extension (for audit)
+                options: keyword options for the form
 
-            @return: a FORM instance
+            Returns:
+                a FORM instance
         """
 
         db = current.db
@@ -1187,7 +1198,8 @@ class S3SQLCustomForm(S3SQLForm):
             and all subtables in the form, and store any errors
             in the form.
 
-            @param form: the form
+            Args:
+                form: the form
         """
 
         s3db = current.s3db
@@ -1267,11 +1279,12 @@ class S3SQLCustomForm(S3SQLForm):
         """
             Create/update all records from the form.
 
-            @param form: the form
-            @param format: data format extension (for audit)
-            @param link: resource.link for linktable components
-            @param hierarchy: the data for the hierarchy link to create
-            @param undelete: reinstate a previously deleted record
+            Args:
+                form: the form
+                format: data format extension (for audit)
+                link: resource.link for linktable components
+                hierarchy: the data for the hierarchy link to create
+                undelete: reinstate a previously deleted record
         """
 
         db = current.db
@@ -1375,9 +1388,10 @@ class S3SQLCustomForm(S3SQLForm):
         """
             Extract the current row from a single-component
 
-            @param master_query: query for the master record
-            @param component: the single-component (CRUDResource)
-            @param fields: list of field names to extract
+            Args:
+                master_query: query for the master record
+                component: the single-component (CRUDResource)
+                fields: list of field names to extract
         """
 
         # Get the join for this subtable
@@ -1409,8 +1423,9 @@ class S3SQLCustomForm(S3SQLForm):
         """
             Extract data for a subtable from the form
 
-            @param form: the form
-            @param alias: the component alias of the subtable
+            Args:
+                form: the form
+                alias: the component alias of the subtable
         """
 
         if alias is None:
@@ -1439,13 +1454,14 @@ class S3SQLCustomForm(S3SQLForm):
         """
             Create or update a record
 
-            @param record_id: the record ID
-            @param data: the data
-            @param alias: the component alias
-            @param format: the request format (for audit)
-            @param hierarchy: the data for the hierarchy link to create
-            @param link: resource.link for linktable components
-            @param undelete: reinstate a previously deleted record
+            Args:
+                record_id: the record ID
+                data: the data
+                alias: the component alias
+                format: the request format (for audit)
+                hierarchy: the data for the hierarchy link to create
+                link: resource.link for linktable components
+                undelete: reinstate a previously deleted record
         """
 
         if alias is not None:
@@ -1589,11 +1605,9 @@ class S3SQLFormElement:
     # -------------------------------------------------------------------------
     def __init__(self, selector, **options):
         """
-            Constructor to define the form element, to be extended
-            in subclass.
-
-            @param selector: the data object selector
-            @param options: options for the form element
+            Args:
+                selector: the data object selector
+                options: options for the form element
         """
 
         self.selector = selector
@@ -1605,22 +1619,24 @@ class S3SQLFormElement:
             Method to resolve this form element against the calling resource.
             To be implemented in subclass.
 
-            @param resource: the resource
-            @return: a tuple
-                        (
-                            form element,
-                            original field name,
-                            Field instance for the form renderer
-                        )
+            Args:
+                resource: the resource
 
-            The form element can be None for the main table, the component
-            alias for a subtable, or this form element instance for a
-            subform.
+            Returns:
+                a tuple (form element,
+                         original field name,
+                         Field instance for the form renderer
+                         )
 
-            If None is returned as Field instance, this form element will
-            not be rendered at all. Besides setting readable/writable
-            in the Field instance, this can be another mechanism to
-            control access to form elements.
+            Note:
+                The form element can be None for the main table, the component
+                alias for a subtable, or this form element instance for a
+                subform.
+
+                If None is returned as Field instance, this form element will
+                not be rendered at all. Besides setting readable/writable
+                in the Field instance, this can be another mechanism to
+                control access to form elements.
         """
 
         return None, None, None
@@ -1640,19 +1656,20 @@ class S3SQLFormElement:
             Rename a field (actually: create a new Field instance with the
             same attributes as the given Field, but a different field name).
 
-            @param field: the original Field instance
-            @param name: the new name
-            @param comments: render comments - if set to False, only
-                             navigation items with an inline() renderer
-                             method will be rendered (unless popup is None)
-            @param label: override option for the original field label
-            @param popup: only if comments=False, additional vars for comment
-                          navigation items (e.g. AddResourceLink), None prevents
-                          rendering of navigation items
-            @param skip_post_validation: skip field validation during POST,
-                                         useful for client-side processed
-                                         dummy fields.
-            @param widget: override option for the original field widget
+            Args:
+                field: the original Field instance
+                name: the new name
+                comments: render comments - if set to False, only
+                          navigation items with an inline() renderer
+                          method will be rendered (unless popup is None)
+                label: override option for the original field label
+                popup: only if comments=False, additional vars for comment
+                       navigation items (e.g. AddResourceLink), None prevents
+                       rendering of navigation items
+                skip_post_validation: skip field validation during POST,
+                                      useful for client-side processed
+                                      dummy fields.
+                widget: override option for the original field widget
         """
 
         if label is DEFAULT:
@@ -1749,13 +1766,14 @@ class S3SQLField(S3SQLFormElement):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple
-                        (
-                            subtable alias (or None for main table),
-                            original field name,
-                            Field instance for the form renderer
-                        )
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (subtable alias (or None for main table),
+                         original field name,
+                         Field instance for the form renderer
+                         )
         """
 
         # Import S3ResourceField only here, to avoid circular dependency
@@ -1819,13 +1837,14 @@ class S3SQLVirtualField(S3SQLFormElement):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple
-                        (
-                            subtable alias (or None for main table),
-                            original field name,
-                            Field instance for the form renderer
-                        )
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (subtable alias (or None for main table),
+                         original field name,
+                         Field instance for the form renderer
+                         )
         """
 
         table = resource.table
@@ -1871,13 +1890,14 @@ class S3SQLDummyField(S3SQLFormElement):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple
-                        (
-                            subtable alias (or None for main table),
-                            original field name,
-                            Field instance for the form renderer
-                        )
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (subtable alias (or None for main table),
+                         original field name,
+                         Field instance for the form renderer
+                         )
         """
 
         selector = self.selector
@@ -1897,14 +1917,16 @@ class S3SQLDummyField(S3SQLFormElement):
             subclass (if required) and to be set as widget=self for the
             field returned by the resolve()-method of this form element.
 
-            @param field: the input field
-            @param value: the value to populate the widget
-            @param attributes: attributes for the widget
-            @return: the widget for this form element as HTML helper
+            Args:
+                field: the input field
+                value: the value to populate the widget
+                attributes: attributes for the widget
+
+            Returns:
+                the widget for this form element as HTML helper
         """
 
-        return DIV(_class = "s3-dummy-field",
-                   )
+        return DIV(_class = "s3-dummy-field")
 
 # =============================================================================
 class S3SQLSectionBreak(S3SQLFormElement):
@@ -1916,26 +1938,18 @@ class S3SQLSectionBreak(S3SQLFormElement):
     """
 
     # -------------------------------------------------------------------------
-    def __init__(self):
-        """
-            Constructor to define the form element, to be extended
-            in subclass.
-        """
-
-        super(S3SQLSectionBreak, self).__init__(None)
-
-    # -------------------------------------------------------------------------
     def resolve(self, resource):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple
-                        (
-                            subtable alias (or None for main table),
-                            original field name,
-                            Field instance for the form renderer
-                        )
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (subtable alias (or None for main table),
+                         original field name,
+                         Field instance for the form renderer
+                         )
         """
 
         selector = ""
@@ -1955,14 +1969,16 @@ class S3SQLSectionBreak(S3SQLFormElement):
             subclass (if required) and to be set as widget=self for the
             field returned by the resolve()-method of this form element.
 
-            @param field: the input field
-            @param value: the value to populate the widget
-            @param attributes: attributes for the widget
-            @return: the widget for this form element as HTML helper
+            Args:
+                field: the input field
+                value: the value to populate the widget
+                attributes: attributes for the widget
+
+            Returns:
+                the widget for this form element as HTML helper
         """
 
-        return DIV(_class = "s3-section-break",
-                   )
+        return DIV(_class = "s3-section-break")
 
 # =============================================================================
 class S3SQLInlineInstruction(S3SQLFormElement):
@@ -1976,11 +1992,9 @@ class S3SQLInlineInstruction(S3SQLFormElement):
     # -------------------------------------------------------------------------
     def __init__(self, do, say, **options):
         """
-            Constructor to define the form element, to be extended
-            in subclass.
-
-            @param do: What to Do
-            @param say: What to Say
+            Args:
+                do: What to Do
+                say: What to Say
         """
 
         super(S3SQLInlineInstruction, self).__init__(None)
@@ -1993,13 +2007,14 @@ class S3SQLInlineInstruction(S3SQLFormElement):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple
-                        (
-                            subtable alias (or None for main table),
-                            original field name,
-                            Field instance for the form renderer
-                        )
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (subtable alias (or None for main table),
+                         original field name,
+                         Field instance for the form renderer
+                         )
         """
 
         selector = ""
@@ -2019,16 +2034,21 @@ class S3SQLInlineInstruction(S3SQLFormElement):
             subclass (if required) and to be set as widget=self for the
             field returned by the resolve()-method of this form element.
 
-            @param field: the input field
-            @param value: the value to populate the widget
-            @param attributes: attributes for the widget
-            @return: the widget for this form element as HTML helper
+            Args:
+                field: the input field
+                value: the value to populate the widget
+                attributes: attributes for the widget
+
+            Returns:
+                the widget for this form element as HTML helper
         """
 
-        element = DIV(_class="s3-inline-instructions",
+        element = DIV(data = {"do": self.do,
+                              "say": self.say,
+                              },
+                      _class = "s3-inline-instructions",
                       )
-        element["data-do"] = self.do
-        element["data-say"] = self.say
+
         return element
 
 # =============================================================================
@@ -2044,11 +2064,9 @@ class S3SQLSubForm(S3SQLFormElement):
     # -------------------------------------------------------------------------
     def __init__(self, selector, **options):
         """
-            Constructor to define the form element, to be extended
-            in subclass.
-
-            @param selector: the data object selector
-            @param options: options for the form element
+            Args:
+                selector: the data object selector
+                options: options for the form element
         """
 
         super(S3SQLSubForm, self).__init__(selector, **options)
@@ -2062,11 +2080,13 @@ class S3SQLSubForm(S3SQLFormElement):
             method will be called by the form renderer to populate the
             form for an existing record. To be implemented in subclass.
 
-            @param resource: the resource the record belongs to
-            @param record_id: the record ID
+            Args:
+                resource: the resource the record belongs to
+                record_id: the record ID
 
-            @return: the value for the input field that corresponds
-                      to the specified record.
+            Returns:
+                the value for the input field that corresponds
+                to the specified record.
         """
 
         return None
@@ -2080,11 +2100,14 @@ class S3SQLSubForm(S3SQLFormElement):
             subclass and set as requires=self.parse for the input field
             in the resolve()-method of this form element.
 
-            @param value: the value returned from the input field
-            @param record_id: usused (for API compatibility with validators)
-            @return: tuple of (value, error) where value is the
-                      pre-processed field value and error an error
-                      message in case of invalid data, or None.
+            Args:
+                value: the value returned from the input field
+                record_id: usused (for API compatibility with validators)
+
+            Returns:
+                tuple of (value, error) where value is the pre-processed
+                field value and error an error message in case of invalid
+                data, or None.
         """
 
         return (value, None)
@@ -2096,10 +2119,13 @@ class S3SQLSubForm(S3SQLFormElement):
             subclass (if required) and to be set as widget=self for the
             field returned by the resolve()-method of this form element.
 
-            @param field: the input field
-            @param value: the value to populate the widget
-            @param attributes: attributes for the widget
-            @return: the widget for this form element as HTML helper
+            Args:
+                field: the input field
+                value: the value to populate the widget
+                attributes: attributes for the widget
+
+            Returns:
+                the widget for this form element as HTML helper
         """
 
         raise NotImplementedError
@@ -2111,9 +2137,12 @@ class S3SQLSubForm(S3SQLFormElement):
             used instead of the __call__() method when the form element
             is to be rendered read-only.
 
-            @param value: the value as returned from extract()
-            @return: the read-only representation of this element as
-                      string or HTML helper
+            Args:
+                value: the value as returned from extract()
+
+            Returns:
+                the read-only representation of this element as
+                string or HTML helper
         """
 
         return ""
@@ -2126,10 +2155,13 @@ class S3SQLSubForm(S3SQLFormElement):
             form has been accepted, where the master record ID will
             be provided.
 
-            @param form: the form
-            @param master_id: the master record ID
-            @param format: the data format extension
-            @return: True on success, False on error
+            Args:
+                form: the form
+                master_id: the master record ID
+                format: the data format extension
+
+            Returns:
+                True on success, False on error
         """
 
         return True
@@ -2145,10 +2177,11 @@ class SKIP_POST_VALIDATION(Validator):
 
     def __init__(self, other=None):
         """
-            Constructor, used like:
-            field.requires = SKIP_POST_VALIDATION(field.requires)
+            Args:
+                other: the actual field validator
 
-            @param other: the actual field validator
+            Example:
+                field.requires = SKIP_POST_VALIDATION(field.requires)
         """
 
         if other and isinstance(other, (list, tuple)):
@@ -2162,12 +2195,14 @@ class SKIP_POST_VALIDATION(Validator):
             if hasattr(other, "formatter"):
                 self.formatter = other.formatter
 
+    # -------------------------------------------------------------------------
     def __call__(self, value, record_id=None):
         """
             Validation
 
-            @param value: the value
-            @param record_id: the record ID (unused, for API compatibility)
+            Args:
+                value: the value
+                record_id: the record ID (unused, for API compatibility)
         """
 
         other = self.other
@@ -2189,7 +2224,6 @@ class S3SQLSubFormLayout:
     layout_class = "subform-default"
 
     def __init__(self):
-        """ Constructor """
 
         self.inject_script()
         self.columns = None
@@ -2201,8 +2235,9 @@ class S3SQLSubFormLayout:
             Set column widths for inline-widgets, can be used by subclasses
             to render CSS classes for grid-width
 
-            @param columns: iterable of column widths
-            @param actions: whether the subform contains an action column
+            Args:
+                columns: iterable of column widths
+                actions: whether the subform contains an action column
         """
 
         self.columns = columns
@@ -2218,11 +2253,12 @@ class S3SQLSubFormLayout:
         """
             Outer container for the subform
 
-            @param data: the data dict (as returned from extract())
-            @param item_rows: the item rows
-            @param action_rows: the (hidden) action rows
-            @param empty: no data in this component
-            @param readonly: render read-only
+            Args:
+                data: the data dict (as returned from extract())
+                item_rows: the item rows
+                action_rows: the (hidden) action rows
+                empty: no data in this component
+                readonly: render read-only
         """
 
         if empty:
@@ -2241,8 +2277,9 @@ class S3SQLSubFormLayout:
         """
             Render this component read-only (table-style)
 
-            @param resource: the CRUDResource
-            @param data: the data dict (as returned from extract())
+            Args:
+                resource: the CRUDResource
+                data: the data dict (as returned from extract())
         """
 
         audit = current.audit
@@ -2275,8 +2312,9 @@ class S3SQLSubFormLayout:
         """
             Render this component read-only (list-style)
 
-            @param resource: the CRUDResource
-            @param data: the data dict (as returned from extract())
+            Args:
+                resource: the CRUDResource
+                data: the data dict (as returned from extract())
         """
 
         audit = current.audit
@@ -2310,8 +2348,9 @@ class S3SQLSubFormLayout:
         """
             Render the header row with field labels
 
-            @param data: the input field data as Python object
-            @param readonly: whether the form is read-only
+            Args:
+                data: the input field data as Python object
+                readonly: whether the form is read-only
         """
 
         fields = data["fields"]
@@ -2349,13 +2388,14 @@ class S3SQLSubFormLayout:
         """
             Render subform row actions into the row
 
-            @param subform: the subform row
-            @param formname: the form name
-            @param index: the row index
-            @param item: the row data
-            @param readonly: this is a read-row
-            @param editable: this row is editable
-            @param deletable: this row is deletable
+            Args:
+                subform: the subform row
+                formname: the form name
+                index: the row index
+                item: the row data
+                readonly: this is a read-row
+                editable: this row is editable
+                deletable: this row is deletable
         """
 
         T = current.T
@@ -2568,8 +2608,11 @@ class S3SQLInlineComponent(S3SQLSubForm):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple (self, None, Field instance)
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (self, None, Field instance)
         """
 
         selector = self.selector
@@ -2621,10 +2664,12 @@ class S3SQLInlineComponent(S3SQLSubForm):
             the component data for this record from the database and
             converts them into a JSON string to populate the input field with.
 
-            @param resource: the resource the record belongs to
-            @param record_id: the record ID
+            Args:
+                resource: the resource the record belongs to
+                record_id: the record ID
 
-            @return: the JSON for the input field.
+            Returns:
+                the JSON for the input field.
         """
 
         self.resource = resource
@@ -2802,11 +2847,14 @@ class S3SQLInlineComponent(S3SQLSubForm):
             Validator method, converts the JSON returned from the input
             field into a Python object.
 
-            @param value: the JSON from the input field.
-            @param record_id: usused (for API compatibility with validators)
-            @return: tuple of (value, error), where value is the converted
-                      JSON, and error the error message if the decoding
-                      fails, otherwise None
+            Args:
+                value: the JSON from the input field.
+                record_id: usused (for API compatibility with validators)
+
+            Returns:
+                tuple of (value, error), where value is the converted
+                JSON, and error the error message if the decoding
+                fails, otherwise None
         """
 
         # @todo: catch uploads during validation errors
@@ -2835,9 +2883,10 @@ class S3SQLInlineComponent(S3SQLSubForm):
             uses s3.inline_component.js to facilitate manipulation of the
             entries.
 
-            @param field: the Field for this form element
-            @param value: the current value for this field
-            @param attributes: keyword attributes for this widget
+            Args:
+                field: the Field for this form element
+                value: the current value for this field
+                attributes: keyword attributes for this widget
         """
 
         T = current.T
@@ -3097,7 +3146,8 @@ class S3SQLInlineComponent(S3SQLSubForm):
         """
             Read-only representation of this sub-form
 
-            @param value: the value returned from extract()
+            Args:
+                value: the value returned from extract()
         """
 
         if isinstance(value, str):
@@ -3137,9 +3187,10 @@ class S3SQLInlineComponent(S3SQLSubForm):
             Post-processes this form element against the POST data of the
             request, and create/update/delete any related records.
 
-            @param form: the form
-            @param master_id: the ID of the master record in the form
-            @param format: the data format extension (for audit)
+            Args:
+                form: the form
+                master_id: the ID of the master record in the form
+                format: the data format extension (for audit)
         """
 
         # Name of the real input field
@@ -3412,7 +3463,8 @@ class S3SQLInlineComponent(S3SQLSubForm):
         """
             Generate a string representing the formname
 
-            @param separator: separator to prepend a prefix
+            Args:
+                separator: separator to prepend a prefix
         """
 
         if separator:
@@ -3449,16 +3501,17 @@ class S3SQLInlineComponent(S3SQLSubForm):
         """
             Render a read- or edit-row.
 
-            @param table: the database table
-            @param item: the data
-            @param fields: the fields to render (list of strings)
-            @param readonly: render a read-row (otherwise edit-row)
-            @param editable: whether the record can be edited
-            @param deletable: whether the record can be deleted
-            @param multiple: whether multiple records can be added
-            @param index: the row index
-            @param layout: the subform layout (S3SQLSubFormLayout)
-            @param attributes: HTML attributes for the row
+            Args:
+                table: the database table
+                item: the data
+                fields: the fields to render (list of strings)
+                readonly: render a read-row (otherwise edit-row)
+                editable: whether the record can be edited
+                deletable: whether the record can be deleted
+                multiple: whether multiple records can be added
+                index: the row index
+                layout: the subform layout (S3SQLSubFormLayout)
+                attributes: HTML attributes for the row
         """
 
         s3 = current.response.s3
@@ -3679,7 +3732,8 @@ class S3SQLInlineComponent(S3SQLSubForm):
             Re-render the options list for a field if there is a
             filterby-restriction.
 
-            @param fieldname: the name of the field
+            Args:
+                fieldname: the name of the field
         """
 
         component = self.resource.components[self.selector]
@@ -3789,91 +3843,78 @@ class S3SQLInlineLink(S3SQLInlineComponent):
     """
         Subform to edit link table entries for the master record
 
-        Constructor options:
-
+        Keyword Args:
             ** Common options:
 
-            readonly..........True|False......render read-only always
-            multiple..........True|False......allow selection of multiple
-                                              options (default True)
-            widget............string..........which widget to use, one of:
-                                              - multiselect (default)
-                                              - groupedopts (default when cols is specified)
-                                              - hierarchy   (requires hierarchical lookup-table)
-                                              - cascade     (requires hierarchical lookup-table)
-            render_list.......True|False......in read-only mode, render HTML
-                                              list rather than comma-separated
-                                              strings (default False)
+            readonly: render read-only always (bool)
+            multiple: allow selection of multiple options (bool, default True)
+            widget: which widget to use (str), one of:
+                            - multiselect (default)
+                            - groupedopts (default when cols is specified)
+                            - hierarchy   (requires hierarchical lookup-table)
+                            - cascade     (requires hierarchical lookup-table)
+            render_list: in read-only mode, render HTML list rather than
+                         comma-separated strings (bool, default False)
 
             ** Options for groupedopts widget:
 
-            cols..............integer.........number of columns for grouped
-                                              options (default: None)
-            orientation.......string..........orientation for grouped options
-                                              order, one of:
-                                                  - cols
-                                                  - rows
-            size..............integer.........maximum number of items per group
-                                              in grouped options, None to disable
-                                              grouping
-            sort..............True|False......sort grouped options (always True
-                                              when grouping, i.e. size!=None)
-            help_field........string..........additional field in the look-up
-                                              table to render as tooltip for
-                                              grouped options
-            table.............True|False......render grouped options as HTML
-                                              TABLE rather than nested DIVs
-                                              (default True)
+            cols: number of columns for grouped ptions (int, default: None)
+            orientation: orientation for grouped options order (str), one of:
+                            - cols
+                            - rows
+            size: maximum number of items per group in grouped options,
+                  None to disable grouping
+            sort: sort grouped options (bool, always True when grouping,
+                  i.e. size!=None)
+            help_field: additional field in the look-up table to render as
+                        tooltip for grouped options (field name, str)
+            table: render grouped options as HTML TABLE rather than nested
+                   DIVs (bool, default True)
 
             ** Options for multi-select widget:
 
-            header............True|False......multi-select to show a header with
-                                              bulk-select options and optional
-                                              search-field
-            search............True|False......show the search-field in the header
-            selectedList......integer.........how many items to show on multi-select
-                                              button before collapsing into number
-            noneSelectedText..string..........placeholder text on multi-select button
-            columns...........integer.........Foundation column-width for the
-                                              widget (for custom forms)
-            create............dict............Options to create a new record {"c": "controller",
-                                                                              "f": "function",
-                                                                              "label": "label",
-                                                                              "parent": "parent", (optional: which function to lookup options from)
-                                                                              "child": "child", (optional: which field to lookup options for)
-                                                                              }
+            header: multi-select to show a header with bulk-select options
+                    and optional search-field (bool)
+            search: show the search-field in the header (bool)
+            selectedList: how many items to show on multi-select button before
+                          collapsing into number (int)
+            noneSelectedText: placeholder text on multi-select button (str)
+            columns: Foundation column-width for the widget (int, for custom forms)
+            create: Options to create a new record, dict:
+                            {"c": "controller",
+                             "f": "function",
+                             "label": "label",
+                             "parent": "parent", (optional: which function to lookup options from)
+                             "child": "child", (optional: which field to lookup options for)
+                             }
 
             ** Options-filtering:
                - multiselect and groupedopts only
                - for hierarchy and cascade widgets, use the "filter" option
 
-            requires..........Validator.......validator to determine the
-                                              selectable options (defaults to
-                                              field validator)
-            filterby..........field selector..filter look-up options by this field
-                                              (can be a field in the look-up table
-                                              itself or in another table linked to it)
-            options...........value|list......filter for these values, or:
-            match.............field selector..lookup the filter value from this
-                                              field (can be a field in the master
-                                              table, or in linked table)
+            requires: validator to determine the selectable options (defaults
+                      to field validator)
+            filterby: filter look-up options by this field (can be a field in
+                      the look-up table itself or in another table linked to it),
+                      str (field selector)
+            options: filter for these values, OR:
+            match: lookup the filter value from this field (can be a field in the
+                   master table, or in linked table), str (field selector)
 
             ** Options for hierarchy and cascade widgets:
 
-            levels............list............ordered list of labels for hierarchy
-                                              levels (top-down order), to override
-                                              the lookup-table's "hierarchy_levels"
-                                              setting, cascade-widget only
-            represent.........callback........representation method for hierarchy
-                                              nodes (defaults to field represent)
-            leafonly..........True|False......only leaf nodes can be selected
-            cascade...........True|False......automatically select the entire branch
-                                              when a parent node is newly selected;
-                                              with multiple=False, this will
-                                              auto-select single child options
-                                              (default True when leafonly=True)
-            filter............resource query..filter expression to filter the
-                                              selectable options
+            levels: ordered list of labels for hierarchy levels (top-down order),
+                    to override the lookup-table's "hierarchy_levels" setting,
+                    cascade-widget only
+            represent: representation function for hierarchy nodes (defaults
+                       to field represent)
+            leafonly: only leaf nodes can be selected (bool)
+            cascade: automatically select the entire branch when a parent
+                     node is newly selected; with multiple=False, this will
+                     auto-select single child options (bool, default True when
+                     leafonly=True)
+            filter: filter expression to filter the selectable options
+                    (S3ResourceQuery)
     """
 
     prefix = "link"
@@ -3883,11 +3924,13 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         """
             Get all existing links for record_id.
 
-            @param resource: the resource the record belongs to
-            @param record_id: the record ID
+            Args:
+                resource: the resource the record belongs to
+                record_id: the record ID
 
-            @return: list of component record IDs this record is
-                     linked to via the link table
+            Returns:
+                list of component record IDs this record is
+                linked to via the link table
         """
 
         self.resource = resource
@@ -3929,11 +3972,13 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             Widget renderer, currently supports multiselect (default),
             hierarchy and groupedopts widgets.
 
-            @param field: the input field
-            @param value: the value to populate the widget
-            @param attributes: attributes for the widget
+            Args:
+                field: the input field
+                value: the value to populate the widget
+                attributes: attributes for the widget
 
-            @return: the widget
+            Returns:
+                the widget
         """
 
         options = self.options
@@ -4063,7 +4108,8 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             Validate this link, currently only checking whether it has
             a value when required=True
 
-            @param form: the form
+            Args:
+                form: the form
         """
 
         required = self.options.required
@@ -4084,11 +4130,12 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             Post-processes this subform element against the POST data,
             and create/update/delete any related records.
 
-            @param form: the master form
-            @param master_id: the ID of the master record in the form
-            @param format: the data format extension (for audit)
+            Args:
+                form: the master form
+                master_id: the ID of the master record in the form
+                format: the data format extension (for audit)
 
-            @todo: implement audit
+            TODO implement audit
         """
 
         from ..resource import FS
@@ -4164,8 +4211,11 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         """
             Read-only representation of this subform.
 
-            @param value: the value as returned from extract()
-            @return: the read-only representation
+            Args:
+                value: the value as returned from extract()
+
+            Returns:
+                the read-only representation
         """
 
         component, link = self.get_link()
@@ -4227,7 +4277,8 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         """
             Get the options for the widget
 
-            @return: dict {value: representation} of options
+            Returns:
+                dict {value: representation} of options
         """
 
         from ..resource import FS
@@ -4305,7 +4356,8 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         """
             Find the target component and its linktable
 
-            @return: tuple of CRUDResource instances (component, link)
+            Returns:
+                tuple of CRUDResource instances (component, link)
         """
 
         selector = self.selector
@@ -4329,14 +4381,13 @@ class S3WithIntro(S3SQLFormElement):
 
     def __init__(self, widget, intro=None, cmsxml=False):
         """
-            Constructor
-
-            @param widget: the widget
-            @param intro: the intro, string|DIV|tuple,
-                          if specified as tuple (module, resource, name),
-                          the intro text will be looked up from CMS
-            @param cmsxml: do not XML-escape CMS contents, should only
-                           be used with safe origin content (=normally never)
+            Args:
+                widget: the widget
+                intro: the intro, string|DIV|tuple,
+                       if specified as tuple (module, resource, name),
+                       the intro text will be looked up from CMS
+                cmsxml: do not XML-escape CMS contents, should only
+                        be used with safe origin content (=normally never)
         """
 
         self.widget = widget
@@ -4349,8 +4400,9 @@ class S3WithIntro(S3SQLFormElement):
         """
             Override S3SQLFormElement.resolve() to map to widget
 
-            @param resource: the CRUDResource to resolve this form element
-                             against
+            Args:
+                resource: the CRUDResource to resolve this form element
+                          against
         """
 
         resolved = self.widget.resolve(resource)
@@ -4365,7 +4417,8 @@ class S3WithIntro(S3SQLFormElement):
         """
             Attribute access => map to widget
 
-            @param key: the attribute key
+            Args:
+                key: the attribute key
         """
 
         if key in self.__dict__:
@@ -4401,7 +4454,8 @@ class S3WithIntro(S3SQLFormElement):
         """
             Get intro from CMS
 
-            @param intro: the intro spec as tuple (module, resource, postname)
+            Args:
+                intro: the intro spec as tuple (module, resource, postname)
         """
 
         # Get intro text from CMS

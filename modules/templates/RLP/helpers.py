@@ -433,7 +433,7 @@ class RLPDelegatedPersonRepresent(S3Represent):
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
             Represent a row
 

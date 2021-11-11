@@ -54,8 +54,9 @@ class S3RoleManager(CRUDMethod):
         """
             Entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         method = self.method
@@ -115,10 +116,12 @@ class S3RoleManager(CRUDMethod):
         """
             List or export roles
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
 
-            NB this function must be restricted to ADMINs (in apply_method)
+            Note:
+                This function must be restricted to ADMINs (in apply_method)
         """
 
         # Check permission to read in this table
@@ -265,7 +268,8 @@ class S3RoleManager(CRUDMethod):
         """
             Configure action buttons for role list
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -334,7 +338,8 @@ class S3RoleManager(CRUDMethod):
         """
             Create, read, update a role
 
-            NB this function must be restricted to ADMINs (in apply_method)
+            Note:
+                This function must be restricted to ADMINs (in apply_method)
         """
 
         T = current.T
@@ -485,9 +490,10 @@ class S3RoleManager(CRUDMethod):
         """
             Show a hint if permissions cannot be edited due to security policy
 
-            @param field: the Field instance
-            @param value: the current field value (ignored)
-            @param attr: DOM attributes for the widget (ignored)
+            Args:
+                field: the Field instance
+                value: the current field value (ignored)
+                attr: DOM attributes for the widget (ignored)
         """
 
         T = current.T
@@ -510,9 +516,11 @@ class S3RoleManager(CRUDMethod):
         """
             Extract the permission rules for a role
 
-            @param role: the role (Row)
+            Args:
+                role: the role (Row)
 
-            @returns: the permission rules as JSON string
+            Returns:
+                the permission rules as JSON string
         """
 
         permissions = current.auth.permission
@@ -561,10 +569,12 @@ class S3RoleManager(CRUDMethod):
         """
             Create or update a role from a role form
 
-            @param role: the role (Row)
-            @param form: the form
+            Args:
+                role: the role (Row)
+                form: the form
 
-            @returns: tuple (role ID, confirmation message)
+            Returns:
+                tuple (role ID, confirmation message)
         """
 
         T = current.T
@@ -612,8 +622,9 @@ class S3RoleManager(CRUDMethod):
         """
             Update the permission rules for a role
 
-            @param role_id: the role record ID (auth_group.id)
-            @param rules: the rules as JSON string
+            Args:
+                role_id: the role record ID (auth_group.id)
+                rules: the rules as JSON string
         """
 
         table = current.auth.permission.table
@@ -670,7 +681,8 @@ class S3RoleManager(CRUDMethod):
         """
             Duplicate an existing role
 
-            NB this function must be restricted to ADMINs (in apply_method)
+            Note:
+                This function must be restricted to ADMINs (in apply_method)
         """
 
         # CSRF Protection
@@ -752,7 +764,8 @@ class S3RoleManager(CRUDMethod):
         """
             Delete a role
 
-            NB this function must be restricted to ADMINs (in apply_method)
+            Note:
+                This function must be restricted to ADMINs (in apply_method)
         """
 
         # CSRF Protection
@@ -782,7 +795,8 @@ class S3RoleManager(CRUDMethod):
         """
             Assign/unassign roles to a user
 
-            NB this function is accessible for non-ADMINs (e.g. ORG_ADMIN)
+            Note:
+                This function is accessible for non-ADMINs (e.g. ORG_ADMIN)
         """
 
         auth = current.auth
@@ -932,7 +946,8 @@ class S3RoleManager(CRUDMethod):
         """
             Assign/unassign users to a role
 
-            NB this function could be accessible for non-ADMINs (e.g. ORG_ADMIN)
+            Note:
+                This function could be accessible for non-ADMINs (e.g. ORG_ADMIN)
         """
 
         auth = current.auth
@@ -1081,15 +1096,19 @@ class S3RoleManager(CRUDMethod):
         """
             Get a dict of users the current user can assign to roles
 
-            @param role_id: the target role ID
+            Args:
+                role_id: the target role ID
 
-            @returns: a dict {user_id: {l:label,
-                                        t:title,
-                                        a:assignable,
-                                        r:removable,
-                                        u:unrestrictable,
-                                        }, ...}
-                      NB a, r and u attributes only added if non-default
+            Returns:
+                a dict {user_id: {l:label,
+                                  t:title,
+                                  a:assignable,
+                                  r:removable,
+                                  u:unrestrictable,
+                                  }, ...}
+
+            Note:
+                a, r and u attributes only added if non-default
         """
 
         auth = current.auth
@@ -1148,12 +1167,15 @@ class S3RoleManager(CRUDMethod):
         """
             Get a dict of roles the current user can manage
 
-            @returns: a dict {role_id: {l:label,
-                                        a:assignable,
-                                        r:removable,
-                                        u:unrestrictable,
-                                        }, ...},
-                      NB a, r and u attributes only added if non-default
+            Returns:
+                a dict {role_id: {l:label,
+                                  a:assignable,
+                                  r:removable,
+                                  u:unrestrictable,
+                                  }, ...}
+
+            Note:
+                a, r and u attributes only added if non-default
         """
 
         auth = current.auth
@@ -1217,9 +1239,10 @@ class S3RoleManager(CRUDMethod):
         """
             Get a dict of realms managed by the current user
 
-            @returns: tuple (realm_types, realms):
-                        - realm_types = [(instance_type, label), ...]
-                        - realms = {pe_id: {l:label, t:type}, ...}
+            Returns:
+                tuple (realm_types, realms):
+                    - realm_types = [(instance_type, label), ...]
+                    - realms = {pe_id: {l:label, t:type}, ...}
         """
 
         T = current.T
@@ -1278,7 +1301,8 @@ class S3RoleManager(CRUDMethod):
         """
             Interactive import of roles (auth_roles.csv format)
 
-            NB this function must be restricted to ADMINs (in apply_method)
+            Note:
+                This function must be restricted to ADMINs (in apply_method)
         """
 
         # TODO implement roles importer
@@ -1307,7 +1331,8 @@ class S3RoleManager(CRUDMethod):
         """
             Export of roles (auth_roles.csv format)
 
-            NB this function must be restricted to ADMINs (in apply_method)
+            Note:
+                This function must be restricted to ADMINs (in apply_method)
         """
 
         output = S3RolesExport(r.resource).as_csv()
@@ -1332,7 +1357,8 @@ class S3PermissionWidget:
 
     def __init__(self, role_id=None):
         """
-            Constructor
+            Args:
+                role_id: the role ID (auth_group)
         """
 
         sr = current.auth.get_system_roles()
@@ -1351,9 +1377,10 @@ class S3PermissionWidget:
         """
             Form builder entry point
 
-            @param field: the Field
-            @param value: the current (or default) value of the field
-            @param attributes: HTML attributes for the widget
+            Args:
+                field: the Field
+                value: the current (or default) value of the field
+                attributes: HTML attributes for the widget
         """
 
         T = current.T
@@ -1436,7 +1463,8 @@ class S3PermissionWidget:
         """
             Get a JSON-serializable dict of active modules
 
-            @returns: a dict {prefix: (name_nice, restricted)}
+            Returns:
+                a dict {prefix: (name_nice, restricted)}
         """
 
         # Modules where access rules do not apply (or are hard-coded)
@@ -1460,7 +1488,8 @@ class S3PermissionWidget:
         """
             Get a JSON-serializable dict of active data models
 
-            @returns: a dict {prefix: {tablename: restricted}}
+            Returns:
+                a dict {prefix: {tablename: restricted}}
         """
 
         # Get all table names
@@ -1507,7 +1536,8 @@ class S3PermissionWidget:
             Return all table names in the database; in separate function
             to allow caching because it requires to load all models once
 
-            @returns: db.tables
+            Returns:
+                db.tables
         """
 
         db = current.db
@@ -1530,7 +1560,8 @@ class S3PermissionWidget:
         """
             Get a JSON-serializable list of permissions
 
-            @returns: an ordered list of dicts:
+            Returns:
+                an ordered list of dicts:
                      [{l: label,
                        b: bit,
                        o: relevant for owned records,
@@ -1566,7 +1597,8 @@ class S3PermissionWidget:
             Get default permissions, i.e. those granted by roles the user
             has by default
 
-            @returns: a dict {tablename: (uACL, oACL)}
+            Returns:
+                a dict {tablename: (uACL, oACL)}
         """
 
         permissions = current.auth.permission
@@ -1611,9 +1643,10 @@ class S3PermissionWidget:
         """
             Inject the necessary JavaScript for the widget
 
-            @param widget_id: the widget ID
-                              (=element ID of the person_id field)
-            @param options: JSON-serializable dict of widget options
+            Args:
+                widget_id: the widget ID
+                           (=element ID of the person_id field)
+                options: JSON-serializable dict of widget options
         """
 
         s3 = current.response.s3
@@ -1701,16 +1734,15 @@ class S3RolesWidget:
                  ajax_url=None,
                  ):
         """
-            Constructor
-
-            @param mode: what to assign ("roles"|"users")
-            @param items: the assignable items (roles or users), dict,
-                          structure see get_managed_roles/get_managed_users
-            @param use_realms: boolean, whether to use realms
-            @param realm_types: the realm types and their labels, tuple,
-                                format see get_managed_realms
-            @param realms: the realms, dict, structure see get_managed_realms
-            @param ajax_url: the URL for Ajax modification of assignments
+            Args:
+                mode: what to assign ("roles"|"users")
+                items: the assignable items (roles or users), dict,
+                       structure see get_managed_roles/get_managed_users
+                use_realms: boolean, whether to use realms
+                realm_types: the realm types and their labels, tuple,
+                             format see get_managed_realms
+                realms: the realms, dict, structure see get_managed_realms
+                ajax_url: the URL for Ajax modification of assignments
         """
 
         self.mode = mode
@@ -1728,9 +1760,10 @@ class S3RolesWidget:
         """
             Form builder entry point
 
-            @param field: the Field
-            @param value: the current (or default) value of the field
-            @param attributes: HTML attributes for the widget
+            Args:
+                field: the Field
+                value: the current (or default) value of the field
+                attributes: HTML attributes for the widget
         """
 
         T = current.T
@@ -1797,9 +1830,11 @@ class S3RolesWidget:
         """
             Get the current assignments for the user/role
 
-            @param record_id: the user or role ID
+            Args:
+                record_id: the user or role ID
 
-            @returns: a list of tuples (roleID|userID, realmID)
+            Returns:
+                a list of tuples (roleID|userID, realmID)
         """
 
         auth = current.auth
@@ -1855,12 +1890,13 @@ class S3RolesWidget:
         """
             Inject the necessary JavaScript for the widget
 
-            @param widget_id: the widget ID
-                              (=element ID of the person_id field)
-            @param options: JSON-serializable dict of widget options
-            @param i18n: translations of screen messages rendered by
-                         the client-side script,
-                         a dict {messageKey: translation}
+            Args:
+                widget_id: the widget ID
+                           (=element ID of the person_id field)
+                options: JSON-serializable dict of widget options
+                i18n: translations of screen messages rendered by
+                      the client-side script,
+                      a dict {messageKey: translation}
         """
 
         s3 = current.response.s3
@@ -1898,7 +1934,8 @@ class S3RolesWidget:
             Inject translations for screen messages rendered by the
             client-side script
 
-            @param labels: dict of translations {messageKey: translation}
+            Args:
+                labels: dict of translations {messageKey: translation}
         """
 
         strings = ['''i18n.%s="%s"''' % (k, s3_str(v))
@@ -1913,10 +1950,9 @@ class S3RolesExport:
 
     def __init__(self, resource):
         """
-            Constructor
-
-            @param resource: the role resource (auth_group) with REST
-                             filters; or None to export all groups
+            Args:
+                resource: the role resource (auth_group) with REST
+                          filters; or None to export all groups
         """
 
         db = current.db
@@ -1998,7 +2034,8 @@ class S3RolesExport:
             Export the current roles and permissions as CSV,
             suitable for prepop (see S3BulkImporter.import_role)
 
-            @returns: a StringIO containing the CSV
+            Returns:
+                a StringIO containing the CSV
         """
 
         import csv
@@ -2095,9 +2132,10 @@ class S3RolesExport:
             Encodes a permission bitmap as string, using the permission
             labels from S3Permission.PERMISSION_OPTS
 
-            @param permissions: the permission bitmap
-            @param explicit_none: return "NONE" if no permission bit set
-                                  (otherwise returns None)
+            Args:
+                permissions: the permission bitmap
+                explicit_none: return "NONE" if no permission bit set
+                               (otherwise returns None)
         """
 
         if not permissions:

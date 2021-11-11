@@ -29,7 +29,6 @@ __all__ = ("S3Permission",
            )
 
 from collections import OrderedDict
-from functools import reduce
 
 from gluon import current, redirect, HTTP, URL
 from gluon.storage import Storage
@@ -57,53 +56,42 @@ class S3Permission:
     ALL = CREATE | READ | UPDATE | DELETE | REVIEW | APPROVE | PUBLISH
     NONE = 0x0000 # must be 0!
 
-    PERMISSION_OPTS = OrderedDict([
-        [CREATE, "CREATE"],
-        [READ, "READ"],
-        [UPDATE, "UPDATE"],
-        [DELETE, "DELETE"],
-        [REVIEW, "REVIEW"],
-        [APPROVE, "APPROVE"],
+    PERMISSION_OPTS = OrderedDict((
+        (CREATE, "CREATE"),
+        (READ, "READ"),
+        (UPDATE, "UPDATE"),
+        (DELETE, "DELETE"),
+        (REVIEW, "REVIEW"),
+        (APPROVE, "APPROVE"),
         #[PUBLISH, "PUBLISH"],   # currently unused
-    ])
+        ))
 
-    # Method <-> required permission
-    METHODS = Storage({
-        "create": CREATE,
-        "read": READ,
-        "update": UPDATE,
-        "delete": DELETE,
-        "map": READ,
-        "report": READ,
-        #"search": READ,
-        "timeplot": READ,
-        "import": CREATE,
-        "review": REVIEW,
-        "approve": APPROVE,
-        "reject": APPROVE,
-        "publish": PUBLISH,
-    })
-
-    # Lambda expressions for ACL handling
-    required_acl = lambda self, methods: \
-                          reduce(lambda a, b: a | b,
-                                 [self.METHODS[m]
-                                  for m in methods if m in self.METHODS],
-                                 self.NONE)
-    most_permissive = lambda self, acl: \
-                             reduce(lambda x, y: (x[0]|y[0], x[1]|y[1]),
-                                    acl, (self.NONE, self.NONE))
-    most_restrictive = lambda self, acl: \
-                              reduce(lambda x, y: (x[0]&y[0], x[1]&y[1]),
-                                     acl, (self.ALL, self.ALL))
+    # URL Method <-> required permission
+    METHODS = {"create": CREATE,
+               "read": READ,
+               "update": UPDATE,
+               "delete": DELETE,
+               "list": READ,
+               "datatable": READ,
+               "datalist": READ,
+               "map": READ,
+               "report": READ,
+               "timeplot": READ,
+               "import": CREATE,
+               "review": REVIEW,
+               "approve": APPROVE,
+               "reject": APPROVE,
+               "publish": PUBLISH,
+               }
 
     # -------------------------------------------------------------------------
     def __init__(self, auth, tablename=None):
         """
             Constructor, invoked by AuthS3.__init__
 
-            @param auth: the AuthS3 instance
-            @param tablename: the name for the permissions table
+            Args:
+                auth: the AuthS3 instance
+                tablename: the name for the permissions table (override)
         """
 
         db = current.db
@@ -264,6 +252,37 @@ class S3Permission:
             db.executesql(sql % names)
 
     # -------------------------------------------------------------------------
+    # Permission rule handling
+    # -------------------------------------------------------------------------
+    @classmethod
+    def required_acl(cls, methods):
+
+        all_methods, none = cls.METHODS, cls.NONE
+
+        result = none
+        for method in methods:
+            result |= all_methods.get(method, none)
+        return result
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def most_permissive(cls, rules):
+
+        result = (cls.NONE, cls.NONE)
+        for rule in rules:
+            result = result[0] | rule[0], result[1] | rule[1]
+        return result
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def most_restrictive(cls, rules):
+
+        result = (cls.ALL, cls.ALL)
+        for rule in rules:
+            result = result[0] & rule[0], result[1] & rule[1]
+        return result
+
+    # -------------------------------------------------------------------------
     # ACL Management
     # -------------------------------------------------------------------------
     def update_acl(self, group,
@@ -279,16 +298,17 @@ class S3Permission:
         """
             Update an ACL
 
-            @param group: the ID or UID of the auth_group this ACL applies to
-            @param c: the controller
-            @param f: the function
-            @param t: the tablename
-            @param record: the record (as ID or Row with ID)
-            @param oacl: the ACL for the owners of the specified record(s)
-            @param uacl: the ACL for all other users
-            @param entity: restrict this ACL to the records owned by this
-                           entity (pe_id), specify "any" for any entity
-            @param delete: delete the ACL instead of updating it
+            Args:
+                group: the ID or UID of the auth_group this ACL applies to
+                c: the controller
+                f: the function
+                t: the tablename
+                record: the record (as ID or Row with ID)
+                oacl: the ACL for the owners of the specified record(s)
+                uacl: the ACL for all other users
+                entity: restrict this ACL to the records owned by this
+                        entity (pe_id), specify "any" for any entity
+                delete: delete the ACL instead of updating it
         """
 
         ANY = "any"
@@ -386,13 +406,15 @@ class S3Permission:
                    ):
         """
             Delete an ACL
-            @param group: the ID or UID of the auth_group this ACL applies to
-            @param c: the controller
-            @param f: the function
-            @param t: the tablename
-            @param record: the record (as ID or Row with ID)
-            @param entity: restrict this ACL to the records owned by this
-                           entity (pe_id), specify "any" for any entity
+
+            Args:
+                group: the ID or UID of the auth_group this ACL applies to
+                c: the controller
+                f: the function
+                t: the tablename
+                record: the record (as ID or Row with ID)
+                entity: restrict this ACL to the records owned by this
+                        entity (pe_id), specify "any" for any entity
         """
 
         return self.update_acl(group,
@@ -412,14 +434,17 @@ class S3Permission:
         """
             Get the entity/group/user owning a record
 
-            @param table: the table
-            @param record: the record ID (or the Row, if already loaded)
+            Args:
+                table: the table
+                record: the record ID (or the Row, if already loaded)
 
-            @note: if passing a Row, it must contain all available ownership
-                   fields (id, owned_by_user, owned_by_group, realm_entity),
-                   otherwise the record will be re-loaded by this function.
+            Returns:
+                tuple of (realm_entity, owner_group, owner_user)
 
-            @return: tuple of (realm_entity, owner_group, owner_user)
+            Note:
+                If passing a Row, it must contain all available ownership
+                fields (id, owned_by_user, owned_by_group, realm_entity),
+                otherwise the record will be re-loaded by this function.
         """
 
         realm_entity = None
@@ -482,12 +507,14 @@ class S3Permission:
         """
             Check whether the current user owns the record
 
-            @param table: the table or tablename
-            @param record: the record ID (or the Row if already loaded)
-            @param owners: override the actual record owners by a tuple
-                           (realm_entity, owner_group, owner_user)
+            Args:
+                table: the table or tablename
+                record: the record ID (or the Row if already loaded)
+                owners: override the actual record owners by a tuple
+                        (realm_entity, owner_group, owner_user)
 
-            @return: True if the current user owns the record, else False
+            Returns:
+                True if the current user owns the record, else False
         """
 
         auth = self.auth
@@ -556,13 +583,15 @@ class S3Permission:
         """
             Returns a query to select the records in table owned by user
 
-            @param table: the table
-            @param user: the current auth.user (None for not authenticated)
-            @param use_realm: use realms
-            @param realm: limit owner access to these realms
-            @param no_realm: don't include these entities in role realms
-            @return: a web2py Query instance, or None if no query can be
-                      constructed
+            Args:
+                table: the table
+                user: the current auth.user (None for not authenticated)
+                use_realm: use realms
+                realm: limit owner access to these realms
+                no_realm: don't include these entities in role realms
+
+            Returns:
+                a web2py Query instance, or None if no query can be constructed
         """
 
         OUSR = "owned_by_user"
@@ -667,10 +696,12 @@ class S3Permission:
         """
             Returns a query to select the records owned by one of the entities.
 
-            @param table: the table
-            @param entities: list of entities
-            @return: a web2py Query instance, or None if no query can be
-                      constructed
+            Args:
+                table: the table
+                entities: list of entities
+
+            Returns:
+                a web2py Query instance, or None if no query can be constructed
         """
 
         OENT = "realm_entity"
@@ -692,14 +723,16 @@ class S3Permission:
             Returns a list of the realm entities which a user can access for
             the given table.
 
-            @param tablename: the tablename
-            @param method: the method
-            @param c: override request.controller to look up for
-                      a different controller context
-            @param f: override request.function to look up for
-                      a different controller context
+            Args:
+                tablename: the tablename
+                method: the method
+                c: override request.controller to look up for
+                   a different controller context
+                f: override request.function to look up for
+                   a different controller context
 
-            @return: a list of pe_ids or None (for no restriction)
+            Returns:
+                a list of pe_ids or None (for no restriction)
         """
 
         if not self.entity_realm:
@@ -744,10 +777,14 @@ class S3Permission:
         """
             Check whether a record has been approved or not
 
-            @param table: the table
-            @param record: the record or record ID
-            @param approved: True = check if approved,
-                             False = check if unapproved
+            Args:
+                table: the table
+                record: the record or record ID
+                approved: True = check if approved,
+                          False = check if unapproved
+
+            Returns:
+                boolean result of the check
         """
 
         if "approved_by" not in table.fields or \
@@ -781,8 +818,9 @@ class S3Permission:
         """
             Check whether a record has not been approved yet
 
-            @param table: the table
-            @param record: the record or record ID
+            Args:
+                table: the table
+                record: the record or record ID
         """
 
         return self.approved(table, record, approved=False)
@@ -793,7 +831,8 @@ class S3Permission:
         """
             Check whether record approval is required for a table
 
-            @param table: the table (or tablename)
+            Args:
+                table: the table (or tablename)
         """
 
         settings = current.deployment_settings
@@ -823,9 +862,10 @@ class S3Permission:
         """
             Set the default approver for new records in table
 
-            @param table: the table
-            @param force: whether to force approval for tables which
-                          require manual approval
+            Args:
+                table: the table
+                force: whether to force approval for tables which
+                       require manual approval
         """
 
         APPROVER = "approved_by"
@@ -861,11 +901,12 @@ class S3Permission:
         """
             Check permission to access a record with method
 
-            @param method: the access method (string)
-            @param c: the controller name (falls back to current request)
-            @param f: the function name (falls back to current request)
-            @param t: the table or tablename
-            @param record: the record or record ID (None for any record)
+            Args:
+                method: the access method (string)
+                c: the controller name (falls back to current request)
+                f: the function name (falls back to current request)
+                t: the table or tablename
+                record: the record or record ID (None for any record)
         """
 
         # Auth override, system roles and login
@@ -1055,10 +1096,11 @@ class S3Permission:
             Returns a query to select the accessible records for method
             in table.
 
-            @param method: the method as string or a list of methods (AND)
-            @param table: the database table or table name
-            @param c: controller name (falls back to current request)
-            @param f: function name (falls back to current request)
+            Args:
+                method: the method as string or a list of methods (AND)
+                table: the database table or table name
+                c: controller name (falls back to current request)
+                f: function name (falls back to current request)
         """
 
         # Get the table
@@ -1276,18 +1318,19 @@ class S3Permission:
                        ):
         """
             Return a URL only if accessible by the user, otherwise False
-            - used for Navigation Items
+                - used for Navigation Items
 
-            @param c: the controller
-            @param f: the function
-            @param p: the permission (defaults to READ)
-            @param t: the tablename (defaults to <c>_<f>)
-            @param a: the application name
-            @param args: the URL arguments
-            @param vars: the URL variables
-            @param anchor: the anchor (#) of the URL
-            @param extension: the request format extension
-            @param env: the environment
+            Args:
+                c: the controller
+                f: the function
+                p: the permission (defaults to READ)
+                t: the tablename (defaults to <c>_<f>)
+                a: the application name
+                args: the URL arguments
+                vars: the URL variables
+                anchor: the anchor (#) of the URL
+                extension: the request format extension
+                env: the environment
         """
 
         if args is None:
@@ -1367,17 +1410,19 @@ class S3Permission:
             Find all applicable ACLs for the specified situation for
             the specified realms and delegations
 
-            @param racl: the required ACL
-            @param realms: the realms
-            @param delegations: the delegations
-            @param c: the controller name, falls back to current request
-            @param f: the function name, falls back to current request
-            @param t: the tablename
-            @param entity: the realm entity
+            Args:
+                racl: the required ACL
+                realms: the realms
+                delegations: the delegations
+                c: the controller name, falls back to current request
+                f: the function name, falls back to current request
+                t: the tablename
+                entity: the realm entity
 
-            @return: None for no ACLs defined (allow),
-                      [] for no ACLs applicable (deny),
-                      or list of applicable ACLs
+            Returns:
+                - None for no ACLs defined (allow), or
+                - [] for no ACLs applicable (deny), or
+                - list of applicable ACLs
         """
 
         if not self.use_cacls:
@@ -1596,8 +1641,9 @@ class S3Permission:
             Checks whether a page is restricted (=whether ACLs
             are to be applied)
 
-            @param c: controller name
-            @param f: function name
+            Args:
+                c: controller name
+                f: function name
         """
 
 
@@ -1617,7 +1663,8 @@ class S3Permission:
         """
             Check whether access to a table is restricted
 
-            @param t: the table name or Table
+            Args:
+                t: the table name or Table
         """
 
         s3 = current.response.s3
@@ -1676,10 +1723,11 @@ class S3Permission:
             Checks whether ownership can be required to access records in
             this table (this may not apply to every record in this table).
 
-            @param method: the method as string or a list of methods (AND)
-            @param table: the database table or table name
-            @param c: controller name (falls back to current request)
-            @param f: function name (falls back to current request)
+            Args:
+                method: the method as string or a list of methods (AND)
+                table: the database table or table name
+                c: controller name (falls back to current request)
+                f: function name (falls back to current request)
         """
 
         if not self.use_cacls:
@@ -1750,8 +1798,9 @@ class S3Permission:
             necessary in methods which change the status of the record
             (e.g. approval).
 
-            @param table: the table
-            @param record_id: the record ID
+            Args:
+                table: the table
+                record_id: the record ID
         """
 
         if table is None:

@@ -2508,7 +2508,7 @@ class cr_AssignUnit(S3CRUD):
             r.error(400, current.messages.BAD_REQUEST)
 
         self.settings = current.response.s3.crud
-        sqlform = self._config("crud_form")
+        sqlform = self.resource.get_config("crud_form")
         self.sqlform = sqlform if sqlform else S3SQLDefaultForm()
         self.data = None
 

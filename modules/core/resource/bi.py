@@ -535,17 +535,18 @@ class S3BulkImporter:
         """
             Import images, such as a logo or person image
 
-            filename     a CSV list of records and filenames
-            tablename    the name of the table
-            idfield      the field used to identify the record
-            imagefield   the field to where the image will be added
+            Args:
+                filename: a CSV list of records and filenames
+                tablename: the name of the table
+                idfield: the field used to identify the record
+                imagefield: the field to where the image will be added
 
             Example:
-            bi.import_image ("org_logos.csv", "org_organisation", "name", "logo")
-            and the file org_logos.csv may look as follows
-            id                            file
-            Sahana Software Foundation    sahanalogo.jpg
-            American Red Cross            icrc.gif
+                bi.import_image ("org_logos.csv", "org_organisation", "name", "logo")
+                ...and the file org_logos.csv may look as follows:
+                id                            file
+                Sahana Software Foundation    sahanalogo.jpg
+                American Red Cross            icrc.gif
         """
 
         # Check if the source file is accessible
@@ -983,8 +984,11 @@ class S3BulkImporter:
         """
             Convert a permissions rule into its binary representation
 
-            :param str rule: |-separated permission names
-            :returns int: the binary representation of the rule (bits)
+            Args:
+                rule: |-separated permission names (str)
+
+            Returns:
+                int: the binary representation of the rule (bits)
         """
 
         permissions = current.auth.permission

@@ -67,16 +67,17 @@ class XMLImporter:
             Parse a data source for import, and convert it into a S3XML
             element tree.
 
-            :param tablename: the name of the target table
-            :param source: the data source; accepts a single source, a list of
-                           sources or a list of tuples (name, source); each
-                           source must be either an ElementTree or a file-like
-                           object
-            :param str source_type: the source type (xml|json|csv|xls|xlsx)
-            :param stylesheet: the transformation stylesheet
-            :param extra_data: for CSV imports, dict of extra columns to add
-                               to each row
-            :param args: parameters to pass to the transformation stylesheet
+            Args:
+                tablename: the name of the target table
+                source: the data source; accepts a single source, a list of
+                        sources or a list of tuples (name, source); each
+                        source must be either an ElementTree or a file-like
+                        object
+                str source_type: the source type (xml|json|csv|xls|xlsx)
+                stylesheet: the transformation stylesheet
+                extra_data: for CSV imports, dict of extra columns to add
+                            to each row
+                args: parameters to pass to the transformation stylesheet
         """
 
         xml = current.xml
@@ -151,22 +152,22 @@ class XMLImporter:
         """
             Import data from an S3XML element tree.
 
-            :param str tablename: the name of the target table
-            :param ElementTree tree: the S3XML element tree
-            :param dict files: file attachments referenced by the tree
-            :param record_id: the target record ID
-            :param list components: list of importable components
-            :param commit: commit the import job, if False, the import job
-                           will be rolled back and stored for committing at
-                           a later time
-            :param ignore_errors: ignore any errors, import what is possible
-            :param job_id: the job UID, to restore and commit a previously
-                           stored import job
-            :param list select_items: only restore these items from the job
-                                      (list of import item record IDs)
-
-            :param strategy: list of allowed import methods
-            :param SyncPolicy sync_policy: the synchronization policy
+            Args:
+                tablename: the name of the target table
+                tree: the S3XML element tree (ElementTree)
+                files: file attachments referenced by the tree (dict)
+                record_id: the target record ID
+                list components: list of importable components
+                commit: commit the import job, if False, the import job
+                        will be rolled back and stored for committing at
+                        a later time
+                ignore_errors: ignore any errors, import what is possible
+                job_id: the job UID, to restore and commit a previously
+                        stored import job
+                list select_items: only restore these items from the job
+                                   (list of import item record IDs)
+                strategy: list of allowed import methods
+                sync_policy: the synchronization policy (SyncPolicy)
         """
 
         db = current.db
@@ -304,11 +305,13 @@ class XMLImporter:
             Find elements in the source tree that belong to the target
             record, or the target table if no record is specified.
 
-            :param ElementTree tree: the source tree
-            :param str tablename: the name of the target table
-            :param int record_id: the target record ID
+            Args:
+                tree: the source tree (ElementTree)
+                tablename: the name of the target table
+                record_id: the target record ID
 
-            :returns list: list of matching elements, or None
+            Returns:
+                list of matching elements, or None
         """
 
         xml = current.xml
@@ -359,9 +362,10 @@ class ImportResult:
 
     def __init__(self, success, error=None, job=None):
         """
-            :param bool success: whether the job was successful
-            :param str error: error message
-            :param ImportJob job: the ImportJob
+            Args:
+                success: whether the job was successful (bool)
+                error: error message
+                job: the ImportJob
         """
 
         self.success = success
@@ -390,7 +394,8 @@ class ImportResult:
         """
             Generate a JSON message from this result
 
-            :returns str: the JSON message
+            Returns:
+                the JSON message (str)
         """
 
         xml = current.xml
@@ -436,11 +441,12 @@ class ImportJob():
                  sync_policy = None,
                  ):
         """
-            :param tree: the element tree to import
-            :param files: files attached to the import (for upload fields)
-            :param job_id: restore job from database (record ID or job_id)
-            :param strategy: the import strategy
-            :param sync_policy: the synchronization policy
+            Args:
+                tree: the element tree to import
+                files: files attached to the import (for upload fields)
+                job_id: restore job from database (record ID or job_id)
+                strategy: the import strategy
+                sync_policy: the synchronization policy
         """
 
         self.error = None # the last error
@@ -564,19 +570,21 @@ class ImportJob():
             Parse and validate an XML element and add it as new item
             to the job.
 
-            :param element: the element
-            :param original: the original DB record (if already available,
-                             will otherwise be looked-up by this function)
-            :param components: a dictionary of components (as in CRUDResource)
-                               to include in the job (defaults to all
-                               defined components)
-            :param parent: the parent item (if this is a component)
-            :param joinby: the component join key(s) (if this is a component)
+            Args:
+                element: the element
+                original: the original DB record (if already available,
+                          will otherwise be looked-up by this function)
+                components: a dictionary of components (as in CRUDResource)
+                            to include in the job (defaults to all
+                            defined components)
+                parent: the parent item (if this is a component)
+                joinby: the component join key(s) (if this is a component)
 
-            :returns: a unique identifier for the new item, or None if there
-                      was an error. self.error contains the last error, and
-                      self.error_tree an element tree with all failing elements
-                      including error attributes.
+            Returns:
+                a unique identifier for the new item, or None if there
+                was an error. self.error contains the last error, and
+                self.error_tree an element tree with all failing elements
+                including error attributes.
         """
 
         if element in self.elements:
@@ -822,12 +830,13 @@ class ImportJob():
         """
             Find referenced elements in the tree
 
-            :param element: the element
-            :param table: the DB table
-            :param fields: the FK fields in the table
-            :param tree: the import tree
-            :param directory: a dictionary to lookup elements in the tree
-                              (will be filled in by this function)
+            Args:
+                element: the element
+                table: the DB table
+                fields: the FK fields in the table
+                tree: the import tree
+                directory: a dictionary to lookup elements in the tree
+                           (will be filled in by this function)
         """
 
         db = current.db
@@ -1024,8 +1033,9 @@ class ImportJob():
         """
             Resolve the reference list of an item
 
-            :param item_id: the import item UID
-            :param import_list: the ordered list of items (UIDs) to import
+            Args:
+                item_id: the import item UID
+                import_list: the ordered list of items (UIDs) to import
         """
 
         item = self.items[item_id]
@@ -1048,10 +1058,11 @@ class ImportJob():
         """
             Commit the import job to the DB
 
-            :param ignore_errors: skip any items with errors
-                                  (does still report the errors)
-            :param log_items: callback function to log import items
-                              before committing them
+            Args:
+                ignore_errors: skip any items with errors
+                               (does still report the errors)
+                log_items: callback function to log import items
+                           before committing them
         """
 
         ATTRIBUTE = current.xml.ATTRIBUTE
@@ -1274,7 +1285,8 @@ class ImportItem:
 
     def __init__(self, job):
         """
-            :param job: the import job this item belongs to
+            Args:
+                job: the import job this item belongs to
         """
 
         self.job = job
@@ -1347,12 +1359,14 @@ class ImportItem:
         """
             Read data from a <resource> element
 
-            :param element: the element
-            :param table: the DB table
-            :param tree: the import tree
-            :param files: uploaded files
+            Args:
+                element: the element
+                table: the DB table
+                tree: the import tree
+                files: uploaded files
 
-            :returns: True if successful, False if not (sets self.error)
+            Returns:
+                True if successful, False if not (sets self.error)
         """
 
         s3db = current.s3db
@@ -1724,8 +1738,8 @@ class ImportItem:
         """
             Commit this item to the database
 
-            :param ignore_errors: skip invalid components
-                                  (still reports errors)
+            Args:
+                ignore_errors: skip invalid components (still reports errors)
         """
 
         if self.committed:
@@ -2173,7 +2187,8 @@ class ImportItem:
             an underscore, used only for new records and only if the respective
             field is not populated yet.
 
-            :param data: the data dict
+            Args:
+                data: the data dict
         """
 
         for k, v in list(data.items()):
@@ -2314,8 +2329,9 @@ class ImportItem:
             if) it has been committed. This is only needed if the reference
             could not be resolved before commit due to circular references.
 
-            :param field: the field name of the foreign key
-            :param value: the value of the foreign key
+            Args:
+                field: the field name of the foreign key
+                value: the value of the foreign key
         """
 
         table = self.table
@@ -2353,9 +2369,10 @@ class ImportItem:
         """
             Update object references in a JSON field
 
-            :param fieldname: the name of the JSON field
-            :param refkey: the reference key, a tuple (tablename, uidtype, uid)
-            :param value: the foreign key value
+            Args:
+                fieldname: the name of the JSON field
+                refkey: the reference key, a tuple (tablename, uidtype, uid)
+                value: the foreign key value
         """
 
 
@@ -2474,7 +2491,8 @@ class ImportItem:
             the references (since this can not be done before all items
             are restored), must call job.restore_references() to do that
 
-            :param row: the item table row
+            Args:
+                row: the item table row
         """
 
         xml = current.xml
@@ -2549,12 +2567,13 @@ class SyncPolicy:
                  last_sync = None,
                  ):
         """
-            :param str onupdate: update policy
-            :param str onconflict: conflict policy
-            :param function resolve: callback to resolve conflicts, receives
-                                     the import item as parameter
-            :param datetime last_sync: date and time of the last sync run
-                                       with the remote repository
+            Args:
+                onupdate: update policy (str)
+                onconflict: conflict policy (str)
+                resolve: callback to resolve conflicts, receives
+                         the import item as parameter
+                last_sync: datetime of the last sync run with the remote
+                           repository
         """
 
         self.update_policy = onupdate
@@ -2577,10 +2596,10 @@ class ObjectReferences:
         - resolve() replaces them with:
                 "<name>": <db_id>
 
-        .. example::
+        Examples:
             # Get a list of all references in obj
             refs = ObjectReferences(obj).refs
-        .. example::
+
             # Resolve a reference in obj
             ObjectReferences(obj).resolve("req_req", "uuid", "REQ1", 57)
     """
@@ -2591,7 +2610,8 @@ class ObjectReferences:
 
     def __init__(self, obj):
         """
-            :param obj: the object to inspect (parsed)
+            Args:
+                obj: the object to inspect (parsed)
         """
 
         self.obj = obj
@@ -2605,7 +2625,8 @@ class ObjectReferences:
         """
             List of references discovered in the object (lazy property)
 
-            :returns: a list of tuples (tablename, uidtype, uid)
+            Returns:
+                a list of tuples (tablename, uidtype, uid)
         """
 
         if self._refs is None:
@@ -2620,7 +2641,8 @@ class ObjectReferences:
         """
             A dict with pointers to the references inside the object
 
-            :returns: a dict {(tablename, uidtype, uid): (obj, key)}
+            Returns:
+                a dict {(tablename, uidtype, uid): (obj, key)}
         """
 
         if self._objs is None:
@@ -2635,7 +2657,8 @@ class ObjectReferences:
             Traverse a (possibly nested) object and find all references,
             populates self.refs and self.objs
 
-            :param obj: the object to inspect
+            Args:
+                obj: the object to inspect
         """
 
         refs = self._refs
@@ -2687,10 +2710,11 @@ class ObjectReferences:
             Resolve a reference in self.obj with the given value; will
             resolve all occurences of the reference
 
-            :param tablename: the referenced table
-            :param uidtype: the type of uid (uuid or tuid)
-            :param uid: the uuid or tuid
-            :param value: the value to resolve the reference
+            Args:
+                tablename: the referenced table
+                uidtype: the type of uid (uuid or tuid)
+                uid: the uuid or tuid
+                value: the value to resolve the reference
         """
 
         items = self.objs.get((tablename, uidtype, uid))
@@ -2712,15 +2736,16 @@ class S3Duplicate:
                  noupdate = False,
                  ):
         """
-            :param primary: list or tuple of primary fields to find a
-                            match, must always match (mandatory, defaults
-                            to "name" field)
-            :param secondary: list or tuple of secondary fields to
-                              find a match, must match if values are
-                              present in the import item
-            :param ignore_case: ignore case for string/text fields
-            :param ignore_deleted: do not match deleted records
-            :param noupdate: match, but do not update
+            Args:
+                primary: list or tuple of primary fields to find a
+                         match, must always match (mandatory, defaults
+                         to "name" field)
+                secondary: list or tuple of secondary fields to
+                           find a match, must match if values are
+                           present in the import item
+                ignore_case: ignore case for string/text fields
+                ignore_deleted: do not match deleted records
+                noupdate: match, but do not update
         """
 
         if not primary:
@@ -2741,12 +2766,15 @@ class S3Duplicate:
         """
             Entry point for importer
 
-            :param item: the import item
+            Args:
+                item: the import item
 
-            :returns: the duplicate Row if match found, otherwise None
+            Returns:
+                the duplicate Row if match found, otherwise None
 
-            :raises SyntaxError: if any of the query fields doesn't exist
-                                 in the item table
+            Raises:
+                SyntaxError: if any of the query fields doesn't exist in
+                             the item table
         """
 
         data = item.data
@@ -2805,10 +2833,12 @@ class S3Duplicate:
         """
             Helper function to generate a match-query
 
-            :param field: the Field
-            :param value: the value
+            Args:
+                field: the Field
+                value: the value
 
-            :returns: a Query
+            Returns:
+                a Query
         """
 
         ftype = str(field.type)

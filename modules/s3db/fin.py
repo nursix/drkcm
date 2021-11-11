@@ -3665,9 +3665,9 @@ class fin_VoucherCancelDebit(CRUDMethod):
             # Redirect to the debit
             self.next = r.url(id=r.id, method="")
 
-        return {"title": self.crud_string("fin_voucher_debit",
-                                          "title_display",
-                                          ),
+        return {"title": get_crud_string("fin_voucher_debit",
+                                         "title_display",
+                                         ),
                 "form": form,
                 }
 

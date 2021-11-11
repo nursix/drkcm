@@ -47,8 +47,9 @@ class S3ExportPOI(CRUDMethod):
         """
             Apply method.
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         output = {}
@@ -64,6 +65,10 @@ class S3ExportPOI(CRUDMethod):
     def export(self, r, **attr):
         """
             Export POI resources.
+
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
 
             URL options:
 
@@ -82,9 +87,6 @@ class S3ExportPOI(CRUDMethod):
                 .kml            Google KML
 
             (other formats can be requested, but may give unexpected results)
-
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
         """
 
         # Determine request Lx
@@ -166,11 +168,12 @@ class S3ExportPOI(CRUDMethod):
             Export a combined tree of all records in tables, which
             are in Lx, and have been updated since msince.
 
-            @param tables: list of table names
-            @param msince: minimum modified_on datetime, "auto" for
-                           automatic from feed data, None to turn it off
-            @param update_feed: update the last_update datetime in the feed
-            @param lx: the id of the current Lx
+            Args:
+                tables: list of table names
+                msince: minimum modified_on datetime, "auto" for
+                        automatic from feed data, None to turn it off
+                update_feed: update the last_update datetime in the feed
+                lx: the id of the current Lx
         """
 
         db = current.db
@@ -232,10 +235,10 @@ class S3ExportPOI(CRUDMethod):
     @staticmethod
     def _add_lx_filter(resource, lx):
         """
-            Add a Lx filter for the current location to this
-            resource.
+            Add a Lx filter for the current location to this resource.
 
-            @param resource: the resource
+            Args:
+                resource: the resource
         """
 
         from ..resource import FS
@@ -255,8 +258,9 @@ class S3ImportPOI(CRUDMethod):
         """
             Apply method.
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if r.representation == "html":

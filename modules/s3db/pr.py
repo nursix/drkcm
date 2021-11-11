@@ -8571,7 +8571,7 @@ class pr_Contacts(CRUDMethod):
         # Custom View
         response.view = "pr/contacts.html"
 
-        title = self.crud_string(r.tablename, "title_display")
+        title = get_crud_string(r.tablename, "title_display")
 
         return {"contents": contents,
                 "title": title,
@@ -10851,8 +10851,7 @@ class pr_PersonListLayout(S3DataListLayout):
             btn = A(ICON("edit"),
                     _href = update_url,
                     _class = "s3_modal",
-                    _title = CRUDMethod.crud_string(resource.tablename,
-                                                    "title_update")
+                    _title = get_crud_string(resource.tablename, "title_update")
                     )
             toolbox.append(btn)
 

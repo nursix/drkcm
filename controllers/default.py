@@ -499,7 +499,7 @@ def masterkey():
 
     # If successfully logged-in, provide context information for
     # the master key (e.g. project UUID + title, master key UUID)
-    from core.auth.masterkey import S3MasterKey
+    from core.aaa.masterkey import S3MasterKey
     return S3MasterKey.context()
 
 # -----------------------------------------------------------------------------

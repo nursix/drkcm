@@ -48,8 +48,9 @@ class S3CheckInMethod(CRUDMethod):
         """
             Apply method.
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if r.representation == "html":
@@ -166,8 +167,9 @@ class S3CheckOutMethod(CRUDMethod):
         """
             Apply method.
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if r.representation == "html":

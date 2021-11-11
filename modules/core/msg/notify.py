@@ -83,7 +83,8 @@ class S3Notifications:
             controller which extracts the data and renders and sends
             the notification message (see send()).
 
-            @param resource_id: the pr_subscription_resource record ID
+            Args:
+                resource_id: the pr_subscription_resource record ID
         """
 
         _debug = current.log.debug
@@ -235,8 +236,9 @@ class S3Notifications:
             notification message and send it - responds to POST?format=msg
             requests to the respective resource.
 
-            @param r: the CRUDRequest
-            @param resource: the CRUDResource
+            Args:
+                r: the CRUDRequest
+                resource: the CRUDResource
         """
 
         _debug = current.log.debug
@@ -470,11 +472,14 @@ class S3Notifications:
             Helper method to find all subscriptions which need to be
             notified now.
 
-            @param now: current datetime (UTC)
-            @return: joined Rows pr_subscription/pr_subscription_resource,
-                     or None if no due subscriptions could be found
+            Args:
+                now: current datetime (UTC)
 
-            @todo: take notify_on into account when checking
+            Returns:
+                joined Rows pr_subscription/pr_subscription_resource,
+                or None if no due subscriptions could be found
+
+            TODO take notify_on into account when checking
         """
 
         db = current.db
@@ -552,10 +557,11 @@ class S3Notifications:
         """
             Method to pre-render the contents for the message template
 
-            @param resource: the CRUDResource
-            @param data: the data returned from CRUDResource.select
-            @param meta_data: the meta data for the notification
-            @param format: the contents format ("text" or "html")
+            Args:
+                resource: the CRUDResource
+                data: the data returned from CRUDResource.select
+                meta_data: the meta data for the notification
+                format: the contents format ("text" or "html")
         """
 
         created_on_selector = resource.prefix_selector("created_on")

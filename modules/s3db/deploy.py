@@ -592,7 +592,7 @@ class S3DeploymentModel(DataModel):
         # Check permission only here, i.e. when the summary is
         # actually being rendered:
         if current.auth.s3_has_permission("create", r.tablename):
-            return A(CRUDMethod.crud_string(r.tablename, "label_create"),
+            return A(get_crud_string(r.tablename, "label_create"),
                      _href = r.url(method="create", id=0, vars={}),
                      _class = "action-btn",
                      )
@@ -1486,9 +1486,8 @@ def deploy_rheader(r, tabs=None, profile=False):
         if not profile and not r.component:
             rheader = ""
         else:
-            crud_string = CRUDMethod.crud_string
             record = r.record
-            title = crud_string(r.tablename, "title_display")
+            title = get_crud_string(r.tablename, "title_display")
             if record:
                 title = "%s: %s" % (title, record.name)
                 edit_btn = ""
@@ -1828,7 +1827,7 @@ class deploy_Inbox(CRUDMethod):
 
             response.view = "list_filter.html"
             return {"items": items,
-                    "title": S3CRUD.crud_string(resource.tablename, "title_list"),
+                    "title": get_crud_string(resource.tablename, "title_list"),
                     }
 
         elif r.representation == "aadata":
@@ -3356,7 +3355,6 @@ class deploy_MissionProfileLayout(S3DataListLayout):
                              )
 
         has_permission = current.auth.s3_has_permission
-        crud_string = CRUDMethod.crud_string
 
         toolbox = DIV(_class="edit-bar fright")
 
@@ -3366,13 +3364,13 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             btn = A(ICON("edit"),
                     _href = update_url,
                     _class = "s3_modal",
-                    _title = crud_string(tablename, "title_update"),
+                    _title = get_crud_string(tablename, "title_update"),
                     )
             toolbox.append(btn)
         elif open_url:
             btn = A(ICON("file-alt"),
                     _href = open_url,
-                    _title = crud_string(tablename, "title_display"),
+                    _title = get_crud_string(tablename, "title_display"),
                     )
             toolbox.append(btn)
 
@@ -3380,7 +3378,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         if has_permission("delete", table, record_id=record_id):
             btn = A(ICON("delete"),
                     _class = "dl-item-delete",
-                    _title = crud_string(tablename, "label_delete_button"),
+                    _title = get_crud_string(tablename, "label_delete_button"),
                     )
             toolbox.append(btn)
 

@@ -53,10 +53,12 @@ class S3Merge(CRUDMethod):
         """
             Apply Merge methods
 
-            @param r: the CRUDRequest
-            @param attr: dictionary of parameters for the method handler
+            Args:
+                r: the CRUDRequest
+                attr: dictionary of parameters for the method handler
 
-            @return: output object to send to the view
+            Returns:
+                output object to send to the view
         """
 
         output = {}
@@ -101,8 +103,9 @@ class S3Merge(CRUDMethod):
         """
             Bookmark the current record for de-duplication
 
-            @param r: the CRUDRequest
-            @param attr: the controller parameters for the request
+            Args:
+                r: the CRUDRequest
+                attr: the controller parameters for the request
         """
 
         s3 = current.session.s3
@@ -133,8 +136,9 @@ class S3Merge(CRUDMethod):
         """
             Remove a record from the deduplicate list
 
-            @param r: the CRUDRequest
-            @param attr: the controller parameters for the request
+            Args:
+                r: the CRUDRequest
+                attr: the controller parameters for the request
         """
 
         s3 = current.session.s3
@@ -170,9 +174,10 @@ class S3Merge(CRUDMethod):
             view, also renders a link to the duplicate bookmark list to
             initiate the merge process from
 
-            @param r: the CRUDRequest
-            @param tablename: the table name
-            @param record_id: the record ID
+            Args:
+                r: the CRUDRequest
+                tablename: the table name
+                record_id: the record ID
         """
 
         auth = current.auth
@@ -229,8 +234,9 @@ class S3Merge(CRUDMethod):
             records in this resource, with option to select two
             and initiate the merge process from here
 
-            @param r: the CRUDRequest
-            @param attr: the controller attributes for the request
+            Args:
+                r: the CRUDRequest
+                attr: the controller attributes for the request
         """
 
         s3 = current.response.s3
@@ -383,12 +389,14 @@ class S3Merge(CRUDMethod):
         """
             Merge form for two records
 
-            @param r: the CRUDRequest
-            @param **attr: the controller attributes for the request
+            Args:
+                r: the CRUDRequest
+                attr: the controller attributes for the request
 
-            @note: this method can always only be POSTed, and requires
-                   both "selected" and "mode" in post_vars, as well as
-                   the duplicate bookmarks list in session.s3
+            Note:
+                This method can always only be POSTed, and requires both
+                "selected" and "mode" in post_vars, as well as the duplicate
+                bookmarks list in session.s3
         """
 
         T = current.T
@@ -514,7 +522,6 @@ class S3Merge(CRUDMethod):
 
         # Page title and subtitle
         output["title"] = T("Merge records")
-        #output["subtitle"] = self.crud_string(tablename, "title_list")
 
         # Submit buttons
         if keep_o or not any((keep_o, keep_d)):
@@ -655,8 +662,9 @@ class S3Merge(CRUDMethod):
             Runs the onvalidation routine for this table, and maps
             form fields and errors to regular keys
 
-            @param tablename: the table name
-            @param form: the FORM
+            Args:
+                tablename: the table name
+                form: the FORM
         """
 
         ORIGINAL, DUPLICATE, KEEP = cls.ORIGINAL, cls.DUPLICATE, cls.KEEP
@@ -685,9 +693,10 @@ class S3Merge(CRUDMethod):
             Initialize all IS_NOT_IN_DB to allow override of
             both original and duplicate value
 
-            @param field: the Field
-            @param o: the original value
-            @param d: the duplicate value
+            Args:
+                field: the Field
+                o: the original value
+                d: the duplicate value
         """
 
         allowed_override = [str(o), str(d)]
@@ -713,16 +722,18 @@ class S3Merge(CRUDMethod):
         """
             Render a widget for the Field/value
 
-            @param field: the Field
-            @param value: the value
-            @param download_url: the download URL for upload fields
-            @param attr: the HTML attributes for the widget
+            Args:
+                field: the Field
+                value: the value
+                download_url: the download URL for upload fields
+                attr: the HTML attributes for the widget
 
-            @note: upload fields currently not rendered because the
-                   upload widget wouldn't render the current value,
-                   hence pointless for merge
-            @note: custom widgets must allow override of both _id
-                   and _name attributes
+            Notes:
+                - upload fields currently not rendered because the upload
+                   widget wouldn't render the current value, hence pointless
+                   for merge
+                - custom widgets must allow override of both _id and _name
+                  attributes
         """
 
         widgets = SQLFORM.widgets
@@ -779,21 +790,22 @@ class S3RecordMerger:
 
     def __init__(self, resource):
         """
-            Constructor
-
-            @param resource: the resource
+            Args:
+                resource: the resource
         """
 
         self.resource = resource
+        self.main = True
 
     # -------------------------------------------------------------------------
     @staticmethod
     def raise_error(msg, error=RuntimeError):
         """
-            Roll back the current transaction and raise an error
+            Rolls back the current transaction and raise an error
 
-            @param message: error message
-            @param error: exception class to raise
+            Args:
+                message: error message
+                error: exception class to raise
         """
 
         current.db.rollback()
@@ -839,9 +851,10 @@ class S3RecordMerger:
             Merge the realms of two person entities (update all
             realm_entities in all records from duplicate to original)
 
-            @param table: the table original and duplicate belong to
-            @param original: the original record
-            @param duplicate: the duplicate record
+            Args:
+                table: the table original and duplicate belong to
+                original: the original record
+                duplicate: the duplicate record
         """
 
         if "pe_id" not in table.fields:
@@ -889,31 +902,30 @@ class S3RecordMerger:
             Merge a duplicate record into its original and remove the
             duplicate, updating all references in the database.
 
-            @param original_id: the ID of the original record
-            @param duplicate_id: the ID of the duplicate record
-            @param replace: list fields names for which to replace the
-                            values in the original record with the values
-                            of the duplicate
-            @param update: dict of {field:value} to update the final record
-            @param main: internal indicator for recursive calls
+            Args:
+                original_id: the ID of the original record
+                duplicate_id: the ID of the duplicate record
+                replace: list fields names for which to replace the
+                         values in the original record with the values
+                         of the duplicate
+                update: dict of {field:value} to update the final record
+                main: internal indicator for recursive calls
 
-            @status: work in progress
-            @todo: de-duplicate components and link table entries
+            Notes:
+                - virtual references (i.e. non-SQL, without foreign key
+                  constraints) must be declared in the table configuration
+                  of the referenced table like:
 
-            @note: virtual references (i.e. non-SQL, without foreign key
-                   constraints) must be declared in the table configuration
-                   of the referenced table like:
+                    s3db.configure(tablename, referenced_by=[(tablename, fieldname)])
 
-                   s3db.configure(tablename, referenced_by=[(tablename, fieldname)])
+                  This does not apply for list:references which will be found
+                  automatically.
+                - this method can only be run from master resources (in order
+                  to find all components). To merge component records, you have
+                  to re-define the component as a master resource.
+                - NB CLI calls must db.commit()
 
-                   This does not apply for list:references which will be found
-                   automatically.
-
-            @note: this method can only be run from master resources (in order
-                   to find all components). To merge component records, you have
-                   to re-define the component as a master resource.
-
-            @note: CLI calls must db.commit()
+            TODO de-duplicate components and link table entries
         """
 
         self.main = main

@@ -65,26 +65,28 @@ class S3ResourceData:
         """
             Constructor, extracts (and represents) data from a resource
 
-            @param resource: the resource
-            @param fields: the fields to extract (selector strings)
-            @param start: index of the first record
-            @param limit: maximum number of records
-            @param left: additional left joins required for custom filters
-            @param orderby: orderby-expression for DAL
-            @param groupby: fields to group by (overrides fields!)
-            @param distinct: select distinct rows
-            @param virtual: include mandatory virtual fields
-            @param count: include the total number of matching records
-            @param getids: include the IDs of all matching records
-            @param as_rows: return the rows (don't extract/represent)
-            @param represent: render field value representations
-            @param raw_data: include raw data in the result
+            Args:
+                resource: the resource
+                fields: the fields to extract (selector strings)
+                start: index of the first record
+                limit: maximum number of records
+                left: additional left joins required for custom filters
+                orderby: orderby-expression for DAL
+                groupby: fields to group by (overrides fields!)
+                distinct: select distinct rows
+                virtual: include mandatory virtual fields
+                count: include the total number of matching records
+                getids: include the IDs of all matching records
+                as_rows: return the rows (don't extract/represent)
+                represent: render field value representations
+                raw_data: include raw data in the result
 
-            @note: as_rows / groupby prevent automatic splitting of
-                   large multi-table joins, so use with care!
-            @note: with groupby, only the groupby fields will be returned
-                   (i.e. fields will be ignored), because aggregates are
-                   not supported (yet)
+            Notes:
+                - as_rows / groupby prevent automatic splitting of
+                  large multi-table joins, so use with care!
+                - with groupby, only the groupby fields will be returned
+                  (i.e. fields will be ignored), because aggregates are
+                  not supported (yet)
         """
 
         db = current.db
@@ -132,7 +134,7 @@ class S3ResourceData:
         master_query = query = resource.get_query()
 
         # Joins from filters
-        # @note: in components, rfilter is None until after get_query!
+        # NB in components, rfilter is None until after get_query!
         rfilter = resource.rfilter
         filter_tables = set(ijoins.add(rfilter.get_joins(left=False)))
         filter_tables.update(ljoins.add(rfilter.get_joins(left=True)))
@@ -597,7 +599,8 @@ class S3ResourceData:
                               determine the lookup strategy for the
                               representation.
 
-            @param rfields: the fields to extract ([S3ResourceField])
+            Args:
+                rfields: the fields to extract ([S3ResourceField])
         """
 
         table = self.resource.table
@@ -627,16 +630,20 @@ class S3ResourceData:
         """
             Resolve the ORDERBY expression.
 
-            @param orderby: the orderby expression from the caller
-            @return: tuple (expr, aggr, fields, tables):
-                     expr: the orderby expression (resolved into Fields)
-                     aggr: the orderby expression with aggregations
-                     fields: the fields in the orderby
-                     tables: the tables required for the orderby
+            Args:
+                orderby: the orderby expression from the caller
 
-            @note: for GROUPBY id (e.g. filter query), all ORDERBY fields
-                   must appear in aggregation functions, otherwise ORDERBY
-                   can be ambiguous => use aggr instead of expr
+            Returns:
+                tuple (expr, aggr, fields, tables):
+                        expr: the orderby expression (resolved into Fields)
+                        aggr: the orderby expression with aggregations
+                        fields: the fields in the orderby
+                        tables: the tables required for the orderby
+
+            Note:
+                for GROUPBY id (e.g. filter query), all ORDERBY fields
+                must appear in aggregation functions, otherwise ORDERBY
+                can be ambiguous => use aggr instead of expr
         """
 
         table = self.resource.table
@@ -727,15 +734,17 @@ class S3ResourceData:
             Execute a query to determine the number/record IDs of all
             matching rows
 
-            @param query: the filter query
-            @param join: the inner joins for the query
-            @param left: the left joins for the query
-            @param getids: extract the IDs of matching records
-            @param limitby: tuple of indices (start, end) to extract only
-                            a limited set of IDs
-            @param orderby: ORDERBY expression for the query
+            Args:
+                query: the filter query
+                join: the inner joins for the query
+                left: the left joins for the query
+                getids: extract the IDs of matching records
+                limitby: tuple of indices (start, end) to extract only
+                         a limited set of IDs
+                orderby: ORDERBY expression for the query
 
-            @return: tuple of (TotalNumberOfRecords, RecordIDs)
+            Returns:
+                tuple of (TotalNumberOfRecords, RecordIDs)
         """
 
         db = current.db
@@ -831,17 +840,19 @@ class S3ResourceData:
         """
             Find all tables and fields to retrieve in the master query
 
-            @param dfields: the requested fields (S3ResourceFields)
-            @param vfields: the virtual filter fields
-            @param joined_tables: the tables joined in the master query
-            @param as_rows: whether to produce web2py Rows
-            @param groupby: the GROUPBY expression from the caller
+            Args:
+                dfields: the requested fields (S3ResourceFields)
+                vfields: the virtual filter fields
+                joined_tables: the tables joined in the master query
+                as_rows: whether to produce web2py Rows
+                groupby: the GROUPBY expression from the caller
 
-            @return: tuple (tables, fields, extract, groupby):
-                     tables: the tables required to join
-                     fields: the fields to retrieve
-                     extract: the fields to extract from the result
-                     groupby: the GROUPBY expression (resolved into Fields)
+            Returns:
+                tuple (tables, fields, extract, groupby):
+                        tables: the tables required to join
+                        fields: the fields to retrieve
+                        extract: the fields to extract from the result
+                        groupby: the GROUPBY expression (resolved into Fields)
         """
 
         db = current.db
@@ -933,13 +944,15 @@ class S3ResourceData:
             Determine which fields in joined tables haven't been
             retrieved in the master query
 
-            @param all_fields: all requested fields (list of S3ResourceFields)
-            @param master_fields: all fields in the master query, a dict
-                                  {ColumnName: Field}
+            Args:
+                all_fields: all requested fields (list of S3ResourceFields)
+                master_fields: all fields in the master query, a dict
+                               {ColumnName: Field}
 
-            @return: a nested dict {TableName: {ColumnName: Field}},
-                     additionally required left joins are stored per
-                     table in the inner dict as "_left"
+            Returns:
+                a nested dict {TableName: {ColumnName: Field}},
+                additionally required left joins are stored per table in the
+                inner dict as "_left"
         """
 
         resource = self.resource
@@ -977,16 +990,18 @@ class S3ResourceData:
             master query, then we perform a separate query for each joined
             table (this is faster than building a multi-table-join)
 
-            @param tablename: name of the joined table
-            @param query: the Query
-            @param fields: the fields to extract
-            @param records: the output dict to update, structure:
-                            {RecordID: {ColumnName: RawValues}}
-            @param represent: store extracted data (self.field_data) for
-                              fast representation, and estimate lookup
-                              efforts (self.effort)
+            Args:
+                tablename: name of the joined table
+                query: the Query
+                fields: the fields to extract
+                records: the output dict to update, structure:
+                         {RecordID: {ColumnName: RawValues}}
+                represent: store extracted data (self.field_data) for
+                           fast representation, and estimate lookup
+                           efforts (self.effort)
 
-            @return: the output dict
+            Returns:
+                the output dict
         """
 
         s3db = current.s3db
@@ -1048,13 +1063,14 @@ class S3ResourceData:
         """
             Extract the data from rows and store them in self.field_data
 
-            @param rows: the rows
-            @param pkey: the primary key
-            @param columns: the columns to extract
-            @param join: the rows are the result of a join query
-            @param records: the records dict to merge the data into
-            @param represent: collect unique values per field and estimate
-                              representation efforts for list:types
+            Args:
+                rows: the rows
+                pkey: the primary key
+                columns: the columns to extract
+                join: the rows are the result of a join query
+                records: the records dict to merge the data into
+                represent: collect unique values per field and estimate
+                           representation efforts for list:types
         """
 
         field_data = self.field_data
@@ -1136,15 +1152,16 @@ class S3ResourceData:
             Render the representations of the values for rfield in
             all records in the result
 
-            @param rfield: the field (S3ResourceField)
-            @param results: the output dict to update with the representations,
-                            structure: {RecordID: {ColumnName: Representation}},
-                            the raw data will be a special item "_row" in the
-                            inner dict holding a Storage of the raw field values
-            @param none: default representation of None
-            @param raw_data: retain the raw data in the output dict
-            @param show_links: allow representation functions to render
-                               links as HTML
+            Args:
+                rfield: the field (S3ResourceField)
+                results: the output dict to update with the representations,
+                         structure: {RecordID: {ColumnName: Representation}},
+                         the raw data will be a special item "_row" in the
+                         inner dict holding a Storage of the raw field values
+                none: default representation of None
+                raw_data: retain the raw data in the output dict
+                show_links: allow representation functions to render
+                            links as HTML
         """
 
         colname = rfield.colname
@@ -1262,9 +1279,10 @@ class S3ResourceData:
             Helper method to access the results as dict items, for
             backwards-compatibility
 
-            @param key: the key
+            Args:
+                key: the key
 
-            @todo: migrate use-cases to .<key> notation, then deprecate
+            TODO migrate use-cases to .<key> notation, then deprecate
         """
 
         if key in ("rfields", "numrows", "ids", "rows"):
@@ -1279,10 +1297,12 @@ class S3ResourceData:
             Extract all unique record IDs from rows, preserving the
             order by first match
 
-            @param rows: the Rows
-            @param pkey: the primary key
+            Args:
+                rows: the Rows
+                pkey: the primary key
 
-            @return: list of unique record IDs
+            Returns:
+                list of unique record IDs
         """
 
         x = set()
@@ -1303,11 +1323,13 @@ class S3ResourceData:
         """
             Select a subset of rows by their record IDs
 
-            @param rows: the Rows
-            @param ids: the record IDs
-            @param pkey: the primary key
+            Args:
+                rows: the Rows
+                ids: the record IDs
+                pkey: the primary key
 
-            @return: the subset (Rows)
+            Returns:
+                the subset (Rows)
         """
 
         if ids:
@@ -1323,13 +1345,15 @@ class S3ResourceData:
         """
             Build a subset [start:limit] from rows and ids
 
-            @param rows: the Rows
-            @param ids: all matching record IDs
-            @param start: start index of the page
-            @param limit: maximum length of the page
-            @param has_id: whether the Rows contain the primary key
+            Args:
+                rows: the Rows
+                ids: all matching record IDs
+                start: start index of the page
+                limit: maximum length of the page
+                has_id: whether the Rows contain the primary key
 
-            @return: tuple (rows, page), with:
+            Returns:
+                tuple (rows, page), with:
                         rows = the Rows in the subset, in order
                         page = the record IDs in the subset, in order
         """
@@ -1356,9 +1380,11 @@ class S3ResourceData:
         """
             Get the names of all tables that need to be joined for a field
 
-            @param rfield: the field (S3ResourceField)
+            Args:
+                rfield: the field (S3ResourceField)
 
-            @return: a set of tablenames
+            Returns:
+                a set of tablenames
         """
 
         left = rfield.left
@@ -1379,7 +1405,8 @@ class S3ResourceData:
         """
             Resolve an orderby or groupby expression into its items
 
-            @param expr: the orderby/groupby expression
+            Args:
+                expr: the orderby/groupby expression
         """
 
         if isinstance(expr, str):

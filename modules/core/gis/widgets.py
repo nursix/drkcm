@@ -53,7 +53,8 @@ class MAP(DIV):
 
     def __init__(self, **opts):
         """
-            :param **opts: options to pass to the Map for server-side processing
+            Args:
+                opts: options to pass to the Map for server-side processing
         """
 
         # We haven't yet run _setup()
@@ -930,7 +931,8 @@ class MAP2(DIV):
 
     def __init__(self, **opts):
         """
-            :param **opts: options to pass to the Map for server-side processing
+            Args:
+                opts: options to pass to the Map for server-side processing
         """
 
         self.opts = opts
@@ -1355,10 +1357,12 @@ def addFeatures(features):
 def addFeatureQueries(feature_queries):
     """
         Add Feature Queries to the map
-        -  These can be Rows or Storage()
-        NB These considerations need to be taken care of before arriving here:
-            Security of data
-            Localisation of name/popup_label
+            - These can be Rows or Storage()
+
+        Note:
+            These considerations need to be taken care of before arriving here:
+                - Security of data
+                - Localisation of name/popup_label
     """
 
     db = current.db
@@ -1487,7 +1491,7 @@ def addFeatureQueries(feature_queries):
 def addFeatureResources(feature_resources):
     """
         Add Feature Resources to the map
-        - REST URLs to back-end resources
+            - REST URLs to back-end resources
     """
 
     T = current.T

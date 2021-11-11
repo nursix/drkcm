@@ -58,15 +58,14 @@ class S3DataTable:
                  empty = False,
                  ):
         """
-            S3DataTable constructor
-
-            @param rfields: A list of S3Resourcefield
-            @param data: A list of Storages the key is of the form table.field
-                         The value is the data to be displayed in the dataTable
-            @param start: the first row to return from the data
-            @param limit: the (maximum) number of records to return
-            @param filterString: The string that was used in filtering the records
-            @param orderby: the DAL orderby construct
+            Args:
+                rfields: A list of S3Resourcefield
+                data: A list of Storages the key is of the form table.field
+                      The value is the data to be displayed in the dataTable
+                start: the first row to return from the data
+                limit: the (maximum) number of records to return
+                filterString: The string that was used in filtering the records
+                orderby: the DAL orderby construct
         """
 
         self.data = data
@@ -189,16 +188,17 @@ class S3DataTable:
         """
             Method to render the dataTable into html
 
-            @param totalrows: The total rows in the unfiltered query.
-            @param filteredrows: The total rows in the filtered query.
-            @param id: The id of the table these need to be unique if more
-                       than one dataTable is to be rendered on the same page.
-                           If this is not passed in then a unique id will be
-                           generated. Regardless the id is stored in self.id
-                           so it can be easily accessed after rendering.
-            @param draw: An unaltered copy of draw sent from the client used
-                         by dataTables as a draw count.
-            @param attr: dictionary of attributes which can be passed in
+            Args:
+                totalrows: The total rows in the unfiltered query.
+                filteredrows: The total rows in the filtered query.
+                id: The id of the table these need to be unique if more
+                    than one dataTable is to be rendered on the same page.
+                    If this is not passed in then a unique id will be
+                    generated. Regardless the id is stored in self.id
+                    so it can be easily accessed after rendering.
+                draw: An unaltered copy of draw sent from the client used
+                      by dataTables as a draw count.
+                attr: dictionary of attributes which can be passed in
         """
 
         flist = self.colnames
@@ -303,21 +303,24 @@ class S3DataTable:
         """
             Method to render the data into a json object
 
-            @param totalrows: The total rows in the unfiltered query.
-            @param displayrows: The total rows in the filtered query.
-            @param id: The id of the table for which this ajax call will
-                       respond to.
-            @param draw: An unaltered copy of draw sent from the client used
-                          by dataTables as a draw count.
-            @param attr: dictionary of attributes which can be passed in
-                   dt_action_col: The column where the action buttons will be placed
-                   dt_bulk_actions: list of labels for the bulk actions.
-                   dt_bulk_col: The column in which the checkboxes will appear,
-                                by default it will be the column immediately
-                                before the first data item
-                   dt_group_totals: The number of record in each group.
-                                    This will be displayed in parenthesis
-                                    after the group title.
+            Args:
+                totalrows: The total rows in the unfiltered query.
+                displayrows: The total rows in the filtered query.
+                id: The id of the table for which this ajax call will
+                    respond to.
+                draw: An unaltered copy of draw sent from the client used
+                      by dataTables as a draw count.
+                attr: dictionary of attributes which can be passed in
+
+            Keyword Args:
+                dt_action_col: The column where the action buttons will be placed
+                dt_bulk_actions: list of labels for the bulk actions.
+                dt_bulk_col: The column in which the checkboxes will appear,
+                             by default it will be the column immediately
+                             before the first data item
+                dt_group_totals: The number of record in each group.
+                                 This will be displayed in parenthesis
+                                 after the group title.
         """
 
         attr_get = attr.get
@@ -356,33 +359,32 @@ class S3DataTable:
         """
             Method to extract the configuration data from S3 globals and
             store them as an attr variable.
-            - used by Survey module
 
-            @return: dictionary of attributes which can be passed into html()
+            Returns:
+                dictionary of attributes which can be passed into html()
 
-            @param attr: dictionary of attributes which can be passed in
-                   dt_pageLength : The default number of records that will be shown
-                   dt_pagination: Enable pagination
-                   dt_pagingType: type of pagination, one of:
-                                        simple
-                                        simple_numbers
-                                        full
-                                        full_numbers (default)
-                                  http://datatables.net/reference/option/pagingType
-                   dt_searching: Enable or disable filtering of data.
-                   dt_group: The colum that is used to group the data
-                   dt_ajax_url: The URL to be used for the Ajax call
-                   dt_action_col: The column where the action buttons will be placed
-                   dt_bulk_actions: list of labels for the bulk actions.
-                   dt_bulk_col: The column in which the checkboxes will appear,
-                                by default it will be the column immediately
-                                before the first data item
-                   dt_bulk_selected: A list of selected items
-                   #dt_row_actions: a list of actions (each is a dict)
-                   dt_styles: dictionary of styles to be applied to a list of ids
-                              for example:
-                              {"warning" : [1,3,6,7,9],
-                               "alert" : [2,10,13]}
+            current.response.s3 parameters:
+                dt_pageLength : The default number of records that will be shown
+                dt_pagination: Enable pagination
+                dt_pagingType: type of pagination, one of:
+                                    simple
+                                    simple_numbers
+                                    full
+                                    full_numbers (default)
+                                http://datatables.net/reference/option/pagingType
+                dt_searching: Enable or disable filtering of data.
+                dt_group: The colum that is used to group the data
+                dt_ajax_url: The URL to be used for the Ajax call
+                dt_action_col: The column where the action buttons will be placed
+                dt_bulk_actions: list of labels for the bulk actions.
+                dt_bulk_col: The column in which the checkboxes will appear,
+                             by default it will be the column immediately
+                             before the first data item
+                dt_bulk_selected: A list of selected items
+                #dt_row_actions: a list of actions (each is a dict)
+                dt_styles: dictionary of styles to be applied to a list of ids
+                           for example:
+                           {"warning" : [1,3,6,7,9], "alert" : [2,10,13]}
         """
 
         s3 = current.response.s3
@@ -430,10 +432,11 @@ class S3DataTable:
         """
             Calculate the export formats that can be added to the table
 
-            @param rfields: optional list of field selectors for exports
-            @param permalink: search result URL
-            @param base_url: the base URL of the datatable (without
-                             method or query vars) to construct format URLs
+            Args:
+                rfields: optional list of field selectors for exports
+                permalink: search result URL
+                base_url: the base URL of the datatable (without
+                          method or query vars) to construct format URLs
         """
 
         T = current.T
@@ -461,7 +464,7 @@ class S3DataTable:
             default_url = "%s?%s" % (default_url, query)
 
         # Construct row of export icons
-        # @note: icons appear in reverse order due to float-right
+        # NB icons appear in reverse order due to float-right
         icons = SPAN(_class = "list_formats",
                      )
 
@@ -548,15 +551,16 @@ class S3DataTable:
         """
             Configure default action buttons
 
-            @param resource: the resource
-            @param r: the request, if specified, all action buttons will
-                      be linked to the controller/function of this request
-                      rather than to prefix/name of the resource
-            @param custom_actions: custom actions as list of dicts like
-                                   {"label":label, "url":url, "_class":class},
-                                   will be appended to the default actions
+            Args:
+                resource: the resource
+                r: the request, if specified, all action buttons will
+                   be linked to the controller/function of this request
+                   rather than to prefix/name of the resource
+                custom_actions: custom actions as list of dicts like
+                                {"label":label, "url":url, "_class":class},
+                                will be appended to the default actions
 
-            @ToDo: DRY with S3CRUD.action_buttons()
+            TODO DRY with S3CRUD.action_buttons()
         """
 
         from ..methods import S3CRUD
@@ -628,58 +632,59 @@ class S3DataTable:
             Method to wrap the html for a dataTable in a form, add the export formats
             and the config details required by dataTables
 
-            @param html: The html table
-            @param id: The id of the table
-            @param orderby: the sort details see http://datatables.net/reference/option/order
-            @param rfields: The list of resource fields
-            @param attr: dictionary of attributes which can be passed in
-                   dt_lengthMenu: The menu options for the number of records to be shown
-                   dt_pageLength : The default number of records that will be shown
-                   dt_dom : The Datatable DOM initialisation variable, describing
-                            the order in which elements are displayed.
-                            See http://datatables.net/ref for more details.
-                   dt_pagination : Is pagination enabled, dafault 'true'
-                   dt_pagingType : How the pagination buttons are displayed
-                   dt_searching: Enable or disable filtering of data.
-                   dt_ajax_url: The URL to be used for the Ajax call
-                   dt_action_col: The column where the action buttons will be placed
-                   dt_bulk_actions: list of labels for the bulk actions.
-                   dt_bulk_col: The column in which the checkboxes will appear,
-                                by default it will be the column immediately
-                                before the first data item
-                   dt_bulk_single: only allow a single row to be selected
-                   dt_group: The column(s) that is(are) used to group the data
-                   dt_group_totals: The number of record in each group.
-                                    This will be displayed in parenthesis
-                                    after the group title.
-                   dt_group_titles: The titles to be used for each group.
-                                    These are a list of lists with the inner list
-                                    consisting of two values, the repr from the
-                                    db and the label to display. This can be more than
-                                    the actual number of groups (giving an empty group).
-                   dt_group_space: Insert a space between the group heading and the next group
-                   dt_bulk_selected: A list of selected items
-                   dt_row_actions: list of actions (each is a dict)
-                   dt_styles: dictionary of styles to be applied to a list of ids
-                              for example:
-                              {"warning" : [1,3,6,7,9],
-                               "alert" : [2,10,13]}
-                   dt_col_widths: dictionary of columns to apply a width to
-                                  for example:
-                                  {1 : 15,
-                                   2 : 20}
-                   dt_text_maximum_len: The maximum length of text before it is condensed
-                   dt_text_condense_len: The length displayed text is condensed down to
-                   dt_double_scroll: Render double scroll bars (top+bottom), only available
-                                     with settings.ui.datatables_responsive=False
-                   dt_shrink_groups: If set then the rows within a group will be hidden
-                                     two types are supported, 'individual' and 'accordion'
-                   dt_group_types: The type of indicator for groups that can be 'shrunk'
-                                   Permitted valies are: 'icon' (the default) 'text' and 'none'
-                   dt_base_url: base URL to construct export format URLs, resource
-                                default URL without any URL method or query part
+            Args:
+                html: The html table
+                id: The id of the table
+                orderby: the sort details see http://datatables.net/reference/option/order
+                rfields: The list of resource fields
+                attr: dictionary of attributes which can be passed in
 
-            @global current.response.s3.actions used to get the RowActions
+            Keyword Args:
+                dt_lengthMenu: The menu options for the number of records to be shown
+                dt_pageLength : The default number of records that will be shown
+                dt_dom : The Datatable DOM initialisation variable, describing
+                         the order in which elements are displayed.
+                         See http://datatables.net/ref for more details.
+                dt_pagination : Is pagination enabled, dafault 'true'
+                dt_pagingType : How the pagination buttons are displayed
+                dt_searching: Enable or disable filtering of data.
+                dt_ajax_url: The URL to be used for the Ajax call
+                dt_action_col: The column where the action buttons will be placed
+                dt_bulk_actions: list of labels for the bulk actions.
+                dt_bulk_col: The column in which the checkboxes will appear,
+                             by default it will be the column immediately
+                             before the first data item
+                dt_bulk_single: only allow a single row to be selected
+                dt_group: The column(s) that is(are) used to group the data
+                dt_group_totals: The number of record in each group.
+                                 This will be displayed in parenthesis
+                                 after the group title.
+                dt_group_titles: The titles to be used for each group.
+                                 These are a list of lists with the inner list
+                                 consisting of two values, the repr from the
+                                 db and the label to display. This can be more than
+                                 the actual number of groups (giving an empty group).
+                dt_group_space: Insert a space between the group heading and the next group
+                dt_bulk_selected: A list of selected items
+                dt_row_actions: list of actions (each is a dict)
+                dt_styles: dictionary of styles to be applied to a list of ids
+                            for example:
+                            {"warning" : [1,3,6,7,9], "alert" : [2,10,13]}
+                dt_col_widths: dictionary of columns to apply a width to
+                               for example: {1 : 15, 2 : 20}
+                dt_text_maximum_len: The maximum length of text before it is condensed
+                dt_text_condense_len: The length displayed text is condensed down to
+                dt_double_scroll: Render double scroll bars (top+bottom), only available
+                                  with settings.ui.datatables_responsive=False
+                dt_shrink_groups: If set then the rows within a group will be hidden
+                                  two types are supported, 'individual' and 'accordion'
+                dt_group_types: The type of indicator for groups that can be 'shrunk'
+                                Permitted valies are: 'icon' (the default) 'text' and 'none'
+                dt_base_url: base URL to construct export format URLs, resource
+                             default URL without any URL method or query part
+
+            Note:
+                current.response.s3.actions used to get the RowActions
         """
 
         from gluon.serializers import json as jsons
@@ -866,10 +871,11 @@ class S3DataTable:
             an html table is required without the dataTable goodness. However
             if you want html for a dataTable then use the html() method
 
-            @param id: The id of the table
-            @param flist: The list of fields
-            @param action_col: The column where action columns will be displayed
-                               (this is required by dataTables)
+            Args:
+                id: The id of the table
+                flist: The list of fields
+                action_col: The column where action columns will be displayed
+                            (this is required by dataTables)
         """
 
         data = self.data
@@ -934,22 +940,25 @@ class S3DataTable:
         """
             Method to render the data into a json object
 
-            @param totalrows: The total rows in the unfiltered query.
-            @param displayrows: The total rows in the filtered query.
-            @param id: The id of the table for which this ajax call will
-                       respond to.
-            @param draw: An unaltered copy of draw sent from the client used
-                          by dataTables as a draw count.
-            @param flist: The list of fields
-            @param attr: dictionary of attributes which can be passed in
-                   dt_action_col: The column where the action buttons will be placed
-                   dt_bulk_actions: list of labels for the bulk actions.
-                   dt_bulk_col: The column in which the checkboxes will appear,
-                                by default it will be the column immediately
-                                before the first data item
-                   dt_group_totals: The number of record in each group.
-                                    This will be displayed in parenthesis
-                                    after the group title.
+            Args:
+                totalrows: The total rows in the unfiltered query.
+                displayrows: The total rows in the filtered query.
+                id: The id of the table for which this ajax call will
+                    respond to.
+                draw: An unaltered copy of draw sent from the client used
+                      by dataTables as a draw count.
+                flist: The list of fields
+                attr: dictionary of attributes which can be passed in
+
+            Keyword Args:
+                dt_action_col: The column where the action buttons will be placed
+                dt_bulk_actions: list of labels for the bulk actions.
+                dt_bulk_col: The column in which the checkboxes will appear,
+                             by default it will be the column immediately
+                             before the first data item
+                dt_group_totals: The number of record in each group.
+                                 This will be displayed in parenthesis
+                                 after the group title.
         """
 
         data = self.data

@@ -48,10 +48,12 @@ class S3Audit:
         """
             Constructor
 
-            @param tablename: the name of the audit table
-            @param migrate: migration setting
+            Args:
+                tablename: the name of the audit table
+                migrate: migration setting
 
-            @note: this defines the audit table
+            Note:
+                This defines the audit table.
         """
 
         settings = current.deployment_settings
@@ -98,13 +100,14 @@ class S3Audit:
         """
             Audit
 
-            @param method: Method to log, one of
-                "create", "update", "read", "list" or "delete"
-            @param prefix: the module prefix of the resource
-            @param name: the name of the resource (without prefix)
-            @param form: the form
-            @param record: the record ID
-            @param representation: the representation format
+            Args:
+                method: Method to log, one of
+                        "create", "update", "read", "list" or "delete"
+                prefix: the module prefix of the resource
+                name: the name of the resource (without prefix)
+                form: the form
+                record: the record ID
+                representation: the representation format
         """
 
         table = self.table
@@ -249,7 +252,8 @@ class S3Audit:
             Provide a Human-readable representation of Audit records
             - currently unused
 
-            @param record: the record IDs
+            Args:
+                record: the record IDs
         """
 
         table = self.table

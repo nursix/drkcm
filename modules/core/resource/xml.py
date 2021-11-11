@@ -209,8 +209,9 @@ class S3XML(S3Codec):
         """
             Parse an XML source into an element tree
 
-            @param source: the XML source -
-                can be a file-like object, a filename or a HTTP/HTTPS/FTP URL
+            Args:
+                source: the XML source - can be a file-like object, a filename
+                        or a HTTP/HTTPS/FTP URL
         """
 
         self.error = None
@@ -238,9 +239,10 @@ class S3XML(S3Codec):
         """
             Transform an element tree with XSLT
 
-            @param tree: the element tree
-            @param stylesheet_path: pathname of the XSLT stylesheet
-            @param args: dict of arguments to pass to the stylesheet
+            Args:
+                tree: the element tree
+                stylesheet_path: pathname of the XSLT stylesheet
+                args: dict of arguments to pass to the stylesheet
         """
 
         self.error = None
@@ -291,12 +293,13 @@ class S3XML(S3Codec):
                 <!-- can be multiple <object> elements -->
             </contents>
 
-            @param tree: the element tree or list of trees to wrap, can also
-                         be a list of tuples (tree, description) in order to
-                         provide a description for each XML content object
-            @param stylesheet_path: the path to the XSLT transformation stylesheet
-                                    to transform the envelope (e.g. into EDXL-DE)
-            @param args: stylesheet parameters
+            Args:
+                tree: the element tree or list of trees to wrap, can also
+                      be a list of tuples (tree, description) in order to
+                      provide a description for each XML content object
+                stylesheet_path: the path to the XSLT transformation stylesheet
+                                 to transform the envelope (e.g. into EDXL-DE)
+                args: stylesheet parameters
         """
 
         if not isinstance(tree, (list, tuple)):
@@ -327,11 +330,13 @@ class S3XML(S3Codec):
         """
             Convert an element tree into XML as string
 
-            @param tree: the element tree
-            @param xml_declaration: add an XML declaration to the output
-            @param pretty_print: provide pretty formatted output
+            Args:
+                tree: the element tree
+                xml_declaration: add an XML declaration to the output
+                pretty_print: provide pretty formatted output
 
-            @returns: the XML as str
+            Returns:
+                the XML as str
         """
 
         string = etree.tostring(tree,
@@ -354,14 +359,15 @@ class S3XML(S3Codec):
         """
             Builds a S3XML tree from a list of elements
 
-            @param elements: list of <resource> elements
-            @param root: the root element to link the tree to
-            @param domain: name of the current domain
-            @param url: url of the request
-            @param start: the start record (in server-side pagination)
-            @param limit: the page size (in server-side pagination)
-            @param results: number of total available results
-            @param maxbounds: include maximum Geo-boundaries (lat/lon min/max)
+            Args:
+                elements: list of <resource> elements
+                root: the root element to link the tree to
+                domain: name of the current domain
+                url: url of the request
+                start: the start record (in server-side pagination)
+                limit: the page size (in server-side pagination)
+                results: number of total available results
+                maxbounds: include maximum Geo-boundaries (lat/lon min/max)
         """
 
         # For now we do not nsmap, because the default namespace cannot be
@@ -409,7 +415,8 @@ class S3XML(S3Codec):
         """
             Exports UIDs with domain prefix
 
-            @param uid: the UID
+            Args:
+                uid: the UID
         """
 
         if not uid:
@@ -428,7 +435,8 @@ class S3XML(S3Codec):
         """
             Imports UIDs with domain prefixes
 
-            @param uid: the UID
+            Args:
+                uid: the UID
         """
 
         domain = self.domain
@@ -450,9 +458,10 @@ class S3XML(S3Codec):
         """
             Get the representation of a field value
 
-            @param table: the database table
-            @param f: the field name
-            @param v: the value
+            Args:
+                table: the database table
+                f: the field name
+                v: the value
         """
 
         if f in (self.CUSER, self.MUSER, self.OUSER):
@@ -502,9 +511,10 @@ class S3XML(S3Codec):
         """
             Adds <reference> elements to a <resource>
 
-            @param element: the <resource> element
-            @param rmap: the reference map for the corresponding record
-            @param show_ids: insert the record ID as attribute in references
+            Args:
+                element: the <resource> element
+                rmap: the reference map for the corresponding record
+                show_ids: insert the record ID as attribute in references
         """
 
         REFERENCE = self.TAG.reference
@@ -563,7 +573,8 @@ class S3XML(S3Codec):
         """
             Add lat/lon to location references
 
-            @param rmap: the reference map of the tree
+            Args:
+                rmap: the reference map of the tree
         """
 
         ATTRIBUTE = self.ATTRIBUTE
@@ -608,12 +619,13 @@ class S3XML(S3Codec):
             GIS-encodes the master resource so that it can be transformed into
             a mappable format.
 
-            @param resource: the referencing resource
-            @param record: the particular record
-            @param element: the XML element
-            @param location_data: dictionary of location data from gis.get_location_data()
+            Args:
+                resource: the referencing resource
+                record: the particular record
+                element: the XML element
+                location_data: dictionary of location data from gis.get_location_data()
 
-            @ToDo: Support multiple locations per master resource (e.g. event_event.location)
+            TODO Support multiple locations per master resource (e.g. event_event.location)
         """
 
         fmt = current.auth.permission.format
@@ -938,15 +950,16 @@ class S3XML(S3Codec):
         """
             Creates a <resource> element from a record
 
-            @param parent: the parent element in the document tree
-            @param table: the database table
-            @param record: the record
-            @param alias: the resource alias (for disambiguation of components)
-            @param fields: list of field names to include
-            @param url: URL of the record
-            @param lazy: lazy representation map
-            @param llrepr: lookup list representation method
-            @param postprocess: post-process hook (xml_post_render)
+            Args:
+                parent: the parent element in the document tree
+                table: the database table
+                record: the record
+                alias: the resource alias (for disambiguation of components)
+                fields: list of field names to include
+                url: URL of the record
+                lazy: lazy representation map
+                llrepr: lookup list representation method
+                postprocess: post-process hook (xml_post_render)
         """
 
         SubElement = etree.SubElement
@@ -1139,8 +1152,9 @@ class S3XML(S3Codec):
         """
             Selects resources from an element tree
 
-            @param tree: the element tree
-            @param tablename: table name to search for
+            Args:
+                tree: the element tree
+                tablename: table name to search for
         """
 
         resources = []
@@ -1180,8 +1194,9 @@ class S3XML(S3Codec):
             Helper function to parse a string into a date,
             time or datetime value (always returns UTC datetimes).
 
-            @param dtstr: the string
-            @param field_type: the field type
+            Args:
+                dtstr: the string
+                field_type: the field type
         """
 
         error = None
@@ -1213,12 +1228,13 @@ class S3XML(S3Codec):
             Creates a record (Storage) from a <resource> element and validates
             it
 
-            @param table: the database table
-            @param element: the element
-            @param original: the original record
-            @param files: dict of attached upload files
-            @param postprocess: post-process hook (xml_post_parse)
-            @param skip: fields to skip
+            Args:
+                table: the database table
+                element: the element
+                original: the original record
+                files: dict of attached upload files
+                postprocess: post-process hook (xml_post_parse)
+                skip: fields to skip
         """
 
         valid = True
@@ -1499,12 +1515,13 @@ class S3XML(S3Codec):
         """
             Get options of a field as <select>
 
-            @param table: the Table
-            @param fieldname: the Field name
-            @param parent: the parent element in the tree
-            @param show_uids: include UUIDs in foreign key options
-            @param hierarchy: include parent ID in foreign key options (if
-                              the lookup table is hierarchical)
+            Args:
+                table: the Table
+                fieldname: the Field name
+                parent: the parent element in the tree
+                show_uids: include UUIDs in foreign key options
+                hierarchy: include parent ID in foreign key options (if
+                           the lookup table is hierarchical)
         """
 
         # Get the field options
@@ -1615,12 +1632,13 @@ class S3XML(S3Codec):
         """
             Get options of option fields in a table as <select>s
 
-            @param prefix: the application prefix
-            @param name: the resource name (without prefix)
-            @param fields: optional list of fieldnames
-            @param show_uids: include UIDs in foreign key options
-            @param hierarchy: include parent IDs in foreign key options (if
-                              the lookup table is hierarchical)
+            Args:
+                prefix: the application prefix
+                name: the resource name (without prefix)
+                fields: optional list of fieldnames
+                show_uids: include UIDs in foreign key options
+                hierarchy: include parent IDs in foreign key options (if
+                           the lookup table is hierarchical)
         """
 
         if fields:
@@ -1658,11 +1676,12 @@ class S3XML(S3Codec):
         """
             Get fields in a table as <fields> element
 
-            @param prefix: the application prefix
-            @param name: the resource name (without prefix)
-            @param parent: the parent element to append the tree to
-            @param options: include option lists in option fields
-            @param references: include option lists even in reference fields
+            Args:
+                prefix: the application prefix
+                name: the resource name (without prefix)
+                parent: the parent element to append the tree to
+                options: include option lists in option fields
+                references: include option lists even in reference fields
         """
 
         db = current.db
@@ -1736,13 +1755,15 @@ class S3XML(S3Codec):
         """
             Get the table structure as XML tree
 
-            @param prefix: the application prefix
-            @param name: the tablename (without prefix)
-            @param parent: the parent element to append the tree to
-            @param options: include option lists in option fields
-            @param references: include option lists even in reference fields
+            Args:
+                prefix: the application prefix
+                name: the tablename (without prefix)
+                parent: the parent element to append the tree to
+                options: include option lists in option fields
+                references: include option lists even in reference fields
 
-            @raise AttributeError: in case the table doesn't exist
+            Raises:
+                AttributeError: in case the table doesn't exist
         """
 
         db = current.db
@@ -1774,10 +1795,10 @@ class S3XML(S3Codec):
         """
             Converts a data field from JSON into an element
 
-            @param key: key (field name)
-            @param value: value for the field
-            @param native: use native mode
-            @type native: bool
+            Args:
+                key: key (field name)
+                value: value for the field
+                native: use native mode (bool)
         """
 
         if isinstance(value, dict):
@@ -1820,9 +1841,10 @@ class S3XML(S3Codec):
         """
             Converts a JSON object into an element
 
-            @param tag: tag name for the element
-            @param obj: the JSON object
-            @param native: use native mode for attributes
+            Args:
+                tag: tag name for the element
+                obj: the JSON object
+                native: use native mode for attributes
         """
 
         resource = field = None
@@ -1904,8 +1926,9 @@ class S3XML(S3Codec):
         """
             Converts JSON into an element tree
 
-            @param source: the JSON source
-            @param format: name of the XML root element
+            Args:
+                source: the JSON source
+                format: name of the XML root element
         """
 
         try:
@@ -1933,8 +1956,9 @@ class S3XML(S3Codec):
         """
             Converts an element into JSON
 
-            @param element: the element
-            @param native: use native mode for attributes
+            Args:
+                element: the element
+                native: use native mode for attributes
         """
 
         TAG = cls.TAG
@@ -2065,17 +2089,19 @@ class S3XML(S3Codec):
         """
             Converts an element tree into JSON
 
-            @param tree: the element tree
-            @param pretty_print: indent and insert line breaks into
-                                 the JSON string to make it human-readable
-                                 (useful for debug)
-            @param native: tree is S3XML
-            @param as_dict: return a JSON-serializable object instead of
-                            a string, useful for embedding the data in
-                            other structures
+            Args:
+                tree: the element tree
+                pretty_print: indent and insert line breaks into
+                              the JSON string to make it human-readable
+                              (useful for debug)
+                native: tree is S3XML
+                as_dict: return a JSON-serializable object instead of
+                         a string, useful for embedding the data in
+                         other structures
 
-            @return: a JSON string (with as_dict=False),
-                     or a JSON-serializable object (with as_dict=True)
+            Returns:
+                a JSON string (with as_dict=False), or a JSON-serializable
+                object (with as_dict=True)
         """
 
         if isinstance(tree, etree._ElementTree):
@@ -2110,7 +2136,8 @@ class S3XML(S3Codec):
         """
             Collect errors from an error tree
 
-            @param job: the import job, resource or error tree as Element
+            Args:
+                job: the import job, resource or error tree as Element
         """
 
         errors = []
@@ -2170,29 +2197,32 @@ class S3XML(S3Codec):
             The returned ElementTree can be imported using S3CSV
             stylesheets (through CRUDResource.import_xml()).
 
-            @param source: the XLS source (stream, or XLRD book, or
-                           None if sheet is an open XLRD sheet)
-            @param resourcename: the resource name
-            @param extra_data: dict of extra cols {key:value} to add to each row
-            @param hashtags: dict of hashtags for extra cols {key:hashtag}
-            @param sheet: sheet name or index, or an open XLRD sheet
+            Args:
+                source: the XLS source (stream, or XLRD book, or
+                        None if sheet is an open XLRD sheet)
+                resourcename: the resource name
+                extra_data: dict of extra cols {key:value} to add to each row
+                hashtags: dict of hashtags for extra cols {key:hashtag}
+                sheet: sheet name or index, or an open XLRD sheet
                           (open worksheet overrides source)
-            @param rows: Rows range, integer (length from 0) or
-                         tuple (start, length) - or a tuple (start,) to
-                         read all available rows after start
-            @param cols: Columns range, like "rows"
-            @param fields: Field map, a dict {index: fieldname} where
-                           index is the column index counted from the
-                           first column within the specified range,
-                           e.g. cols=(2,7), fields={1:"MyField"}
-                           means column 3 in the sheet is "MyField",
-                           the field map can be omitted to read the field
-                           names from the sheet (see "header_row")
-            @param header_row: the first row contains column headers
+                rows: Rows range, integer (length from 0) or
+                      tuple (start, length) - or a tuple (start,) to
+                      read all available rows after start
+                cols: Columns range, like "rows"
+                fields: Field map, a dict {index: fieldname} where
+                        index is the column index counted from the
+                        first column within the specified range,
+                        e.g. cols=(2,7), fields={1:"MyField"}
+                        means column 3 in the sheet is "MyField",
+                        the field map can be omitted to read the field
+                        names from the sheet (see "header_row")
+                header_row: the first row contains column headers
                                (if fields is None, they will be used
                                as field names in the output - otherwise
                                they will be ignored)
-            @return: an etree.ElementTree representing the table
+
+            Returns:
+                an etree.ElementTree representing the table
         """
 
         try:
@@ -2264,8 +2294,9 @@ class S3XML(S3Codec):
                 """
                     Helper method to calculate a cell range
 
-                    @param cells: the specified range
-                    @param max_cells: maximum number of cells
+                    Args:
+                        cells: the specified range
+                        max_cells: maximum number of cells
                 """
                 if not cells:
                     cells = (0, max_cells)
@@ -2298,9 +2329,12 @@ class S3XML(S3Codec):
                 """
                     Helper method to decode the cell value by type
 
-                    @param t: the cell type
-                    @param v: the cell value
-                    @return: text representation of the cell value
+                    Args:
+                        t: the cell type
+                        v: the cell value
+
+                    Returns:
+                        text representation of the cell value
                 """
                 text = ""
                 if v:
@@ -2321,10 +2355,11 @@ class S3XML(S3Codec):
                 """
                     Helper method to add a column to an output row
 
-                    @param row: the output row (etree.Element)
-                    @param name: the column name
-                    @param t: the cell type
-                    @param v: the cell value
+                    Args:
+                        row: the output row (etree.Element)
+                        name: the column name
+                        t: the cell type
+                        v: the cell value
                 """
                 col = SubElement(row, COL)
                 col.set(FIELD, name)
@@ -2423,29 +2458,32 @@ class S3XML(S3Codec):
             The returned ElementTree can be imported using S3CSV
             stylesheets (through CRUDResource.import_xml()).
 
-            @param source: the XLS source (stream, or OpenPyXL book, or
-                           None if sheet is an open OpenPyXL sheet)
-            @param resourcename: the resource name
-            @param extra_data: dict of extra cols {key:value} to add to each row
-            @param hashtags: dict of hashtags for extra cols {key:hashtag}
-            @param sheet: sheet name or index, or an open OpenPyXL sheet
-                          (open worksheet overrides source)
-            @param rows: Rows range, integer (length from 0) or
-                         tuple (start, length) - or a tuple (start,) to
-                         read all available rows after start
-            @param cols: Columns range, like "rows"
-            @param fields: Field map, a dict {index: fieldname} where
-                           index is the column index counted from the
-                           first column within the specified range,
-                           e.g. cols=(2,7), fields={1:"MyField"}
-                           means column 3 in the sheet is "MyField",
-                           the field map can be omitted to read the field
-                           names from the sheet (see "header_row")
-            @param header_row: the first row contains column headers
-                               (if fields is None, they will be used
-                               as field names in the output - otherwise
-                               they will be ignored)
-            @return: an etree.ElementTree representing the table
+            Args:
+                source: the XLS source (stream, or OpenPyXL book, or
+                        None if sheet is an open OpenPyXL sheet)
+                resourcename: the resource name
+                extra_data: dict of extra cols {key:value} to add to each row
+                hashtags: dict of hashtags for extra cols {key:hashtag}
+                sheet: sheet name or index, or an open OpenPyXL sheet
+                       (open worksheet overrides source)
+                rows: Rows range, integer (length from 0) or
+                      tuple (start, length) - or a tuple (start,) to
+                      read all available rows after start
+                cols: Columns range, like "rows"
+                fields: Field map, a dict {index: fieldname} where
+                        index is the column index counted from the
+                        first column within the specified range,
+                        e.g. cols=(2,7), fields={1:"MyField"}
+                        means column 3 in the sheet is "MyField",
+                        the field map can be omitted to read the field
+                        names from the sheet (see "header_row")
+                header_row: the first row contains column headers
+                            (if fields is None, they will be used
+                            as field names in the output - otherwise
+                            they will be ignored)
+
+            Returns:
+                an etree.ElementTree representing the table
         """
 
         try:
@@ -2529,8 +2567,11 @@ class S3XML(S3Codec):
                 """
                     Helper method to decode the cell value by type
 
-                    @param v: the cell value
-                    @return: text representation of the cell value
+                    Args:
+                        v: the cell value
+
+                    Returns:
+                        text representation of the cell value
                 """
                 text = ""
                 if v:
@@ -2552,9 +2593,10 @@ class S3XML(S3Codec):
                 """
                     Helper method to add a column to an output row
 
-                    @param row: the output row (etree.Element)
-                    @param name: the column name
-                    @param v: the cell value
+                    Args:
+                        row: the output row (etree.Element)
+                        name: the column name
+                        v: the cell value
                 """
                 col = SubElement(row, COL)
                 col.set(FIELD, name)
@@ -2570,8 +2612,9 @@ class S3XML(S3Codec):
                 """
                     Helper method to calculate a cell range
 
-                    @param cells: the specified range
-                    @param max_cells: maximum number of cells
+                    Args:
+                        cells: the specified range
+                        max_cells: maximum number of cells
                 """
                 if not cells:
                     cells = (0, max_cells)
@@ -2694,14 +2737,15 @@ class S3XML(S3Codec):
             Convert a table-form CSV source into an element tree, consisting of
             <table name="format">, <row> and <col field="fieldname"> elements.
 
-            @param source: the source (file-like object)
-            @param resourcename: the resource name
-            @param extra_data: dict of extra cols {key:value} to add to each row
-            @param hashtags: dict of hashtags for extra cols {key:hashtag}
-            @param delimiter: delimiter for values
-            @param quotechar: quotation character
+            Args:
+                source: the source (file-like object)
+                resourcename: the resource name
+                extra_data: dict of extra cols {key:value} to add to each row
+                hashtags: dict of hashtags for extra cols {key:hashtag}
+                delimiter: delimiter for values
+                quotechar: quotation character
 
-            @todo: add a character encoding parameter to skip the guessing
+            TODO add a character encoding parameter to skip the guessing
         """
 
         import csv
@@ -2830,11 +2874,10 @@ class S3EntityResolver(etree.Resolver):
 
     def __init__(self, source):
         """
-            Constructor
-
-            @param source: the document source, to distinguish it from
-                           other external entities (if it is an external
-                           entity itself)
+            Args:
+                source: the document source, to distinguish it from
+                        other external entities (if it is an external
+                        entity itself)
         """
 
         super(S3EntityResolver, self).__init__()
@@ -2849,9 +2892,10 @@ class S3EntityResolver(etree.Resolver):
         """
             Safe resolution of external parsed entities
 
-            @param system_url: the system URL of the external entity
-            @param public_id: the public ID of the entity
-            @param context: opaque context object
+            Args:
+                system_url: the system URL of the external entity
+                public_id: the public ID of the entity
+                context: opaque context object
         """
 
         if system_url == self.source:
@@ -2898,9 +2942,8 @@ class S3XMLFormat:
 
     def __init__(self, stylesheet):
         """
-            Constructor
-
-            @param stylesheet: the stylesheet (pathname or stream)
+            Args:
+                stylesheet: the stylesheet (pathname or stream)
         """
 
         self.tree = current.xml.parse(stylesheet)
@@ -2916,10 +2959,13 @@ class S3XMLFormat:
         """
             Get the fields to include/exclude for the specified table.
 
-            @param tablename: the tablename
-            @return: tuple of lists (include, exclude) of fields to
-                     include or exclude. None indicates "all fields",
-                     whereas an empty list indicates "no fields".
+            Args:
+                tablename: the tablename
+
+            Returns:
+                tuple of lists (include, exclude) of fields to include or
+                exclude. None indicates "all fields", whereas an empty list
+                indicates "no fields".
         """
 
         ANY = "ANY"
@@ -3007,8 +3053,9 @@ class S3XMLFormat:
         """
             Transform an element tree using this format
 
-            @param tree: the element tree
-            @param args: parameters for the stylesheet
+            Args:
+                tree: the element tree
+                args: parameters for the stylesheet
         """
 
         if not self.tree:

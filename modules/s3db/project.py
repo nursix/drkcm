@@ -13781,16 +13781,16 @@ def project_project_list_layout(list_id, item_id, resource, rfields, record,
                                args=[record_id, "update.popup"]
                                ),
                      _class="s3_modal",
-                     _title=S3CRUD.crud_string(resource.tablename,
-                                               "title_update"),
+                     _title=get_crud_string(resource.tablename,
+                                            "title_update"),
                      )
     else:
         edit_btn = ""
     if permit("delete", table, record_id=record_id):
         delete_btn = A(ICON("delete"),
                        _class="dl-item-delete",
-                       _title=S3CRUD.crud_string(resource.tablename,
-                                                 "label_delete_button"),
+                       _title=get_crud_string(resource.tablename,
+                                              "label_delete_button"),
                        )
     else:
         delete_btn = ""
@@ -13896,7 +13896,7 @@ def project_activity_list_layout(list_id, item_id, resource, rfields, record,
                                      "record": record_id},
                                ),
                      _class="s3_modal",
-                     _title=S3CRUD.crud_string(resource.tablename,
+                     _title=get_crud_string(resource.tablename,
                                                "title_update"),
                      )
     else:
@@ -13904,7 +13904,7 @@ def project_activity_list_layout(list_id, item_id, resource, rfields, record,
     if permit("delete", table, record_id=record_id):
         delete_btn = A(ICON("delete"),
                        _class="dl-item-delete",
-                       _title=S3CRUD.crud_string(resource.tablename,
+                       _title=get_crud_string(resource.tablename,
                                                  "label_delete_button"),
                        )
     else:
@@ -14037,7 +14037,7 @@ def project_task_list_layout(list_id, item_id, resource, rfields, record,
                                      "record": record_id},
                                ),
                      _class="s3_modal",
-                     _title=S3CRUD.crud_string(resource.tablename,
+                     _title=get_crud_string(resource.tablename,
                                                "title_update"),
                      )
     else:
@@ -14045,7 +14045,7 @@ def project_task_list_layout(list_id, item_id, resource, rfields, record,
     if permit("delete", table, record_id=record_id):
         delete_btn = A(ICON("delete"),
                        _class="dl-item-delete",
-                       _title=S3CRUD.crud_string(resource.tablename,
+                       _title=get_crud_string(resource.tablename,
                                                  "label_delete_button"),
                        )
     else:
