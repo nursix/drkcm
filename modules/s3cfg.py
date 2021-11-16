@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Deployment Settings
 
-""" Deployment Settings
-
-    @requires: U{B{I{gluon}} <http://web2py.com>}
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -29,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Config",)
+__all__ = ("S3Config",
+           )
 
 from collections import OrderedDict
 
@@ -38,6 +35,7 @@ from gluon.storage import Storage
 
 from s3theme import FORMSTYLES
 
+# =============================================================================
 class S3Config(Storage):
     """
         Deployment Settings Helper Class

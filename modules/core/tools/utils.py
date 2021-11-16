@@ -25,16 +25,48 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
+__all__ = ("RCVARS",
+           "SEPARATORS",
+           "S3CustomController",
+           "S3MarkupStripper",
+           "StringTemplateParser",
+           "Traceback",
+           "URL2",
+           "s3_addrow",
+           "s3_dev_toolbar",
+           "s3_flatlist",
+           "s3_get_extension",
+           "s3_get_extension_from_url",
+           "s3_get_foreign_key",
+           "s3_get_last_record_id",
+           "s3_has_foreign_key",
+           "s3_keep_messages",
+           "s3_mark_required",
+           "s3_orderby_fields",
+           "s3_redirect_default",
+           "s3_remove_last_record_id",
+           "s3_represent_value",
+           "s3_required_label",
+           "s3_set_extension",
+           "s3_set_match_strings",
+           "s3_store_last_record_id",
+           "s3_strip_markup",
+           "s3_validate",
+           "system_info",
+           "version_info",
+           )
+
 import collections
 import copy
 import os
+import platform
 import sys
 
 from html.parser import HTMLParser
 from urllib import parse as urlparse
 
 from gluon import current, redirect, HTTP, URL, \
-                  A, BEAUTIFY, CODE, DIV, PRE, SPAN, TABLE, TAG, TR, \
+                  A, BEAUTIFY, CODE, DIV, PRE, SPAN, TABLE, TAG, TR, TD, \
                   IS_EMPTY_OR, IS_NOT_IN_DB
 from gluon.storage import Storage
 from gluon.tools import addrow
@@ -977,5 +1009,173 @@ def s3_strip_markup(text):
     except Exception:
         pass
     return text
+
+# =============================================================================
+def system_info():
+    """
+        System Information, for issue reporting and support; visible e.g. on
+        the default/about page
+
+        :returns: a DIV with the system information
+    """
+
+    request = current.request
+    settings = current.deployment_settings
+
+    INCORRECT = "Not installed or incorrectly configured."
+    UNKNOWN = "?"
+
+    subheader = lambda title: TR(TD(title, _colspan="2"), _class="about-subheader")
+    item = lambda title, value: TR(TD(title), TD(value))
+
+    # Technical Support Details
+    system_info = DIV(_class="system-info")
+
+    # Application version
+    try:
+        with open(os.path.join(request.folder, "VERSION"), "r") as version_file:
+            app_version = version_file.read().strip("\n")
+    except IOError:
+        app_version = UNKNOWN
+    template = settings.get_template()
+    if isinstance(template, (tuple, list)):
+        template = ", ".join(template)
+    trows = [subheader(settings.get_system_name_short()),
+             item("Template", template),
+             item("Version", app_version),
+             ]
+
+    # Server Components
+    base_version = ".".join(map(str, version_info()))
+    try:
+        with open(os.path.join(request.env.web2py_path, "VERSION"), "r") as version_file:
+            web2py_version = version_file.read()[8:].strip("\n")
+    except IOError:
+        web2py_version = UNKNOWN
+    os_version = platform.platform()
+
+    trows.extend([subheader("Server"),
+                  item("Base Release", base_version),
+                  item("Web2Py", web2py_version),
+                  item("HTTP Server", request.env.server_software),
+                  item("Operating System", os_version),
+                  ])
+
+    # Database
+    db_info = [subheader("Database")]
+
+    dbtype = settings.get_database_type()
+    if dbtype == "sqlite":
+        try:
+            import sqlite3
+            sqlite_version = sqlite3.version
+        except (ImportError, AttributeError):
+            sqlite_version = UNKNOWN
+
+        db_info.extend([item("SQLite", sqlite_version),
+                        ])
+
+    elif dbtype == "mysql":
+        database_name = settings.database.get("database", "sahana")
+        try:
+            # @ToDo: Support using pymysql & Warn
+            import MySQLdb
+            mysqldb_version = MySQLdb.__revision__
+        except (ImportError, AttributeError):
+            mysqldb_version = INCORRECT
+            mysql_version = UNKNOWN
+        else:
+            #mysql_version = (subprocess.Popen(["mysql", "--version"], stdout=subprocess.PIPE).communicate()[0]).rstrip()[10:]
+            con = MySQLdb.connect(host = settings.database.get("host", "localhost"),
+                                  port = settings.database.get("port", None) or 3306,
+                                  db = database_name,
+                                  user = settings.database.get("username", "sahana"),
+                                  passwd = settings.database.get("password", "password")
+                                  )
+            cur = con.cursor()
+            cur.execute("SELECT VERSION()")
+            mysql_version = cur.fetchone()
+
+        db_info.extend([item("MySQL", mysql_version),
+                        item("MySQLdb python driver", mysqldb_version),
+                        ])
+
+    else:
+        # Postgres
+        try:
+            import psycopg2
+            psycopg_version = psycopg2.__version__
+        except (ImportError, AttributeError):
+            psycopg_version = INCORRECT
+            pgsql_version = UNKNOWN
+        else:
+            con = psycopg2.connect(host = settings.database.get("host", "localhost"),
+                                   port = settings.database.get("port", None) or 5432,
+                                   database = settings.database.get("database", "sahana"),
+                                   user = settings.database.get("username", "sahana"),
+                                   password = settings.database.get("password", "password")
+                                   )
+            cur = con.cursor()
+            cur.execute("SELECT version()")
+            pgsql_version = cur.fetchone()
+
+        db_info.extend([item("PostgreSQL", pgsql_version),
+                        item("psycopg2 python driver", psycopg_version),
+                        ])
+
+    trows.extend(db_info)
+
+    # Python and Libraries
+    python_version = platform.python_version()
+    try:
+        from lxml import etree
+        lxml_version = ".".join([str(i) for i in etree.LXML_VERSION])
+    except (ImportError, AttributeError):
+        lxml_version = INCORRECT
+    try:
+        import reportlab
+        reportlab_version = reportlab.Version
+    except (ImportError, AttributeError):
+        reportlab_version = INCORRECT
+    try:
+        import shapely
+        shapely_version = shapely.__version__
+    except (ImportError, AttributeError):
+        shapely_version = INCORRECT
+    try:
+        import xlrd
+        xlrd_version = xlrd.__VERSION__
+    except (ImportError, AttributeError):
+        xlrd_version = INCORRECT
+    try:
+        import xlwt
+        xlwt_version = xlwt.__VERSION__
+    except (ImportError, AttributeError):
+        xlwt_version = INCORRECT
+
+    trows.extend([subheader("Python"),
+                  item("Python", python_version),
+                  item("lxml", lxml_version),
+                  item("ReportLab", reportlab_version),
+                  item("Shapely", shapely_version),
+                  item("xlrd", xlrd_version),
+                  item("xlwt", xlwt_version),
+                  ])
+
+    system_info.append(TABLE(*trows))
+
+    return system_info
+
+# =============================================================================
+def version_info():
+    """
+        Base system version info
+
+        :returns tuple: the base system version number as integer tuple
+    """
+
+    from ...._version import __version__
+
+    return tuple(map(int, __version__.split(".")))
 
 # END =========================================================================

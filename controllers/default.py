@@ -217,179 +217,13 @@ def about():
 
     response.title = T("About")
 
-    # Technical Support Details
     if not settings.get_security_version_info() or \
        settings.get_security_version_info_requires_login() and \
        not auth.s3_logged_in():
-
-        return {"details": "",
-                "item": item,
-                }
-
-    import platform
-    import string
-    import subprocess
-
-    eden_version = open(os.path.join(request.folder, "VERSION"), "r").read()
-    web2py_version = open(_apath("../VERSION"), "r").read()[8:]
-    python_version = platform.python_version()
-    os_version = platform.platform()
-
-    # Database
-    if db_string.find("sqlite") != -1:
-        try:
-            import sqlite3
-            sqlite_version = sqlite3.version
-        except:
-            sqlite_version = T("Unknown")
-        database = TR(TD("SQLite"),
-                      TD(sqlite_version))
-
-    elif db_string.find("mysql") != -1:
-        database_name = settings.database.get("database", "sahana")
-        try:
-            # @ToDo: Support using pymysql & Warn
-            import MySQLdb
-            mysqldb_version = MySQLdb.__revision__
-        except:
-            mysqldb_version = T("Not installed or incorrectly configured.")
-            mysql_version = T("Unknown")
-        else:
-            #mysql_version = (subprocess.Popen(["mysql", "--version"], stdout=subprocess.PIPE).communicate()[0]).rstrip()[10:]
-            con = MySQLdb.connect(host = settings.database.get("host", "localhost"),
-                                  port = settings.database.get("port", None) or 3306,
-                                  db = database_name,
-                                  user = settings.database.get("username", "sahana"),
-                                  passwd = settings.database.get("password", "password")
-                                  )
-            cur = con.cursor()
-            cur.execute("SELECT VERSION()")
-            mysql_version = cur.fetchone()
-
-        database = TAG[""](TR(TD("MySQL"),
-                              TD(mysql_version)),
-                           TR(TD("MySQLdb python driver"),
-                              TD(mysqldb_version)),
-                           TR(TD("Database"),
-                              TD(database_name)),
-                           )
-
+        details = ""
     else:
-        # Postgres
-        database_name = settings.database.get("database", "sahana")
-        try:
-            # @ToDo: Support using pg8000 & Warn
-            import psycopg2
-            psycopg_version = psycopg2.__version__
-        except:
-            psycopg_version = T("Not installed or incorrectly configured.")
-            pgsql_version = T("Unknown")
-        else:
-            #pgsql_reply = (subprocess.Popen(["psql", "--version"], stdout=subprocess.PIPE).communicate()[0])
-            #pgsql_version = string.split(pgsql_reply)[2]
-            con = psycopg2.connect(host = settings.database.get("host", "localhost"),
-                                   port = settings.database.get("port", None) or 5432,
-                                   database = database_name,
-                                   user = settings.database.get("username", "sahana"),
-                                   password = settings.database.get("password", "password")
-                                   )
-            cur = con.cursor()
-            cur.execute("SELECT version()")
-            pgsql_version = cur.fetchone()
-
-        database = TAG[""](TR(TD("PostgreSQL"),
-                              TD(pgsql_version)),
-                              TR(TD("psycopg2 python driver"),
-                                 TD(psycopg_version)),
-                              TR(TD("Database"),
-                                 TD(database_name)),
-                              )
-
-    # Libraries
-    try:
-        from lxml import etree
-        lxml_version = ".".join([str(i) for i in etree.LXML_VERSION])
-    except:
-        lxml_version = T("Not installed or incorrectly configured.")
-    try:
-        import reportlab
-        reportlab_version = reportlab.Version
-    except:
-        reportlab_version = T("Not installed or incorrectly configured.")
-    try:
-        import shapely
-        shapely_version = shapely.__version__
-    except:
-        shapely_version = T("Not installed or incorrectly configured.")
-    try:
-        import xlrd
-        xlrd_version = xlrd.__VERSION__
-    except:
-        xlrd_version = T("Not installed or incorrectly configured.")
-    try:
-        import xlwt
-        xlwt_version = xlwt.__VERSION__
-    except:
-        xlwt_version = T("Not installed or incorrectly configured.")
-
-    details = DIV(TABLE(THEAD(),
-                        TBODY(TR(TD(STRONG(T("Configuration"))),
-                                 TD(),
-                                 _class = "odd",
-                                 ),
-                              TR(TD(T("Public URL")),
-                                 TD(settings.get_base_public_url()),
-                                 ),
-                              TR(TD(STRONG(T("Core Components"))),
-                                 TD(STRONG(T("Version"))),
-                                 _class = "odd",
-                                 ),
-                              TR(TD(settings.get_system_name_short()),
-                                 TD(eden_version),
-                                 ),
-                              TR(TD(T("Web Server")),
-                                 TD(request.env.server_software),
-                                 _class = "odd",
-                                 ),
-                              TR(TD("Web2Py"),
-                                 TD(web2py_version),
-                                 ),
-                              TR(TD("Python"),
-                                 TD(python_version),
-                                 _class = "odd",
-                                 ),
-                              TR(TD("Operating System"),
-                                 TD(os_version),
-                                 ),
-                              TR(TD(STRONG(T("Database"))),
-                                 TD(),
-                                 _class = "odd",
-                                 ),
-                              database,
-                              TR(TD(STRONG(T("Other Components"))),
-                                 TD(),
-                                 _class = "odd",
-                                 ),
-                              TR(TD("lxml"),
-                                 TD(lxml_version),
-                                 ),
-                              TR(TD("ReportLab"),
-                                 TD(reportlab_version),
-                                 _class = "odd",
-                                 ),
-                              TR(TD("Shapely"),
-                                 TD(shapely_version),
-                                 ),
-                              TR(TD("xlrd"),
-                                 TD(xlrd_version),
-                                 _class = "odd",
-                                 ),
-                              TR(TD("xlwt"),
-                                 TD(xlwt_version),
-                                 ),
-                        _class = "dataTable display"),
-                  _class = "table-container")
-                  )
+        from core import system_info
+        details = system_info()
 
     return {"item": item,
             "details": details,
@@ -1458,7 +1292,7 @@ def _apath(path = ""):
     from gluon.fileutils import up
     opath = up(request.folder)
     # @ToDo: This path manipulation is very OS specific.
-    while path[:3] == "../": opath, path=up(opath), path[3:]
+    while path[:3] == "../": opath, path = up(opath), path[3:]
     return os.path.join(opath, path).replace("\\", "/")
 
 # -----------------------------------------------------------------------------

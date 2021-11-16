@@ -379,8 +379,9 @@ class S3BulkImporter:
 
         # Check if the source file is accessible
         try:
-            open_file = open(filename, "r")
+            open_file = open(filename, "r", encoding="utf-8")
         except IOError:
+            raise
             return "Unable to open file %s" % filename
 
         parse_permissions = self._parse_permissions

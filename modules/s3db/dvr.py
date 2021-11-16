@@ -1447,6 +1447,11 @@ class DVRResponseModel(DataModel):
                      self.org_sector_id(readable = themes_sectors,
                                         writable = themes_sectors,
                                         ),
+                     Field("obsolete", "boolean",
+                           default = False,
+                           label = T("Obsolete"),
+                           represent = s3_yes_no_represent,
+                           ),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1479,6 +1484,8 @@ class DVRResponseModel(DataModel):
         requires = IS_ONE_OF(db, "%s.id" % tablename,
                              themes_represent,
                              multiple = True,
+                             not_filterby = "obsolete",
+                             not_filter_opts = (True,),
                              )
         if settings.get_dvr_response_themes_org_specific():
             root_org = current.auth.root_org()
@@ -6665,13 +6672,14 @@ class dvr_ResponseThemeRepresent(S3Represent):
 class dvr_CaseActivityRepresent(S3Represent):
     """ Representation of case activity IDs """
 
-    def __init__(self, show_as=None, fmt=None, show_link=False, linkto=None):
+    def __init__(self, show_as=None, fmt=None, show_link=False, show_date=False, linkto=None):
         """
             Constructor
 
             @param show_as: alternative representations:
                             "beneficiary"|"need"|"subject"
             @param show_link: show representation as clickable link
+            @param show_date: include date when showing as need or subject
             @param fmt: string format template for person record
         """
 
@@ -6690,6 +6698,8 @@ class dvr_CaseActivityRepresent(S3Represent):
             self.fmt = fmt
         else:
             self.fmt = "%(first_name)s %(last_name)s"
+
+        self.show_date = show_date
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -6728,6 +6738,7 @@ class dvr_CaseActivityRepresent(S3Represent):
             ntable = current.s3db.dvr_need
             left.append(ntable.on(ntable.id == table.need_id))
             rows = current.db(query).select(table.id,
+                                            table.start_date,
                                             ptable.id,
                                             ntable.name,
                                             left = left,
@@ -6769,11 +6780,18 @@ class dvr_CaseActivityRepresent(S3Represent):
             if self.translate:
                 need = current.T(need) if need else self.none
 
-            return need
+            repr_str = need
 
         else:
+            repr_str = row.dvr_case_activity.subject
 
-            return row.dvr_case_activity.subject
+        if self.show_date:
+            date = row.dvr_case_activity.start_date
+            if date:
+                date = current.calendar.format_date(date, local=True)
+                repr_str = "%s (%s)" % (repr_str, date)
+
+        return repr_str
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):

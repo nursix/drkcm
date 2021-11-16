@@ -1372,23 +1372,51 @@ table.dataTable table.import-item-details {
 }
 
 /* line 186, ../../default/scss/theme/_tables.scss */
+.system-info {
+  width: 100%;
+  margin-top: 0.8rem;
+}
+/* line 189, ../../default/scss/theme/_tables.scss */
+.system-info table {
+  margin: auto;
+  border: 2px solid #871D33;
+}
+/* line 192, ../../default/scss/theme/_tables.scss */
+.system-info table td {
+  font-size: 0.8rem;
+  line-height: 0.8rem;
+  background-color: #ffffff;
+}
+/* line 196, ../../default/scss/theme/_tables.scss */
+.system-info table td:nth-child(2) {
+  font-size: 0.7rem;
+}
+/* line 201, ../../default/scss/theme/_tables.scss */
+.system-info .about-subheader td {
+  background-color: #f0f1f2;
+  font-size: 0.9rem;
+  font-weight: bold;
+  line-height: 0.9rem;
+}
+
+/* line 210, ../../default/scss/theme/_tables.scss */
 body.rtl .dt-export-options,
 body.rtl .list_formats div {
   float: left;
 }
-/* line 191, ../../default/scss/theme/_tables.scss */
+/* line 215, ../../default/scss/theme/_tables.scss */
 body.rtl .dataTable .group .group-collapse,
 body.rtl .dataTable .group .group-expand {
   float: left;
 }
 
-/* line 197, ../../default/scss/theme/_tables.scss */
+/* line 221, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;
 }
 
-/* line 202, ../../default/scss/theme/_tables.scss */
+/* line 226, ../../default/scss/theme/_tables.scss */
 .fc table,
 .fc table tr {
   background: transparent;
