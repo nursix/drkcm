@@ -41,7 +41,8 @@ from gluon.storage import Storage
 from gluon.tools import callback
 
 from s3dal import Row, Rows, Table
-from ..tools import s3_format_datetime, s3_get_last_record_id, s3_has_foreign_key, s3_remove_last_record_id, s3_str, IS_ONE_OF
+from ..tools import IS_ONE_OF, s3_format_datetime, s3_get_last_record_id, \
+                    s3_has_foreign_key, s3_remove_last_record_id, s3_str
 from ..ui import S3DataTable, S3DataList
 from ..model import s3_all_meta_field_names
 

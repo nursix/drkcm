@@ -144,7 +144,7 @@ class Marker:
     #                  h = self.height,
     #                  w = self.width,
     #                  )
-    #    return json.dumps(output, separators=SEPARATORS)
+    #    return json.dumps(output, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def as_json_dict(self):

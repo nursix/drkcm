@@ -28,7 +28,7 @@ class S3HoursWidgetTests(unittest.TestCase):
                           precision=None,
                           explicit_above=None,
                           )
-        parse = w.s3_parse
+        parse = w.parse_input
 
         samples = {"0": 0.0,              # decimal
                    "0.28754": 0.28754,    # decimal
@@ -53,7 +53,7 @@ class S3HoursWidgetTests(unittest.TestCase):
                           precision=2,
                           explicit_above=None,
                           )
-        parse = w.s3_parse
+        parse = w.parse_input
 
         samples = {"18": 18.0,          # decimal, hours assumed
                    "18m": 0.3,          # decimal, explicit unit
@@ -80,7 +80,7 @@ class S3HoursWidgetTests(unittest.TestCase):
                           precision=None,
                           explicit_above=None,
                           )
-        parse = w.s3_parse
+        parse = w.parse_input
 
         samples = {"0": 0.0,
                    "0.28754": 0.5,

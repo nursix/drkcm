@@ -55,15 +55,14 @@ from gluon import current, URL, A, DIV, FORM, INPUT, LABEL, OPTION, SELECT, \
 from gluon.storage import Storage
 
 from s3dal import Field
-from ..tools import s3_decode_iso_datetime, S3DateTime, s3_get_foreign_key, s3_str, S3TypeConverter, IS_UTC_DATE
+
+from ..tools import IS_UTC_DATE, JSONSEPARATORS, S3DateTime, \
+                    S3TypeConverter, s3_decode_iso_datetime, \
+                    s3_get_foreign_key, s3_str
 from ..ui import ICON, S3CalendarWidget, S3CascadeSelectWidget, \
                        S3GroupedOptionsWidget, S3HierarchyWidget, \
                        S3MultiSelectWidget
-
 from ..resource import FS, S3ResourceField, S3ResourceQuery, S3URLQuery
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 # =============================================================================
 class S3FilterWidget:
@@ -975,18 +974,18 @@ class S3DateFilter(S3RangeFilter):
                 event_end = fields[0]
             else:
                 event_start = event_end = fields
-            from ..methods import S3TimeSeries
-            ts = S3TimeSeries(resource,
-                              start = minimum,
-                              end = maximum,
-                              slots = None,     # Introspect the data
-                              event_start = event_start,
-                              event_end = event_end,
-                              rows = None,
-                              cols = None,
-                              facts = None,     # Default to Count id
-                              baseline = None,  # No baseline
-                              )
+            from ..tools import TimeSeries
+            ts = TimeSeries(resource,
+                            start = minimum,
+                            end = maximum,
+                            slots = None,     # Introspect the data
+                            event_start = event_start,
+                            event_end = event_end,
+                            rows = None,
+                            cols = None,
+                            facts = None,     # Default to Count id
+                            baseline = None,  # No baseline
+                            )
             # Extract aggregated results as JSON-serializable dict
             data = ts.as_dict()
             # We just want the dates & values
@@ -1111,7 +1110,7 @@ class S3DateFilter(S3RangeFilter):
             if maximum:
                 range_picker["_data-max"] = maximum.strftime(ISO)
             if ts:
-                range_picker["_data-ts"] = json.dumps(ts, separators=SEPARATORS)
+                range_picker["_data-ts"] = json.dumps(ts, separators=JSONSEPARATORS)
             if hide_time:
                 # @ToDo: Translate Settings from Python to Moment
                 # http://momentjs.com/docs/#/displaying/
@@ -2163,13 +2162,13 @@ class S3LocationFilter(S3FilterWidget):
         if inject_hierarchy:
             # Inject the Location Hierarchy
             hierarchy = "S3.location_filter_hierarchy=%s" % \
-                json.dumps(hierarchy, separators=SEPARATORS)
+                json.dumps(hierarchy, separators=JSONSEPARATORS)
             js_global = current.response.s3.js_global
             js_global.append(hierarchy)
             if translate:
                 # Inject lookup list
                 name_l10n = "S3.location_name_l10n=%s" % \
-                    json.dumps(name_l10n, separators=SEPARATORS)
+                    json.dumps(name_l10n, separators=JSONSEPARATORS)
                 js_global.append(name_l10n)
 
         return (ftype, levels, None)
@@ -3528,7 +3527,7 @@ class S3FilterForm:
 
         script = '''$("#%s").filtermanager(%s)''' % \
                     (widget_id,
-                     json.dumps(config, separators=SEPARATORS))
+                     json.dumps(config, separators=JSONSEPARATORS))
 
         current.response.s3.jquery_ready.append(script)
 

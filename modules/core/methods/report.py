@@ -47,14 +47,14 @@ from gluon.storage import Storage
 from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
 from ..resource import FS, S3XMLFormat, S3Joins
-from ..tools import get_crud_string, s3_flatlist, s3_has_foreign_key, s3_str,\
-                    S3MarkupStripper, s3_represent_value, JSONERRORS, IS_NUMBER
+from ..tools import IS_NUMBER, JSONERRORS, JSONSEPARATORS, \
+                    S3MarkupStripper, get_crud_string, s3_flatlist, \
+                    s3_has_foreign_key, s3_represent_value, s3_str
 
 from .base import CRUDMethod
 
 # Compact JSON encoding
 DEFAULT = lambda: None
-SEPARATORS = (",", ":")
 
 LAYER = re.compile(r"([a-zA-Z]+)\((.*)\)\Z")
 FACT = re.compile(r"([a-zA-Z]+)\(([a-zA-Z0-9_.$:\,~]+)\),*(.*)\Z")
@@ -237,7 +237,7 @@ class S3Report(CRUDMethod):
 
         elif r.representation == "json":
 
-            output = json.dumps(pivotdata, separators=SEPARATORS)
+            output = json.dumps(pivotdata, separators=JSONSEPARATORS)
 
         elif r.representation == "xls":
 
@@ -741,7 +741,7 @@ class S3Report(CRUDMethod):
                 output[record_id] = repr_str
 
         current.response.headers["Content-Type"] = "application/json"
-        return json.dumps(output, separators=SEPARATORS)
+        return json.dumps(output, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -783,7 +783,7 @@ class S3ReportForm:
 
     # -------------------------------------------------------------------------
     def html(self,
-             pivotdata,
+             data,
              filter_widgets = None,
              get_vars = None,
              ajaxurl = None,
@@ -809,7 +809,7 @@ class S3ReportForm:
                                              )
 
         # Pivot data
-        hidden = {"pivotdata": json.dumps(pivotdata, separators=SEPARATORS)}
+        hidden = {"data": json.dumps(data, separators=JSONSEPARATORS)}
 
         empty = T("No report specified.")
         hide = T("Hide Table")
@@ -931,7 +931,7 @@ class S3ReportForm:
         script = '''$('#%(widget_id)s').pivottable(%(opts)s)''' % \
                                         {"widget_id": widget_id,
                                          "opts": json.dumps(opts,
-                                                            separators=SEPARATORS,
+                                                            separators=JSONSEPARATORS,
                                                             ),
                                          }
         s3.jquery_ready.append(script)

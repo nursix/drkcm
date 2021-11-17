@@ -32,7 +32,7 @@ import json
 
 from gluon import current, DIV, FORM
 
-from ..tools import SEPARATORS, S3Hierarchy, get_crud_string
+from ..tools import JSONSEPARATORS, S3Hierarchy, get_crud_string
 
 from .base import CRUDMethod
 
@@ -207,7 +207,7 @@ class S3HierarchyCRUD(CRUDMethod):
                     data["children"] = nodes
 
         current.response.headers["Content-Type"] = "application/json"
-        return json.dumps(data, separators = SEPARATORS)
+        return json.dumps(data, separators = JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def render_tree(self, widget_id, record=None):
@@ -271,7 +271,7 @@ class S3HierarchyCRUD(CRUDMethod):
         # Apply the widget JS
         script = '''$('#%(widget_id)s').hierarchicalcrud(%(widget_opts)s)''' % \
                  {"widget_id": widget_id,
-                  "widget_opts": json.dumps(widget_opts, separators=SEPARATORS),
+                  "widget_opts": json.dumps(widget_opts, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
 

@@ -49,8 +49,8 @@ from gluon.storage import Storage
 
 from s3dal import SQLCustomType
 
-from ..tools import S3DateTime, s3_str, IS_ISO639_2_LANGUAGE_CODE, \
-                    IS_ONE_OF, IS_UTC_DATE, IS_UTC_DATETIME, S3Represent
+from ..tools import IS_ISO639_2_LANGUAGE_CODE, IS_ONE_OF, IS_UTC_DATE, \
+                    IS_UTC_DATETIME, S3DateTime, S3Represent, s3_str
 from ..ui import S3ScriptItem, S3CalendarWidget, S3DateWidget
 
 # =============================================================================

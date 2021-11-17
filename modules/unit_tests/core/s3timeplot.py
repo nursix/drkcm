@@ -17,12 +17,12 @@ from unit_tests import run_suite
 
 # =============================================================================
 class EventTests(unittest.TestCase):
-    """ Tests for S3TimeSeriesEvent class """
+    """ Tests for TimeSeriesEvent class """
 
     def testSeries(self):
         """ Test series-method """
 
-        series = S3TimeSeriesEvent.series
+        series = TimeSeriesEvent.series
 
         assertEqual = self.assertEqual
 
@@ -60,33 +60,33 @@ class EventTests(unittest.TestCase):
         values = {"test": 2}
 
         # Test construction without values
-        event = S3TimeSeriesEvent(event_id,
-                                  start=start,
-                                  end=end,
-                                  )
+        event = TimeSeriesEvent(event_id,
+                                start=start,
+                                end=end,
+                                )
 
         assertEqual(event.event_id, event_id)
         assertTrue(isinstance(event.values, dict))
         assertEqual(event["test"], None)
 
         # Test construction with values
-        event = S3TimeSeriesEvent(event_id,
-                                  start=start,
-                                  end=end,
-                                  values=values,
-                                  )
+        event = TimeSeriesEvent(event_id,
+                                start=start,
+                                end=end,
+                                values=values,
+                                )
 
         assertEqual(event.event_id, event_id)
         assertEqual(event.values, values)
         assertEqual(event["test"], values["test"])
 
         # Test construction with values and row
-        event = S3TimeSeriesEvent(event_id,
-                                  start=start,
-                                  end=end,
-                                  values=values,
-                                  row = "A",
-                                  )
+        event = TimeSeriesEvent(event_id,
+                                start=start,
+                                end=end,
+                                values=values,
+                                row = "A",
+                                )
 
         self.assertEqual(event.event_id, event_id)
         self.assertEqual(event.values, values)
@@ -95,13 +95,13 @@ class EventTests(unittest.TestCase):
         self.assertEqual(event.cols, set())
 
         # Test construction with values and row/col
-        event = S3TimeSeriesEvent(event_id,
-                                  start=start,
-                                  end=end,
-                                  values=values,
-                                  row = "B",
-                                  col = [1, 4, 7],
-                                  )
+        event = TimeSeriesEvent(event_id,
+                                start=start,
+                                end=end,
+                                values=values,
+                                row = "B",
+                                col = [1, 4, 7],
+                                )
 
         self.assertEqual(event.event_id, event_id)
         self.assertEqual(event.values, values)
@@ -125,10 +125,10 @@ class EventTests(unittest.TestCase):
         for event_id, start, end in data:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    )
             events.append(event)
 
         order = [event.event_id for event in sorted(events)]
@@ -136,7 +136,7 @@ class EventTests(unittest.TestCase):
 
 # =============================================================================
 class PeriodTests(unittest.TestCase):
-    """ Tests for S3TimeSeriesPeriod """
+    """ Tests for TimeSeriesPeriod """
 
     def setUp(self):
 
@@ -144,7 +144,7 @@ class PeriodTests(unittest.TestCase):
         start = tp_datetime(2013, 4, 1)
         end = tp_datetime(2013, 7, 1)
 
-        period = S3TimeSeriesPeriod(start=start, end=end)
+        period = TimeSeriesPeriod(start=start, end=end)
 
         # Add current events
         events = [
@@ -167,13 +167,13 @@ class PeriodTests(unittest.TestCase):
         for event_id, start, end, values, row, col in events:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      values = values,
-                                      row = row,
-                                      col = col,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    values = values,
+                                    row = row,
+                                    col = col,
+                                    )
             period.add_current(event)
         self.current_events = events
 
@@ -188,13 +188,13 @@ class PeriodTests(unittest.TestCase):
         for event_id, start, end, values, row, col in events:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      values = values,
-                                      row = row,
-                                      col = col,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    values = values,
+                                    row = row,
+                                    col = col,
+                                    )
             period.add_previous(event)
         self.previous_events = events
 
@@ -231,10 +231,10 @@ class PeriodTests(unittest.TestCase):
 
         for index, event in enumerate(events):
             start, end, expected_duration = event
-            tp_event = S3TimeSeriesEvent(index,
-                                         start=tp_datetime(*start),
-                                         end=tp_datetime(*end),
-                                         )
+            tp_event = TimeSeriesEvent(index,
+                                       start=tp_datetime(*start),
+                                       end=tp_datetime(*end),
+                                       )
             duration = period.duration(tp_event, "days")
             self.assertEqual(duration, expected_duration,
                              msg = "Incorrect result for duration of event %s: %s != %s." %
@@ -382,7 +382,7 @@ class PeriodTests(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("count", "base"))
+        totals = period.aggregate(TimeSeriesFact("count", "base"))
 
         # Check rows
         expected_rows = {"A": [4],
@@ -437,7 +437,7 @@ class PeriodTests(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("sum", "base"))
+        totals = period.aggregate(TimeSeriesFact("sum", "base"))
 
         # Check rows
         expected_rows = {"A": [180],
@@ -493,7 +493,7 @@ class PeriodTests(unittest.TestCase):
         assertAlmostEqual = self.assertAlmostEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("avg", "base"))
+        totals = period.aggregate(TimeSeriesFact("avg", "base"))
 
         # Check rows
         expected_rows = {"A": [45],
@@ -556,8 +556,8 @@ class PeriodTests(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate([S3TimeSeriesFact("min", "base"),
-                                   S3TimeSeriesFact("max", "base"),
+        totals = period.aggregate([TimeSeriesFact("min", "base"),
+                                   TimeSeriesFact("max", "base"),
                                    ],
                                   )
 
@@ -614,12 +614,12 @@ class PeriodTests(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate([S3TimeSeriesFact("sum", "base"),
-                                   S3TimeSeriesFact("cumulate",
-                                                    "base",
-                                                    slope="slope",
-                                                    interval="days",
-                                                    ),
+        totals = period.aggregate([TimeSeriesFact("sum", "base"),
+                                   TimeSeriesFact("cumulate",
+                                                  "base",
+                                                  slope="slope",
+                                                  interval="days",
+                                                  ),
                                    ]
                                   )
 
@@ -671,7 +671,7 @@ class PeriodTests(unittest.TestCase):
 
 # =============================================================================
 class PeriodTestsSingleAxis(unittest.TestCase):
-    """ Tests for S3TimeSeriesPeriod with single pivot axis """
+    """ Tests for TimeSeriesPeriod with single pivot axis """
 
     def setUp(self):
 
@@ -679,7 +679,7 @@ class PeriodTestsSingleAxis(unittest.TestCase):
         start = tp_datetime(2013,4,1)
         end = tp_datetime(2013,7,1)
 
-        period = S3TimeSeriesPeriod(start=start, end=end)
+        period = TimeSeriesPeriod(start=start, end=end)
 
         # Add current events
         events = [
@@ -702,12 +702,12 @@ class PeriodTestsSingleAxis(unittest.TestCase):
         for event_id, start, end, values, row in events:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      values = values,
-                                      row = row,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    values = values,
+                                    row = row,
+                                    )
             period.add_current(event)
         self.current_events = events
 
@@ -722,12 +722,12 @@ class PeriodTestsSingleAxis(unittest.TestCase):
         for event_id, start, end, values, row in events:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      values = values,
-                                      row = row,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    values = values,
+                                    row = row,
+                                    )
             period.add_previous(event)
         self.previous_events = events
 
@@ -808,7 +808,7 @@ class PeriodTestsSingleAxis(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("count", "base"))
+        totals = period.aggregate(TimeSeriesFact("count", "base"))
 
         # Check rows
         expected_rows = {"A": [4],
@@ -841,7 +841,7 @@ class PeriodTestsSingleAxis(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("sum", "base"))
+        totals = period.aggregate(TimeSeriesFact("sum", "base"))
 
         # Check rows
         expected_rows = {"A": [180],
@@ -868,7 +868,7 @@ class PeriodTestsSingleAxis(unittest.TestCase):
 
 # =============================================================================
 class PeriodTestsNoGroups(unittest.TestCase):
-    """ Tests for S3TimeSeriesPeriod without grouping """
+    """ Tests for TimeSeriesPeriod without grouping """
 
     def setUp(self):
 
@@ -876,7 +876,7 @@ class PeriodTestsNoGroups(unittest.TestCase):
         start = tp_datetime(2013,4,1)
         end = tp_datetime(2013,7,1)
 
-        period = S3TimeSeriesPeriod(start=start, end=end)
+        period = TimeSeriesPeriod(start=start, end=end)
 
         # Add current events
         events = [
@@ -899,11 +899,11 @@ class PeriodTestsNoGroups(unittest.TestCase):
         for event_id, start, end, values in events:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      values = values,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    values = values,
+                                    )
             period.add_current(event)
         self.current_events = events
 
@@ -918,11 +918,11 @@ class PeriodTestsNoGroups(unittest.TestCase):
         for event_id, start, end, values in events:
             event_start = tp_datetime(*start) if start else None
             event_end = tp_datetime(*end) if end else None
-            event = S3TimeSeriesEvent(event_id,
-                                      start = event_start,
-                                      end = event_end,
-                                      values = values,
-                                      )
+            event = TimeSeriesEvent(event_id,
+                                    start = event_start,
+                                    end = event_end,
+                                    values = values,
+                                    )
             period.add_previous(event)
         self.previous_events = events
 
@@ -975,7 +975,7 @@ class PeriodTestsNoGroups(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("count", "base"))
+        totals = period.aggregate(TimeSeriesFact("count", "base"))
 
         # Check rows
         assertEqual(period.rows, {})
@@ -999,7 +999,7 @@ class PeriodTestsNoGroups(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("sum", "base"))
+        totals = period.aggregate(TimeSeriesFact("sum", "base"))
 
         # Check rows
         assertEqual(period.rows, {})
@@ -1023,11 +1023,11 @@ class PeriodTestsNoGroups(unittest.TestCase):
         assertEqual = self.assertEqual
 
         # Aggregate
-        totals = period.aggregate(S3TimeSeriesFact("cumulate",
-                                                   "base",
-                                                   slope="slope",
-                                                   interval="days",
-                                                   )
+        totals = period.aggregate(TimeSeriesFact("cumulate",
+                                                 "base",
+                                                 slope="slope",
+                                                 interval="days",
+                                                 )
                                   )
 
         # Check rows
@@ -1046,7 +1046,7 @@ class PeriodTestsNoGroups(unittest.TestCase):
 
 # =============================================================================
 class EventFrameTests(unittest.TestCase):
-    """ Tests for S3TimeSeriesEventFrame class """
+    """ Tests for TimeSeriesEventFrame class """
 
     def setUp(self):
 
@@ -1073,11 +1073,11 @@ class EventFrameTests(unittest.TestCase):
 
         events = []
         for event_id, start, end, values in data:
-            events.append(S3TimeSeriesEvent(event_id,
-                                            start=tp_datetime(*start) if start else None,
-                                            end=tp_datetime(*end) if end else None,
-                                            values=values,
-                                            ))
+            events.append(TimeSeriesEvent(event_id,
+                                          start=tp_datetime(*start) if start else None,
+                                          end=tp_datetime(*end) if end else None,
+                                          values=values,
+                                          ))
         self.events = events
 
     # -------------------------------------------------------------------------
@@ -1085,9 +1085,9 @@ class EventFrameTests(unittest.TestCase):
         """ Test correct grouping of events into periods """
 
         # Create event frame and add events
-        ef = S3TimeSeriesEventFrame(tp_datetime(2012,1,1),
-                                    tp_datetime(2012,12,15),
-                                    slots="3 months")
+        ef = TimeSeriesEventFrame(tp_datetime(2012,1,1),
+                                  tp_datetime(2012,12,15),
+                                  slots="3 months")
         ef.extend(self.events)
 
         # Expected result (start, end, previous, current, results)
@@ -1116,13 +1116,13 @@ class EventFrameTests(unittest.TestCase):
             assertEqual(set(event_ids), set(previous))
 
             # Check aggregation (multi-fact)
-            result = period.aggregate([S3TimeSeriesFact("sum", "test"),
-                                       S3TimeSeriesFact("max", "test"),
-                                       S3TimeSeriesFact("cumulate",
-                                                        None,
-                                                        slope="test",
-                                                        interval="months",
-                                                        ),
+            result = period.aggregate([TimeSeriesFact("sum", "test"),
+                                       TimeSeriesFact("max", "test"),
+                                       TimeSeriesFact("cumulate",
+                                                      None,
+                                                      slope="test",
+                                                      interval="months",
+                                                      ),
                                        ])
             assertEqual(result, expected_result)
 
@@ -1132,9 +1132,9 @@ class EventFrameTests(unittest.TestCase):
 
         assertEqual = self.assertEqual
 
-        ef = S3TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
-                                    tp_datetime(2011, 1, 8),
-                                    slots="days")
+        ef = TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
+                                  tp_datetime(2011, 1, 8),
+                                  slots="days")
         expected = [(tp_datetime(2011, 1, 5), tp_datetime(2011, 1, 6)),
                     (tp_datetime(2011, 1, 6), tp_datetime(2011, 1, 7)),
                     (tp_datetime(2011, 1, 7), tp_datetime(2011, 1, 8))]
@@ -1143,9 +1143,9 @@ class EventFrameTests(unittest.TestCase):
             assertEqual(period.start, expected[i][0])
             assertEqual(period.end, expected[i][1])
 
-        ef = S3TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
-                                    tp_datetime(2011, 1, 16),
-                                    slots="4 days")
+        ef = TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
+                                  tp_datetime(2011, 1, 16),
+                                  slots="4 days")
         expected = [(tp_datetime(2011, 1, 5), tp_datetime(2011, 1, 9)),
                     (tp_datetime(2011, 1, 9), tp_datetime(2011, 1, 13)),
                     (tp_datetime(2011, 1, 13), tp_datetime(2011, 1, 16))]
@@ -1159,9 +1159,9 @@ class EventFrameTests(unittest.TestCase):
 
         assertEqual = self.assertEqual
 
-        ef = S3TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
-                                    tp_datetime(2011, 1, 28),
-                                    slots="weeks")
+        ef = TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
+                                  tp_datetime(2011, 1, 28),
+                                  slots="weeks")
         expected = [(tp_datetime(2011, 1, 5), tp_datetime(2011, 1, 12)),
                     (tp_datetime(2011, 1, 12), tp_datetime(2011, 1, 19)),
                     (tp_datetime(2011, 1, 19), tp_datetime(2011, 1, 26)),
@@ -1170,9 +1170,9 @@ class EventFrameTests(unittest.TestCase):
             assertEqual(period.start, expected[i][0])
             assertEqual(period.end, expected[i][1])
 
-        ef = S3TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
-                                    tp_datetime(2011, 2, 16),
-                                    slots="2 weeks")
+        ef = TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
+                                  tp_datetime(2011, 2, 16),
+                                  slots="2 weeks")
         expected = [(tp_datetime(2011, 1, 5), tp_datetime(2011, 1, 19)),
                     (tp_datetime(2011, 1, 19), tp_datetime(2011, 2, 2)),
                     (tp_datetime(2011, 2, 2), tp_datetime(2011, 2, 16))]
@@ -1186,9 +1186,9 @@ class EventFrameTests(unittest.TestCase):
 
         assertEqual = self.assertEqual
 
-        ef = S3TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
-                                    tp_datetime(2011, 4, 28),
-                                    slots="months")
+        ef = TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
+                                  tp_datetime(2011, 4, 28),
+                                  slots="months")
         expected = [(tp_datetime(2011, 1, 5), tp_datetime(2011, 2, 5)),
                     (tp_datetime(2011, 2, 5), tp_datetime(2011, 3, 5)),
                     (tp_datetime(2011, 3, 5), tp_datetime(2011, 4, 5)),
@@ -1197,9 +1197,9 @@ class EventFrameTests(unittest.TestCase):
             assertEqual(period.start, expected[i][0])
             assertEqual(period.end, expected[i][1])
 
-        ef = S3TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
-                                    tp_datetime(2011, 8, 16),
-                                    slots="3 months")
+        ef = TimeSeriesEventFrame(tp_datetime(2011, 1, 5),
+                                  tp_datetime(2011, 8, 16),
+                                  slots="3 months")
         expected = [(tp_datetime(2011, 1, 5), tp_datetime(2011, 4, 5)),
                     (tp_datetime(2011, 4, 5), tp_datetime(2011, 7, 5)),
                     (tp_datetime(2011, 7, 5), tp_datetime(2011, 8, 16))]
@@ -1219,7 +1219,7 @@ class DtParseTests(unittest.TestCase):
         assertRaises = self.assertRaises
         assertEqual = self.assertEqual
 
-        ts = S3TimeSeries
+        ts = TimeSeries
 
         result = ts.dtparse("5/2001")
         assertTrue(isinstance(result, datetime.datetime))
@@ -1273,7 +1273,7 @@ class DtParseTests(unittest.TestCase):
         assertRaises = self.assertRaises
         assertEqual = self.assertEqual
 
-        ts = S3TimeSeries
+        ts = TimeSeries
         start = datetime.datetime(2014, 1, 3, 11, 30)
 
         result = ts.dtparse("+1 year", start=start)
@@ -1318,7 +1318,7 @@ class DtParseTests(unittest.TestCase):
 
 # =============================================================================
 class TimeSeriesTests(unittest.TestCase):
-    """ Tests for S3TimeSeries class """
+    """ Tests for TimeSeries class """
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1417,10 +1417,10 @@ class TimeSeriesTests(unittest.TestCase):
 
         query = FS("event_type") == "STARTEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2011, 1, 3, 0, 0, 0))
@@ -1428,10 +1428,10 @@ class TimeSeriesTests(unittest.TestCase):
 
         query = FS("event_type") == "NOSTART"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        )
         ef = ts.event_frame
         # falls back to first end date minus 1 day
         assertEqual(ef.start, tp_datetime(2012, 2, 12, 0, 0, 0))
@@ -1439,20 +1439,20 @@ class TimeSeriesTests(unittest.TestCase):
 
         query = FS("event_type") == "NOEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2012, 7, 21, 0, 0, 0))
         assertTrue(is_now(ef.end))
 
         resource = s3db.resource("tp_test_events")
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2011, 1, 3, 0, 0, 0))
@@ -1468,11 +1468,11 @@ class TimeSeriesTests(unittest.TestCase):
 
         query = FS("event_type") == "STARTEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          end = "2011-03-01",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        end = "2011-03-01",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2011, 1, 3, 0, 0, 0))
@@ -1482,11 +1482,11 @@ class TimeSeriesTests(unittest.TestCase):
 
         query = FS("event_type") == "NOSTART"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          end = "2013-01-01",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        end = "2013-01-01",
+                        )
         ef = ts.event_frame
         # falls back to first end date minus 1 day
         assertEqual(ef.start, tp_datetime(2012, 2, 12, 0, 0, 0))
@@ -1496,11 +1496,11 @@ class TimeSeriesTests(unittest.TestCase):
 
         query = FS("event_type") == "NOEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          end = "2016-06-01",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        end = "2016-06-01",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2012, 7, 21, 0, 0, 0))
@@ -1509,11 +1509,11 @@ class TimeSeriesTests(unittest.TestCase):
         assertEqual(ef.slots, "3 months")
 
         resource = s3db.resource("tp_test_events")
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          end = "2011-01-15",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        end = "2011-01-15",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2011, 1, 3, 0, 0, 0))
@@ -1524,12 +1524,12 @@ class TimeSeriesTests(unittest.TestCase):
         # Check with manual slot length
         query = FS("event_type") == "NOEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          end = "2016-06-01",
-                          slots = "years",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        end = "2016-06-01",
+                        slots = "years",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2012, 7, 21, 0, 0, 0))
@@ -1539,12 +1539,12 @@ class TimeSeriesTests(unittest.TestCase):
         # Check with manual start date
         query = FS("event_type") == "STARTEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          start = "2011-02-15",
-                          end = "2011-03-01",
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        start = "2011-02-15",
+                        end = "2011-03-01",
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2011, 2, 15, 0, 0, 0))
@@ -1555,12 +1555,12 @@ class TimeSeriesTests(unittest.TestCase):
         # Check with manual start date
         query = FS("event_type") == "STARTEND"
         resource = s3db.resource("tp_test_events", filter = query)
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          start = "2011-02-15",
-                          end = tp_datetime(2011, 2, 28, 12, 53, 0),
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        start = "2011-02-15",
+                        end = tp_datetime(2011, 2, 28, 12, 53, 0),
+                        )
         ef = ts.event_frame
         # falls back to first start date
         assertEqual(ef.start, tp_datetime(2011, 2, 15, 0, 0, 0))
@@ -1582,13 +1582,13 @@ class TimeSeriesTests(unittest.TestCase):
         VALUE = "v"
 
         resource = s3db.resource("tp_test_events")
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          end = "2013-01-01",
-                          slots = "months",
-                          facts = [S3TimeSeriesFact("sum", "parameter1")],
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        end = "2013-01-01",
+                        slots = "months",
+                        facts = [TimeSeriesFact("sum", "parameter1")],
+                        )
 
         # Verify correct slot length
         assertEqual(ts.event_frame.slots, "months")
@@ -1660,19 +1660,19 @@ class TimeSeriesTests(unittest.TestCase):
         VALUE = "v"
 
         resource = s3db.resource("tp_test_events")
-        ts = S3TimeSeries(resource,
-                          event_start = "event_start",
-                          event_end = "event_end",
-                          start = "2012-01-01",
-                          end = "2013-01-01",
-                          slots = "months",
-                          facts = [S3TimeSeriesFact("cumulate",
-                                                    None,
-                                                    slope="parameter1",
-                                                    interval="months",
-                                                    )
-                                   ],
-                          )
+        ts = TimeSeries(resource,
+                        event_start = "event_start",
+                        event_end = "event_end",
+                        start = "2012-01-01",
+                        end = "2013-01-01",
+                        slots = "months",
+                        facts = [TimeSeriesFact("cumulate",
+                                                None,
+                                                slope="parameter1",
+                                                interval="months",
+                                                )
+                                 ],
+                        )
 
         # Verify correct slot length
         assertEqual(ts.event_frame.slots, "months")
@@ -1734,12 +1734,12 @@ class TimeSeriesTests(unittest.TestCase):
 
 # =============================================================================
 class FactParserTests(unittest.TestCase):
-    """ Tests for S3TimeSeriesFact parser """
+    """ Tests for TimeSeriesFact parser """
 
     def testFactExpressionParsing(self):
         """ Test parsing of fact expressions """
 
-        parse = S3TimeSeriesFact.parse
+        parse = TimeSeriesFact.parse
 
         expressions = (
                        # Isolated selector

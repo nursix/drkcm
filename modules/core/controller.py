@@ -427,7 +427,7 @@ class CRUDRequest:
             from .methods import RESTful, S3Filter, S3GroupedItemsReport, \
                                  S3HierarchyCRUD, S3Map, S3Merge, S3MobileCRUD, \
                                  S3Organizer, S3Profile, S3Report, S3Summary, \
-                                 S3TimePlot, S3XForms, SpreadsheetImporter
+                                 TimePlot, S3XForms, SpreadsheetImporter
 
             methods = {"deduplicate": S3Merge,
                        "fields": RESTful,
@@ -443,7 +443,7 @@ class CRUDRequest:
                        "report": S3Report,
                        "summary": S3Summary,
                        "sync": current.sync,
-                       "timeplot": S3TimePlot,
+                       "timeplot": TimePlot,
                        "xform": S3XForms,
                        }
 

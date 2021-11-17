@@ -33,8 +33,10 @@ from gluon.storage import Storage
 from s3dal import Field
 
 from ..resource import FS
-from ..tools import s3_get_foreign_key, s3_represent_value, s3_str, IS_ONE_OF
-from ..ui import S3DataTable, S3AddPersonWidget, S3LocationSelector, S3LocationAutocompleteWidget
+from ..tools import IS_ONE_OF, s3_get_foreign_key, s3_represent_value, \
+                    s3_str
+from ..ui import S3AddPersonWidget, S3DataTable, S3LocationAutocompleteWidget, \
+                 S3LocationSelector
 
 from .base import CRUDMethod
 

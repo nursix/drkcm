@@ -71,11 +71,10 @@ from gluon.validators import Validator, ValidationError
 
 from .calendar import S3DateTime
 from .convert import s3_str
-from .utils import s3_orderby_fields
+from .utils import s3_orderby_fields, JSONSEPARATORS
 
 DEFAULT = lambda: None
 JSONERRORS = (NameError, TypeError, ValueError, AttributeError, KeyError)
-SEPARATORS = (",", ":")
 
 LAT_SCHEMA = re.compile(r"^([0-9]{,3})[d:°]{,1}\s*([0-9]{,3})[m:']{,1}\s*([0-9]{,3}(\.[0-9]+){,1})[s\"]{,1}\s*([N|S]{,1})$")
 LON_SCHEMA = re.compile(r"^([0-9]{,3})[d:°]{,1}\s*([0-9]{,3})[m:']{,1}\s*([0-9]{,3}(\.[0-9]+){,1})[s\"]{,1}\s*([E|W]{,1})$")
@@ -155,7 +154,7 @@ class IS_JSONS3(Validator):
             import ast
             try:
                 v = json.dumps(ast.literal_eval(value),
-                               separators = SEPARATORS,
+                               separators = JSONSEPARATORS,
                                )
             except JSONERRORS + (SyntaxError,) as e:
                 raise ValidationError(error(e))
@@ -187,7 +186,7 @@ class IS_JSONS3(Validator):
            self.native_json and isinstance(value, str):
             return value
         else:
-            return json.dumps(value, separators = SEPARATORS)
+            return json.dumps(value, separators = JSONSEPARATORS)
 
 # =============================================================================
 class IS_LAT(Validator):

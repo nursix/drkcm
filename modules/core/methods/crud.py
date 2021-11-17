@@ -37,14 +37,12 @@ from gluon.storage import Storage
 from gluon.tools import callback
 
 from ..resource import S3Exporter
-from ..tools import S3DateTime, get_crud_string, s3_decode_iso_datetime, \
-                    s3_str, s3_validate, s3_represent_value, s3_set_extension
+from ..tools import JSONSEPARATORS, S3DateTime, get_crud_string, \
+                    s3_decode_iso_datetime, s3_represent_value, \
+                    s3_set_extension, s3_str, s3_validate
 from ..ui import S3EmbeddedComponentWidget, S3Selector, ICON, S3SQLDefaultForm
 
 from .base import CRUDMethod
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 # =============================================================================
 class S3CRUD(CRUDMethod):
@@ -2354,7 +2352,7 @@ class S3CRUD(CRUDMethod):
         if single and len(output) == 1:
             output = output[0]
 
-        return json.dumps(output, separators=SEPARATORS)
+        return json.dumps(output, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     # Utility functions

@@ -105,6 +105,13 @@ $anonymize_button_bgcolor_hover: $alert-button-bg-hover !default;
     }
 }
 
+button.btn.toggle-text {
+    font-size: 0.7rem !important;
+    margin-left: 0.7rem !important;
+    line-height: 1.0;
+    padding: 0.2rem 0.3rem;
+}
+
 /* Date picker */
 input.date.hasDatepicker {
     display: inline-block;

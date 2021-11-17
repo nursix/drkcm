@@ -34,7 +34,8 @@ from gluon.tools import callback
 
 from s3dal import original_tablename, Row
 
-from ..tools import s3_get_last_record_id, s3_has_foreign_key, s3_remove_last_record_id
+from ..tools import s3_get_last_record_id, s3_has_foreign_key, \
+                    s3_remove_last_record_id
 
 __all__ = ("DeleteProcess",
            )

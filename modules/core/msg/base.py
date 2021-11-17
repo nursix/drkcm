@@ -54,7 +54,8 @@ from gluon import current, redirect, IS_IN_SET
 from gluon.html import *
 
 from ..methods import S3CRUD
-from ..tools import get_crud_string, s3_decode_iso_datetime, s3_str, IS_ONE_OF
+from ..tools import IS_ONE_OF, get_crud_string, s3_decode_iso_datetime, \
+                    s3_str
 from ..ui import S3SQLDefaultForm, S3PentityAutocompleteWidget
 
 PHONECHARS = string.digits

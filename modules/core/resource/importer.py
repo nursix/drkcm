@@ -48,7 +48,8 @@ from gluon.tools import callback
 
 from s3dal import Field
 
-from ..tools import s3_format_datetime, s3_get_foreign_key, s3_has_foreign_key, s3_str, s3_utc
+from ..tools import s3_format_datetime, s3_get_foreign_key, \
+                    s3_has_foreign_key, s3_str, s3_utc
 
 # =============================================================================
 class XMLImporter:

@@ -44,7 +44,8 @@ from uuid import uuid4
 from gluon import current, DIV, INPUT
 from gluon.storage import Storage
 
-from ..tools import get_crud_string, s3_decode_iso_datetime, s3_str, S3DateTime, JSONERRORS
+from ..tools import JSONERRORS, S3DateTime, get_crud_string, \
+                    s3_decode_iso_datetime, s3_str
 from ..ui import S3DateWidget
 
 from .base import CRUDMethod

@@ -34,7 +34,8 @@ from gluon import HTTP, current
 from gluon.contenttype import contenttype
 from gluon.storage import Storage
 
-from ...tools import get_crud_string, s3_str, s3_strip_markup, s3_get_foreign_key
+from ...tools import get_crud_string, s3_get_foreign_key, s3_str, \
+                     s3_strip_markup
 
 from ..codec import S3Codec
 

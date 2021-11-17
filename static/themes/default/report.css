@@ -4,6 +4,12 @@
   /* hide initially, made visible by script */
   display: none;
 }
+.pt-form legend,
+.tp-form legend {
+    font-size: 14px;
+    margin-bottom: 0;
+    border: 0 !important;
+}
 
 .pt-form .pt-rows {
   margin-right: 0.5rem;
@@ -12,9 +18,15 @@
   margin-left: 0.5rem;
 }
 .pt-form .pt-axis-options select,
-.pt-form .pt-axis-options label {
+.pt-form .pt-axis-options label,
+.tp-form .tp-time-options select,
+.tp-form .tp-time-options label {
   display: inline-block;
   width: auto;
+}
+.tp-form .tp-time-options label {
+    font-size: 0.9rem;
+    margin: 0 0.7rem;
 }
 
 /* Chart options */

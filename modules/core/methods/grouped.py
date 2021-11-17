@@ -36,12 +36,9 @@ import math
 
 from gluon import current, DIV, H2, INPUT, SPAN, TABLE, TBODY, TD, TFOOT, TH, THEAD, TR
 
-from ..tools import get_crud_string, s3_strip_markup, s3_str
+from ..tools import JSONSEPARATORS, get_crud_string, s3_strip_markup, s3_str
 
 from .base import CRUDMethod
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 DEFAULT = lambda: None
 
@@ -1484,7 +1481,7 @@ class S3GroupedItems:
 
         # Convert to JSON unless requested otherwise
         if master and not as_dict:
-            output = json.dumps(output, separators=SEPARATORS)
+            output = json.dumps(output, separators=JSONSEPARATORS)
         return output
 
 # =============================================================================

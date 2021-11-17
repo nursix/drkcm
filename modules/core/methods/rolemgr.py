@@ -38,8 +38,8 @@ from gluon import current, URL, DIV, SPAN, SQLFORM, INPUT, A, LI, UL
 
 from s3dal import Field
 
-from ..resource import FS, SEPARATORS
-from ..tools import s3_str, s3_mark_required, JSONERRORS
+from ..resource import FS
+from ..tools import JSONERRORS, JSONSEPARATORS, s3_mark_required, s3_str
 from ..ui import s3_comments_widget
 
 from .base import CRUDMethod
@@ -562,7 +562,7 @@ class S3RoleManager(CRUDMethod):
                               False, # delete-flag
                               ])
 
-        return json.dumps(rules, separators=SEPARATORS)
+        return json.dumps(rules, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def update_role(self, role, form):
@@ -1671,7 +1671,7 @@ class S3PermissionWidget:
         # Widget instantiation
         script = '''$('#%(widget_id)s').permissionEdit(%(options)s)''' % \
                  {"widget_id": widget_id,
-                  "options": json.dumps(opts, separators=SEPARATORS),
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
                   }
         jquery_ready = s3.jquery_ready
         if script not in jquery_ready:
@@ -1788,7 +1788,7 @@ class S3RolesWidget:
                            ),
                      INPUT(_type = "hidden",
                            _name = "assigned",
-                           _value = json.dumps(assignments, separators=SEPARATORS),
+                           _value = json.dumps(assignments, separators=JSONSEPARATORS),
                            _id = widget_id + "-data",
                            ),
                      _id = widget_id,
@@ -1921,7 +1921,7 @@ class S3RolesWidget:
         # Widget instantiation
         script = '''$('#%(widget_id)s').roleManager(%(options)s)''' % \
                  {"widget_id": widget_id,
-                  "options": json.dumps(opts, separators=SEPARATORS),
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
                   }
         jquery_ready = s3.jquery_ready
         if script not in jquery_ready:

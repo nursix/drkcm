@@ -26,7 +26,7 @@
 """
 
 __all__ = ("RCVARS",
-           "SEPARATORS",
+           "JSONSEPARATORS",
            "S3CustomController",
            "S3MarkupStripper",
            "StringTemplateParser",
@@ -77,7 +77,7 @@ from s3dal import Expression, Field, Row, S3DAL
 from .convert import s3_str
 
 # Compact JSON encoding
-SEPARATORS = (",", ":")
+JSONSEPARATORS = (",", ":")
 
 RCVARS = "rcvars"
 

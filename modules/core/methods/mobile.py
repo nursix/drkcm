@@ -36,8 +36,8 @@ import json
 from gluon import IS_EMPTY_OR, IS_IN_SET, current
 
 from ..resource import S3ResourceTree
-from ..tools import s3_get_foreign_key, s3_str, SEPARATORS, s3_parse_datetime, \
-                    S3Represent
+from ..tools import S3Represent, JSONSEPARATORS, s3_get_foreign_key, \
+                    s3_parse_datetime, s3_str
 from ..ui import S3SQLCustomForm, S3SQLDummyField, S3SQLField, \
                  S3SQLForm, S3SQLInlineInstruction, S3SQLSectionBreak
 
@@ -208,7 +208,7 @@ class S3MobileFormList:
                 a JSON string
         """
 
-        return json.dumps(self.formlist, separators=SEPARATORS)
+        return json.dumps(self.formlist, separators=JSONSEPARATORS)
 
 # =============================================================================
 class S3MobileSchema:
@@ -1331,7 +1331,7 @@ class S3MobileCRUD(CRUDMethod):
         mform["function"] = r.function
 
         # Convert to JSON
-        output = json.dumps(mform, separators=SEPARATORS)
+        output = json.dumps(mform, separators=JSONSEPARATORS)
 
         current.response.headers = {"Content-Type": "application/json"}
         return output

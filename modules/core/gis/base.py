@@ -46,7 +46,7 @@ from gluon.storage import Storage
 
 from s3dal import Rows
 
-from ..tools import S3Trackable, s3_str
+from ..tools import JSONSEPARATORS, S3Trackable, s3_str
 
 KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 
@@ -62,9 +62,6 @@ GEOM_TYPES = {"point": 1,
 
 # km
 RADIUS_EARTH = 6371.01
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 # Garmin GPS Symbols
 GPS_SYMBOLS = ("Airport",
@@ -2744,7 +2741,7 @@ class GIS:
                 rows = db(query).select(stable.record_id,
                                         stable.style)
                 for row in rows:
-                    styles[row.record_id] = json.dumps(row.style, separators=SEPARATORS)
+                    styles[row.record_id] = json.dumps(row.style, separators=JSONSEPARATORS)
 
                 styles[tablename] = styles
 
@@ -3462,7 +3459,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                     id = row.id
                     shape = wkt_loads(row.wkt)
                     # Compact Encoding
-                    geojson = dumps(shape, separators=SEPARATORS)
+                    geojson = dumps(shape, separators=JSONSEPARATORS)
                 if geojson:
                     f = {"type": "Feature",
                          "properties": {"id": id},
@@ -3477,7 +3474,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                 # Output to file
                 filename = os.path.join(folder, "countries.geojson")
                 File = open(filename, "w")
-                File.write(json.dumps(data, separators=SEPARATORS))
+                File.write(json.dumps(data, separators=JSONSEPARATORS))
                 File.close()
 
         q1 = (table.level == "L1") & \
@@ -3531,7 +3528,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                         id = row.id
                         shape = wkt_loads(row.wkt)
                         # Compact Encoding
-                        geojson = dumps(shape, separators=SEPARATORS)
+                        geojson = dumps(shape, separators=JSONSEPARATORS)
                     if geojson:
                         f = {"type": "Feature",
                              "properties": {"id": id},
@@ -3546,7 +3543,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                     # Output to file
                     filename = os.path.join(folder, "1_%s.geojson" % _id)
                     File = open(filename, "w")
-                    File.write(json.dumps(data, separators=SEPARATORS))
+                    File.write(json.dumps(data, separators=JSONSEPARATORS))
                     File.close()
                 else:
                     current.log.debug("No L1 features in %s" % _id)
@@ -3592,7 +3589,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                             id = row.id
                             shape = wkt_loads(row.wkt)
                             # Compact Encoding
-                            geojson = dumps(shape, separators=SEPARATORS)
+                            geojson = dumps(shape, separators=JSONSEPARATORS)
                         if geojson:
                             f = {"type": "Feature",
                                  "properties": {"id": id},
@@ -3607,7 +3604,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                         # Output to file
                         filename = os.path.join(folder, "2_%s.geojson" % l1.id)
                         File = open(filename, "w")
-                        File.write(json.dumps(data, separators=SEPARATORS))
+                        File.write(json.dumps(data, separators=JSONSEPARATORS))
                         File.close()
                     else:
                         current.log.debug("No L2 features in %s" % l1.id)
@@ -3656,7 +3653,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                                 id = row.id
                                 shape = wkt_loads(row.wkt)
                                 # Compact Encoding
-                                geojson = dumps(shape, separators=SEPARATORS)
+                                geojson = dumps(shape, separators=JSONSEPARATORS)
                             if geojson:
                                 f = {"type": "Feature",
                                      "properties": {"id": id},
@@ -3671,7 +3668,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                             # Output to file
                             filename = os.path.join(folder, "3_%s.geojson" % l2.id)
                             File = open(filename, "w")
-                            File.write(json.dumps(data, separators=SEPARATORS))
+                            File.write(json.dumps(data, separators=JSONSEPARATORS))
                             File.close()
                         else:
                             current.log.debug("No L3 features in %s" % l2.id)
@@ -3723,7 +3720,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                                     id = row.id
                                     shape = wkt_loads(row.wkt)
                                     # Compact Encoding
-                                    geojson = dumps(shape, separators=SEPARATORS)
+                                    geojson = dumps(shape, separators=JSONSEPARATORS)
                                 if geojson:
                                     f = {"type": "Feature",
                                          "properties": {"id": id},
@@ -3738,7 +3735,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                                 # Output to file
                                 filename = os.path.join(folder, "4_%s.geojson" % l3.id)
                                 File = open(filename, "w")
-                                File.write(json.dumps(data, separators=SEPARATORS))
+                                File.write(json.dumps(data, separators=JSONSEPARATORS))
                                 File.close()
                             else:
                                 current.log.debug("No L4 features in %s" % l3.id)
@@ -6299,7 +6296,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
         elif output == "geojson":
             from ...geojson import dumps
             # Compact Encoding
-            output = dumps(shape, separators=SEPARATORS)
+            output = dumps(shape, separators=JSONSEPARATORS)
 
         return output
 

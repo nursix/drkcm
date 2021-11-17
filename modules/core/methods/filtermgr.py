@@ -34,7 +34,7 @@ from gluon import current
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from ..tools import SEPARATORS
+from ..tools import JSONSEPARATORS
 
 from .base import CRUDMethod
 
@@ -128,7 +128,7 @@ class S3Filter(CRUDMethod):
                     if opts and isinstance(opts, dict):
                         options.update(opts)
 
-        options = json.dumps(options, separators=SEPARATORS)
+        options = json.dumps(options, separators=JSONSEPARATORS)
         current.response.headers["Content-Type"] = "application/json"
         return options
 
@@ -347,6 +347,6 @@ class S3Filter(CRUDMethod):
 
         # JSON response
         current.response.headers["Content-Type"] = "application/json"
-        return json.dumps(filters, separators=SEPARATORS)
+        return json.dumps(filters, separators=JSONSEPARATORS)
 
 # END =========================================================================

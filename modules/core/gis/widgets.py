@@ -33,7 +33,7 @@ from urllib.parse import quote as urllib_quote
 from gluon import current, URL, DIV, XML, A, HTTP
 from gluon.languages import regex_translate
 
-from ..tools import JSONERRORS, SEPARATORS, s3_include_ext, s3_include_underscore, s3_str
+from ..tools import JSONERRORS, JSONSEPARATORS, s3_include_ext, s3_include_underscore, s3_str
 
 from .base import GIS
 from .layers import LayerArcREST, LayerBing, LayerCoordinate, LayerEmpty, LayerFeature, \
@@ -846,7 +846,7 @@ class MAP(DIV):
         globals_dict = self.globals
         js_globals = []
         for key, val in globals_dict.items():
-            line = '''S3.gis.%s=%s''' % (key, dumps(val, separators=SEPARATORS))
+            line = '''S3.gis.%s=%s''' % (key, dumps(val, separators=JSONSEPARATORS))
             if line not in js_globals:
                 js_globals.append(line)
         js_globals = '''\n'''.join(js_globals)
@@ -879,7 +879,7 @@ class MAP(DIV):
         options = self.options
         projection = options["projection"]
         try:
-            options = dumps(options, separators=SEPARATORS)
+            options = dumps(options, separators=JSONSEPARATORS)
         except Exception as exception:
             current.log.error("Map %s failed to initialise" % map_id, exception)
         plugin_callbacks = '''\n'''.join(self.plugin_callbacks)
@@ -1302,7 +1302,7 @@ class MAP2(DIV):
             return super(MAP2, self).xml()
 
         map_id = self.opts.get("id", "default_map")
-        options = json.dumps(options, separators=SEPARATORS)
+        options = json.dumps(options, separators=JSONSEPARATORS)
 
         # Insert the JavaScript
         appname = current.request.application

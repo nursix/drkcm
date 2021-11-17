@@ -46,7 +46,8 @@ from s3dal import Row, Rows, Query, Field, original_tablename
 
 from ..controller import CRUDRequest
 from ..model import S3MetaFields, s3_comments
-from ..tools import S3Represent, S3Tracker, s3_addrow, s3_mark_required, s3_str, IS_ISO639_2_LANGUAGE_CODE
+from ..tools import IS_ISO639_2_LANGUAGE_CODE, S3Represent, S3Tracker, \
+                    s3_addrow, s3_mark_required, s3_str
 
 from .permissions import S3Permission
 

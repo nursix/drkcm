@@ -41,7 +41,8 @@ from uuid import uuid4
 
 from gluon import current, TABLE, THEAD, TBODY, TR, TD, TH, XML
 
-from ..tools import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc, s3_str, s3_truncate
+from ..tools import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc, \
+                    s3_str, s3_truncate
 
 # =============================================================================
 class S3Notifications:

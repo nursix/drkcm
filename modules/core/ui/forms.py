@@ -53,12 +53,11 @@ from gluon.validators import Validator
 from s3dal import Field, original_tablename
 
 from ..tools import s3_mark_required, s3_store_last_record_id, s3_str, \
-                    s3_validate, JSONERRORS, S3Represent
+                    s3_validate, JSONERRORS, JSONSEPARATORS, S3Represent
 
 from .widgets import S3Selector, S3UploadWidget
 
 # Compact JSON encoding
-SEPARATORS = (",", ":")
 DEFAULT = lambda: None
 
 # =============================================================================
@@ -2839,7 +2838,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                 "data": items
                 }
 
-        return json.dumps(data, separators=SEPARATORS)
+        return json.dumps(data, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def parse(self, value, record_id=None):
@@ -2903,7 +2902,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
             data = json.loads(value)
         else:
             data = value
-            value = json.dumps(value, separators=SEPARATORS)
+            value = json.dumps(value, separators=JSONSEPARATORS)
         if data is None:
             raise SyntaxError("No resource structure information")
 

@@ -217,7 +217,7 @@ class S3ResourceTree:
             # Gets loaded before re-dumping, so no need to compact
             # or avoid double-encoding
             # NB Ensure we don't double-encode unicode!
-            #root.set("map", json.dumps(map_data, separators=SEPARATORS,
+            #root.set("map", json.dumps(map_data, separators=JSONSEPARATORS,
             #                           ensure_ascii=False))
             root.set("map", json.dumps(map_data))
 

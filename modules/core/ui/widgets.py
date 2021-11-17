@@ -839,7 +839,7 @@ class S3AddPersonWidget(FormWidget):
         # Widget instantiation
         script = '''$('#%(widget_id)s').addPerson(%(options)s)''' % \
                  {"widget_id": widget_id,
-                  "options": json.dumps(opts, separators=SEPARATORS),
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
                   }
         jquery_ready = s3.jquery_ready
         if script not in jquery_ready:
@@ -1596,7 +1596,7 @@ class S3ColorPickerWidget(FormWidget):
                        noColorSelectedText = s3_str(T("No Color Selected")),
                        )
 
-        options = json.dumps(options, separators=SEPARATORS)
+        options = json.dumps(options, separators=JSONSEPARATORS)
         # Ensure we save in rrggbb format not #rrggbb (IS_HTML_COLOUR)
         options = "%s,change:function(c){this.value=c.toHex()}}" % options[:-1]
         script = \
@@ -2031,7 +2031,7 @@ class S3CalendarWidget(FormWidget):
         # jQuery-ready script
         script = '''$('#%(selector)s').calendarWidget(%(options)s);''' % \
                  {"selector": selector,
-                  "options": json.dumps(options, separators=SEPARATORS),
+                  "options": json.dumps(options, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
 
@@ -2736,7 +2736,7 @@ class S3WeeklyHoursWidget(FormWidget):
         # jQuery-ready script
         script = '''$('#%(selector)s').weeklyHours(%(options)s);''' % \
                  {"selector": selector,
-                  "options": json.dumps(options, separators=SEPARATORS),
+                  "options": json.dumps(options, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
 
@@ -2956,7 +2956,7 @@ class S3QRInput(FormWidget):
         # jQuery-ready script
         script = '''$('#%(selector)s').qrInput(%(options)s);''' % \
                  {"selector": selector,
-                  "options": json.dumps(opts, separators=SEPARATORS),
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
 
@@ -3163,7 +3163,7 @@ class S3EmbeddedComponentWidget(FormWidget):
         # Initialize UI Widget
         script = '''$('#%(input)s').embeddedComponent(%(options)s)''' % \
                  {"input": input_id,
-                  "options": json.dumps(options, separators=SEPARATORS),
+                  "options": json.dumps(options, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
 
@@ -3326,7 +3326,7 @@ class S3GroupedOptionsWidget(FormWidget):
             s3_include_underscore()
 
         script = '''$('#%s').groupedopts(%s)''' % \
-                 (_id, json.dumps(widget_opts, separators=SEPARATORS))
+                 (_id, json.dumps(widget_opts, separators=JSONSEPARATORS))
         jquery_ready = current.response.s3.jquery_ready
         if script not in jquery_ready:
             jquery_ready.append(script)
@@ -3922,7 +3922,7 @@ class S3KeyValueWidget(ListWidget):
             value = "[]"
         if not isinstance(value, str):
             try:
-                value = json.dumps(value, separators=SEPARATORS)
+                value = json.dumps(value, separators=JSONSEPARATORS)
             except:
                 raise("Bad value for key-value pair field")
         appname = current.request.application
@@ -4482,7 +4482,7 @@ class S3Selector(FormWidget):
                 the serialized values
         """
 
-        return json.dumps(values, separators=SEPARATORS)
+        return json.dumps(values, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def parse(self, value):
@@ -5054,7 +5054,7 @@ class S3LocationSelector(S3Selector):
         if self.open_map_on_load:
             options["openMapOnLoad"] = True
         script = '''$('#%s').locationselector(%s)''' % \
-                 (fieldname, json.dumps(options, separators=SEPARATORS))
+                 (fieldname, json.dumps(options, separators=JSONSEPARATORS))
 
         show_map = self.show_map
         callback = None
@@ -6912,7 +6912,7 @@ class S3MultiSelectWidget(MultipleOptionsWidget):
         if create:
             tablename = "%s_%s" % (create["c"], create["f"])
             if current.auth.s3_has_permission("create", tablename):
-                create = ",create:%s" % json.dumps(create, separators=SEPARATORS)
+                create = ",create:%s" % json.dumps(create, separators=JSONSEPARATORS)
             else:
                 create = ""
         script = '''$('#%s').multiselect({allSelectedText:'%s',selectedText:'%s',%s,height:300,minWidth:0,selectedList:%s,noneSelectedText:'%s',multiple:%s%s})''' % \
@@ -7065,7 +7065,7 @@ class S3CascadeSelectWidget(FormWidget):
         widget = DIV(self.hidden_input(input_id, field, value, **attr),
                      INPUT(_type = "hidden",
                            _class = "s3-cascade",
-                           _value = json.dumps(nodes, separators=SEPARATORS),
+                           _value = json.dumps(nodes, separators=JSONSEPARATORS),
                            ),
                      selector_rows,
                      _class = "s3-cascade-select",
@@ -7126,7 +7126,7 @@ class S3CascadeSelectWidget(FormWidget):
                              _id = input_id,
                              _class = "s3-cascade-input",
                              requires = requires,
-                             value = json.dumps(selected, separators=SEPARATORS),
+                             value = json.dumps(selected, separators=JSONSEPARATORS),
                              )
 
         return hidden_input
@@ -7164,7 +7164,7 @@ class S3CascadeSelectWidget(FormWidget):
         # Widget instantiation
         script = '''$('#%(widget_id)s').cascadeSelect(%(options)s)''' % \
                  {"widget_id": widget_id,
-                  "options": json.dumps(opts, separators=SEPARATORS),
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
                   }
         jquery_ready = s3.jquery_ready
         if script not in jquery_ready:
@@ -7350,7 +7350,7 @@ class S3HierarchyWidget(FormWidget):
                              _id = selector,
                              _class = "s3-hierarchy-input",
                              requires = requires,
-                             value = json.dumps(selected, separators=SEPARATORS),
+                             value = json.dumps(selected, separators=JSONSEPARATORS),
                              )
 
         # The widget
@@ -7422,7 +7422,7 @@ class S3HierarchyWidget(FormWidget):
 
         script = '''$('#%(widget_id)s').hierarchicalopts(%(widget_opts)s)''' % \
                  {"widget_id": widget_id,
-                  "widget_opts": json.dumps(widget_opts, separators=SEPARATORS),
+                  "widget_opts": json.dumps(widget_opts, separators=JSONSEPARATORS),
                   }
 
         s3.jquery_ready.append(script)
@@ -7725,7 +7725,7 @@ class S3PentityAutocompleteWidget(FormWidget):
 
         if self.types:
             # Something other than default: ("pr_person", "pr_group")
-            types = json.dumps(self.types, separators=SEPARATORS)
+            types = json.dumps(self.types, separators=JSONSEPARATORS)
         else:
             types = ""
 
@@ -7835,7 +7835,7 @@ class S3SiteAutocompleteWidget(FormWidget):
         for instance_type in site_types:
             # Change from T()
             site_types[instance_type] = s3_str(site_types[instance_type])
-        site_types = '''S3.org_site_types=%s''' % json.dumps(site_types, separators=SEPARATORS)
+        site_types = '''S3.org_site_types=%s''' % json.dumps(site_types, separators=JSONSEPARATORS)
 
         settings = current.deployment_settings
         delay = settings.get_ui_autocomplete_delay()
@@ -8566,7 +8566,7 @@ def search_ac(r, **attr):
             append(record)
 
     current.response.headers["Content-Type"] = "application/json"
-    return json.dumps(output, separators=SEPARATORS)
+    return json.dumps(output, separators=JSONSEPARATORS)
 
 # =============================================================================
 class S3XMLContents:

@@ -39,14 +39,11 @@ from gluon.storage import Storage
 
 from ..tools import s3_decode_iso_datetime, s3_encode_iso_datetime, s3_utc, \
                     s3_get_foreign_key, s3_represent_value, s3_str, \
-                    s3_strip_markup, s3_validate, S3RepresentLazy
+                    s3_strip_markup, s3_validate, S3RepresentLazy, JSONSEPARATORS
 
 from .codec import S3Codec
 
 ogetattr = object.__getattribute__
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 # =============================================================================
 class S3XML(S3Codec):
@@ -2128,7 +2125,7 @@ class S3XML(S3Codec):
             js = json.dumps(root_dict, indent=2)
             return "\n".join([l.rstrip() for l in js.splitlines()])
         else:
-            return json.dumps(root_dict, separators=SEPARATORS)
+            return json.dumps(root_dict, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     @staticmethod
