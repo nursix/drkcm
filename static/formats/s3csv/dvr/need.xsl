@@ -7,6 +7,10 @@
 
          CSV column..................Format..........Content
 
+         Organisation................string..........Organisation Name
+         Branch.........................optional.....Organisation Branch Name
+         ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
+
          Type........................string..........Type Name
          SubType.....................string..........Sub Type Name
          SubSubType... (indefinite depth)
@@ -15,6 +19,8 @@
          Comments....................string..........Comments
 
     *********************************************************************** -->
+    <xsl:import href="../orgh.xsl"/>
+
     <xsl:output method="xml"/>
 
     <xsl:key name="services" match="row" use="col[@field='Service']"/>
@@ -22,6 +28,14 @@
     <!-- ****************************************************************** -->
     <xsl:template match="/">
         <s3xml>
+
+            <!-- Import the organisation hierarchy -->
+            <xsl:for-each select="table/row[1]">
+                <xsl:call-template name="OrganisationHierarchy">
+                    <xsl:with-param name="level">Organisation</xsl:with-param>
+                    <xsl:with-param name="rows" select="//table/row"/>
+                </xsl:call-template>
+            </xsl:for-each>
 
             <!-- Services -->
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('services',
@@ -57,7 +71,6 @@
         <xsl:param name="Subset"/>
 
         <xsl:variable name="Name" select="col[@field=$Level]"/>
-        <test><xsl:value-of select="$Name"/></test>
 
         <xsl:if test="$Name!=''">
 
@@ -150,6 +163,16 @@
 
             <!-- Name -->
             <data field="name"><xsl:value-of select="$Name"/></data>
+
+            <!-- Link to Organisation -->
+            <xsl:variable name="Organisation" select="col[@field='Organisation']/text()"/>
+            <xsl:if test="$Organisation!=''">
+                <reference field="organisation_id" resource="org_organisation">
+                    <xsl:attribute name="tuid">
+                        <xsl:call-template name="OrganisationID"/>
+                    </xsl:attribute>
+                </reference>
+            </xsl:if>
 
             <!-- Link to Service -->
             <xsl:variable name="Service" select="col[@field='Service']/text()"/>

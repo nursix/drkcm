@@ -2701,6 +2701,7 @@ def config(settings):
     def configure_response_theme_selector(ui_options,
                                           case_root_org = None,
                                           person_id = None,
+                                          record_id = None,
                                           case_activity = None,
                                           case_activity_id = None,
                                           ):
@@ -2710,6 +2711,7 @@ def config(settings):
             @param ui_options: the UI options for the current org
             @param case_root_org: the case root organisation
             @param person_id: the person record ID (to look up the root org)
+            @param record_id: the response action record ID (if updating)
             @param case_activity: the case activity record
             @param case_activity_id: the case activity record ID
                                      (to look up the case activity record)
@@ -2720,7 +2722,6 @@ def config(settings):
 
         ttable = s3db.dvr_response_theme
         query = (ttable.obsolete == False) | (ttable.obsolete == None)
-
         # Limit themes to the themes of the case root organisation
         if not case_root_org:
             case_root_org = get_case_root_org(person_id)
@@ -2731,14 +2732,14 @@ def config(settings):
 
         themes_needs = settings.get_dvr_response_themes_needs()
         if ui_options.get("activity_use_need") and themes_needs:
-
             # Limit themes to those matching the need of the activity
             if case_activity:
                 need_id = case_activity.need_id
             elif case_activity_id:
                 # Look up the parent record
                 catable = s3db.dvr_case_activity
-                case_activity = db(catable.id == case_activity_id).select(catable.need_id,
+                case_activity = db(catable.id == case_activity_id).select(catable.id,
+                                                                          catable.need_id,
                                                                           limitby = (0, 1),
                                                                           ).first()
                 need_id = case_activity.need_id if case_activity else None
@@ -2748,11 +2749,33 @@ def config(settings):
                 q = (ttable.need_id == need_id)
                 query = q & query if query else q
 
+        table = s3db.dvr_response_action
+        if record_id:
+            # Include currently selected themes even if they do not match
+            # any of the previous criteria
+            q = (table.id == record_id)
+            row = db(q).select(table.response_theme_ids,
+                               limitby = (0, 1),
+                               ).first()
+            if row and row.response_theme_ids:
+                query |= ttable.id.belongs(row.response_theme_ids)
+
+        elif case_activity:
+            # Include all themes currently linked to this case activity
+            # (for inline responses)
+            q = (table.case_activity_id == case_activity.id) & \
+                (table.deleted == False)
+            rows = db(q).select(table.response_theme_ids)
+            theme_ids = set()
+            for row in rows:
+                if row.response_theme_ids:
+                    theme_ids |= set(row.response_theme_ids)
+            if theme_ids:
+                query |= ttable.id.belongs(theme_ids)
+
         dbset = db(query) if query else db
 
-        table = s3db.dvr_response_action
         field = table.response_theme_ids
-
         if themes_needs:
             # Include the need in the themes-selector
             # - helps to find themes using the selector search field
@@ -2966,16 +2989,23 @@ def config(settings):
             date_due = "date_due" if use_due_date else None
 
             # Configure theme selector
+            record = r.record
             if r.tablename == "dvr_response_action":
                 is_master = True
-                person_id = r.record.person_id if r.record else None
+                if record:
+                    person_id = record.person_id
+                    record_id = record.id
+                else:
+                    person_id = record_id = None
             elif r.tablename == "pr_person" and \
                  r.component and r.component.tablename == "dvr_response_action":
                 is_master = False
-                person_id = r.record.id if r.record else None
+                person_id = record.id if record else None
+                record_id = r.component_id
 
             configure_response_theme_selector(ui_options,
                                               person_id = person_id,
+                                              record_id = record_id,
                                               )
 
             get_vars = r.get_vars
