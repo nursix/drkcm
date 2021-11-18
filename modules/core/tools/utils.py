@@ -1040,7 +1040,7 @@ class StringTemplateParser:
         return parser._keys
 
 # =============================================================================
-class S3MarkupStripper(HTMLParser, object):
+class S3MarkupStripper(HTMLParser):
     """ Simple markup stripper """
 
     def __init__(self):

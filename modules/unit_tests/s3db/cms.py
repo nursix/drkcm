@@ -11,12 +11,13 @@ from gluon import *
 from unit_tests import run_suite
 
 # =============================================================================
+@unittest.skipIf(not current.deployment_settings.has_module("cms"), "CMS module disabled")
 class CMSPostBodyRepresentTests(unittest.TestCase):
     """ Tests for the represent method on the cms_post.body field """
 
     # -------------------------------------------------------------------------
     def setUp(self):
-        self.represent = current.s3db.cms_post.body.represent
+        self.represent = lambda v: str(current.s3db.cms_post.body.represent(v))
 
     # -------------------------------------------------------------------------
     def testNoURLs(self):
@@ -26,7 +27,6 @@ class CMSPostBodyRepresentTests(unittest.TestCase):
             self.represent("no urls in here, just unicode ßñö chars"),
             "no urls in here, just unicode ßñö chars"
             )
-
 
     # -------------------------------------------------------------------------
     def testURLsWithoutHref(self):
