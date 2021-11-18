@@ -2944,6 +2944,7 @@ def config(settings):
         # Custom list fields
         list_fields = ["name",
                        #"organisation_id",
+                       "organisation_id$organisation_type__link.organisation_type_id",
                        (T("Telephone"), "phone1"),
                        "email",
                        (T("Opening Hours"), "opening_times"),
@@ -3188,6 +3189,7 @@ def config(settings):
                     "service_site.service_id",
                     (T("Project"), "organisation_id$project.name"),
                     (T("Organization Group"), "organisation_id$group_membership.group_id"),
+                    "organisation_id$organisation_type__link.organisation_type_id",
                     (T("Requested Items"), "req.req_item.item_id"),
                     ]
 
