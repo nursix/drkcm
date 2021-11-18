@@ -1,5 +1,5 @@
 """
-    CRUD Access Methods
+    CRUD Methods
 
     Copyright: 2009-2021 (c) Sahana Software Foundation
 
@@ -68,6 +68,16 @@ class CRUDMethod:
                 widget_id: widget ID
                 attr: dict of parameters for the method handler
 
+            Keyword Args:
+                hide_filter: whether to hide filter forms
+                    - None  = show filters on master, hide for components
+                    - False = show all filters (on all tabs)
+                    - True  = hide all filters (on all tabs)
+                    - {alias=setting} = setting per component,
+                                        alias None means master resource,
+                                        alias "_default" to specify an
+                                        alternative default
+
             Returns:
                 output object to send to the view
         """
@@ -80,10 +90,7 @@ class CRUDMethod:
         self.download_url = response.s3.download_url
 
         # Override request method
-        if method is not None:
-            self.method = method
-        else:
-            self.method = r.method
+        self.method = method if method else r.method
 
         # Find the target resource and record
         if r.component:
@@ -114,24 +121,7 @@ class CRUDMethod:
         self.table = resource.table
         self.resource = resource
 
-        if self.method == "_init":
-            # Just init, don't execute
-            return None
-
         if r.interactive:
-            # hide_filter policy:
-            #
-            #   None            show filters on master,
-            #                   hide for components (default)
-            #   False           show all filters (on all tabs)
-            #   True            hide all filters (on all tabs)
-            #
-            #   dict(alias=setting)     setting per component, alias
-            #                           None means master resource,
-            #                           use special alias _default
-            #                           to specify an alternative
-            #                           default
-            #
             hide_filter = attr.get("hide_filter")
             if isinstance(hide_filter, dict):
                 component_name = r.component_name
@@ -150,8 +140,8 @@ class CRUDMethod:
         # Apply method
         if widget_id and hasattr(self, "widget"):
             output = self.widget(r,
-                                 method=self.method,
-                                 widget_id=widget_id,
+                                 method = self.method,
+                                 widget_id = widget_id,
                                  **attr)
         else:
             output = self.apply_method(r, **attr)
