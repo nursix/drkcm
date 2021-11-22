@@ -702,8 +702,8 @@ class CWAReport(object):
             data["dgc"] = True
 
         # Convert data to JSON
-        from core import SEPARATORS
-        data_json = json.dumps(data, separators=SEPARATORS)
+        from core import JSONSEPARATORS
+        data_json = json.dumps(data, separators=JSONSEPARATORS)
 
         # Base64-encode the data JSON
         data_str = base64.urlsafe_b64encode(data_json.encode("utf-8")).decode("utf-8")

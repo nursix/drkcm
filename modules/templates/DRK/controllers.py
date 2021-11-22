@@ -311,6 +311,8 @@ class surplus_meals(S3CustomController):
         s3 = current.response.s3
         controller = self.__class__.__name__
 
+        list_url = URL(args=[controller], vars={})
+
         def prep(r):
 
             SURPLUS_MEALS = "SURPLUS-MEALS"
@@ -391,10 +393,6 @@ class surplus_meals(S3CustomController):
                            "comments",
                            ]
 
-            # URL of the list view
-            list_url = URL(args=[controller], vars={})
-            s3.datatable_ajax_source = list_url
-
             resource.configure(insertable = True,
                                list_fields = list_fields,
                                # Fix redirects:
@@ -459,7 +457,7 @@ class surplus_meals(S3CustomController):
                          extension = current.auth.permission.format,
                          )
 
-        return r()
+        return r(dtargs = {"dt_ajax_url": list_url})
 
 # =============================================================================
 def update_transferability(site_id=None):

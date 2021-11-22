@@ -7179,8 +7179,7 @@ class DVRManageAppointments(CRUDMethod):
                                    represent = True,
                                    )
             filteredrows = data["numrows"]
-            dt = S3DataTable(data["rfields"], data["rows"], orderby=orderby)
-            dt_id = "datatable"
+            dt = DataTable(data["rfields"], data["rows"], "datatable", orderby=orderby)
 
             # Bulk actions
             dt_bulk_actions = [(T("Completed"), "completed"),
@@ -7191,13 +7190,12 @@ class DVRManageAppointments(CRUDMethod):
                 # Page load
                 resource.configure(deletable = False)
 
-                dt.defaultActionButtons(resource)
+                S3CRUD.action_buttons(r)
                 response.s3.no_formats = True
 
                 # Data table (items)
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_pageLength = display_length,
                                 dt_ajax_url = URL(c = "dvr",
                                                   f = "case_appointment",
@@ -7205,8 +7203,8 @@ class DVRManageAppointments(CRUDMethod):
                                                   vars = {},
                                                   extension = "aadata",
                                                   ),
-                                dt_searching = "false",
-                                dt_pagination = "true",
+                                dt_searching = False,
+                                dt_pagination = True,
                                 dt_bulk_actions = dt_bulk_actions,
                                 )
 
@@ -7264,7 +7262,6 @@ class DVRManageAppointments(CRUDMethod):
                     echo = None
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions = dt_bulk_actions,
                                 )
@@ -9420,8 +9417,6 @@ class dvr_AssignMethod(CRUDMethod):
             already = [row.case_id for row in rows]
             resource.add_filter((~db.dvr_case.id.belongs(already)))
 
-            dt_id = "datatable"
-
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
 
@@ -9486,16 +9481,15 @@ class dvr_AssignMethod(CRUDMethod):
                                        count=True,
                                        represent=True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
 
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url=r.url(representation="aadata"),
                                 dt_bulk_actions=dt_bulk_actions,
                                 dt_pageLength=display_length,
-                                dt_pagination="true",
-                                dt_searching="false",
+                                dt_pagination=True,
+                                dt_searching=False,
                                 )
 
                 # @ToDO: dvr_case_label()
@@ -9523,11 +9517,10 @@ class dvr_AssignMethod(CRUDMethod):
                                        count=True,
                                        represent=True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
 
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions=dt_bulk_actions)
                 response.headers["Content-Type"] = "application/json"

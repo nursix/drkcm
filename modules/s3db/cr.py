@@ -45,6 +45,7 @@ import json
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
+from s3dal import Row
 from s3layouts import S3PopupLink
 
 NIGHT = 1

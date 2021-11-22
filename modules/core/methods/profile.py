@@ -637,10 +637,7 @@ class S3Profile(S3CRUD):
             s3 = current.response.s3
 
             # How many records per page?
-            if s3.dataTable_pageLength:
-                display_length = s3.dataTable_pageLength
-            else:
-                display_length = widget_get("pagesize", 10)
+            display_length = widget_get("pagesize", 10)
             dtargs["dt_lengthMenu"] = [[10, 25, 50, -1],
                                        [10, 25, 50, s3_str(current.T("All"))]
                                        ]
@@ -654,19 +651,20 @@ class S3Profile(S3CRUD):
 
             # Server-side pagination?
             if not s3.no_sspag:
-                dt_pagination = "true"
+                dt_pagination = True
                 if not limit and display_length is not None:
                     limit = 2 * display_length
                 else:
                     limit = None
             else:
-                dt_pagination = "false"
+                dt_pagination = False
 
             # Get the data table
             dt, totalrows = resource.datatable(fields = list_fields,
                                                start = start,
                                                limit = limit,
                                                orderby = orderby,
+                                               list_id = list_id,
                                                )
             displayrows = totalrows
 
@@ -678,27 +676,22 @@ class S3Profile(S3CRUD):
                                             "msg_no_match")
             empty = DIV(empty_str, _class="empty")
 
-            dtargs["dt_searching"] = widget_get("dt_searching", "true")
-
+            dtargs["dt_searching"] = widget_get("dt_searching", True)
             dtargs["dt_pagination"] = dt_pagination
             dtargs["dt_pageLength"] = display_length
             # @todo: fix base URL (make configurable?) to fix export options
             s3.no_formats = True
             dtargs["dt_base_url"] = r.url(method="", vars={})
             get_vars.update(update = widget["index"])
-            dtargs["dt_ajax_url"] = r.url(vars=get_vars,
-                                          representation="aadata")
+            dtargs["dt_ajax_url"] = r.url(vars=get_vars, representation="aadata")
+
             actions = widget_get("actions")
             if callable(actions):
                 actions = actions(r, list_id)
             if actions:
                 dtargs["dt_row_actions"] = actions
 
-            datatable = dt.html(totalrows,
-                                displayrows,
-                                id = list_id,
-                                **dtargs)
-
+            datatable = dt.html(totalrows, displayrows, **dtargs)
             if dt.data:
                 empty.update(_style = "display:none")
             else:
@@ -769,6 +762,7 @@ class S3Profile(S3CRUD):
                                                      limit = limit,
                                                      left = left,
                                                      orderby = orderby,
+                                                     list_id = list_id,
                                                      )
             else:
                 dt, displayrows = None, 0
@@ -783,15 +777,13 @@ class S3Profile(S3CRUD):
             if dt is not None:
                 data = dt.json(totalrows,
                                displayrows,
-                               list_id,
                                draw,
                                **dtargs)
             else:
                 data = '{"recordsTotal":%s,' \
                        '"recordsFiltered":0,' \
-                       '"dataTable_id":"%s",' \
                        '"draw":%s,' \
-                       '"data":[]}' % (totalrows, list_id, draw)
+                       '"data":[]}' % (totalrows, draw)
 
             return data
 

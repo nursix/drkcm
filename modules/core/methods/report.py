@@ -809,7 +809,7 @@ class S3ReportForm:
                                              )
 
         # Pivot data
-        hidden = {"data": json.dumps(data, separators=JSONSEPARATORS)}
+        hidden = {"pivotdata": json.dumps(data, separators=JSONSEPARATORS)}
 
         empty = T("No report specified.")
         hide = T("Hide Table")

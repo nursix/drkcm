@@ -264,6 +264,18 @@ def user():
                     (registration_key != None) & \
                     (registration_key != "")
             r.resource.add_filter(query)
+        #else:
+        #    # Add some highlighting to the rows
+        #    query = (table.registration_key.belongs(["disabled", "pending"]))
+        #    rows = db(query).select(table.id,
+        #                            table.registration_key,
+        #                            )
+        #    disabled_rows = [str(row.id) for row in rows if row.registration_key == "disabled"]
+        #    pending_rows = [str(row.id) for row in rows if row.registration_key == "pending"]
+        #    s3.dataTableStyle = {
+        #        "dtdisable": disabled_rows,
+        #        "dtalert": pending_rows,
+        #        }
 
         if r.interactive:
             s3db.configure(r.tablename,
@@ -361,23 +373,7 @@ def user():
                                 "_class": "action-btn",
                                 })
 
-                # Add some highlighting to the rows
-                query = (table.registration_key.belongs(["disabled", "pending"]))
-                rows = db(query).select(table.id,
-                                        table.registration_key,
-                                        )
-                s3.dataTableStyleDisabled = s3.dataTableStyleWarning = [str(row.id) for row in rows if row.registration_key == "disabled"]
-                s3.dataTableStyleAlert = [str(row.id) for row in rows if row.registration_key == "pending"]
-
             s3.actions = actions
-
-            # Translate the status values
-            values = [{"col": 6, "key": "", "display": s3_str(T("Active"))},
-                      {"col": 6, "key": "None", "display": s3_str(T("Active"))},
-                      {"col": 6, "key": "pending", "display": s3_str(T("Pending"))},
-                      {"col": 6, "key": "disabled", "display": s3_str(T("Disabled"))}
-                      ]
-            s3.dataTableDisplay = values
 
             # @ToDo: Merge these with the code in s3aaa.py and use S3SQLCustomForm to implement
             form = output.get("form", None)

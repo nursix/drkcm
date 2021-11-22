@@ -263,10 +263,8 @@ class SpreadsheetImporter(CRUDMethod):
             start, limit = None, 0
 
         # How many records per page?
-        if s3.dataTable_pageLength:
-            display_length = s3.dataTable_pageLength
-        else:
-            display_length = 25
+        settings = current.deployment_settings
+        display_length = settings.get_ui_datatables_pagelength()
         if not limit:
             limit = 2 * display_length
 
@@ -276,9 +274,9 @@ class SpreadsheetImporter(CRUDMethod):
                                             start = start,
                                             limit = limit,
                                             orderby = orderby,
+                                            list_id = "import-items",
                                             )
 
-        datatable_id = "import-items"
         dt_bulk_actions = [current.T("Import")]
 
         if representation == "aadata":
@@ -289,7 +287,6 @@ class SpreadsheetImporter(CRUDMethod):
 
             output = dt.json(totalrows,
                              displayrows,
-                             datatable_id,
                              draw,
                              dt_bulk_actions = dt_bulk_actions,
                              )
@@ -313,9 +310,8 @@ class SpreadsheetImporter(CRUDMethod):
 
             items =  dt.html(totalrows,
                              displayrows,
-                             id = datatable_id,
                              dt_formkey = formkey,
-                             dt_pagination = "true",
+                             dt_pagination = True,
                              dt_pageLength = display_length,
                              dt_base_url = r.url(method="import", vars={"job_id": job_id}),
                              dt_permalink = None,
@@ -331,9 +327,6 @@ class SpreadsheetImporter(CRUDMethod):
                         _value = "%s" % job_id,
                         )
             items.append(job)
-
-            # Set global datatable ID
-            s3.dataTableID = [datatable_id]
 
             # Add toggle-button for item details
             SHOW = T("Display Details")

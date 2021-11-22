@@ -480,16 +480,6 @@ def help():
     return {"item": item}
 
 # -----------------------------------------------------------------------------
-#def load_all_models():
-#    """
-#        Controller to load all models in web browser
-#        - to make it easy to debug in Eclipse
-#    """
-
-#    s3db.load_all_models()
-#    return "ok"
-
-# -----------------------------------------------------------------------------
 def masterkey():
     """ Master Key Verification and Context Query """
 
@@ -517,71 +507,6 @@ def message():
             "message": message,
             "image_src": "/%s/static/img/%s" % (appname, image),
             }
-
-# -----------------------------------------------------------------------------
-def organisation():
-    """
-        Function to handle pagination for the org list on the homepage
-    """
-
-    representation = request.extension
-
-    resource = s3db.resource("org_organisation")
-    totalrows = resource.count()
-    display_start = int(get_vars.start) if get_vars.start else 0
-    display_length = int(get_vars.limit) if get_vars.limit else 10
-    limit = display_length
-
-    list_fields = ["id", "name"]
-    default_orderby = orderby = "org_organisation.name asc"
-    if representation == "aadata":
-        query, orderby, left = resource.datatable_filter(list_fields, get_vars)
-        if orderby is None:
-            orderby = default_orderby
-        if query:
-            resource.add_filter(query)
-    else:
-        limit = 4 * limit
-
-    data = resource.select(list_fields,
-                           start=display_start,
-                           limit=limit,
-                           orderby=orderby,
-                           count=True,
-                           represent=True)
-    filteredrows = data["numrows"]
-    rfields = data["rfields"]
-    data = data["rows"]
-
-    dt = s3base.S3DataTable(rfields, data)
-    dt.defaultActionButtons(resource)
-    s3.no_formats = True
-
-    if representation == "html":
-        items = dt.html(totalrows,
-                        totalrows,
-                        "org_dt",
-                        dt_ajax_url=URL(c="default",
-                                        f="organisation",
-                                        extension="aadata",
-                                        vars={"id": "org_dt"},
-                                        ),
-                        dt_pageLength=display_length,
-                        dt_pagination="true",
-                        )
-    elif representation == "aadata":
-        draw = get_vars.get("draw")
-        if draw:
-            draw = int(draw)
-        items = dt.json(totalrows,
-                        filteredrows,
-                        "org_dt",
-                        draw)
-    else:
-        from gluon.http import HTTP
-        raise HTTP(415, ERROR.BAD_FORMAT)
-
-    return items
 
 # -----------------------------------------------------------------------------
 def page():
@@ -1101,14 +1026,14 @@ def user():
 
     if arg == "login":
         title = response.title = T("Login")
-        # @ToDo: move this code to /modules/s3/s3aaa.py:def login()?
+        # @ToDo: move this code to /modules/s3/s3aaa.py:login()?
         auth.messages.submit_button = T("Login")
         form = auth()
         #form = auth.login()
         login_form = form
 
     elif arg == "register":
-        # @ToDo: move this code to /modules/s3/s3aaa.py:def register()?
+        # @ToDo: move this code to /modules/s3/s3aaa.py:register()?
         if not self_registration:
             session.error = T("Registration not permitted")
             redirect(URL(f="index"))

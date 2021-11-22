@@ -1485,20 +1485,17 @@ class S3CRUD(CRUDMethod):
             linkto = self._linkto(r)
 
         left = []
-        distinct = False
         dtargs = attr.get("dtargs", {})
 
         if r.interactive:
 
             # How many records per page?
-            if s3.dataTable_pageLength:
-                display_length = s3.dataTable_pageLength
-            else:
-                display_length = 25
+            settings = current.deployment_settings
+            display_length = settings.get_ui_datatables_pagelength()
 
             # Server-side pagination?
             if not s3.no_sspag:
-                dt_pagination = "true"
+                dt_pagination = True
                 if not limit:
                     limit = 2 * display_length
                 current.session.s3.filter = get_vars
@@ -1518,7 +1515,7 @@ class S3CRUD(CRUDMethod):
                                                               dt_sorting,
                                                               )[1:3]
             else:
-                dt_pagination = "false"
+                dt_pagination = False
 
             # Get the data table
             dt, totalrows = resource.datatable(fields = list_fields,
@@ -1526,7 +1523,8 @@ class S3CRUD(CRUDMethod):
                                                limit = limit,
                                                left = left,
                                                orderby = orderby,
-                                               distinct = distinct,
+                                               distinct = False,
+                                               list_id = list_id,
                                                )
             displayrows = totalrows
 
@@ -1559,10 +1557,7 @@ class S3CRUD(CRUDMethod):
             dtargs["dt_pageLength"] = display_length
             dtargs["dt_base_url"] = r.url(method="", vars={})
             dtargs["dt_permalink"] = r.url()
-            datatable = dt.html(totalrows,
-                                displayrows,
-                                id = list_id,
-                                **dtargs)
+            datatable = dt.html(totalrows, displayrows, **dtargs)
 
             # View + data
             response.view = self._view(r, "list_filter.html")
@@ -1590,7 +1585,8 @@ class S3CRUD(CRUDMethod):
                                                      limit = limit,
                                                      left = left,
                                                      orderby = orderby,
-                                                     distinct = distinct,
+                                                     distinct = False,
+                                                     list_id = list_id,
                                                      )
             else:
                 dt, displayrows = None, 0
@@ -1602,17 +1598,12 @@ class S3CRUD(CRUDMethod):
 
             # Representation
             if dt is not None:
-                output = dt.json(totalrows,
-                                 displayrows,
-                                 list_id,
-                                 draw,
-                                 **dtargs)
+                output = dt.json(totalrows, displayrows, draw, **dtargs)
             else:
                 output = '{"recordsTotal":%s,' \
                          '"recordsFiltered":0,' \
-                         '"dataTable_id":"%s",' \
                          '"draw":%s,' \
-                         '"data":[]}' % (totalrows, list_id, draw)
+                         '"data":[]}' % (totalrows, draw)
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
@@ -1872,14 +1863,12 @@ class S3CRUD(CRUDMethod):
             output["title"] = title
 
             # How many records per page?
-            if s3.dataTable_pageLength:
-                display_length = s3.dataTable_pageLength
-            else:
-                display_length = 25
+            settings = current.deployment_settings
+            display_length = settings.get_ui_datatables_pagelength()
 
             # Server-side pagination?
             if not s3.no_sspag:
-                dt_pagination = "true"
+                dt_pagination = True
                 if not limit:
                     limit = 2 * display_length
                 session.s3.filter = get_vars
@@ -1896,7 +1885,7 @@ class S3CRUD(CRUDMethod):
                     del get_vars["iSortCol_0"]
                     del get_vars["sSortDir_0"]
             else:
-                dt_pagination = "false"
+                dt_pagination = False
 
             # Get the data table
             dt, totalrows = resource.datatable(fields = list_fields,
@@ -1905,6 +1894,7 @@ class S3CRUD(CRUDMethod):
                                                left = left,
                                                orderby = orderby,
                                                distinct = distinct,
+                                               list_id = list_id,
                                                )
             displayrows = totalrows
 
@@ -1913,11 +1903,11 @@ class S3CRUD(CRUDMethod):
                 s3.no_formats = True
                 datatable = current.T("No records to review")
             else:
-                dt_dom = s3.get("dataTable_dom",
-                                current.deployment_settings.get_ui_datatables_dom())
-                datatable = dt.html(totalrows, displayrows, list_id,
-                                    dt_pagination=dt_pagination,
-                                    dt_pageLength=display_length,
+                dt_dom = current.deployment_settings.get_ui_datatables_dom()
+                datatable = dt.html(totalrows,
+                                    displayrows,
+                                    dt_pagination = dt_pagination,
+                                    dt_pageLength = display_length,
                                     dt_dom = dt_dom,
                                     )
                 s3.actions = [{"label": s3_str(current.T("Review")),
@@ -1951,6 +1941,7 @@ class S3CRUD(CRUDMethod):
                                                      left = left,
                                                      orderby = orderby,
                                                      distinct = distinct,
+                                                     list_id = list_id,
                                                      )
             else:
                 dt, displayrows = None, 0
@@ -1964,14 +1955,13 @@ class S3CRUD(CRUDMethod):
             if dt is not None:
                 output = dt.json(totalrows,
                                  displayrows,
-                                 list_id,
-                                 draw)
+                                 draw,
+                                 )
             else:
                 output = '{"recordsTotal": %s, ' \
                          '"recordsFiltered": 0,' \
-                         '"dataTable_id": "%s", ' \
                          '"draw": %s, ' \
-                         '"data": []}' % (totalrows, list_id, draw)
+                         '"data": []}' % (totalrows, draw)
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)

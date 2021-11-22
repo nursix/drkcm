@@ -1104,7 +1104,7 @@ class auth_Consent(object):
             @returns: the hash as string
         """
 
-        inp = json.dumps(data, separators=SEPARATORS)
+        inp = json.dumps(data, separators=JSONSEPARATORS)
 
         crypt = CRYPT(key = current.deployment_settings.hmac_key,
                       digest_alg = "sha512",

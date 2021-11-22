@@ -852,14 +852,12 @@ class approve(S3CustomController):
             if representation in CRUDRequest.INTERACTIVE_FORMATS:
 
                 # How many records per page?
-                if s3.dataTable_pageLength:
-                    display_length = s3.dataTable_pageLength
-                else:
-                    display_length = 25
+                settings = current.deployment_settings
+                display_length = settings.get_ui_datatables_pagelength()
 
                 # Server-side pagination?
                 if not s3.no_sspag:
-                    dt_pagination = "true"
+                    dt_pagination = True
                     if not limit:
                         limit = 2 * display_length
                     session.s3.filter = get_vars
@@ -879,7 +877,7 @@ class approve(S3CustomController):
                                                                   dt_sorting,
                                                                   )[1:3]
                 else:
-                    dt_pagination = "false"
+                    dt_pagination = False
 
                 # Disable exports
                 s3.no_formats = True
@@ -891,6 +889,7 @@ class approve(S3CustomController):
                                                    left = left,
                                                    orderby = orderby,
                                                    distinct = distinct,
+                                                   list_id = list_id,
                                                    )
                 displayrows = totalrows
 
@@ -903,10 +902,7 @@ class approve(S3CustomController):
                 dtargs["dt_pageLength"] = display_length
                 dtargs["dt_base_url"] = URL(c="default", f="index", args="approve")
                 dtargs["dt_permalink"] = URL(c="default", f="index", args="approve")
-                datatable = dt.html(totalrows,
-                                    displayrows,
-                                    id = list_id,
-                                    **dtargs)
+                datatable = dt.html(totalrows, displayrows, **dtargs)
 
                 # Action Buttons
                 s3.actions = [{"label": s3_str(T("Review")),
@@ -942,6 +938,7 @@ class approve(S3CustomController):
                                                          left = left,
                                                          orderby = orderby,
                                                          distinct = distinct,
+                                                         list_id = list_id,
                                                          )
                 else:
                     dt, displayrows = None, 0
@@ -955,15 +952,13 @@ class approve(S3CustomController):
                 if dt is not None:
                     output = dt.json(totalrows,
                                      displayrows,
-                                     list_id,
                                      draw,
                                      **dtargs)
                 else:
                     output = '{"recordsTotal":%s,' \
                              '"recordsFiltered":0,' \
-                             '"dataTable_id":"%s",' \
                              '"draw":%s,' \
-                             '"data":[]}' % (totalrows, list_id, draw)
+                             '"data":[]}' % (totalrows, draw)
             else:
                 CRUDRequest("auth", "user").error(415, current.ERROR.BAD_FORMAT)
 
@@ -2316,8 +2311,8 @@ class geocode(S3CustomController):
             results["lat"] = lat
             results["lon"] = lon
 
-            from core import SEPARATORS
-            output = json.dumps(results, separators=SEPARATORS)
+            from core import JSONSEPARATORS
+            output = json.dumps(results, separators=JSONSEPARATORS)
 
         current.response.headers["Content-Type"] = "application/json"
         return output

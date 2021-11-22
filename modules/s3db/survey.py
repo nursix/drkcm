@@ -687,7 +687,7 @@ def survey_build_template_summary(template_id):
                             the summary is to be built
     """
 
-    from core import S3DataTable
+    from core import DataTable
     T = current.T
 
     table = TABLE(_id="template_summary",
@@ -747,21 +747,13 @@ def survey_build_template_summary(template_id):
     table.append(body)
     table.append(foot)
 
-    # Turn off server side pagination
-    s3 = current.response.s3
-    s3.no_sspag = True
-    s3.no_formats = True
-
-    s3.dataTableID = None
-    attr = S3DataTable.getConfigData()
-    form = S3DataTable.htmlConfig(table,
-                                  "template_summary",
-                                  [[0, 'asc']], # order by
-                                  "", # the filter string
-                                  None, # the rfields
-                                  dt_action_col = -1,
-                                  **attr
-                                  )
+    current.response.s3.no_formats = True
+    form = DataTable.form(table,
+                          "template_summary",
+                          [[0, 'asc']], # order by
+                          dt_pagination = False,
+                          dt_action_col = -1,
+                          )
     return form
 
 # =============================================================================
@@ -2334,7 +2326,7 @@ def buildSeriesSummary(series_id, posn_offset):
         each question in the template
     """
 
-    from core import S3DataTable
+    from core import DataTable
     T = current.T
 
     table = TABLE(_id="series_summary",
@@ -2382,22 +2374,17 @@ def buildSeriesSummary(series_id, posn_offset):
     table.append(header)
     table.append(body)
 
-    s3 = current.response.s3
-    # Turn off server side pagination
-    s3.no_sspag = True
-    # Turn multi-select on
-    s3.dataTableBulkActions = [current.T("Display Selected Questions")]
-
-    attr = S3DataTable.getConfigData()
-    form = S3DataTable.htmlConfig(table,
-                                  "series_summary",
-                                  [[0, 'asc']], # order by
-                                  "", # the filter string
-                                  None, # the rfields
-                                  **attr
-                                  )
-    series = INPUT(_type="hidden", _id="selectSeriesID", _name="series",
-                   _value="%s" % series_id)
+    form = DataTable.form(table,
+                          "series_summary",
+                          [[0, 'asc']], # order by
+                          dt_pagination = False,
+                          dt_bulk_actions = [current.T("Display Selected Questions")],
+                          )
+    series = INPUT(_type = "hidden",
+                   _id = "selectSeriesID",
+                   _name = "series",
+                   _value = "%s" % series_id,
+                   )
     form.append(series)
     return form
 
@@ -2942,17 +2929,12 @@ def buildTableFromCompletedList(data_source):
 
     table.append(header)
     table.append(body)
-    # Turn off server side pagination
-    current.response.s3.no_sspag = True
 
-    attr = S3DataTable.getConfigData()
-    form = S3DataTable.htmlConfig(table,
-                                  "completed_list",
-                                  [[0, 'asc']], # order by
-                                  "", # the filter string
-                                  None, # the rfields
-                                  **attr
-                                  )
+    form = DataTable.form(table,
+                          "completed_list",
+                          [[0, 'asc']], # order by
+                          dt_pagination = False,
+                          )
     return form
 
 # =============================================================================

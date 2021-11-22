@@ -1783,8 +1783,7 @@ class deploy_Inbox(CRUDMethod):
 
         # Instantiate the data table
         filteredrows = data["numrows"]
-        dt = S3DataTable(data["rfields"], data["rows"], orderby=orderby)
-        dt_id = "datatable"
+        dt = DataTable(data["rfields"], data["rows"], "datatable", orderby=orderby)
 
         # Bulk actions
         # @todo: user confirmation
@@ -1813,7 +1812,6 @@ class deploy_Inbox(CRUDMethod):
             # Render data table
             items = dt.html(totalrows,
                             filteredrows,
-                            dt_id,
                             dt_ajax_url= URL(c = "deploy",
                                              f = "email_inbox",
                                              extension = "aadata",
@@ -1821,8 +1819,8 @@ class deploy_Inbox(CRUDMethod):
                                              ),
                             dt_bulk_actions = dt_bulk_actions,
                             dt_pageLength = display_length,
-                            dt_pagination = "true",
-                            dt_searching = "true",
+                            dt_pagination = True,
+                            dt_searching = True,
                             )
 
             response.view = "list_filter.html"
@@ -1839,7 +1837,6 @@ class deploy_Inbox(CRUDMethod):
 
             return dt.json(totalrows,
                            filteredrows,
-                           dt_id,
                            draw,
                            dt_bulk_actions = dt_bulk_actions,
                            )
@@ -2011,8 +2008,7 @@ def deploy_apply(r, **attr):
                                represent = True,
                                )
         filteredrows = data.numrows
-        dt = S3DataTable(data.rfields, data.rows, orderby=orderby)
-        dt_id = "datatable"
+        dt = DataTable(data.rfields, data.rows, "datatable", orderby=orderby)
 
         # Bulk actions
         dt_bulk_actions = [(T("Add as %(team)s Members") % \
@@ -2024,8 +2020,6 @@ def deploy_apply(r, **attr):
         if r.representation == "html":
             # Page load
             resource.configure(deletable = False)
-
-            #dt.defaultActionButtons(resource)
             profile_url = URL(f = "human_resource",
                               args = ["[id]", "profile"],
                               )
@@ -2051,15 +2045,14 @@ def deploy_apply(r, **attr):
             # Data table (items)
             items = dt.html(totalrows,
                             filteredrows,
-                            dt_id,
                             dt_pageLength = display_length,
                             dt_ajax_url = URL(c = "deploy",
                                               f = "application",
                                               extension = "aadata",
                                               vars = {},
                                               ),
-                            dt_searching = "false",
-                            dt_pagination = "true",
+                            dt_searching = False,
+                            dt_pagination = True,
                             dt_bulk_actions = dt_bulk_actions,
                             )
 
@@ -2117,7 +2110,6 @@ def deploy_apply(r, **attr):
                 draw = None
             items = dt.json(totalrows,
                             filteredrows,
-                            dt_id,
                             draw,
                             dt_bulk_actions = dt_bulk_actions,
                             )
@@ -2266,8 +2258,7 @@ def deploy_alert_select_recipients(r, **attr):
                            )
 
     filteredrows = data.numrows
-    dt = S3DataTable(data.rfields, data.rows, orderby=orderby)
-    dt_id = "datatable"
+    dt = DataTable(data.rfields, data.rows, "datatable", orderby=orderby)
 
     # Bulk actions
     dt_bulk_actions = [(T("Select as Recipients"), "select")]
@@ -2276,18 +2267,16 @@ def deploy_alert_select_recipients(r, **attr):
         # Page load
         resource.configure(deletable = False)
 
-        #dt.defaultActionButtons(resource)
         s3.no_formats = True
 
         # Data table (items)
         items = dt.html(totalrows,
                         filteredrows,
-                        dt_id,
                         dt_ajax_url = r.url(representation="aadata"),
                         dt_bulk_actions = dt_bulk_actions,
                         dt_pageLength = display_length,
-                        dt_pagination = "true",
-                        dt_searching = "false",
+                        dt_pagination = True,
+                        dt_searching = False,
                         )
 
         # Filter form
@@ -2349,7 +2338,6 @@ def deploy_alert_select_recipients(r, **attr):
             draw = None
         items = dt.json(totalrows,
                         filteredrows,
-                        dt_id,
                         draw,
                         dt_bulk_actions = dt_bulk_actions,
                         )
@@ -2472,8 +2460,7 @@ def deploy_response_select_mission(r, **attr):
                            )
 
     filteredrows = data.numrows
-    dt = S3DataTable(data.rfields, data.rows, orderby=orderby)
-    dt_id = "datatable"
+    dt = DataTable(data.rfields, data.rows, "datatable", orderby=orderby)
 
     if r.representation == "html":
         # Page load
@@ -2503,11 +2490,10 @@ def deploy_response_select_mission(r, **attr):
         # Data table (items)
         items = dt.html(totalrows,
                         filteredrows,
-                        dt_id,
                         dt_ajax_url = r.url(representation="aadata"),
                         dt_pageLength = display_length,
-                        dt_pagination = "true",
-                        dt_searching = "false",
+                        dt_pagination = True,
+                        dt_searching = False,
                         )
 
         # Filter form
@@ -2642,7 +2628,6 @@ def deploy_response_select_mission(r, **attr):
             draw = None
         items = dt.json(totalrows,
                         filteredrows,
-                        dt_id,
                         draw,
                         )
         response.headers["Content-Type"] = "application/json"

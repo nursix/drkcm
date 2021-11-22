@@ -6065,6 +6065,7 @@ class org_SiteCheckInMethod(CRUDMethod):
                             ),
                       Field("person",
                             label = "",
+                            readable = True,
                             writable = False,
                             default = "",
                             ),
@@ -6082,11 +6083,13 @@ class org_SiteCheckInMethod(CRUDMethod):
 
         # Initial data
         data = {"id": "",
-                "label": pe_label,
+                "label": "", #pe_label,
                 "person": "",
                 "status": "",
                 "info": "",
                 }
+        if person:
+            data["label"] = pe_label
 
         # Hidden inputs
         hidden = {
@@ -6120,7 +6123,7 @@ class org_SiteCheckInMethod(CRUDMethod):
         formstyle = settings.get_ui_formstyle()
         widget_id = "check-in-form"
         table_name = "site_check_in"
-        form = SQLFORM.factory(record = data if person else None,
+        form = SQLFORM.factory(record = data, # if person else None,
                                showid = False,
                                formstyle = formstyle,
                                table_name = table_name,
@@ -8552,8 +8555,7 @@ class org_AssignMethod(CRUDMethod):
                                    count=True,
                                    represent=True)
             filteredrows = data["numrows"]
-            dt = S3DataTable(data["rfields"], data["rows"])
-            dt_id = "datatable"
+            dt = DataTable(data["rfields"], data["rows"], "datatable")
 
             # Bulk actions
             dt_bulk_actions = [(T("Add"), "assign")]
@@ -8574,15 +8576,14 @@ class org_AssignMethod(CRUDMethod):
                 # Data table (items)
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url=URL(args = r.args,
                                                 extension="aadata",
                                                 vars={},
                                                 ),
                                 dt_bulk_actions=dt_bulk_actions,
                                 dt_pageLength=display_length,
-                                dt_pagination="true",
-                                dt_searching="false",
+                                dt_pagination=True,
+                                dt_searching=False,
                                 )
 
                 # Filter form
@@ -8636,7 +8637,6 @@ class org_AssignMethod(CRUDMethod):
                     echo = None
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions=dt_bulk_actions)
                 response.headers["Content-Type"] = "application/json"

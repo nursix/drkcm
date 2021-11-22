@@ -35,7 +35,7 @@ from s3dal import Field
 from ..resource import FS
 from ..tools import IS_ONE_OF, s3_get_foreign_key, s3_represent_value, \
                     s3_str
-from ..ui import S3AddPersonWidget, S3DataTable, S3LocationAutocompleteWidget, \
+from ..ui import S3AddPersonWidget, DataTable, S3LocationAutocompleteWidget, \
                  S3LocationSelector
 
 from .base import CRUDMethod
@@ -284,10 +284,9 @@ class S3Merge(CRUDMethod):
                 limit = None # use default
         else:
             start = None # use default
-        if s3.dataTable_pageLength:
-            display_length = s3.dataTable_pageLength
-        else:
-            display_length = 25
+
+        settings = current.deployment_settings
+        display_length = settings.get_ui_datatables_pagelength()
         if limit is None:
             limit = 2 * display_length
 
@@ -325,17 +324,15 @@ class S3Merge(CRUDMethod):
             totalrows = displayrows
 
         # Generate a datatable
-        dt = S3DataTable(data["rfields"], data["rows"])
-
-        datatable_id = "s3merge_1"
+        dt = DataTable(data["rfields"], data["rows"], "s3merge_1")
+        bulk_actions = [(current.T("Merge"), "merge", "pair-action")]
 
         if representation == "aadata":
             output = dt.json(totalrows,
                              displayrows,
-                             datatable_id,
                              draw,
-                             dt_bulk_actions = [(current.T("Merge"),
-                                                 "merge", "pair-action")])
+                             dt_bulk_actions = bulk_actions,
+                             )
 
         elif representation == "html":
             # Initial HTML response
@@ -349,10 +346,8 @@ class S3Merge(CRUDMethod):
                                                     #r.function)
             items =  dt.html(totalrows,
                              displayrows,
-                             datatable_id,
                              dt_ajax_url = url,
-                             dt_bulk_actions = [(T("Merge"),
-                                                 "merge", "pair-action")],
+                             dt_bulk_actions = bulk_actions,
                              dt_pageLength = display_length,
                              )
 
@@ -378,7 +373,6 @@ class S3Merge(CRUDMethod):
                     SPAN(T("Select 2 records from this list, then click 'Merge'.")),
                 )
 
-            s3.dataTableID = [datatable_id]
             current.response.view = self._view(r, "list.html")
 
         else:

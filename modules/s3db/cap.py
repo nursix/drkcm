@@ -5063,8 +5063,7 @@ class cap_AssignArea(CRUDMethod):
             filteredrows = data.numrows
 
             # Instantiate the datatable
-            dt = S3DataTable(data.rfields, data.rows)
-            dt_id = "datatable"
+            dt = DataTable(data.rfields, data.rows, "datatable")
 
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
@@ -5090,15 +5089,14 @@ class cap_AssignArea(CRUDMethod):
                 # Render the datatable (will be "items" in the output dict)
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url = URL(args = r.args,
                                                   extension="aadata",
                                                   vars={},
                                                   ),
                                 dt_bulk_actions = dt_bulk_actions,
                                 dt_pageLength = display_length,
-                                dt_pagination = "true",
-                                dt_searching = "false",
+                                dt_pagination = True,
+                                dt_searching = False,
                                 )
 
                 # Filter form
@@ -5151,7 +5149,6 @@ class cap_AssignArea(CRUDMethod):
                     echo = None
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions=dt_bulk_actions,
                                 )

@@ -5982,8 +5982,6 @@ class hrm_AssignMethod(CRUDMethod):
                                       )
                     s3db.pr_availability_filter(request)
 
-            dt_id = "datatable"
-
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
 
@@ -6049,17 +6047,16 @@ class hrm_AssignMethod(CRUDMethod):
                                        count = True,
                                        represent = True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url = r.url(representation = "aadata",
                                                     vars = ajax_vars),
                                 dt_bulk_actions = dt_bulk_actions,
                                 dt_bulk_single = not component.multiple,
                                 dt_pageLength = display_length,
-                                dt_pagination = "true",
-                                dt_searching = "false",
+                                dt_pagination = True,
+                                dt_searching = False,
                                 )
 
                 STAFF = settings.get_hrm_staff_label()
@@ -6091,10 +6088,9 @@ class hrm_AssignMethod(CRUDMethod):
                                        count = True,
                                        represent = True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions = dt_bulk_actions)
 

@@ -8285,8 +8285,6 @@ class pr_AssignMethod(CRUDMethod):
             if s3.filter:
                 resource.add_filter(s3.filter)
 
-            dt_id = "datatable"
-
             # Bulk actions
             label = s3.crud.get("assign_button", "Assign")
             dt_bulk_actions = [(T(label), "assign")]
@@ -8357,16 +8355,15 @@ class pr_AssignMethod(CRUDMethod):
                                        count = True,
                                        represent = True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url = r.url(representation="aadata"),
                                 dt_bulk_actions = dt_bulk_actions,
                                 dt_pageLength = display_length,
-                                dt_pagination = "true",
+                                dt_pagination = True,
                                 dt_row_actions = actions,
-                                dt_searching = "false",
+                                dt_searching = False,
                                 )
 
                 response.view = "list_filter.html"
@@ -8391,10 +8388,9 @@ class pr_AssignMethod(CRUDMethod):
                                        count = True,
                                        represent = True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions = dt_bulk_actions)
                 response.headers["Content-Type"] = "application/json"

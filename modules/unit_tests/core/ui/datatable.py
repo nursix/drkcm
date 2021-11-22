@@ -8,7 +8,7 @@ import datetime
 from gluon import *
 from gluon.storage import Storage
 
-from core import S3DataTable
+from core import DataTable
 
 from unit_tests import run_suite
 
@@ -18,7 +18,7 @@ class DataTableTests(unittest.TestCase):
     # -------------------------------------------------------------------------
     def setUp(self):
         """
-            Set up the list of fields each time since the call to S3DataTables
+            Set up the list of fields each time since the call to DataTables
             could change it.
         """
 
@@ -51,38 +51,38 @@ class DataTableTests(unittest.TestCase):
 
         table = self.resource.table
 
-        dt = S3DataTable(self.rfields, self.data)
+        dt = DataTable(self.rfields, self.data)
         expected = [[1, "asc"]]
         actual = dt.orderby
         self.assertEqual(expected, actual)
 
-        dt = S3DataTable(self.rfields, self.data,
-                         orderby=table.name)
+        dt = DataTable(self.rfields, self.data,
+                       orderby=table.name)
         expected = [[2, "asc"]]
         actual = dt.orderby
         self.assertEqual(expected, actual)
 
-        dt = S3DataTable(self.rfields, self.data,
-                         orderby=~table.name)
+        dt = DataTable(self.rfields, self.data,
+                       orderby=~table.name)
         expected = [[2, "desc"]]
         actual = dt.orderby
         self.assertEqual(expected, actual)
 
-        dt = S3DataTable(self.rfields, self.data,
-                         orderby=table.office_type_id | table.name)
+        dt = DataTable(self.rfields, self.data,
+                       orderby=table.office_type_id | table.name)
         expected = [[3, "asc"], [2, "asc"]]
         actual = dt.orderby
         self.assertEqual(expected, actual)
 
-        dt = S3DataTable(self.rfields, self.data,
-                         orderby=~table.office_type_id | table.name)
+        dt = DataTable(self.rfields, self.data,
+                       orderby=~table.office_type_id | table.name)
         expected = [[3, "desc"], [2, "asc"]]
         actual = dt.orderby
         self.assertEqual(expected, actual)
 
         otable = current.s3db.org_organisation
-        dt = S3DataTable(self.rfields, self.data,
-                         orderby=otable.name | ~table.office_type_id | table.name)
+        dt = DataTable(self.rfields, self.data,
+                       orderby=otable.name | ~table.office_type_id | table.name)
         expected = [[1, "asc"], [3, "desc"], [2, "asc"]]
         actual = dt.orderby
         self.assertEqual(expected, actual)

@@ -43,7 +43,7 @@ from gluon.tools import callback
 from s3dal import Row, Rows, Table
 from ..tools import IS_ONE_OF, s3_format_datetime, s3_get_last_record_id, \
                     s3_has_foreign_key, s3_remove_last_record_id, s3_str
-from ..ui import S3DataTable, S3DataList
+from ..ui import DataTable, S3DataList
 from ..model import s3_all_meta_field_names
 
 from .components import S3Components
@@ -869,6 +869,7 @@ class CRUDResource:
                   left = None,
                   orderby = None,
                   distinct = False,
+                  list_id = None,
                   ):
         """
             Generate a data table of this resource
@@ -880,9 +881,10 @@ class CRUDResource:
                 left: additional left joins for DB query
                 orderby: orderby for DB query
                 distinct: distinct-flag for DB query
+                list_id: the datatable ID
 
             Returns:
-                tuple (S3DataTable, numrows), where numrows represents
+                tuple (DataTable, numrows), where numrows represents
                 the total number of rows in the table that match the query
         """
 
@@ -921,21 +923,9 @@ class CRUDResource:
         # Restore ID representation
         table_id.represent = id_repr
 
-        # Empty table - or just no match?
-        empty = False
-        if not rows:
-            DELETED = current.xml.DELETED
-            if DELETED in table:
-                query = (table[DELETED] == False)
-            else:
-                query = (table_id > 0)
-            row = current.db(query).select(table_id, limitby=(0, 1)).first()
-            if not row:
-                empty = True
-
         # Generate the data table
         rfields = data.rfields
-        dt = S3DataTable(rfields, rows, orderby=orderby, empty=empty)
+        dt = DataTable(rfields, rows, list_id, orderby=orderby)
 
         return dt, data.numrows
 

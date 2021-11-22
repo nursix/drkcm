@@ -161,13 +161,14 @@ class S3RoleManager(CRUDMethod):
             current.session["_formkey[admin/rolelist]"] = formkey
 
             # Pagination
-            display_length = s3.dataTable_pageLength or 25
+            settings = current.deployment_settings
+            display_length = settings.get_ui_datatables_pagelength()
             start = None
             if s3.no_sspag:
-                dt_pagination = "false"
+                dt_pagination = False
                 limit = None
             else:
-                dt_pagination = "true"
+                dt_pagination = True
                 limit = 2 * display_length
 
             # Generate Data Table
@@ -176,12 +177,12 @@ class S3RoleManager(CRUDMethod):
                                                limit = limit,
                                                left = [],
                                                orderby = default_orderby,
+                                               list_id = list_id,
                                                )
 
             # Render the Data Table
             datatable = dt.html(totalrows,
                                 totalrows,
-                                id = list_id,
                                 dt_pagination = dt_pagination,
                                 dt_pageLength = display_length,
                                 dt_base_url = r.url(method="", vars={}),
@@ -239,6 +240,7 @@ class S3RoleManager(CRUDMethod):
                                                      limit = limit,
                                                      left = left,
                                                      orderby = orderby,
+                                                     list_id = list_id,
                                                      )
             else:
                 dt, displayrows = None, 0
@@ -250,13 +252,12 @@ class S3RoleManager(CRUDMethod):
 
             # Representation
             if dt is not None:
-                output = dt.json(totalrows, displayrows, list_id, draw)
+                output = dt.json(totalrows, displayrows, draw)
             else:
                 output = '{"recordsTotal":%s,' \
                          '"recordsFiltered":0,' \
-                         '"dataTable_id":"%s",' \
                          '"draw":%s,' \
-                         '"data":[]}' % (totalrows, list_id, draw)
+                         '"data":[]}' % (totalrows, draw)
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)

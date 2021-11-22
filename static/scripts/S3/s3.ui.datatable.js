@@ -328,8 +328,7 @@
             var serverSide = true,
                 processing = true,
                 fnAjax = null;
-            // FIXME Why is this a string and not a boolean? (It's JSON anyway)
-            if (tableConfig.pagination == 'true') {
+            if (tableConfig.pagination) {
                 // Server-side Pagination
                 this.ajaxUrl = tableConfig.ajaxUrl;
                 fnAjax = this._pipeline({cache: this._initCache()});
@@ -358,8 +357,7 @@
                 'pagingType': tableConfig.pagingType,
                 'processing': processing,
                 'searchDelay': 450,
-                // FIXME Why is this a string and not a boolean:
-                'searching': tableConfig.searching == 'true',
+                'searching': tableConfig.searching,
                 'serverSide': serverSide,
                 'search': {
                     // Workaround for dataTables bug:
@@ -922,14 +920,14 @@
                 // - configured as array of [[groupingColumnIndex, 'asc'|'desc'], ...]
                 var tableConfig = self.tableConfig,
                     groups = tableConfig.group;
-                if (groups.length) {
+                if (groups && groups.length) {
 
                     // Array of preceding grouping column indices, used to
                     // construct a key for groupTotals
                     var prefixID = [];
 
                     // Insert the header rows for all groups
-                    tableConfig.group.forEach(function(group, i) {
+                    groups.forEach(function(group, i) {
                         var groupTotals = tableConfig.groupTotals[i] || {},
                             groupTitles = tableConfig.groupTitles[i] || [];
                         self._renderGroups(oSettings, group[0], groupTitles, groupTotals, prefixID, i + 1);
@@ -1111,9 +1109,12 @@
             var tableConfig = this.tableConfig,
                 maxLength = tableConfig.textMaxLength,
                 shrinkLength = tableConfig.textShrinkLength,
-                groups = tableConfig.group.map(function(group) { return group[0]; }),
+                groups = null,
                 colIdx = 0;
 
+            if (tableConfig.group) {
+                groups = tableConfig.group.map(function(group) { return group[0]; });
+            }
             for (var i = 0; i < data.length; i++) {
 
                 // Ignore any columns used for groups
@@ -1424,7 +1425,11 @@
                     continue;
                 }
 
-                rowData = oSettings.aoData[oSettings.aiDisplay[dataCnt]]._aData;
+                if (oSettings.aoData.length) {
+                    rowData = oSettings.aoData[oSettings.aiDisplay[dataCnt]]._aData;
+                } else {
+                    continue;
+                }
 
                 if (row.hasClass('group')) {
                     // A group header row of a higher level
@@ -1582,7 +1587,7 @@
             // Add open/close-icons (arrows on the right)
             if (collapsable && addIcons) {
 
-                var expandIcons = tableConfig.groupIcon,
+                var expandIcons = tableConfig.groupIcon | [],
                     expandIconType;
                 if (expandIcons.length >= level) {
                     expandIconType = expandIcons[level - 1];

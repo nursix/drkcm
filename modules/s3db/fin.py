@@ -2732,7 +2732,7 @@ class fin_VoucherProgram(object):
                 "ohash": ohash,
                 "signature": signature,
                 }
-        inp = json.dumps(data, separators=SEPARATORS)
+        inp = json.dumps(data, separators=JSONSEPARATORS)
 
         crypt = CRYPT(key = current.deployment_settings.hmac_key,
                       digest_alg = "sha512",
@@ -3453,7 +3453,7 @@ class fin_VoucherBilling(object):
                 "date": date.isoformat(),
                 "uuid": uuid,
                 }
-        inp = json.dumps(data, separators=SEPARATORS)
+        inp = json.dumps(data, separators=JSONSEPARATORS)
 
         crypt = CRYPT(key = current.deployment_settings.hmac_key,
                       digest_alg = "sha512",
