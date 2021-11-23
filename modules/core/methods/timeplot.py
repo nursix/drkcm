@@ -258,6 +258,7 @@ class TimePlot(CRUDMethod):
 
             ajax_vars = Storage(r.get_vars)
             ajax_vars.update(get_vars)
+            ajax_vars.pop("time", None)
             filter_url = r.url(method="",
                                representation="",
                                vars=ajax_vars.fromkeys((k for k in ajax_vars
@@ -330,7 +331,6 @@ class TimePlot(CRUDMethod):
 
         # Extract the relevant GET vars
         report_vars = ("timestamp",
-                       "time",
                        "start",
                        "end",
                        "slots",
@@ -715,14 +715,22 @@ class TimePlotForm(S3ReportForm):
             opts = options["time"]
         else:
             # (label, start, end, slots)
-            # - if start is specified, end is relative to start, otherwise
-            #   end is relative to now
-            opts = (("All up to now", "", "", ""),
-                    ("Last Year", "-1year", "", "months"),
-                    ("Last 6 Months", "-6months", "", "weeks"),
-                    ("Last Quarter", "-3months", "", "weeks"),
-                    ("Last Month", "-1month", "", "days"),
-                    ("Last Week", "-1week", "", "days"),
+            # - if start is specified, end is relative to start
+            # - otherwise, end is relative to now
+            # - start "" means the date of the earliest recorded event
+            # - end "" means now
+            opts = ((T("All up to now"), "", "", ""),
+                    (T("Last Year"), "<-1 year", "+1 year", "months"),
+                    (T("This Year"), "<-0 years", "", "months"),
+                    (T("Last Month"), "<-1 month", "+1 month", "days"),
+                    (T("This Month"), "<-0 months", "", "days"),
+                    (T("Last Week"), "<-1 week", "+1 week", "days"),
+                    (T("This Week"), "<-0 weeks", "", "days"),
+                    #(T("Past 12 Months"), "-12months", "", "months"),
+                    #(T("Past 6 Months"), "-6months", "", "weeks"),
+                    #(T("Past 3 Months"), "-3months", "", "weeks"),
+                    #(T("Past Month"), "-1month", "", "days"),
+                    #(T("Past Week"), "-1week", "", "days"),
                     #("All/+1 Month", "", "+1month", ""),
                     #("All/+2 Month", "", "+2month", ""),
                     #("-6/+3 Months", "-6months", "+9months", "months"),
@@ -836,9 +844,9 @@ class TimePlotForm(S3ReportForm):
                 timeframe = timeframe.split("|")
             start, end, slots = (list(timeframe[-3:]) + ["", "", ""])[:3]
         else:
-            start = get_vars.get("start")
-            end = get_vars.get("end")
-            slots = get_vars.get("slots")
+            start = get_vars.get("start", "")
+            end = get_vars.get("end", "")
+            slots = get_vars.get("slots", "")
 
         return start, end, slots
 

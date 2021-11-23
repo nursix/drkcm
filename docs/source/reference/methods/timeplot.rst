@@ -63,12 +63,15 @@ The attributes of the ``timeplot_options`` setting are as follows:
 |time       |list  | | List of time frames as tuples *(label, start, end, slots)*    |
 |           |      | |                                                               |
 |           |      | | *start* and *end* can be either absolute dates (ISO-format),  |
-|           |      | | or relative date expressions, or ``""``.                      |
+|           |      | | or :ref:`relative date expressions <rdt>`, or ``""``.         |
 |           |      | |                                                               |
 |           |      | | A relative *start* is relative to now.                        |
 |           |      | |                                                               |
 |           |      | | A relative *end* is relative to *start*, or, if no *start*    |
 |           |      | | is specified, it is relative to now.                          |
+|           |      | |                                                               |
+|           |      | | *start* ``""`` means the date of the earliest recorded        |
+|           |      | | event, *end* ``""`` means now.                                |
 |           |      | |                                                               |
 |           |      | | The *slots* length is the default for the time frame, but can |
 |           |      | | be overridden with an explicit slot-selector (see below).     |
@@ -87,3 +90,46 @@ The attributes of the ``timeplot_options`` setting are as follows:
 |           |      | | single item of the respective list (except *fact*, which      |
 |           |      | | accepts a list).                                              |
 +-----------+------+-----------------------------------------------------------------+
+
+.. _rdt:
+
+Relative Time Expressions
+-------------------------
+
+The *start* and *end* parameters for the time frame of the report support relative
+expressions of the form ``[<|>][+|-]{n}[year|month|week|day|hour]s``.
+
+The *n* is an integer, e.g.:
+
+.. code-block:: python
+
+   "-1 year"    # one year back
+   "+2 weeks"   # two weeks onward
+
+Additionally, the ``<`` and ``>`` markers can be added to indicate the start/end of
+the respective calendar period, e.g.:
+
+.. code-block:: python
+
+   "<-1 year"   # one year back, 1st of January
+   ">+2 weeks"  # two weeks onward, Sunday
+
+In this context, weeks go from Monday (first day) to Sunday (last day).
+
+.. note::
+
+   Even when using ``<`` and ``>`` markers, the rule that *end* is relative
+   to *start* still applies.
+
+   This can be confusing when using these markers for both interval ends, e.g.
+   the time frame for January 1st to December 31st of last year is **not**:
+
+      ``("<-1 year", ">-1 year")``
+
+   but actually:
+
+      ``("<-1 year", ">+0 years")``
+
+   ...namely, from the beginning of last year to the end of that **same** year.
+
+   More intuitive in this case is to specify: ``("<-1 year", "+1 year")``.

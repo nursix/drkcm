@@ -548,21 +548,13 @@ class DiseaseMonitoringModel(DataModel):
                          },
             }
 
-        timeframes = [("All up to now", "", "", ""),
-                      ("Last 6 Months", "-6months", "", "weeks"),
-                      ("Last 3 Months", "-3months", "", "weeks"),
-                      ("Last Month", "-1month", "", "days"),
-                      ("Last Week", "-1week", "", "days"),
-                      ]
         timeplot_options = {
             "fact": facts,
             "timestamp": ((T("per interval"), "date,date"),
                           (T("cumulative"), "date"),
                           ),
-            "time": timeframes,
             "defaults": {"fact": facts[:2],
                          "timestamp": "date,date",
-                         "time": time_opts[-1],
                          },
             }
 

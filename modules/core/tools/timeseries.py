@@ -59,7 +59,7 @@ dt_regex = Storage(
     YEAR_MONTH = re.compile(r"\A\s*(\d{4})-([0]*[1-9]|[1][12])\s*\Z"),
     MONTH_YEAR = re.compile(r"\A\s*([0]*[1-9]|[1][12])/(\d{4})\s*\Z"),
     DATE = re.compile(r"\A\s*(\d{4})-([0]?[1-9]|[1][12])-([012]?[1-9]|[3][01])\s*\Z"),
-    DELTA = re.compile(r"\A\s*([+-]?)\s*(\d+)\s*([ymwdh])\w*\s*\Z"),
+    DELTA = re.compile(r"\A\s*([<>]?)([+-]?)\s*(\d+)\s*([ymwdh])\w*\s*\Z"),
 )
 
 FACT = re.compile(r"([a-zA-Z]+)\(([a-zA-Z0-9_.$:\,~]+)\),*(.*)\Z")
@@ -726,16 +726,40 @@ class TimeSeries:
                          "m": "months",
                          "w": "weeks",
                          "d": "days",
-                         "h": "hours"}
-            length = intervals.get(groups[2])
+                         "h": "hours",
+                         }
+            length = intervals.get(groups[3])
             if not length:
                 raise SyntaxError("Invalid date/time: %s" % timestr)
-            num = int(groups[1])
-            if not num:
-                return start
-            if groups[0] == "-":
+
+            num = int(groups[2])
+            if groups[1] == "-":
                 num *= -1
-            return start + relativedelta(**{length: num})
+            delta = {length: num}
+
+            end = groups[0]
+            if end == "<":
+                delta.update(minute=0, second=0, microsecond=0)
+                if length != "hours":
+                    delta.update(hour=0)
+                if length == "weeks":
+                    delta.update(weeks=num-1, weekday=0)
+                elif length == "months":
+                    delta.update(day=1)
+                elif length == "years":
+                    delta.update(month=1, day=1)
+            elif end == ">":
+                delta.update(minute=59, second=59, microsecond=999999)
+                if length != "hours":
+                    delta.update(hour=23)
+                if length == "weeks":
+                    delta.update(weekday=6)
+                elif length == "months":
+                    delta.update(day=31)
+                elif length == "years":
+                    delta.update(month=12, day=31)
+
+            return start + relativedelta(**delta)
 
         # Month/Year, e.g. "5/2001"
         match = dt_regex.MONTH_YEAR.match(timestr)
