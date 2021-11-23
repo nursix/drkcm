@@ -1,5 +1,5 @@
-UI Elements
-===========
+User Interface Elements
+=======================
 
 .. toctree::
    :maxdepth: 2
@@ -7,6 +7,6 @@ UI Elements
 
    Form Widgets <widgets>
    Filter Widgets <filters>
-   Data Tables <datatable>
-   Card Lists <datalist>
+   DataTable <datatable>
+   DataList <datalist>
 

@@ -1,7 +1,16 @@
-Data Tables
-===========
+DataTable
+=========
 
-**Data Tables** represent a set of records as an interactive HTML table.
+The **DataTable** widget represents a set of records as an
+interactive HTML table.
+
+DataTables are one of the most common UI features in EdenASP,
+and a standard aspect of interactive CRUD.
+
+The ``DataTable`` class implements the server-side functions to
+configure, build and update a DataTable. The client-side parts
+are implemented by the *s3.ui.datatable.js* script, using
+jQuery datatables.
 
 Overview
 --------
@@ -11,7 +20,8 @@ Overview
    :param rfields: the table columns, [S3ResourceField, ...]
    :param data: the data, [{colname: value, ...}, ...]
    :param table_id: the DOM ID for the <table> element
-   :param orderby: the DAL orderby expression that was used to extract the data
+   :param orderby: the DAL orderby expression that was used to
+                   extract the data
 
    .. note::
 
@@ -29,8 +39,7 @@ Overview
 
    .. method:: DataTable.json(totalrows, filteredrows, draw, **attr)
 
-      Builds a JSON object to update the data table; the output of this
-      function can be returned to the client as-is.
+      Builds a JSON object to update the data table.
 
       :param totalrows: total number of rows available
       :param filteredrows: total number of rows matching filters
@@ -44,7 +53,7 @@ Overview
 Example
 -------
 
-Typically, *DataTable* views would be implemented by CRUD methods.
+Typically, *DataTable* views are implemented in CRUD methods.
 
 The following example implements a *DataTable* view for the *org_facility*
 table, including server-side pagination and Ajax-filtering, like this:
@@ -137,9 +146,15 @@ table, including server-side pagination and Ajax-filtering, like this:
             else:
                 r.error(405, current.ERROR.BAD_FORMAT)
 
+            # View template, includes dataTables.html
             current.response.view = "list.html"
 
             return output
+
+.. note::
+
+   The view template must ``include`` the *dataTables.html* template to add
+   the necessary JavaScript for the DataTable widget.
 
 .. _build-params:
 
@@ -147,8 +162,8 @@ Build Parameters
 ----------------
 
 Both build methods *html()* and *json()* accept the same set of keyword arguments to
-control the build of the DataTable. Most of these arguments are optional (see :ref:`example <dt-example>`
-above for a typical minimum set).
+control the build of the DataTable. Most of these arguments are optional (see
+:ref:`example <dt-example>` above for a typical minimum set).
 
 Basic configuration
 """""""""""""""""""
@@ -158,16 +173,16 @@ Basic parameters for the data table.
 +----------------+-----+---------+-------------------------------------------------------+
 |Keyword         |Type |Default  |Explanation                                            |
 +================+=====+=========+=======================================================+
-|dt_ajax_url     |str  |None     |The URL to be used for the Ajax call                   |
+|dt_ajax_url     |str  |None     |URL for Ajax requests                                  |
 +----------------+-----+---------+-------------------------------------------------------+
-|dt_base_url     |str  |None     |base URL to construct export format URLs, resource     |
-|                |     |         |default URL without any URL method or query part       |
+|dt_base_url     |str  |None     |Base URL for exports, usually the resource             |
+|                |     |         |default URL without any method or query part           |
 +----------------+-----+---------+-------------------------------------------------------+
-|dt_dom          |str  |None     | | The Datatable DOM initialisation variable,          |
-|                |     |         | | describing the order in which elements are displayed|
+|dt_dom          |str  |None     | | The jQuery datatable "dom" option,                  |
+|                |     |         | | determines the order in which elements are displayed|
 |                |     |         | | - see https://datatables.net/reference/option/dom   |
 +----------------+-----+---------+-------------------------------------------------------+
-|dt_formkey      |str  |None     |a form key (XSRF protection for Ajax-actions)          |
+|dt_formkey      |str  |None     |A form key (XSRF protection for Ajax requests)         |
 +----------------+-----+---------+-------------------------------------------------------+
 
 Pagination
@@ -192,11 +207,18 @@ Parameters for pagination (server-side pagination requires *dt_ajax_url*).
 
 Searching
 """""""""
+
+Parameters to control the search box.
+
 +----------------+-----+-------------------------------+-----------------------------------------------------------+
 |Keyword         |Type |Default                        |Explanation                                                |
 +================+=====+===============================+===========================================================+
 |dt_searching    |bool |True                           |Enable/disable search-field                                |
 +----------------+-----+-------------------------------+-----------------------------------------------------------+
+
+.. note::
+
+   The search box should normally be disabled when using separate filter forms.
 
 Row Actions
 """""""""""
