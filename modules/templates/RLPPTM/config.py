@@ -2777,6 +2777,12 @@ def config(settings):
         auth = current.auth
         s3db = current.s3db
 
+        from .helpers import FacilityList
+        s3db.set_method("org_facility",
+                        method = "dtdemo",
+                        action = FacilityList,
+                        )
+
         is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
 
         # Approval workflow tags as filtered components (for embedding in form)

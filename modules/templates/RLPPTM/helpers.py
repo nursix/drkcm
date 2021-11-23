@@ -2713,4 +2713,80 @@ class TestFacilityInfo(CRUDMethod):
             response.headers["Content-Type"] = "application/json; charset=utf-8"
         return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
 
+# =============================================================================
+class FacilityList(CRUDMethod):
+
+    def apply_method(self, r, **attr):
+
+        get_vars = r.get_vars
+
+        # Pagination
+        page_length = 25
+        if r.interactive:
+            # Default limits when page is first loaded
+            # - extracting twice the page length here to fill the cache,
+            #   so no Ajax-request is required for the first two pages
+            start, limit = 0, 2 * page_length
+        else:
+            # Dynamic limits for subsequent Ajax-requests
+            start, limit = self._limits(get_vars, default_limit=page_length)
+
+        resource = current.s3db.resource("org_facility")
+        fields = ["id", "name", "organisation_id", "location_id"]
+
+        # Extract the data, applying client-side filters/sorting
+        query, orderby, left = resource.datatable_filter(fields, get_vars)
+        if query is not None:
+            totalrows = resource.count()
+            resource.add_filter(query)
+
+        data = resource.select(fields,
+                               start = start,
+                               limit = limit,
+                               left = left,
+                               orderby = orderby,
+                               count = True,
+                               represent = True,
+                               )
+
+        filteredrows = data.numrows
+        if query is None:
+            totalrows = filteredrows
+
+        # Set up the DataTable
+        from core import DataTable
+        dt = DataTable(data.rfields, data.rows, "facility_list")
+
+        # Configure row actions (before building the DataTable)
+        current.response.s3.actions = [{"label": "Read",
+                                        "url": URL(args = ["[id]", "read"]),
+                                        "_class": "action-btn"
+                                        },
+                                       ]
+
+        # Rendering parameters to pass in to .html() and .json()
+        dtargs = {"dt_pagination": True,
+                  "dt_pageLength": page_length,
+                  "dt_base_url": URL(args=[], vars={}),
+                  }
+
+        if r.interactive:
+            # This is the initial page load request
+            # - build the HTML:
+            dt_html = dt.html(totalrows, filteredrows, **dtargs)
+            output = {"items": dt_html}
+
+        elif r.representation == "aadata":
+            # Client-side script uses the "aadata" extension to request updates
+            # - generate a JSON response:
+            draw = int(r.get_vars.get("draw", 1))
+            output = dt.json(totalrows, filteredrows, draw, **dtargs)
+
+        else:
+            r.error(405, current.ERROR.BAD_FORMAT)
+
+        current.response.view = "list.html"
+
+        return output
+
 # END =========================================================================

@@ -10,3 +10,4 @@ Reference Guide
    settings/index
    models/index
    methods/index
+   ui/index

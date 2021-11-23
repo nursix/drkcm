@@ -11,7 +11,6 @@ implementing classes and functions to build RESTful CRUD controllers.
    Controllers and Resources <crud>
    CRUD Methods <methods/index>
    Data Export and Import <io>
-   User Interface <ui>
    Authentication, Authorization and Accounting <aaa>
    Tools <tools>
 

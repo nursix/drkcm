@@ -457,7 +457,7 @@ class DataTable:
 
         row_styles = attr_get("dt_styles")
         if not row_styles:
-            row_styles = current.response.s3.dataTableStyle
+            row_styles = s3.dataTableStyle
         if row_styles:
             config["rowStyles"] = row_styles
 
