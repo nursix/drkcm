@@ -528,10 +528,10 @@ class DiseaseMonitoringModel(DataModel):
                        ]
 
         # Report options
-        facts = ((T("Number of Tests"), "sum(tests_total)"),
+        facts = [(T("Number of Tests"), "sum(tests_total)"),
                  (T("Number of Positive Test Results"), "sum(tests_positive)"),
                  (T("Number of Reports"), "count(id)"),
-                 )
+                 ]
         axes = ["site_id",
                 "site_id$location_id$L2",
                 "site_id$location_id$L3",
@@ -548,6 +548,24 @@ class DiseaseMonitoringModel(DataModel):
                          },
             }
 
+        timeframes = [("All up to now", "", "", ""),
+                      ("Last 6 Months", "-6months", "", "weeks"),
+                      ("Last 3 Months", "-3months", "", "weeks"),
+                      ("Last Month", "-1month", "", "days"),
+                      ("Last Week", "-1week", "", "days"),
+                      ]
+        timeplot_options = {
+            "fact": facts,
+            "timestamp": ((T("per interval"), "date,date"),
+                          (T("cumulative"), "date"),
+                          ),
+            "time": timeframes,
+            "defaults": {"fact": facts[:2],
+                         "timestamp": "date,date",
+                         "time": time_opts[-1],
+                         },
+            }
+
         # Table Configuration
         configure(tablename,
                   crud_form = crud_form,
@@ -556,6 +574,7 @@ class DiseaseMonitoringModel(DataModel):
                   onvalidation = self.testing_report_onvalidation,
                   orderby = "%s.date desc" % tablename,
                   report_options = report_options,
+                  timeplot_options = timeplot_options,
                   )
 
         # CRUD Strings

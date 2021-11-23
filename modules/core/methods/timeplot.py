@@ -202,9 +202,7 @@ class TimePlot(CRUDMethod):
         cols = get_vars.get("cols")
 
         # Parse event frame parameters
-        start = get_vars.get("start")
-        end = get_vars.get("end")
-        slots = get_vars.get("slots")
+        start, end, slots = TimePlotForm.get_timeframe(get_vars)
 
         # Create time series
         ts = TimeSeries(resource,
@@ -332,6 +330,7 @@ class TimePlot(CRUDMethod):
 
         # Extract the relevant GET vars
         report_vars = ("timestamp",
+                       "time",
                        "start",
                        "end",
                        "slots",
@@ -613,7 +612,10 @@ class TimePlotForm(S3ReportForm):
             if not isinstance(selected, list):
                 selected = [selected]
             for item in selected:
-                value.extend(item.split(","))
+                if isinstance(item, (tuple, list)):
+                    value.append(item[-1])
+                elif isinstance(item, str):
+                    value.extend(item.split(","))
         if not value:
             value = default
 
@@ -691,8 +693,8 @@ class TimePlotForm(S3ReportForm):
                                     )
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def time_options(options=None, get_vars=None, widget_id=None):
+    @classmethod
+    def time_options(cls, options=None, get_vars=None, widget_id=None):
         """
             Generate a selector for the report time frame
 
@@ -736,9 +738,7 @@ class TimePlotForm(S3ReportForm):
 
         # Currently selected value
         if get_vars:
-            start = get_vars.get("start", "")
-            end = get_vars.get("end", "")
-            slots = get_vars.get("slots", "")
+            start, end, slots = cls.get_timeframe(get_vars)
         else:
             start = end = slots = ""
         value = "|".join((start, end, slots))
@@ -814,5 +814,32 @@ class TimePlotForm(S3ReportForm):
                                     _name = "slots",
                                     _class = "tp-slots",
                                     )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_timeframe(get_vars):
+        """
+            Get the report time frame from GET vars; can be encoded either
+            as a query parameter "time" with start|end|slots (i.e. |-separated),
+            or as separate start, end and slots parameters.
+
+            Args:
+                get_vars: the GET vars
+
+            Returns:
+                tuple (start, end, slots)
+        """
+
+        timeframe = get_vars.get("time")
+        if timeframe:
+            if isinstance(timeframe, str):
+                timeframe = timeframe.split("|")
+            start, end, slots = (list(timeframe[-3:]) + ["", "", ""])[:3]
+        else:
+            start = get_vars.get("start")
+            end = get_vars.get("end")
+            slots = get_vars.get("slots")
+
+        return start, end, slots
 
 # END =========================================================================

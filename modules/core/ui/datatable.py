@@ -159,7 +159,7 @@ class DataTable:
                                any(orderby_dirs[c] != direction for c in sortby):
                                 sortby = None
                         if sortby:
-                            append((col_idx, direction))
+                            append([col_idx, direction])
                             pos += len(sortby)
                             skip(col_idx)
                             break

@@ -235,6 +235,16 @@ Row Actions
 Bulk Actions
 """"""""""""
 
+Bulk-action DataTable views render an additional column with checkboxes
+to select rows and then perform actions "in bulk" for all selected rows
+with a single button click.
+
+.. figure:: dt_bulk.png
+
+   Spreadsheet Importer: DataTable with bulk action column.
+
+\
+
 +----------------+-----+-------------------------------+-----------------------------------------------------------+
 |Keyword         |Type |Default                        |Explanation                                                |
 +================+=====+===============================+===========================================================+
@@ -247,6 +257,12 @@ Bulk Actions
 +----------------+-----+-------------------------------+-----------------------------------------------------------+
 |dt_bulk_selected|list |None                           |list of (pre-)selected items                               |
 +----------------+-----+-------------------------------+-----------------------------------------------------------+
+
+.. note::
+
+   Bulk-actions require server-side processing of the DataTable FORM upon submit.
+
+   .. TODO add example
 
 Grouping
 """"""""
