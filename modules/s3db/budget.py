@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Budget Model
 
-""" Sahana Eden Budget Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,11 +25,11 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3BudgetModel",
-           "S3BudgetKitModel",
-           "S3BudgetBundleModel",
-           "S3BudgetAllocationModel",
-           "S3BudgetMonitoringModel",
+__all__ = ("BudgetModel",
+           "BudgetKitModel",
+           "BudgetBundleModel",
+           "BudgetAllocationModel",
+           "BudgetMonitoringModel",
            "budget_rheader",
            "budget_CostItemRepresent",
            )
@@ -44,7 +42,7 @@ from s3dal import Row
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3BudgetModel(DataModel):
+class BudgetModel(DataModel):
 
     names = ("budget_entity",
              "budget_budget",
@@ -553,7 +551,7 @@ class S3BudgetModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetKitModel(DataModel):
+class BudgetKitModel(DataModel):
 
     names = ("budget_kit",
              "budget_item",
@@ -922,7 +920,7 @@ class S3BudgetKitModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetBundleModel(DataModel):
+class BudgetBundleModel(DataModel):
     """ Model for Budget Bundles """
 
     names = ("budget_bundle",
@@ -1308,7 +1306,7 @@ class S3BudgetBundleModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetAllocationModel(DataModel):
+class BudgetAllocationModel(DataModel):
     """
         Model for Budget Allocation
    """
@@ -1446,7 +1444,7 @@ class S3BudgetAllocationModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetMonitoringModel(DataModel):
+class BudgetMonitoringModel(DataModel):
     """
         Budget Monitoring Model
 

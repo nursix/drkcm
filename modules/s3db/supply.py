@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Supply Model
 
-""" Sahana Eden Supply Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,10 +25,10 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3SupplyModel",
-           "S3SupplyDistributionModel",
-           "S3SupplyDistributionDVRActivityModel",
-           "S3SupplyPersonModel",
+__all__ = ("SupplyModel",
+           "SupplyDistributionModel",
+           "SupplyDistributionDVRActivityModel",
+           "SupplyPersonModel",
            "supply_item_rheader",
            "supply_item_controller",
            "supply_item_entity_controller",
@@ -65,7 +63,7 @@ um_patterns = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
                )
 
 # =============================================================================
-class S3SupplyModel(DataModel):
+class SupplyModel(DataModel):
     """
         Generic Supply functionality such as catalogs and items that is used
         across multiple modules.
@@ -1264,7 +1262,7 @@ $.filterOptionsS3({
                                    )
 
 # =============================================================================
-class S3SupplyDistributionModel(DataModel):
+class SupplyDistributionModel(DataModel):
     """
         Supply Distribution Model
         - depends on Stats module
@@ -1754,7 +1752,7 @@ class S3SupplyDistributionModel(DataModel):
             return list(range(date.year, end_date.year + 1))
 
 # =============================================================================
-class S3SupplyDistributionDVRActivityModel(DataModel):
+class SupplyDistributionDVRActivityModel(DataModel):
     """
         Model to link distributions to DVR activities / case activities
     """
@@ -1784,7 +1782,7 @@ class S3SupplyDistributionDVRActivityModel(DataModel):
         return None
 
 # =============================================================================
-class S3SupplyPersonModel(DataModel):
+class SupplyPersonModel(DataModel):
     """
         Link table between People & Items
         - e.g. Donations
@@ -2325,7 +2323,7 @@ def supply_item_rheader(r):
     return None
 
 # =============================================================================
-class SupplyItemPackQuantity(object):
+class SupplyItemPackQuantity:
     """
         Field method for pack quantity of an item, used in req and inv
     """

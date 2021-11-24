@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Common Alerting Protocol (CAP) Model
 
-""" Sahana Eden Common Alerting Protocol (CAP) Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -5638,7 +5636,7 @@ def clone(r, record=None, **attr):
     return
 
 # -----------------------------------------------------------------------------
-class cap_AlertProfileWidget(object):
+class cap_AlertProfileWidget:
     """ Custom profile widget builder """
 
     def __init__(self, title, label=None, value=None):

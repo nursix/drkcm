@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Vehicle Model
 
-""" Sahana Eden Vehicle Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3VehicleModel",)
+__all__ = ("VehicleModel",)
 
 from gluon import *
 from gluon.storage import Storage
@@ -35,7 +33,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3VehicleModel(DataModel):
+class VehicleModel(DataModel):
     """
         Vehicle Management Functionality
 

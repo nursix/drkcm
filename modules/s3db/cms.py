@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Content Management System Model
 
-""" Sahana Eden Content Management System Model
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation

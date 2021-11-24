@@ -1,9 +1,7 @@
-﻿# -*- coding: utf-8 -*-
+﻿"""
+    Organisation Model
 
-""" Sahana Eden Organisation Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -8204,7 +8202,7 @@ def org_update_root_organisation(organisation_id, root_org=None):
     return root_org
 
 # =============================================================================
-class org_OrganisationDuplicate(object):
+class org_OrganisationDuplicate:
     """ Import item deduplication, match by name or l10_name """
 
     @classmethod

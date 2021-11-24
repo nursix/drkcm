@@ -1543,7 +1543,6 @@ class S3OptionsMenu(object):
         community_volunteers = lambda i: settings.get_project_community_volunteers()
         demographics = lambda i: settings.get_project_demographics()
         hazards = lambda i: settings.get_project_hazards()
-        #indicators = lambda i: settings.get_project_indicators()
         programmes = lambda i: settings.get_project_programmes()
         sectors = lambda i: settings.get_project_sectors()
         stats = lambda i: settings.has_module("stats")
@@ -1587,12 +1586,6 @@ class S3OptionsMenu(object):
                     M("Beneficiaries", f="beneficiary", m="report",
                       check=stats,
                       ),
-                    #M("Indicators", f="indicator", m="report",
-                    #  check=indicators,
-                    #  ),
-                    #M("Indicators over Time", f="indicator", m="timeplot",
-                    #  check=indicators,
-                    #  ),
                     M("Funding", f="organisation", m="report"),
                  ),
                  M("Import", f="project", m="import", p="create")(
@@ -1626,10 +1619,6 @@ class S3OptionsMenu(object):
                    check=hazards)(
                     M("Create", m="create"),
                  ),
-                 #M("Indicators", f="indicator",
-                 #  check=indicators)(
-                 #   M("Create", m="create"),
-                 #),
                  M("Sectors", f="sector",
                    check=sectors)(
                     M("Create", m="create"),

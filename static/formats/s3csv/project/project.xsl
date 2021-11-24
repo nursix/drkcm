@@ -23,7 +23,6 @@
          End Date.............YYYY-MM-DD......End date of the project
          Sectors..............;-sep list......List of Project Sectors (Allow Sector Names to include a Comma, such as "Water, Sanitation & Hygiene"
          Hazards..............comma-sep list..List of Hazard names
-         HFA..................comma-sep list..List of HFA priorities (integer numbers)
          Budget...............double          Total Budget of project
          Budget:XXXX..........float...........Budget for year XXX (multiple allowed)
          FPFirstName..........string..........First Name of Focal Person
@@ -136,7 +135,6 @@
         <!-- Optional Classifications -->
         <xsl:variable name="Status" select="col[@field='Status']"/>
         <xsl:variable name="Hazards" select="col[@field='Hazards']"/>
-        <xsl:variable name="HFA" select="col[@field='HFA']"/>
         <xsl:variable name="Sectors" select="col[@field='Sectors']"/>
         <xsl:variable name="Themes" select="col[@field='Themes']"/>
         <xsl:variable name="Locations" select="col[@field='Locations']"/>
@@ -192,17 +190,6 @@
                             <xsl:value-of select="concat($EventPrefix, $Event)"/>
                         </xsl:attribute>
                     </reference>
-                </resource>
-            </xsl:if>
-
-            <!-- HFAs -->
-            <xsl:if test="$HFA!=''">
-                <resource name="project_drr">
-                    <data field="hfa">
-                        <xsl:attribute name="value">
-                            <xsl:value-of select="concat('[', $HFA, ']')"/>
-                        </xsl:attribute>
-                    </data>
                 </resource>
             </xsl:if>
 

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Disaster Victim Identification Model
 
-""" Sahana Eden Disaster Victim Identification Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3DVIModel",)
+__all__ = ("DVIModel",
+           )
 
 from gluon import *
 from gluon.storage import Storage
@@ -35,7 +34,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3DVIModel(DataModel):
+class DVIModel(DataModel):
 
     names = ("dvi_recreq",
              "dvi_body",

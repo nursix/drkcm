@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Assets Model
 
-""" Sahana Eden Assets Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,10 +25,10 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3AssetModel",
-           "S3AssetHRModel",
-           "S3AssetTeamModel",
-           "S3AssetTelephoneModel",
+__all__ = ("AssetModel",
+           "AssetHRModel",
+           "AssetTeamModel",
+           "AssetTelephoneModel",
            #"asset_rheader",
            "asset_types",
            "asset_log_status",
@@ -80,7 +78,7 @@ asset_log_status = {"SET_BASE" : ASSET_LOG_SET_BASE,
                     }
 
 # =============================================================================
-class S3AssetModel(DataModel):
+class AssetModel(DataModel):
     """
         Asset Management
     """
@@ -832,7 +830,7 @@ $.filterOptionsS3({
             db(atable.id == asset_id).update(cond = form_vars.cond)
 
 # =============================================================================
-class S3AssetHRModel(DataModel):
+class AssetHRModel(DataModel):
     """
         Optionally link Assets to Human Resources
         - useful for staffing a vehicle
@@ -862,7 +860,7 @@ class S3AssetHRModel(DataModel):
         return None
 
 # =============================================================================
-class S3AssetTeamModel(DataModel):
+class AssetTeamModel(DataModel):
     """
         Optionally link Assets to Teams
     """
@@ -891,7 +889,7 @@ class S3AssetTeamModel(DataModel):
         return None
 
 # =============================================================================
-class S3AssetTelephoneModel(DataModel):
+class AssetTelephoneModel(DataModel):
     """
         Extend the Assset Module for Telephones:
             Usage Costs

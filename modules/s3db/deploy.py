@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Deployments Model
 
-""" Sahana Eden Deployments Model
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,9 +25,9 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3DeploymentOrganisationModel",
-           "S3DeploymentModel",
-           "S3DeploymentAlertModel",
+__all__ = ("DeployOrganisationModel",
+           "DeployModel",
+           "DeployAlertModel",
            "deploy_rheader",
            "deploy_apply",
            "deploy_alert_select_recipients",
@@ -46,7 +44,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3DeploymentOrganisationModel(DataModel):
+class DeployOrganisationModel(DataModel):
     """
         Split into separate model to avoid circular deadlock in HRModel
     """
@@ -72,7 +70,7 @@ class S3DeploymentOrganisationModel(DataModel):
         return None
 
 # =============================================================================
-class S3DeploymentModel(DataModel):
+class DeployModel(DataModel):
 
     names = ("deploy_mission",
              "deploy_mission_id",
@@ -842,7 +840,7 @@ class S3DeploymentModel(DataModel):
         s3db.resource("hrm_appraisal", id=link.appraisal_id).delete()
 
 # =============================================================================
-class S3DeploymentAlertModel(DataModel):
+class DeployAlertModel(DataModel):
 
     names = ("deploy_alert",
              "deploy_alert_recipient",

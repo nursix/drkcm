@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Person Registry Model
 
-""" Sahana Eden Person Registry Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -61,9 +59,9 @@ __all__ = (# PR Base Entities
            "PRGroupTagModel",
 
            # S3 Models
-           "S3ImageLibraryModel",
-           "S3SavedFilterModel",
-           "S3SubscriptionModel",
+           "PRImageLibraryModel",
+           "PRSavedFilterModel",
+           "PRSubscriptionModel",
 
            # Representation Methods
            "pr_get_entities",
@@ -6700,7 +6698,7 @@ class PRReligionModel(DataModel):
         return None
 
 # =============================================================================
-class S3ImageLibraryModel(DataModel):
+class PRImageLibraryModel(DataModel):
     """
         Image Model
 
@@ -6785,7 +6783,7 @@ class S3ImageLibraryModel(DataModel):
         dbset.delete()
 
 # =============================================================================
-class S3SavedFilterModel(DataModel):
+class PRSavedFilterModel(DataModel):
     """ Saved Filters """
 
     names = ("pr_filter",
@@ -6862,7 +6860,7 @@ class S3SavedFilterModel(DataModel):
             form.vars.query = query
 
 # =============================================================================
-class S3SubscriptionModel(DataModel):
+class PRSubscriptionModel(DataModel):
     """
         Model for Subscriptions & hence Notifications
         http://eden.sahanafoundation.org/wiki/S3/Notifications

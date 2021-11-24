@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
     This is just a commented template to copy/paste from when implementing
     new models. Be sure you replace this docstring by something more

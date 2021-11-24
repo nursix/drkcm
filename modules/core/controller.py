@@ -216,7 +216,6 @@ class CRUDRequest:
                                      approved = approved,
                                      unapproved = unapproved,
                                      include_deleted = include_deleted,
-                                     context = True,
                                      filter_component = component_name,
                                      )
 

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Transport Model
 
-""" Sahana Eden Transport Model
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3TransportModel",
+__all__ = ("TransportModel",
            "transport_rheader",
            )
 
@@ -38,7 +36,7 @@ from ..core import *
 from ..s3layouts import S3PopupLink
 
 # =============================================================================
-class S3TransportModel(DataModel):
+class TransportModel(DataModel):
     """
         http://eden.sahanafoundation.org/wiki/BluePrint/Transport
     """

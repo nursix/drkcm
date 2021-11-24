@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Finance Tables
 
-""" Finance Tables
-
-    @copyright: 2015-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2015-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -2114,7 +2112,7 @@ def fin_rheader(r, tabs=None):
     return rheader
 
 # =============================================================================
-class fin_VoucherProgram(object):
+class fin_VoucherProgram:
     """
         Helper to record transactions in voucher programs
     """
@@ -2807,7 +2805,7 @@ class fin_VoucherProgram(object):
         return True
 
 # =============================================================================
-class fin_VoucherBilling(object):
+class fin_VoucherBilling:
     """
         Helper to facilitate the billing process for a voucher program
     """

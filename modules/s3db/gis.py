@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    GIS Model
 
-""" Sahana Eden GIS Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,21 +25,19 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division
-
-__all__ = ("S3LocationModel",
-           "S3LocationNameModel",
-           "S3LocationTagModel",
-           "S3LocationGroupModel",
-           "S3LocationHierarchyModel",
-           "S3GISConfigModel",
-           "S3LayerEntityModel",
-           "S3FeatureLayerModel",
-           "S3MapModel",
-           "S3GISThemeModel",
-           "S3PoIModel",
-           "S3PoIOrganisationGroupModel",
-           "S3PoIFeedModel",
+__all__ = ("GISLocationModel",
+           "GISLocationNameModel",
+           "GISLocationTagModel",
+           "GISLocationGroupModel",
+           "GISLocationHierarchyModel",
+           "GISConfigModel",
+           "GISLayerEntityModel",
+           "GISFeatureLayerModel",
+           "GISMapModel",
+           "GISThemeModel",
+           "GISPoIModel",
+           "GISPoIOrganisationGroupModel",
+           "GISPoIFeedModel",
            "gis_location_filter",
            "gis_LocationRepresent",
            "gis_layer_represent",
@@ -65,7 +61,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3LocationModel(DataModel):
+class GISLocationModel(DataModel):
     """
         Locations model
     """
@@ -1232,7 +1228,7 @@ class S3LocationModel(DataModel):
         return output
 
 # =============================================================================
-class S3LocationNameModel(DataModel):
+class GISLocationNameModel(DataModel):
     """
         Location Names model
         - local/alternate names for Locations
@@ -1303,7 +1299,7 @@ class S3LocationNameModel(DataModel):
         return None
 
 # =============================================================================
-class S3LocationTagModel(DataModel):
+class GISLocationTagModel(DataModel):
     """
         Location Tags model
         - flexible Key-Value component attributes to Locations
@@ -1383,7 +1379,7 @@ class S3LocationTagModel(DataModel):
         return od
 
 # =============================================================================
-class S3LocationGroupModel(DataModel):
+class GISLocationGroupModel(DataModel):
     """
         Location Groups model
         - currently unused
@@ -1439,7 +1435,7 @@ class S3LocationGroupModel(DataModel):
         return None
 
 # =============================================================================
-class S3LocationHierarchyModel(DataModel):
+class GISLocationHierarchyModel(DataModel):
     """
         Location Hierarchy model
     """
@@ -1615,7 +1611,7 @@ class S3LocationHierarchyModel(DataModel):
                     form.errors[gap] = hierarchy_gap
 
 # =============================================================================
-class S3GISConfigModel(DataModel):
+class GISConfigModel(DataModel):
     """
         GIS Config model: Web Map Context
         - Site config
@@ -2474,7 +2470,7 @@ class gis_MarkerRepresent(S3Represent):
         return represent
 
 # ==============================================================================
-class S3LayerEntityModel(DataModel):
+class GISLayerEntityModel(DataModel):
     """
         Model for Layer SuperEntity
         - used to provide a common link table for:
@@ -2860,7 +2856,7 @@ class S3LayerEntityModel(DataModel):
                               )
 
 # =============================================================================
-class S3FeatureLayerModel(DataModel):
+class GISFeatureLayerModel(DataModel):
     """
         Model for Feature Layers
         - used to select a set of Features for either Display on a Map
@@ -3069,7 +3065,7 @@ class S3FeatureLayerModel(DataModel):
             item.method = item.METHOD.UPDATE
 
 # =============================================================================
-class S3MapModel(DataModel):
+class GISMapModel(DataModel):
     """ Models for Maps """
 
     names = ("gis_cache",
@@ -4425,16 +4421,16 @@ class S3MapModel(DataModel):
         gis_layer_onaccept(form)
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def gis_layer_shapefile_onaccept_update(form):
+    @classmethod
+    def gis_layer_shapefile_onaccept_update(cls, form):
         """
             @ToDo: Check if the file has changed & run the normal onaccept if-so
         """
 
-        S3MapModel.gis_layer_shapefile_onaccept(form)
+        cls.gis_layer_shapefile_onaccept(form)
 
 # =============================================================================
-class S3GISThemeModel(DataModel):
+class GISThemeModel(DataModel):
     """
         Thematic Mapping model
 
@@ -4594,7 +4590,7 @@ class S3GISThemeModel(DataModel):
         return json.dumps(style)
 
 # =============================================================================
-class S3PoIModel(DataModel):
+class GISPoIModel(DataModel):
     """
         Data Model for PoIs (Points of Interest)
     """
@@ -4897,7 +4893,7 @@ class S3PoIModel(DataModel):
             current.log.warning("Unable to update GIS PoI Style as there are multiple possible")
 
 # =============================================================================
-class S3PoIOrganisationGroupModel(DataModel):
+class GISPoIOrganisationGroupModel(DataModel):
     """
         PoI Organisation Group Model
 
@@ -4935,7 +4931,7 @@ class S3PoIOrganisationGroupModel(DataModel):
         return None
 
 # =============================================================================
-class S3PoIFeedModel(DataModel):
+class GISPoIFeedModel(DataModel):
     """ Data Model for PoI feeds """
 
     names = ("gis_poi_feed",)

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Stats Model
 
-""" Sahana Eden Stats Model
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,12 +25,10 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division
-
-__all__ = ("S3StatsModel",
-           "S3StatsDemographicModel",
-           "S3StatsImpactModel",
-           "S3StatsPeopleModel",
+__all__ = ("StatsModel",
+           "StatsDemographicModel",
+           "StatsImpactModel",
+           "StatsPeopleModel",
            "stats_demographic_data_controller",
            "stats_quantile",
            "stats_year",
@@ -50,7 +46,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3StatsModel(DataModel):
+class StatsModel(DataModel):
     """
         Statistics Data
     """
@@ -79,7 +75,6 @@ class S3StatsModel(DataModel):
         sp_types = Storage(disease_statistic = T("Disease Statistic"),
                            org_resource_type = T("Organization Resource Type"),
                            project_beneficiary_type = T("Project Beneficiary Type"),
-                           project_campaign_keyword = T("Project Campaign Keyword"),
                            #project_indicator = T("Project Indicator"),
                            stats_demographic = T("Demographic"),
                            stats_impact_type = T("Impact Type"),
@@ -113,7 +108,6 @@ class S3StatsModel(DataModel):
         sd_types = Storage(disease_stats_data = T("Disease Data"),
                            org_resource = T("Organization Resource"),
                            project_beneficiary = T("Project Beneficiary"),
-                           project_campaign_response_summary = T("Project Campaign Response Summary"),
                            #project_indicator_data = T("Project Indicator Data"),
                            stats_demographic_data = T("Demographic Data"),
                            stats_impact = T("Impact"),
@@ -231,7 +225,7 @@ class S3StatsModel(DataModel):
                 }
 
 # =============================================================================
-class S3StatsDemographicModel(DataModel):
+class StatsDemographicModel(DataModel):
     """
         Baseline Demographics
 
@@ -672,7 +666,7 @@ class S3StatsDemographicModel(DataModel):
         location_dict = {} # a list of locations
         loc_level_list = {} # a list of levels for each location
 
-        aggregated_period = S3StatsDemographicModel.stats_demographic_aggregated_period
+        aggregated_period = StatsDemographicModel.stats_demographic_aggregated_period
         (last_period, year_end) = aggregated_period(None)
 
         # Test to see which date format we have based on how we were called
@@ -1219,7 +1213,7 @@ def stats_demographic_data_controller():
                                    )
 
 # =============================================================================
-class S3StatsImpactModel(DataModel):
+class StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
@@ -1351,7 +1345,7 @@ class S3StatsImpactModel(DataModel):
                 }
 
 # =============================================================================
-class S3StatsPeopleModel(DataModel):
+class StatsPeopleModel(DataModel):
     """
         Used to record people in the CRMT (Community Resilience Mapping Tool) template
 

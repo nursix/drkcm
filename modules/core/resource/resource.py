@@ -93,7 +93,6 @@ class CRUDResource:
                  include_deleted = False,
                  approved = True,
                  unapproved = False,
-                 context = False,
                  extra_filters = None
                  ):
         """
@@ -123,7 +122,6 @@ class CRUDResource:
 
                 approved: include approved records
                 unapproved: include unapproved records
-                context: apply context filters
                 extra_filters: extra filters (to be applied on
                                pre-filtered subsets), as list of
                                tuples (method, expression)
@@ -252,8 +250,6 @@ class CRUDResource:
                              extra_filters = extra_filters,
                              filter_component = filter_component,
                              )
-            if context:
-                self.add_filter(s3db.context)
 
         # Component - attach link table
         elif linktable is not None:

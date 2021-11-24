@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Setup Model:
+"""
+    Setup Model:
         * Installation of a Deployment
         * Configuration of a Deployment
         * Managing a Deployment (Start/Stop/Clean instances)
         * Monitoring of a Deployment
         * Upgrading a Deployment (tbc)
 
-    @copyright: 2015-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2015-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,17 +30,17 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3DNSModel",
-           "S3GandiDNSModel",
-           "S3GoDaddyDNSModel",
-           "S3CloudModel",
-           "S3AWSCloudModel",
-           "S3OpenStackCloudModel",
-           "S3EmailProviderModel",
-           "S3GoogleEmailModel",
-           "S3SMTPModel",
-           "S3SetupDeploymentModel",
-           "S3SetupMonitorModel",
+__all__ = ("SetupDNSModel",
+           "SetupGandiDNSModel",
+           "SetupGoDaddyDNSModel",
+           "SetupCloudModel",
+           "SetupAWSCloudModel",
+           "SetupOpenStackCloudModel",
+           "SetupEmailProviderModel",
+           "SetupGoogleEmailModel",
+           "SetupSMTPModel",
+           "SetupDeploymentModel",
+           "SetupMonitorModel",
            "setup_instance_deploy",
            "setup_instance_settings_read",
            "setup_monitor_run_task",
@@ -62,8 +60,6 @@ import random
 import string
 import sys
 import time
-
-from collections import OrderedDict
 
 from gluon import *
 
@@ -89,7 +85,7 @@ INSTANCE_TYPES = {1: "prod",
                   }
 
 # =============================================================================
-class S3DNSModel(DataModel):
+class SetupDNSModel(DataModel):
     """
         Domain Name System (DNS) Providers
         - super-entity
@@ -155,7 +151,7 @@ class S3DNSModel(DataModel):
                 }
 
 # =============================================================================
-class S3GandiDNSModel(S3DNSModel):
+class SetupGandiDNSModel(SetupDNSModel):
     """
         Gandi LiveDNS
         - DNS Provider Instance
@@ -205,7 +201,7 @@ class S3GandiDNSModel(S3DNSModel):
         return None
 
 # =============================================================================
-class S3GoDaddyDNSModel(S3DNSModel):
+class SetupGoDaddyDNSModel(SetupDNSModel):
     """
         GoDaddy DNS
         - DNS Provider Instance
@@ -254,7 +250,7 @@ class S3GoDaddyDNSModel(S3DNSModel):
         return None
 
 # =============================================================================
-class S3CloudModel(DataModel):
+class SetupCloudModel(DataModel):
     """
         Clouds
         - super-entity
@@ -320,7 +316,7 @@ class S3CloudModel(DataModel):
                 }
 
 # =============================================================================
-class S3AWSCloudModel(S3CloudModel):
+class SetupAWSCloudModel(SetupCloudModel):
     """
         Amazon Web Services
         - Cloud Instance
@@ -501,7 +497,7 @@ class S3AWSCloudModel(S3CloudModel):
                                      )
 
 # =============================================================================
-class S3OpenStackCloudModel(S3CloudModel):
+class SetupOpenStackCloudModel(SetupCloudModel):
     """
         OpenStack
         - Cloud Instance
@@ -679,7 +675,7 @@ class S3OpenStackCloudModel(S3CloudModel):
                                      )
 
 # =============================================================================
-class S3EmailProviderModel(DataModel):
+class SetupEmailProviderModel(DataModel):
     """
         Email Providers (we just use Groups currently)
         - super-entity
@@ -744,7 +740,7 @@ class S3EmailProviderModel(DataModel):
                 }
 
 # =============================================================================
-class S3GoogleEmailModel(S3EmailProviderModel):
+class SetupGoogleEmailModel(SetupEmailProviderModel):
     """
         Google
         - Email Group Provider Instance
@@ -883,7 +879,7 @@ class S3GoogleEmailModel(S3EmailProviderModel):
         os.unlink(creds_path)
 
 # =============================================================================
-class S3SMTPModel(DataModel):
+class SetupSMTPModel(DataModel):
     """
         SMTP Smart Hosts
         - tested with:
@@ -961,7 +957,7 @@ class S3SMTPModel(DataModel):
                 }
 
 # =============================================================================
-class S3SetupDeploymentModel(DataModel):
+class SetupDeploymentModel(DataModel):
 
     names = ("setup_deployment",
              "setup_deployment_id",
@@ -2281,7 +2277,7 @@ dropdown.change(function() {
                      )
 
 # =============================================================================
-class S3SetupMonitorModel(DataModel):
+class SetupMonitorModel(DataModel):
 
     names = ("setup_monitor_server",
              "setup_monitor_check",
@@ -3635,7 +3631,7 @@ def setup_instance_deploy(deployment_id, instance_id, folder):
                                        left = left,
                                        )
         else:
-             raise NotImplementedError
+            raise NotImplementedError
     else:
         # Get Server(s) details
         servers = db(query).select(stable.name,
@@ -4600,7 +4596,7 @@ def setup_modules_apply(instance_id, modules):
             tappend({"name": "If we disabled the module, then remove the disabling",
                      "become": "yes",
                      "lineinfile": {"dest": dest,
-                                    "regexp": '^del settings.modules\["%s"\]' % module,
+                                    "regexp": r'^del settings.modules\["%s"\]' % module,
                                     "state": "absent",
                                     },
                      "register": "default",
@@ -4609,7 +4605,7 @@ def setup_modules_apply(instance_id, modules):
             tappend({"name": "Enable the Module",
                      "become": "yes",
                      "lineinfile": {"dest": dest,
-                                    "regexp": '^settings.modules\["%s"\]' % module,
+                                    "regexp": r'^settings.modules\["%s"\]' % module,
                                     "line": 'settings.modules["%s"] = {"name_nice": T("%s"), "module_type": 10}' % (module, label),
                                     },
                      "when": "not default.found",
@@ -4624,7 +4620,7 @@ def setup_modules_apply(instance_id, modules):
                 tappend({"name": "Handle Dependency: If we disabled the module, then remove the disabling",
                          "become": "yes",
                          "lineinfile": {"dest": dest,
-                                        "regexp": '^del settings.modules\["%s"\]' % m,
+                                        "regexp": r'^del settings.modules\["%s"\]' % m,
                                         "state": "absent",
                                         },
                          "register": "default",
@@ -4632,7 +4628,7 @@ def setup_modules_apply(instance_id, modules):
                 tappend({"name": "Handle Dependency: Enable the Module",
                          "become": "yes",
                          "lineinfile": {"dest": dest,
-                                        "regexp": '^settings.modules\["%s"\]' % module,
+                                        "regexp": r'^settings.modules\["%s"\]' % module,
                                         "line": 'settings.modules["%s"] = {"name_nice": T("%s"), "module_type": 10}' % (m, d.get("label")),
                                         },
                          "when": "not default.found",
@@ -4645,7 +4641,7 @@ def setup_modules_apply(instance_id, modules):
             tappend({"name": "If we enabled the module, then remove the enabling",
                      "become": "yes",
                      "lineinfile": {"dest": dest,
-                                    "regexp": '^settings.modules\["%s"\]' % module,
+                                    "regexp": r'^settings.modules\["%s"\]' % module,
                                     "state": "absent",
                                     },
                      "register": "default",
@@ -4653,7 +4649,7 @@ def setup_modules_apply(instance_id, modules):
             tappend({"name": "Disable the module",
                      "become": "yes",
                      "lineinfile": {"dest": dest,
-                                    "regexp": '^del settings.modules\["%s"\]' % module,
+                                    "regexp": r'^del settings.modules\["%s"\]' % module,
                                     "line": 'del settings.modules["%s"]' % module,
                                     },
                      "when": "not default.found",

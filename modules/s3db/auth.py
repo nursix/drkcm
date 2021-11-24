@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Auth Model
 
-""" Sahana Eden Auth Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -31,10 +29,10 @@ __all__ = ("AuthDomainApproverModel",
            "AuthUserOptionsModel",
            "AuthConsentModel",
            "AuthMasterKeyModel",
+           "AuthUserTempModel",
            "auth_Consent",
            "auth_user_options_get_osm",
            "auth_UserRepresent",
-           "AuthUserTempModel",
            )
 
 import datetime
@@ -552,7 +550,48 @@ class AuthMasterKeyModel(DataModel):
                 }
 
 # =============================================================================
-class auth_Consent(object):
+class AuthUserTempModel(DataModel):
+    """
+        Model to store complementary data for pending user accounts
+        after self-registration
+    """
+
+    names = ("auth_user_temp",
+             )
+
+    def model(self):
+
+        utable = current.auth.settings.table_user
+
+        # ---------------------------------------------------------------------
+        # Temporary User Table
+        # - interim storage of registration data that can be used to
+        #   create complementary records about a user once their account
+        #   is approved
+        #
+        self.define_table("auth_user_temp",
+                          Field("user_id", utable),
+                          Field("home"),
+                          Field("mobile"),
+                          Field("image", "upload",
+                                length = current.MAX_FILENAME_LENGTH,
+                                ),
+                          Field("consent"),
+                          Field("custom", "json",
+                                requires = IS_EMPTY_OR(IS_JSONS3()),
+                                ),
+                          S3MetaFields.uuid(),
+                          S3MetaFields.created_on(),
+                          S3MetaFields.modified_on(),
+                          )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+# =============================================================================
+class auth_Consent:
     """ Helper class to track consent """
 
     def __init__(self, processing_types=None):
@@ -1316,48 +1355,6 @@ def auth_user_options_get_osm(pe_id):
         return record.osm_oauth_consumer_key, record.osm_oauth_consumer_secret
     else:
         return None
-
-# =============================================================================
-class AuthUserTempModel(DataModel):
-    """
-        Model to store complementary data for pending user accounts
-        after self-registration
-    """
-
-    names = ("auth_user_temp",
-             )
-
-    def model(self):
-
-        utable = current.auth.settings.table_user
-
-        # ---------------------------------------------------------------------
-        # Temporary User Table
-        # - interim storage of registration data that can be used to
-        #   create complementary records about a user once their account
-        #   is approved
-        #
-        self.define_table("auth_user_temp",
-                          Field("user_id", utable),
-                          Field("home"),
-                          Field("mobile"),
-                          Field("image", "upload",
-                                length = current.MAX_FILENAME_LENGTH,
-                                ),
-                          Field("consent"),
-                          Field("custom", "json",
-                                requires = IS_EMPTY_OR(IS_JSONS3()),
-                                ),
-                          S3MetaFields.uuid(),
-                          S3MetaFields.created_on(),
-                          S3MetaFields.modified_on(),
-                          )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
 
 # =============================================================================
 class auth_UserRepresent(S3Represent):

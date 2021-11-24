@@ -1,20 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Procurement Model
 
-""" Sahana Eden Procurement Model
-
-        A module to handle Procurement
-
-        Currently handles
-            Planned Procurements
-            Purchase Orders (PO)
-
-        @ToDo: Extend to
-            Purchase Requests (PR)
-            Requests for Quotation (RFQ)
-            Competitive Bid Analysis (CBA)
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -38,8 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3ProcurementPlansModel",
-           "S3PurchaseOrdersModel",
+__all__ = ("PROCProcurementPlansModel",
+           "PROCPurchaseOrdersModel",
            "proc_rheader"
            )
 
@@ -48,7 +35,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3ProcurementPlansModel(DataModel):
+class PROCProcurementPlansModel(DataModel):
     """
         Procurement Plans
 
@@ -272,7 +259,7 @@ class S3ProcurementPlansModel(DataModel):
             return current.messages.UNKNOWN_OPT
 
 # =============================================================================
-class S3PurchaseOrdersModel(DataModel):
+class PROCPurchaseOrdersModel(DataModel):
     """
         Purchase Orders (PO)
 

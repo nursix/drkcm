@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Human Resources Management
 
-""" Sahana Eden Human Resources Management
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -35,7 +33,6 @@ __all__ = ("HRModel",
            "HRContractModel",
            "HRSkillModel",
            "HRTagModel",
-           "HREventStrategyModel",
            "HREventProgrammeModel",
            "HREventProjectModel",
            "HREventAssessmentModel",
@@ -2890,11 +2887,6 @@ class HRSkillModel(DataModel):
                                           "key": "project_id",
                                           "actuate": "hide",
                                           },
-                       project_strategy = {"link": "hrm_event_strategy",
-                                           "joinby": "training_event_id",
-                                           "key": "strategy_id",
-                                           "actuate": "hide",
-                                           },
 
                        dc_target = {"link": "hrm_event_target",
                                     "joinby": "training_event_id",
@@ -4180,35 +4172,6 @@ def hrm_training_onaccept(form):
                 form.vars = Storage()
                 form.vars.id = certification_id
                 hrm_certification_onaccept(form)
-
-# =============================================================================
-class HREventStrategyModel(DataModel):
-    """
-        (Training) Events <> Strategies Link Table
-    """
-
-    names = ("hrm_event_strategy",
-             )
-
-    def model(self):
-
-        # =====================================================================
-        # (Training) Events <> Strategies Link Table
-        #
-        tablename = "hrm_event_strategy"
-        self.define_table(tablename,
-                          self.hrm_training_event_id(empty = False,
-                                                     ondelete = "CASCADE",
-                                                     ),
-                          self.project_strategy_id(empty = False,
-                                                   ondelete = "CASCADE",
-                                                   ),
-                          *s3_meta_fields())
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
 
 # =============================================================================
 class HREventProgrammeModel(DataModel):

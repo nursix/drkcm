@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Disease Tracking Models
 
-""" Sahana Eden Disease Tracking Models
-
-    @ToDo Extend to Vector Tracking for Dengue/Malaria
-
-    @copyright: 2014-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2014-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,13 +23,15 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
+
+    TODO Extend to Vector Tracking for Dengue/Malaria
 """
 
 __all__ = ("DiseaseDataModel",
            "DiseaseMonitoringModel",
            "DiseaseCertificateModel",
-           "CaseTrackingModel",
-           "ContactTracingModel",
+           "DiseaseCaseTrackingModel",
+           "DiseaseContactTracingModel",
            "DiseaseStatsModel",
            "disease_rheader",
            )
@@ -913,7 +911,7 @@ class DiseaseCertificateModel(DataModel):
         return None
 
 # =============================================================================
-class CaseTrackingModel(DataModel):
+class DiseaseCaseTrackingModel(DataModel):
 
     names = ("disease_case",
              "disease_case_id",
@@ -1714,7 +1712,7 @@ class disease_CaseRepresent(S3Represent):
             return full_name
 
 # =============================================================================
-class ContactTracingModel(DataModel):
+class DiseaseContactTracingModel(DataModel):
 
     names = ("disease_tracing",
              "disease_exposure",

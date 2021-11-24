@@ -58,7 +58,6 @@ class DataModel:
 
         self.cache = (current.cache.ram, 60)
 
-        self.context = None
         self.classes = {}
         self._module_map = None
 

@@ -668,12 +668,7 @@ class S3Profile(S3CRUD):
                                                )
             displayrows = totalrows
 
-            if dt.empty:
-                empty_str = get_crud_string(tablename,
-                                            "msg_list_empty")
-            else:
-                empty_str = get_crud_string(tablename,
-                                            "msg_no_match")
+            empty_str = get_crud_string(tablename, "msg_no_match")
             empty = DIV(empty_str, _class="empty")
 
             dtargs["dt_searching"] = widget_get("dt_searching", True)
