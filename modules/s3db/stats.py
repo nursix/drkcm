@@ -1040,11 +1040,12 @@ class StatsDemographicModel(DataModel):
             Calculates the stats_demographic_aggregate for a specific parameter at a
             specific location.
 
-            @param location_id: the location record ID
-            @param parameter_id: the parameter record ID
-            @param total_id: the parameter record ID for the percentage calculation
-            @param start_date: the start date of the time period (as string)
-            @param end_date: the end date of the time period (as string)
+            Args:
+                location_id: the location record ID
+                parameter_id: the parameter record ID
+                total_id: the parameter record ID for the percentage calculation
+                start_date: the start date of the time period (as string)
+                end_date: the end date of the time period (as string)
         """
 
         db = current.db
@@ -1530,9 +1531,10 @@ def stats_quantile(data, q):
 def stats_year(row, tablename):
     """
         Function to calculate computed field for stats_data
-        - returns the year of this entry
+            - returns the year of this entry
 
-        @param row: a dict of the Row
+        Args:
+            row: a dict of the Row
     """
 
     NOT_PRESENT = lambda: None
@@ -1667,12 +1669,14 @@ class stats_SourceRepresent(S3Represent):
         """
             Represent multiple values as dict {value: representation}
 
-            @param values: list of values
-            @param rows: the referenced rows (if values are foreign keys)
-            @param show_link: render each representation as link
-            @param include_blank: Also include a blank value
+            Args:
+                values: list of values
+                rows: the referenced rows (if values are foreign keys)
+                show_link: render each representation as link
+                include_blank: Also include a blank value
 
-            @return: a dict {value: representation}
+            Returns:
+                a dict {value: representation}
         """
 
         show_link = show_link and self.show_link
@@ -1712,7 +1716,8 @@ class stats_SourceRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the site IDs
+            Args:
+                values: the site IDs
         """
 
         db = current.db
@@ -1768,9 +1773,10 @@ class stats_SourceRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key (site_id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (site_id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         if row:
@@ -1790,7 +1796,8 @@ class stats_SourceRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the org_site Row
+            Args:
+                row: the org_site Row
         """
 
         name = row["stats_source.name"]

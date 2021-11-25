@@ -778,8 +778,8 @@ class RequestModel(DataModel):
         """
             Represent a Request
 
-            @todo: document parameters
-            @todo: S3Represent
+            TODO document parameters
+            TODO S3Represent
         """
 
         if row:
@@ -1649,7 +1649,8 @@ class RequestModel(DataModel):
             Remove any scheduled tasks when deleting a recurring request
             template
 
-            @param row: the deleted req_req Row
+            Args:
+                row: the deleted req_req Row
         """
 
         db = current.db
@@ -2074,9 +2075,9 @@ $.filterOptionsS3({
     @staticmethod
     def req_quantity_represent(quantity, qtype, show_link=True):
         """
-            @todo: better docstring
-            @ToDo: There should be better control of this feature - currently this only works
-                   with req_items which are being matched by commit / send / recv
+            TODO better docstring
+            TODO There should be better control of this feature - currently this only works
+                 with req_items which are being matched by commit / send / recv
         """
 
         if quantity and show_link and \
@@ -2095,14 +2096,15 @@ $.filterOptionsS3({
     def req_item_duplicate(item):
         """
             This callback will be called when importing records. It will look
-            to see if the record being imported is a duplicate.
+            to see if the record being imported is a duplicate. If the record
+            is a duplicate then it will set the item method to update
 
-            @param item: An ImportItem object which includes all the details
-                         of the record being imported
+            Args:
+                item: An ImportItem object which includes all the details
+                      of the record being imported
 
-            If the record is a duplicate then it will set the item method to update
-
-            Rules for finding a duplicate:
+            Notes:
+                Rules for finding a duplicate:
                 - If the Request Number matches
                 - The item is the same
         """
@@ -4570,8 +4572,8 @@ def req_ref_represent(value, show_link=True, pdf=False):
         if show_link is True then it will generate a link to the record
         if pdf is True then it will generate a link to the PDF
 
-        @todo: document parameters
-        @todo: S3Represent
+        TODO document parameters
+        TODO S3Represent
     """
 
     if value:
@@ -4601,10 +4603,12 @@ def req_tabs(r, match=True):
     """
         Add a set of rheader tabs for a site's request management
 
-        @param r: the CRUDRequest (for permission checking)
-        @param match: request matching is applicable for this type of site
+        Args:
+            r: the CRUDRequest (for permission checking)
+            match: request matching is applicable for this type of site
 
-        @return: list of rheader tab definitions
+        Returns:
+            list of rheader tab definitions
     """
 
     settings = current.deployment_settings
@@ -4696,7 +4700,8 @@ def req_update_commit_quantities_and_status(req):
     """
         Update commit quantities and status of a request
 
-        @param req: the req_req record (Row)
+        Args:
+            req: the req_req record (Row)
     """
 
     db = current.db
@@ -4971,7 +4976,7 @@ def req_rheader(r, check_page=False):
     """
         Resource Header for Requests & Needs
 
-        @todo: improve structure/readability
+        TODO improve structure/readability
     """
 
     if r.representation != "html":
@@ -5237,11 +5242,13 @@ def req_match(rheader = None):
             - add as req_match controller to the module, then
             - configure as rheader-tab "req_match/" for the site resource
 
-        @param rheader: module-specific rheader
+        Args:
+            rheader: module-specific rheader
 
-        NB make sure rheader uses s3_rheader_resource to handle "viewing"
-        NB can override rheader in customise_req_req_controller by
-           updating attr dict
+        Notes:
+            - make sure rheader uses s3_rheader_resource to handle "viewing"
+            - can override rheader in customise_req_req_controller by
+              updating attr dict
     """
 
     T = current.T
@@ -5452,10 +5459,11 @@ class req_CheckMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         req_type = r.record.type
@@ -5819,10 +5827,9 @@ class req_RequesterRepresent(S3Represent):
 
     def __init__(self, show_link=True):
         """
-            Constructor
-
-            @param show_link: render as link to the contact tab of
-                              the requester (in PR/HRM/VOL as appropriate)
+            Args:
+                show_link: render as link to the contact tab of
+                           the requester (in PR/HRM/VOL as appropriate)
         """
 
         super(req_RequesterRepresent, self).__init__(lookup = "pr_person",
@@ -5834,9 +5841,10 @@ class req_RequesterRepresent(S3Represent):
         """
             Custom look-up of rows
 
-            @param key: the key field
-            @param values: the values to look up
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key field
+                values: the values to look up
+                fields: unused (retained for API compatibility)
         """
 
         s3db = current.s3db
@@ -5876,7 +5884,8 @@ class req_RequesterRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if not hasattr(row, "pr_person"):
@@ -5900,9 +5909,10 @@ class req_RequesterRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key
+                v: the representation of the key
+                row: the row with this key
         """
 
         hr_type = None
@@ -5931,9 +5941,6 @@ class req_RequesterRepresent(S3Represent):
 class req_ReqItemRepresent(S3Represent):
 
     def __init__(self):
-        """
-            Constructor
-        """
 
         super(req_ReqItemRepresent, self).__init__(lookup = "req_req_item",
                                                    )
@@ -5943,9 +5950,10 @@ class req_ReqItemRepresent(S3Represent):
         """
             Custom look-up of rows
 
-            @param key: the key field
-            @param values: the values to look up
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key field
+                values: the values to look up
+                fields: unused (retained for API compatibility)
         """
 
         ritable = self.table
@@ -5971,7 +5979,8 @@ class req_ReqItemRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if not hasattr(row, "supply_item"):
@@ -5986,9 +5995,6 @@ class req_CommitRepresent(S3Represent):
     """
 
     def __init__(self):
-        """
-            Constructor
-        """
 
         super(req_CommitRepresent, self).__init__(lookup = "req_commit",
                                                   )
@@ -5998,9 +6004,10 @@ class req_CommitRepresent(S3Represent):
         """
             Custom look-up of rows
 
-            @param key: the key field
-            @param values: the values to look up
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key field
+                values: the values to look up
+                fields: unused (retained for API compatibility)
         """
 
         table = self.table
@@ -6048,7 +6055,8 @@ class req_CommitRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         table = self.table
@@ -6129,7 +6137,8 @@ def req_add_from_template(req_id):
         Add a Request from a Template (scheduled function to create
         recurring requests)
 
-        @param req_id: record ID of the request template
+        Args:
+            req_id: record ID of the request template
     """
 
     fieldnames = ["type",
@@ -6391,7 +6400,8 @@ def req_hide_quantities(table):
     """
         Hide per-status quantity fields in Request create-forms
 
-        @param table: the Table (req_item or req_skill)
+        Args:
+            table: the Table (req_item or req_skill)
     """
 
     if not current.deployment_settings.get_req_item_quantities_writable():
@@ -6406,10 +6416,11 @@ def req_hide_quantities(table):
 def req_inline_form(req_type, method):
     """
         Function to be called from REST prep functions
-         - to add req_item & req_skill components as inline forms
+            - to add req_item & req_skill components as inline forms
 
-        @param req_type: the request type (1=items, 3=skills)
-        @param method: the URL request method
+        Args:
+            req_type: the request type (1=items, 3=skills)
+            method: the URL request method
     """
 
     T = current.T

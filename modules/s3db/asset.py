@@ -1332,7 +1332,8 @@ class asset_AssetRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the organisation IDs
+            Args:
+                values: the organisation IDs
         """
 
         db = current.db
@@ -1366,7 +1367,8 @@ class asset_AssetRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the asset_asset Row
+            Args:
+                row: the asset_asset Row
         """
 
         # Custom Row (with the item & brand left-joined)
@@ -1388,9 +1390,10 @@ class asset_AssetRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key (site_id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (site_id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         if row:

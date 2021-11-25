@@ -887,13 +887,12 @@ class EventModel(DataModel):
     def event_event_year(row):
         """
             Virtual field for event_event - returns the year of this entry
-            used for report.
+            used for report. Requires "start_date" to be in extra_fields.
 
-            Requires "start_date" to be in extra_fields
+            Args:
+                row: the Row
 
-            @param row: the Row
-
-            @ToDo: Extend this to show multiple years if open for multiple?
+            TODO Extend this to show multiple years if open for multiple?
         """
 
         try:
@@ -5294,10 +5293,9 @@ class event_ActionPlan(CRUDMethod):
 
     def __init__(self, form=None):
         """
-            Constructor
-
-            @param form: widget config to inject at the top of the page,
-                         or a callable to produce such a widget config
+            Args:
+                form: widget config to inject at the top of the page,
+                      or a callable to produce such a widget config
         """
 
         super(event_ActionPlan, self).__init__()
@@ -5320,10 +5318,11 @@ class event_ActionPlan(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.name == "incident" and \
@@ -5551,10 +5550,9 @@ class event_ScenarioActionPlan(CRUDMethod):
 
     def __init__(self, form=None):
         """
-            Constructor
-
-            @param form: widget config to inject at the top of the page,
-                         or a callable to produce such a widget config
+            Args:
+                form: widget config to inject at the top of the page,
+                      or a callable to produce such a widget config
         """
 
         super(event_ScenarioActionPlan, self).__init__()
@@ -5577,10 +5575,11 @@ class event_ScenarioActionPlan(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.name == "scenario" and \
@@ -5806,10 +5805,11 @@ class event_ApplyScenario(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.http != "POST":
@@ -5923,8 +5923,9 @@ class event_EventAssignMethod(CRUDMethod):
 
     def __init__(self, component=None, next_tab=None):
         """
-            @param component: the Component in which to create records
-            @param next_tab: the component/method to redirect to after assigning
+            Args:
+                component: the Component in which to create records
+                next_tab: the component/method to redirect to after assigning
         """
 
         super(event_EventAssignMethod, self).__init__()
@@ -5938,10 +5939,11 @@ class event_EventAssignMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if self.component:
@@ -6315,8 +6317,9 @@ class event_IncidentAssignMethod(CRUDMethod):
 
     def __init__(self, component, next_tab=None):
         """
-            @param component: the Component in which to create records
-            @param next_tab: the component/method to redirect to after assigning
+            Args:
+                component: the Component in which to create records
+                next_tab: the component/method to redirect to after assigning
         """
 
         super(event_IncidentAssignMethod, self).__init__()
@@ -6332,10 +6335,11 @@ class event_IncidentAssignMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         try:
@@ -6814,11 +6818,12 @@ def event_event_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Incidents on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["event_event.id"]
@@ -6898,11 +6903,12 @@ def event_incident_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Incidents on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row
@@ -7004,11 +7010,12 @@ def event_resource_list_layout(list_id, item_id, resource, rfields, record):
     """
         Default dataList item renderer for Resources on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row

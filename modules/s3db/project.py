@@ -30,7 +30,6 @@ __all__ = ("ProjectModel",
            "ProjectActivityDemographicsModel",
            "ProjectActivityItemModel",
            "ProjectActivityTypeModel",
-           "ProjectActivityPersonModel",
            "ProjectActivityOrganisationModel",
            "ProjectActivityOrganisationGroupModel",
            "ProjectActivitySectorModel",
@@ -77,9 +76,6 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 from .req import req_timeframe
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 # =============================================================================
 class ProjectModel(DataModel):
@@ -3277,13 +3273,6 @@ class ProjectActivityModel(DataModel):
                                               },
                        # Format for InlineComponent/filter_widget
                        project_beneficiary_activity = "activity_id",
-                       # Beneficiaries (Named Cases)
-                       pr_person = {"link": "project_activity_person",
-                                    "joinby": "activity_id",
-                                    "key": "person_id",
-                                    #"actuate": "hide",
-                                    "actuate": "replace",
-                                    },
                        # Data
                        project_activity_data = "activity_id",
                        # Demographic
@@ -3689,70 +3678,6 @@ class ProjectActivityTypeModel(DataModel):
         # Pass names back to global scope (s3.*)
         return {"project_activity_type_id": activity_type_id,
                 }
-
-# =============================================================================
-class ProjectActivityPersonModel(DataModel):
-    """
-        Project Activity Person Model
-        - an Activity can have multiple named beneficiaries
-    """
-
-    names = ("project_activity_person",)
-
-    def model(self):
-
-        T = current.T
-        uploadfolder = os.path.join(current.request.folder, "uploads")
-
-        # ---------------------------------------------------------------------
-        # Project Activities <> Named Beneficiaries Link Table
-        #
-        # @ToDo: When Activity is linked to a Project, ensure these stay in sync
-        #
-        tablename = "project_activity_person"
-        self.define_table(tablename,
-                          self.project_activity_id(empty = False,
-                                                   # Default:
-                                                   #ondelete = "CASCADE",
-                                                   ),
-                          #self.dvr_case_id(empty = False,
-                          #                 ondelete = "CASCADE",
-                          #                 ),
-                          self.pr_person_id(empty = False,
-                                            label = T("Head of Household"),
-                                            ondelete = "CASCADE",
-                                            ),
-                          # @ToDo: Option to scan this in easily (mobile-only)
-                          Field("identity", "upload",
-                                label = T("Identity"),
-                                length = current.MAX_FILENAME_LENGTH,
-                                represent = self.doc_image_represent,
-                                requires = [IS_EMPTY_OR(IS_IMAGE(maxsize=(400, 400),
-                                                                 error_message=T("Upload an image file (png or jpeg), max. 400x400 pixels!"))),
-                                            IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
-                                            ],
-                                uploadfolder = uploadfolder,
-                                ),
-                          Field("relationship",
-                                label = T("Relationship"),
-                                represent = lambda v: v or current.messages["NONE"],
-                                comment = T("If not the Head of Household"),
-                                ),
-                          # @ToDo: Option to draw this easily (mobile-only)
-                          Field("signature", "upload",
-                                label = T("Signature"),
-                                length = current.MAX_FILENAME_LENGTH,
-                                represent = self.doc_image_represent,
-                                requires = [IS_EMPTY_OR(IS_IMAGE(maxsize=(400, 400),
-                                                                 error_message=T("Upload an image file (png or jpeg), max. 400x400 pixels!"))),
-                                            IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
-                                            ],
-                                uploadfolder = uploadfolder,
-                                ),
-                          *s3_meta_fields())
-
-        # Pass names back to global scope (s3.*)
-        return None
 
 # =============================================================================
 class ProjectActivityOrganisationModel(DataModel):
@@ -4358,7 +4283,7 @@ class ProjectTaskModel(DataModel):
                            "optional": True,
                            }
                 jquery_ready_append('''$.filterOptionsS3(%s)''' % \
-                                    json.dumps(options, separators=SEPARATORS))
+                                    json.dumps(options, separators=JSONSEPARATORS))
 
         # Basic workflow fields
         cextend(("name",
@@ -4395,7 +4320,7 @@ class ProjectTaskModel(DataModel):
                            "optional": True,
                            }
                 jquery_ready_append('''$.filterOptionsS3(%s)''' % \
-                                    json.dumps(options, separators=SEPARATORS))
+                                    json.dumps(options, separators=JSONSEPARATORS))
 
         # Remaining standard filter widgets for tasks
         filter_widgets.extend((S3OptionsFilter("pe_id",
@@ -5542,45 +5467,6 @@ class ProjectTaskTagModel(DataModel):
         return None
 
 # =============================================================================
-#def multi_theme_percentage_represent(record_id):
-    #"""
-        #Representation for Theme Percentages
-        #for multiple=True options
-    #"""
-
-    #if not record_id:
-        #return current.messages["NONE"]
-
-    #s3db = current.s3db
-    #table = s3db.project_theme_percentage
-    #ttable = s3db.project_theme
-
-    #def represent_row(row):
-        #return "%s (%s%%)" % (row.project_theme.name,
-                              #row.project_theme_percentage.percentage,
-                              #)
-
-    #if isinstance(record_id, (list, tuple)):
-        #query = (table.id.belongs(record_id)) & \
-                #(ttable.id == table.theme_id)
-        #rows = current.db(query).select(table.percentage,
-                                        #ttable.name,
-                                        #)
-        #reprstr = ", ".join(represent_row(row) for row in rows)
-        #return reprstr
-    #else:
-        #query = (table.id == record_id) & \
-                #(ttable.id == table.theme_id)
-        #row = current.db(query).select(table.percentage,
-                                       #ttable.name,
-                                       #limitby = (0, 1),
-                                       #).first()
-        #try:
-            #return represent_row(row)
-        #except AttributeError:
-            #return current.messages.UNKNOWN_OPT
-
-# =============================================================================
 class project_LocationRepresent(S3Represent):
     """ Representation of Project Locations """
 
@@ -5612,12 +5498,11 @@ class project_LocationRepresent(S3Represent):
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
         """
-            Custom lookup method for organisation rows, does a
-            join with the projects and locations. Parameters
-            key and fields are not used, but are kept for API
-            compatiblity reasons.
+            Custom lookup method for organisation rows, does a join with the
+            projects and locations.
 
-            @param values: the project_location IDs
+            Args:
+                values: the project_location IDs
         """
 
         db = current.db
@@ -5660,7 +5545,8 @@ class project_LocationRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the joined Row
+            Args:
+                row: the joined Row
         """
 
         community = self.community
@@ -5775,12 +5661,11 @@ class project_ActivityRepresent(S3Represent):
     # -------------------------------------------------------------------------
     def custom_lookup_rows(self, key, values, fields=None):
         """
-            Custom lookup method for activity rows, does a
-            left join with the parent project. Parameters
-            key and fields are not used, but are kept for API
-            compatibility reasons.
+            Custom lookup method for activity rows, does a left join with
+            the parent project.
 
-            @param values: the activity IDs
+            Args:
+                values: the activity IDs
         """
 
         s3db = current.s3db
@@ -5810,7 +5695,8 @@ class project_ActivityRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the project_activity Row
+            Args:
+                row: the project_activity Row
         """
 
         if self.code:
@@ -5838,11 +5724,10 @@ class project_TaskRepresent(S3Represent):
                  show_project=False,
                  project_first=True):
         """
-            Constructor
-
-            @param show_link: render representation as link to the task
-            @param show_project: show the project name in the representation
-            @param project_first: show the project name before the task name
+            Args:
+                show_link: render representation as link to the task
+                show_project: show the project name in the representation
+                project_first: show the project name before the task name
         """
 
         task_url = URL(c="project", f="task", args=["[id]"])
@@ -5863,9 +5748,10 @@ class project_TaskRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         s3db = current.s3db
@@ -5902,7 +5788,8 @@ class project_TaskRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         output = row["project_task.name"]
@@ -5975,11 +5862,11 @@ def project_time_day(row):
     """
         Virtual field for project_time - abbreviated string format for
         date, allows grouping per day instead of the individual datetime,
-        used for project time report.
+        used for project time report. Requires "date" to be in the additional
+        report_fields
 
-        Requires "date" to be in the additional report_fields
-
-        @param row: the Row
+        Args:
+            row: the Row
     """
 
     try:
@@ -6003,10 +5890,10 @@ def project_time_week(row):
     """
         Virtual field for project_time - returns the date of the Monday
         (=first day of the week) of this entry, used for project time report.
-
         Requires "date" to be in the additional report_fields
 
-        @param row: the Row
+        Args:
+            row: the Row
     """
 
     try:
@@ -6152,9 +6039,9 @@ def project_rheader(r):
                 ]
         if settings.get_project_activity_items():
             tabs.append((T("Distribution Items"), "distribution"))
-        if settings.has_module("dvr"):
-            tabs.append((T("Beneficiaries"), "person"))
-            #tabs.append((T("Assign Beneficiaries"), "assign"))
+        #if settings.has_module("dvr"):
+            #tabs.append((T("Beneficiaries"), "person"))
+            ##tabs.append((T("Assign Beneficiaries"), "assign"))
         if settings.get_project_mode_task():
             tabs.append((T("Tasks"), "task"))
             tabs.append((attachments_label, "document"))
@@ -6465,8 +6352,9 @@ def project_theme_help_fields(options):
     """
         Provide the tooltips for the Theme filter
 
-        @param options: the options to generate tooltips for, from
-                        S3GroupedOptionsWidget: list of tuples (key, represent)
+        Args:
+            options: the options to generate tooltips for, from
+                     S3GroupedOptionsWidget: list of tuples (key, represent)
     """
 
     table = current.s3db.project_theme
@@ -6485,8 +6373,9 @@ def project_hazard_help_fields(options):
     """
         Provide the tooltips for the Hazard filter
 
-        @param options: the options to generate tooltips for, from
-                        S3GroupedOptionsWidget: list of tuples (key, represent)
+        Args:
+            options: the options to generate tooltips for, from
+                     S3GroupedOptionsWidget: list of tuples (key, represent)
     """
 
     table = current.s3db.project_hazard
@@ -6506,7 +6395,8 @@ def project_project_filters(org_label):
     """
         Filter widgets for project_project
 
-        @param org_label: the label to use for organisation_id
+        Args:
+            org_label: the label to use for organisation_id
     """
 
     T = current.T
@@ -6604,11 +6494,12 @@ def project_project_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Projects on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row
@@ -6710,11 +6601,12 @@ def project_activity_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Incidents on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row
@@ -6821,11 +6713,12 @@ def project_task_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Tasks on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row

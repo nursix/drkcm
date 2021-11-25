@@ -1416,8 +1416,8 @@ class BudgetAllocationModel(DataModel):
         """
             Import item de-duplication
 
-            @todo: additionally have an onaccept sanitizing overlapping
-                   allocations? (may be too simple, though)
+            TODO additionally have an onaccept sanitizing overlapping
+                 allocations? (may be too simple, though)
         """
 
         data = item.data
@@ -1671,11 +1671,7 @@ class BudgetMonitoringModel(DataModel):
 class budget_CostItemRepresent(S3Represent):
     """ Representation of Cost Items """
 
-    # -------------------------------------------------------------------------
     def __init__(self, show_link=False):
-        """
-            Constructor
-        """
 
         super(budget_CostItemRepresent, self).__init__(lookup="budget_cost_item",
                                                        key="cost_item_id",
@@ -1694,9 +1690,10 @@ class budget_CostItemRepresent(S3Represent):
         """
             Custom rows lookup function
 
-            @param key: the key field
-            @param values: the values to look up
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key field
+                values: the values to look up
+                fields: unused (retained for API compatibility)
         """
 
         db = current.db
@@ -1781,7 +1778,8 @@ class budget_CostItemRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         s3db = current.s3db
@@ -1966,7 +1964,8 @@ def budget_budget_totals(budget_entity_id):
     """
         Calculate Totals for a budget
 
-        @param budget_entity_id: the budget_entity record ID
+        Args:
+            budget_entity_id: the budget_entity record ID
     """
 
     db = current.db

@@ -677,7 +677,8 @@ class DVRCaseModel(DataModel):
             Onaccept routine for case statuses:
             - only one status can be the default
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -700,9 +701,10 @@ class DVRCaseModel(DataModel):
     def case_onvalidation(form):
         """
             Case onvalidation:
-            - make sure case numbers are unique within the organisation
+                - make sure case numbers are unique within the organisation
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         db = current.db
@@ -783,7 +785,8 @@ class DVRCaseModel(DataModel):
             Wrapper for case_onaccept when called during create
             rather than update
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         cls.case_onaccept(form, create=True)
@@ -793,11 +796,12 @@ class DVRCaseModel(DataModel):
     def case_onaccept(form, create=False):
         """
             Case onaccept routine:
-            - auto-create active appointments
-            - count household size for new cases
+                - auto-create active appointments
+                - count household size for new cases
 
-            @param form: the FORM
-            @param create: perform additional actions for new cases
+            Args:
+                form: the FORM
+                create: perform additional actions for new cases
         """
 
         db = current.db
@@ -1929,9 +1933,10 @@ class DVRResponseModel(DataModel):
     def response_type_onaccept(form):
         """
             Onaccept routine for response types:
-            - only one type can be the default
+                - only one type can be the default
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -1956,9 +1961,10 @@ class DVRResponseModel(DataModel):
     def response_status_onaccept(form):
         """
             Onaccept routine for response statuses:
-            - only one status can be the default
+                - only one status can be the default
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -1997,7 +2003,8 @@ class DVRResponseModel(DataModel):
                 - RESTRICT  => block deletion cascade
                 - otherwise => clean up the list:reference
 
-            @param row: the dvr_response_theme Row to be deleted
+            Args:
+                row: the dvr_response_theme Row to be deleted
         """
 
         db = current.db
@@ -2030,11 +2037,13 @@ class DVRResponseModel(DataModel):
         """
             DRY helper to find or create a case activity matching a need_id
 
-            @param person_id: the beneficiary person ID
-            @param need_id: the need ID (or a list of need IDs)
-            @param human_resource_id: the HR responsible
+            Args:
+                person_id: the beneficiary person ID
+                need_id: the need ID (or a list of need IDs)
+                human_resource_id: the HR responsible
 
-            @returns: a dvr_case_activity record ID
+            Returns:
+                a dvr_case_activity record ID
         """
 
         if not person_id:
@@ -3345,9 +3354,10 @@ class DVRCaseActivityModel(DataModel):
     def case_activity_status_onaccept(form):
         """
             Onaccept routine for case activity statuses:
-            - only one status can be the default
+                - only one status can be the default
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -3391,7 +3401,8 @@ class DVRCaseActivityModel(DataModel):
         """
             Close all open response actions in a case activity
 
-            @param case_activity_id: the case activity record ID
+            Args:
+                case_activity_id: the case activity record ID
         """
 
         db = current.db
@@ -3595,7 +3606,8 @@ class DVRCaseEffortModel(DataModel):
                 - inherit person_id from case_activity, unless specified
                   in form or default
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         # Read form data
@@ -3860,7 +3872,8 @@ class DVRCaseAppointmentModel(DataModel):
                 - Future appointments can not be set to completed
                 - Undated appointments can not be set to completed
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         formvars = form.vars
@@ -3882,7 +3895,8 @@ class DVRCaseAppointmentModel(DataModel):
                 - Update last_seen_on in the corresponding case(s)
                 - Update the case status if configured to do so
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         # Read form data
@@ -3997,7 +4011,8 @@ class DVRCaseAppointmentModel(DataModel):
             Actions after deleting appointments
                 - Update last_seen_on in the corresponding case(s)
 
-            @param row: the deleted Row
+            Args:
+                row: the deleted Row
         """
 
         if current.deployment_settings.get_dvr_appointments_update_last_seen_on():
@@ -4813,7 +4828,8 @@ class DVRCaseAllowanceModel(DataModel):
             Validate allowance form
                 - Status paid requires paid_on date
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         formvars = form.vars
@@ -4866,7 +4882,8 @@ class DVRCaseAllowanceModel(DataModel):
             Actions after deleting allowance information
                 - Update last_seen_on in the corresponding case(s)
 
-            @param row: the deleted Row
+            Args:
+                row: the deleted Row
         """
 
         if current.deployment_settings.get_dvr_payments_update_last_seen_on():
@@ -5200,9 +5217,10 @@ class DVRCaseEventModel(DataModel):
     def case_event_type_onaccept(form):
         """
             Onaccept routine for case event types:
-            - only one type can be the default
+                - only one type can be the default
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -5228,7 +5246,8 @@ class DVRCaseEventModel(DataModel):
                 - update last_seen_on in the corresponding cases
                 - close appointments if configured to do so
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         formvars = form.vars
@@ -5394,7 +5413,8 @@ class DVRCaseEventModel(DataModel):
             Actions after deleting a case event:
                 - update last_seen_on in the corresponding cases
 
-            @param row: the deleted Row
+            Args:
+                row: the deleted Row
         """
 
         # Get the deleted keys
@@ -6005,7 +6025,8 @@ def dvr_case_default_status():
     """
         Helper to get/set the default status for case records
 
-        @return: the default status_id
+        Returns:
+            the default status_id
     """
 
     s3db = current.s3db
@@ -6036,9 +6057,11 @@ def dvr_case_status_filter_opts(closed=None):
     """
         Get filter options for case status, ordered by workflow position
 
-        @return: OrderedDict of options
+        Returns:
+            OrderedDict of options
 
-        @note: set sort=False for filter widget to retain this order
+        Note:
+            set sort=False for filter widget to retain this order
     """
 
     table = current.s3db.dvr_case_status
@@ -6064,7 +6087,8 @@ def dvr_case_activity_default_status():
     """
         Helper to get/set the default status for case activities
 
-        @return: the default status_id
+        Returns:
+            the default status_id
     """
 
     s3db = current.s3db
@@ -6102,7 +6126,8 @@ def dvr_response_default_type():
     """
         Helper to get/set the default type for response records
 
-        @return: the default response_type_id
+        Returns:
+            the default response_type_id
     """
 
     s3db = current.s3db
@@ -6133,7 +6158,8 @@ def dvr_response_default_status():
     """
         Helper to get/set the default status for response records
 
-        @return: the default status_id
+        Returns:
+            the default status_id
     """
 
     s3db = current.s3db
@@ -6171,10 +6197,12 @@ def dvr_response_status_colors(resource, selector):
     """
         Get colors for response statuses
 
-        @param resource: the CRUDResource the caller is looking at
-        @param selector: the Field selector (usually "status_id")
+        Args:
+            resource: the CRUDResource the caller is looking at
+            selector: the Field selector (usually "status_id")
 
-        @returns: a dict with colors {field_value: "#RRGGBB", ...}
+        Returns:
+            a dict with colors {field_value: "#RRGGBB", ...}
     """
 
     table = current.s3db.dvr_response_status
@@ -6193,7 +6221,8 @@ def dvr_case_household_size(group_id):
         case groups. To be called onaccept of pr_group_membership if automatic
         household size is enabled
 
-        @param group_id: the group_id of the case group (group_type == 7)
+        Args:
+            group_id: the group_id of the case group (group_type == 7)
     """
 
     db = current.db
@@ -6254,7 +6283,8 @@ def dvr_due_followups(human_resource_id=None):
     """
         Number of activities due for follow-up
 
-        @param human_resource_id: count only activities assigned to this HR
+        Args:
+            human_resource_id: count only activities assigned to this HR
     """
 
     # Generate a request for case activities and customise it
@@ -6290,9 +6320,8 @@ class dvr_ActivityRepresent(S3Represent):
 
     def __init__(self, show_link=False):
         """
-            Constructor
-
-            @param show_link: show representation as clickable link
+            Args:
+                show_link: show representation as clickable link
         """
 
         super(dvr_ActivityRepresent, self).__init__(lookup = "dvr_activity",
@@ -6304,9 +6333,10 @@ class dvr_ActivityRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         table = current.s3db.dvr_activity
@@ -6343,7 +6373,8 @@ class dvr_ActivityRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if row.name:
@@ -6380,9 +6411,10 @@ class dvr_ActivityRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link
 
-            @param k: the key (dvr_activity.id)
-            @param v: the representation of the key
-            @param row: the row with this key (unused here)
+            Args:
+                k: the key (dvr_activity.id)
+                v: the representation of the key
+                row: the row with this key (unused here)
         """
 
         url = URL(c="dvr", f="activity", args=[k], extension="")
@@ -6395,9 +6427,8 @@ class dvr_ResponseActionRepresent(S3Represent):
 
     def __init__(self, show_hr=True, show_link=True):
         """
-            Constructor
-
-            @param show_hr: include the staff member name
+            Args:
+                show_hr: include the staff member name
         """
 
         super(dvr_ResponseActionRepresent, self).__init__(
@@ -6412,9 +6443,10 @@ class dvr_ResponseActionRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: list of fields to look up (unused)
+            Args:
+                key: the key Field
+                values: the values
+                fields: list of fields to look up (unused)
         """
 
         show_hr = self.show_hr
@@ -6446,7 +6478,8 @@ class dvr_ResponseActionRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         table = self.table
@@ -6467,9 +6500,10 @@ class dvr_ResponseActionRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link
 
-            @param k: the key (dvr_case_activity.id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (dvr_case_activity.id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         try:
@@ -6491,10 +6525,9 @@ class dvr_ResponseActionThemeRepresent(S3Represent):
 
     def __init__(self, paragraph=False, details=False):
         """
-            Constructor
-
-            @param paragraph: render as HTML paragraph
-            @param details: include details in paragraph
+            Args:
+                paragraph: render as HTML paragraph
+                details: include details in paragraph
         """
 
         super(dvr_ResponseActionThemeRepresent, self).__init__(
@@ -6509,9 +6542,10 @@ class dvr_ResponseActionThemeRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: list of fields to look up (unused)
+            Args:
+                key: the key Field
+                values: the values
+                fields: list of fields to look up (unused)
         """
 
         count = len(values)
@@ -6540,7 +6574,8 @@ class dvr_ResponseActionThemeRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         table = self.table
@@ -6565,10 +6600,11 @@ class dvr_ResponseActionThemeRepresent(S3Represent):
         """
             Render list-type representations from bulk()-results.
 
-            @param value: the list
-            @param labels: the labels as returned from bulk()
-            @param show_link: render references as links, should
-                              be the same as used with bulk()
+            Args:
+                value: the list
+                labels: the labels as returned from bulk()
+                show_link: render references as links, should
+                           be the same as used with bulk()
         """
 
         if self.paragraph:
@@ -6598,9 +6634,10 @@ class dvr_ResponseThemeRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         table = self.table
@@ -6635,7 +6672,8 @@ class dvr_ResponseThemeRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         T = current.T
@@ -6672,13 +6710,12 @@ class dvr_CaseActivityRepresent(S3Represent):
 
     def __init__(self, show_as=None, fmt=None, show_link=False, show_date=False, linkto=None):
         """
-            Constructor
-
-            @param show_as: alternative representations:
-                            "beneficiary"|"need"|"subject"
-            @param show_link: show representation as clickable link
-            @param show_date: include date when showing as need or subject
-            @param fmt: string format template for person record
+            Args:
+                show_as: alternative representations:
+                         "beneficiary"|"need"|"subject"
+                show_link: show representation as clickable link
+                show_date: include date when showing as need or subject
+                fmt: string format template for person record
         """
 
         super(dvr_CaseActivityRepresent, self).__init__(
@@ -6704,9 +6741,10 @@ class dvr_CaseActivityRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         table = self.table
@@ -6759,7 +6797,8 @@ class dvr_CaseActivityRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         show_as = self.show_as
@@ -6796,9 +6835,10 @@ class dvr_CaseActivityRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link
 
-            @param k: the key (dvr_case_activity.id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (dvr_case_activity.id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         try:
@@ -6827,16 +6867,15 @@ class dvr_DocEntityRepresent(S3Represent):
                  show_link=False,
                  ):
         """
-            Constructor
-
-            @param case_label: label for cases (default: "Case")
-            @param case_group_label: label for case groups (default: "Case Group")
-            @param activity_label: label for case activities
-                                   (default: "Activity")
-            @param use_need: use need if available instead of subject
-            @param use_sector: use sector if available instead of
-                               activity label
-            @param show_link: show representation as clickable link
+            Args:
+                case_label: label for cases (default: "Case")
+                case_group_label: label for case groups (default: "Case Group")
+                activity_label: label for case activities
+                                (default: "Activity")
+                use_need: use need if available instead of subject
+                use_sector: use sector if available instead of
+                            activity label
+                show_link: show representation as clickable link
         """
 
         super(dvr_DocEntityRepresent, self).__init__(lookup = "doc_entity",
@@ -6868,9 +6907,10 @@ class dvr_DocEntityRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         db = current.db
@@ -6974,7 +7014,8 @@ class dvr_DocEntityRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         reprstr = self.default
@@ -7035,9 +7076,10 @@ class dvr_DocEntityRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link
 
-            @param k: the key (doc_entity.doc_id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (doc_entity.doc_id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         link = v
@@ -7280,8 +7322,9 @@ class DVRManageAllowance(CRUDMethod):
         """
             Main entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         # User must be permitted to update allowance information
@@ -7304,8 +7347,9 @@ class DVRManageAllowance(CRUDMethod):
         """
             Method to bulk-update status of allowance payments
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         T = current.T
@@ -7410,7 +7454,8 @@ class DVRManageAllowance(CRUDMethod):
         """
             Update form validation
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         T = current.T
@@ -7438,12 +7483,14 @@ def dvr_get_household_size(person_id, dob=False, formatted=True):
         Helper function to calculate the household size
         (counting only members with active cases)
 
-        @param person_id: the person record ID
-        @param dob: the date of birth of that person (if known)
-        @param formatted: return household size info as string
+        Args:
+            person_id: the person record ID
+            dob: the date of birth of that person (if known)
+            formatted: return household size info as string
 
-        @return: household size info as string if formatted=True,
-                 otherwise tuple (number_of_adults, number_of_children)
+        Returns:
+            household size info as string if formatted=True,
+            otherwise tuple (number_of_adults, number_of_children)
     """
 
     db = current.db
@@ -7560,8 +7607,9 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Main entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         if not self.permitted():
@@ -7592,8 +7640,9 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Render and process the registration form
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         T = current.T
@@ -7814,7 +7863,8 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Helper function to check permissions
 
-            @return: True if permitted to use this method, else False
+            Returns:
+                True if permitted to use this method, else False
         """
 
         # User must be permitted to create case events
@@ -7825,9 +7875,11 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Get a case event type for an event code
 
-            @param code: the type code (using default event type if None)
+            Args:
+                code: the type code (using default event type if None)
 
-            @return: the dvr_case_event_type Row, or None if not found
+            Returns:
+                the dvr_case_event_type Row, or None if not found
         """
 
         event_types = self.get_event_types()
@@ -7849,7 +7901,8 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Validate the event registration form
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         T = current.T
@@ -7901,9 +7954,10 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Helper function to process the form
 
-            @param r: the CRUDRequest
-            @param form: the FORM
-            @param event_type: the event_type (Row)
+            Args:
+                r: the CRUDRequest
+                form: the FORM
+                event_type: the event_type (Row)
         """
 
         T = current.T
@@ -7942,10 +7996,12 @@ class DVRRegisterCaseEvent(CRUDMethod):
                  t: the event type code
                  }
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
 
-            @return: JSON response, structure:
+            Returns:
+                JSON response, structure:
 
                     {l: the actual PE label (to update the input field),
                      p: the person details,
@@ -8097,13 +8153,15 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Helper function to extend the form
 
-            @param person: the person (Row)
-            @param formfields: list of form fields (Field)
-            @param data: the form data (dict)
-            @param hidden: hidden form fields (dict)
-            @param permitted: whether the action is permitted
+            Args:
+                person: the person (Row)
+                formfields: list of form fields (Field)
+                data: the form data (dict)
+                hidden: hidden form fields (dict)
+                permitted: whether the action is permitted
 
-            @return: tuple (widget_id, submit_label)
+            Returns:
+                tuple (widget_id, submit_label)
         """
 
         T = current.T
@@ -8132,8 +8190,11 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Helper function to construct the event type header
 
-            @param event_type: the event type (Row)
-            @returns: dict of view items
+            Args:
+                event_type: the event type (Row)
+
+            Returns:
+                dict of view items
         """
 
         T = current.T
@@ -8189,8 +8250,9 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Register a case event
 
-            @param person_id: the person record ID
-            @param type:id: the event type record ID
+            Args:
+                person_id: the person record ID
+                type:id: the event type record ID
         """
 
         s3db = current.s3db
@@ -8239,8 +8301,9 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Lazy getter for case event types
 
-            @return: a dict {id: Row} for dvr_case_event_type, with an
-                     additional key "_default" for the default event type
+            Returns:
+                a dict {id: Row} for dvr_case_event_type, with an
+                additional key "_default" for the default event type
         """
 
         if not hasattr(self, "event_types"):
@@ -8291,11 +8354,13 @@ class DVRRegisterCaseEvent(CRUDMethod):
             Check minimum intervals between consecutive registrations
             of the same event type
 
-            @param person_id: the person record ID
-            @param type_id: check only this event type (rather than all types)
+            Args:
+                person_id: the person record ID
+                type_id: check only this event type (rather than all types)
 
-            @return: a dict with blocked event types
-                     {type_id: (error_message, blocked_until_datetime)}
+            Returns:
+                a dict with blocked event types
+                    {type_id: (error_message, blocked_until_datetime)}
         """
 
         T = current.T
@@ -8474,7 +8539,8 @@ class DVRRegisterCaseEvent(CRUDMethod):
             Get the person record for a PE Label (or ID code), search only
             for persons with an open DVR case.
 
-            @param pe_label: the PE label (or a scanned ID code as string)
+            Args:
+                pe_label: the PE label (or a scanned ID code as string)
         """
 
         s3db = current.s3db
@@ -8623,7 +8689,8 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Format the person details
 
-            @param person: the person record (Row)
+            Args:
+                person: the person record (Row)
         """
 
         T = current.T
@@ -8678,10 +8745,12 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Get the profile picture URL for a person
 
-            @param person: the person record (Row)
+            Args:
+                person: the person record (Row)
 
-            @return: the profile picture URL (relative URL), or None if
-                     no profile picture is available for that person
+            Returns:
+                the profile picture URL (relative URL), or None if
+                no profile picture is available for that person
         """
 
         try:
@@ -8706,11 +8775,13 @@ class DVRRegisterCaseEvent(CRUDMethod):
             Check minimum intervals for event registration and return
             all currently blocked events
 
-            @param person_id: the person record ID
-            @param type_id: check only this event type (rather than all)
+            Args:
+                person_id: the person record ID
+                type_id: check only this event type (rather than all)
 
-            @return: a dict of blocked event types:
-                     {type_id: (reason, blocked_until)}
+            Returns:
+                a dict of blocked event types:
+                    {type_id: (reason, blocked_until)}
         """
 
         check_intervals = self.check_intervals
@@ -8726,13 +8797,15 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Parse a scanned ID code (QR Code)
 
-            @param code: the scanned ID code (string)
+            Args:
+                code: the scanned ID code (string)
 
-            @return: a dict {"label": the PE label,
-                             "first_name": optional first name,
-                             "last_name": optional last name,
-                             "date_of_birth": optional date of birth,
-                             }
+            Returns:
+                a dict {"label": the PE label,
+                        "first_name": optional first name,
+                        "last_name": optional last name,
+                        "date_of_birth": optional date of birth,
+                        }
         """
 
         data = {"label": code}
@@ -8753,8 +8826,11 @@ class DVRRegisterCaseEvent(CRUDMethod):
         """
             Renders the button to launch the Zxing barcode scanner app
 
-            @param event_code: the current event code
-            @return: the Zxing launch button
+            Args:
+                event_code: the current event code
+
+            Returns:
+                the Zxing launch button
         """
 
         T = current.T
@@ -8800,8 +8876,9 @@ class DVRRegisterCaseEvent(CRUDMethod):
             Helper function to inject static JS and instantiate
             the eventRegistration widget
 
-            @param widget_id: the node ID where to instantiate the widget
-            @param options: dict of widget options (JSON-serializable)
+            Args:
+                widget_id: the node ID where to instantiate the widget
+                options: dict of widget options (JSON-serializable)
         """
 
         s3 = current.response.s3
@@ -8839,7 +8916,8 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to check permissions
 
-            @return: True if permitted to use this method, else False
+            Returns:
+                True if permitted to use this method, else False
         """
 
         # User must be permitted to update allowance records
@@ -8850,9 +8928,11 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Get a case event type for an event code
 
-            @param code: the type code (using default event type if None)
+            Args:
+                code: the type code (using default event type if None)
 
-            @return: the dvr_case_event_type Row, or None if not found
+            Returns:
+                the dvr_case_event_type Row, or None if not found
         """
 
         # Only one type of event
@@ -8863,9 +8943,10 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to process the form
 
-            @param r: the CRUDRequest
-            @param form: the FORM
-            @param event_type: the event_type (Row)
+            Args:
+                r: the CRUDRequest
+                form: the FORM
+                event_type: the event_type (Row)
         """
 
         T = current.T
@@ -8916,10 +8997,12 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
                  d: the payment data (raw data, which payments to update)
                  }
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
 
-            @return: JSON response, structure:
+            Returns:
+                JSON response, structure:
 
                     {l: the actual PE label (to update the input field),
                      p: the person details,
@@ -9054,13 +9137,15 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to extend the form
 
-            @param person: the person (Row)
-            @param formfields: list of form fields (Field)
-            @param data: the form data (dict)
-            @param hidden: hidden form fields (dict)
-            @param permitted: whether the action is permitted
+            Args:
+                person: the person (Row)
+                formfields: list of form fields (Field)
+                data: the form data (dict)
+                hidden: hidden form fields (dict)
+                permitted: whether the action is permitted
 
-            @return: tuple (widget_id, submit_label)
+            Returns:
+                tuple (widget_id, submit_label)
         """
 
         T = current.T
@@ -9111,8 +9196,11 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to construct the event type header
 
-            @param event_type: the event type (Row)
-            @returns: dict of view items
+            Args:
+                event_type: the event type (Row)
+
+            Returns:
+                dict of view items
         """
 
         # Simple title, no selector/toggle
@@ -9138,13 +9226,15 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
             Helper function to extract currently pending allowance
             payments for the person_id.
 
-            @param person_id: the person record ID
+            Args:
+                person_id: the person record ID
 
-            @return: a list of dicts [{i: record_id,
-                                       d: date,
-                                       c: currency,
-                                       a: amount,
-                                       }, ...]
+            Returns:
+                a list of dicts [{i: record_id,
+                                  d: date,
+                                  c: currency,
+                                  a: amount,
+                                  }, ...]
         """
 
         query = (FS("person_id") == person_id) & \
@@ -9181,12 +9271,14 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Helper function to register payments
 
-            @param person_id: the person record ID
-            @param payments: the payments as sent from form
-            @param date: the payment date (default utcnow)
-            @param comments: comments for the payments
+            Args:
+                person_id: the person record ID
+                payments: the payments as sent from form
+                date: the payment date (default utcnow)
+                comments: comments for the payments
 
-            @return: tuple (updated, failed), number of records
+            Returns:
+                tuple (updated, failed), number of records
         """
 
         if isinstance(payments, str):
@@ -9245,7 +9337,8 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         """
             Representation method for the payment details field
 
-            @param data: the payment data (from get_payment_data)
+            Args:
+                data: the payment data (from get_payment_data)
         """
 
         if data:
@@ -9270,9 +9363,10 @@ class dvr_AssignMethod(CRUDMethod):
 
     def __init__(self, component, next_tab="case", types=None):
         """
-            @param component: the Component in which to create records
-            @param types: a list of types to pick from: Staff, Volunteers, Deployables
-            @param next_tab: the component/method to redirect to after assigning
+            Args:
+                component: the Component in which to create records
+                types: a list of types to pick from: Staff, Volunteers, Deployables
+                next_tab: the component/method to redirect to after assigning
         """
 
         super(dvr_AssignMethod, self).__init__()
@@ -9284,10 +9378,11 @@ class dvr_AssignMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         try:
@@ -9534,13 +9629,15 @@ def dvr_get_flag_instructions(person_id, action=None):
     """
         Get handling instructions if flags are set for a person
 
-        @param person_id: the person ID
-        @param action: the action for which instructions are needed:
-                       - check-in|check-out|payment|id-check
+        Args:
+            person_id: the person ID
+            action: the action for which instructions are needed:
+                    - check-in|check-out|payment|id-check
 
-        @returns: dict {"permitted": whether the action is permitted
-                        "info": list of tuples (flagname, instructions)
-                        }
+        Returns:
+            dict {"permitted": whether the action is permitted
+                  "info": list of tuples (flagname, instructions)
+                  }
     """
 
     s3db = current.s3db
@@ -9609,7 +9706,8 @@ def dvr_update_last_seen(person_id):
     """
         Helper function for automatic updates of dvr_case.last_seen_on
 
-        @param person_id: the person ID
+        Args:
+            person_id: the person ID
     """
 
     db = current.db
