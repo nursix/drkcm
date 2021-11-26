@@ -220,6 +220,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Custom settings
     settings.custom.test_station_registration = True
+    settings.custom.test_station_cleanup = True
 
     # -------------------------------------------------------------------------
     def poll_dcc():
