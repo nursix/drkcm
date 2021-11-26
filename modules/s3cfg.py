@@ -5483,15 +5483,6 @@ class S3Config(Storage):
             setting = self.has_module("stats")
         return setting
 
-    def get_project_activity_items(self):
-        """
-            Use Items in Activities
-        """
-        setting = self.project.get("activity_items", None)
-        if setting is None:
-            setting = self.has_module("supply")
-        return setting
-
     def get_project_activity_sectors(self):
         """
             Use Sectors in Activities
@@ -5587,18 +5578,6 @@ class S3Config(Storage):
             Link Activities & Tasks to Projects
         """
         return self.project.get("projects", False)
-
-    def get_project_programmes(self):
-        """
-            Use Programmes in Projects
-        """
-        return self.project.get("programmes", False)
-
-    def get_project_programme_budget(self):
-        """
-            Use Budgets in Programmes
-        """
-        return self.project.get("programme_budget", False)
 
     def get_project_sectors(self):
         """

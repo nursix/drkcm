@@ -1543,7 +1543,6 @@ class S3OptionsMenu(object):
         community_volunteers = lambda i: settings.get_project_community_volunteers()
         demographics = lambda i: settings.get_project_demographics()
         hazards = lambda i: settings.get_project_hazards()
-        programmes = lambda i: settings.get_project_programmes()
         sectors = lambda i: settings.get_project_sectors()
         stats = lambda i: settings.has_module("stats")
         themes = lambda i: settings.get_project_themes()
@@ -1553,10 +1552,6 @@ class S3OptionsMenu(object):
         if settings.get_project_mode_3w():
             if community:
                 menu(
-                     M("Programs", f="programme",
-                       check=programmes)(
-                        M("Create", m="create"),
-                     ),
                      M("Projects", f="project")(
                         M("Create", m="create"),
                      ),
@@ -1571,10 +1566,6 @@ class S3OptionsMenu(object):
                     )
             else:
                 menu(
-                     M("Programs", f="programme",
-                       check=programmes)(
-                        M("Create", m="create"),
-                     ),
                      M("Projects", f="project")(
                         M("Create", m="create"),
                         M("Map", f="location", m="map"),

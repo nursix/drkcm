@@ -140,8 +140,6 @@ def config(settings):
     # Projects
     # Don't use Beneficiaries
     settings.project.activity_beneficiaries = False
-    # Don't use Item Catalog for Distributions
-    settings.project.activity_items = False
     settings.project.activity_sectors = True
     # Links to Filtered Components for Donors & Partners
     settings.project.organisation_roles = {

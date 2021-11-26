@@ -180,6 +180,7 @@ def project():
                 set_theme_requires(sector_ids)
 
             elif component_name == "task":
+                ttable = component.table
                 if not auth.s3_has_role("STAFF"):
                     # Hide fields which are meant for staff members
                     # (avoid confusion both of inputters & recipients)
@@ -190,7 +191,6 @@ def project():
                                        "time_actual",
                                        "status",
                                        ]
-                    ttable = component.table
                     for fieldname in unwanted_fields:
                         field = ttable[fieldname]
                         field.readable = field.writable = False
@@ -207,9 +207,9 @@ def project():
                                   }
                 fields = []
                 if settings.get_project_activities():
-                    fields.append(s3db.project_task_activity.activity_id)
+                    fields.append(ttable.activity_id)
                 if settings.get_project_milestones():
-                    fields.append(s3db.project_task_milestone.milestone_id)
+                    fields.append(ttable.milestone_id)
                 for f in fields:
                     requires = f.requires
                     if isinstance(requires, IS_EMPTY_OR):
@@ -586,6 +586,7 @@ def activity():
 
     table = s3db.project_activity
 
+    # For create-forms in popups
     if "project_id" in get_vars:
         field = table.project_id
         field.default = get_vars.project_id
@@ -595,34 +596,64 @@ def activity():
     # Pre-process
     def prep(r):
         if r.interactive:
-            if r.component is not None:
-                component_name = r.component_name
-                if component_name == "distribution":
-                    dtable = s3db.supply_distribution
-                    f = dtable.location_id
-                    f.default = r.record.location_id
-                    f.readable = f.writable = False
-                    f = dtable.date
-                    f.default = r.record.date
-                    f.readable = f.writable = False
-                elif component_name == "document":
-                    dtable = s3db.doc_document
-                    dtable.organisation_id.readable = dtable.organisation_id.writable = False
-                    dtable.person_id.readable = dtable.person_id.writable = False
-                    f = dtable.location_id
-                    f.default = r.record.location_id
-                    f.readable = f.writable = False
-                    s3db.configure("doc_document",
-                                   list_fields = ["name",
-                                                  "date",
-                                                  ],
-                                   )
+
+            record = r.record
+
+            component_name = r.component_name
+            if component_name == "task":
+                ttable = r.component.table
+
+                # Set project_id to that of the activity
+                field = ttable.project_id
+                field.default = record.project_id
+                field.readable = field.writable = False
+
+                # Filter milestones to project of activity
+                field = ttable.milestone_id
+                requires = field.requires
+                if isinstance(requires, IS_EMPTY_OR):
+                    requires = requires.other
+                requires.set_filter(filterby = "project_id",
+                                    filter_opts = (record.project_id,),
+                                    )
+
+            elif component_name == "document":
+                dtable = r.component.table
+
+                # Hide unused fields
+                unused_fields = ("organisation_id", "person_id")
+                for fn in unused_fields:
+                    field = dtable[fn]
+                    field.readable = field.writable = False
+
+                # Set location_id to that of the activity
+                field = dtable.location_id
+                field.default = record.location_id
+                field.readable = field.writable = False
+
+                # Reduce list_fields
+                s3db.configure("doc_document",
+                               list_fields = ["name", "date"],
+                               )
+
+            elif component_name == "distribution":
+                dtable = r.component.table
+
+                # Set location_id to that of the activity
+                field = dtable.location_id
+                field.default = record.location_id
+                field.readable = field.writable = False
+
+                # Set date to that of the activity
+                field = dtable.date
+                field.default = record.date
+                field.readable = field.writable = False
+
         return True
     s3.prep = prep
 
     return crud_controller("project", "activity",
                            csv_template = "activity",
-                           #hide_filter = False,
                            rheader = s3db.project_rheader,
                            )
 
@@ -819,54 +850,6 @@ def task():
     return s3db.project_task_controller()
 
 # =============================================================================
-def task_project():
-    """ RESTful CRUD controller for options.s3json lookups """
-
-    if auth.permission.format != "s3json":
-        return ""
-
-    # Pre-process
-    def prep(r):
-        if r.method != "options":
-            return False
-        return True
-    s3.prep = prep
-
-    return crud_controller()
-
-# =============================================================================
-def task_activity():
-    """ RESTful CRUD controller for options.s3json lookups """
-
-    if auth.permission.format != "s3json":
-        return ""
-
-    # Pre-process
-    def prep(r):
-        if r.method != "options":
-            return False
-        return True
-    s3.prep = prep
-
-    return crud_controller()
-
-# =============================================================================
-def task_milestone():
-    """ RESTful CRUD controller for options.s3json lookups """
-
-    if auth.permission.format != "s3json":
-        return ""
-
-    # Pre-process
-    def prep(r):
-        if r.method != "options":
-            return False
-        return True
-    s3.prep = prep
-
-    return crud_controller()
-
-# =============================================================================
 def task_tag():
     """ RESTful CRUD controller for options.s3json lookups """
 
@@ -876,18 +859,6 @@ def task_tag():
             return False
         return True
     s3.prep = prep
-
-    return crud_controller()
-
-# =============================================================================
-def role():
-    """ RESTful CRUD controller """
-
-    return crud_controller()
-
-# =============================================================================
-def member():
-    """ RESTful CRUD Controller """
 
     return crud_controller()
 
@@ -934,19 +905,19 @@ def time():
                 query &= (ttable.status.belongs(s3db.project_task_active_statuses))
             dbset = db(query)
             table.task_id.requires = IS_ONE_OF(dbset, "project_task.id",
-                                               s3db.project_task_represent_w_project
+                                               s3db.project_task_represent_project
                                                )
         list_fields = ["id",
                        "date",
                        "hours",
-                       (T("Project"), "task_id$task_project.project_id"),
-                       (T("Activity"), "task_id$task_activity.activity_id"),
+                       (T("Project"), "task_id$project_id"),
+                       (T("Activity"), "task_id$activity_id"),
                        "task_id",
                        "comments",
                        ]
         if settings.get_project_milestones():
             # Use the field in this format to get the custom represent
-            list_fields.insert(5, (T("Milestone"), "task_id$task_milestone.milestone_id"))
+            list_fields.insert(5, (T("Milestone"), "task_id$milestone_id"))
 
         s3db.configure("project_time",
                        list_fields = list_fields,
@@ -972,20 +943,8 @@ def time():
     return crud_controller(hide_filter=hide_filter)
 
 # =============================================================================
-# Programmes
+# Community Volunteers
 # =============================================================================
-def programme():
-    """ RESTful controller for Programmes """
-
-    return crud_controller()
-
-def programme_project():
-    """ RESTful controller for Programmes <> Projects """
-
-    s3.prep = lambda r: r.method == "options" and r.representation == "s3json"
-
-    return crud_controller()
-
 def person():
     """ RESTful controller for Community Volunteers """
     # @ToDo: Filter

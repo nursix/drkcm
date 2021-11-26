@@ -1093,19 +1093,6 @@ def config(settings):
 
         s3db = current.s3db
 
-        s3db.project_l10n.language.requires = IS_EMPTY_OR(IS_ISO639_2_LANGUAGE_CODE(select = l10n_options,
-                                                                                    sort = True,
-                                                                                    translate = False,
-                                                                                    zero = "",
-                                                                                    ))
-
-        # Custom Component
-        s3db.add_components("project_project",
-                            project_l10n = {"joinby": "project_id",
-                                            "multiple": False,
-                                            },
-                            )
-
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("New project"),
             #title_display = T("Project Details"),
@@ -1185,14 +1172,6 @@ def config(settings):
             if r.id and not r.component and r.representation == "xls":
                 # Custom XLS Exporter to include all Responses.
                 r.custom_action = s3db.dc_TargetXLS
-            elif r.component_name == "target":
-                ltable = s3db.project_l10n
-                l10n = current.db(ltable.project_id == r.id).select(ltable.language,
-                                                                    limitby = (0,1)
-                                                                    ).first()
-                if l10n:
-                    s3db.dc_target_l10n.language.default = l10n.language
-
             elif r.method == "datalist":
                 # Over-ride list_fields set in default prep
                 s3db.configure("project_project",

@@ -155,16 +155,14 @@ def req_timeframe():
                       5: T("5-7 days"),
                       6: T(">1 week"),
                       }
-    return S3ReusableField("timeframe", "integer",
-                           default = 3,
-                           label = T("Timeframe"),
-                           represent = represent_option(timeframe_opts),
-                           requires = IS_EMPTY_OR(
-                                        IS_IN_SET(timeframe_opts,
-                                                  zero = None,
-                                                  ),
-                                        ),
-                           )
+    return Field("timeframe", "integer",
+                 default = 3,
+                 label = T("Timeframe"),
+                 represent = represent_option(timeframe_opts),
+                 requires = IS_EMPTY_OR(
+                                IS_IN_SET(timeframe_opts, zero = None),
+                                ),
+                 )
 
 # =============================================================================
 class RequestModel(DataModel):
@@ -2757,7 +2755,7 @@ class RequestNeedsDemographicsModel(DataModel):
                                           empty = False,
                                           comment = parameter_id_comment,
                                           ),
-                          req_timeframe()(),
+                          req_timeframe(),
                           Field("value", "double",
                                 label = T("Number"),
                                 #label = T("Number in Need"),
@@ -2850,7 +2848,7 @@ $.filterOptionsS3({
                                               widget = None,
                                               ),
                           self.supply_item_pack_id(),
-                          req_timeframe()(),
+                          req_timeframe(),
                           Field("quantity", "double",
                                 label = T("Quantity"),
                                 #label = T("Quantity Requested"),
@@ -3100,7 +3098,7 @@ $.filterOptionsS3({
                                 requires = IS_EMPTY_OR(
                                             IS_FLOAT_AMOUNT(minimum=1.0)),
                                 ),
-                          req_timeframe()(),
+                          req_timeframe(),
                           Field("quantity_committed", "double",
                                 label = T("Quantity Committed"),
                                 represent = lambda v: \

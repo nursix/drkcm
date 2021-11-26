@@ -102,7 +102,6 @@ class DocumentLibrary(DataModel):
                                pr_group = T("Team"),
                                project_project = T("Project"),
                                project_activity = T("Project Activity"),
-                               project_programme = T("Project Programme"),
                                project_task = T("Task"),
                                org_facility = T("Facility"),
                                org_group = T("Organization Group"),

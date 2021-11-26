@@ -16,7 +16,6 @@
          Objectives...........string..........Project objectives
          KV:XX................string..........project_project_tag Key,Value (Key = XX in column name, value = cell in row. Multiple allowed)
          Comments.............string..........Project comments
-         Programme............string..........Project Programme
          Status...............string..........Project status
          Duration.............string..........Project duration
          Start Date...........YYYY-MM-DD......Start date of the project
@@ -43,8 +42,6 @@
 
     *********************************************************************** -->
 
-    <xsl:import href="programme.xsl"/>
-
     <xsl:output method="xml"/>
 
     <xsl:include href="../../xml/commons.xsl"/>
@@ -59,7 +56,6 @@
     <xsl:key name="orgs" match="row" use="col[@field='Organisation']"/>
     <xsl:key name="events" match="row" use="col[@field='Event']"/>
     <xsl:key name="statuses" match="row" use="col[@field='Status']"/>
-    <xsl:key name="programmes" match="row" use="col[@field='Programme']"/>
 
     <xsl:key name="FP" match="row"
              use="concat(col[@field='Organisation'], '/',
@@ -100,15 +96,6 @@
                                         generate-id(key('statuses',
                                                         col[@field='Status'])[1])]">
                 <xsl:call-template name="Status"/>
-            </xsl:for-each>
-
-            <!-- Programmes -->
-            <xsl:for-each select="//row[generate-id(.)=
-                                        generate-id(key('programmes',
-                                                        col[@field='Programme'])[1])]">
-                <xsl:call-template name="Programme">
-                    <xsl:with-param name="Field">Programme</xsl:with-param>
-                </xsl:call-template>
             </xsl:for-each>
 
             <!-- Themes -->
@@ -169,9 +156,6 @@
             <xsl:if test="col[@field='Comments']!=''">
                 <data field="comments"><xsl:value-of select="col[@field='Comments']"/></data>
             </xsl:if>
-
-            <!-- Programme -->
-            <xsl:call-template name="ProgrammeLink"/>
 
             <!-- Status -->
             <xsl:if test="$Status">
