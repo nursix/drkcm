@@ -63,7 +63,9 @@ class Daily():
         DCC.cleanup()
 
         # On Sundays, cleanup public test station registry
-        if now.weekday() == 6:
+        settings = current.deployment_settings
+        if settings.get_custom(key="test_station_cleanup") and \
+           now.weekday() == 6:
             errors = self.cleanup_public_registry()
 
         return errors if errors else None
