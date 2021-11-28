@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from gluon import current
 from core import *
 from s3layouts import *
@@ -144,7 +142,6 @@ class S3MainMenu(default.S3MainMenu):
         """ Custom Personal Menu """
 
         auth = current.auth
-        s3 = current.response.s3
         settings = current.deployment_settings
 
         ADMIN = current.auth.get_system_roles().ADMIN
@@ -222,7 +219,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
         if not shelter_id:
             return None
 
-        ADMIN = current.auth.get_system_roles().ADMIN
+        #ADMIN = current.auth.get_system_roles().ADMIN
 
         return M(c="cr")(
                     M("Shelter", f="shelter", args=[shelter_id])(

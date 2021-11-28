@@ -1,15 +1,8 @@
-# -*- coding: utf-8 -*-
-
-import json
-
-from os import path
-
 from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import FS, S3CustomController
-from s3theme import formstyle_foundation_inline
+from core import S3CustomController
 
 THEME = "DRK"
 

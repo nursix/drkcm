@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import json
 
-from gluon import current, Field, IS_NOT_EMPTY, INPUT, A, SQLFORM, URL
+from gluon import current, Field, URL
 
 from core import s3_str, s3_encode_iso_datetime, s3_fullname, S3DateTime
 from s3db.dvr import DVRRegisterCaseEvent
