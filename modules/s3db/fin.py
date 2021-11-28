@@ -349,11 +349,11 @@ class FinVoucherModel(DataModel):
         billing_status = (("SCHEDULED", T("Scheduled")),
                           ("ABORTED", T("Aborted")),
                           )
-        status_repr = dict(billing_status)
+        billing_status_opts = dict(billing_status)
 
         # Additional statuses that cannot be entered or imported
-        status_repr["IN PROGRESS"] = T("In Progress")
-        status_repr["COMPLETE"] = T("Completed")
+        billing_status_opts["IN PROGRESS"] = T("In Progress")
+        billing_status_opts["COMPLETE"] = T("Completed")
 
         tablename = "fin_voucher_billing"
         define_table(tablename,
@@ -370,7 +370,7 @@ class FinVoucherModel(DataModel):
                            requires = IS_IN_SET(billing_status,
                                                 zero = None,
                                                 ),
-                           represent = represent_option(status_repr),
+                           represent = S3Represent(options=billing_status_opts),
                            writable = False, # Only writable while scheduled
                            ),
                      Field("vouchers_total", "integer",
@@ -677,12 +677,12 @@ class FinVoucherModel(DataModel):
                         #("INVOICED", T("Invoiced")),
                         #("PAID", T("Paid")),
                         )
-        status_repr = dict(claim_status)
+        claim_status_opts = dict(claim_status)
 
         # Additional statuses that cannot be entered or imported
-        status_repr["INVOICED"] = T("Invoiced")
+        claim_status_opts["INVOICED"] = T("Invoiced")
         paid_label = settings.get_fin_voucher_claim_paid_label()
-        status_repr["PAID"] = T(paid_label) if paid_label else T("Paid")
+        claim_status_opts["PAID"] = T(paid_label) if paid_label else T("Paid")
 
         tablename = "fin_voucher_claim"
         define_table(tablename,
@@ -767,7 +767,7 @@ class FinVoucherModel(DataModel):
                            requires = IS_IN_SET(claim_status,
                                                 zero = None,
                                                 ),
-                           represent = represent_option(dict(status_repr)),
+                           represent = represent_option(claim_status_opts),
                            writable = False,
                            ),
 
@@ -1188,6 +1188,8 @@ class FinVoucherModel(DataModel):
         # Pass names back to global scope (s3.*)
         #
         return {"fin_voucher_invoice_status": dict(invoice_status),
+                "fin_voucher_claim_status_opts": claim_status_opts,
+                "fin_voucher_billing_status_opts": billing_status_opts,
                 }
 
     # -------------------------------------------------------------------------
@@ -1196,6 +1198,8 @@ class FinVoucherModel(DataModel):
         """ Safe defaults for names in case the module is disabled """
 
         return {"fin_voucher_invoice_status": {},
+                "fin_voucher_claim_status_opts": {},
+                "fin_voucher_billing_status_opts": {},
                 }
 
     # -------------------------------------------------------------------------

@@ -742,12 +742,6 @@ class DataTable:
             EXPORT = T("Export in %(format)s format")
 
             for fmt in export_formats:
-                if fmt in default_formats:
-                    url = formats.get(fmt, default_url)
-                else:
-                    url = formats.get(fmt)
-                if not url:
-                    continue
 
                 title = None
                 if isinstance(fmt, tuple):
@@ -756,6 +750,13 @@ class DataTable:
                     fmt, css = fmt[:2] if len(fmt) >= 2 else (fmt[0], "")
                 else:
                     css = ""
+
+                if fmt in default_formats:
+                    url = formats.get(fmt, default_url)
+                else:
+                    url = formats.get(fmt)
+                if not url:
+                    continue
 
                 css_class = "dt-export export_%s" % fmt
                 if css:

@@ -1702,19 +1702,16 @@ def config(settings):
         table = current.s3db.fin_voucher_billing
 
         # Color-coded representation of billing process status
-        from core import S3PriorityRepresent
         field = table.status
-        try:
-            status_opts = field.represent.options
-        except AttributeError:
-            pass
-        else:
-            field.represent = S3PriorityRepresent(status_opts,
-                                                  {"SCHEDULED": "lightblue",
-                                                   "IN PROGRESS": "amber",
-                                                   "ABORTED": "black",
-                                                   "COMPLETE": "green",
-                                                   }).represent
+
+        from core import S3PriorityRepresent
+        status_opts = s3db.fin_voucher_billing_status_opts
+        field.represent = S3PriorityRepresent(status_opts,
+                                              {"SCHEDULED": "lightblue",
+                                               "IN PROGRESS": "amber",
+                                               "ABORTED": "black",
+                                               "COMPLETE": "green",
+                                               }).represent
 
         # Custom onaccept to maintain realm-assignment of invoices
         # when accountant organisation changes
@@ -1836,19 +1833,16 @@ def config(settings):
             field.readable = field.writable = False
 
         # Color-coded representation of claim status
-        from core import S3PriorityRepresent
         field = table.status
-        try:
-            status_opts = field.represent.options
-        except AttributeError:
-            pass
-        else:
-            field.represent = S3PriorityRepresent(status_opts,
-                                                  {"NEW": "lightblue",
-                                                   "CONFIRMED": "blue",
-                                                   "INVOICED": "amber",
-                                                   "PAID": "green",
-                                                   }).represent
+
+        from core import S3PriorityRepresent
+        status_opts = s3db.fin_voucher_claim_status_opts
+        field.represent = S3PriorityRepresent(status_opts,
+                                              {"NEW": "lightblue",
+                                               "CONFIRMED": "blue",
+                                               "INVOICED": "amber",
+                                               "PAID": "green",
+                                               }).represent
 
         # Custom list fields
         list_fields = [#"refno",
