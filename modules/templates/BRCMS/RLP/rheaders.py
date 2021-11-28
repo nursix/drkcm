@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Custom rheaders for RLPCM template
+    Custom rheaders for BRCMS/RLP
 
-    @license: MIT
+    License: MIT
 """
 
 from gluon import current, URL, A, SPAN

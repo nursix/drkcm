@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for BRCMS/RLP
+
+    License: MIT
+"""
 
 import json
 import os
@@ -145,9 +149,11 @@ class index(S3CustomController):
         """
             Get current announcements
 
-            @param roles: filter announcement by these roles
+            Args:
+                roles: filter announcement by these roles
 
-            @returns: any announcements (Rows)
+            Returns:
+                any announcements (Rows)
         """
 
         db = current.db
@@ -192,7 +198,8 @@ class index(S3CustomController):
         """
             Get intro from CMS
 
-            @param intro: the intro spec as tuple (module, resource, postname)
+            Args:
+                intro: the intro spec as tuple (module, resource, postname)
         """
 
         # Get intro text from CMS
@@ -599,9 +606,10 @@ class register(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
+            Returns:
+                a tuple (formfields, required_fields)
+                - formfields = list of form fields
+                - required_fields = list of field names of required fields
         """
 
         T = current.T
@@ -692,7 +700,8 @@ class register(S3CustomController):
             Custom validation of registration form
             - currently doing nothing except standard onvalidation
 
-            @returns: callback function
+            Returns:
+                callback function
         """
 
         def register_onvalidation(form):
@@ -808,10 +817,12 @@ class register(S3CustomController):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -939,7 +950,8 @@ class verify_email(S3CustomController):
         """
             Send a welcome email to the new user
 
-            @param user: the auth_user Row
+            Agrs:
+                user: the auth_user Row
         """
 
         register.customise_auth_messages()
@@ -1265,11 +1277,12 @@ class register_org(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields, subheadings)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
-                      - subheadings = list of tuples (position, heading) to
-                                      insert into the form
+            Returns:
+                a tuple (formfields, required_fields, subheadings)
+                - formfields = list of form fields
+                - required_fields = list of field names of required fields
+                - subheadings = list of tuples (position, heading) to
+                                insert into the form
         """
 
         T = current.T
@@ -1399,7 +1412,8 @@ class register_org(S3CustomController):
         """
             Look up applicable org types for registration
 
-            @returns: a dict {org_type_id: org_type_name}
+            Returns:
+                a dict {org_type_id: org_type_name}
         """
 
         db = current.db
@@ -1417,9 +1431,12 @@ class register_org(S3CustomController):
             Identify the organisation the user attempts to register for,
             by name, office Lx and if necessary office email address
 
-            @param formvars: the FORM vars
-            @returns: organisation_id if found, or None if this is a new
-                      organisation
+            Args:
+                formvars: the FORM vars
+
+            Returns:
+                organisation_id if found, or None if this is a new
+                organisation
         """
 
         orgname = formvars.get("organisation")

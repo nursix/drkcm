@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Anonymization Rules for RLP
+
+    License: MIT
+"""
 
 from uuid import uuid4
 
@@ -10,11 +14,13 @@ def rlp_obscure_dob(record_id, field, value):
         Helper to obscure a date of birth; maps to the first day of
         the quarter, thus retaining the approximate age for statistics
 
-        @param record_id: the record ID
-        @param field: the Field
-        @param value: the field value
+        Args:
+            record_id: the record ID
+            field: the Field
+            value: the field value
 
-        @return: the new field value
+        Returns:
+            the new field value
     """
 
     if value:
@@ -28,11 +34,13 @@ def rlp_decline_delegation(record_id, field, value):
     """
         Decline all requested deployments when anonymizing the volunteer
 
-        @param record_id: the record ID
-        @param field: the Field
-        @param value: the field value
+        Args:
+            record_id: the record ID
+            field: the Field
+            value: the field value
 
-        @return: the new field value
+        Returns:
+            the new field value
     """
 
     return "DECL" if value == "REQ" else value

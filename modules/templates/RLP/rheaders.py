@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Custom rheaders for RLP template
+    Custom rheaders for RLP
 
-    @license: MIT
+    License: MIT
 """
 
 from gluon import current

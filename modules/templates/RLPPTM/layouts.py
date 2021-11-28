@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Menu layouts for RLPPTM
+
+    License: MIT
+"""
 
 from gluon import URL, current, \
                   A, FORM, IMG, INPUT, LI, OPTION, SELECT, SPAN, TAG, UL

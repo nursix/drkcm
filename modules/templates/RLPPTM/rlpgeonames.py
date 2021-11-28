@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Geocoder for RLPPTM
+
+    License: MIT
+"""
 
 from functools import partial
 from urllib.parse import urlencode
@@ -99,5 +103,5 @@ try:
 except ImportError:
 
     # Geopy not installed
-    class rlp_GeoNames(object):
+    class rlp_GeoNames:
         enable = False

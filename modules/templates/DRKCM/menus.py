@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom menus for DRKCM
+
+    License: MIT
+"""
 
 from gluon import current
 from core import *

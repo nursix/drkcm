@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Menu layouts for DRKCM
+
+    License: MIT
+"""
 
 from gluon import *
 from gluon.storage import Storage

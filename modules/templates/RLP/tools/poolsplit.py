@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Helper Script to split a pool retaining POOLREADER assignments
 #
 # RLP Template Version 1.5.0

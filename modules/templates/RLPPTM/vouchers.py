@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Voucher PDF Layouts for RLPPTM
+
+    License: MIT
+"""
 
 import os
 
@@ -34,18 +38,20 @@ class RLPCardLayout(S3PDFCardLayout):
             allows the text to wrap if it would otherwise exceed the given
             width
 
-            @param x: drawing position
-            @param y: drawing position
-            @param value: the text to render
-            @param width: the maximum available width (points)
-            @param height: the maximum available height (points)
-            @param size: the font size (points)
-            @param bold: use bold font
-            @param valign: vertical alignment ("top"|"middle"|"bottom"),
-                           default "bottom"
-            @param halign: horizontal alignment ("left"|"center")
+            Args:
+                x: drawing position
+                y: drawing position
+                value: the text to render
+                width: the maximum available width (points)
+                height: the maximum available height (points)
+                size: the font size (points)
+                bold: use bold font
+                valign: vertical alignment ("top"|"middle"|"bottom"),
+                        default "bottom"
+                halign: horizontal alignment ("left"|"center")
 
-            @returns: the actual height of the text element drawn
+            Returns:
+                the actual height of the text element drawn
         """
 
         # Preserve line breaks by replacing them with <br/> tags
@@ -90,9 +96,11 @@ class VoucherCardLayout(RLPCardLayout):
         """
             The layout-specific list of fields to look up from the resource
 
-            @param resource: the resource
+            Args:
+                resource: the resource
 
-            @returns: list of field selectors
+            Returns:
+                list of field selectors
         """
 
         return ["id",
@@ -113,10 +121,12 @@ class VoucherCardLayout(RLPCardLayout):
         """
             Look up layout-specific common data for all cards
 
-            @param resource: the resource
-            @param items: the items
+            Args:
+                resource: the resource
+                items: the items
 
-            @returns: a dict with common data
+            Returns:
+                a dict with common data
         """
 
         db = current.db

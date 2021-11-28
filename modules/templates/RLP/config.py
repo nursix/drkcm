@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Application Template for Rhineland-Palatinate (RLP) Crisis Management
-    - used to manage Volunteer Pools for COVID-19 response
+    RLP: Template for Rhineland-Palatinate (RLP) COVID-19 Volunteer Database
 
-    @license MIT
+    License: MIT
 """
 
 import datetime
@@ -894,7 +891,8 @@ def config(settings):
                 - auto-generate an ID label
                 - update alias (in case name changed)
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         s3db = current.s3db
@@ -935,11 +933,12 @@ def config(settings):
             Post-process resource.select of pr_person to suppress
             field data the user is not permitted to see
 
-            @param records: list of selected data
-            @param rfields: list of S3ResourceFields in the records
-            @param represent: records contain represented data
-            @param as_rows: records are bare Rows rather than extracted
-                            Storage
+            Args:
+                records: list of selected data
+                rfields: list of S3ResourceFields in the records
+                represent: records contain represented data
+                as_rows: records are bare Rows rather than extracted
+                         Storage
         """
 
         auth = current.auth
@@ -1076,7 +1075,8 @@ def config(settings):
         """
             Customise availability fields in volunteer form
 
-            @param r: the current CRUDRequest
+            Args:
+                r: the current CRUDRequest
         """
 
         from core import S3WeeklyHoursWidget, S3WithIntro, s3_text_represent
@@ -1123,11 +1123,13 @@ def config(settings):
         """
             Determine fields for volunteer list
 
-            @param r: the current CRUDRequest
-            @param coordinator: user is COORDINATOR
-            @param name_fields: name fields in order
+            Args:
+                r: the current CRUDRequest
+                coordinator: user is COORDINATOR
+                name_fields: name fields in order
 
-            @returns: list of selectors (list_fields)
+            Returns:
+                list of selectors (list_fields)
         """
 
         if name_fields is None:
@@ -1194,11 +1196,13 @@ def config(settings):
         """
             Determine fields for volunteer form
 
-            @param coordinator: user is COORDINATOR
-            @param show_contact_details: show contact information
-            @param name_fields: name fields in order
+            Args:
+                coordinator: user is COORDINATOR
+                show_contact_details: show contact information
+                name_fields: name fields in order
 
-            @returns: list of form fields
+            Returns:
+                list of form fields
         """
 
         from core import (S3SQLInlineComponent,
@@ -1808,8 +1812,9 @@ def config(settings):
         """
             Enforce workflow in delegation records
 
-            @param table: the Table used in the request (can be aliased)
-            @param record: the delegation record
+            Args:
+                table: the Table used in the request (can be aliased)
+                record: the delegation record
         """
 
         field = table.status
@@ -1885,16 +1890,18 @@ def config(settings):
             Determine possible alternative time intervals for
             delegation requests
 
-            @param target: the requested interval (start, end)
-            @param occupied: the occupied intervals colliding with the target
-            @param recurse: recursive call
-            @param original: the original target (in recursive calls)
+            Args:
+                target: the requested interval (start, end)
+                occupied: the occupied intervals colliding with the target
+                recurse: recursive call
+                original: the original target (in recursive calls)
 
-            @returns: the original target if no conflicts were found, or
-                      an interval correction as tuple (start, end)
-                      - start is None if only the end date needs correction
-                      - end is None if only the start date needs correction
-                      ...or None if no alternatives were found
+            Returns:
+                the original target if no conflicts were found, or
+                an interval correction as tuple (start, end)
+                - start is None if only the end date needs correction
+                - end is None if only the start date needs correction
+                ...or None if no alternatives were found
         """
 
         if not recurse:

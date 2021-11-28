@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Notification functions for RLPPTM
+
+    License: MIT
+"""
 
 import re
 
@@ -12,8 +16,9 @@ def formatmap(template, mapping):
     """
         Helper to replace placeholders in template using mapping
 
-        @param: template, a string containing placeholders of the format {name}
-        @param: mapping, a dict mapping placeholders to values
+        Args:
+            template, a string containing placeholders of the format {name}
+            mapping, a dict mapping placeholders to values
     """
     def repl(match):
         key = match.group(1)
@@ -21,7 +26,7 @@ def formatmap(template, mapping):
     return PLACEHOLDER.sub(repl, template)
 
 # =============================================================================
-class CMSNotifications(object):
+class CMSNotifications:
     """
         Helper class to send CMS-based Notifications
     """
@@ -31,17 +36,17 @@ class CMSNotifications(object):
         """
             Send notification emails
 
-            @param email: the recipient email address (or list|tuple of email addresses)
-            @param template: suffix of the CMS posts containing the subject
-                             and message templates
+            Args:
+                email: the recipient email address (or list|tuple of email addresses)
+                template: suffix of the CMS posts containing the subject
+                          and message templates
+                data: dict of data to substitute placeholders in the template
+                cc: list of cc-recipients email addresses
+                module: module prefix for the CMS posts
+                resource: resource name for the CMS posts
 
-            @param data: dict of data to substitute placeholders in the template
-            @param cc: list of cc-recipients email addresses
-
-            @param module: module prefix for the CMS posts
-            @param resource: resource name for the CMS posts
-
-            @returns: error message (T), or None if sending was successful
+            Returns:
+                error message (T), or None if sending was successful
         """
 
         T = current.T
@@ -80,13 +85,15 @@ class CMSNotifications(object):
         """
             Compose subject/message from templates using data
 
-            @param templates: a tuple of string templates (subject, message),
-                              or the name of the template-pair, e.g. "Volunteer"
-            @param data: a dict of data to substitute placeholders in the templates
-            @param module: the module prefix
-            @param resource: the resource name
+            Args:
+                templates: a tuple of string templates (subject, message),
+                           or the name of the template-pair, e.g. "Volunteer"
+                data: a dict of data to substitute placeholders in the templates
+                module: the module prefix
+                resource: the resource name
 
-            @returns: tuple (subject, message), or None if disabled
+            Returns:
+                tuple (subject, message), or None if disabled
         """
 
         # Sanitize data
@@ -115,11 +122,13 @@ class CMSNotifications(object):
         """
             Get message templates
 
-            @param name: the name of the template-pair, e.g. "InviteOrg"
-            @param module: the module prefix
-            @param resource: the resource name
+            Args:
+                name: the name of the template-pair, e.g. "InviteOrg"
+                module: the module prefix
+                resource: the resource name
 
-            @returns: tuple (subject_template, message_template, attachments), or None
+            Returns:
+                tuple (subject_template, message_template, attachments), or None
         """
 
         db = current.db
@@ -188,10 +197,12 @@ class CMSNotifications(object):
         """
             Look up contact number/address for a PE
 
-            @param pe_id: the PE_ID
-            @param contact_method: the contact method
+            Args:
+                pe_id: the PE_ID
+                contact_method: the contact method
 
-            @returns: the contact/number address, or None if not found
+            Returns:
+                the contact/number address, or None if not found
         """
 
         db = current.db

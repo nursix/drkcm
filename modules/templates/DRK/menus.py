@@ -1,3 +1,9 @@
+"""
+    Custom menus for DRK/Village
+
+    License: MIT
+"""
+
 from gluon import current
 from core import *
 from s3layouts import *

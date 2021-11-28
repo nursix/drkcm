@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Maintenance Tasks for RLPPTM
+
+    License: MIT
+"""
 
 import datetime
 import os
@@ -135,7 +139,8 @@ class Daily():
             activity reports for more than 4 four weeks; + notify OrgAdmins
             about deactivation
 
-            @returns: error message, or None if successful
+            Returns:
+                error message, or None if successful
         """
 
         db = current.db

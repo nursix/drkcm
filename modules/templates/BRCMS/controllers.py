@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for BRCMS
+
+    License: MIT
+"""
 
 from gluon import current
 from gluon.html import A, DIV, H3, P, XML

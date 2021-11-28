@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Application Template for Rhineland-Palatinate (RLP) Crisis Management
-    - used to manage COVID-19 test stations
+    RLPPTM: Template for Rhineland-Palatinate (RLP) COVID-19 Test Stations Portal
 
-    @license MIT
+    License: MIT
 """
 
 from collections import OrderedDict
@@ -1980,7 +1977,8 @@ def config(settings):
         """
             Callback to notify the provider that an invoice has been settled
 
-            @param invoice: the invoice (Row)
+            Args:
+                invoice: the invoice (Row)
         """
 
         db = current.db

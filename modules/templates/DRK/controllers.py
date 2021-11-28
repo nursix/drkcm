@@ -1,3 +1,9 @@
+"""
+    Custom controllers for DRK/Village
+
+    License: MIT
+"""
+
 from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
@@ -458,7 +464,8 @@ def update_transferability(site_id=None):
         Update transferability status of all cases, to be called either
         from scheduler task or manually through custom controller.
 
-        @param site_id: the site to check for transferability of cases
+        Args:
+            site_id: the site to check for transferability of cases
     """
 
     db = current.db

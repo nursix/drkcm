@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Maintenance tasks for RLP
+
+    License: MIT
+"""
 
 import datetime
 import os

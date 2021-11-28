@@ -1,3 +1,9 @@
+"""
+    DRK ("Village"): Case Management, Refugee Reception Center, German Red Cross
+
+    License: MIT
+"""
+
 import datetime
 
 from collections import OrderedDict
@@ -11,11 +17,6 @@ from core import FS, IS_ONE_OF, S3DateTime, CRUDMethod, s3_str
 ABSENCE_LIMIT = 5
 
 def config(settings):
-    """
-        DRK ("Village") Template:
-
-        Case Management, Refugee Reception Center, German Red Cross
-    """
 
     T = current.T
 
@@ -461,10 +462,12 @@ def config(settings):
         """
             Determine the current check-in status for a person
 
-            @param site: the site record (instance!)
-            @param person: the person record
+            Args:
+                site: the site record (instance!)
+                person: the person record
 
-            see org_SiteCheckInMethod for details of the return value
+            See also:
+                org_SiteCheckInMethod for details of the return value
         """
 
         db = current.db
@@ -578,8 +581,9 @@ def config(settings):
             When a person is checked-in to a Shelter then update the
             Shelter Registration
 
-            @param site_id: the site_id of the shelter
-            @param person_id: the person_id to check-in
+            Args:
+                site_id: the site_id of the shelter
+                person_id: the person_id to check-in
         """
 
         s3db = current.s3db
@@ -614,8 +618,9 @@ def config(settings):
             When a person is checked-out from a Shelter then update the
             Shelter Registration
 
-            @param site_id: the site_id of the shelter
-            @param person_id: the person_id to check-in
+            Args:
+                site_id: the site_id of the shelter
+                person_id: the person_id to check-in
         """
 
         s3db = current.s3db
@@ -922,8 +927,9 @@ def config(settings):
         """
             Get cases (person_ids) for which a certain event is overdue
 
-            @param code: the event code
-            @param interval: the interval in days
+            Args:
+                code: the event code
+                interval: the interval in days
         """
 
         db = current.db
@@ -2370,7 +2376,8 @@ def config(settings):
         """
             Set default filters for case event report
 
-            @param event_code: code for the default event type
+            Args:
+                event_code: code for the default event type
         """
 
         from core import s3_set_default_filter
@@ -3046,7 +3053,8 @@ def drk_absence(row):
         Field method to display duration of absence in
         dvr/person list view and rheader
 
-        @param row: the Row
+        Args:
+            row: the Row
     """
 
     if hasattr(row, "cr_shelter_registration"):
@@ -3341,8 +3349,9 @@ class DRKCreateSiteActivityReport(CRUDMethod):
         """
             Entry point for REST controller
 
-            @param r: the S3Request
-            @param attr: dict of controller parameters
+            Args:
+                r: the CRUDRequest
+                attr: dict of controller parameters
         """
 
         if r.representation in ("html", "iframe"):
@@ -3360,8 +3369,9 @@ class DRKCreateSiteActivityReport(CRUDMethod):
         """
             Generate and process the form
 
-            @param r: the S3Request
-            @param attr: dict of controller parameters
+            Args:
+                r: the CRUDRequest
+                attr: dict of controller parameters
         """
 
         # User must be permitted to create site activity reports
@@ -3447,7 +3457,8 @@ class DRKCreateSiteActivityReport(CRUDMethod):
         """
             Validate the form
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         T = current.T
@@ -3477,7 +3488,7 @@ class DRKCaseEventDateAxes:
 
     def __init__(self):
         """
-            Constructor; perform all slow lookups outside of the field methods
+            Perform all slow lookups outside of the field methods
         """
 
         from dateutil import tz
@@ -3583,10 +3594,9 @@ class DRKSiteActivityReport:
 
     def __init__(self, site_id=None, date=None):
         """
-            Constructor
-
-            @param site_id: the site ID (defaults to default site)
-            @param date: the date of the report (defaults to today)
+            Args:
+                site_id: the site ID (defaults to default site)
+                date: the date of the report (defaults to today)
         """
 
         if site_id is None:
@@ -3963,10 +3973,12 @@ class DRKSiteActivityReport:
         """
             Header for the Excel sheet
 
-            @param sheet: the sheet
-            @param data: the data dict from extract()
+            Args:
+                sheet: the sheet
+                data: the data dict from extract()
 
-            @return: the number of rows in the header
+            Returns:
+                the number of rows in the header
         """
 
         length = 3

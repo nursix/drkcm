@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for DRKCM
+
+    License: MIT
+"""
 
 import json
 
@@ -250,7 +254,6 @@ class userstats(S3CustomController):
     """
 
     def __init__(self):
-        """ Constructor """
 
         super(userstats, self).__init__()
 
@@ -358,8 +361,11 @@ class userstats(S3CustomController):
         """
             Show the current date in the output
 
-            @param r: the CRUDRequest
-            @returns: the page header (rheader)
+            Args:
+                r: the CRUDRequest
+
+            Returns:
+                the page header (rheader)
         """
 
         from core import S3DateTime
@@ -464,7 +470,8 @@ class userstats(S3CustomController):
             Field method to return the total number of user accounts
             for the organisation
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if hasattr(row, "org_organisation"):
@@ -479,7 +486,8 @@ class userstats(S3CustomController):
             Field method to return the number of active user accounts
             for the organisation
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if hasattr(row, "org_organisation"):
@@ -498,7 +506,8 @@ class userstats(S3CustomController):
             Field method to return the number of disabled user accounts
             for the organisation
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if hasattr(row, "org_organisation"):
@@ -514,7 +523,8 @@ class userstats(S3CustomController):
             organisation which have been used over the past 30 days
             (useful to verify the number of active accounts)
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if hasattr(row, "org_organisation"):

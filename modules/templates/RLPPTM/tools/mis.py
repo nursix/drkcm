@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Helper Script for Mass-Invitation of Participant Organisations
 #
 # RLPPTM Template Version 1.0

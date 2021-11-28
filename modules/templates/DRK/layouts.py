@@ -1,3 +1,9 @@
+"""
+    Menu layouts for DRK/Village
+
+    License: MIT
+"""
+
 from gluon import *
 from gluon.storage import Storage
 from core import *

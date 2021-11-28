@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Org-specific UI Options for DRKCM template
+    Org-specific UI Options for DRKCM
 
-    @license: MIT
+    License: MIT
 """
 
 from gluon import current

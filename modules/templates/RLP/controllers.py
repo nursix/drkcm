@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for RLP
+
+    License: MIT
+"""
 
 import json
 from uuid import uuid4
@@ -124,9 +128,11 @@ class index(S3CustomController):
         """
             Get current announcements
 
-            @param roles: filter announcement by these roles
+            Args:
+                roles: filter announcement by these roles
 
-            @returns: any announcements (Rows)
+            Returns:
+                any announcements (Rows)
         """
 
         db = current.db
@@ -527,11 +533,12 @@ class register(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields, subheadings)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
-                      - subheadings = list of tuples (position, heading) to
-                                      insert into the form
+            Returns:
+                a tuple (formfields, required_fields, subheadings)
+                    - formfields = list of form fields
+                    - required_fields = list of field names of required fields
+                    - subheadings = list of tuples (position, heading) to
+                                    insert into the form
         """
 
         T = current.T
@@ -753,7 +760,8 @@ class register(S3CustomController):
         """
             Get the record ID of the default volunteer pool
 
-            @returns: the pr_group.id of the default pool
+            Returns:
+                the pr_group.id of the default pool
         """
 
         s3db = current.s3db
@@ -1096,10 +1104,12 @@ class register(S3CustomController):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -1237,7 +1247,8 @@ class verify_email(S3CustomController):
         """
             Send a welcome email to the new user
 
-            @param user: the auth_user Row
+            Args:
+                user: the auth_user Row
         """
 
         register.customise_auth_messages()

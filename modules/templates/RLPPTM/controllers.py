@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for RLPPTM
+
+    License: MIT
+"""
 
 import json
 from uuid import uuid4
@@ -142,9 +146,11 @@ class index(S3CustomController):
         """
             Get current announcements
 
-            @param roles: filter announcement by these roles
+            Args:
+                roles: filter announcement by these roles
 
-            @returns: any announcements (Rows)
+            Returns:
+                any announcements (Rows)
         """
 
         db = current.db
@@ -189,7 +195,8 @@ class index(S3CustomController):
         """
             Get intro from CMS
 
-            @param intro: the intro spec as tuple (module, resource, postname)
+            Args:
+                intro: the intro spec as tuple (module, resource, postname)
         """
 
         # Get intro text from CMS
@@ -1205,11 +1212,12 @@ class register(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields, subheadings)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
-                      - subheadings = list of tuples (position, heading) to
-                                      insert into the form
+            Returns:
+                a tuple (formfields, required_fields, subheadings)
+                    - formfields = list of form fields
+                    - required_fields = list of field names of required fields
+                    - subheadings = list of tuples (position, heading) to
+                                    insert into the form
         """
 
         T = current.T
@@ -1386,10 +1394,12 @@ class register(S3CustomController):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -1428,9 +1438,12 @@ Thank you
             Identify the organisation the user attempts to register for,
             by name, facility Lx and if necessary facility email address
 
-            @param formvars: the FORM vars
-            @returns: organisation_id if found, or None if this is a new
-                      organisation
+            Args:
+                formvars: the FORM vars
+
+            Returns:
+                organisation_id if found, or None if this is a new
+                organisation
         """
 
         orgname = formvars.get("organisation")
@@ -1503,7 +1516,8 @@ Thank you
             Projects the user can select during test station registration
             => all projects that are tagged with APPLY=Y
 
-            @returns: list of project_ids
+            Returns:
+                list of project_ids
         """
 
         db = current.db
@@ -1530,7 +1544,8 @@ Thank you
         """
             Services the user can select during test station registration
 
-            @returns: list of service_ids
+            Returns:
+                list of service_ids
         """
 
         db = current.db
@@ -1550,7 +1565,8 @@ Thank you
         """
             Service modes the user can select during test station registration
 
-            @returns: list of service_ids
+            Returns:
+                list of service_ids
         """
 
         db = current.db
@@ -1570,7 +1586,8 @@ Thank you
         """
             Booking modes the user can select during test station registration
 
-            @returns: list of service_ids
+            Returns:
+                list of service_ids
         """
 
         db = current.db
@@ -1783,7 +1800,8 @@ Please go to %(url)s to approve this station."""
         """
             Send a welcome email to the new user
 
-            @param user: the auth_user Row
+            Args:
+                user: the auth_user Row
         """
 
         register.customise_auth_messages()
@@ -2056,7 +2074,8 @@ class register_invited(S3CustomController):
         """
             Process Registration
 
-            @param user_id: the user ID
+            Args:
+                user_id: the user ID
         """
 
         auth = current.auth
@@ -2071,7 +2090,8 @@ class register_invited(S3CustomController):
         """
             Send a welcome email to the new user
 
-            @param user: the auth_user Row
+            Args:
+                user: the auth_user Row
         """
 
         cls.customise_auth_messages()
@@ -2152,8 +2172,9 @@ class register_invited(S3CustomController):
         """
             Find the account matching registration key and code
 
-            @param key: the registration key (from URL args)
-            @param code: the registration code (from form)
+            Args:
+                key: the registration key (from URL args)
+                code: the registration code (from form)
         """
 
         if key and code:
@@ -2171,9 +2192,10 @@ class register_invited(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
+            Returns:
+                a tuple (formfields, required_fields)
+                    - formfields = list of form fields
+                    - required_fields = list of field names of required fields
         """
 
         T = current.T
@@ -2243,10 +2265,12 @@ class register_invited(S3CustomController):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -2465,13 +2489,15 @@ class ocert(S3CustomController):
             and generate a verification hash (=encrypt the OrgID with the
             appkey, salted with the token) if successful
 
-            @param organisation_id: the organisation_id
-            @param purpose: the purpose code
-            @param token: the token
-            @param appkey: the appkey
+            Args:
+                organisation_id: the organisation_id
+                purpose: the purpose code
+                token: the token
+                appkey: the appkey
 
-            @returns: the encrypted certificate if the organisation
-                      qualifies, otherwise None
+            Returns:
+                the encrypted certificate if the organisation
+                qualifies, otherwise None
         """
 
         if not all((purpose, token, appkey)):
@@ -2529,9 +2555,11 @@ class ocert(S3CustomController):
             Render a form for the user to select one of their managed
             organisations
 
-            @param organisations: the managed organisations, Rows {id, name}
+            Args:
+                organisations: the managed organisations, Rows {id, name}
 
-            @returns: a FORM
+            Returns:
+                a FORM
         """
 
         T = current.T
@@ -2578,7 +2606,8 @@ class ocert(S3CustomController):
         """
             Redirect to home page with error message
 
-            @param message: the error message
+            Args:
+                message: the error message
         """
 
         current.session.error = current.T(message)

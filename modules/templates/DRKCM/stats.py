@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Performance Indicators for DRKCM
+
+    License: MIT
+"""
 
 from io import BytesIO
 
@@ -8,13 +12,10 @@ from core import CRUDMethod, s3_decode_iso_datetime, s3_str
 from core.resource.codecs.xls import S3XLS
 
 # =============================================================================
-class PerformanceIndicators(object):
+class PerformanceIndicators:
     """ Default Performance Indicators Set (Base Class) """
 
     def __init__(self):
-        """
-            Constructor
-        """
 
         self.styles = None
 
@@ -24,9 +25,11 @@ class PerformanceIndicators(object):
         """
             Query/compute the performance indicators
 
-            @param resource: the filtered dvr_response_action resource
+            Args:
+                resource: the filtered dvr_response_action resource
 
-            @returns: dict with performance indicators (raw values)
+            Returns:
+                dict with performance indicators (raw values)
         """
 
         db = current.db
@@ -75,10 +78,11 @@ class PerformanceIndicators(object):
         """
             Export performance indicators
 
-            @param resource: the CRUDResource
-            @param sheet: the XLS worksheet to write to
-            @param title: the title for the export
-            @param subtitle: an optional subtitle (e.g. start+end dates)
+            Args:
+                resource: the CRUDResource
+                sheet: the XLS worksheet to write to
+                title: the title for the export
+                subtitle: an optional subtitle (e.g. start+end dates)
         """
 
         T = current.T
@@ -126,11 +130,12 @@ class PerformanceIndicators(object):
         """
             Write a label/value into the XLS worksheet
 
-            @param sheet: the worksheet
-            @param rowindex: the row index
-            @param colindex: the column index
-            @param label: the label/value to write
-            @param style: style name (S3XLS styles)
+            Args:
+                sheet: the worksheet
+                rowindex: the row index
+                colindex: the column index
+                label: the label/value to write
+                style: style name (S3XLS styles)
         """
 
         styles = self.styles
@@ -163,9 +168,11 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
         """
             Query/compute the performance indicators
 
-            @param resource: the filtered dvr_response_action resource
+            Args:
+                resource: the filtered dvr_response_action resource
 
-            @returns: dict with performance indicators (raw values)
+            Returns:
+                dict with performance indicators (raw values)
         """
 
         db = current.db
@@ -262,10 +269,11 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
         """
             Export performance indicators
 
-            @param resource: the CRUDResource
-            @param sheet: the XLS worksheet to write to
-            @param title: the title for the export
-            @param subtitle: an optional subtitle (e.g. start+end dates)
+            Args:
+                resource: the CRUDResource
+                sheet: the XLS worksheet to write to
+                title: the title for the export
+                subtitle: an optional subtitle (e.g. start+end dates)
         """
 
         T = current.T
@@ -356,9 +364,8 @@ class PerformanceIndicatorExport(CRUDMethod):
 
     def __init__(self, pitype=None):
         """
-            Constructor
-
-            @param pitype: the performance indicator set
+            Args:
+                pitype: the performance indicator set
         """
 
         super(PerformanceIndicatorExport, self).__init__()
@@ -376,8 +383,9 @@ class PerformanceIndicatorExport(CRUDMethod):
         """
             Page-render entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         output = {}
@@ -397,8 +405,9 @@ class PerformanceIndicatorExport(CRUDMethod):
         """
             Export the performance indicators as XLS data sheet
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         try:

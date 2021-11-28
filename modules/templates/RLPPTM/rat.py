@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    RAT (Rapid Antigen Test) device list updater for RLPPTM template
+    RAT (Rapid Antigen Test) device list updater for RLPPTM
 
-    @license: MIT
+    License: MIT
 """
 
 import json
@@ -18,7 +16,7 @@ VSETURL = "https://distribution.dcc-rules.de/valuesets"
 VSETID = "covid-19-lab-test-manufacturer-and-name"
 
 # =============================================================================
-class RATList(object):
+class RATList:
     """
         Helper class to update the local testing device database
         with the the list of currently EU-approved COVID-19 RAT testing
@@ -33,7 +31,8 @@ class RATList(object):
         """
             Synchronize the local RAT device registry with upstream data
 
-            @returns: success True|False
+            Returns:
+                success True|False
         """
 
         settings = current.deployment_settings
@@ -70,10 +69,12 @@ class RATList(object):
         """
             Update the RAT device registry from the value set
 
-            @param source: the source URI
-            @param vset: the value set retrieved from the source
+            Args:
+                source: the source URI
+                vset: the value set retrieved from the source
 
-            @returns: success True|False
+            Returns:
+                success True|False
         """
 
         if not isinstance(vset, dict):
@@ -141,7 +142,8 @@ class RATList(object):
         """
             Get the defaults for new testing device entries
 
-            @returns: the defaults as dict
+            Returns:
+                the defaults as dict
         """
 
         defaults = {"device_class": "RAT",
@@ -165,9 +167,11 @@ class RATList(object):
         """
             Read JSON data from URL
 
-            @param url: the URL to read from
+            Args:
+                url: the URL to read from
 
-            @returns: the decoded data, or None on error
+            Returns:
+                the decoded data, or None on error
         """
 
         try:

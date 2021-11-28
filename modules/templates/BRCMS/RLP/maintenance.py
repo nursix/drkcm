@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Maintenance Tasks for BRCMS/RLP
+
+    License: MIT
+"""
 
 import datetime
 import os

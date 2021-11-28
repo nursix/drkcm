@@ -1,22 +1,18 @@
-# -*- coding: utf-8 -*-
+"""
+    BRCMS: Beneficiary Registry and Case Management System
 
-#import datetime
+    License: MIT
+"""
 
 from collections import OrderedDict
 
-from gluon import current #, A, DIV,IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, SPAN, TAG, URL
+from gluon import current
 from gluon.storage import Storage
 
-#from core import FS, IS_ONE_OF
 from s3dal import original_tablename
-
-#from templates.BRCMS.idcards import IDCardLayout
 
 # =============================================================================
 def config(settings):
-    """
-        BRCMS: Sahana Beneficiary Registry and Case Management System
-    """
 
     T = current.T
 
