@@ -16,7 +16,6 @@
          Organisation.........comma-sep list..project_activity_organisation.organisation_id role=1 (default)
          Partner..............comma-sep list..project_activity_organisation.organisation_id role=2
          Donor................comma-sep list..project_activity_organisation.organisation_id role=3
-         Organisation Group...string..........project_activity_group.group_id
          Country..............string..........Country code/name (L0)
          L1...................string..........L1 location name (e.g. State/Province)
          L2...................string..........L2 location name (e.g. District/County)
@@ -60,7 +59,6 @@
     <xsl:variable name="ThemePrefix" select="'Theme:'"/>
 
     <xsl:key name="events" match="row" use="col[@field='Event']"/>
-    <xsl:key name="org_groups" match="row" use="col[@field='Organisation Group']"/>
     <xsl:key name="projects" match="row" use="col[@field='Project']"/>
     <xsl:key name="statuses" match="row" use="col[@field='Status']"/>
 
@@ -81,12 +79,6 @@
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('events',
                                                                    col[@field='Event'])[1])]">
                 <xsl:call-template name="Event"/>
-            </xsl:for-each>
-
-            <!-- Organisation Groups -->
-            <xsl:for-each select="//row[generate-id(.)=generate-id(key('org_groups',
-                                                                       col[@field='Organisation Group'])[1])]">
-                <xsl:call-template name="OrganisationGroup"/>
             </xsl:for-each>
 
             <!-- Projects -->
@@ -180,18 +172,6 @@
                     </xsl:with-param>
                     <xsl:with-param name="arg">org_ref</xsl:with-param>
                 </xsl:call-template>
-
-                <!-- Link to Organisation Group -->
-                <xsl:if test="col[@field='Organisation Group']!=''">
-                    <resource name="project_activity_group">
-                        <reference field="group_id" resource="org_group">
-                            <xsl:attribute name="tuid">
-                                <xsl:value-of select="concat('OrganisationGroup:',
-                                                             col[@field='Organisation Group'])"/>
-                            </xsl:attribute>
-                        </reference>
-                    </resource>
-                </xsl:if>
 
                 <!-- Link to Project -->
                 <xsl:if test="$Project!=''">
@@ -926,21 +906,6 @@
             </xsl:when>
         </xsl:choose>
 
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="OrganisationGroup">
-
-        <xsl:variable name="OrganisationGroup" select="col[@field='Organisation Group']"/>
-
-        <xsl:if test="$OrganisationGroup!=''">
-            <resource name="org_group">
-                <xsl:attribute name="tuid">
-                    <xsl:value-of select="concat('OrganisationGroup:', $OrganisationGroup)"/>
-                </xsl:attribute>
-                <data field="name"><xsl:value-of select="$OrganisationGroup"/></data>
-            </resource>
-        </xsl:if>
     </xsl:template>
 
     <!-- ****************************************************************** -->

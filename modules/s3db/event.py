@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Event Model
 
-""" Sahana Eden Event Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,44 +25,44 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3EventModel",
-           "S3EventLocationModel",
-           "S3EventNameModel",
-           "S3EventTagModel",
-           "S3IncidentModel",
-           "S3IncidentLogModel",
-           "S3IncidentReportModel",
-           "S3IncidentReportOrganisationGroupModel",
-           "S3IncidentTypeModel",
-           "S3IncidentTypeTagModel",
-           "S3EventActivityModel",
-           "S3EventAssetModel",
-           "S3EventBookmarkModel",
-           "S3EventCMSModel",
-           "S3EventCMSTagModel",
-           "S3EventDCModel",
-           "S3EventExpenseModel",
-           "S3EventForumModel",
-           "S3EventHRModel",
-           "S3EventTeamModel",
-           "S3EventImpactModel",
-           "S3EventMapModel",
-           "S3EventNeedModel",
-           "S3EventNeedResponseModel",
-           "S3EventOrganisationModel",
-           "S3EventProjectModel",
-           "S3EventRequestModel",
-           "S3EventResourceModel",
-           "S3EventScenarioModel",
-           "S3EventScenarioAssetModel",
-           "S3EventScenarioHRModel",
-           "S3EventScenarioOrganisationModel",
-           "S3EventScenarioTaskModel",
-           "S3EventSiteModel",
-           "S3EventShelterModel",
-           "S3EventSitRepModel",
-           "S3EventTagModel",
-           "S3EventTaskModel",
+__all__ = ("EventModel",
+           "EventLocationModel",
+           "EventNameModel",
+           "EventTagModel",
+           "EventIncidentModel",
+           "EventIncidentLogModel",
+           "EventIncidentReportModel",
+           "EventIncidentReportOrganisationGroupModel",
+           "EventIncidentTypeModel",
+           "EventIncidentTypeTagModel",
+           "EventActivityModel",
+           "EventAssetModel",
+           "EventBookmarkModel",
+           "EventCMSModel",
+           "EventCMSTagModel",
+           "EventDCModel",
+           "EventExpenseModel",
+           "EventForumModel",
+           "EventHRModel",
+           "EventTeamModel",
+           "EventImpactModel",
+           "EventMapModel",
+           "EventNeedModel",
+           "EventNeedResponseModel",
+           "EventOrganisationModel",
+           "EventProjectModel",
+           "EventRequestModel",
+           "EventResourceModel",
+           "EventScenarioModel",
+           "EventScenarioAssetModel",
+           "EventScenarioHRModel",
+           "EventScenarioOrganisationModel",
+           "EventScenarioTaskModel",
+           "EventSiteModel",
+           "EventShelterModel",
+           "EventSitRepModel",
+           "EventTagModel",
+           "EventTaskModel",
            #"event_ActionPlan",
            #"event_ScenarioActionPlan",
            #"event_ApplyScenario",
@@ -86,7 +84,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3EventModel(DataModel):
+class EventModel(DataModel):
     """
         Event Model
 
@@ -889,13 +887,12 @@ class S3EventModel(DataModel):
     def event_event_year(row):
         """
             Virtual field for event_event - returns the year of this entry
-            used for report.
+            used for report. Requires "start_date" to be in extra_fields.
 
-            Requires "start_date" to be in extra_fields
+            Args:
+                row: the Row
 
-            @param row: the Row
-
-            @ToDo: Extend this to show multiple years if open for multiple?
+            TODO Extend this to show multiple years if open for multiple?
         """
 
         try:
@@ -938,7 +935,7 @@ class S3EventModel(DataModel):
                 db(table.id == row.post_id).update(expired=True)
 
 # =============================================================================
-class S3EventLocationModel(DataModel):
+class EventLocationModel(DataModel):
     """
         Event Locations model
         - locations for Events
@@ -984,7 +981,7 @@ class S3EventLocationModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventNameModel(DataModel):
+class EventNameModel(DataModel):
     """
         Event Names model
         - local names for Events
@@ -1023,7 +1020,7 @@ class S3EventNameModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventTagModel(DataModel):
+class EventTagModel(DataModel):
     """
         Event Tags model
         - tags for Events
@@ -1072,7 +1069,7 @@ class S3EventTagModel(DataModel):
         return None
 
 # =============================================================================
-class S3IncidentModel(DataModel):
+class EventIncidentModel(DataModel):
     """
         Incidents
          - the primary unit at which things are managed:
@@ -2061,7 +2058,7 @@ class S3IncidentModel(DataModel):
         return output
 
 # =============================================================================
-class S3IncidentReportModel(DataModel):
+class EventIncidentReportModel(DataModel):
     """
         Incident Reports
          - reports about incidents
@@ -2266,7 +2263,7 @@ class S3IncidentReportModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventActivityModel(DataModel):
+class EventActivityModel(DataModel):
     """
         Link Project Activities to Events
     """
@@ -2302,7 +2299,7 @@ class S3EventActivityModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventRequestModel(DataModel):
+class EventRequestModel(DataModel):
     """
         Link Requests to Incidents &/or Events
     """
@@ -2341,7 +2338,7 @@ class S3EventRequestModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventResourceModel(DataModel):
+class EventResourceModel(DataModel):
     """
         Resources Assigned to Events/Incidents
         - depends on Stats module
@@ -2520,7 +2517,7 @@ class S3EventResourceModel(DataModel):
         return None
 
 # =============================================================================
-class S3IncidentReportOrganisationGroupModel(DataModel):
+class EventIncidentReportOrganisationGroupModel(DataModel):
     """
         Links between Incident Reports & Organisation Groups
     """
@@ -2558,7 +2555,7 @@ class S3IncidentReportOrganisationGroupModel(DataModel):
         return None
 
 # =============================================================================
-class S3IncidentLogModel(DataModel):
+class EventIncidentLogModel(DataModel):
     """
         Incident Logs
             - record of all changes
@@ -2661,7 +2658,7 @@ class S3IncidentLogModel(DataModel):
             current.msg.send_by_pe_id(pe_id, subject, message, contact_method="SMS")
 
 # =============================================================================
-class S3IncidentTypeModel(DataModel):
+class EventIncidentTypeModel(DataModel):
     """
         Incident Types
     """
@@ -2786,7 +2783,7 @@ class S3IncidentTypeModel(DataModel):
                 }
 
 # =============================================================================
-class S3IncidentTypeTagModel(DataModel):
+class EventIncidentTypeTagModel(DataModel):
     """
         Incident Type Tags
          - Key-Value extensions
@@ -2825,7 +2822,7 @@ class S3IncidentTypeTagModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventAlertModel(DataModel):
+class EventAlertModel(DataModel):
     """
         Alerts for Events/Incidents
 
@@ -2929,7 +2926,7 @@ class S3EventAlertModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventAssetModel(DataModel):
+class EventAssetModel(DataModel):
     """
         Link Assets to Incidents
     """
@@ -3154,7 +3151,7 @@ class S3EventAssetModel(DataModel):
                              )
 
 # =============================================================================
-class S3EventBookmarkModel(DataModel):
+class EventBookmarkModel(DataModel):
     """
         Bookmarks for Events &/or Incidents
         - the Incident bookmarks do NOT populate the Event's
@@ -3203,7 +3200,7 @@ class S3EventBookmarkModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventCMSModel(DataModel):
+class EventCMSModel(DataModel):
     """
         Link CMS Posts to Events &/or Incidents
     """
@@ -3282,7 +3279,7 @@ class S3EventCMSModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventCMSTagModel(DataModel):
+class EventCMSTagModel(DataModel):
     """
         Link (CMS) Tags to Events or Incidents (used in WACOP)
         - the Incident tags do NOT populate the Event's
@@ -3324,7 +3321,7 @@ class S3EventCMSTagModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventDCModel(DataModel):
+class EventDCModel(DataModel):
     """
         Link Data Collections to Events &/or Incidents
     """
@@ -3394,7 +3391,7 @@ class S3EventDCModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventExpenseModel(DataModel):
+class EventExpenseModel(DataModel):
     """
         Link Expenses to Incidents &/or Events
         - normally linked at the Incident level & just visible at the Event level
@@ -3443,7 +3440,7 @@ class S3EventExpenseModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventForumModel(DataModel):
+class EventForumModel(DataModel):
     """
         Shares for Events &/or Incidents
         - the Incident shares do NOT populate the Event's
@@ -3491,7 +3488,7 @@ class S3EventForumModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventHRModel(DataModel):
+class EventHRModel(DataModel):
     """
         Link Human Resources to Events/Incidents
     """
@@ -3743,7 +3740,7 @@ class S3EventHRModel(DataModel):
                              )
 
 # =============================================================================
-class S3EventTeamModel(DataModel):
+class EventTeamModel(DataModel):
     """ Link Teams to Events &/or Incidents """
 
     names = ("event_team_status",
@@ -3858,7 +3855,7 @@ class S3EventTeamModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventImpactModel(DataModel):
+class EventImpactModel(DataModel):
     """
         Link Events &/or Incidents with Impacts
     """
@@ -3919,7 +3916,7 @@ class S3EventImpactModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventMapModel(DataModel):
+class EventMapModel(DataModel):
     """
         Link Map Configs to Incidents
     """
@@ -3966,7 +3963,7 @@ class S3EventMapModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventNeedModel(DataModel):
+class EventNeedModel(DataModel):
     """
         Link Events &/or Incidents with Needs
     """
@@ -4024,7 +4021,7 @@ class S3EventNeedModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventNeedResponseModel(DataModel):
+class EventNeedResponseModel(DataModel):
     """
         Link Events &/or Incidents with Need Responses (Activity Groups)
     """
@@ -4082,7 +4079,7 @@ class S3EventNeedResponseModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventOrganisationModel(DataModel):
+class EventOrganisationModel(DataModel):
     """
         Link Organisations to Events &/or Incidents
     """
@@ -4155,7 +4152,7 @@ class S3EventOrganisationModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventProjectModel(DataModel):
+class EventProjectModel(DataModel):
     """
         Link Projects to Events
     """
@@ -4191,7 +4188,7 @@ class S3EventProjectModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventScenarioModel(DataModel):
+class EventScenarioModel(DataModel):
     """
         Scenario Model
 
@@ -4322,7 +4319,7 @@ class S3EventScenarioModel(DataModel):
                 }
 
 # =============================================================================
-class S3EventScenarioAssetModel(DataModel):
+class EventScenarioAssetModel(DataModel):
     """
         Link Scenarios to Assets
     """
@@ -4422,7 +4419,7 @@ class S3EventScenarioAssetModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventScenarioHRModel(DataModel):
+class EventScenarioHRModel(DataModel):
     """
         Link Scenarios to Human Resources
     """
@@ -4521,7 +4518,7 @@ class S3EventScenarioHRModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventScenarioOrganisationModel(DataModel):
+class EventScenarioOrganisationModel(DataModel):
     """
         Link Scenarios to Organisations
     """
@@ -4572,7 +4569,7 @@ class S3EventScenarioOrganisationModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventScenarioTaskModel(DataModel):
+class EventScenarioTaskModel(DataModel):
     """
         Link Scenarios to Tasks
 
@@ -4626,7 +4623,7 @@ class S3EventScenarioTaskModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventSiteModel(DataModel):
+class EventSiteModel(DataModel):
     """
         Link Sites (Facilities) to Incidents
     """
@@ -4741,7 +4738,7 @@ class S3EventSiteModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventShelterModel(DataModel):
+class EventShelterModel(DataModel):
     """
         Link Shelters to Events
     """
@@ -4813,7 +4810,7 @@ class S3EventShelterModel(DataModel):
         return None
 
 # =============================================================================
-class S3EventSitRepModel(DataModel):
+class EventSitRepModel(DataModel):
     """
         Situation Reports
         - can be simple text/rich text
@@ -5176,7 +5173,7 @@ class S3EventSitRepModel(DataModel):
         db(db.event_sitrep.id == sitrep_id).update(table_id=table_id)
 
 # =============================================================================
-class S3EventTaskModel(DataModel):
+class EventTaskModel(DataModel):
     """
         Link Tasks to Incidents &/or Events
         - normally linked at the Incident level & just visible at the Event level
@@ -5296,10 +5293,9 @@ class event_ActionPlan(CRUDMethod):
 
     def __init__(self, form=None):
         """
-            Constructor
-
-            @param form: widget config to inject at the top of the page,
-                         or a callable to produce such a widget config
+            Args:
+                form: widget config to inject at the top of the page,
+                      or a callable to produce such a widget config
         """
 
         super(event_ActionPlan, self).__init__()
@@ -5322,10 +5318,11 @@ class event_ActionPlan(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.name == "incident" and \
@@ -5553,10 +5550,9 @@ class event_ScenarioActionPlan(CRUDMethod):
 
     def __init__(self, form=None):
         """
-            Constructor
-
-            @param form: widget config to inject at the top of the page,
-                         or a callable to produce such a widget config
+            Args:
+                form: widget config to inject at the top of the page,
+                      or a callable to produce such a widget config
         """
 
         super(event_ScenarioActionPlan, self).__init__()
@@ -5579,10 +5575,11 @@ class event_ScenarioActionPlan(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.name == "scenario" and \
@@ -5808,10 +5805,11 @@ class event_ApplyScenario(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.http != "POST":
@@ -5925,8 +5923,9 @@ class event_EventAssignMethod(CRUDMethod):
 
     def __init__(self, component=None, next_tab=None):
         """
-            @param component: the Component in which to create records
-            @param next_tab: the component/method to redirect to after assigning
+            Args:
+                component: the Component in which to create records
+                next_tab: the component/method to redirect to after assigning
         """
 
         super(event_EventAssignMethod, self).__init__()
@@ -5940,10 +5939,11 @@ class event_EventAssignMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if self.component:
@@ -6192,8 +6192,6 @@ class event_EventAssignMethod(CRUDMethod):
             #if s3.filter:
             #    resource.add_filter(s3.filter)
 
-            dt_id = "datatable"
-
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
 
@@ -6263,16 +6261,15 @@ class event_EventAssignMethod(CRUDMethod):
                                        count=True,
                                        represent=True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
 
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url=r.url(representation="aadata"),
                                 dt_bulk_actions=dt_bulk_actions,
                                 dt_pageLength=display_length,
-                                dt_pagination="true",
-                                dt_searching="false",
+                                dt_pagination=True,
+                                dt_searching=False,
                                 )
 
                 response.view = "list_filter.html"
@@ -6297,11 +6294,10 @@ class event_EventAssignMethod(CRUDMethod):
                                        count=True,
                                        represent=True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
 
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions=dt_bulk_actions)
                 response.headers["Content-Type"] = "application/json"
@@ -6321,8 +6317,9 @@ class event_IncidentAssignMethod(CRUDMethod):
 
     def __init__(self, component, next_tab=None):
         """
-            @param component: the Component in which to create records
-            @param next_tab: the component/method to redirect to after assigning
+            Args:
+                component: the Component in which to create records
+                next_tab: the component/method to redirect to after assigning
         """
 
         super(event_IncidentAssignMethod, self).__init__()
@@ -6338,10 +6335,11 @@ class event_IncidentAssignMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         try:
@@ -6579,8 +6577,6 @@ class event_IncidentAssignMethod(CRUDMethod):
             #if s3.filter:
             #    resource.add_filter(s3.filter)
 
-            dt_id = "datatable"
-
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
 
@@ -6649,16 +6645,15 @@ class event_IncidentAssignMethod(CRUDMethod):
                                        count = True,
                                        represent = True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
 
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url = r.url(representation="aadata"),
                                 dt_bulk_actions = dt_bulk_actions,
                                 dt_pageLength = display_length,
-                                dt_pagination = "true",
-                                dt_searching = "false",
+                                dt_pagination = True,
+                                dt_searching = False,
                                 )
 
                 response.view = "list_filter.html"
@@ -6688,11 +6683,10 @@ class event_IncidentAssignMethod(CRUDMethod):
                                        count = True,
                                        represent = True)
                 filteredrows = data["numrows"]
-                dt = S3DataTable(data["rfields"], data["rows"])
+                dt = DataTable(data["rfields"], data["rows"], "datatable")
 
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions = dt_bulk_actions)
                 response.headers["Content-Type"] = "application/json"
@@ -6824,11 +6818,12 @@ def event_event_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Incidents on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["event_event.id"]
@@ -6855,7 +6850,7 @@ def event_event_list_layout(list_id, item_id, resource, rfields, record,
                                      "record": record_id},
                                ),
                      _class="s3_modal",
-                     _title=S3CRUD.crud_string(resource.tablename,
+                     _title=get_crud_string(resource.tablename,
                                                "title_update"),
                      )
     else:
@@ -6863,7 +6858,7 @@ def event_event_list_layout(list_id, item_id, resource, rfields, record,
     if permit("delete", table, record_id=record_id):
         delete_btn = A(ICON("delete"),
                        _class="dl-item-delete",
-                       _title=S3CRUD.crud_string(resource.tablename,
+                       _title=get_crud_string(resource.tablename,
                                                  "label_delete_button"),
                        )
     else:
@@ -6908,11 +6903,12 @@ def event_incident_list_layout(list_id, item_id, resource, rfields, record,
     """
         Default dataList item renderer for Incidents on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row
@@ -6958,16 +6954,16 @@ def event_incident_list_layout(list_id, item_id, resource, rfields, record,
                                      "record": record_id},
                                ),
                      _class="s3_modal",
-                     _title=S3CRUD.crud_string(resource.tablename,
-                                               "title_update"),
+                     _title=get_crud_string(resource.tablename,
+                                            "title_update"),
                      )
     else:
         edit_btn = ""
     if permit("delete", table, record_id=record_id):
         delete_btn = A(ICON("delete"),
                        _class="dl-item-delete",
-                       _title=S3CRUD.crud_string(resource.tablename,
-                                                 "label_delete_button"),
+                       _title=get_crud_string(resource.tablename,
+                                              "label_delete_button"),
                        )
     else:
         delete_btn = ""
@@ -7014,11 +7010,12 @@ def event_resource_list_layout(list_id, item_id, resource, rfields, record):
     """
         Default dataList item renderer for Resources on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     raw = record._row
@@ -7077,18 +7074,18 @@ def event_resource_list_layout(list_id, item_id, resource, rfields, record):
                                  vars = urlvars,
                                  ),
                      _class = "s3_modal",
-                     _title = S3CRUD.crud_string(resource.tablename,
-                                                 "title_update",
-                                                 ),
+                     _title = get_crud_string(resource.tablename,
+                                              "title_update",
+                                              ),
                      )
     else:
         edit_btn = ""
     if permit("delete", table, record_id=record_id):
         delete_btn = A(ICON("delete"),
                        _class = "dl-item-delete",
-                       _title = S3CRUD.crud_string(resource.tablename,
-                                                   "label_delete_button",
-                                                   ),
+                       _title = get_crud_string(resource.tablename,
+                                                "label_delete_button",
+                                                ),
                        )
     else:
         delete_btn = ""

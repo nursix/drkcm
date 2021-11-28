@@ -62,35 +62,38 @@ class S3PDFCard(S3Codec):
         """
             API Method to encode a resource as cards
 
-            @param resource: the CRUDResource, or
+            Args:
+                resource: the CRUDResource, or
                              - the data items as list [{fieldname: representation, ...}, ...], or
                              - a callable that produces such a list of items
-            @param attr: additional encoding parameters (see below)
+                attr: additional encoding parameters (see below)
 
-            @keyword layout: the layout (a S3PDFCardLayout subclass, overrides
-                             the resource's pdf_card_layout setting
-            @keyword orderby: orderby-expression for data extraction, overrides
-                              the resource's orderby setting
-            @keyword labels: the labels for the fields,
-                             - a dict {colname: label}, or
-                             - a callable that produces it,
-                             - defaults to the labels of the extracted fields
-            @keyword pagesize: the PDF page size,
-                               - a string "A4" or "Letter", or
-                               - a tuple (width, height), in points
-                               - defaults to the layout's card size
-            @keyword margins: the page margins,
-                              - a tuple (N, E, S, W), in points, or
-                              - a single number, in points
-                              - will be computed if omitted
-            @keyword spacing: the spacing between cards,
-                              - a tuple (H, V), in points, or
-                              - a single number, in points
-                              - defaults to 18 points in both directions
-            @keyword title: the document title,
+            Keyword Args:
+                layout: the layout (a S3PDFCardLayout subclass, overrides
+                        the resource's pdf_card_layout setting
+                orderby: orderby-expression for data extraction, overrides
+                         the resource's orderby setting
+                labels: the labels for the fields,
+                            - a dict {colname: label}, or
+                            - a callable that produces it,
+                            - defaults to the labels of the extracted fields
+                pagesize: the PDF page size,
+                            - a string "A4" or "Letter", or
+                            - a tuple (width, height), in points
+                            - defaults to the layout's card size
+                margins: the page margins,
+                            - a tuple (N, E, S, W), in points, or
+                            - a single number, in points
+                            - will be computed if omitted
+                spacing: the spacing between cards,
+                            - a tuple (H, V), in points, or
+                            - a single number, in points
+                            - defaults to 18 points in both directions
+                title: the document title,
                             - defaults to title_list crud string of the resource
 
-            @return: a handle to the output
+            Returns:
+                a handle to the output
         """
 
         if not REPORTLAB:
@@ -192,11 +195,13 @@ class S3PDFCard(S3Codec):
         """
             Extract the data items from the given resource
 
-            @param resource: the resource (a filtered CRUDResource)
-            @param fields: the fields to extract (array of field selectors)
-            @param orderby: the orderby-expression
+            Args:
+                resource: the resource (a filtered CRUDResource)
+                fields: the fields to extract (array of field selectors)
+                orderby: the orderby-expression
 
-            @returns: an S3ResourceData instance
+            Returns:
+                an S3ResourceData instance
         """
 
         if orderby is None:
@@ -217,12 +222,13 @@ class S3PDFCard(S3Codec):
         """
             Get the Flowable-instances for the data items
 
-            @param layout: the S3PDFCardLayout subclass implementing the
-                           card layout
-            @param resource: the resource
-            @param items: the data items
-            @param labels: the field labels
-            @param cards_per_page: the number of cards per page
+            Args:
+                layout: the S3PDFCardLayout subclass implementing the
+                        card layout
+                resource: the resource
+                items: the data items
+                labels: the field labels
+                cards_per_page: the number of cards per page
         """
 
         if not len(items):
@@ -287,15 +293,15 @@ class S3PDFCardTemplate(BaseDocTemplate):
                  title = None,
                  ):
         """
-            Constructor
+            Args:
+                pagesize: the page size, tuple (w, h)
+                cardsize: the card size, tuple (w, h)
+                margins: the page margins, tuple (N, E, S, W)
+                spacing: the spacing between cards, tuple (H, V)
+                title: the document title
 
-            @param pagesize: the page size, tuple (w, h)
-            @param cardsize: the card size, tuple (w, h)
-            @param margins: the page margins, tuple (N, E, S, W)
-            @param spacing: the spacing between cards, tuple (H, V)
-            @param title: the document title
-
-            - all sizes in points (72 points per inch)
+            Note:
+                - all sizes in points (72 points per inch)
         """
 
         # Spacing between cards
@@ -356,10 +362,11 @@ class S3PDFCardTemplate(BaseDocTemplate):
         """
             Compute the number of cards for one page dimension
 
-            @param pagesize: the page size
-            @param cardsize: the card size
-            @param margins: tuple of margins
-            @param spacing: the spacing between cards
+            Args:
+                pagesize: the page size
+                cardsize: the card size
+                margins: tuple of margins
+                spacing: the spacing between cards
         """
 
         available = pagesize - sum(margins)
@@ -374,9 +381,10 @@ class S3PDFCardTemplate(BaseDocTemplate):
         """
             Calculate default margins
 
-            @param pagesize: the page size, tuple (w, h)
-            @param cardsize: the card size, tuple (w, h)
-            @param spacing: spacing between cards, tuple (h, v)
+            Args:
+                pagesize: the page size, tuple (w, h)
+                cardsize: the card size, tuple (w, h)
+                spacing: spacing between cards, tuple (h, v)
         """
 
         cardwidth, cardheight = cardsize
@@ -403,12 +411,14 @@ class S3PDFCardTemplate(BaseDocTemplate):
         """
             Generate page templates for front/back sides of cards
 
-            @param pagesize: the page size, tuple (w, h)
-            @param cardsize: the card size, tuple (w, h)
-            @param margins: the page margins, tuple (N, E, S, W)
-            @param spacing: the spacing between cards, tuple (H, V)
+            Args:
+                pagesize: the page size, tuple (w, h)
+                cardsize: the card size, tuple (w, h)
+                margins: the page margins, tuple (N, E, S, W)
+                spacing: the spacing between cards, tuple (H, V)
 
-            - all sizes in points (72 points per inch)
+            Note:
+                - all sizes in points (72 points per inch)
         """
 
         pagewidth, pageheight = pagesize
@@ -485,14 +495,13 @@ class S3PDFCardLayout(Flowable):
                  multiple=False,
                  ):
         """
-            Constructor
-
-            @param resource: the resource
-            @param item: the data item
-            @param labels: the field labels
-            @param common: common data for all cards
-            @param backside: this instance should render a card backside
-            @param multiple: there are multiple cards per page
+            Args:
+                resource: the resource
+                item: the data item
+                labels: the field labels
+                common: common data for all cards
+                backside: this instance should render a card backside
+                multiple: there are multiple cards per page
         """
 
         Flowable.__init__(self)
@@ -524,8 +533,9 @@ class S3PDFCardLayout(Flowable):
             - self.width..............the width of the card (in points)
             - self.height.............the height of the card (in points)
 
-            NB Canvas coordinates are relative to the lower left corner of the
-               card's frame, drawing must not overshoot self.width/self.height
+            Note:
+                Canvas coordinates are relative to the lower left corner of the
+                card's frame, drawing must not overshoot self.width/self.height
         """
 
         c = self.canv
@@ -558,9 +568,11 @@ class S3PDFCardLayout(Flowable):
             Get the fields to look up from the resource, can be overridden
             in subclasses (as the field list is usually layout-specific)
 
-            @param resource: the resource
+            Args:
+                resource: the resource
 
-            @returns: list of field selectors
+            Returns:
+                list of field selectors
         """
 
         return resource.list_fields()
@@ -571,11 +583,13 @@ class S3PDFCardLayout(Flowable):
         """
             Look up common data for all cards
 
-            @param resource: the resource
-            @param items: the items
+            Args:
+                resource: the resource
+                items: the items
 
-            @returns: a dict with common data for all cards, will be
-                      passed to the individual flowables
+            Returns:
+                a dict with common data for all cards, will be passed to the
+                individual flowables
         """
 
         return {}
@@ -595,19 +609,21 @@ class S3PDFCardLayout(Flowable):
         """
             Helper function to render a barcode
 
-            @param value: the string to encode
-            @param x: drawing position
-            @param y: drawing position
-            @param bctype: the barcode type
-            @param height: the height of the barcode (in points)
-            @param barwidth: the default width of the smallest bar
-            @param halign: horizontal alignment ("left"|"center"|"right"), default left
-            @param valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
-            @param maxwidth: the maximum total width, if specified, the barcode will
-                             not be rendered if it would exceed this width even with
-                             the minimum possible bar width
+            Args:
+                value: the string to encode
+                x: drawing position
+                y: drawing position
+                bctype: the barcode type
+                height: the height of the barcode (in points)
+                barwidth: the default width of the smallest bar
+                halign: horizontal alignment ("left"|"center"|"right"), default left
+                valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
+                maxwidth: the maximum total width, if specified, the barcode will
+                          not be rendered if it would exceed this width even with
+                          the minimum possible bar width
 
-            @return: True if successful, otherwise False
+            Returns:
+                True if successful, otherwise False
         """
 
         # For arbitrary alphanumeric values, these would be the most
@@ -662,13 +678,14 @@ class S3PDFCardLayout(Flowable):
         """
             Helper function to draw a QR code
 
-            @param value: the string to encode
-            @param x: drawing position
-            @param y: drawing position
-            @param size: the size (edge length) of the QR code
-            @param level: error correction level ("L", "M", "Q", "H")
-            @param halign: horizontal alignment ("left"|"center"|"right"), default left
-            @param valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
+            Args:
+                value: the string to encode
+                x: drawing position
+                y: drawing position
+                size: the size (edge length) of the QR code
+                level: error correction level ("L", "M", "Q", "H")
+                halign: horizontal alignment ("left"|"center"|"right"), default left
+                valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
         """
 
         qr_code = qr.QrCodeWidget(value, barLevel=level)
@@ -713,17 +730,18 @@ class S3PDFCardLayout(Flowable):
                    ):
         """
             Helper function to draw an image
-            - requires PIL (required for ReportLab image handling anyway)
+                - requires PIL (required for ReportLab image handling anyway)
 
-            @param img: the image (filename or BytesIO buffer)
-            @param x: drawing position
-            @param y: drawing position
-            @param width: the target width of the image (in points)
-            @param height: the target height of the image (in points)
-            @param proportional: keep image proportions when scaling to width/height
-            @param scale: scale the image by this factor (overrides width/height)
-            @param halign: horizontal alignment ("left"|"center"|"right"), default left
-            @param valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
+            Args:
+                img: the image (filename or BytesIO buffer)
+                x: drawing position
+                y: drawing position
+                width: the target width of the image (in points)
+                height: the target height of the image (in points)
+                proportional: keep image proportions when scaling to width/height
+                scale: scale the image by this factor (overrides width/height)
+                halign: horizontal alignment ("left"|"center"|"right"), default left
+                valign: vertical alignment ("top"|"middle"|"bottom"), default bottom
         """
 
         if hasattr(img, "seek"):

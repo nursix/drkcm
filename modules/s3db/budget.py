@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Budget Model
 
-""" Sahana Eden Budget Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,11 +25,11 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3BudgetModel",
-           "S3BudgetKitModel",
-           "S3BudgetBundleModel",
-           "S3BudgetAllocationModel",
-           "S3BudgetMonitoringModel",
+__all__ = ("BudgetModel",
+           "BudgetKitModel",
+           "BudgetBundleModel",
+           "BudgetAllocationModel",
+           "BudgetMonitoringModel",
            "budget_rheader",
            "budget_CostItemRepresent",
            )
@@ -44,7 +42,7 @@ from s3dal import Row
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3BudgetModel(DataModel):
+class BudgetModel(DataModel):
 
     names = ("budget_entity",
              "budget_budget",
@@ -553,7 +551,7 @@ class S3BudgetModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetKitModel(DataModel):
+class BudgetKitModel(DataModel):
 
     names = ("budget_kit",
              "budget_item",
@@ -922,7 +920,7 @@ class S3BudgetKitModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetBundleModel(DataModel):
+class BudgetBundleModel(DataModel):
     """ Model for Budget Bundles """
 
     names = ("budget_bundle",
@@ -1308,7 +1306,7 @@ class S3BudgetBundleModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetAllocationModel(DataModel):
+class BudgetAllocationModel(DataModel):
     """
         Model for Budget Allocation
    """
@@ -1418,8 +1416,8 @@ class S3BudgetAllocationModel(DataModel):
         """
             Import item de-duplication
 
-            @todo: additionally have an onaccept sanitizing overlapping
-                   allocations? (may be too simple, though)
+            TODO additionally have an onaccept sanitizing overlapping
+                 allocations? (may be too simple, though)
         """
 
         data = item.data
@@ -1446,7 +1444,7 @@ class S3BudgetAllocationModel(DataModel):
         return
 
 # =============================================================================
-class S3BudgetMonitoringModel(DataModel):
+class BudgetMonitoringModel(DataModel):
     """
         Budget Monitoring Model
 
@@ -1673,11 +1671,7 @@ class S3BudgetMonitoringModel(DataModel):
 class budget_CostItemRepresent(S3Represent):
     """ Representation of Cost Items """
 
-    # -------------------------------------------------------------------------
     def __init__(self, show_link=False):
-        """
-            Constructor
-        """
 
         super(budget_CostItemRepresent, self).__init__(lookup="budget_cost_item",
                                                        key="cost_item_id",
@@ -1696,9 +1690,10 @@ class budget_CostItemRepresent(S3Represent):
         """
             Custom rows lookup function
 
-            @param key: the key field
-            @param values: the values to look up
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key field
+                values: the values to look up
+                fields: unused (retained for API compatibility)
         """
 
         db = current.db
@@ -1783,7 +1778,8 @@ class budget_CostItemRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         s3db = current.s3db
@@ -1968,7 +1964,8 @@ def budget_budget_totals(budget_entity_id):
     """
         Calculate Totals for a budget
 
-        @param budget_entity_id: the budget_entity record ID
+        Args:
+            budget_entity_id: the budget_entity record ID
     """
 
     db = current.db

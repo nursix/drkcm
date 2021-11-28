@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Content Management System Model
 
-""" Sahana Eden Content Management System Model
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -707,11 +705,12 @@ class CMSContentModel(DataModel):
             or online documentation):
                 - same name and series => same post
 
-            @param item: the import item
+            Args:
+                item: the import item
 
-            @todo: if no name present => use cms_post_module component
-                   to identify updates (also requires deduplication of
-                   cms_post_module component)
+            TODO if no name present => use cms_post_module component
+                 to identify updates (also requires deduplication of
+                 cms_post_module component)
         """
 
         data = item.data
@@ -1417,9 +1416,10 @@ def cms_documentation(r, default_page, default_url):
     """
         Render an online documentation page, to be called from prep
 
-        @param r: the CRUDRequest
-        @param default_page: the default page name
-        @param default_url: the default URL if no contents found
+        Args:
+            r: the CRUDRequest
+            default_page: the default page name
+            default_url: the default URL if no contents found
     """
 
     row = r.record
@@ -1457,9 +1457,11 @@ def cms_announcements(roles=None):
     """
         Get current announcements
 
-        @param roles: filter announcement by these roles
+        Args:
+            roles: filter announcement by these roles
 
-        @returns: any announcements (Rows)
+        Returns:
+            any announcements (Rows)
     """
 
     db = current.db
@@ -1508,12 +1510,14 @@ class S3CMS(CRUDMethod):
     def apply_method(self, r, **attr):
         """
             Entry point to apply cms method to CRUDRequests
-            - produces a full page with a Richtext widget
+                - produces a full page with a Richtext widget
 
-            @param r: the CRUDRequest
-            @param attr: dictionary of parameters for the method handler
+            Args:
+                r: the CRUDRequest
+                attr: dictionary of parameters for the method handler
 
-            @return: output object to send to the view
+            Returns:
+                output object to send to the view
         """
 
         # Not Implemented
@@ -1525,11 +1529,12 @@ class S3CMS(CRUDMethod):
             Render a Rich Text widget suitable for use in a page such as
             S3Summary
 
-            @param method: the widget method
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                method: the widget method
+                r: the CRUDRequest
+                attr: controller attributes
 
-            @ToDo: Support comments
+            TODO Support comments
         """
 
         if not current.deployment_settings.has_module("cms"):
@@ -1550,12 +1555,13 @@ class S3CMS(CRUDMethod):
         """
             Render resource-related CMS contents
 
-            @param module: the module prefix
-            @param resource: the resource name (without prefix)
-            @param record: the record ID (optional)
-            @param widget_id: the DOM node ID for the CMS widget
-            @param hide_if_empty: return an empty string when there is no
-                                  contents rather than a blank DIV
+            Args:
+                module: the module prefix
+                resource: the resource name (without prefix)
+                record: the record ID (optional)
+                widget_id: the DOM node ID for the CMS widget
+                hide_if_empty: return an empty string when there is no
+                               contents rather than a blank DIV
         """
 
         db = current.db
@@ -1734,11 +1740,12 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
         Default dataList item renderer for CMS Posts on the
         Home & News Feed pages.
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["cms_post.id"]
@@ -2187,10 +2194,11 @@ class cms_Calendar(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.name == "post":
@@ -2357,10 +2365,11 @@ class cms_TagList(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.representation == "json":

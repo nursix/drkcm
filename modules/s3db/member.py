@@ -27,8 +27,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3MembersModel",
-           "S3MemberProgrammeModel",
+__all__ = ("MemberModel",
+           "MemberProgrammeModel",
            "member_rheader"
            )
 
@@ -39,7 +39,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3MembersModel(DataModel):
+class MemberModel(DataModel):
     """
     """
 
@@ -572,7 +572,7 @@ class S3MembersModel(DataModel):
         record.update_record(**data)
 
 # =============================================================================
-class S3MemberProgrammeModel(DataModel):
+class MemberProgrammeModel(DataModel):
     """ Member Programmes Model """
 
     names = ("member_membership_programme",

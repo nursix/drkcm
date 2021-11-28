@@ -44,7 +44,8 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         """
             Register this site at the peer repository
 
-            @return: True to indicate success, otherwise False
+            Returns:
+                True to indicate success, otherwise False
         """
 
         # No registration needed
@@ -55,7 +56,8 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         """
             Login at the peer repository
 
-            @return: None if successful, otherwise the error
+            Returns:
+                None if successful, otherwise the error
         """
 
         # No explicit login required
@@ -67,12 +69,14 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             Fetch updates from the peer repository and import them
             into the local database (active pull)
 
-            @param task: the synchronization task (sync_task Row)
-            @param onconflict: callback for automatic conflict resolution
+            Args:
+                task: the synchronization task (sync_task Row)
+                onconflict: callback for automatic conflict resolution
 
-            @return: tuple (error, mtime), with error=None if successful,
-                     else error=message, and mtime=modification timestamp
-                     of the youngest record sent
+            Returns:
+                tuple (error, mtime), with error=None if successful,
+                else error=message, and mtime=modification timestamp
+                of the youngest record sent
         """
 
         repository = self.repository
@@ -206,11 +210,13 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             Extract new updates from the local database and send
             them to the peer repository (active push)
 
-            @param task: the synchronization task (sync_task Row)
+            Args:
+                task: the synchronization task (sync_task Row)
 
-            @return: tuple (error, mtime), with error=None if successful,
-                     else error=message, and mtime=modification timestamp
-                     of the youngest record sent
+            Returns:
+                tuple (error, mtime), with error=None if successful,
+                else error=message, and mtime=modification timestamp
+                of the youngest record sent
         """
 
         repository = self.repository
@@ -360,19 +366,21 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         """
             Respond to an incoming pull from the peer repository
 
-            @param resource: the resource to be synchronized
-            @param start: index of the first record to send
-            @param limit: maximum number of records to send
-            @param msince: minimum modification date/time for records to send
-            @param filters: URL filters for record extraction
-            @param mixed: negotiate resource with peer (disregard resource)
-            @param pretty_print: make the output human-readable
+            Args:
+                resource: the resource to be synchronized
+                start: index of the first record to send
+                limit: maximum number of records to send
+                msince: minimum modification date/time for records to send
+                filters: URL filters for record extraction
+                mixed: negotiate resource with peer (disregard resource)
+                pretty_print: make the output human-readable
 
-            @return: a dict {status, remote, message, response}, with:
-                        - status....the outcome of the operation
-                        - remote....whether the error was remote (or local)
-                        - message...the log message
-                        - response..the response to send to the peer
+            Returns:
+                a dict {status, remote, message, response}, with:
+                    - status....the outcome of the operation
+                    - remote....whether the error was remote (or local)
+                    - message...the log message
+                    - response..the response to send to the peer
         """
 
         msg = "Send not supported for this repository type"
@@ -396,20 +404,22 @@ class S3SyncAdapter(S3SyncBaseAdapter):
         """
             Respond to an incoming push from the peer repository
 
-            @param source: the input stream (list of file-like objects)
-            @param resource: the target resource
-            @param strategy: the import strategy
-            @param update_policy: the update policy
-            @param conflict_policy: the conflict resolution policy
-            @param onconflict: callback for conflict resolution
-            @param last_sync: the last synchronization date/time for the peer
-            @param mixed: negotiate resource with peer (disregard resource)
+            Args:
+                source: the input stream (list of file-like objects)
+                resource: the target resource
+                strategy: the import strategy
+                update_policy: the update policy
+                conflict_policy: the conflict resolution policy
+                onconflict: callback for conflict resolution
+                last_sync: the last synchronization date/time for the peer
+                mixed: negotiate resource with peer (disregard resource)
 
-            @return: a dict {status, remote, message, response}, with:
-                        - status....the outcome of the operation
-                        - remote....whether the error was remote (or local)
-                        - message...the log message
-                        - response..the response to send to the peer
+            Returns:
+                a dict {status, remote, message, response}, with:
+                    - status....the outcome of the operation
+                    - remote....whether the error was remote (or local)
+                    - message...the log message
+                    - response..the response to send to the peer
         """
 
         msg = "Receive not supported for this repository type"
@@ -427,9 +437,11 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             repository path, excluding files which have not been modified
             since the last pull of the task
 
-            @param task: the synchronization task
-            @return: a list of file paths, ordered by their time
-                     stamp (oldest first)
+            Args:
+                task: the synchronization task
+
+            Returns:
+                a list of file paths, ordered by their time stamp (oldest first)
         """
 
         path = self.repository.path
@@ -466,9 +478,12 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             Helper function to construct the output file name from
             the repository path and the output file name pattern
 
-            @param task: the synchronization task
-            @return: the output file name, or None if either
-                     path or pattern are missing
+            Args:
+                task: the synchronization task
+
+            Returns:
+                the output file name, or None if either path or
+                pattern are missing
         """
 
         path = self.repository.path

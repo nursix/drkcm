@@ -27,8 +27,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3IRSModel",
-           "S3IRSResponseModel",
+__all__ = ("IRSModel",
+           "IRSResponseModel",
            "irs_rheader"
            )
 
@@ -44,7 +44,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3IRSModel(DataModel):
+class IRSModel(DataModel):
 
     names = ("irs_icategory",
              "irs_ireport",
@@ -992,7 +992,7 @@ S3.timeline.now="''', now.isoformat(), '''"
             r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
-class S3IRSResponseModel(DataModel):
+class IRSResponseModel(DataModel):
     """
         Tables used when responding to Incident Reports
         - with HRMs &/or Vehicles

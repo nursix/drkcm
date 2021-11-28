@@ -9,3 +9,4 @@ functionality.
    :caption: Contents:
 
    Content Management <cms>
+   Project Tracking <project>

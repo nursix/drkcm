@@ -46,7 +46,7 @@ from gluon.storage import Storage
 
 from s3dal import Rows
 
-from ..tools import S3Trackable, s3_str
+from ..tools import JSONSEPARATORS, S3Trackable, s3_str
 
 KML_NAMESPACE = "http://earth.google.com/kml/2.2"
 
@@ -62,9 +62,6 @@ GEOM_TYPES = {"point": 1,
 
 # km
 RADIUS_EARTH = 6371.01
-
-# Compact JSON encoding
-SEPARATORS = (",", ":")
 
 # Garmin GPS Symbols
 GPS_SYMBOLS = ("Airport",
@@ -241,12 +238,13 @@ class GIS:
             Designed to be called asynchronously using:
                 current.s3task.run_async("download_kml", [record_id, filename])
 
-            @param record_id: id of the record in db.gis_layer_kml
-            @param filename: name to save the file as
-            @param session_id_name: name of the session
-            @param session_id: id of the session
+            Args:
+                record_id: id of the record in db.gis_layer_kml
+                filename: name to save the file as
+                session_id_name: name of the session
+                session_id: id of the session
 
-            @ToDo: Pass error messages to Result & have JavaScript listen for these
+            TODO Pass error messages to Result & have JavaScript listen for these
         """
 
         table = current.s3db.gis_layer_kml
@@ -314,10 +312,10 @@ class GIS:
             Fetch a KML file:
                 - unzip it if-required
                 - follow NetworkLinks recursively if-required
-
-            Returns a file object
-
             Designed as a helper function for download_kml()
+
+            Returns:
+                a file object
         """
 
         from gluon.tools import fetch
@@ -459,10 +457,11 @@ class GIS:
             - used by S3LocationSelector
                       settings.get_gis_geocode_imported_addresses
 
-            @param address: street address
-            @param postcode: postcode
-            @param Lx_ids: list of ancestor IDs
-            @param geocoder: which geocoder service to use
+            Args:
+                address: street address
+                postcode: postcode
+                Lx_ids: list of ancestor IDs
+                geocoder: which geocoder service to use
         """
 
         try:
@@ -782,20 +781,23 @@ class GIS:
             Ensure a minimum size of bounding box, and that the points
             are inset from the border.
 
-            @param features: A list of point features
-            @param bbox_min_size: Minimum bounding box - gives a minimum width
-                   and height in degrees for the region shown.
-                   Without this, a map showing a single point would not show any
-                   extent around that point.
-            @param bbox_inset: Bounding box insets - adds a small amount of
-                   distance outside the points.
-                   Without this, the outermost points would be on the bounding
-                   box, and might not be visible.
-            @return: An appropriate map bounding box, as a dict:
-                   dict(lon_min=lon_min, lat_min=lat_min,
-                        lon_max=lon_max, lat_max=lat_max)
+            Args:
+                features: A list of point features
+                bbox_min_size: Minimum bounding box - gives a minimum width
+                               and height in degrees for the region shown.
+                               Without this, a map showing a single point would
+                               not show any extent around that point.
+                bbox_inset: Bounding box insets - adds a small amount of
+                            distance outside the points.
+                            Without this, the outermost points would be on the
+                            bounding box, and might not be visible.
 
-            @ToDo: Support Polygons (separate function?)
+            Returns:
+                An appropriate map bounding box, as a dict:
+                   {"lon_min": lon_min, "lat_min": lat_min,
+                    "lon_max": lon_max, "lat_max": lat_max}
+
+            TODO Support Polygons (separate function?)
         """
 
         if features:
@@ -987,12 +989,15 @@ class GIS:
             be correct. A set of candidate prepopulate data can be tested by
             importing after prepopulate is run.
 
-            @param parent: A location_id to provide bounds suitable
-                           for validating child locations
-            @return: bounding box and parent location name, as a list:
+            Args:
+                parent: A location_id to provide bounds suitable for
+                validating child locations
+
+            Returns:
+                bounding box and parent location name, as a list:
                 [lat_min, lon_min, lat_max, lon_max, parent_name]
 
-            @ToDo: Support Polygons (separate function?)
+            TODO Support Polygons (separate function?)
         """
 
         table = current.s3db.gis_location
@@ -1101,10 +1106,14 @@ class GIS:
             greater efficiency:
             http://eden.sahanafoundation.org/wiki/HaitiGISToDo#HierarchicalTrees
 
-            @param: level - optionally filter by level
+            Args:
+            :param: level - optionally filter by level
 
-            @return: Rows object containing IDs & Names
-                      Note: This does NOT include the parent location itself
+            Returns:
+                Rows object containing IDs & Names
+
+            Note:
+                Return value does NOT include the parent location itself
         """
 
         db = current.db
@@ -1354,7 +1363,8 @@ class GIS:
 
             Returns the id of the config it actually used, if any.
 
-            @param: config_id. use '0' to set the SITE_DEFAULT
+            Args:
+            :param: config_id. use '0' to set the SITE_DEFAULT
 
             @ToDo: Merge configs for Event
         """
@@ -1605,8 +1615,9 @@ class GIS:
         """
             Returns the location hierarchy and it's labels
 
-            @param: level - a specific level for which to lookup the label
-            @param: location - the location_id to lookup the location for
+            Args:
+            :param: level - a specific level for which to lookup the label
+            :param: location - the location_id to lookup the location for
                                currently only the actual location is supported
                                @ToDo: Do a search of parents to allow this
                                       lookup for any location
@@ -1695,7 +1706,8 @@ class GIS:
         """
             Returns the strict hierarchy value from the current config.
 
-            @param: location - the location_id of the record to check
+            Args:
+            :param: location - the location_id of the record to check
         """
 
         s3db = current.s3db
@@ -1856,8 +1868,9 @@ class GIS:
         """
             Returns the parent country for a given record
 
-            @param: location: the location or id to search for
-            @param: key_type: whether to return an id or code
+            Args:
+            :param: location: the location or id to search for
+            :param: key_type: whether to return an id or code
 
             @ToDo: Optimise to not use try/except
         """
@@ -1919,7 +1932,8 @@ class GIS:
         """
             Returns the default country for the active gis_config
 
-            @param: key_type: whether to return an id or code
+            Args:
+            :param: key_type: whether to return an id or code
         """
 
         config = GIS.get_config()
@@ -2094,13 +2108,12 @@ class GIS:
         """
             Compute a bounding box given a Radius (in km) of a LatLon Location
 
-            Note the order of the parameters.
+            Returns:
+                a dict containing the bounds with keys min_lon, max_lon,
+                min_lat, max_lat
 
-            @return a dict containing the bounds with keys min_lon, max_lon,
-            min_lat, max_lat
-
-            See:
-            http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates
+            See Also:
+                http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates
         """
 
         import math
@@ -2310,8 +2323,9 @@ class GIS:
 
             used by display_feature() in gis controller
 
-            @param feature_id: the feature ID
-            @param filter: Filter out results based on deployment_settings
+            Args:
+                feature_id: the feature ID
+                filter: Filter out results based on deployment_settings
         """
 
         db = current.db
@@ -2480,10 +2494,11 @@ class GIS:
             e.g. Exports in KML, GeoRSS or GPX format
 
             Called by S3ResourceTree
-            @param: resource - CRUDResource instance (required)
-            @param: attr_fields - list of attr_fields to use instead of reading
+            Args:
+            :param: resource - CRUDResource instance (required)
+            :param: attr_fields - list of attr_fields to use instead of reading
                                   from get_vars or looking up in gis_layer_feature
-            @param: count - total number of features
+            :param: count - total number of features
                            (can actually be more if features have multiple locations)
         """
 
@@ -2726,7 +2741,7 @@ class GIS:
                 rows = db(query).select(stable.record_id,
                                         stable.style)
                 for row in rows:
-                    styles[row.record_id] = json.dumps(row.style, separators=SEPARATORS)
+                    styles[row.record_id] = json.dumps(row.style, separators=JSONSEPARATORS)
 
                 styles[tablename] = styles
 
@@ -3358,11 +3373,12 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             Export admin areas to /static/cache for use by interactive web-mapping services
             - designed for use by the Vulnerability Mapping
 
-            @param countries: list of ISO2 country codes
-            @param levels: list of which Lx levels to export
-            @param format: Only GeoJSON supported for now (may add KML &/or OSM later)
-            @param simplify: tolerance for the simplification algorithm. False to disable simplification
-            @param precision: number of decimal points to include in the coordinates
+            Args:
+                countries: list of ISO2 country codes
+                levels: list of which Lx levels to export
+                format: Only GeoJSON supported for now (may add KML &/or OSM later)
+                simplify: tolerance for the simplification algorithm. False to disable simplification
+                precision: number of decimal points to include in the coordinates
         """
 
         db = current.db
@@ -3443,7 +3459,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                     id = row.id
                     shape = wkt_loads(row.wkt)
                     # Compact Encoding
-                    geojson = dumps(shape, separators=SEPARATORS)
+                    geojson = dumps(shape, separators=JSONSEPARATORS)
                 if geojson:
                     f = {"type": "Feature",
                          "properties": {"id": id},
@@ -3458,7 +3474,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                 # Output to file
                 filename = os.path.join(folder, "countries.geojson")
                 File = open(filename, "w")
-                File.write(json.dumps(data, separators=SEPARATORS))
+                File.write(json.dumps(data, separators=JSONSEPARATORS))
                 File.close()
 
         q1 = (table.level == "L1") & \
@@ -3512,7 +3528,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                         id = row.id
                         shape = wkt_loads(row.wkt)
                         # Compact Encoding
-                        geojson = dumps(shape, separators=SEPARATORS)
+                        geojson = dumps(shape, separators=JSONSEPARATORS)
                     if geojson:
                         f = {"type": "Feature",
                              "properties": {"id": id},
@@ -3527,7 +3543,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                     # Output to file
                     filename = os.path.join(folder, "1_%s.geojson" % _id)
                     File = open(filename, "w")
-                    File.write(json.dumps(data, separators=SEPARATORS))
+                    File.write(json.dumps(data, separators=JSONSEPARATORS))
                     File.close()
                 else:
                     current.log.debug("No L1 features in %s" % _id)
@@ -3573,7 +3589,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                             id = row.id
                             shape = wkt_loads(row.wkt)
                             # Compact Encoding
-                            geojson = dumps(shape, separators=SEPARATORS)
+                            geojson = dumps(shape, separators=JSONSEPARATORS)
                         if geojson:
                             f = {"type": "Feature",
                                  "properties": {"id": id},
@@ -3588,7 +3604,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                         # Output to file
                         filename = os.path.join(folder, "2_%s.geojson" % l1.id)
                         File = open(filename, "w")
-                        File.write(json.dumps(data, separators=SEPARATORS))
+                        File.write(json.dumps(data, separators=JSONSEPARATORS))
                         File.close()
                     else:
                         current.log.debug("No L2 features in %s" % l1.id)
@@ -3637,7 +3653,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                                 id = row.id
                                 shape = wkt_loads(row.wkt)
                                 # Compact Encoding
-                                geojson = dumps(shape, separators=SEPARATORS)
+                                geojson = dumps(shape, separators=JSONSEPARATORS)
                             if geojson:
                                 f = {"type": "Feature",
                                      "properties": {"id": id},
@@ -3652,7 +3668,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                             # Output to file
                             filename = os.path.join(folder, "3_%s.geojson" % l2.id)
                             File = open(filename, "w")
-                            File.write(json.dumps(data, separators=SEPARATORS))
+                            File.write(json.dumps(data, separators=JSONSEPARATORS))
                             File.close()
                         else:
                             current.log.debug("No L3 features in %s" % l2.id)
@@ -3704,7 +3720,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                                     id = row.id
                                     shape = wkt_loads(row.wkt)
                                     # Compact Encoding
-                                    geojson = dumps(shape, separators=SEPARATORS)
+                                    geojson = dumps(shape, separators=JSONSEPARATORS)
                                 if geojson:
                                     f = {"type": "Feature",
                                          "properties": {"id": id},
@@ -3719,7 +3735,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                                 # Output to file
                                 filename = os.path.join(folder, "4_%s.geojson" % l3.id)
                                 File = open(filename, "w")
-                                File.write(json.dumps(data, separators=SEPARATORS))
+                                File.write(json.dumps(data, separators=JSONSEPARATORS))
                                 File.close()
                             else:
                                 current.log.debug("No L4 features in %s" % l3.id)
@@ -3731,14 +3747,15 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                            levels=["L0", "L1", "L2"]
                           ):
         """
-           Import Admin Boundaries into the Locations table
+            Import Admin Boundaries into the Locations table
 
-           @param source - Source to get the data from.
-                           Currently only GADM is supported: http://gadm.org
-           @param countries - List of ISO2 countrycodes to download data for
-                              defaults to all countries
-           @param levels - Which levels of the hierarchy to import.
-                           defaults to all 3 supported levels
+            Args:
+                source - Source to get the data from.
+                         Currently only GADM is supported: http://gadm.org
+                countries - List of ISO2 countrycodes to download data for
+                            defaults to all countries
+                levels - Which levels of the hierarchy to import, defaults to
+                         all 3 supported levels
         """
 
         if source == "gadmv1":
@@ -3783,13 +3800,15 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
     @staticmethod
     def import_gadm1_L0(ogr, countries=[]):
         """
-           Import L0 Admin Boundaries into the Locations table from GADMv1
-           - designed to be called from import_admin_areas()
-           - assumes that basic prepop has been done, so that no new records need to be created
+            Import L0 Admin Boundaries into the Locations table from GADMv1
+                - designed to be called from import_admin_areas()
+                - assumes that basic prepop has been done, so that no new
+                  records need to be created
 
-           @param ogr - The OGR Python module
-           @param countries - List of ISO2 countrycodes to download data for
-                              defaults to all countries
+            Args:
+                ogr - The OGR Python module
+                countries - List of ISO2 countrycodes to download data for
+                            defaults to all countries
         """
 
         db = current.db
@@ -3935,10 +3954,11 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             - designed to be called from import_admin_areas()
             - assumes a fresh database with just Countries imported
 
-            @param ogr - The OGR Python module
-            @param level - "L1" or "L2"
-            @param countries - List of ISO2 countrycodes to download data for
-                               defaults to all countries
+            Args:
+                ogr - The OGR Python module
+                level - "L1" or "L2"
+                countries - List of ISO2 countrycodes to download data for
+                            defaults to all countries
         """
 
         if level == "L1":
@@ -4306,12 +4326,13 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             - designed to be called from import_admin_areas()
             - assumes that basic prepop has been done, so that no new L0 records need to be created
 
-            @param ogr - The OGR Python module
-            @param level - The OGR Python module
-            @param countries - List of ISO2 countrycodes to download data for
+            Args:
+                ogr - The OGR Python module
+                level - The OGR Python module
+                countries - List of ISO2 countrycodes to download data for
                                defaults to all countries
 
-            @ToDo: Complete this
+            TODO Complete this
                 - not currently possible to get all data from the 1 file easily
                 - no ISO2
                 - needs updating for gis_location_tag model
@@ -4464,8 +4485,9 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
         """
             Import Locations from the Geonames database
 
-            @param country: the 2-letter country code
-            @param level: the ADM level to import
+            Args:
+                country: the 2-letter country code
+                level: the ADM level to import
 
             Designed to be run from the CLI
             Levels should be imported sequentially.
@@ -4737,21 +4759,23 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
     def update_location_tree(feature=None, all_locations=False, propagating=False):
         """
             Update GIS Locations' Materialized path, Lx locations, Lat/Lon & the_geom
+                - called onaccept for locations (async, where-possible)
 
-            @param feature: a feature dict to update the tree for
-            - if not provided then update the whole tree
-            @param all_locations: passed to recursive calls to indicate that this
-            is an update of the whole tree. Used to avoid repeated attempts to
-            update hierarchy locations with missing data (e.g. lacking some
-            ancestor level).
-            @param propagating: passed to recursive calls to indicate that this
-            is a propagation update. Used to avoid repeated attempts to
-            update hierarchy locations with missing data (e.g. lacking some
-            ancestor level).
+            Args:
+                feature: a feature dict to update the tree for
+                         - if not provided then update the whole tree
+                all_locations: passed to recursive calls to indicate that this
+                               is an update of the whole tree. Used to avoid
+                               repeated attempts to update hierarchy locations
+                               with missing data (e.g. lacking some ancestor
+                               level).
+                propagating: passed to recursive calls to indicate that this
+                             is a propagation update. Used to avoid repeated
+                             attempts to update hierarchy locations with
+                             missing data (e.g. lacking some ancestor level).
 
-            returns the path of the feature
-
-            Called onaccept for locations (async, where-possible)
+            Returns:
+                the path of the feature
         """
 
         # During prepopulate, for efficiency, we don't update the location
@@ -4828,7 +4852,8 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             """
                 Propagate Lat/Lon down to any Features which inherit from this one
 
-                @param parent: gis_location id of parent
+                Args:
+                    parent: gis_location id of parent
             """
 
             # No need to filter out deleted since the parent FK is None for these records
@@ -6189,11 +6214,12 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             db(query).select(table.the_geom.st_simplify(tolerance).st_astext().with_alias('wkt')).first().wkt
             db(query).select(table.the_geom.st_simplify(tolerance).st_asgeojson().with_alias('geojson')).first().geojson
 
-            @param wkt: the WKT string to be simplified (usually coming from a gis_location record)
-            @param tolerance: how aggressive a simplification to perform
-            @param preserve_topology: whether the simplified geometry should be maintained
-            @param output: whether to output as WKT or GeoJSON format
-            @param precision: the number of decimal places to include in the output
+            Args:
+                wkt: the WKT string to be simplified (usually coming from a gis_location record)
+                tolerance: how aggressive a simplification to perform
+                preserve_topology: whether the simplified geometry should be maintained
+                output: whether to output as WKT or GeoJSON format
+                precision: the number of decimal places to include in the output
         """
 
         from shapely.geometry import Point, LineString, Polygon, MultiPolygon
@@ -6270,7 +6296,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
         elif output == "geojson":
             from ...geojson import dumps
             # Compact Encoding
-            output = dumps(shape, separators=SEPARATORS)
+            output = dumps(shape, separators=JSONSEPARATORS)
 
         return output
 
@@ -6328,93 +6354,127 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
             Normally called in the controller as: map = gis.show_map()
             In the view, put: {{=XML(map)}}
 
-            @param id: ID to uniquely identify this map if there are several on a page
-            @param height: Height of viewport (if not provided then the default deployment setting is used)
-            @param width: Width of viewport (if not provided then the default deployment setting is used)
-            @param bbox: default Bounding Box of viewport (if not provided then the Lat/Lon/Zoom are used) (Dict):
-                {"lon_min" : float,
-                 "lat_min" : float,
-                 "lon_max" : float,
-                 "lat_max" : float,
-                 }
-            @param lat: default Latitude of viewport (if not provided then the default setting from the Map Service Catalogue is used)
-            @param lon: default Longitude of viewport (if not provided then the default setting from the Map Service Catalogue is used)
-            @param zoom: default Zoom level of viewport (if not provided then the default setting from the Map Service Catalogue is used)
-            @param projection: EPSG code for the Projection to use (if not provided then the default setting from the Map Service Catalogue is used)
-            @param add_feature: Whether to include a DrawFeature control to allow adding a marker to the map
-            @param add_feature_active: Whether the DrawFeature control should be active by default
-            @param add_polygon: Whether to include a DrawFeature control to allow drawing a polygon over the map
-            @param add_polygon_active: Whether the DrawFeature control should be active by default
-            @param add_circle: Whether to include a DrawFeature control to allow drawing a circle over the map
-            @param add_circle_active: Whether the DrawFeature control should be active by default
-            @param features: Simple Features to overlay on Map (no control over appearance & not interactive)
-                [wkt]
-            @param feature_queries: Feature Queries to overlay onto the map & their options (List of Dicts):
-                [{"name"   : T("MyLabel"), # A string: the label for the layer
-                  "query"  : query,        # A gluon.sql.Rows of gis_locations, which can be from a simple query or a Join.
-                                           # Extra fields can be added for 'popup_url', 'popup_label' & either
-                                           # 'marker' (url/height/width) or 'shape' (with optional 'colour' & 'size')
-                  "active" : True,         # Is the feed displayed upon load or needs ticking to load afterwards?
-                  "marker" : None,         # Optional: A per-Layer marker query or marker_id for the icon used to display the feature
-                  "opacity" : 1,           # Optional
-                  "cluster_attribute",     # Optional
-                  "cluster_distance",      # Optional
-                  "cluster_threshold"      # Optional
-                  }]
-            @param feature_resources: REST URLs for (filtered) resources to overlay onto the map & their options (List of Dicts):
-                [{"name"      : T("MyLabel"), # A string: the label for the layer
-                  "id"        : "search",     # A string: the id for the layer (for manipulation by JavaScript)
-                  "active"    : True,         # Is the feed displayed upon load or needs ticking to load afterwards?
-                  EITHER:
-                  "layer_id"  : 1,            # An integer: the layer_id to load (optional alternative to specifying URL/tablename/marker)
-                  "filter"    : "filter",     # A string: an optional URL filter which *replaces* any in the layer
-                  OR:
-                  "tablename" : "module_resource", # A string: the tablename (used to determine whether to locate via location_id or site_id)
-                  "url"       : "/eden/module/resource.geojson?filter", # A URL to load the resource
+            Args:
+                id: ID to uniquely identify this map if there are several
+                    on a page
+                height: Height of viewport (if not provided then the default
+                        deployment setting is used)
+                width: Width of viewport (if not provided then the default
+                       deployment setting is used)
+                bbox: default Bounding Box of viewport (if not provided then
+                       the Lat/Lon/Zoom are used), a dict:
+                            {"lon_min" : float,
+                             "lat_min" : float,
+                             "lon_max" : float,
+                             "lat_max" : float,
+                             }
+                lat: default Latitude of viewport (if not provided then the
+                     default setting from the Map Service Catalogue is used)
+                lon: default Longitude of viewport (if not provided then the
+                     default setting from the Map Service Catalogue is used)
+                zoom: default Zoom level of viewport (if not provided then
+                      the default setting from the Map Service Catalogue is used)
+                projection: EPSG code for the Projection to use (if not provided
+                            then the default setting from the Map Service Catalogue
+                            is used)
+                add_feature: Whether to include a DrawFeature control to allow
+                             adding a marker to the map
+                add_feature_active: Whether the DrawFeature control should be
+                                    active by default
+                add_polygon: Whether to include a DrawFeature control to allow
+                             drawing a polygon over the map
+                add_polygon_active: Whether the DrawFeature control should be
+                                    active by default
+                add_circle: Whether to include a DrawFeature control to allow
+                            drawing a circle over the map
+                add_circle_active: Whether the DrawFeature control should be
+                                   active by default
+                features: Simple Features to overlay on Map (no control over
+                          appearance & not interactive) [wkt]
+                feature_queries: Feature Queries to overlay onto the map and
+                                 their options (List of Dicts):
+                        [{"name"   : T("MyLabel"), # A string: the label for the layer
+                          "query"  : query,        # A gluon.sql.Rows of gis_locations, which can be from
+                                                   # a simple query or a Join.
+                                                   # Extra fields can be added for 'popup_url', 'popup_label' & either
+                                                   # 'marker' (url/height/width) or 'shape' (with optional 'colour' & 'size')
+                          "active" : True,         # Is the feed displayed upon load or needs ticking to load afterwards?
+                          "marker" : None,         # Optional: A per-Layer marker query or marker_id for the icon used to display the feature
+                          "opacity" : 1,           # Optional
+                          "cluster_attribute",     # Optional
+                          "cluster_distance",      # Optional
+                          "cluster_threshold"      # Optional
+                          }]
+                feature_resources: REST URLs for (filtered) resources to overlay
+                                   onto the map & their options (List of Dicts):
+                        [{"name"      : T("MyLabel"), # A string: the label for the layer
+                          "id"        : "search",     # A string: the id for the layer (for manipulation by JavaScript)
+                          "active"    : True,         # Is the feed displayed upon load or needs ticking to load afterwards?
 
-                  "marker"    : None,         # Optional: A per-Layer marker dict for the icon used to display the feature (overrides layer_id if-set)
-                  "opacity"   : 1,            # Optional (overrides layer_id if-set)
-                  "cluster_attribute",        # Optional (overrides layer_id if-set)
-                  "cluster_distance",         # Optional (overrides layer_id if-set)
-                  "cluster_threshold",        # Optional (overrides layer_id if-set)
-                  "dir",                      # Optional (overrides layer_id if-set)
-                  "style",                    # Optional (overrides layer_id if-set)
-                  }]
-            @param wms_browser: WMS Server's GetCapabilities & options (dict)
-                {"name": T("MyLabel"),     # Name for the Folder in LayerTree
-                 "url": string             # URL of GetCapabilities
-                 }
-            @param catalogue_layers: Show all the enabled Layers from the GIS Catalogue
-                                     Defaults to False: Just show the default Base layer
-            @param legend: True: Show the GeoExt Legend panel, False: No Panel, "float": New floating Legend Panel
-            @param toolbar: Show the Icon Toolbar of Controls
-            @param area: Show the Area tool on the Toolbar
-            @param color_picker: Show the Color Picker tool on the Toolbar (used for S3LocationSelector...pick up in postprocess)
-                                 If a style is provided then this is used as the default style
-            @param nav: Show the Navigation controls on the Toolbar
-            @param save: Show the Save tool on the Toolbar
-            @param search: Show the Geonames search box (requires a username to be configured)
-            @param mouse_position: Show the current coordinates in the bottom-right of the map. 3 Options: 'normal', 'mgrs', False (defaults to checking deployment_settings, which defaults to 'normal')
-            @param overview: Show the Overview Map (defaults to checking deployment_settings, which defaults to True)
-            @param permalink: Show the Permalink control (defaults to checking deployment_settings, which defaults to True)
-            @param scaleline: Show the ScaleLine control (defaults to checking deployment_settings, which defaults to True)
-            @param zoomcontrol: Show the Zoom control (defaults to checking deployment_settings, which defaults to True)
-            @param mgrs: Use the MGRS Control to select PDFs
-                {"name": string,           # Name for the Control
-                 "url": string             # URL of PDF server
-                 }
-                @ToDo: Also add MGRS Search support: http://gxp.opengeo.org/master/examples/mgrs.html
-            @param window: Have viewport pop out of page into a resizable window
-            @param window_hide: Have the window hidden by default, ready to appear (e.g. on clicking a button)
-            @param closable: In Window mode, whether the window is closable or not
-            @param collapsed: Start the Tools panel (West region) collapsed
-            @param callback: Code to run once the Map JavaScript has loaded
-            @param plugins: an iterable of objects which support the following methods:
-                                .extend_gis_map(map)
-                            Client-side portion supports the following methods:
-                                .addToMapWindow(items)
-                                .setup(map)
+                        EITHER:
+                          "layer_id"  : 1,            # An integer: the layer_id to load (optional alternative to
+                                                      # specifying URL/tablename/marker)
+                          "filter"    : "filter",     # A string: an optional URL filter which *replaces* any in the layer
+                        OR:
+                          "tablename" : "module_resource", # A string: the tablename (used to determine whether to locate via location_id or site_id)
+                          "url"       : "/eden/module/resource.geojson?filter", # A URL to load the resource
 
+                          "marker"    : None,         # Optional: A per-Layer marker dict for the icon used to display the feature (overrides layer_id if-set)
+                          "opacity"   : 1,            # Optional (overrides layer_id if-set)
+                          "cluster_attribute",        # Optional (overrides layer_id if-set)
+                          "cluster_distance",         # Optional (overrides layer_id if-set)
+                          "cluster_threshold",        # Optional (overrides layer_id if-set)
+                          "dir",                      # Optional (overrides layer_id if-set)
+                          "style",                    # Optional (overrides layer_id if-set)
+                          }]
+                wms_browser: WMS Server's GetCapabilities & options (dict)
+                             {"name": T("MyLabel"),     # Name for the Folder in LayerTree
+                              "url": string             # URL of GetCapabilities
+                              }
+                catalogue_layers: Show all the enabled Layers from the
+                                  GIS Catalogue, defaults to False: Just
+                                  show the default Base layer
+                legend: True: Show the GeoExt Legend panel,
+                        False: No Panel, "float": New floating Legend Panel
+                toolbar: Show the Icon Toolbar of Controls
+                area: Show the Area tool on the Toolbar
+                color_picker: Show the Color Picker tool on the Toolbar (used
+                              for S3LocationSelector...pick up in postprocess),
+                              if a style is provided then this is used as the
+                              default style
+                nav: Show the Navigation controls on the Toolbar
+                save: Show the Save tool on the Toolbar
+                search: Show the Geonames search box (requires a username to be
+                        configured)
+                mouse_position: Show the current coordinates in the bottom-right
+                                of the map. 3 Options: 'normal', 'mgrs', False
+                                (defaults to checking deployment_settings, which
+                                defaults to 'normal')
+                overview: Show the Overview Map (defaults to checking
+                          deployment_settings, which defaults to True)
+                permalink: Show the Permalink control (defaults to checking
+                           deployment_settings, which defaults to True)
+                scaleline: Show the ScaleLine control (defaults to checking
+                           deployment_settings, which defaults to True)
+                zoomcontrol: Show the Zoom control (defaults to checking
+                             deployment_settings, which defaults to True)
+                mgrs: Use the MGRS Control to select PDFs
+                        {"name": string,   # Name for the Control
+                         "url": string     # URL of PDF server
+                         }
+                      TODO Also add MGRS Search support: http://gxp.opengeo.org/master/examples/mgrs.html
+                window: Have viewport pop out of page into a resizable window
+                window_hide: Have the window hidden by default, ready to
+                             appear (e.g. on clicking a button)
+                closable: In Window mode, whether the window is closable or not
+                collapsed: Start the Tools panel (West region) collapsed
+                callback: Code to run once the Map JavaScript has loaded
+                plugins: an iterable of objects which support the following
+                         methods:
+                            .extend_gis_map(map)
+                         Client-side portion supports the following methods:
+                            .addToMapWindow(items)
+                            .setup(map)
         """
 
         if bbox is DEFAULT:

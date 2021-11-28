@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Stats Model
 
-""" Sahana Eden Stats Model
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,12 +25,10 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division
-
-__all__ = ("S3StatsModel",
-           "S3StatsDemographicModel",
-           "S3StatsImpactModel",
-           "S3StatsPeopleModel",
+__all__ = ("StatsModel",
+           "StatsDemographicModel",
+           "StatsImpactModel",
+           "StatsPeopleModel",
            "stats_demographic_data_controller",
            "stats_quantile",
            "stats_year",
@@ -50,7 +46,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3StatsModel(DataModel):
+class StatsModel(DataModel):
     """
         Statistics Data
     """
@@ -79,7 +75,6 @@ class S3StatsModel(DataModel):
         sp_types = Storage(disease_statistic = T("Disease Statistic"),
                            org_resource_type = T("Organization Resource Type"),
                            project_beneficiary_type = T("Project Beneficiary Type"),
-                           project_campaign_keyword = T("Project Campaign Keyword"),
                            #project_indicator = T("Project Indicator"),
                            stats_demographic = T("Demographic"),
                            stats_impact_type = T("Impact Type"),
@@ -113,7 +108,6 @@ class S3StatsModel(DataModel):
         sd_types = Storage(disease_stats_data = T("Disease Data"),
                            org_resource = T("Organization Resource"),
                            project_beneficiary = T("Project Beneficiary"),
-                           project_campaign_response_summary = T("Project Campaign Response Summary"),
                            #project_indicator_data = T("Project Indicator Data"),
                            stats_demographic_data = T("Demographic Data"),
                            stats_impact = T("Impact"),
@@ -231,7 +225,7 @@ class S3StatsModel(DataModel):
                 }
 
 # =============================================================================
-class S3StatsDemographicModel(DataModel):
+class StatsDemographicModel(DataModel):
     """
         Baseline Demographics
 
@@ -672,7 +666,7 @@ class S3StatsDemographicModel(DataModel):
         location_dict = {} # a list of locations
         loc_level_list = {} # a list of levels for each location
 
-        aggregated_period = S3StatsDemographicModel.stats_demographic_aggregated_period
+        aggregated_period = StatsDemographicModel.stats_demographic_aggregated_period
         (last_period, year_end) = aggregated_period(None)
 
         # Test to see which date format we have based on how we were called
@@ -1046,11 +1040,12 @@ class S3StatsDemographicModel(DataModel):
             Calculates the stats_demographic_aggregate for a specific parameter at a
             specific location.
 
-            @param location_id: the location record ID
-            @param parameter_id: the parameter record ID
-            @param total_id: the parameter record ID for the percentage calculation
-            @param start_date: the start date of the time period (as string)
-            @param end_date: the end date of the time period (as string)
+            Args:
+                location_id: the location record ID
+                parameter_id: the parameter record ID
+                total_id: the parameter record ID for the percentage calculation
+                start_date: the start date of the time period (as string)
+                end_date: the end date of the time period (as string)
         """
 
         db = current.db
@@ -1219,7 +1214,7 @@ def stats_demographic_data_controller():
                                    )
 
 # =============================================================================
-class S3StatsImpactModel(DataModel):
+class StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
@@ -1351,7 +1346,7 @@ class S3StatsImpactModel(DataModel):
                 }
 
 # =============================================================================
-class S3StatsPeopleModel(DataModel):
+class StatsPeopleModel(DataModel):
     """
         Used to record people in the CRMT (Community Resilience Mapping Tool) template
 
@@ -1536,9 +1531,10 @@ def stats_quantile(data, q):
 def stats_year(row, tablename):
     """
         Function to calculate computed field for stats_data
-        - returns the year of this entry
+            - returns the year of this entry
 
-        @param row: a dict of the Row
+        Args:
+            row: a dict of the Row
     """
 
     NOT_PRESENT = lambda: None
@@ -1673,12 +1669,14 @@ class stats_SourceRepresent(S3Represent):
         """
             Represent multiple values as dict {value: representation}
 
-            @param values: list of values
-            @param rows: the referenced rows (if values are foreign keys)
-            @param show_link: render each representation as link
-            @param include_blank: Also include a blank value
+            Args:
+                values: list of values
+                rows: the referenced rows (if values are foreign keys)
+                show_link: render each representation as link
+                include_blank: Also include a blank value
 
-            @return: a dict {value: representation}
+            Returns:
+                a dict {value: representation}
         """
 
         show_link = show_link and self.show_link
@@ -1718,7 +1716,8 @@ class stats_SourceRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the site IDs
+            Args:
+                values: the site IDs
         """
 
         db = current.db
@@ -1774,9 +1773,10 @@ class stats_SourceRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key (site_id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (site_id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         if row:
@@ -1796,7 +1796,8 @@ class stats_SourceRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the org_site Row
+            Args:
+                row: the org_site Row
         """
 
         name = row["stats_source.name"]

@@ -40,7 +40,8 @@ from gluon import current, redirect, A, HTTP, URL
 from gluon.storage import Storage
 
 from .resource import CRUDResource
-from .tools import s3_get_extension, s3_keep_messages, s3_store_last_record_id, s3_str
+from .tools import get_crud_string, s3_get_extension, s3_keep_messages, \
+                   s3_store_last_record_id, s3_str
 
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
 
@@ -68,21 +69,21 @@ class CRUDRequest:
                  http = None,
                  ):
         """
-            Constructor
+            Args:
+                prefix: the table name prefix
+                name: the table name
+                c: the controller prefix
+                f: the controller function
+                args: list of request arguments
+                vars: dict of request variables
+                extension: the format extension (representation)
+                get_vars: the URL query variables (overrides vars)
+                post_vars: the POST variables (overrides vars)
+                http: the HTTP method (GET, PUT, POST, or DELETE)
 
-            :param prefix: the table name prefix
-            :param name: the table name
-            :param c: the controller prefix
-            :param f: the controller function
-            :param args: list of request arguments
-            :param vars: dict of request variables
-            :param extension: the format extension (representation)
-            :param get_vars: the URL query variables (overrides vars)
-            :param post_vars: the POST variables (overrides vars)
-            :param http: the HTTP method (GET, PUT, POST, or DELETE)
-
-            .. note:: all parameters fall back to the attributes of the
-                      current web2py request object
+            Note:
+                All parameters fall back to the attributes of the current
+                web2py request object.
         """
 
         # XSLT Paths
@@ -215,7 +216,6 @@ class CRUDRequest:
                                      approved = approved,
                                      unapproved = unapproved,
                                      include_deleted = include_deleted,
-                                     context = True,
                                      filter_component = component_name,
                                      )
 
@@ -337,9 +337,10 @@ class CRUDRequest:
             in POST vars (if multipart), or from JSON request body (if
             not multipart or $search=ajax).
 
-            NB: overrides CRUDRequest method as GET (r.http) to trigger
+            Note:
+                Overrides CRUDRequest method as GET (r.http) to trigger
                 the correct method handlers, but will not change
-                current.request.env.request_method
+                current.request.env.request_method.
         """
 
         get_vars = self.get_vars
@@ -425,7 +426,7 @@ class CRUDRequest:
             from .methods import RESTful, S3Filter, S3GroupedItemsReport, \
                                  S3HierarchyCRUD, S3Map, S3Merge, S3MobileCRUD, \
                                  S3Organizer, S3Profile, S3Report, S3Summary, \
-                                 S3TimePlot, S3XForms, SpreadsheetImporter
+                                 TimePlot, S3XForms, SpreadsheetImporter
 
             methods = {"deduplicate": S3Merge,
                        "fields": RESTful,
@@ -441,7 +442,7 @@ class CRUDRequest:
                        "report": S3Report,
                        "summary": S3Summary,
                        "sync": current.sync,
-                       "timeplot": S3TimePlot,
+                       "timeplot": TimePlot,
                        "xform": S3XForms,
                        }
 
@@ -471,8 +472,9 @@ class CRUDRequest:
         """
             Get the widget handler for a method
 
-            :param r: the CRUDRequest
-            :param method: the widget method
+            Args:
+                r: the CRUDRequest
+                method: the widget method
         """
 
         handler = None
@@ -505,7 +507,8 @@ class CRUDRequest:
         """
             Execute this request
 
-            :param attr: Controller parameters
+            Args:
+                attr: Controller parameters
         """
 
         response = current.response
@@ -630,7 +633,8 @@ class CRUDRequest:
         """
             Generate a new request for the same resource
 
-            :param args: arguments for request constructor
+            Args:
+                args: arguments for request constructor
         """
 
         return crud_request(r=self, **args)
@@ -642,7 +646,8 @@ class CRUDRequest:
             attribute. Falls back to current.request if the attribute is
             not defined in this CRUDRequest.
 
-            :param key: the key to lookup
+            Args:
+                key: the key to lookup
         """
 
         if key in self.__dict__:
@@ -659,7 +664,8 @@ class CRUDRequest:
         """
             Check the request for a transformable format
 
-            :param method: "import" for import methods, else None
+            Args:
+                method: "import" for import methods, otherwise None
         """
 
         if self.representation in ("html", "aadata", "popup", "iframe"):
@@ -677,7 +683,8 @@ class CRUDRequest:
         """
             Determine whether to actuate a link or not
 
-            :param component_id: the component_id (if not self.component_id)
+            Args:
+                component_id: the component_id (if not self.component_id)
         """
 
         if not component_id:
@@ -713,9 +720,7 @@ class CRUDRequest:
     # -------------------------------------------------------------------------
     @staticmethod
     def unauthorised():
-        """
-            Action upon unauthorised request
-        """
+        """ Action upon unauthorised request """
 
         current.auth.permission.fail()
 
@@ -724,9 +729,10 @@ class CRUDRequest:
         """
             Action upon error
 
-            :param status: HTTP status code
-            :param message: the error message
-            :param tree: the tree causing the error
+            Args:
+                status: HTTP status code
+                message: the error message
+                tree: the tree causing the error
         """
 
         if self.representation == "html":
@@ -760,21 +766,21 @@ class CRUDRequest:
         """
             Returns the URL of this request, use parameters to override
             current requests attributes:
-
                 - None to keep current attribute (default)
                 - 0 or "" to set attribute to NONE
                 - value to use explicit value
 
-            :param id: the master record ID
-            :param component: the component name
-            :param component_id: the component ID
-            :param target: the target record ID (choose automatically)
-            :param method: the URL method
-            :param representation: the representation for the URL
-            :param vars: the URL query variables
-            :param host: string to force absolute URL with host (True means http_host)
+            Args:
+                id: the master record ID
+                component: the component name
+                component_id: the component ID
+                target: the target record ID (choose automatically)
+                method: the URL method
+                representation: the representation for the URL
+                vars: the URL query variables
+                host: string to force absolute URL with host (True means http_host)
 
-            Particular behavior:
+            Notes:
                 - changing the master record ID resets the component ID
                 - removing the target record ID sets the method to None
                 - removing the method sets the target record ID to None
@@ -882,7 +888,8 @@ class CRUDRequest:
         """
             Get the target table of the current request
 
-            :return: a tuple of (prefix, name, table, tablename) of the target
+            Returns:
+                tuple of (prefix, name, table, tablename) of the target
                 resource of this request
 
             TODO update for link table support
@@ -913,8 +920,9 @@ class CRUDRequest:
             Parse the "viewing" URL parameter, frequently used for
             perspective discrimination and processing in prep
 
-            :returns: tuple (tablename, record_id) if "viewing" is set,
-                      None otherwise
+            Returns:
+                tuple (tablename, record_id) if "viewing" is set,
+                otherwise None
         """
 
         get_vars = self.get_vars
@@ -936,9 +944,10 @@ class CRUDRequest:
         """
             Find the XSLT stylesheet for this request
 
-            :param method: "import" for data imports, else None
-            :param skip_error: do not raise an HTTP error status
-                               if the stylesheet cannot be found
+            Args:
+                method: "import" for data imports, else None
+                skip_error: do not raise an HTTP error status
+                            if the stylesheet cannot be found
         """
 
         representation = self.representation
@@ -997,9 +1006,7 @@ class CRUDRequest:
 
     # -------------------------------------------------------------------------
     def read_body(self):
-        """
-            Read data from request body
-        """
+        """ Read data from request body """
 
         self.files = Storage()
         content_type = self.env.get("content_type")
@@ -1032,29 +1039,31 @@ class CRUDRequest:
         """
             Invoke the customization callback for a resource.
 
-            :param tablename: the tablename of the resource; if called
-                              without tablename it will invoke the callbacks
-                              for the target resources of this request:
-                                - master
-                                - active component
-                                - active link table
+            Args:
+                tablename: the tablename of the resource; if called
+                           without tablename it will invoke the callbacks
+                           for the target resources of this request:
+                            - master
+                            - active component
+                            - active link table
                               (in this order)
 
-            Resource customization functions can be defined like:
+            Example:
+                Resource customization functions can be defined like:
 
                 def customise_resource_my_table(r, tablename):
 
                     current.s3db.configure(tablename,
                                            my_custom_setting = "example")
-                    return
 
                 settings.customise_resource_my_table = \
                                         customise_resource_my_table
 
-            .. note:: the hook itself can call r.customise_resource in order
-                      to cascade customizations as necessary
-            .. note:: if a table is customised that is not currently loaded,
-                      then it will be loaded for this process
+            Notes:
+                - the hook itself can call r.customise_resource in order
+                  to cascade customizations as necessary
+                - if a table is customised that is not currently loaded,
+                  then it will be loaded for this process
         """
 
         if tablename is None:
@@ -1082,13 +1091,15 @@ def crud_request(*args, **kwargs):
     """
         Helper function to generate CRUDRequest instances
 
-        :param args: arguments for the CRUDRequest
-        :param kwargs: keyword arguments for the CRUDRequest
+        Args:
+            args: arguments for the CRUDRequest
+            kwargs: keyword arguments for the CRUDRequest
 
-        :keyword catch_errors: if set to False, errors will be raised
-                               instead of returned to the client, useful
-                               for optional sub-requests, or if the caller
-                               implements fallbacks
+        Keyword Args:
+            catch_errors: if set to False, errors will be raised
+                          instead of returned to the client, useful
+                          for optional sub-requests, or if the caller
+                          implements fallbacks
     """
 
     catch_errors = kwargs.pop("catch_errors", True)
@@ -1130,15 +1141,17 @@ def crud_controller(prefix=None, resourcename=None, **attr):
     """
         Helper function to apply CRUD methods
 
-        :param prefix: the application prefix
-        :param resourcename: the resource name (without prefix)
-        :param attr: additional keyword parameters
+        Args:
+            prefix: the application prefix
+            resourcename: the resource name (without prefix)
+            attr: additional keyword parameters
 
-        Any keyword parameters will be copied into the output dict (provided
-        that the output is a dict). If a keyword parameter is callable, then
-        it will be invoked, and its return value will be added to the output
-        dict instead. The callable receives the CRUDRequest as its first and
-        only parameter.
+        Keyword Args:
+            Any keyword parameters will be copied into the output dict (provided
+            that the output is a dict). If a keyword parameter is callable, then
+            it will be invoked, and its return value will be added to the output
+            dict instead. The callable receives the CRUDRequest as its first and
+            only parameter.
 
         CRUD can be configured per table using:
 
@@ -1287,7 +1300,7 @@ def crud_controller(prefix=None, resourcename=None, **attr):
             # the primary key into get_vars for automatic linking
             if native and not listadd and \
                auth.s3_has_permission("create", tablename):
-                label = S3CRUD.crud_string(tablename, "label_create")
+                label = get_crud_string(tablename, "label_create")
                 component = r.resource.components[name]
                 fkey = "%s.%s" % (name, component.fkey)
                 get_vars_copy = request.get_vars.copy()

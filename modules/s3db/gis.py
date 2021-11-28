@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    GIS Model
 
-""" Sahana Eden GIS Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,21 +25,19 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from __future__ import division
-
-__all__ = ("S3LocationModel",
-           "S3LocationNameModel",
-           "S3LocationTagModel",
-           "S3LocationGroupModel",
-           "S3LocationHierarchyModel",
-           "S3GISConfigModel",
-           "S3LayerEntityModel",
-           "S3FeatureLayerModel",
-           "S3MapModel",
-           "S3GISThemeModel",
-           "S3PoIModel",
-           "S3PoIOrganisationGroupModel",
-           "S3PoIFeedModel",
+__all__ = ("GISLocationModel",
+           "GISLocationNameModel",
+           "GISLocationTagModel",
+           "GISLocationGroupModel",
+           "GISLocationHierarchyModel",
+           "GISConfigModel",
+           "GISLayerEntityModel",
+           "GISFeatureLayerModel",
+           "GISMapModel",
+           "GISThemeModel",
+           "GISPoIModel",
+           "GISPoIOrganisationGroupModel",
+           "GISPoIFeedModel",
            "gis_location_filter",
            "gis_LocationRepresent",
            "gis_layer_represent",
@@ -65,7 +61,7 @@ from s3layouts import S3PopupLink
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3LocationModel(DataModel):
+class GISLocationModel(DataModel):
     """
         Locations model
     """
@@ -720,25 +716,22 @@ class S3LocationModel(DataModel):
     @staticmethod
     def gis_location_duplicate(item):
         """
-          This callback will be called when importing location records it will look
-          to see if the record being imported is a duplicate.
+            This callback will be called when importing location records it will look
+            to see if the record being imported is a duplicate. If the record is a
+            duplicate then it will set the item method to update
 
-          @param item: An ImportItem object which includes all the details
-                       of the record being imported
+            Args:
+                item: An ImportItem object which includes all the details
+                      of the record being imported
 
-          If the record is a duplicate then it will set the item method to update
-
-          Rules for finding a duplicate:
-           - If there is no level, then deduplicate based on the address
-           - Look for a record with the same name, ignoring case
-           - If no match, also check name_l10n
-           - If parent exists in the import, the same parent
-           - If start_date exists in the import, the same start_date
-           - If end_date exists in the import, the same end_date
-
-            @ToDo: Check soundex? (only good in English)
-                   http://eden.sahanafoundation.org/ticket/481
-                   - make a deployment_setting for relevant function?
+            Notes:
+                Rules for finding a duplicate:
+                - If there is no level, then deduplicate based on the address
+                - Look for a record with the same name, ignoring case
+                - If no match, also check name_l10n
+                - If parent exists in the import, the same parent
+                - If start_date exists in the import, the same start_date
+                - If end_date exists in the import, the same end_date
         """
 
         data = item.data
@@ -930,10 +923,11 @@ class S3LocationModel(DataModel):
     def gis_search_ac(r, **attr):
         """
             JSON search method for S3LocationAutocompleteWidget
-            - adds hierarchy support
+                - adds hierarchy support
 
-            @param r: the CRUDRequest
-            @param attr: request attributes
+            Args:
+                r: the CRUDRequest
+                attr: request attributes
         """
 
         output = None
@@ -1232,7 +1226,7 @@ class S3LocationModel(DataModel):
         return output
 
 # =============================================================================
-class S3LocationNameModel(DataModel):
+class GISLocationNameModel(DataModel):
     """
         Location Names model
         - local/alternate names for Locations
@@ -1303,7 +1297,7 @@ class S3LocationNameModel(DataModel):
         return None
 
 # =============================================================================
-class S3LocationTagModel(DataModel):
+class GISLocationTagModel(DataModel):
     """
         Location Tags model
         - flexible Key-Value component attributes to Locations
@@ -1383,7 +1377,7 @@ class S3LocationTagModel(DataModel):
         return od
 
 # =============================================================================
-class S3LocationGroupModel(DataModel):
+class GISLocationGroupModel(DataModel):
     """
         Location Groups model
         - currently unused
@@ -1439,7 +1433,7 @@ class S3LocationGroupModel(DataModel):
         return None
 
 # =============================================================================
-class S3LocationHierarchyModel(DataModel):
+class GISLocationHierarchyModel(DataModel):
     """
         Location Hierarchy model
     """
@@ -1615,7 +1609,7 @@ class S3LocationHierarchyModel(DataModel):
                     form.errors[gap] = hierarchy_gap
 
 # =============================================================================
-class S3GISConfigModel(DataModel):
+class GISConfigModel(DataModel):
     """
         GIS Config model: Web Map Context
         - Site config
@@ -2466,7 +2460,9 @@ class gis_MarkerRepresent(S3Represent):
     def represent_row(self, row):
         """
             Represent a Row
-            @param row: The Row
+
+            Args:
+                row: The Row
         """
         represent = DIV(IMG(_src=URL(c="static", f="img",
                                      args=["markers", row.image]),
@@ -2474,7 +2470,7 @@ class gis_MarkerRepresent(S3Represent):
         return represent
 
 # ==============================================================================
-class S3LayerEntityModel(DataModel):
+class GISLayerEntityModel(DataModel):
     """
         Model for Layer SuperEntity
         - used to provide a common link table for:
@@ -2860,7 +2856,7 @@ class S3LayerEntityModel(DataModel):
                               )
 
 # =============================================================================
-class S3FeatureLayerModel(DataModel):
+class GISFeatureLayerModel(DataModel):
     """
         Model for Feature Layers
         - used to select a set of Features for either Display on a Map
@@ -3069,7 +3065,7 @@ class S3FeatureLayerModel(DataModel):
             item.method = item.METHOD.UPDATE
 
 # =============================================================================
-class S3MapModel(DataModel):
+class GISMapModel(DataModel):
     """ Models for Maps """
 
     names = ("gis_cache",
@@ -4425,16 +4421,16 @@ class S3MapModel(DataModel):
         gis_layer_onaccept(form)
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def gis_layer_shapefile_onaccept_update(form):
+    @classmethod
+    def gis_layer_shapefile_onaccept_update(cls, form):
         """
             @ToDo: Check if the file has changed & run the normal onaccept if-so
         """
 
-        S3MapModel.gis_layer_shapefile_onaccept(form)
+        cls.gis_layer_shapefile_onaccept(form)
 
 # =============================================================================
-class S3GISThemeModel(DataModel):
+class GISThemeModel(DataModel):
     """
         Thematic Mapping model
 
@@ -4594,7 +4590,7 @@ class S3GISThemeModel(DataModel):
         return json.dumps(style)
 
 # =============================================================================
-class S3PoIModel(DataModel):
+class GISPoIModel(DataModel):
     """
         Data Model for PoIs (Points of Interest)
     """
@@ -4897,7 +4893,7 @@ class S3PoIModel(DataModel):
             current.log.warning("Unable to update GIS PoI Style as there are multiple possible")
 
 # =============================================================================
-class S3PoIOrganisationGroupModel(DataModel):
+class GISPoIOrganisationGroupModel(DataModel):
     """
         PoI Organisation Group Model
 
@@ -4935,7 +4931,7 @@ class S3PoIOrganisationGroupModel(DataModel):
         return None
 
 # =============================================================================
-class S3PoIFeedModel(DataModel):
+class GISPoIFeedModel(DataModel):
     """ Data Model for PoI feeds """
 
     names = ("gis_poi_feed",)
@@ -5064,8 +5060,9 @@ def gis_hierarchy_editable(level, location_id):
 
         Used by gis_location_onvalidation()
 
-        @param id: the id of the location or an ancestor - used to find
-                   the ancestor country location.
+        Args:
+            id: the id of the location or an ancestor - used to find
+                the ancestor country location.
     """
 
     country = current.gis.get_parent_country(location_id)
@@ -5187,9 +5184,10 @@ class gis_LocationRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key
-            @param v: the representation of the key
-            @param row: the row with this key (unused here)
+            Args:
+                k: the key
+                v: the representation of the key
+                row: the row with this key (unused here)
         """
 
         if k is None:
@@ -5264,7 +5262,8 @@ class gis_LocationRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatiblity reasons.
 
-            @param values: the gis_location IDs
+            Args:
+                values: the gis_location IDs
         """
 
         db = current.db
@@ -5376,10 +5375,11 @@ class gis_LocationRepresent(S3Represent):
     def represent_row(self, row):
         """
             Represent a single Row
-            - assumes that Path & Lx have been populated correctly by
-              gis.update_location_tree()
+                - assumes that Path & Lx have been populated correctly by
+                  gis.update_location_tree()
 
-            @param row: the gis_location Row
+            Args:
+                row: the gis_location Row
         """
 
         sep = self.sep

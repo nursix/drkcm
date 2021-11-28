@@ -179,15 +179,20 @@ body.rtl {
     margin-bottom: 1rem;
 }
 #poweredby {
+    color: $footer_fgcolor;
+    font-size: 0.625rem;
+    line-height: 1.0;
     margin-right: 0.5rem;
     text-align: right;
-    color: $footer_fgcolor;
-    font-size: 0.8rem;
     a {
         color: $footer_fgcolor;
-        text-decoration: none;
-        font-size: 0.8rem;
+        font-size: 0.625rem;
         margin-left: 0.2rem;
+        text-decoration: none;
+    }
+    img {
+        margin-right: 5px;
+        vertical-align: text-bottom;
     }
 }
 body.rtl {

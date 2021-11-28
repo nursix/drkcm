@@ -46,9 +46,10 @@ class S3TypeConverter:
         """
             Convert b into the data type of a
 
-            @raise TypeError: if any of the data types are not supported
-                              or the types are incompatible
-            @raise ValueError: if the value conversion fails
+            Raises:
+                TypeError: if any of the data types are not supported
+                           or the types are incompatible
+                ValueError: if the value conversion fails
         """
 
         if isinstance(a, lazyT):
@@ -243,8 +244,9 @@ def s3_str(s, encoding="utf-8"):
     """
         Convert an object into a str
 
-        @param s: the object
-        @param encoding: the character encoding
+        Args:
+            s: the object
+            encoding: the character encoding
     """
 
     if type(s) is str:

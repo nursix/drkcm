@@ -43,7 +43,7 @@ from gluon import current, URL
 from gluon.languages import regex_translate
 
 from ..model import s3_all_meta_field_names
-from ..tools import SEPARATORS, JSONERRORS, s3_str
+from ..tools import JSONERRORS, JSONSEPARATORS, s3_str
 
 from .marker import Marker
 from .projection import Projection
@@ -210,7 +210,7 @@ class Layer:
 
         result = self.as_dict()
         if result:
-            return json.dumps(result, separators=SEPARATORS)
+            return json.dumps(result, separators=JSONSEPARATORS)
         else:
             return ""
 

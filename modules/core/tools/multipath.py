@@ -80,7 +80,7 @@ class S3MultiPath:
     # Construction
     #
     def __init__(self, paths=None):
-        """ Constructor """
+
         self.paths = []
         if isinstance(paths, S3MultiPath):
             self.paths = list(paths.paths)
@@ -100,8 +100,10 @@ class S3MultiPath:
         """
             Append a new ancestor path to this multi-path
 
-            @param path: the ancestor path
+            Args:
+                path: the ancestor path
         """
+
         Path = self.Path
 
         if isinstance(path, Path):
@@ -126,8 +128,9 @@ class S3MultiPath:
         """
             Extend this multi-path with a new vertex ancestors<-head
 
-            @param head: the head node
-            @param ancestors: the ancestor (multi-)path of the head node
+            Args:
+                head: the head node
+                ancestors: the ancestor (multi-)path of the head node
         """
 
         # If ancestors is a multi-path, extend recursively with all paths
@@ -169,9 +172,11 @@ class S3MultiPath:
         """
             Cut off the vertex ancestor<-head in this multi-path
 
-            @param head: the head node
-            @param ancestor: the ancestor node to cut off
+            Args:
+                head: the head node
+                ancestor: the ancestor node to cut off
         """
+
         for p in self.paths:
             p.cut(head, ancestor)
         # Must cleanup for duplicates
@@ -182,6 +187,7 @@ class S3MultiPath:
         """
             Remove any duplicate and empty paths from this multi-path
         """
+
         mp = S3MultiPath(self)
         pop = mp.paths.pop
         self.paths = []
@@ -197,14 +203,17 @@ class S3MultiPath:
     #
     def __parse(self, value):
         """ Parse a multi-path-string into nodes """
+
         return value.split(",")
 
     def __repr__(self):
         """ Serialize this multi-path as string """
+
         return ",".join([str(p) for p in self.paths])
 
     def as_list(self):
         """ Return this multi-path as list of node lists """
+
         return [p.as_list() for p in self.paths if len(p)]
 
     # -------------------------------------------------------------------------
@@ -212,6 +221,7 @@ class S3MultiPath:
     #
     def __len__(self):
         """ The number of paths in this multi-path """
+
         return len(self.paths)
 
     # -------------------------------------------------------------------------
@@ -220,8 +230,10 @@ class S3MultiPath:
             Check whether sequence is the start sequence of any of
             the paths in this multi-path (for de-duplication)
 
-            @param sequence: sequence of node IDs (or path)
+            Args:
+                sequence: sequence of node IDs (or path)
         """
+
         for p in self.paths:
             if p.startswith(sequence):
                 return 1
@@ -234,8 +246,10 @@ class S3MultiPath:
             also be used to check whether this multi-path contains a path
             to a particular node)
 
-            @param sequence: the sequence (or node ID)
+            Args:
+                sequence: the sequence (or node ID)
         """
+
         for p in self.paths:
             if sequence in p:
                 return 1
@@ -244,6 +258,7 @@ class S3MultiPath:
     # -------------------------------------------------------------------------
     def nodes(self):
         """ Get all nodes from this path """
+
         nodes = []
         for p in self.paths:
             n = [i for i in p.nodes if i not in nodes]
@@ -256,8 +271,10 @@ class S3MultiPath:
         """
             Get all nodes from all paths
 
-            @param paths: list of multi-paths
+            Args:
+                paths: list of multi-paths
         """
+
         nodes = []
         for p in paths:
             n = [i for i in p.nodes() if i not in nodes]
@@ -272,8 +289,10 @@ class S3MultiPath:
         """
             Normalize a path into a sequence of non-recurrent paths
 
-            @param path: the path as a list of node IDs
+            Args:
+                path: the path as a list of node IDs
         """
+
         seq = [str(item) for item in path]
         if len(seq) < 2:
             return [path]
@@ -301,8 +320,10 @@ class S3MultiPath:
             Resolve a sequence of vertices (=pairs of node IDs) into a
             sequence of non-recurrent paths
 
-            @param seq: the vertex sequence
+            Args:
+                seq: the vertex sequence
         """
+
         resolve = S3MultiPath.__resolve
         if seq:
             head = seq[0]
@@ -334,7 +355,7 @@ class S3MultiPath:
         # Construction methods
         #
         def __init__(self, nodes=None):
-            """ Constructor """
+
             self.nodes = []
             if isinstance(nodes, S3MultiPath.Path):
                 self.nodes = list(nodes.nodes)
@@ -355,8 +376,10 @@ class S3MultiPath:
             """
                 Append a node to this path
 
-                @param node: the node
+                Args:
+                    node: the node
             """
+
             if node is None:
                 return True
             n = str(node)
@@ -373,9 +396,11 @@ class S3MultiPath:
                 Extend this path with a new vertex ancestors<-head, if this
                 path ends at the head node
 
-                @param head: the head node
-                @param ancestors: the ancestor sequence
+                Args:
+                    head: the head node
+                    ancestors: the ancestor sequence
             """
+
             if ancestors is None:
                 # If no head node is specified, use the first ancestor node
                 path = S3MultiPath.Path(head)
@@ -398,10 +423,11 @@ class S3MultiPath:
                 Cut off the ancestor<-head vertex from this path, retaining
                 the head node
 
-                @param head: the head node
-                @param ancestor: the ancestor node
-
+                Args:
+                    head: the head node
+                    ancestor: the ancestor node
             """
+
             if ancestor is not None:
                 sequence = [str(head), str(ancestor)]
                 pos = self.find(sequence)
@@ -419,14 +445,17 @@ class S3MultiPath:
         #
         def __repr__(self):
             """ Represent this path as a string """
+
             return "[|%s|]" % "|".join(self.nodes)
 
         def __parse(self, value):
             """ Parse a string into nodes """
+
             return value.strip().strip("[").strip("]").strip("|").split("|")
 
         def as_list(self):
             """ Return the list of nodes """
+
             return list(self.nodes)
 
         # ---------------------------------------------------------------------
@@ -434,6 +463,7 @@ class S3MultiPath:
         #
         def __getitem__(self, i):
             """ Get the node at position i """
+
             try:
                 return self.nodes.__getitem__(i)
             except IndexError:
@@ -442,11 +472,13 @@ class S3MultiPath:
         # ---------------------------------------------------------------------
         def first(self):
             """ Get the first node in this path (the nearest ancestor) """
+
             return self[0]
 
         # ---------------------------------------------------------------------
         def last(self):
             """ Get the last node in this path (the most distant ancestor) """
+
             return self[-1]
 
         # ---------------------------------------------------------------------
@@ -456,8 +488,10 @@ class S3MultiPath:
             """
                 Check whether this path contains sequence
 
-                @param sequence: sequence of node IDs
+                Args:
+                    sequence: sequence of node IDs
             """
+
             if self.find(sequence) != -1:
                 return 1
             else:
@@ -468,6 +502,7 @@ class S3MultiPath:
             """
                 Get the number of nodes in this path
             """
+
             return len(self.nodes)
 
         # ---------------------------------------------------------------------
@@ -475,10 +510,14 @@ class S3MultiPath:
             """
                 Find a sequence of node IDs in this path
 
-                @param sequence: sequence of node IDs (or path)
-                @return: position of the sequence (index+1), 0 if the path
-                          is empty, -1 if the sequence wasn't found
+                Args:
+                    sequence: sequence of node IDs (or path)
+
+                Returns:
+                    position of the sequence (index+1), 0 if the path
+                    is empty, -1 if the sequence wasn't found
             """
+
             path = S3MultiPath.Path(sequence)
             sequence = path.nodes
             nodes = self.nodes
@@ -501,8 +540,10 @@ class S3MultiPath:
             """
                 Check whether this path starts with sequence
 
-                @param sequence: sequence of node IDs (or path)
+                Args:
+                    sequence: sequence of node IDs (or path)
             """
+
             sequence = S3MultiPath.Path(sequence).nodes
             if self.nodes[0:len(sequence)] == sequence:
                 return True

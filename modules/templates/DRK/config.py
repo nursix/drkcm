@@ -1103,7 +1103,7 @@ def config(settings):
 
                 # Autocomplete using alternative search method
                 search_fields = ("first_name", "last_name", "pe_label")
-                s3db.set_method("pr", "person",
+                s3db.set_method("pr_person",
                                 method = "search_ac",
                                 action = s3db.pr_PersonSearchAutocomplete(search_fields),
                                 )
@@ -2352,7 +2352,7 @@ def config(settings):
         s3db = current.s3db
 
         from .food import DRKRegisterFoodEvent
-        s3db.set_method("dvr", "case_event",
+        s3db.set_method("dvr_case_event",
                         method = "register_food",
                         action = DRKRegisterFoodEvent,
                         )
@@ -2530,7 +2530,7 @@ def config(settings):
 
         s3db = current.s3db
 
-        s3db.set_method("dvr", "site_activity",
+        s3db.set_method("dvr_site_activity",
                         method = "create",
                         action = DRKCreateSiteActivityReport,
                         )

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Hospital Management System Model
 
-""" Sahana Eden Hospital Management System Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -28,7 +26,7 @@
 """
 
 __all__ = ("HospitalDataModel",
-           "CholeraTreatmentCapabilityModel",
+           "HospitalCTCModel",
            "HospitalActivityReportModel",
            "hms_hospital_rheader"
            )
@@ -985,7 +983,7 @@ class HospitalDataModel(DataModel):
                                                 available_beds=a_beds)
 
 # =============================================================================
-class CholeraTreatmentCapabilityModel(DataModel):
+class HospitalCTCModel(DataModel):
 
     names = ("hms_ctc",)
 

@@ -16,14 +16,12 @@
          Objectives...........string..........Project objectives
          KV:XX................string..........project_project_tag Key,Value (Key = XX in column name, value = cell in row. Multiple allowed)
          Comments.............string..........Project comments
-         Programme............string..........Project Programme
          Status...............string..........Project status
          Duration.............string..........Project duration
          Start Date...........YYYY-MM-DD......Start date of the project
          End Date.............YYYY-MM-DD......End date of the project
          Sectors..............;-sep list......List of Project Sectors (Allow Sector Names to include a Comma, such as "Water, Sanitation & Hygiene"
          Hazards..............comma-sep list..List of Hazard names
-         HFA..................comma-sep list..List of HFA priorities (integer numbers)
          Budget...............double          Total Budget of project
          Budget:XXXX..........float...........Budget for year XXX (multiple allowed)
          FPFirstName..........string..........First Name of Focal Person
@@ -44,8 +42,6 @@
 
     *********************************************************************** -->
 
-    <xsl:import href="programme.xsl"/>
-
     <xsl:output method="xml"/>
 
     <xsl:include href="../../xml/commons.xsl"/>
@@ -60,7 +56,6 @@
     <xsl:key name="orgs" match="row" use="col[@field='Organisation']"/>
     <xsl:key name="events" match="row" use="col[@field='Event']"/>
     <xsl:key name="statuses" match="row" use="col[@field='Status']"/>
-    <xsl:key name="programmes" match="row" use="col[@field='Programme']"/>
 
     <xsl:key name="FP" match="row"
              use="concat(col[@field='Organisation'], '/',
@@ -103,15 +98,6 @@
                 <xsl:call-template name="Status"/>
             </xsl:for-each>
 
-            <!-- Programmes -->
-            <xsl:for-each select="//row[generate-id(.)=
-                                        generate-id(key('programmes',
-                                                        col[@field='Programme'])[1])]">
-                <xsl:call-template name="Programme">
-                    <xsl:with-param name="Field">Programme</xsl:with-param>
-                </xsl:call-template>
-            </xsl:for-each>
-
             <!-- Themes -->
             <xsl:for-each select="//row[1]/col[starts-with(@field, 'Theme')]">
                 <xsl:call-template name="Theme"/>
@@ -136,7 +122,6 @@
         <!-- Optional Classifications -->
         <xsl:variable name="Status" select="col[@field='Status']"/>
         <xsl:variable name="Hazards" select="col[@field='Hazards']"/>
-        <xsl:variable name="HFA" select="col[@field='HFA']"/>
         <xsl:variable name="Sectors" select="col[@field='Sectors']"/>
         <xsl:variable name="Themes" select="col[@field='Themes']"/>
         <xsl:variable name="Locations" select="col[@field='Locations']"/>
@@ -172,9 +157,6 @@
                 <data field="comments"><xsl:value-of select="col[@field='Comments']"/></data>
             </xsl:if>
 
-            <!-- Programme -->
-            <xsl:call-template name="ProgrammeLink"/>
-
             <!-- Status -->
             <xsl:if test="$Status">
                 <reference field="status_id" resource="project_status">
@@ -192,17 +174,6 @@
                             <xsl:value-of select="concat($EventPrefix, $Event)"/>
                         </xsl:attribute>
                     </reference>
-                </resource>
-            </xsl:if>
-
-            <!-- HFAs -->
-            <xsl:if test="$HFA!=''">
-                <resource name="project_drr">
-                    <data field="hfa">
-                        <xsl:attribute name="value">
-                            <xsl:value-of select="concat('[', $HFA, ']')"/>
-                        </xsl:attribute>
-                    </data>
                 </resource>
             </xsl:if>
 

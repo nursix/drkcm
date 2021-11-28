@@ -16,5 +16,4 @@ generalized.
    :caption: Contents:
 
    Disease Tracking <disease>
-   Project Management <project>
    Training Courses and Events <training>

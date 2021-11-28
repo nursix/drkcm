@@ -86,6 +86,8 @@
             var data = this.personData.val();
             if (data && data != 'null') {
                 this._showPersonData(JSON.parse(data));
+            } else {
+                this._clearForm();
             }
 
             this._bindEvents();

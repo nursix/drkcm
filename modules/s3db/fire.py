@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Fire Models
 
-""" Sahana Eden Fire Models
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,8 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3FireModel",
-           "S3FireStationModel",
+__all__ = ("FireModel",
+           "FireStationModel",
            )
 
 from gluon import *
@@ -38,7 +36,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3FireModel(DataModel):
+class FireModel(DataModel):
     """
         Fire Zones: Burn Perimeter, Burnt zone, Evacuation Zone, etc
     """
@@ -140,7 +138,7 @@ class S3FireModel(DataModel):
         return None
 
 # =============================================================================
-class S3FireStationModel(DataModel):
+class FireStationModel(DataModel):
     """
         A Model to manage Fire Stations:
         http://eden.sahanafoundation.org/wiki/Deployments/Bombeiros

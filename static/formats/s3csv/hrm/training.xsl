@@ -11,7 +11,6 @@
          Training Organisation
          Event Name
          Event Type
-         Strategy
          Programme
          Project
          Course
@@ -99,7 +98,6 @@
     <!-- Index for faster processing & deduplication -->
     <xsl:key name="courses" match="row" use="col[@field='Course']"/>
     <xsl:key name="event_types" match="row" use="col[@field='Event Type']"/>
-    <xsl:key name="strategies" match="row" use="col[@field='Strategy']"/>
     <xsl:key name="programmes" match="row" use="col[@field='Programme']"/>
     <xsl:key name="projects" match="row" use="col[@field='Project']"/>
     <xsl:key name="organisations" match="row" use="col[@field='Trainee Organisation']"/>
@@ -447,12 +445,6 @@
                 <xsl:call-template name="EventType"/>
             </xsl:for-each>
 
-            <!-- Strategies -->
-            <xsl:for-each select="//row[generate-id(.)=generate-id(key('strategies',
-                                                                   col[@field='Strategy'])[1])]">
-                <xsl:call-template name="Strategy"/>
-            </xsl:for-each>
-
             <!-- Programmes -->
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('programmes',
                                                                    col[@field='Programme'])[1])]">
@@ -543,7 +535,6 @@
         <xsl:if test="$SiteName!='' or $L0!=''">
             <xsl:variable name="Organisation" select="col[@field='Training Organisation']/text()"/>
             <xsl:variable name="EventType" select="col[@field='Event Type']/text()"/>
-            <xsl:variable name="Strategy" select="col[@field='Strategy']/text()"/>
             <xsl:variable name="Programme" select="col[@field='Programme']/text()"/>
             <xsl:variable name="Project" select="col[@field='Project']/text()"/>
             <xsl:variable name="FacilityType" select="col[@field='Facility Type']/text()"/>
@@ -604,16 +595,6 @@
                             <xsl:value-of select="$EventType"/>
                         </xsl:attribute>
                     </reference>
-                </xsl:if>
-                <xsl:if test="$Strategy!=''">
-                    <!-- Link to Strategy -->
-                    <resource name="hrm_event_strategy">
-                        <reference field="strategy_id" resource="project_strategy">
-                            <xsl:attribute name="tuid">
-                                <xsl:value-of select="$Strategy"/>
-                            </xsl:attribute>
-                        </reference>
-                    </resource>
                 </xsl:if>
                 <xsl:if test="$Programme!=''">
                     <!-- Link to Programme -->
@@ -1133,21 +1114,6 @@
     </xsl:template>
 
     <!-- ****************************************************************** -->
-    <xsl:template name="Strategy">
-        <xsl:variable name="Name" select="col[@field='Strategy']/text()"/>
-
-        <xsl:if test="$Name!=''">
-            <resource name="project_strategy">
-                <xsl:attribute name="tuid">
-                    <xsl:value-of select="$Name"/>
-                </xsl:attribute>
-                <data field="name"><xsl:value-of select="$Name"/></data>
-            </resource>
-        </xsl:if>
-
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
     <xsl:template name="Programme">
         <xsl:variable name="Name" select="col[@field='Programme']/text()"/>
 
@@ -1264,7 +1230,7 @@
 
         <xsl:variable name="ProvidedOfficeName" select="col[@field='Office Name']/text()"/>
         <xsl:variable name="L0" select="col[@field='Office L0']/text()"/>
-        
+
         <xsl:variable name="resourcename">org_office</xsl:variable>
             <!-- @ToDo if-required:
             <xsl:choose>

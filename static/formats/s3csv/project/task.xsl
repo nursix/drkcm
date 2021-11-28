@@ -20,7 +20,7 @@
          Assigned.............string..........Person Initials
          Date Due.............date............Task date_due
          Milestone............string..........Milestone name
-         Time Estimated.......integer.........Task time_estimated 
+         Time Estimated.......integer.........Task time_estimated
          Priority.............string..........Task priority
          Status...............string..........Task status
          Country..............string..........Country code/name (L0)
@@ -88,7 +88,7 @@
                                                                    col[@field='Assigned'])[1])]">
                 <xsl:call-template name="Person"/>
             </xsl:for-each>
-            
+
             <!-- Milestones -->
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('milestones',
                                                                    col[@field='Milestone'])[1])]">
@@ -247,24 +247,20 @@
 
             <!-- Link to Project -->
             <xsl:if test="$ProjectName!=''">
-                <resource name="project_task_project">
-                    <reference field="project_id" resource="project_project">
-                        <xsl:attribute name="tuid">
-                            <xsl:value-of select="$ProjectName"/>
-                        </xsl:attribute>
-                    </reference>
-                </resource>
+                <reference field="project_id" resource="project_project">
+                    <xsl:attribute name="tuid">
+                        <xsl:value-of select="$ProjectName"/>
+                    </xsl:attribute>
+                </reference>
             </xsl:if>
 
             <!-- Link to Activity -->
             <xsl:if test="$ActivityName!=''">
-                <resource name="project_task_activity">
-                    <reference field="activity_id" resource="project_activity">
-                        <xsl:attribute name="tuid">
-                            <xsl:value-of select="$ActivityName"/>
-                        </xsl:attribute>
-                    </reference>
-                </resource>
+                <reference field="activity_id" resource="project_activity">
+                    <xsl:attribute name="tuid">
+                        <xsl:value-of select="$ActivityName"/>
+                    </xsl:attribute>
+                </reference>
             </xsl:if>
 
             <!-- Link to Incident -->
@@ -283,13 +279,11 @@
 
             <!-- Link to Milestone -->
             <xsl:if test="$Milestone!=''">
-                <resource name="project_task_milestone">
-                    <reference field="milestone_id" resource="project_milestone">
-                        <xsl:attribute name="tuid">
-                            <xsl:value-of select="$Milestone"/>
-                        </xsl:attribute>
-                    </reference>
-                </resource>
+                <reference field="milestone_id" resource="project_milestone">
+                    <xsl:attribute name="tuid">
+                        <xsl:value-of select="$Milestone"/>
+                    </xsl:attribute>
+                </reference>
             </xsl:if>
         </resource>
 

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Shelter (Camp) Registry, model
 
-""" Shelter (Camp) Registry, model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -45,6 +43,7 @@ import json
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
+from s3dal import Row
 from s3layouts import S3PopupLink
 
 NIGHT = 1
@@ -1840,7 +1839,8 @@ class CRShelterRegistrationModel(DataModel):
             Registration onaccept: track status changes, update
             shelter population
 
-            @param form: the FORM (also accepts Row)
+            Args:
+                form: the FORM (also accepts Row)
         """
 
         try:
@@ -1955,9 +1955,10 @@ class CRShelterRegistrationModel(DataModel):
         """
             Update the shelter population, onaccept
 
-            @param form: the FORM
-            @param tablename: the table name
-            @param unit_id: the shelter unit ID (to warn if full)
+            Args:
+                form: the FORM
+                tablename: the table name
+                unit_id: the shelter unit ID (to warn if full)
         """
 
         db = current.db
@@ -2094,7 +2095,8 @@ def cr_update_housing_unit_population(shelter_id):
         To be called onaccept/ondelete of cr_shelter_registration and
         cr_shelter_allocation.
 
-        @param shelter_id: the Shelter ID
+        Args:
+            shelter_id: the Shelter ID
     """
 
     db = current.db
@@ -2223,7 +2225,8 @@ def cr_update_shelter_population(shelter_id):
         called onaccept/ondelete of cr_shelter_registration and
         cr_shelter_allocation.
 
-        @param shelter_id: the shelter record ID
+        Args:
+            shelter_id: the shelter record ID
     """
 
     db = current.db
@@ -2314,8 +2317,9 @@ def cr_check_population_availability(unit_id, table):
         Evaluate the population capacity availability.
         Show a non blocking warning in case the people in the shelter/housing unit are more than its capacity
 
-        @param unit_id: the shelter ID / housing unit ID
-        @param table: related tablename (cr_shelter or cr_shelter_housing_unit)
+        Args:
+            unit_id: the shelter ID / housing unit ID
+            table: related tablename (cr_shelter or cr_shelter_housing_unit)
     """
 
     T = current.T
@@ -2382,7 +2386,8 @@ def cr_update_capacity_from_housing_units(shelter_id):
         To be called onaccept/ondelete of cr_shelter_registration and
         cr_shelter_allocation.
 
-        @param shelter_id: the shelter record ID
+        Args:
+            shelter_id: the shelter record ID
     """
 
     db = current.db
@@ -2496,10 +2501,11 @@ class cr_AssignUnit(S3CRUD):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         try:
@@ -2508,7 +2514,7 @@ class cr_AssignUnit(S3CRUD):
             r.error(400, current.messages.BAD_REQUEST)
 
         self.settings = current.response.s3.crud
-        sqlform = self._config("crud_form")
+        sqlform = self.resource.get_config("crud_form")
         self.sqlform = sqlform if sqlform else S3SQLDefaultForm()
         self.data = None
 
@@ -2538,9 +2544,8 @@ class ShelterInspectionFlagRepresent(S3Represent):
 
     def __init__(self, show_link=False):
         """
-            Constructor
-
-            @param show_link: represent as link to the shelter inspection
+            Args:
+                show_link: represent as link to the shelter inspection
         """
 
         super(ShelterInspectionFlagRepresent, self).__init__(
@@ -2553,9 +2558,10 @@ class ShelterInspectionFlagRepresent(S3Represent):
         """
             Link inspection flag representations to the inspection record
 
-            @param k: the inspection flag ID
-            @param v: the representation
-            @param row: the row from lookup_rows
+            Args:
+                k: the inspection flag ID
+                v: the representation
+                row: the row from lookup_rows
         """
 
         if row:
@@ -2573,7 +2579,8 @@ class ShelterInspectionFlagRepresent(S3Represent):
         """
             Represent a Row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         details = {"unit": row.cr_shelter_unit.name,
@@ -2588,9 +2595,10 @@ class ShelterInspectionFlagRepresent(S3Represent):
         """
             Lookup all rows referenced by values.
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: the fields to retrieve
+            Args:
+                key: the key Field
+                values: the values
+                fields: the fields to retrieve
         """
 
         s3db = current.s3db
@@ -2627,9 +2635,8 @@ class ShelterInspectionRepresent(S3Represent):
 
     def __init__(self, show_link=False):
         """
-            Constructor
-
-            @param show_link: represent as link to the shelter inspection
+            Args:
+                show_link: represent as link to the shelter inspection
         """
 
         super(ShelterInspectionRepresent, self).__init__(
@@ -2642,9 +2649,10 @@ class ShelterInspectionRepresent(S3Represent):
         """
             Link inspection flag representations to the inspection record
 
-            @param k: the inspection flag ID
-            @param v: the representation
-            @param row: the row from lookup_rows
+            Args:
+                k: the inspection flag ID
+                v: the representation
+                row: the row from lookup_rows
         """
 
         if row:
@@ -2662,7 +2670,8 @@ class ShelterInspectionRepresent(S3Represent):
         """
             Represent a Row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         details = {"unit": row.cr_shelter_unit.name,
@@ -2676,9 +2685,10 @@ class ShelterInspectionRepresent(S3Represent):
         """
             Lookup all rows referenced by values.
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: the fields to retrieve
+            Args:
+                key: the key Field
+                values: the values
+                fields: the fields to retrieve
         """
 
         s3db = current.s3db
@@ -2714,8 +2724,9 @@ class CRShelterInspection(CRUDMethod):
         """
             Main entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         if not self.permitted():
@@ -2744,7 +2755,7 @@ class CRShelterInspection(CRUDMethod):
     # -------------------------------------------------------------------------
     def permitted(self):
         """
-            @todo: docstring
+            TODO docstring
         """
 
         # @todo: implement
@@ -2755,8 +2766,9 @@ class CRShelterInspection(CRUDMethod):
         """
             Generate the form
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         T = current.T
@@ -2851,8 +2863,9 @@ class CRShelterInspection(CRUDMethod):
         """
             Ajax-registration of shelter inspection
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
         """
 
         T = current.T
@@ -2961,8 +2974,9 @@ class CRShelterInspection(CRUDMethod):
             Helper function to inject static JS and instantiate
             the shelterInspection widget
 
-            @param widget_id: the node ID where to instantiate the widget
-            @param options: dict of widget options (JSON-serializable)
+            Args:
+                widget_id: the node ID where to instantiate the widget
+                options: dict of widget options (JSON-serializable)
         """
 
         s3 = current.response.s3
@@ -2989,7 +3003,8 @@ def cr_resolve_shelter_flags(task_id):
         If a task is set to an inactive status, then mark all linked
         shelter inspection flags as resolved
 
-        @param task_id: the task record ID
+        Args:
+            task_id: the task record ID
     """
 
     db = current.db

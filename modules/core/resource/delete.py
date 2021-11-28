@@ -34,7 +34,8 @@ from gluon.tools import callback
 
 from s3dal import original_tablename, Row
 
-from ..tools import s3_get_last_record_id, s3_has_foreign_key, s3_remove_last_record_id
+from ..tools import s3_get_last_record_id, s3_has_foreign_key, \
+                    s3_remove_last_record_id
 
 __all__ = ("DeleteProcess",
            )
@@ -49,10 +50,11 @@ class DeleteProcess:
 
     def __init__(self, resource, archive=None, representation=None):
         """
-            :param CRUDResource resource: the resource to delete records from
-            :param bool archive: True|False to override global
-                                 security.archive_not_delete setting
-            :param str representation: the request format (for audit, optional)
+            Args:
+                resource: the resource to delete records from (CRUDResource)
+                archive: True|False to override global
+                         security.archive_not_delete setting
+                representation: the request format (for audit, optional), str
         """
 
         self.resource = resource
@@ -94,13 +96,14 @@ class DeleteProcess:
             Main deletion process, deletes/archives all records
             in the resource
 
-            :param cascade: this is called as a cascade-action from another
-                            process (e.g. another delete)
-            :param replaced_by: dict of {replaced_id: replacement_id},
-                                used by record merger to log which record
-                                has replaced which
-            :param skip_undeletable: delete whatever is possible, skip
-                                     undeletable rows
+            Args:
+                cascade: this is called as a cascade-action from another
+                         process (e.g. another delete)
+                replaced_by: dict of {replaced_id: replacement_id},
+                             used by record merger to log which record
+                             has replaced which
+                skip_undeletable: delete whatever is possible, skip
+                                  undeletable rows
         """
 
         # Must not re-use instance
@@ -255,9 +258,10 @@ class DeleteProcess:
     # -------------------------------------------------------------------------
     def extract(self):
         """
-             Extract the rows to be deleted
+            Extract the rows to be deleted
 
-             :returns: a Rows instance
+            Returns:
+                a Rows instance
         """
 
         table = self.table
@@ -281,12 +285,17 @@ class DeleteProcess:
         """
             Check which rows in the set are deletable, collect all errors
 
-            :param rows: the Rows to be deleted
-            :param check_all: find all restrictions for each record
-                              rather than from just one table (not
-                              standard because of performance cost)
-            :returns: array of Rows found to be deletable
-                      NB those can still fail further down the cascade
+            Args:
+                rows: the Rows to be deleted
+                check_all: find all restrictions for each record
+                           rather than from just one table (not
+                           standard because of performance cost)
+
+            Returns:
+                Array of Rows found to be deletable
+
+            Note:
+                The rows found can still fail further down the cascade
         """
 
         db = current.db
@@ -354,10 +363,11 @@ class DeleteProcess:
             Run the automatic deletion cascade: remove or update records
             referencing this row with ondelete!="RESTRICT"
 
-            :param row: the Row to delete
-            :param check_all: process the entire cascade to reveal all
-                              errors (rather than breaking out of it after
-                              the first error)
+            Args:
+                row: the Row to delete
+                check_all: process the entire cascade to reveal all
+                           errors (rather than breaking out of it after
+                           the first error)
         """
 
         tablename = self.tablename
@@ -433,7 +443,8 @@ class DeleteProcess:
         """
             Auto-delete linked records if row was the last link
 
-            :param row: the Row about to get deleted
+            Args:
+                row: the Row about to get deleted
         """
 
         resource = self.resource
@@ -479,11 +490,13 @@ class DeleteProcess:
         """
             Archive ("soft-delete") a record
 
-            :param row: the Row to delete
-            :param replaced_by: dict of {replaced_id: replacement_id}, used \
-                                by record merger to log which record has replaced which
+            Args:
+                row: the Row to delete
+                replaced_by: dict of {replaced_id: replacement_id}, used \
+                             by record merger to log which record has replaced which
 
-            :returns: True for success, False on error
+            Returns:
+                True for success, False on error
         """
 
         table = self.table
@@ -529,9 +542,11 @@ class DeleteProcess:
         """
             Delete a record
 
-            :param row: the Row to delete
+            Args:
+                row: the Row to delete
 
-            :returns: True for success, False on error
+            Returns:
+                True for success, False on error
         """
 
         table = self.table
@@ -559,7 +574,8 @@ class DeleteProcess:
         """
             List of super-keys (instance links) in this resource
 
-            :returns: a list of field names
+            Returns:
+                a list of field names
         """
 
         super_keys = self._super_keys
@@ -595,7 +611,8 @@ class DeleteProcess:
         """
             List of foreign key fields in this resource
 
-            :returns: a list of field names
+            Returns:
+                a list of field names
         """
 
         # Produce a list of foreign key Fields in self.table
@@ -616,7 +633,8 @@ class DeleteProcess:
             A list of foreign keys referencing this resource,
             lazy property
 
-            :returns: a list of Fields
+            Returns:
+                a list of Fields
         """
 
         references = self._references
@@ -634,7 +652,8 @@ class DeleteProcess:
             A list of foreign keys referencing this resource with
             ondelete="RESTRICT", lazy property
 
-            :returns: a list of Fields
+            Returns:
+                a list of Fields
         """
 
         restrictions = self._restrictions
@@ -678,8 +697,9 @@ class DeleteProcess:
         """
             Add an error
 
-            :param record_id: the record ID
-            :param msg: the error message
+            Args:
+                record_id: the record ID
+                msg: the error message
         """
 
         key = (self.tablename, record_id)
@@ -726,9 +746,10 @@ class DeleteProcess:
         """
             Log all errors for a failed master record
 
-            :param master: the master log message
-            :param reference: the prefix for the sub-message
-            :param errors: the errors
+            Args:
+                master: the master log message
+                reference: the prefix for the sub-message
+                errors: the errors
         """
 
         if isinstance(errors, list):

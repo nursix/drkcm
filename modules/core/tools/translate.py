@@ -627,10 +627,13 @@ class TranslateReadFiles:
     @staticmethod
     def findstr(fileName, spmod, modlist):
         """
-            Using the methods in TranslateParseFiles to extract the strings
-            fileName -> the file to be used for extraction
-            spmod -> the required module
-            modlist -> a list of all modules in Eden
+            Using the methods in TranslateParseFiles to extract the
+            strings
+
+            Args:
+                fileName: the file to be used for extraction
+                spmod: the required module
+                modlist: a list of all modules in Eden
         """
 
         try:
@@ -725,8 +728,8 @@ class TranslateReadFiles:
     @staticmethod
     def read_html_js(filename):
         """
-           Function to read and extract strings from html/js files
-           using regular expressions
+            Function to read and extract strings from html/js files
+            using regular expressions
         """
 
         html_js_file = open(filename, "rb")
@@ -1693,7 +1696,8 @@ class TranslateReportStatus:
             Get the percentages of translated strings per module for
             the given language code.
 
-            @param lang_code: the language code
+            Args:
+                lang_code: the language code
         """
 
         pickle_file = os.path.join(current.request.folder,

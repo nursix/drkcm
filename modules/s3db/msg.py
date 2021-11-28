@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Messaging Model
 
-""" Sahana Eden Messaging Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,25 +25,25 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3ChannelModel",
-           "S3MessageModel",
-           "S3MessageAttachmentModel",
-           "S3MessageContactModel",
-           "S3MessageTagModel",
-           "S3EmailModel",
-           "S3FacebookModel",
-           "S3MCommonsModel",
-           "S3GCMModel",
-           "S3ParsingModel",
-           "S3RSSModel",
-           "S3SMSModel",
-           "S3SMSOutboundModel",
-           "S3TropoModel",
-           "S3TwilioModel",
-           "S3TwitterModel",
-           "S3TwitterSearchModel",
-           "S3XFormsModel",
-           "S3BaseStationModel",
+__all__ = ("MsgChannelModel",
+           "MsgMessageModel",
+           "MsgMessageAttachmentModel",
+           "MsgMessageContactModel",
+           "MsgMessageTagModel",
+           "MsgEmailModel",
+           "MsgFacebookModel",
+           "MsgMCommonsModel",
+           "MsgGCMModel",
+           "MsgParsingModel",
+           "MsgRSSModel",
+           "MsgSMSModel",
+           "MsgSMSOutboundModel",
+           "MsgTropoModel",
+           "MsgTwilioModel",
+           "MsgTwitterModel",
+           "MsgTwitterSearchModel",
+           "MsgXFormsModel",
+           "MsgBaseStationModel",
            )
 
 from gluon import *
@@ -56,7 +54,7 @@ from ..core import *
 SEPARATORS = (",", ":")
 
 # =============================================================================
-class S3ChannelModel(DataModel):
+class MsgChannelModel(DataModel):
     """
         Messaging Channels
         - all Inbound & Outbound channels for messages are instances of this
@@ -356,7 +354,7 @@ class S3ChannelModel(DataModel):
         redirect(URL(f=fn))
 
 # =============================================================================
-class S3MessageModel(DataModel):
+class MsgMessageModel(DataModel):
     """
         Messages
     """
@@ -537,7 +535,7 @@ class S3MessageModel(DataModel):
                 }
 
 # =============================================================================
-class S3MessageAttachmentModel(DataModel):
+class MsgMessageAttachmentModel(DataModel):
     """
         Message Attachments
         - link table between msg_message & doc_document
@@ -562,7 +560,7 @@ class S3MessageAttachmentModel(DataModel):
         return None
 
 # =============================================================================
-class S3MessageContactModel(DataModel):
+class MsgMessageContactModel(DataModel):
     """
         Contact Form
     """
@@ -658,7 +656,7 @@ class S3MessageContactModel(DataModel):
         return None
 
 # =============================================================================
-class S3MessageTagModel(DataModel):
+class MsgMessageTagModel(DataModel):
     """
         Message Tags
     """
@@ -702,7 +700,7 @@ class S3MessageTagModel(DataModel):
         return None
 
 # =============================================================================
-class S3EmailModel(S3ChannelModel):
+class MsgEmailModel(MsgChannelModel):
     """
         Email
             InBound Channels
@@ -836,7 +834,7 @@ class S3EmailModel(S3ChannelModel):
         return None
 
 # =============================================================================
-class S3FacebookModel(S3ChannelModel):
+class MsgFacebookModel(MsgChannelModel):
     """
         Facebook
             Channels
@@ -959,15 +957,15 @@ class S3FacebookModel(S3ChannelModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def msg_facebook_channel_onaccept(form):
+    @classmethod
+    def msg_facebook_channel_onaccept(cls, form):
 
         if form.vars.login:
             # Ensure only a single account used for Login
             current.db(current.s3db.msg_facebook_channel.id != form.vars.id).update(login = False)
 
         # Normal onaccept processing
-        S3ChannelModel.channel_onaccept(form)
+        cls.channel_onaccept(form)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -983,7 +981,7 @@ class S3FacebookModel(S3ChannelModel):
         return c
 
 # =============================================================================
-class S3MCommonsModel(S3ChannelModel):
+class MsgMCommonsModel(MsgChannelModel):
     """
         Mobile Commons Inbound SMS Settings
         - Outbound can use Web API
@@ -1053,7 +1051,7 @@ class S3MCommonsModel(S3ChannelModel):
         return None
 
 # =============================================================================
-class S3GCMModel(S3ChannelModel):
+class MsgGCMModel(MsgChannelModel):
     """
         Google Cloud Messaging
             Channels
@@ -1115,18 +1113,18 @@ class S3GCMModel(S3ChannelModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def msg_gcm_channel_onaccept(form):
+    @classmethod
+    def msg_gcm_channel_onaccept(cls, form):
 
         if form.vars.enabled:
             # Ensure only a single account enabled
             current.db(current.s3db.msg_gcm_channel.id != form.vars.id).update(enabled = False)
 
         # Normal onaccept processing
-        S3ChannelModel.channel_onaccept(form)
+        cls.channel_onaccept(form)
 
 # =============================================================================
-class S3ParsingModel(DataModel):
+class MsgParsingModel(DataModel):
     """
         Message Parsing Model
     """
@@ -1429,7 +1427,7 @@ class S3ParsingModel(DataModel):
                 current.s3db.msg_parser_enable(form.vars.id)
 
 # =============================================================================
-class S3RSSModel(S3ChannelModel):
+class MsgRSSModel(MsgChannelModel):
     """
         RSS channel
     """
@@ -1619,7 +1617,7 @@ class S3RSSModel(S3ChannelModel):
         return None
 
 # =============================================================================
-class S3SMSModel(DataModel):
+class MsgSMSModel(DataModel):
     """
         SMS: Short Message Service
 
@@ -1684,7 +1682,7 @@ class S3SMSModel(DataModel):
         return None
 
 # =============================================================================
-class S3SMSOutboundModel(DataModel):
+class MsgSMSOutboundModel(DataModel):
     """
         SMS: Short Message Service
         - Outbound Channels
@@ -1859,7 +1857,7 @@ class S3SMSOutboundModel(DataModel):
         return None
 
 # =============================================================================
-class S3TropoModel(DataModel):
+class MsgTropoModel(DataModel):
     """
         Tropo can be used to send & receive SMS, Twitter & XMPP
 
@@ -1926,7 +1924,7 @@ class S3TropoModel(DataModel):
         return None
 
 # =============================================================================
-class S3TwilioModel(S3ChannelModel):
+class MsgTwilioModel(MsgChannelModel):
     """
         Twilio Inbound SMS channel
         - for Outbound, use Web API
@@ -2008,7 +2006,7 @@ class S3TwilioModel(S3ChannelModel):
         return None
 
 # =============================================================================
-class S3TwitterModel(DataModel):
+class MsgTwitterModel(DataModel):
 
     names = ("msg_twitter_channel",
              "msg_twitter",
@@ -2186,7 +2184,7 @@ class S3TwitterModel(DataModel):
             current.db(current.s3db.msg_twitter_channel.id != form.vars.id).update(login = False)
 
         # Normal onaccept processing
-        S3ChannelModel.channel_onaccept(form)
+        MsgChannelModel.channel_onaccept(form)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2230,7 +2228,7 @@ class S3TwitterModel(DataModel):
             s3[k] = ""
 
 # =============================================================================
-class S3TwitterSearchModel(S3ChannelModel):
+class MsgTwitterSearchModel(MsgChannelModel):
     """
         Twitter Searches
          - results can be fed to KeyGraph
@@ -2507,7 +2505,7 @@ S3.timeline.now="''', now.isoformat(), '''"
         else:
             r.error(405, current.ERROR.BAD_METHOD)
 # =============================================================================
-class S3XFormsModel(DataModel):
+class MsgXFormsModel(DataModel):
     """
         XForms are used by the ODK Collect mobile client
 
@@ -2535,7 +2533,7 @@ class S3XFormsModel(DataModel):
         return None
 
 # =============================================================================
-class S3BaseStationModel(DataModel):
+class MsgBaseStationModel(DataModel):
     """
         Base Stations (Cell Towers) are a type of Site
 

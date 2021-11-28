@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Document Library
 
-""" Sahana Eden Document Library
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,10 +25,10 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3DocumentLibrary",
-           "S3DocumentTagModel",
-           "S3CKEditorModel",
-           "S3DataCardModel",
+__all__ = ("DocumentLibrary",
+           "DocumentTagModel",
+           "DocumentCKEditorModel",
+           "DocumentDataCardModel",
            "doc_image_represent",
            "doc_document_list_layout",
            )
@@ -46,7 +44,7 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class S3DocumentLibrary(DataModel):
+class DocumentLibrary(DataModel):
 
     names = ("doc_entity",
              "doc_document",
@@ -104,8 +102,6 @@ class S3DocumentLibrary(DataModel):
                                pr_group = T("Team"),
                                project_project = T("Project"),
                                project_activity = T("Project Activity"),
-                               project_framework = T("Project Framework"),
-                               project_programme = T("Project Programme"),
                                project_task = T("Task"),
                                org_facility = T("Facility"),
                                org_group = T("Organization Group"),
@@ -364,9 +360,11 @@ class S3DocumentLibrary(DataModel):
         """
             File representation
 
-            @param filename: the stored file name (field value)
+            Args:
+                filename: the stored file name (field value)
 
-            @return: a link to download the file
+            Returns:
+                a link to download the file
         """
 
         if filename:
@@ -529,7 +527,7 @@ class S3DocumentLibrary(DataModel):
                                  )
 
 # =============================================================================
-class S3DocumentTagModel(DataModel):
+class DocumentTagModel(DataModel):
     """
         Document Tags
     """
@@ -576,7 +574,8 @@ def doc_image_represent(filename):
     """
         Represent an image as a clickable thumbnail
 
-        @param filename: name of the image file
+        Args:
+            filename: name of the image file
     """
 
     if not filename:
@@ -619,11 +618,12 @@ def doc_document_list_layout(list_id, item_id, resource, rfields, record):
         NB The CSS classes here refer to static/themes/bootstrap/cards.css & newsfeed.css
         - so this CSS either needs moving to core or else this needs modifying for default CSS
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["doc_document.id"]
@@ -722,9 +722,10 @@ class doc_DocumentRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key (doc_document.id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (doc_document.id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         if row:
@@ -742,7 +743,7 @@ class doc_DocumentRepresent(S3Represent):
         return v
 
 # =============================================================================
-class S3CKEditorModel(DataModel):
+class DocumentCKEditorModel(DataModel):
     """
         Storage for Images used by CKEditor
         - and hence the s3_richtext_widget
@@ -816,7 +817,7 @@ class S3CKEditorModel(DataModel):
         return ftype
 
 # =============================================================================
-class S3DataCardModel(DataModel):
+class DocumentDataCardModel(DataModel):
     """
         Model to manage context-specific features of printable
         data cards (S3PDFCard)
@@ -939,9 +940,10 @@ class S3DataCardModel(DataModel):
         """
             Make sure each card type can be defined only once per org
 
-            @param record_id: the current doc_card_config record ID
-                              (when currently editing a record)
-            @param organisation_id: the organisation record ID
+            Args:
+                record_id: the current doc_card_config record ID
+                           (when currently editing a record)
+                organisation_id: the organisation record ID
         """
 
         s3db = current.s3db

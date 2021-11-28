@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Deployments Model
 
-""" Sahana Eden Deployments Model
-
-    @copyright: 2011-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2011-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,9 +25,9 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3DeploymentOrganisationModel",
-           "S3DeploymentModel",
-           "S3DeploymentAlertModel",
+__all__ = ("DeployOrganisationModel",
+           "DeployModel",
+           "DeployAlertModel",
            "deploy_rheader",
            "deploy_apply",
            "deploy_alert_select_recipients",
@@ -46,7 +44,7 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class S3DeploymentOrganisationModel(DataModel):
+class DeployOrganisationModel(DataModel):
     """
         Split into separate model to avoid circular deadlock in HRModel
     """
@@ -72,7 +70,7 @@ class S3DeploymentOrganisationModel(DataModel):
         return None
 
 # =============================================================================
-class S3DeploymentModel(DataModel):
+class DeployModel(DataModel):
 
     names = ("deploy_mission",
              "deploy_mission_id",
@@ -586,13 +584,13 @@ class S3DeploymentModel(DataModel):
     @staticmethod
     def add_button(r, widget_id=None, visible=True, **attr):
         """
-            @todo: docstring?
+            TODO docstring?
         """
 
         # Check permission only here, i.e. when the summary is
         # actually being rendered:
         if current.auth.s3_has_permission("create", r.tablename):
-            return A(CRUDMethod.crud_string(r.tablename, "label_create"),
+            return A(get_crud_string(r.tablename, "label_create"),
                      _href = r.url(method="create", id=0, vars={}),
                      _class = "action-btn",
                      )
@@ -603,7 +601,7 @@ class S3DeploymentModel(DataModel):
     @staticmethod
     def deploy_mission_name_represent(name):
         """
-            @todo: docstring?
+            TODO docstring?
         """
 
         table = current.s3db.deploy_mission
@@ -626,7 +624,8 @@ class S3DeploymentModel(DataModel):
         """
             See if we can auto-populate the Date/Location/Event Type in imported records
 
-            @param form: the form
+            Args:
+                form: the form
         """
 
         if not current.response.s3.bulk:
@@ -698,7 +697,8 @@ class S3DeploymentModel(DataModel):
         """
             Create/update linked hrm_experience record for assignment
 
-            @param form: the form
+            Args:
+                form: the form
         """
 
         db = current.db
@@ -795,8 +795,9 @@ class S3DeploymentModel(DataModel):
         """
             Remove linked hrm_experience record
 
-            @param row: the link to be deleted
-            @param tablename: the tablename (ignored)
+            Args:
+                row: the link to be deleted
+                tablename: the tablename (ignored)
         """
 
         s3db = current.s3db
@@ -821,8 +822,9 @@ class S3DeploymentModel(DataModel):
         """
             Remove linked hrm_appraisal record
 
-            @param row: the link to be deleted
-            @param tablename: the tablename (ignored)
+            Args:
+                row: the link to be deleted
+                tablename: the tablename (ignored)
         """
 
         s3db = current.s3db
@@ -842,7 +844,7 @@ class S3DeploymentModel(DataModel):
         s3db.resource("hrm_appraisal", id=link.appraisal_id).delete()
 
 # =============================================================================
-class S3DeploymentAlertModel(DataModel):
+class DeployAlertModel(DataModel):
 
     names = ("deploy_alert",
              "deploy_alert_recipient",
@@ -1303,7 +1305,8 @@ class S3DeploymentAlertModel(DataModel):
             Update the doc_id in all attachments (doc_document) to the
             hrm_human_resource the response is linked to.
 
-            @param form: the form
+            Args:
+                form: the form
         """
 
         form_vars = form.vars
@@ -1358,7 +1361,8 @@ def deploy_availability_filter(r):
             - called from prep of the respective controller
             - adds resource filter for r.resource
 
-        @param r: the CRUDRequest
+        Args:
+            r: the CRUDRequest
     """
 
     get_vars = r.get_vars
@@ -1486,9 +1490,8 @@ def deploy_rheader(r, tabs=None, profile=False):
         if not profile and not r.component:
             rheader = ""
         else:
-            crud_string = CRUDMethod.crud_string
             record = r.record
-            title = crud_string(r.tablename, "title_display")
+            title = get_crud_string(r.tablename, "title_display")
             if record:
                 title = "%s: %s" % (title, record.name)
                 edit_btn = ""
@@ -1681,8 +1684,9 @@ class deploy_Inbox(CRUDMethod):
             Custom method for email inbox, provides a datatable with bulk-delete
             option
 
-            @param r: the CRUDRequest
-            @param attr: the controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: the controller attributes
         """
 
         T = current.T
@@ -1784,8 +1788,7 @@ class deploy_Inbox(CRUDMethod):
 
         # Instantiate the data table
         filteredrows = data["numrows"]
-        dt = S3DataTable(data["rfields"], data["rows"], orderby=orderby)
-        dt_id = "datatable"
+        dt = DataTable(data["rfields"], data["rows"], "datatable", orderby=orderby)
 
         # Bulk actions
         # @todo: user confirmation
@@ -1814,7 +1817,6 @@ class deploy_Inbox(CRUDMethod):
             # Render data table
             items = dt.html(totalrows,
                             filteredrows,
-                            dt_id,
                             dt_ajax_url= URL(c = "deploy",
                                              f = "email_inbox",
                                              extension = "aadata",
@@ -1822,13 +1824,13 @@ class deploy_Inbox(CRUDMethod):
                                              ),
                             dt_bulk_actions = dt_bulk_actions,
                             dt_pageLength = display_length,
-                            dt_pagination = "true",
-                            dt_searching = "true",
+                            dt_pagination = True,
+                            dt_searching = True,
                             )
 
             response.view = "list_filter.html"
             return {"items": items,
-                    "title": S3CRUD.crud_string(resource.tablename, "title_list"),
+                    "title": get_crud_string(resource.tablename, "title_list"),
                     }
 
         elif r.representation == "aadata":
@@ -1840,7 +1842,6 @@ class deploy_Inbox(CRUDMethod):
 
             return dt.json(totalrows,
                            filteredrows,
-                           dt_id,
                            draw,
                            dt_bulk_actions = dt_bulk_actions,
                            )
@@ -1853,7 +1854,7 @@ def deploy_apply(r, **attr):
     """
         Custom method to select new Deployables (e.g. RDRT/RIT Members)
 
-        @todo: make workflow re-usable for manual assignments
+        TODO make workflow re-usable for manual assignments
     """
 
     # Requires permission to create deploy_application
@@ -2012,8 +2013,7 @@ def deploy_apply(r, **attr):
                                represent = True,
                                )
         filteredrows = data.numrows
-        dt = S3DataTable(data.rfields, data.rows, orderby=orderby)
-        dt_id = "datatable"
+        dt = DataTable(data.rfields, data.rows, "datatable", orderby=orderby)
 
         # Bulk actions
         dt_bulk_actions = [(T("Add as %(team)s Members") % \
@@ -2025,8 +2025,6 @@ def deploy_apply(r, **attr):
         if r.representation == "html":
             # Page load
             resource.configure(deletable = False)
-
-            #dt.defaultActionButtons(resource)
             profile_url = URL(f = "human_resource",
                               args = ["[id]", "profile"],
                               )
@@ -2052,15 +2050,14 @@ def deploy_apply(r, **attr):
             # Data table (items)
             items = dt.html(totalrows,
                             filteredrows,
-                            dt_id,
                             dt_pageLength = display_length,
                             dt_ajax_url = URL(c = "deploy",
                                               f = "application",
                                               extension = "aadata",
                                               vars = {},
                                               ),
-                            dt_searching = "false",
-                            dt_pagination = "true",
+                            dt_searching = False,
+                            dt_pagination = True,
                             dt_bulk_actions = dt_bulk_actions,
                             )
 
@@ -2118,7 +2115,6 @@ def deploy_apply(r, **attr):
                 draw = None
             items = dt.json(totalrows,
                             filteredrows,
-                            dt_id,
                             draw,
                             dt_bulk_actions = dt_bulk_actions,
                             )
@@ -2267,8 +2263,7 @@ def deploy_alert_select_recipients(r, **attr):
                            )
 
     filteredrows = data.numrows
-    dt = S3DataTable(data.rfields, data.rows, orderby=orderby)
-    dt_id = "datatable"
+    dt = DataTable(data.rfields, data.rows, "datatable", orderby=orderby)
 
     # Bulk actions
     dt_bulk_actions = [(T("Select as Recipients"), "select")]
@@ -2277,18 +2272,16 @@ def deploy_alert_select_recipients(r, **attr):
         # Page load
         resource.configure(deletable = False)
 
-        #dt.defaultActionButtons(resource)
         s3.no_formats = True
 
         # Data table (items)
         items = dt.html(totalrows,
                         filteredrows,
-                        dt_id,
                         dt_ajax_url = r.url(representation="aadata"),
                         dt_bulk_actions = dt_bulk_actions,
                         dt_pageLength = display_length,
-                        dt_pagination = "true",
-                        dt_searching = "false",
+                        dt_pagination = True,
+                        dt_searching = False,
                         )
 
         # Filter form
@@ -2350,7 +2343,6 @@ def deploy_alert_select_recipients(r, **attr):
             draw = None
         items = dt.json(totalrows,
                         filteredrows,
-                        dt_id,
                         draw,
                         dt_bulk_actions = dt_bulk_actions,
                         )
@@ -2473,8 +2465,7 @@ def deploy_response_select_mission(r, **attr):
                            )
 
     filteredrows = data.numrows
-    dt = S3DataTable(data.rfields, data.rows, orderby=orderby)
-    dt_id = "datatable"
+    dt = DataTable(data.rfields, data.rows, "datatable", orderby=orderby)
 
     if r.representation == "html":
         # Page load
@@ -2504,11 +2495,10 @@ def deploy_response_select_mission(r, **attr):
         # Data table (items)
         items = dt.html(totalrows,
                         filteredrows,
-                        dt_id,
                         dt_ajax_url = r.url(representation="aadata"),
                         dt_pageLength = display_length,
-                        dt_pagination = "true",
-                        dt_searching = "false",
+                        dt_pagination = True,
+                        dt_searching = False,
                         )
 
         # Filter form
@@ -2643,7 +2633,6 @@ def deploy_response_select_mission(r, **attr):
             draw = None
         items = dt.json(totalrows,
                         filteredrows,
-                        dt_id,
                         draw,
                         )
         response.headers["Content-Type"] = "application/json"
@@ -2658,7 +2647,6 @@ class deploy_MissionProfileLayout(S3DataListLayout):
 
     # -------------------------------------------------------------------------
     def __init__(self, profile="deploy_mission"):
-        """ Constructor """
 
         super(deploy_MissionProfileLayout, self).__init__(profile=profile)
 
@@ -2674,8 +2662,9 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         """
             Bulk lookups for cards
 
-            @param resource: the resource
-            @param records: the records as returned from CRUDResource.select
+            Args:
+                resource: the resource
+                records: the records as returned from CRUDResource.select
         """
 
         db = current.db
@@ -2823,11 +2812,12 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         """
             Render the card header
 
-            @param list_id: the HTML ID of the list
-            @param item_id: the HTML ID of the item
-            @param resource: the CRUDResource to render
-            @param rfields: the S3ResourceFields to render
-            @param record: the record as dict
+            Args:
+                list_id: the HTML ID of the list
+                item_id: the HTML ID of the item
+                resource: the CRUDResource to render
+                rfields: the S3ResourceFields to render
+                record: the record as dict
         """
 
         # No card header in this layout
@@ -2838,11 +2828,12 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         """
             Render the card body
 
-            @param list_id: the HTML ID of the list
-            @param item_id: the HTML ID of the item
-            @param resource: the CRUDResource to render
-            @param rfields: the S3ResourceFields to render
-            @param record: the record as dict
+            Args:
+                list_id: the HTML ID of the list
+                item_id: the HTML ID of the item
+                resource: the CRUDResource to render
+                rfields: the S3ResourceFields to render
+                record: the record as dict
         """
 
         db = current.db
@@ -3292,8 +3283,9 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         """
             Render the body icon
 
-            @param list_id: the list ID
-            @param resource: the CRUDResource
+            Args:
+                list_id: the list ID
+                resource: the CRUDResource
         """
 
         tablename = resource.tablename
@@ -3321,9 +3313,10 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         """
             Render the toolbox
 
-            @param list_id: the HTML ID of the list
-            @param resource: the CRUDResource to render
-            @param record: the record as dict
+            Args:
+                list_id: the HTML ID of the list
+                resource: the CRUDResource to render
+                record: the record as dict
         """
 
         table = resource.table
@@ -3356,7 +3349,6 @@ class deploy_MissionProfileLayout(S3DataListLayout):
                              )
 
         has_permission = current.auth.s3_has_permission
-        crud_string = CRUDMethod.crud_string
 
         toolbox = DIV(_class="edit-bar fright")
 
@@ -3366,13 +3358,13 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             btn = A(ICON("edit"),
                     _href = update_url,
                     _class = "s3_modal",
-                    _title = crud_string(tablename, "title_update"),
+                    _title = get_crud_string(tablename, "title_update"),
                     )
             toolbox.append(btn)
         elif open_url:
             btn = A(ICON("file-alt"),
                     _href = open_url,
-                    _title = crud_string(tablename, "title_display"),
+                    _title = get_crud_string(tablename, "title_display"),
                     )
             toolbox.append(btn)
 
@@ -3380,7 +3372,7 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         if has_permission("delete", table, record_id=record_id):
             btn = A(ICON("delete"),
                     _class = "dl-item-delete",
-                    _title = crud_string(tablename, "label_delete_button"),
+                    _title = get_crud_string(tablename, "label_delete_button"),
                     )
             toolbox.append(btn)
 
@@ -3391,9 +3383,10 @@ class deploy_MissionProfileLayout(S3DataListLayout):
         """
             Render a data column.
 
-            @param item_id: the HTML element ID of the item
-            @param rfield: the S3ResourceField for the column
-            @param record: the record (from CRUDResource.select)
+            Args:
+                item_id: the HTML element ID of the item
+                rfield: the S3ResourceField for the column
+                record: the record (from CRUDResource.select)
         """
 
         colname = rfield.colname

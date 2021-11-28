@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Synchronization
 
-""" Sahana Eden Synchronization
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -436,7 +434,7 @@ class SyncRepositoryModel(DataModel):
         """
             Cleanup after repository deletion
 
-            @todo: use standard delete cascade
+            TODO use standard delete cascade
         """
 
         db = current.db
@@ -827,9 +825,11 @@ class SyncDatasetModel(DataModel):
         """
             File representation
 
-            @param filename: the stored file name (field value)
+            Args:
+                filename: the stored file name (field value)
 
-            @return: a link to download the file
+            Returns:
+                a link to download the file
         """
 
         if filename:
@@ -1460,8 +1460,9 @@ def sync_now(r, **attr):
     """
         Manual synchronization of a repository
 
-        @param r: the CRUDRequest
-        @param attr: controller options for the request
+        Args:
+            r: the CRUDRequest
+            attr: controller options for the request
     """
 
     T = current.T
@@ -1534,12 +1535,13 @@ class sync_CreateArchive(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST controller
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
 
-            @todo: perform archive creation async?
+            TODO perform archive creation async?
         """
 
         T = current.T
@@ -1577,11 +1579,12 @@ class sync_CreateArchive(CRUDMethod):
         """
             Simple UI form to trigger POST method
 
-            @param r: the CRUDRequest embedding the form
-            @param row: the data set Row
+            Args:
+                r: the CRUDRequest embedding the form
+                row: the data set Row
 
-            @todo: if archive is currently being built (async),
-                   then hide the button (provide a message instead?)
+            TODO if archive is currently being built (async),
+                 then hide the button (provide a message instead?)
         """
 
         try:
