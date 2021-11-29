@@ -7,7 +7,6 @@ import datetime
 import json
 import unittest
 
-from collections import OrderedDict
 from lxml import etree
 
 from gluon import *
@@ -149,7 +148,6 @@ class FieldSelectorResolutionTests(unittest.TestCase):
         assertEqual(rfield.fname, "parent")
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorsWithoutComponents(self):
         """ Field selector resolution without components"""
 
@@ -158,25 +156,25 @@ class FieldSelectorResolutionTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         selectors = ["id",
                      "name",
                      "organisation_id$name",
-                     "task.description",
+                     "service.name",
                      ]
         fields, joins, left, distinct = resource.resolve_selectors(selectors,
                                                                    skip_components=True,
                                                                    )
 
-        project_project = resource.table
+        org_facility = resource.table
         org_organisation = s3db.org_organisation
 
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
         assertEqual(len(fields), 3)
-        assertEqual(fields[0].colname, "project_project.id")
-        assertEqual(fields[1].colname, "project_project.name")
+        assertEqual(fields[0].colname, "org_facility.id")
+        assertEqual(fields[1].colname, "org_facility.name")
         assertEqual(fields[2].colname, "org_organisation.name")
 
         assertEqual(joins, {})
@@ -189,7 +187,6 @@ class FieldSelectorResolutionTests(unittest.TestCase):
         assertTrue(distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorsWithComponents(self):
         """ Field selector resolution with components"""
 
@@ -198,44 +195,44 @@ class FieldSelectorResolutionTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         selectors = ["id",
                      "name",
                      "organisation_id$name",
-                     "task.description",
+                     "service.name",
                      ]
         fields, joins, left, distinct = resource.resolve_selectors(selectors)
 
-        project_project = resource.table
+        org_facility = resource.table
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
-        expected_l = project_task_project.on(
-                        (project_project.id == project_task_project.project_id) &
-                        (project_task_project.deleted == False))
+        expected_l = org_service_site.on(
+                        (org_facility.site_id == org_service_site.site_id) &
+                        (org_service_site.deleted == False))
 
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
 
         assertEqual(len(fields), 4)
-        assertEqual(fields[0].colname, "project_project.id")
-        assertEqual(fields[1].colname, "project_project.name")
+        assertEqual(fields[0].colname, "org_facility.id")
+        assertEqual(fields[1].colname, "org_facility.name")
         assertEqual(fields[2].colname, "org_organisation.name")
-        assertEqual(fields[3].colname, "project_task.description")
+        assertEqual(fields[3].colname, "org_service.name")
 
         assertEqual(joins, {})
 
         assertTrue(isinstance(left, dict))
-        assertEqual(set(left.keys()), {"org_organisation", "project_task"})
+        assertEqual(set(left.keys()), {"org_organisation", "org_service"})
         assertEqual(len(left["org_organisation"]), 1)
         assertEqual(str(left["org_organisation"][0]), str(expected))
-        assertEqual(len(left["project_task"]), 2)
-        assertEqual(str(left["project_task"][0]), str(expected_l))
-        assertEqual(str(left["project_task"][1]), str(expected_r))
+        assertEqual(len(left["org_service"]), 2)
+        assertEqual(str(left["org_service"][0]), str(expected_l))
+        assertEqual(str(left["org_service"][1]), str(expected_r))
 
         assertTrue(distinct)
 
@@ -379,7 +376,6 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertFalse(distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testGetQueryJoinsReferencedTableField(self):
         """ Referenced table field queries use left joins + distinct """
 
@@ -388,7 +384,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         q = FS("organisation_id$name") == "test"
 
         # Test joins
@@ -397,10 +393,10 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertTrue(distinct)
 
         # Test left joins
-        project_project = resource.table
+        org_facility = resource.table
         org_organisation = s3db.org_organisation
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
         joins, distinct = q._joins(resource, left=True)
         assertTrue(isinstance(joins, dict))
@@ -471,7 +467,6 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertTrue(distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testGetQueryJoinsLinkedComponentField(self):
         """
             Link table component field queries use chained left
@@ -483,8 +478,8 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
-        q = FS("task.description") == "test"
+        resource = s3db.resource("org_facility")
+        q = FS("service.name") == "test"
 
         # Test joins
         joins, distinct = q._joins(resource)
@@ -492,27 +487,26 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertTrue(distinct)
 
         # Test left joins
-        project_project = resource.table
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_facility = resource.table
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
-        expected_l = project_task_project.on(
-                        (project_project.id == project_task_project.project_id) &
-                        (project_task_project.deleted == False))
+        expected_l = org_service_site.on(
+                        (org_facility.site_id == org_service_site.site_id) &
+                        (org_service_site.deleted == False))
 
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
 
         joins, distinct = q._joins(resource, left=True)
-        assertEqual(list(joins.keys()), ["project_task"])
-        assertTrue(isinstance(joins["project_task"], list))
-        assertEqual(len(joins["project_task"]), 2)
-        assertEqual(str(joins["project_task"][0]), str(expected_l))
-        assertEqual(str(joins["project_task"][1]), str(expected_r))
+        assertEqual(list(joins.keys()), ["org_service"])
+        assertTrue(isinstance(joins["org_service"], list))
+        assertEqual(len(joins["org_service"]), 2)
+        assertEqual(str(joins["org_service"][0]), str(expected_l))
+        assertEqual(str(joins["org_service"][1]), str(expected_r))
         assertTrue(distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testGetQueryJoinsCombination(self):
         """ Queries for fields in multiple tables use multiple joins """
 
@@ -521,44 +515,43 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         q = (FS("organisation_id$name") == "test") & \
-            (FS("task.description") == "test")
+            (FS("service.name") == "test")
 
         # Test joins
         joins, distinct = q._joins(resource)
         assertEqual(list(joins.keys()), [])
 
         # Test left joins
-        project_project = resource.table
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_facility = resource.table
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
         org_organisation = s3db.org_organisation
 
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
-        expected_l = project_task_project.on(
-                        (project_project.id == project_task_project.project_id) &
-                        (project_task_project.deleted == False))
+        expected_l = org_service_site.on(
+                        (org_facility.site_id == org_service_site.site_id) &
+                        (org_service_site.deleted == False))
 
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
 
         joins, distinct = q._joins(resource, left=True)
-        assertEqual(set(joins.keys()), {"org_organisation", "project_task"})
+        assertEqual(set(joins.keys()), {"org_organisation", "org_service"})
 
         assertTrue(isinstance(joins["org_organisation"], list))
         assertEqual(len(joins["org_organisation"]), 1)
         assertEqual(str(joins["org_organisation"][0]), str(expected))
-        assertTrue(isinstance(joins["project_task"], list))
-        assertEqual(len(joins["project_task"]), 2)
-        assertEqual(str(joins["project_task"][0]), str(expected_l))
-        assertEqual(str(joins["project_task"][1]), str(expected_r))
+        assertTrue(isinstance(joins["org_service"], list))
+        assertEqual(len(joins["org_service"]), 2)
+        assertEqual(str(joins["org_service"][0]), str(expected_l))
+        assertEqual(str(joins["org_service"][1]), str(expected_r))
         assertTrue(distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testGetQueryMixedQueryType(self):
         """ Test combinations of web2py Queries with S3ResourceQueries """
 
@@ -567,7 +560,7 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         q = (FS("organisation_id$name") == "test") & \
             (resource.table.name == "test")
 
@@ -576,13 +569,11 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual(list(joins.keys()), [])
 
         # Test left joins
-        project_project = resource.table
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_facility = resource.table
         org_organisation = s3db.org_organisation
 
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
         joins, distinct = q._joins(resource, left=True)
         assertEqual(list(joins.keys()), ["org_organisation"])
@@ -597,20 +588,19 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual(qf, None)
         query = qq.query(resource)
         expected = ((org_organisation.name == "test") & \
-                    (project_project.name == "test"))
+                    (org_facility.name == "test"))
         assertEqual(str(query), str(expected))
 
         # Test get_query
         resource.add_filter(q)
         query = resource.get_query()
-        expected = (((project_project.id > 0) & \
-                     (project_project.deleted == False)) & \
+        expected = (((org_facility.id > 0) & \
+                     (org_facility.deleted == False)) & \
                     ((org_organisation.name == "test") & \
-                     (project_project.name == "test")))
+                     (org_facility.name == "test")))
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testGetQueryMixedQueryTypeVirtual(self):
         """ Test combinations of web2py Queries with virtual field filter """
 
@@ -619,36 +609,35 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         q = (FS("virtualfield") == "test") & \
             (resource.table.name == "test")
 
-        project_project = resource.table
+        org_facility = resource.table
 
         # Test joins
-        joins, distinct = q._joins(resource)
+        joins = q._joins(resource)[0]
         assertEqual(joins, {})
 
         # Test left joins
-        joins, distinct = q._joins(resource, left=True)
+        joins = q._joins(resource, left=True)[0]
         assertEqual(joins, {})
 
         # Test split and query
         qq, qf = q.split(resource)
-        expected = (project_project.name == "test")
+        expected = (org_facility.name == "test")
         assertEqual(str(qq), str(expected))
         assertTrue(isinstance(qf, S3ResourceQuery))
 
         # Test get_query
         resource.add_filter(q)
         query = resource.get_query()
-        expected =  (((project_project.id > 0) & \
-                      (project_project.deleted == False)) & \
-                     (project_project.name == "test"))
+        expected =  (((org_facility.id > 0) & \
+                      (org_facility.deleted == False)) & \
+                     (org_facility.name == "test"))
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testGetFilterLeftJoins(self):
         """ Check list of left joins in resource filters """
 
@@ -658,23 +647,23 @@ class ResourceFilterJoinTests(unittest.TestCase):
         assertTrue = self.assertTrue
 
         q = (FS("organisation_id$name") == "test") & \
-            (FS("task.description") == "test")
-        resource = s3db.resource("project_project", filter=q)
+            (FS("service.name") == "test")
+        resource = s3db.resource("org_facility", filter=q)
 
         # Test left joins
-        project_project = resource.table
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_facility = resource.table
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
         org_organisation = s3db.org_organisation
 
         expected1 = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
-        expected2 = project_task_project.on(
-                        (project_project.id == project_task_project.project_id) &
-                        (project_task_project.deleted == False))
+        expected2 = org_service_site.on(
+                        (org_facility.site_id == org_service_site.site_id) &
+                        (org_service_site.deleted == False))
 
-        expected3 = project_task.on(project_task_project.task_id == project_task.id)
+        expected3 = org_service.on(org_service_site.service_id == org_service.id)
 
         joins = resource.rfilter.get_joins(left=True)
         assertTrue(isinstance(joins, list))
@@ -703,7 +692,6 @@ class ResourceFilterQueryTests(unittest.TestCase):
         s3db = current.s3db
 
         assertEqual = self.assertEqual
-        assertTrue = self.assertTrue
 
         q = (FS("id").lower().like("%123%"))
         resource = s3db.resource("org_organisation", filter=q)
@@ -733,7 +721,6 @@ class ResourceFilterQueryTests(unittest.TestCase):
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testMasterFilterConstruction(self):
         """ Test master resource filter construction """
 
@@ -744,28 +731,28 @@ class ResourceFilterQueryTests(unittest.TestCase):
         assertTrue = self.assertTrue
 
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
         q = (FS("organisation_id$name") == "test") & \
-            (FS("task.description") == "test")
-        resource = current.s3db.resource("project_project", filter=q)
+            (FS("service.name") == "test")
+        resource = current.s3db.resource("org_facility", filter=q)
 
         rfilter = resource.rfilter
         assertNotEqual(rfilter, None)
 
         # Check master query
-        expected = ((project_project.id > 0) &
-                    (project_project.deleted == False))
+        expected = ((org_facility.id > 0) &
+                    (org_facility.deleted == False))
         assertEqual(str(rfilter.mquery), str(expected))
 
         # Check effective query
-        expected = (((project_project.id > 0) &
-                     (project_project.deleted == False)) &
+        expected = (((org_facility.id > 0) &
+                     (org_facility.deleted == False)) &
                      ((org_organisation.name == "test") &
-                      (project_task.description == "test")))
+                      (org_service.name == "test")))
         query = rfilter.get_query()
         assertEqual(str(query), str(expected))
 
@@ -775,27 +762,26 @@ class ResourceFilterQueryTests(unittest.TestCase):
 
         # Check left joins
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
 
-        expected_l = project_task_project.on(
-                        (project_project.id == project_task_project.project_id) &
-                        (project_task_project.deleted == False))
+        expected_l = org_service_site.on(
+                        (org_facility.site_id == org_service_site.site_id) &
+                        (org_service_site.deleted == False))
 
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
 
         left = rfilter.get_joins(left=True, as_list=False)
-        assertEqual(set(left.keys()), {"org_organisation", "project_task"})
+        assertEqual(set(left.keys()), {"org_organisation", "org_service"})
         assertTrue(isinstance(left["org_organisation"], list))
         assertEqual(len(left["org_organisation"]), 1)
         assertEqual(str(left["org_organisation"][0]), str(expected))
-        assertTrue(isinstance(left["project_task"], list))
-        assertEqual(len(left["project_task"]), 2)
-        assertEqual(str(left["project_task"][0]), str(expected_l))
-        assertEqual(str(left["project_task"][1]), str(expected_r))
+        assertTrue(isinstance(left["org_service"], list))
+        assertEqual(len(left["org_service"]), 2)
+        assertEqual(str(left["org_service"][0]), str(expected_l))
+        assertEqual(str(left["org_service"][1]), str(expected_r))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testCrossComponentFilterConstruction1(self):
         """ Test cross-component effect of master resource filter """
 
@@ -804,27 +790,27 @@ class ResourceFilterQueryTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
         q1 = (FS("organisation_id$name") == "test")
-        q2 = (FS("task.description") == "test")
-        resource = s3db.resource("project_project", filter=q1)
+        q2 = (FS("service.name") == "test")
+        resource = s3db.resource("org_facility", filter=q1)
         resource.add_filter(q2)
 
-        component = resource.components["task"]
+        component = resource.components["service"]
         component.build_query()
         rfilter = component.rfilter
         query = rfilter.get_query()
 
-        expected = (((project_task.id > 0) &
-                     (project_task.deleted == False)) &
-                   (((project_project.id > 0) &
-                     (project_project.deleted == False)) &
+        expected = (((org_service.id > 0) &
+                     (org_service.deleted == False)) &
+                   (((org_facility.id > 0) &
+                     (org_facility.deleted == False)) &
                    ((org_organisation.name == "test") &
-                   (project_task.description == "test"))))
+                   (org_service.name == "test"))))
 
         assertEqual(query, expected)
 
@@ -837,24 +823,24 @@ class ResourceFilterQueryTests(unittest.TestCase):
         tablenames = list(left.keys())
         assertEqual(len(tablenames), 2)
         assertTrue("org_organisation" in tablenames)
-        assertTrue("project_project" in tablenames)
+        assertTrue("org_facility" in tablenames)
 
         assertTrue(isinstance(left["org_organisation"], list))
         assertEqual(len(left["org_organisation"]), 1)
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
         assertEqual(str(left["org_organisation"][0]), str(expected))
 
-        assertTrue(isinstance(left["project_project"], list))
-        assertEqual(len(left["project_project"]), 2)
-        expected = project_task_project.on(project_task_project.task_id == project_task.id)
-        assertEqual(str(left["project_project"][0]), str(expected))
-        expected = project_project.on((project_project.id == project_task_project.project_id) &
-                                      (project_task_project.deleted == False))
-        assertEqual(str(left["project_project"][1]), str(expected))
+        assertTrue(isinstance(left["org_facility"], list))
+        assertEqual(len(left["org_facility"]), 2)
+        expected = org_service_site.on(org_service_site.service_id == org_service.id)
+        assertEqual(str(left["org_facility"][0]), str(expected))
+        expected = org_facility.on((org_facility.site_id == org_service_site.site_id) &
+                                      (org_service_site.deleted == False))
+        assertEqual(str(left["org_facility"][1]), str(expected))
 
         # Try to select rows
-        rows = component.select(None, limit=1, as_rows=True)
+        component.select(None, limit=1, as_rows=True)
 
     # -------------------------------------------------------------------------
     @unittest.skipIf(not current.deployment_settings.has_module("hrm"), "hrm module disabled")
@@ -920,10 +906,9 @@ class ResourceFilterQueryTests(unittest.TestCase):
         assertEqual(str(left["pr_person"][0]), str(expected_p))
 
         # Try to select rows
-        rows = component.select(None, limit=1, as_rows=True)
+        component.select(None, limit=1, as_rows=True)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testSimpleComponentFilterConstruction1(self):
         """ Test simple component filter construction (check query in filter) """
 
@@ -932,43 +917,43 @@ class ResourceFilterQueryTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        project_project = s3db.project_project
-        project_activity = s3db.project_activity
+        org_facility = s3db.org_facility
+        org_site_tag = s3db.org_site_tag
 
-        resource = s3db.resource("project_project", id=1)
+        resource = s3db.resource("org_facility", id=1)
 
-        component = resource.components["activity"]
+        component = resource.components["tag"]
         component.build_query()
         rfilter = component.rfilter
         query = rfilter.get_query()
 
         # This will fail in 1st run as there is no ADMIN role yet
 
-        expected = (((project_activity.id > 0) &
-                     (project_activity.deleted == False)) &
-                    (((project_project.id == 1) &
-                      (project_project.id > 0)) &
-                     (project_project.deleted == False)))
+        expected = (((org_site_tag.id > 0) &
+                     (org_site_tag.deleted == False)) &
+                    (((org_facility.id == 1) &
+                      (org_facility.id > 0)) &
+                     (org_facility.deleted == False)))
         assertEqual(str(query), str(expected))
 
         join = rfilter.get_joins(left=False, as_list=False)
 
-        expected = project_project.on(project_project.id == project_activity.project_id)
+        expected = org_facility.on(org_facility.site_id == org_site_tag.site_id)
 
         tablenames = list(join.keys())
         assertEqual(len(tablenames), 1)
-        assertTrue("project_project" in tablenames)
+        assertTrue("org_facility" in tablenames)
 
 
-        assertTrue(isinstance(join["project_project"], list))
-        assertEqual(len(join["project_project"]), 1)
-        assertEqual(str(join["project_project"][0]), str(expected))
+        assertTrue(isinstance(join["org_facility"], list))
+        assertEqual(len(join["org_facility"]), 1)
+        assertEqual(str(join["org_facility"][0]), str(expected))
 
         left = rfilter.get_joins(left=True, as_list=False)
         assertEqual(left, {})
 
         # Try to select rows
-        rows = component.select(None, limit=1, as_rows=True)
+        component.select(None, limit=1, as_rows=True)
 
     # -------------------------------------------------------------------------
     @unittest.skipIf(not current.deployment_settings.has_module("hrm"), "hrm module disabled")
@@ -1263,10 +1248,10 @@ class URLFilterSerializerTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        url_query = {"project.organisation_id$name__like": "*test*",
-                     "task.description__like!": "*test*"}
+        url_query = {"facility.organisation_id$name__like": "*test*",
+                     "service.name__like!": "*test*"}
 
-        resource = current.s3db.resource("project_project", vars=url_query)
+        resource = current.s3db.resource("org_facility", vars=url_query)
 
         rfilter = resource.rfilter
         url_vars = rfilter.serialize_url()
@@ -1399,24 +1384,23 @@ class ResourceFieldTests(unittest.TestCase):
         assertTrue(f.distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorInnerField(self):
         """ Resolution of a selector for a field in master table """
 
         assertEqual = self.assertEqual
         assertFalse = self.assertFalse
 
-        resource = current.s3db.resource("project_project")
+        resource = current.s3db.resource("org_facility")
         selector = "name"
 
         f = S3ResourceField(resource, selector)
 
         # Check field
         assertEqual(f.selector, selector)
-        assertEqual(str(f.field), "project_project.name")
-        assertEqual(str(f.tname), "project_project")
+        assertEqual(str(f.field), "org_facility.name")
+        assertEqual(str(f.tname), "org_facility")
         assertEqual(str(f.fname), "name")
-        assertEqual(str(f.colname), "project_project.name")
+        assertEqual(str(f.colname), "org_facility.name")
 
         # Check join (no join)
         assertEqual(f.join, Storage())
@@ -1455,7 +1439,6 @@ class ResourceFieldTests(unittest.TestCase):
         assertFalse(f.distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorVirtualField(self):
         """ Resolution of a selector for a virtual field in master table """
 
@@ -1463,7 +1446,7 @@ class ResourceFieldTests(unittest.TestCase):
         assertNotEqual = self.assertNotEqual
         assertFalse = self.assertFalse
 
-        resource = current.s3db.resource("project_project")
+        resource = current.s3db.resource("org_facility")
         selector = "virtual"
 
         f = S3ResourceField(resource, selector)
@@ -1472,9 +1455,9 @@ class ResourceFieldTests(unittest.TestCase):
         # Check field
         assertEqual(f.selector, selector)
         assertEqual(f.field, None)
-        assertEqual(str(f.tname), "project_project")
+        assertEqual(str(f.tname), "org_facility")
         assertEqual(str(f.fname), "virtual")
-        assertEqual(str(f.colname), "project_project.virtual")
+        assertEqual(str(f.colname), "org_facility.virtual")
 
         # Check join (no join)
         assertEqual(f.join, Storage())
@@ -1525,7 +1508,6 @@ class ResourceFieldTests(unittest.TestCase):
         assertTrue(f.distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorLinkedTableField(self):
         """ Resolution of a selector for a field in a link-table component """
 
@@ -1535,48 +1517,47 @@ class ResourceFieldTests(unittest.TestCase):
 
         s3db = current.s3db
 
-        project_project = s3db.project_project
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_facility = s3db.org_facility
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
-        resource = s3db.resource("project_project")
-        selector = "task.description"
+        resource = s3db.resource("org_facility")
+        selector = "service.name"
 
         f = S3ResourceField(resource, selector)
         assertNotEqual(f, None)
 
         # Check field
         assertEqual(f.selector, selector)
-        assertEqual(str(f.field), "project_task.description")
-        assertEqual(str(f.tname), "project_task")
-        assertEqual(str(f.fname), "description")
-        assertEqual(str(f.colname), "project_task.description")
+        assertEqual(str(f.field), "org_service.name")
+        assertEqual(str(f.tname), "org_service")
+        assertEqual(str(f.fname), "name")
+        assertEqual(str(f.colname), "org_service.name")
 
         # Check join
-        assertTrue(isinstance(f.left["project_task"], list))
-        assertEqual(len(f.left["project_task"]), 2)
+        assertTrue(isinstance(f.left["org_service"], list))
+        assertEqual(len(f.left["org_service"]), 2)
 
-        expected_l = project_task_project.on(
-                        (project_project.id == project_task_project.project_id) &
-                        (project_task_project.deleted == False))
+        expected_l = org_service_site.on(
+                        (org_facility.site_id == org_service_site.site_id) &
+                        (org_service_site.deleted == False))
 
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
 
-        assertEqual(str(f.left["project_task"][0]), str(expected_l))
-        assertEqual(str(f.left["project_task"][1]), str(expected_r))
+        assertEqual(str(f.left["org_service"][0]), str(expected_l))
+        assertEqual(str(f.left["org_service"][1]), str(expected_r))
 
-        expected = (((project_project.id == project_task_project.project_id) &
-                     (project_task_project.deleted == False)) &
-                    (project_task_project.task_id == project_task.id))
+        expected = (((org_facility.site_id == org_service_site.site_id) &
+                     (org_service_site.deleted == False)) &
+                    (org_service_site.service_id == org_service.id))
 
-        assertEqual(str(f.join["project_task"]), str(expected))
+        assertEqual(str(f.join["org_service"]), str(expected))
 
         # Check distinct
         assertTrue(f.distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorReferencedTableField(self):
         """ Resolution of a selector for a field in a referenced table """
 
@@ -1586,10 +1567,10 @@ class ResourceFieldTests(unittest.TestCase):
 
         s3db = current.s3db
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
 
-        resource = s3db.resource("project_project")
+        resource = s3db.resource("org_facility")
         selector = "organisation_id$name"
 
         f = S3ResourceField(resource, selector)
@@ -1606,21 +1587,20 @@ class ResourceFieldTests(unittest.TestCase):
         assertTrue(isinstance(f.left["org_organisation"], list))
         assertEqual(len(f.left["org_organisation"]), 1)
         expected = org_organisation.on(
-                    project_project.organisation_id == org_organisation.id)
+                    org_facility.organisation_id == org_organisation.id)
         assertEqual(str(f.left["org_organisation"][0]), str(expected))
 
-        expected = (project_project.organisation_id == org_organisation.id)
+        expected = (org_facility.organisation_id == org_organisation.id)
         assertEqual(str(f.join["org_organisation"]), str(expected))
 
         # Check distinct
         assertTrue(f.distinct)
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testResolveSelectorExceptions(self):
         """ Exception for invalid selectors """
 
-        resource = current.s3db.resource("project_project")
+        resource = current.s3db.resource("org_facility")
         selector = "organisation_id.test"
         self.assertRaises(AttributeError, S3ResourceField, resource, selector)
 
@@ -1961,7 +1941,6 @@ class URLQueryTests(unittest.TestCase):
             assertEqual((v, parse(v)), (v, r))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testParseURLQuery(self):
         """ Test standard URL query parsing """
 
@@ -1971,16 +1950,16 @@ class URLQueryTests(unittest.TestCase):
         assertNotEqual = self.assertNotEqual
         assertTrue = self.assertTrue
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
-        url_query = {"project.organisation_id$name__like": "*test*",
-                     "task.description__like!": "*test*",
+        url_query = {"facility.organisation_id$name__like": "*test*",
+                     "service.name__like!": "*test*",
                      }
 
-        resource = current.s3db.resource("project_project", vars=url_query)
+        resource = current.s3db.resource("org_facility", vars=url_query)
         rfilter = resource.rfilter
 
         # Check joins
@@ -1989,32 +1968,31 @@ class URLQueryTests(unittest.TestCase):
         assertTrue(isinstance(joins, list))
 
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
         assertEqual(joins[0], str(expected))
 
-        expected_l = project_task_project.on(
-                        (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted == False))
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_l = org_service_site.on(
+                        (org_service_site.site_id == org_facility.site_id) &
+                        (org_service_site.deleted == False))
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
         assertEqual(joins[1], str(expected_l))
         assertEqual(joins[2], str(expected_r))
 
         # Check query
         query = rfilter.get_query()
-        expected1 = (((project_project.id > 0) &
-                      (project_project.deleted == False)) &
+        expected1 = (((org_facility.id > 0) &
+                      (org_facility.deleted == False)) &
                      ((org_organisation.name.lower().like("%test%")) &
-                     (~(project_task.description.lower().like("%test%")))))
-        expected2 = (((project_project.id > 0) &
-                      (project_project.deleted == False)) &
-                     ((~(project_task.description.lower().like("%test%"))) &
+                     (~(org_service.name.lower().like("%test%")))))
+        expected2 = (((org_facility.id > 0) &
+                      (org_facility.deleted == False)) &
+                     ((~(org_service.name.lower().like("%test%"))) &
                       (org_organisation.name.lower().like("%test%"))))
 
         assertTrue(str(query) == str(expected1) or str(query) == str(expected2))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testParseURLQueryWithAlternativeValues(self):
         """ Test URL query parsing with alternative values (OR) """
 
@@ -2023,33 +2001,30 @@ class URLQueryTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
 
-        url_query = {"project.organisation_id$name__like": "Test*,Other*"}
+        url_query = {"facility.organisation_id$name__like": "Test*,Other*"}
 
-        resource = current.s3db.resource("project_project", vars=url_query)
+        resource = current.s3db.resource("org_facility", vars=url_query)
         rfilter = resource.rfilter
 
         # Check joins
         joins = rfilter.get_joins(left=True)
         assertTrue(isinstance(joins, list))
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
         assertEqual(joins[0], str(expected))
 
         # Check query
         query = rfilter.get_query()
-        expected = (((project_project.id > 0) &
-                     (project_project.deleted == False)) &
+        expected = (((org_facility.id > 0) &
+                     (org_facility.deleted == False)) &
                     ((org_organisation.name.lower().like("test%")) |
                      (org_organisation.name.lower().like("other%"))))
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testParseURLQueryWithMultipleValues(self):
         """ Test URL query parsing with multiple values (AND) """
 
@@ -2058,33 +2033,30 @@ class URLQueryTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
 
-        url_query = {"project.organisation_id$name__like": ["Test*", "Other*"]}
+        url_query = {"facility.organisation_id$name__like": ["Test*", "Other*"]}
 
-        resource = current.s3db.resource("project_project", vars=url_query)
+        resource = current.s3db.resource("org_facility", vars=url_query)
         rfilter = resource.rfilter
 
         # Check joins
         joins = rfilter.get_joins(left=True)
         assertTrue(isinstance(joins, list))
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
         assertEqual(joins[0], str(expected))
 
         # Check query
         query = rfilter.get_query()
-        expected = (((project_project.id > 0) &
-                     (project_project.deleted == False)) &
+        expected = (((org_facility.id > 0) &
+                     (org_facility.deleted == False)) &
                     ((org_organisation.name.lower().like("other%")) &
                      (org_organisation.name.lower().like("test%"))))
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testParseURLQueryWithAlternativeSelectors(self):
         """ Test alternative selectors (OR) in a URL query """
 
@@ -2093,14 +2065,14 @@ class URLQueryTests(unittest.TestCase):
         assertEqual = self.assertEqual
         assertTrue = self.assertTrue
 
-        project_project = s3db.project_project
+        org_facility = s3db.org_facility
         org_organisation = s3db.org_organisation
-        project_task_project = s3db.project_task_project
-        project_task = s3db.project_task
+        org_service_site = s3db.org_service_site
+        org_service = s3db.org_service
 
-        url_query = {"project.organisation_id$name|task.description__like": "Test*"}
+        url_query = {"facility.organisation_id$name|service.name__like": "Test*"}
 
-        resource = s3db.resource("project_project", vars=url_query)
+        resource = s3db.resource("org_facility", vars=url_query)
         rfilter = resource.rfilter
 
         # Check joins
@@ -2108,23 +2080,23 @@ class URLQueryTests(unittest.TestCase):
         assertTrue(isinstance(joins, list))
 
         expected = org_organisation.on(
-                        project_project.organisation_id == org_organisation.id)
+                        org_facility.organisation_id == org_organisation.id)
         assertEqual(joins[0], str(expected))
 
-        expected_l = project_task_project.on(
-                        (project_task_project.project_id == project_project.id) &
-                        (project_task_project.deleted == False))
-        expected_r = project_task.on(
-                        project_task_project.task_id == project_task.id)
+        expected_l = org_service_site.on(
+                        (org_service_site.site_id == org_facility.site_id) &
+                        (org_service_site.deleted == False))
+        expected_r = org_service.on(
+                        org_service_site.service_id == org_service.id)
         assertEqual(joins[1], str(expected_l))
         assertEqual(joins[2], str(expected_r))
 
         # Check the query
         query = rfilter.get_query()
-        expected = (((project_project.id > 0) &
-                     (project_project.deleted == False)) &
+        expected = (((org_facility.id > 0) &
+                     (org_facility.deleted == False)) &
                     ((org_organisation.name.lower().like("test%")) |
-                     (project_task.description.lower().like("test%"))))
+                     (org_service.name.lower().like("test%"))))
         assertEqual(str(query), str(expected))
 
     # -------------------------------------------------------------------------
@@ -2272,7 +2244,6 @@ class URLQueryTests(unittest.TestCase):
 # =============================================================================
 class JoinResolutionTests(unittest.TestCase):
 
-    @unittest.skipIf(not current.deployment_settings.has_module("project"), "project module disabled")
     def testPreferredSet(self):
         """ Test resolution of duplicate inner/left joins """
 
@@ -2280,23 +2251,23 @@ class JoinResolutionTests(unittest.TestCase):
 
         assertEqual = self.assertEqual
 
-        ptable = s3db.project_project
-        ltable = s3db.project_task_project
-        ttable = s3db.project_task
+        ftable = s3db.org_facility
+        ltable = s3db.org_service_site
+        ttable = s3db.org_service
 
-        ptable_join = ptable.on(ltable.project_id == ptable.id)
-        ltable_join = ltable.on(ltable.task_id == ttable.id)
+        ftable_join = ftable.on(ltable.site_id == ftable.site_id)
+        ltable_join = ltable.on(ltable.service_id == ttable.id)
 
         # Define a set of inner joins for one table
-        ijoins = S3Joins("project_task")
-        ijoins.extend({"project_project": [ptable_join, ltable_join]})
+        ijoins = S3Joins("org_service")
+        ijoins.extend({"org_facility": [ftable_join, ltable_join]})
 
         # Define a sub-join of the inner joins as a left join
-        ljoins = S3Joins("project_task")
-        ljoins.extend({"project_task_project": [ltable_join]})
+        ljoins = S3Joins("org_service")
+        ljoins.extend({"org_service_site": [ltable_join]})
 
         # Request joins for both tables from both sets, prefer the left joins
-        tablenames = ["project_project", "project_task_project"]
+        tablenames = ["org_facility", "org_service_site"]
         join = ijoins.as_list(tablenames=tablenames, prefer=ljoins)
         left = ljoins.as_list(tablenames=tablenames)
 
@@ -2305,7 +2276,7 @@ class JoinResolutionTests(unittest.TestCase):
         assertEqual(len(left), 2)
         # Mind the order! (must be ordered by dependency)
         assertEqual(str(left[0]), str(ltable_join))
-        assertEqual(str(left[1]), str(ptable_join))
+        assertEqual(str(left[1]), str(ftable_join))
 
 # =============================================================================
 class URLQueryParserTests(unittest.TestCase):
@@ -2598,7 +2569,7 @@ class URLQueryParserTests(unittest.TestCase):
         assertTrue = self.assertTrue
         assertIn = self.assertIn
 
-        q1 = S3FieldSelector("~.test1") == "A"
+        #q1 = S3FieldSelector("~.test1") == "A"
         q2 = S3FieldSelector("x.test2") == "B"
         q3 = S3FieldSelector("x.test3") == "C"
         q4 = S3FieldSelector("y.test4") == "D"
