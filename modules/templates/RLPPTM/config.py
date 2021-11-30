@@ -442,7 +442,7 @@ def config(settings):
             required = ["STORE", "RULES_ISS"]
         else:
             from .helpers import get_managed_facilities
-            if get_managed_facilities():
+            if get_managed_facilities(cacheable=False):
                 required = ["TPNDO"]
 
         if required:

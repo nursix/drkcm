@@ -54,7 +54,7 @@ def get_role_realms(role):
     return role_realms
 
 # =============================================================================
-def get_managed_facilities(role="ORG_ADMIN", public_only=True):
+def get_managed_facilities(role="ORG_ADMIN", public_only=True, cacheable=True):
     """
         Get test stations managed by the current user
 
@@ -90,7 +90,7 @@ def get_managed_facilities(role="ORG_ADMIN", public_only=True):
         join = None
 
     sites = current.db(query).select(ftable.site_id,
-                                     cache = s3db.cache,
+                                     cache = s3db.cache if cacheable else None,
                                      join = join,
                                      )
     return [s.site_id for s in sites]
