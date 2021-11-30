@@ -433,13 +433,17 @@ def config(settings):
         if not person_id:
             return None
 
+        required = None
+
         has_role = auth.s3_has_role
         if has_role("ADMIN"):
             required = None
         elif has_role("VOUCHER_ISSUER"):
             required = ["STORE", "RULES_ISS"]
         else:
-            required = None
+            from .helpers import get_managed_facilities
+            if get_managed_facilities():
+                required = ["TPNDO"]
 
         if required:
             from core import ConsentTracking
@@ -455,17 +459,34 @@ def config(settings):
     # -------------------------------------------------------------------------
     def customise_auth_consent_resource(r, tablename):
 
+        user_org = "person_id$user.user_id:org_organisation_user.organisation_id"
+
+        from core import S3DateFilter, S3OptionsFilter, S3TextFilter
+
+        filter_widgets = [S3TextFilter(["%s$name" % user_org,
+                                        "person_id$first_name",
+                                        "person_id$last_name",
+                                        "option_id$name",
+                                        ],
+                                        label = T("Search"),
+                                        ),
+                          S3OptionsFilter("consenting", cols=2),
+                          S3DateFilter("date", hidden=True),
+                          ]
+
         # Custom list fields to include the user organisation
-        list_fields = ["person_id$user.user_id:org_organisation_user.organisation_id",
+        list_fields = ["date",
+                       user_org,
                        "person_id",
                        "option_id",
                        "consenting",
-                       "date",
                        "expires_on",
                        ]
 
         current.s3db.configure("auth_consent",
+                               filter_widgets = filter_widgets,
                                list_fields = list_fields,
+                               orderby = "auth_consent.date desc",
                                )
 
     settings.customise_auth_consent_resource = customise_auth_consent_resource

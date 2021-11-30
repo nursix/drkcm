@@ -1233,7 +1233,7 @@ class register(S3CustomController):
         passfield = auth_settings.password_field
 
         # Instantiate Consent Tracker
-        consent = ConsentTracking(processing_types=["SHARE", "RULES_PRO"])
+        consent = ConsentTracking(processing_types=["SHARE", "RULES_PRO", "TPNDO"])
 
         # Last name is required
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
