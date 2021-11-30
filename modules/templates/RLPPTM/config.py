@@ -439,7 +439,7 @@ def config(settings):
         elif has_role("VOUCHER_ISSUER"):
             required = ["STORE", "RULES_ISS"]
         else:
-            required = ["SHARE"] #None
+            required = None
 
         if required:
             from core import ConsentTracking
