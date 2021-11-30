@@ -1096,6 +1096,9 @@ def user():
         if s3.crud.submit_style:
             form[0][-1][1][0]["_class"] = s3.crud.submit_style
 
+    # Default view
+    response.view = "default/user.html"
+
     templates = settings.get_template()
     if templates != "default":
         # Try a Custom View

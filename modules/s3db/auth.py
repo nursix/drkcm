@@ -340,7 +340,7 @@ class AuthConsentModel(DataModel):
             msg_record_modified = T("Consent Option updated"),
             msg_record_deleted = T("Consent Option deleted"),
             msg_list_empty = T("No Consent Options currently defined"),
-        )
+            )
 
         # ---------------------------------------------------------------------
         # Consent Question Responses
@@ -351,21 +351,49 @@ class AuthConsentModel(DataModel):
                      Field("vsign"),
                      Field("vhash", "text"),
                      Field("option_id", "reference auth_consent_option",
+                           label = T("Consent Question"),
                            ondelete = "RESTRICT",
-                           represent = S3Represent(lookup="auth_consent_option"),
+                           represent = S3Represent(lookup="auth_consent_option",
+                                                   fields = ["name", "valid_from"],
+                                                   labels = "%(name)s (%(valid_from)s)",
+                                                   ),
                            ),
                      Field("consenting", "boolean",
+                           label = T("Consenting"),
                            default = False,
+                           represent = s3_yes_no_represent,
                            ),
                      s3_date(default = "now",
                              ),
-                     s3_date("expires_on"),
+                     s3_date("expires_on",
+                             label = T("Expires on"),
+                             ),
                      *s3_meta_fields())
+
+        # List Fields
+        list_fields = ["person_id",
+                       "option_id",
+                       "consenting",
+                       "date",
+                       "expires_on",
+                       ]
 
         # Table Configuration
         self.configure(tablename,
+                       list_fields = list_fields,
                        onaccept = self.consent_onaccept,
+                       insertable = False,
+                       editable = False,
+                       deletable = False,
                        )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            title_display = T("Consent Details"),
+            title_list = T("Consent##plural"),
+            label_list_button = T("List Consent"),
+            msg_list_empty = T("No Consent currently registered"),
+            )
 
         # ---------------------------------------------------------------------
         # Consent Assertion

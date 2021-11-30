@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 # =============================================================================
-# Tasks to be callable async &/or on a Schedule
-# @ToDo: Rewrite a lot of these to use s3db_task or settings_task instead of
-#        having a lot of separate tasks defined here
+#   Tasks to be callable async &/or on a Schedule
+#   @ToDo: Rewrite a lot of these to use s3db_task or settings_task instead of
+#          having a lot of separate tasks defined here
 # =============================================================================
 
 has_module = settings.has_module

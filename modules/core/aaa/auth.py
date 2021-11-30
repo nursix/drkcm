@@ -1200,13 +1200,15 @@ Thank you"""
         session = current.session
         settings = current.deployment_settings
 
-        next_url = request.vars.get("_next")
+        next_url = request.get_vars.get("_next")
         if not next_url:
             next_url = settings.get_auth_login_next()
             if callable(next_url):
                 next_url = next_url()
         if not next_url:
             next_url = URL(c = "default", f = "index")
+
+        session.s3.pending_consent = False
 
         # Requires login
         if not self.s3_logged_in():
@@ -1231,6 +1233,7 @@ Thank you"""
             redirect(next_url)
         else:
             response.warning = T("Consent required")
+            session.s3.pending_consent = True
 
          # Instantiate Consent Tracker
         consent = current.s3db.auth_Consent(processing_types=pending_consent)
@@ -1275,7 +1278,9 @@ Thank you"""
                         ):
 
             consent.track(person_id, form.vars.get("consent"))
+            session.s3.pending_consent = False
             session.confirmation = T("Consent registered")
+            print(next_url)
             redirect(next_url)
 
         # Remind the user that form should be submitted even if they didn't

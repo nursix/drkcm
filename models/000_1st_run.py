@@ -1,18 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-    1st RUN:
-    - Run update_check if needed.
-    - Import the S3 Framework Extensions
-    - If needed, copy deployment templates to the live installation.
-"""
-
-# Debug why Eclipse breakpoints are ignored
-# http://stackoverflow.com/questions/29852426/pydev-ignoring-breakpoints
-#import sys
-#def trace_func(frame, event, arg):
-#    print 'Context: ', frame.f_code.co_name, '\tFile:', frame.f_code.co_filename, '\tLine:', frame.f_lineno, '\tEvent:', event
-#    return trace_func
-#sys.settrace(trace_func)
+# =============================================================================
+#   1st RUN:
+#       - Run update_check if needed.
+#       - Import the S3 Framework Extensions
+#       - If needed, copy deployment templates to the live installation.
+# =============================================================================
 
 # -----------------------------------------------------------------------------
 # Perform update checks - will happen in 1st_run or on those upgrades when new

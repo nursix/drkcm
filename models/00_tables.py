@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
-"""
-    Global tables and re-usable fields
-"""
-
 # =============================================================================
+#   Global tables and re-usable fields
+# =============================================================================
+
+# -----------------------------------------------------------------------------
 # Import models
 #
 if s3.debug:
@@ -57,7 +55,7 @@ if s3.debug:
 from core import DataModel
 s3db = current.s3db = DataModel()
 
-# =============================================================================
+# -----------------------------------------------------------------------------
 # Configure the auth models
 # - needed for admin/user, sync/sync & 1st_run, so could move to a fn called
 #   from those 3 if overhead grows
@@ -82,7 +80,7 @@ s3db.configure("auth_membership",
                              },
                )
 
-# =============================================================================
+# -----------------------------------------------------------------------------
 # Make available for controllers
 from core import S3ReusableField, s3_comments, s3_meta_fields
 

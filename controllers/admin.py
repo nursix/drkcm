@@ -619,57 +619,9 @@ def consent_option():
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
-def consent_question():
-    """
-        Controller to request consent on data processing from
-        the currently logged-in user
+def consent():
 
-        - currently only for TESTING
-        - to be moved into default/user/consent once completed (WIP)
-        - can be used as standalone controller for consent renewal after expiry
-     """
-
-    person_id = auth.s3_logged_in_person()
-    if not person_id:
-        redirect(URL(c="default", f="user", args=["login"], vars={"_next": URL()}))
-
-    output = {}
-
-    widget_id = "consent_question"
-
-    consent = s3db.auth_Consent()
-    formfields = [Field("question",
-                        label = T("Consent"),
-                        widget = consent.widget,
-                        ),
-                  ]
-
-    # Generate the form and add it to the output
-    formstyle = settings.get_ui_formstyle()
-    form = SQLFORM.factory(record = None,
-                           showid = False,
-                           formstyle = formstyle,
-                           table_name = "auth_consent",
-                           #buttons = buttons,
-                           #hidden = hidden,
-                           _id = widget_id,
-                           *formfields)
-
-    # Process the form
-    formname = "consent_question/None"
-    if form.accepts(request.post_vars,
-                    current.session,
-                    formname = formname,
-                    keepvalues = False,
-                    hideerror = False,
-                    ):
-
-        consent.track(person_id, form.vars.question)
-
-    output["form"] = form
-    response.view = "create.html"
-
-    return output
+    return crud_controller("auth", "consent")
 
 # =============================================================================
 # Ticket viewing

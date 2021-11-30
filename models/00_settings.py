@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
-"""
-    Global settings:
-
-    Those which are typically edited during a deployment are in
-    000_config.py & their results parsed into here. Deployers
-    shouldn't typically need to edit any settings here.
-"""
+# =============================================================================
+#   Global settings:
+#
+#   Those which are typically edited during a deployment are in
+#   000_config.py & their results parsed into here. Deployers
+#   shouldn't typically need to edit any settings here.
+# =============================================================================
 
 # Keep all our configuration options off the main global variables
 
@@ -23,7 +21,7 @@ s3.download_url = "%s/default/download" % s3.base_url
 
 # -----------------------------------------------------------------------------
 # Global variables
-
+#
 # Strings to i18n
 # Common Labels
 #messages["BREADCRUMB"] = ">> "
@@ -85,7 +83,7 @@ s3.jquery_ready = []
 
 # -----------------------------------------------------------------------------
 # Languages
-
+#
 s3.l10n_languages = settings.get_L10n_languages()
 
 # Default strings are in US English
@@ -132,7 +130,7 @@ else:
 
 # -----------------------------------------------------------------------------
 # Auth
-
+#
 _settings = auth.settings
 _settings.lock_keys = False
 
@@ -208,7 +206,7 @@ _settings.lock_keys = True
 
 # -----------------------------------------------------------------------------
 # Mail
-
+#
 # These settings could be made configurable as part of the Messaging Module
 # - however also need to be used by Auth (order issues)
 sender = settings.get_mail_sender()
@@ -224,7 +222,7 @@ if sender:
 
 # -----------------------------------------------------------------------------
 # Session
-
+#
 # Custom Notifications
 response.error = session.error
 response.confirmation = session.confirmation
@@ -251,7 +249,7 @@ if s3.debug:
 
 # -----------------------------------------------------------------------------
 # CRUD
-
+#
 s3_formstyle = settings.get_ui_formstyle()
 s3_formstyle_read = settings.get_ui_formstyle_read()
 s3_formstyle_mobile = s3_formstyle
