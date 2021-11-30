@@ -439,10 +439,11 @@ def config(settings):
         elif has_role("VOUCHER_ISSUER"):
             required = ["STORE", "RULES_ISS"]
         else:
-            required = None
+            required = ["SHARE"] #None
 
         if required:
-            consent = current.s3db.auth_Consent(required)
+            from core import ConsentTracking
+            consent = ConsentTracking(required)
             pending = consent.pending_responses(person_id)
         else:
             pending = None
@@ -450,6 +451,24 @@ def config(settings):
         return pending
 
     settings.auth.consent_check = consent_check
+
+    # -------------------------------------------------------------------------
+    def customise_auth_consent_resource(r, tablename):
+
+        # Custom list fields to include the user organisation
+        list_fields = ["person_id$user.user_id:org_organisation_user.organisation_id",
+                       "person_id",
+                       "option_id",
+                       "consenting",
+                       "date",
+                       "expires_on",
+                       ]
+
+        current.s3db.configure("auth_consent",
+                               list_fields = list_fields,
+                               )
+
+    settings.customise_auth_consent_resource = customise_auth_consent_resource
 
     # -------------------------------------------------------------------------
     def customise_auth_user_resource(r, tablename):

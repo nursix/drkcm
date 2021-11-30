@@ -14,10 +14,12 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import FS, ICON, IS_PHONE_NUMBER_MULTI, JSONERRORS, S3CRUD, S3CustomController, \
-                 S3GroupedOptionsWidget, S3LocationSelector, S3Represent, CRUDRequest, \
-                 S3WithIntro, s3_comments_widget, s3_get_extension, s3_mark_required, \
-                 s3_str, s3_text_represent, s3_truncate
+from core import ConsentTracking, IS_PHONE_NUMBER_MULTI, \
+                 ICON, S3GroupedOptionsWidget, S3LocationSelector, \
+                 CRUDRequest, S3CRUD, S3CustomController, FS, JSONERRORS, \
+                 S3Represent, S3WithIntro, s3_comments_widget, \
+                 s3_get_extension, s3_mark_required, s3_str, \
+                 s3_text_represent, s3_truncate
 
 from .config import TESTSTATIONS
 from .helpers import applicable_org_types
@@ -1223,9 +1225,6 @@ class register(S3CustomController):
         T = current.T
         request = current.request
 
-        #db = current.db
-        s3db = current.s3db
-
         auth = current.auth
         auth_settings = auth.settings
         auth_messages = auth.messages
@@ -1234,7 +1233,7 @@ class register(S3CustomController):
         passfield = auth_settings.password_field
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["SHARE", "RULES_PRO"])
+        consent = ConsentTracking(processing_types=["SHARE", "RULES_PRO"])
 
         # Last name is required
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
@@ -2201,7 +2200,6 @@ class register_invited(S3CustomController):
         T = current.T
         request = current.request
 
-        s3db = current.s3db
         auth = current.auth
         auth_settings = auth.settings
         auth_messages = auth.messages
@@ -2221,7 +2219,7 @@ class register_invited(S3CustomController):
                                  ]
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["STORE", "RULES_ISS"])
+        consent = ConsentTracking(processing_types=["STORE", "RULES_ISS"])
 
         # Form fields
         formfields = [utable.first_name,

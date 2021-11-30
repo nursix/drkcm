@@ -17,7 +17,8 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+from core import ConsentTracking, \
+                 FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                  JSONERRORS, S3CRUD, S3CustomController, S3LocationSelector, \
                  S3Represent, S3Report, CRUDRequest, S3WithIntro, \
                  s3_comments_widget, s3_get_extension, s3_mark_required, \
@@ -615,7 +616,6 @@ class register(S3CustomController):
         T = current.T
         request = current.request
 
-        s3db = current.s3db
         auth = current.auth
         auth_settings = auth.settings
         auth_messages = auth.messages
@@ -629,7 +629,7 @@ class register(S3CustomController):
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["TOS_PRIVATE", "STORE", "SHARE_OFFERS"])
+        consent = ConsentTracking(processing_types=["TOS_PRIVATE", "STORE", "SHARE_OFFERS"])
 
         # Form fields
         formfields = [# -- User Account --
@@ -1288,9 +1288,6 @@ class register_org(S3CustomController):
         T = current.T
         request = current.request
 
-        #db = current.db
-        s3db = current.s3db
-
         auth = current.auth
         auth_settings = auth.settings
         auth_messages = auth.messages
@@ -1299,7 +1296,7 @@ class register_org(S3CustomController):
         passfield = auth_settings.password_field
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["TOS_CORPORATE", "STORE", "SHARE_OFFERS"])
+        consent = ConsentTracking(processing_types=["TOS_CORPORATE", "STORE", "SHARE_OFFERS"])
 
         # Last name is required
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))

@@ -16,7 +16,7 @@ import uuid
 from gluon import current, Field, IS_EMPTY_OR, IS_IN_SET, SQLFORM, URL, \
                   BUTTON, DIV, FORM, H5, INPUT, TABLE, TD, TR
 
-from core import IS_ONE_OF, S3CustomController, CRUDMethod, \
+from core import ConsentTracking, IS_ONE_OF, S3CustomController, CRUDMethod, \
                  s3_date, s3_mark_required, s3_qrcode_represent, \
                  JSONERRORS
 
@@ -99,7 +99,7 @@ class TestResultRegistration(CRUDMethod):
         intro = row.body if row else None
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["CWA_ANONYMOUS", "CWA_PERSONAL"])
+        consent = ConsentTracking(processing_types=["CWA_ANONYMOUS", "CWA_PERSONAL"])
 
         table = s3db.disease_case_diagnostics
 
@@ -367,8 +367,7 @@ class TestResultRegistration(CRUDMethod):
 
         formvars = form.vars
 
-        consent = current.s3db.auth_Consent
-        response = consent.parse(formvars.get("consent"))
+        response = ConsentTracking.parse(formvars.get("consent"))
 
         # Verify that we have the data and consent required
         cwa = formvars.get("report_to_cwa")
@@ -874,8 +873,7 @@ class CWAReport:
         if not dhash:
             raise ValueError("Missing context hash")
 
-        consent = current.s3db.auth_Consent
-        consent.assert_consent(dhash, processing_type, response)
+        ConsentTracking.assert_consent(dhash, processing_type, response)
 
     # -------------------------------------------------------------------------
     def send(self):

@@ -50,6 +50,7 @@ from ..tools import IS_ISO639_2_LANGUAGE_CODE, S3Represent, S3Tracker, \
                     s3_addrow, s3_mark_required, s3_str
 
 from .permissions import S3Permission
+from .consent import ConsentTracking
 
 # =============================================================================
 class AuthS3(Auth):
@@ -1189,7 +1190,7 @@ Thank you"""
                 bypassing the question and navigating away. To prevent the
                 user from accessing functionality for which consent is
                 mandatory, the respective controllers must check for consent
-                using auth_Consent.has_consented, and refuse if not given
+                using ConsentTracking.has_consented, and refuse if not given
                 (though they can still redirect to this form where useful).
         """
 
@@ -1235,8 +1236,8 @@ Thank you"""
             response.warning = T("Consent required")
             session.s3.pending_consent = True
 
-         # Instantiate Consent Tracker
-        consent = current.s3db.auth_Consent(processing_types=pending_consent)
+        # Instantiate Consent Tracker
+        consent = ConsentTracking(processing_types=pending_consent)
 
         # Form fields
         formfields = [Field("consent",
@@ -1280,7 +1281,6 @@ Thank you"""
             consent.track(person_id, form.vars.get("consent"))
             session.s3.pending_consent = False
             session.confirmation = T("Consent registered")
-            print(next_url)
             redirect(next_url)
 
         # Remind the user that form should be submitted even if they didn't
@@ -2878,7 +2878,7 @@ Please go to %(url)s to approve this user."""
 
         # Track consent
         if deployment_settings.get_auth_consent_tracking():
-            s3db.auth_Consent.register_consent(user_id)
+            ConsentTracking.register_consent(user_id)
 
         user_email = db(utable.id == user_id).select(utable.email,
                                                      ).first().email

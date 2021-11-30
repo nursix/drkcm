@@ -14,11 +14,12 @@ from gluon import Field, SQLFORM, URL, XML, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
-                 JSONERRORS, S3CustomController, S3GroupedOptionsWidget, \
-                 S3LocationSelector, S3MultiSelectWidget, S3WeeklyHoursWidget, \
-                 S3WithIntro, S3Represent, \
-                 s3_comments_widget, s3_date, s3_mark_required, s3_str
+from core import ConsentTracking, S3CustomController, \
+                 IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+                 S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
+                 S3WeeklyHoursWidget, S3WithIntro, \
+                 JSONERRORS, S3Represent, s3_comments_widget, s3_date, \
+                 s3_mark_required, s3_str
 
 from .notifications import formatmap
 from .helpers import rlp_deployment_sites
@@ -559,7 +560,7 @@ class register(S3CustomController):
                                                 )
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["SHARE"])
+        consent = ConsentTracking(processing_types=["SHARE"])
 
         # Last name is required
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
