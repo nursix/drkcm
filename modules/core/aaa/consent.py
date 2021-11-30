@@ -86,7 +86,12 @@ class ConsentTracking:
 
         # Construct the consent options
         has_mandatory_opts = False
-        for code, spec in opts.items():
+        if self.processing_types:
+            # Preserve order
+            items = ((k, opts[k]) for k in self.processing_types if k in opts)
+        else:
+            items = opts.items()
+        for code, spec in items:
 
             # Title
             title = spec.get("name")
