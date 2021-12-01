@@ -206,6 +206,20 @@ def config(settings):
                 realm_entity = s3db.pr_get_pe_id("org_organisation",
                                                  case.organisation_id,
                                                  )
+            else:
+                # Human resources belong to their org's realm
+                htable = s3db.hrm_human_resource
+                otable = s3db.org_organisation
+
+                left = otable.on(otable.id == htable.organisation_id)
+                query = (htable.person_id == row.id) & \
+                        (htable.deleted == False)
+                org = db(query).select(otable.pe_id,
+                                       left = left,
+                                       limitby = (0, 1),
+                                       ).first()
+                if org:
+                    realm_entity = org.pe_id
 
         elif tablename in ("dvr_case_activity",
                            "dvr_case_details",
