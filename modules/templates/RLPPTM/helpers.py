@@ -2587,6 +2587,7 @@ class TestFacilityInfo(CRUDMethod):
                  "name": "FACILITY-NAME",   - the facility name
                  "phone": "phone #",        - the facility phone number
                  "email": "email",          - the facility email address
+                 "public": True|False,      - whether the facility is listed in the public registry
                  "organisation":
                     {"id": "ORG-ID",        - the organisation ID tag
                      "name": "ORG-NAME",    - the organisation name
@@ -2651,26 +2652,38 @@ class TestFacilityInfo(CRUDMethod):
                 r.error(400, current.ERROR.BAD_REQUEST)
             query = (table.code.upper() == code.upper())
 
-        query &= (table.deleted == False)
-        facility = db(query).select(table.code,
-                                    table.name,
-                                    table.phone1,
-                                    table.email,
-                                    table.website,
-                                    table.organisation_id,
-                                    table.location_id,
-                                    table.site_id,
-                                    limitby = (0, 1),
-                                    ).first()
+        ttable = s3db.org_site_tag
+        left = ttable.on((ttable.site_id == table.site_id) & \
+                         (ttable.tag == "PUBLIC") & \
+                         (ttable.deleted == False))
 
-        if not facility:
+        query &= (table.deleted == False)
+        row = db(query).select(table.code,
+                               table.name,
+                               table.phone1,
+                               table.email,
+                               table.website,
+                               table.organisation_id,
+                               table.location_id,
+                               table.site_id,
+                               ttable.id,
+                               ttable.value,
+                               left = left,
+                               limitby = (0, 1),
+                               ).first()
+
+        if not row:
             r.error(404, current.ERROR.BAD_RECORD)
+        else:
+            facility = row.org_facility
+            public = row.org_site_tag
 
         # Prepare facility info
         output = {"code": facility.code,
                   "name": facility.name,
                   "phone": facility.phone1,
                   "email": facility.email,
+                  "public": True if public.value == "Y" else False,
                   }
 
         # Look up organisation data
