@@ -488,6 +488,7 @@ class ConsentTracking:
             raise TypeError("Invalid timestmp type, expected datetime but got %s" % type(timestmp))
         elif timestmp > now:
             raise ValueError("Future timestmp not permitted")
+        timestamp = timestamp.replace(microsecond=0)
 
         if not person_id:
             person_id = current.auth.s3_logged_in_person()
