@@ -25,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("DocumentLibrary",
+__all__ = ("DocumentEntityModel",
+           "DocumentLibrary",
            "DocumentTagModel",
            "DocumentCKEditorModel",
            "DocumentDataCardModel",
@@ -44,10 +45,67 @@ from gluon.storage import Storage
 from ..core import *
 
 # =============================================================================
-class DocumentLibrary(DataModel):
+class DocumentEntityModel(DataModel):
 
     names = ("doc_entity",
-             "doc_document",
+             )
+
+    def model(self):
+
+        T = current.T
+        settings = current.deployment_settings
+
+        # ---------------------------------------------------------------------
+        # Document-referencing entities
+        #
+        entity_types = {"asset_asset": T("Asset"),
+                        "cap_resource": T("CAP Resource"),
+                        "cms_post": T("Post"),
+                        "cr_shelter": T("Shelter"),
+                        "deploy_mission": T("Mission"),
+                        "dc_response": T(settings.get_dc_response_label()),
+                        "dvr_case": T("Case"),
+                        "dvr_case_activity": T("Case Activity"),
+                        "event_event": T("Event"),
+                        "event_incident": T("Incident"),
+                        "event_incident_report": T("Incident Report"),
+                        "event_scenario": T("Scenario"),
+                        "event_sitrep": T("Situation Report"),
+                        "fin_expense": T("Expense"),
+                        "fire_station": T("Fire Station"),
+                        "hms_hospital": T("Hospital"),
+                        "hrm_human_resource": T("Human Resource"),
+                        "hrm_training_event_report": T("Training Event Report"),
+                        "inv_adj": T("Stock Adjustment"),
+                        "inv_recv": T("Incoming Shipment"),
+                        "inv_send": T("Sent Shipment"),
+                        "inv_warehouse": T("Warehouse"),
+                        "pr_group": T("Team"),
+                        "project_project": T("Project"),
+                        "project_activity": T("Project Activity"),
+                        "project_task": T("Task"),
+                        "org_facility": T("Facility"),
+                        "org_group": T("Organization Group"),
+                        "org_office": T("Office"),
+                        "req_need": T("Need"),
+                        "req_need_response": T("Activity Group"),
+                        "req_req": T("Request"),
+                        "security_seized_item": T("Seized Item"),
+                        }
+
+        tablename = "doc_entity"
+        self.super_entity(tablename, "doc_id", entity_types)
+
+        # Components
+        self.add_components(tablename,
+                            doc_document = "doc_id",
+                            doc_image = "doc_id",
+                            )
+
+# =============================================================================
+class DocumentLibrary(DataModel):
+
+    names = ("doc_document",
              "doc_document_id",
              "doc_image",
              )
@@ -75,62 +133,14 @@ class DocumentLibrary(DataModel):
         super_link = self.super_link
 
         # ---------------------------------------------------------------------
-        # Document-referencing entities
-        #
-        entity_types = Storage(asset_asset = T("Asset"),
-                               cap_resource = T("CAP Resource"),
-                               cms_post = T("Post"),
-                               cr_shelter = T("Shelter"),
-                               deploy_mission = T("Mission"),
-                               dc_response = T(settings.get_dc_response_label()),
-                               dvr_case = T("Case"),
-                               dvr_case_activity = T("Case Activity"),
-                               event_event = T("Event"),
-                               event_incident = T("Incident"),
-                               event_incident_report = T("Incident Report"),
-                               event_scenario = T("Scenario"),
-                               event_sitrep = T("Situation Report"),
-                               fin_expense = T("Expense"),
-                               fire_station = T("Fire Station"),
-                               hms_hospital = T("Hospital"),
-                               hrm_human_resource = T("Human Resource"),
-                               hrm_training_event_report = T("Training Event Report"),
-                               inv_adj = T("Stock Adjustment"),
-                               inv_recv = T("Incoming Shipment"),
-                               inv_send = T("Sent Shipment"),
-                               inv_warehouse = T("Warehouse"),
-                               pr_group = T("Team"),
-                               project_project = T("Project"),
-                               project_activity = T("Project Activity"),
-                               project_task = T("Task"),
-                               org_facility = T("Facility"),
-                               org_group = T("Organization Group"),
-                               org_office = T("Office"),
-                               req_need = T("Need"),
-                               req_need_response = T("Activity Group"),
-                               req_req = T("Request"),
-                               security_seized_item = T("Seized Item"),
-                               )
-
-        tablename = "doc_entity"
-        self.super_entity(tablename, "doc_id", entity_types)
-
-        # Components
-        doc_id = "doc_id"
-        add_components(tablename,
-                       doc_document = doc_id,
-                       doc_image = doc_id,
-                       )
-
-        # ---------------------------------------------------------------------
         # Documents
         #
         tablename = "doc_document"
         define_table(tablename,
                      # Instance
-                     self.stats_source_superlink(),
+                     super_link("source_id", "stats_source"),
                      # Component not instance
-                     super_link(doc_id, "doc_entity"),
+                     super_link("doc_id", "doc_entity"),
                      # @ToDo: Remove since Site Instances are doc entities?
                      super_link("site_id", "org_site"),
                      Field("file", "upload",
@@ -268,7 +278,7 @@ class DocumentLibrary(DataModel):
         tablename = "doc_image"
         define_table(tablename,
                      # Component not instance
-                     super_link(doc_id, "doc_entity"),
+                     super_link("doc_id", "doc_entity"),
                      super_link("pe_id", "pr_pentity"), # @ToDo: Remove & make Persons doc entities instead?
                      super_link("site_id", "org_site"), # @ToDo: Remove since Site Instances are doc entities?
                      Field("file", "upload",
