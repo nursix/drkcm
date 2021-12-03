@@ -25,7 +25,9 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("StatsModel",
+__all__ = ("StatsParameterModel",
+           "StatsDataModel",
+           "StatsSourceModel",
            "StatsDemographicModel",
            "StatsImpactModel",
            "StatsPeopleModel",
@@ -46,43 +48,37 @@ from ..core import *
 from s3layouts import S3PopupLink
 
 # =============================================================================
-class StatsModel(DataModel):
+class StatsParameterModel(DataModel):
     """
         Statistics Data
     """
 
     names = ("stats_parameter",
              "stats_parameter_represent",
-             "stats_data",
-             "stats_source",
-             "stats_source_superlink",
-             "stats_source_id",
-             "stats_accuracy",
-             #"stats_source_details",
              )
 
     def model(self):
 
         T = current.T
-        db = current.db
+        #db = current.db
 
         super_entity = self.super_entity
-        super_link = self.super_link
+        #super_link = self.super_link
 
         # ---------------------------------------------------------------------
         # Super entity: stats_parameter
         #
-        sp_types = Storage(disease_statistic = T("Disease Statistic"),
-                           org_resource_type = T("Organization Resource Type"),
-                           project_beneficiary_type = T("Project Beneficiary Type"),
-                           #project_indicator = T("Project Indicator"),
-                           stats_demographic = T("Demographic"),
-                           stats_impact_type = T("Impact Type"),
-                           # @ToDo; Deprecate
-                           stats_people_type = T("Types of People"),
-                           supply_distribution_item = T("Distribution Item"),
-                           #survey_question_type = T("Survey Question Type"),
-                           )
+        sp_types = {"disease_statistic": T("Disease Statistic"),
+                    "org_resource_type": T("Organization Resource Type"),
+                    "project_beneficiary_type": T("Project Beneficiary Type"),
+                    #"project_indicator": T("Project Indicator"),
+                    "stats_demographic": T("Demographic"),
+                    "stats_impact_type": T("Impact Type"),
+                    # @ToDo; Deprecate
+                    "stats_people_type": T("Types of People"),
+                    "supply_distribution_item": T("Distribution Item"),
+                    #"survey_question_type": T("Survey Question Type"),
+                    }
 
         tablename = "stats_parameter"
         super_entity(tablename, "parameter_id",
@@ -102,36 +98,56 @@ class StatsModel(DataModel):
                                           translate = True,
                                           )
 
+
+        # Pass names back to global scope (s3.*)
+        return {"stats_parameter_represent": parameter_represent,
+                }
+
+    # -------------------------------------------------------------------------
+    def defaults(self):
+        """ Safe defaults if module is disabled """
+
+        #dummy = S3ReusableField.dummy
+
+        return {"stats_parameter_represent": lambda v: "",
+                }
+
+# =============================================================================
+class StatsDataModel(DataModel):
+
+    names = ("stats_data",
+             )
+
+    def model(self):
+
+        T = current.T
+        #db = current.db
+
+        super_entity = self.super_entity
+        super_link = self.super_link
+
         # ---------------------------------------------------------------------
         # Super entity: stats_data
         #
-        sd_types = Storage(disease_stats_data = T("Disease Data"),
-                           org_resource = T("Organization Resource"),
-                           project_beneficiary = T("Project Beneficiary"),
-                           #project_indicator_data = T("Project Indicator Data"),
-                           stats_demographic_data = T("Demographic Data"),
-                           stats_impact = T("Impact"),
-                           # @ToDo: Deprecate
-                           stats_people = T("People"),
-                           supply_distribution = T("Distribution"),
-                           #survey_answer = T("Survey Answer"),
-                           )
+        sd_types = {"disease_stats_data": T("Disease Data"),
+                    "org_resource": T("Organization Resource"),
+                    "project_beneficiary": T("Project Beneficiary"),
+                    #"project_indicator_data": T("Project Indicator Data"),
+                    "stats_demographic_data": T("Demographic Data"),
+                    "stats_impact": T("Impact"),
+                    # @ToDo: Deprecate
+                    "stats_people": T("People"),
+                    "supply_distribution": T("Distribution"),
+                    #"survey_answer": T("Survey Answer"),
+                    }
 
-        accuracy_opts = {1 : T("Official Measurement"),
-                         2 : T("Measurement"),
-                         3 : T("Official Estimate"),
-                         4 : T("Estimate"), # e.g. Interpolation
-                         5 : T("Official Projection"),
-                         6 : T("Projection"),
-                         }
-        accuracy = S3ReusableField("accuracy", "integer",
-                                   represent = lambda opt: \
-                                        accuracy_opts.get(opt,
-                                                          current.messages.UNKNOWN_OPT),
-                                   requires = IS_EMPTY_OR(IS_IN_SET(accuracy_opts,
-                                                                    zero=None),
-                                                          ),
-                                   )
+        #accuracy_opts = {1 : T("Official Measurement"),
+        #                 2 : T("Measurement"),
+        #                 3 : T("Official Estimate"),
+        #                 4 : T("Estimate"), # e.g. Interpolation
+        #                 5 : T("Official Projection"),
+        #                 6 : T("Projection"),
+        #                 }
 
         tablename = "stats_data"
         super_entity(tablename, "data_id",
@@ -154,18 +170,42 @@ class StatsModel(DataModel):
                      s3_date("end_date",
                              label = T("End Date"),
                              ),
-                     accuracy(),
+                     #Field("accuracy", "integer",
+                     #      represent = represent_option(accuracy_opts),
+                     #      requires = IS_EMPTY_OR(IS_IN_SET(accuracy_opts,
+                     #                                      zero=None,
+                     #                                      )),
+                     #      ),
                      )
+
+        # Pass names back to global scope (s3.*)
+        return None
+
+# =============================================================================
+class StatsSourceModel(DataModel):
+
+    names = ("stats_source",
+             "stats_source_superlink",
+             "stats_source_id",
+             #"stats_source_details",
+             )
+
+    def model(self):
+
+        T = current.T
+        db = current.db
+
+        super_entity = self.super_entity
 
         # ---------------------------------------------------------------------
         # Stats Source Super-Entity
         #
-        source_types = Storage(doc_document = T("Document"),
-                               #org_organisation = T("Organization"),
-                               #pr_person = T("Person"),
-                               #flood_gauge = T("Flood Gauge"),
-                               #survey_series = T("Survey")
-                               )
+        source_types = {"doc_document": T("Document"),
+                        #"org_organisation": T("Organization"),
+                        #"pr_person": T("Person"),
+                        #"flood_gauge": T("Flood Gauge"),
+                        #"survey_series": T("Survey")
+                        }
 
         tablename = "stats_source"
         super_entity(tablename, "source_id", source_types,
@@ -173,9 +213,6 @@ class StatsModel(DataModel):
                            label = T("Name"),
                            ),
                      )
-
-        # For use by Instances or Components
-        source_superlink = lambda: super_link("source_id", "stats_source")
 
         # For use by other FKs
         represent = stats_SourceRepresent(show_link = True)
@@ -206,10 +243,7 @@ class StatsModel(DataModel):
         #             )
 
         # Pass names back to global scope (s3.*)
-        return {"stats_source_superlink": source_superlink,
-                "stats_source_id": source_id,
-                "stats_accuracy": accuracy,
-                "stats_parameter_represent": parameter_represent,
+        return {"stats_source_id": source_id,
                 }
 
     # -------------------------------------------------------------------------
@@ -218,10 +252,7 @@ class StatsModel(DataModel):
 
         dummy = S3ReusableField.dummy
 
-        return {# Needed for doc
-                "stats_source_superlink": dummy("source_id"),
-                "stats_parameter_represent": lambda v: "",
-                "stats_source_id": dummy("source_id"),
+        return {"stats_source_id": dummy("source_id"),
                 }
 
 # =============================================================================

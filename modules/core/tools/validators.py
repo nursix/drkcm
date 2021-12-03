@@ -726,62 +726,21 @@ class IS_ONE_OF_EMPTY(Validator):
         else:
             self.dbset = dbset
         (ktable, kfield) = str(field).split(".")
+        if not kfield:
+            kfield = "id"
 
-        if not label:
-            label = "%%(%s)s" % kfield
-
-        if isinstance(label, str):
-            if REGEX1.match(str(label)):
-                label = "%%(%s)s" % str(label).split(".")[-1]
-            ks = REGEX2.findall(label)
-            if not kfield in ks:
-                ks += [kfield]
-            fields = ["%s.%s" % (ktable, k) for k in ks]
-        elif hasattr(label, "bulk"):
-            # S3Represent
-            ks = [kfield]
-            if label.custom_lookup:
-                # Represent uses a custom lookup, so we only
-                # retrieve the keys here
-                fields = [kfield]
-                if orderby is None:
-                    orderby = field
-            else:
-                # Represent uses a standard field lookup, so
-                # we can do that right here
-                label._setup()
-                fields = list(label.fields)
-                if kfield not in fields:
-                    fields.insert(0, kfield)
-                # Unlikely, but possible: represent and validator
-                # using different keys - commented for now for
-                # performance reasons (re-enable if ever necessary)
-                #key = label.key
-                #if key and key not in fields:
-                    #fields.insert(0, key)
-        else:
-            ks = [kfield]
-            try:
-                table = current.s3db[ktable]
-                fields =[str(f) for f in table if f.name not in ("wkt", "the_geom")]
-            except RuntimeError:
-                fields = "all"
-
-        self.fields = fields
-        self.label = label
         self.ktable = ktable
-        if not kfield or not len(kfield):
-            self.kfield = "id"
-        else:
-            self.kfield = kfield
-        self.ks = ks
+        self.kfield = kfield
+
+        self.label = label
+        self._fields = None
 
         self.error_message = error_message
 
         self.theset = None
         self.labels = None
 
-        self.orderby = orderby
+        self._orderby = orderby
         self.groupby = groupby
         self.left = left
         self.multiple = multiple
@@ -797,6 +756,75 @@ class IS_ONE_OF_EMPTY(Validator):
         self.realms = realms
         self.updateable = updateable
         self.instance_types = instance_types
+
+    # -------------------------------------------------------------------------
+    @property
+    def orderby(self):
+        """
+            Orderby rule for building the set (lazy property)
+
+            Returns:
+                the orderby expression
+        """
+
+        return self._orderby if self.fields else None
+
+    # -------------------------------------------------------------------------
+    @property
+    def fields(self):
+        """
+            Fields to load before representation (lazy property)
+
+            Returns:
+                list of field names (incl. tablename prefixes)
+        """
+
+        fields = self._fields
+        if fields is None:
+
+            label = self.label
+            ktable, kfield = self.ktable, self.kfield
+
+            pkey = "%s.%s" % (ktable, kfield)
+
+            if not label:
+                label = "%%(%s)s" % kfield
+                fields = [pkey]
+            elif hasattr(label, "bulk"):
+                # S3Represent
+                if label.custom_lookup:
+                    # Represent uses a custom lookup, so we only
+                    # retrieve the keys here
+                    fields = [pkey]
+                    if self._orderby is None:
+                        self._orderby = fields[0]
+                else:
+                    # Represent uses a standard field lookup, so
+                    # we can do that right here
+                    label._setup()
+                    fields = list(label.fields)
+                    if pkey not in fields:
+                        fields.insert(0, pkey)
+            elif callable(label):
+                # Represent function
+                fields = [pkey]
+            elif isinstance(label, str):
+                if REGEX1.match(label):
+                    label = "%%(%s)s" % label.split(".")[-1]
+                ks = REGEX2.findall(label)
+                if not kfield in ks:
+                    ks += [kfield]
+                fields = ["%s.%s" % (ktable, k) for k in ks]
+            elif isinstance(label, (tuple, list)):
+                fields = ["%s.%s" % (ktable, k) for k in label]
+                if pkey not in fields:
+                    fields.insert(0, pkey)
+            else:
+                fields = "all"
+
+            self._fields = fields
+
+        return fields
 
     # -------------------------------------------------------------------------
     def set_self_id(self, record_id):
