@@ -592,8 +592,8 @@ class ConsentTracking:
                   ("option_id", consent.option_id),
                   ("person_id", consent.person_id),
                   ("vsign", consent.vsign),
-                  ("ohash", cls.get_hash(context)),
                   ("consenting", consent.consenting),
+                  ("ohash", cls.get_hash(context)),
                   )
 
         return consent.vhash == cls.get_hash(verify)
