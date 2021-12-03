@@ -141,14 +141,20 @@ class StatsDataModel(DataModel):
                     #"survey_answer": T("Survey Answer"),
                     }
 
-        #accuracy_opts = {1 : T("Official Measurement"),
-        #                 2 : T("Measurement"),
-        #                 3 : T("Official Estimate"),
-        #                 4 : T("Estimate"), # e.g. Interpolation
-        #                 5 : T("Official Projection"),
-        #                 6 : T("Projection"),
-        #                 }
+        accuracy_opts = {1 : T("Official Measurement"),
+                         2 : T("Measurement"),
+                         3 : T("Official Estimate"),
+                         4 : T("Estimate"), # e.g. Interpolation
+                         5 : T("Official Projection"),
+                         6 : T("Projection"),
+                         }
 
+        accuracy = S3ReusableField("accuracy", "integer",
+                                   represent = represent_option(accuracy_opts),
+                                   requires = IS_EMPTY_OR(IS_IN_SET(accuracy_opts,
+                                                                    zero=None,
+                                                                    )),
+                                   )
         tablename = "stats_data"
         super_entity(tablename, "data_id",
                      sd_types,
@@ -170,16 +176,21 @@ class StatsDataModel(DataModel):
                      s3_date("end_date",
                              label = T("End Date"),
                              ),
-                     #Field("accuracy", "integer",
-                     #      represent = represent_option(accuracy_opts),
-                     #      requires = IS_EMPTY_OR(IS_IN_SET(accuracy_opts,
-                     #                                      zero=None,
-                     #                                      )),
-                     #      ),
+                     accuracy(),
                      )
 
         # Pass names back to global scope (s3.*)
-        return None
+        return {"stats_accuracy": accuracy,
+                }
+
+    # -------------------------------------------------------------------------
+    def defaults(self):
+        """ Safe defaults if module is disabled """
+
+        dummy = S3ReusableField.dummy
+
+        return {"stats_accuracy": dummy("accuracy"),
+                }
 
 # =============================================================================
 class StatsSourceModel(DataModel):
