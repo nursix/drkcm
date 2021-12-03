@@ -4,8 +4,8 @@ import dateutil
 import json
 
 from gluon import current, A, BR, DIV, H3, H4, HR, LI, P, SPAN, TAG, TEXTAREA, UL, URL, XML
-from core import ICON, \
-                 s3_str, \
+from core import ICON,
+                 get_crud_string, s3_str, \
                  S3CustomController, \
                  S3FilterForm, S3LocationFilter, S3OptionsFilter, S3TextFilter, \
                  S3Represent
@@ -58,9 +58,8 @@ class index(S3CustomController):
                                    )
         len_sitreps = len(sitreps)
         if len_sitreps == 0:
-            from core import S3CRUD
-            recent_updates = DIV(S3CRUD.crud_string("event_sitrep",
-                                                    "msg_list_empty"),
+            recent_updates = DIV(get_crud_string("event_sitrep",
+                                                 "msg_list_empty"),
                                  _class="empty")
         else:
             recent_updates = DIV()
@@ -752,7 +751,7 @@ class project_ActivityRepresent(S3Represent):
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
             Represent a single Row
 
@@ -824,7 +823,7 @@ class req_NeedRepresent(S3Represent):
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
             Represent a single Row
 

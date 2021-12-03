@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for RLP
+
+    License: MIT
+"""
 
 import json
 from uuid import uuid4
@@ -10,11 +14,12 @@ from gluon import Field, SQLFORM, URL, XML, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
-                 JSONERRORS, S3CustomController, S3GroupedOptionsWidget, \
-                 S3LocationSelector, S3MultiSelectWidget, S3WeeklyHoursWidget, \
-                 S3WithIntro, S3Represent, \
-                 s3_comments_widget, s3_date, s3_mark_required, s3_str
+from core import ConsentTracking, S3CustomController, \
+                 IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+                 S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
+                 S3WeeklyHoursWidget, S3WithIntro, \
+                 JSONERRORS, S3Represent, s3_comments_widget, s3_date, \
+                 s3_mark_required, s3_str
 
 from .notifications import formatmap
 from .helpers import rlp_deployment_sites
@@ -124,9 +129,11 @@ class index(S3CustomController):
         """
             Get current announcements
 
-            @param roles: filter announcement by these roles
+            Args:
+                roles: filter announcement by these roles
 
-            @returns: any announcements (Rows)
+            Returns:
+                any announcements (Rows)
         """
 
         db = current.db
@@ -527,11 +534,12 @@ class register(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields, subheadings)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
-                      - subheadings = list of tuples (position, heading) to
-                                      insert into the form
+            Returns:
+                a tuple (formfields, required_fields, subheadings)
+                    - formfields = list of form fields
+                    - required_fields = list of field names of required fields
+                    - subheadings = list of tuples (position, heading) to
+                                    insert into the form
         """
 
         T = current.T
@@ -552,7 +560,7 @@ class register(S3CustomController):
                                                 )
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["SHARE"])
+        consent = ConsentTracking(processing_types=["SHARE"])
 
         # Last name is required
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
@@ -753,7 +761,8 @@ class register(S3CustomController):
         """
             Get the record ID of the default volunteer pool
 
-            @returns: the pr_group.id of the default pool
+            Returns:
+                the pr_group.id of the default pool
         """
 
         s3db = current.s3db
@@ -1096,10 +1105,12 @@ class register(S3CustomController):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -1237,7 +1248,8 @@ class verify_email(S3CustomController):
         """
             Send a welcome email to the new user
 
-            @param user: the auth_user Row
+            Args:
+                user: the auth_user Row
         """
 
         register.customise_auth_messages()

@@ -1,9 +1,7 @@
-﻿# -*- coding: utf-8 -*-
+﻿"""
+    Organisation Model
 
-""" Sahana Eden Organisation Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1006,10 +1004,12 @@ class OrgOrganisationModel(DataModel):
     def org_search_ac(r, **attr):
         """
             JSON search method for S3OrganisationAutocompleteWidget
-            - searches name & acronym for both this organisation & the parent
-              of branches
-            @param r: the CRUDRequest
-            @param attr: request attributes
+                - searches name & acronym for both this organisation & the parent
+                  of branches
+
+            Args:
+                r: the CRUDRequest
+                attr: request attributes
         """
 
         _vars = current.request.get_vars
@@ -3450,17 +3450,19 @@ class OrgSiteModel(DataModel):
             from variations of its name (rewritten for better
             comprehensibility; unused, retained for reference)
 
-            @param name: the site name
-            @param site_id: the site ID
+            Args:
+                name: the site name
+                site_id: the site ID
 
-            @returns: the unique code, or None if no unique code could
-                      be found
+            Returns:
+                the unique code, or None if no unique code could be found
 
-            @note: this function shows extremely poor performance when
-                   there are hundreds or thousands of sites where the
-                   names start with the same 10 characters (e.g. when
-                   the names start with the site type, as is often the
-                   case)
+            Note:
+                This function shows extremely poor performance when
+                there are hundreds or thousands of sites where the
+                names start with the same 10 characters (e.g. when
+                the names start with the site type, as is often the
+                case)
         """
 
         # ASCII alphanumeric characters, with letters in least
@@ -3540,10 +3542,12 @@ class OrgSiteModel(DataModel):
         """
             Generate a unique site code (replaces get_unique_code)
 
-            @param name: the site name
-            @param site_id: the site_id
+            Args:
+                name: the site name
+                site_id: the site_id
 
-            @returns: site code
+            Returns:
+                site code
         """
 
         import random
@@ -3699,8 +3703,9 @@ class OrgSiteModel(DataModel):
         """
             JSON search method for S3SiteAutocompleteWidget
 
-            @param r: the CRUDRequest
-            @param attr: request attributes
+            Args:
+                r: the CRUDRequest
+                attr: request attributes
         """
 
         response = current.response
@@ -5387,9 +5392,12 @@ def org_parents(organisation_id, path=None):
     """
         Lookup the parent organisations of a branch organisation
 
-        @param organisation_id: the organisation's record ID
+        Args:
+            organisation_id: the organisation's record ID
 
-        @return: list of ids of the parent organisations, starting with the immediate parent
+        Returns:
+            list of ids of the parent organisations, starting with the
+            immediate parent
     """
 
     if not organisation_id:
@@ -5426,10 +5434,12 @@ def org_root_organisation(organisation_id):
     """
         Lookup the root organisation of a branch organisation
 
-        @param organisation_id: the organisation's record ID
+        Args:
+            organisation_id: the organisation's record ID
 
-        @return: id of the root organisation,
-                 or None if no root organisation can be found
+        Returns:
+            id of the root organisation,
+            or None if no root organisation can be found
     """
 
     if not organisation_id:
@@ -5462,10 +5472,12 @@ def org_root_organisation_name(organisation_id):
     """
         Lookup the root organisation name of a branch organisation
 
-        @param organisation_id: the organisation's record ID
+        Args:
+            organisation_id: the organisation's record ID
 
-        @return: name of the root organisation,
-                 or None if no root organisation can be found
+        Returns:
+            name of the root organisation,
+            or None if no root organisation can be found
     """
 
     if not organisation_id:
@@ -5501,13 +5513,15 @@ def org_organisation_requires(required = False,
                               updateable = False
                               ):
     """
-        @param required: Whether the selection is optional or mandatory
-        @param realms: Whether the list should be filtered to just those
-                       belonging to a list of realm entities
-        @param updateable: Whether the list should be filtered to just those
-                           which the user has Write access to
-        @ToDo: Option to remove Branches
-        @ToDo: Option to only include Branches
+        Args:
+            required: Whether the selection is optional or mandatory
+            realms: Whether the list should be filtered to just those
+                    belonging to a list of realm entities
+            updateable: Whether the list should be filtered to just those
+                        which the user has Write access to
+
+        TODO Option to remove Branches
+        TODO Option to only include Branches
     """
 
     requires = IS_ONE_OF(current.db, "org_organisation.id",
@@ -5525,8 +5539,11 @@ def org_region_options(zones=False):
     """
         Get all options for region IDs
 
-        @param zones: select only zones if True, otherwise only regions
-        @return: dict of {org_region.id: representation}
+        Args:
+            zones: select only zones if True, otherwise only regions
+
+        Returns:
+            dict of {org_region.id: representation}
     """
 
     represent = current.s3db.org_region_represent
@@ -5602,7 +5619,8 @@ class org_OrganisationRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the organisation IDs
+            Args:
+                values: the organisation IDs
         """
 
         s3db = current.s3db
@@ -5663,7 +5681,8 @@ class org_OrganisationRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the org_organisation Row
+            Args:
+                row: the org_organisation Row
         """
 
         show_parent = self.parent
@@ -5770,12 +5789,14 @@ class org_SiteRepresent(S3Represent):
         """
             Represent multiple values as dict {value: representation}
 
-            @param values: list of values
-            @param rows: the referenced rows (if values are foreign keys)
-            @param show_link: render each representation as link
-            @param include_blank: Also include a blank value
+            Args:
+                values: list of values
+                rows: the referenced rows (if values are foreign keys)
+                show_link: render each representation as link
+                include_blank: Also include a blank value
 
-            @return: a dict {value: representation}
+            Returns:
+                a dict {value: representation}
         """
 
         show_link = show_link and self.show_link
@@ -5815,7 +5836,8 @@ class org_SiteRepresent(S3Represent):
             Parameters key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the site IDs
+            Args:
+                values: the site IDs
         """
 
         db = current.db
@@ -5929,9 +5951,10 @@ class org_SiteRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link.
 
-            @param k: the key (site_id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (site_id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         if row:
@@ -5955,7 +5978,8 @@ class org_SiteRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the org_site Row
+            Args:
+                row: the org_site Row
         """
 
         if self.translate:
@@ -5997,8 +6021,9 @@ class org_SiteCheckInMethod(CRUDMethod):
         """
             Entry point for the REST API
 
-            @param r: the CRUDRequest
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
         """
 
         output = {}
@@ -6024,8 +6049,9 @@ class org_SiteCheckInMethod(CRUDMethod):
         """
             Render the check-in page
 
-            @param r: the CRUDRequest
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
         """
 
         T = current.T
@@ -6065,6 +6091,7 @@ class org_SiteCheckInMethod(CRUDMethod):
                             ),
                       Field("person",
                             label = "",
+                            readable = True,
                             writable = False,
                             default = "",
                             ),
@@ -6082,11 +6109,13 @@ class org_SiteCheckInMethod(CRUDMethod):
 
         # Initial data
         data = {"id": "",
-                "label": pe_label,
+                "label": "", #pe_label,
                 "person": "",
                 "status": "",
                 "info": "",
                 }
+        if person:
+            data["label"] = pe_label
 
         # Hidden inputs
         hidden = {
@@ -6120,7 +6149,7 @@ class org_SiteCheckInMethod(CRUDMethod):
         formstyle = settings.get_ui_formstyle()
         widget_id = "check-in-form"
         table_name = "site_check_in"
-        form = SQLFORM.factory(record = data if person else None,
+        form = SQLFORM.factory(record = data, # if person else None,
                                showid = False,
                                formstyle = formstyle,
                                table_name = table_name,
@@ -6154,11 +6183,13 @@ class org_SiteCheckInMethod(CRUDMethod):
             Custom widget for label input, providing a clear-button
             (for ease of use on mobile devices where no ESC exists)
 
-            @param field: the Field
-            @param value: the current value
-            @param attributes: HTML attributes
+            Args:
+                field: the Field
+                value: the current value
+                attributes: HTML attributes
 
-            NB: expects Foundation theme
+            Note:
+                expects Foundation theme
         """
 
         from gluon.sqlhtml import StringWidget
@@ -6190,8 +6221,9 @@ class org_SiteCheckInMethod(CRUDMethod):
                  l: the PE label
                  }
 
-            @param r: the CRUDRequest
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
         """
 
         T = current.T
@@ -6291,8 +6323,9 @@ class org_SiteCheckInMethod(CRUDMethod):
             Convert person details and current check-in status into
             a JSON-serializable dict for Ajax-actions
 
-            @param person: the person record
-            @param status: the status dict (from status())
+            Args:
+                person: the person record
+                status: the status dict (from status())
         """
 
         person_details = cls.person_details(person)
@@ -6318,7 +6351,8 @@ class org_SiteCheckInMethod(CRUDMethod):
         """
             Get the person record for the label
 
-            @param label: the PE label
+            Args:
+                label: the PE label
         """
 
         # Fields to extract
@@ -6349,11 +6383,13 @@ class org_SiteCheckInMethod(CRUDMethod):
             invokes the check_in_status hook for the site resource
             to obtain current status information.
 
-            @param r: the CRUDRequest
-            @param site_id: the site ID
-            @param person: the person record
+            Args:
+                r: the CRUDRequest
+                site_id: the site ID
+                person: the person record
 
-            @return: a dict like:
+            Returns:
+                a dict like:
                      {valid: True|False, whether the person record is valid
                              for check-in/out at this site
                       status: 1 = currently checked-in at this site
@@ -6396,7 +6432,8 @@ class org_SiteCheckInMethod(CRUDMethod):
         """
             Format the person details
 
-            @param person: the person record (Row)
+            Args:
+                person: the person record (Row)
         """
 
         T = current.T
@@ -6417,10 +6454,12 @@ class org_SiteCheckInMethod(CRUDMethod):
         """
             Get the profile picture URL for a person
 
-            @param person: the person record (Row)
+            Args:
+                person: the person record (Row)
 
-            @return: the profile picture URL (relative URL), or None if
-                     no profile picture is available for that person
+            Returns:
+                the profile picture URL (relative URL), or None if
+                no profile picture is available for that person
         """
 
         try:
@@ -6448,8 +6487,9 @@ class org_SiteCheckInMethod(CRUDMethod):
             Check-in the person at this site, invokes the site_check_in
             hook for the site resource
 
-            @param r: the CRUDRequest
-            @param person: the person record
+            Args:
+                r: the CRUDRequest
+                person: the person record
         """
 
         from core.tools import S3Trackable
@@ -6483,8 +6523,9 @@ class org_SiteCheckInMethod(CRUDMethod):
             Check-out the person from this site, invokes the site_check_out
             hook for the site resource
 
-            @param r: the CRUDRequest
-            @param person: the person record
+            Args:
+                r: the CRUDRequest
+                person: the person record
         """
 
         from core.tools import S3Trackable
@@ -6518,8 +6559,9 @@ class org_SiteCheckInMethod(CRUDMethod):
             Helper function to inject static JS and instantiate the
             client-side widget
 
-            @param widget_id: the node ID where to instantiate the widget
-            @param options: dict of widget options (JSON-serializable)
+            Args:
+                widget_id: the node ID where to instantiate the widget
+                options: dict of widget options (JSON-serializable)
         """
 
         s3 = current.response.s3
@@ -7254,11 +7296,13 @@ def org_organisation_organisation_onaccept(form):
         ever take effect since the org_organisation record is written
         before the org_organisation_organisation)
 
-        NB Not Active by Default
-        - activate for templates that need this:
-            * RMS
+        Args:
+            form: the Form
 
-        @param form: the Form
+        Note:
+            Not Active by Default
+            - activate for templates that need this:
+                * RMS
     """
 
     # Get the link
@@ -7285,11 +7329,13 @@ def org_organisation_organisation_ondelete(row):
         organisation link (otherwise link-dependent realm rules won't
         take effect)
 
-        NB Not Active by Default
-        - activate for templates that need this:
-            * RMS
+        Args:
+            form: the Row
 
-        @param form: the Row
+        Note:
+            Not Active by Default
+            - activate for templates that need this:
+                * RMS
     """
 
     # Get the link
@@ -7323,11 +7369,13 @@ def org_organisation_organisation_type_onaccept(form):
         ever take effect since the org_organisation record is written
         before the org_organisation_organisation_type)
 
-        NB Not Active by Default
-        - activate for templates that need this:
-            * RMS
+        Args:
+            form: the Form
 
-        @param form: the Form
+        Note:
+            Not Active by Default
+            - activate for templates that need this:
+                * RMS
     """
 
     # Get the link
@@ -7354,11 +7402,13 @@ def org_organisation_organisation_type_ondelete(row):
         organisation type (otherwise type-dependent realm rules won't
         take effect)
 
-        NB Not Active by Default
-        - activate for templates that need this:
-            * RMS
+        Args:
+            form: the Row
 
-        @param form: the Row
+        Note:
+            Not Active by Default
+            - activate for templates that need this:
+                * RMS
     """
 
     # Get the link
@@ -7816,8 +7866,9 @@ def org_update_affiliations(table, record):
     """
         Update OU affiliations related to this record
 
-        @param table: the table
-        @param record: the record
+        Args:
+            table: the table
+            record: the record
     """
 
     if hasattr(table, "_tablename"):
@@ -7888,7 +7939,8 @@ def organisation_update_affiliations(record):
     """
         Update affiliations for a branch organisation
 
-        @param record: the org_organisation_branch record
+        Args:
+            record: the org_organisation_branch record
     """
 
     if record.deleted and record.deleted_fk:
@@ -7956,7 +8008,8 @@ def org_group_update_affiliations(record):
     """
         Update affiliations for organisation group memberships
 
-        @param record: the org_group_membership record
+        Args:
+            record: the org_group_membership record
     """
 
     if record.deleted and record.deleted_fk:
@@ -8020,7 +8073,8 @@ def org_site_update_affiliations(record):
     """
         Update the affiliations of an org_site instance
 
-        @param record: the org_site instance record
+        Args:
+            record: the org_site instance record
     """
 
     from .pr import OU
@@ -8069,7 +8123,8 @@ def org_team_update_affiliations(record):
     """
         Update affiliations for an organisation team
 
-        @param record: the org_organisation_team record
+        Args:
+            record: the org_organisation_team record
     """
 
     # Get the group_id of the team
@@ -8141,11 +8196,13 @@ def org_update_root_organisation(organisation_id, root_org=None):
     """
         Update the root organisation of an org_organisation
 
-        @param organisation_id: the org_organisation record ID
-        @param root_org: the root organisation record ID (for
-                         internal use in update cascade only)
+        Args:
+            organisation_id: the org_organisation record ID
+            root_org: the root organisation record ID (for
+                      internal use in update cascade only)
 
-        @return: the root organisation ID
+        Returns:
+            the root organisation ID
     """
 
     # @todo: make immune against circular references!
@@ -8201,7 +8258,7 @@ def org_update_root_organisation(organisation_id, root_org=None):
     return root_org
 
 # =============================================================================
-class org_OrganisationDuplicate(object):
+class org_OrganisationDuplicate:
     """ Import item deduplication, match by name or l10_name """
 
     @classmethod
@@ -8209,7 +8266,8 @@ class org_OrganisationDuplicate(object):
         """
             Main method, to be set for the "deduplicate" hook
 
-            @param item: the ImportItem
+            Args:
+                item: the ImportItem
         """
 
         try:
@@ -8234,12 +8292,16 @@ class org_OrganisationDuplicate(object):
             Get the record ID that corresponds to the given import item
             or UUID
 
-            @param item: the import item
-            @param uid: the UUID
+            Args:
+                item: the import item
+                uid: the UUID
 
-            @return: the record ID if successfully identified, or
-                     None if there is no record for that item yet
-            @raise ValueError: if there are multiple matches in the DB
+            Returns:
+                the record ID if successfully identified, or
+                None if there is no record for that item yet
+
+            Raises:
+                ValueError: if there are multiple matches in the DB
         """
 
         if item.id:
@@ -8325,10 +8387,13 @@ class org_OrganisationDuplicate(object):
         """
             Find all name matches for the given import item
 
-            @param item: the import item
-            @return: a dict {id: name, parent: parent_id} of records which
-                     match the import item by name, or alternatively by
-                     local name if enabled and no direct name match
+            Args:
+                item: the import item
+
+            Returns:
+                a dict {id: name, parent: parent_id} of records which
+                match the import item by name, or alternatively by
+                local name if enabled and no direct name match
         """
 
         matches = {}
@@ -8377,8 +8442,11 @@ class org_OrganisationDuplicate(object):
         """
             Find the parent for the given import item
 
-            @param item: the import item
-            @return: a tuple (id, uid, item) for the parent
+            Args:
+                item: the import item
+
+            Returns:
+                a tuple (id, uid, item) for the parent
         """
 
         parent_id = parent_uid = parent_item = None
@@ -8417,7 +8485,8 @@ class org_AssignMethod(CRUDMethod):
 
     def __init__(self, component):
         """
-            @param component: the Component in which to create records
+            Args:
+                component: the Component in which to create records
         """
 
         super(org_AssignMethod, self).__init__()
@@ -8427,10 +8496,11 @@ class org_AssignMethod(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         try:
@@ -8552,8 +8622,7 @@ class org_AssignMethod(CRUDMethod):
                                    count=True,
                                    represent=True)
             filteredrows = data["numrows"]
-            dt = S3DataTable(data["rfields"], data["rows"])
-            dt_id = "datatable"
+            dt = DataTable(data["rfields"], data["rows"], "datatable")
 
             # Bulk actions
             dt_bulk_actions = [(T("Add"), "assign")]
@@ -8574,15 +8643,14 @@ class org_AssignMethod(CRUDMethod):
                 # Data table (items)
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url=URL(args = r.args,
                                                 extension="aadata",
                                                 vars={},
                                                 ),
                                 dt_bulk_actions=dt_bulk_actions,
                                 dt_pageLength=display_length,
-                                dt_pagination="true",
-                                dt_searching="false",
+                                dt_pagination=True,
+                                dt_searching=False,
                                 )
 
                 # Filter form
@@ -8636,7 +8704,6 @@ class org_AssignMethod(CRUDMethod):
                     echo = None
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions=dt_bulk_actions)
                 response.headers["Content-Type"] = "application/json"
@@ -8656,10 +8723,11 @@ class org_CapacityReport(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if r.http == "GET":
@@ -8744,7 +8812,8 @@ class org_CapacityReport(CRUDMethod):
         """
             Method to read the data
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         # Read all the permitted data
@@ -8929,9 +8998,10 @@ def org_logo_represent(org = None,
     """
         Produce an Org Logo DIV
 
-        @param org: the name of the Org to use (or None to lookup root_org)
-        @param fallback_org: the name of the fallback Org to use (if root_org lookup fails)
-        @param width: the width of the image
+        Args:
+            org: the name of the Org to use (or None to lookup root_org)
+            fallback_org: the name of the fallback Org to use (if root_org lookup fails)
+            width: the width of the image
     """
 
     logo = None
@@ -9026,11 +9096,12 @@ def org_organisation_list_layout(list_id, item_id, resource, rfields, record):
     """
         Default dataList item renderer for Organisations on the Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["org_organisation.id"]
@@ -9113,11 +9184,12 @@ def org_resource_list_layout(list_id, item_id, resource, rfields, record):
     """
         Default dataList item renderer for Resources on Profile pages
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["org_resource.id"]

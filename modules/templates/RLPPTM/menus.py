@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Menus for RLPPTM
+
+    License: MIT
+"""
 
 from gluon import current
 from core import IS_ISO639_2_LANGUAGE_CODE
@@ -237,6 +241,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Consent Tracking", c="admin", link=False, check=consent_tracking)(
                         M("Processing Types", f="processing_type"),
                         M("Consent Options", f="consent_option"),
+                        M("Consent##plural", f="consent"),
                         ),
                     M("CMS", c="cms", f="post"),
                     M("Database", c="appadmin", f="index")(

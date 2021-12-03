@@ -32,7 +32,7 @@ import json
 
 from gluon import current, DIV, FORM
 
-from ..tools import SEPARATORS, S3Hierarchy
+from ..tools import JSONSEPARATORS, S3Hierarchy, get_crud_string
 
 from .base import CRUDMethod
 
@@ -45,8 +45,9 @@ class S3HierarchyCRUD(CRUDMethod):
         """
             Entry point for REST interface
 
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: controller attributes
         """
 
         if r.http == "GET":
@@ -68,8 +69,9 @@ class S3HierarchyCRUD(CRUDMethod):
         """
             Page load
 
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: controller attributes
         """
 
         output = {}
@@ -88,9 +90,9 @@ class S3HierarchyCRUD(CRUDMethod):
 
         # Page title
         if r.record:
-            title = self.crud_string(tablename, "title_display")
+            title = get_crud_string(tablename, "title_display")
         else:
-            title = self.crud_string(tablename, "title_list")
+            title = get_crud_string(tablename, "title_list")
         output["title"] = title
 
         # Build the form
@@ -103,7 +105,7 @@ class S3HierarchyCRUD(CRUDMethod):
 
         # Widget options and scripts
         T = current.T
-        crud_string = lambda name: self.crud_string(tablename, name)
+        crud_string = lambda name: get_crud_string(tablename, name)
 
         widget_opts = {
             "widgetID": widget_id,
@@ -167,8 +169,9 @@ class S3HierarchyCRUD(CRUDMethod):
         """
             Return a single node as JSON (id, parent and label)
 
-            @param r: the CRUDRequest
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest
+                attr: controller attributes
         """
 
         resource = self.resource
@@ -204,15 +207,16 @@ class S3HierarchyCRUD(CRUDMethod):
                     data["children"] = nodes
 
         current.response.headers["Content-Type"] = "application/json"
-        return json.dumps(data, separators = SEPARATORS)
+        return json.dumps(data, separators = JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def render_tree(self, widget_id, record=None):
         """
             Render the tree
 
-            @param widget_id: the widget ID
-            @param record: the root record (if requested)
+            Args:
+                widget_id: the widget ID
+                record: the root record (if requested)
         """
 
         resource = self.resource
@@ -267,7 +271,7 @@ class S3HierarchyCRUD(CRUDMethod):
         # Apply the widget JS
         script = '''$('#%(widget_id)s').hierarchicalcrud(%(widget_opts)s)''' % \
                  {"widget_id": widget_id,
-                  "widget_opts": json.dumps(widget_opts, separators=SEPARATORS),
+                  "widget_opts": json.dumps(widget_opts, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
 

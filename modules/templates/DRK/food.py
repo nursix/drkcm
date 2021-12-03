@@ -1,9 +1,13 @@
-# -*- coding: utf-8 -*-
+"""
+    Food distribution GUI for DRK/Village
+
+    License: MIT
+"""
 
 import datetime
 import json
 
-from gluon import current, Field, IS_NOT_EMPTY, INPUT, A, SQLFORM, URL
+from gluon import current, Field, URL
 
 from core import s3_str, s3_encode_iso_datetime, s3_fullname, S3DateTime
 from s3db.dvr import DVRRegisterCaseEvent
@@ -29,9 +33,12 @@ class DRKRegisterFoodEvent(DVRRegisterCaseEvent):
                      ]
                  }
 
-            @param r: the S3Request instance
-            @param attr: controller parameters
-            @return: JSON response, structure:
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
+
+            Returns:
+                JSON response, structure:
 
                     {l: the actual PE label (to update the input field),
                      p: the person details,
@@ -243,13 +250,15 @@ class DRKRegisterFoodEvent(DVRRegisterCaseEvent):
         """
             Helper function to extend the form
 
-            @param person: the person (Row)
-            @param formfields: list of form fields (Field)
-            @param data: the form data (dict)
-            @param hidden: hidden form fields (dict)
-            @param permitted: whether the action is permitted
+            Args:
+                person: the person (Row)
+                formfields: list of form fields (Field)
+                data: the form data (dict)
+                hidden: hidden form fields (dict)
+                permitted: whether the action is permitted
 
-            @return: tuple (widget_id, submit_label)
+            Returns:
+                tuple (widget_id, submit_label)
         """
 
         T = current.T
@@ -289,10 +298,12 @@ class DRKRegisterFoodEvent(DVRRegisterCaseEvent):
         """
             Get infos for all family members of person
 
-            @param person: the person (Row)
-            @param include_ids: include the person record IDs
+            Args:
+                person: the person (Row)
+                include_ids: include the person record IDs
 
-            @returns: array with family member infos, format:
+            Returns:
+                array with family member infos, format:
                             [{i: the person record ID (if requested)
                               l: pe_label,
                               n: fullname,
@@ -410,8 +421,11 @@ class DRKRegisterFoodEvent(DVRRegisterCaseEvent):
         """
             Get interval (blocking) rules for persons
 
-            @param person_ids: list|tuple|set of person record IDs
-            @return: rules dict, format:
+            Args:
+                person_ids: list|tuple|set of person record IDs
+
+            Returns:
+                rules dict, format:
                         {person_id:
                             {event_type_id: (message, earliest_datetime),
                              ...
@@ -611,8 +625,9 @@ class DRKRegisterFoodEvent(DVRRegisterCaseEvent):
         """
             Lazy getter for case event types
 
-            @return: a dict {id: Row} for dvr_case_event_type, with an
-                     additional key "_default" for the default event type
+            Returns:
+                a dict {id: Row} for dvr_case_event_type, with an
+                additional key "_default" for the default event type
         """
 
         if not hasattr(self, "event_types"):
@@ -655,8 +670,9 @@ class DRKRegisterFoodEvent(DVRRegisterCaseEvent):
             Helper function to inject static JS and instantiate
             the foodRegistration widget
 
-            @param widget_id: the node ID where to instantiate the widget
-            @param options: dict of widget options (JSON-serializable)
+            Args:
+                widget_id: the node ID where to instantiate the widget
+                options: dict of widget options (JSON-serializable)
         """
 
         T = current.T

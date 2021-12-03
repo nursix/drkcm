@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Transport Model
 
-""" Sahana Eden Transport Model
-
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3TransportModel",
+__all__ = ("TransportModel",
            "transport_rheader",
            )
 
@@ -38,7 +36,7 @@ from ..core import *
 from ..s3layouts import S3PopupLink
 
 # =============================================================================
-class S3TransportModel(DataModel):
+class TransportModel(DataModel):
     """
         http://eden.sahanafoundation.org/wiki/BluePrint/Transport
     """
@@ -812,9 +810,8 @@ class transport_BorderCrossingRepresent(S3Represent):
 
     def __init__(self, show_link=False):
         """
-            Constructor
-
-            @param show_link: render as link to the border crossing
+            Args:
+                show_link: render as link to the border crossing
         """
 
         super(transport_BorderCrossingRepresent, self).__init__(
@@ -827,7 +824,8 @@ class transport_BorderCrossingRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if hasattr(row, "transport_border_crossing"):
@@ -846,9 +844,10 @@ class transport_BorderCrossingRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         s3db = current.s3db

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Application Template for Rhineland-Palatinate (RLP) Crisis Management
-    - used to register beneficiaries and their needs, and broker emergency assistance
+    BRCMS/RLP: Template for Rhineland-Palatinate (RLP) Flood Aid Portal
 
-    @license MIT
+    License: MIT
 """
 
 from collections import OrderedDict

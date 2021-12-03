@@ -2175,6 +2175,13 @@ class S3Config(Storage):
 
         return self.ui.get("datatables_dom", "fril<'dataTable_table't>pi")
 
+    def get_ui_datatables_pagelength(self):
+        """
+            Default (minimum) pagelength for datatables
+        """
+
+        return self.ui.get("datatables_pagelength", 25)
+
     def get_ui_datatables_initComplete(self):
         """
             Callback for dataTables
@@ -5476,15 +5483,6 @@ class S3Config(Storage):
             setting = self.has_module("stats")
         return setting
 
-    def get_project_activity_items(self):
-        """
-            Use Items in Activities
-        """
-        setting = self.project.get("activity_items", None)
-        if setting is None:
-            setting = self.has_module("supply")
-        return setting
-
     def get_project_activity_sectors(self):
         """
             Use Sectors in Activities
@@ -5539,12 +5537,6 @@ class S3Config(Storage):
         """
         return self.project.get("demographics", False)
 
-    def get_project_details_tab(self):
-        """
-            Group Tabs on Projects into a single 'Details' page
-        """
-        return self.project.get("details_tab", False)
-
     def get_project_event_activities(self):
         """
             Link Activities to Events
@@ -5557,12 +5549,6 @@ class S3Config(Storage):
         """
         return self.project.get("event_projects", False)
 
-    def get_project_goals(self):
-        """
-            Use Goals in Projects
-        """
-        return self.project.get("goals", False)
-
     def get_project_hazards(self):
         """
             Use Hazards in DRR Projects
@@ -5573,35 +5559,6 @@ class S3Config(Storage):
             use_hazards = self.get_project_mode_drr()
 
         return use_hazards
-
-    def get_project_hfa(self):
-        """
-            Use HFA Priorities in DRR Projects
-        """
-        use_hfa = self.project.get("hfa")
-        if use_hfa is None:
-            # Default to True if mode_drr
-            use_hfa = self.get_project_mode_drr()
-
-        return use_hfa
-
-    def get_project_indicators(self):
-        """
-            Use Indicators in Projects
-        """
-        return self.project.get("indicators", False)
-
-    def get_project_indicator_criteria(self):
-        """
-            Use Indicator Criteria in Projects
-        """
-        return self.project.get("indicator_criteria", False)
-
-    def get_project_status_from_activities(self):
-        """
-            Use Activity Statuses to build Project Status (instead of Indicator Data)
-        """
-        return self.project.get("status_from_activities", False)
 
     #def get_project_locations_from_countries(self):
     #    """
@@ -5616,44 +5573,11 @@ class S3Config(Storage):
         """
         return self.project.get("milestones", False)
 
-    def get_project_outcomes(self):
-        """
-            Use Outcomes in Projects
-        """
-        return self.project.get("outcomes", False)
-
-    def get_project_outputs(self):
-        """
-            Use Outputs in Projects
-        """
-        return self.project.get("outputs", "inline")
-
-    def get_project_planning_ondelete(self):
-        """
-            Whether the Project Planning data should CASCADE ondelete or RESTRICT
-
-            NB This cannot be edited on the fly, or vary by context
-               It needs defining before the database is created.
-        """
-        return self.project.get("planning_ondelete", "CASCADE")
-
     def get_project_projects(self):
         """
             Link Activities & Tasks to Projects
         """
         return self.project.get("projects", False)
-
-    def get_project_programmes(self):
-        """
-            Use Programmes in Projects
-        """
-        return self.project.get("programmes", False)
-
-    def get_project_programme_budget(self):
-        """
-            Use Budgets in Programmes
-        """
-        return self.project.get("programme_budget", False)
 
     def get_project_sectors(self):
         """

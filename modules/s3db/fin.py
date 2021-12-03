@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Finance Tables
 
-""" Finance Tables
-
-    @copyright: 2015-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2015-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -351,11 +349,11 @@ class FinVoucherModel(DataModel):
         billing_status = (("SCHEDULED", T("Scheduled")),
                           ("ABORTED", T("Aborted")),
                           )
-        status_repr = dict(billing_status)
+        billing_status_opts = dict(billing_status)
 
         # Additional statuses that cannot be entered or imported
-        status_repr["IN PROGRESS"] = T("In Progress")
-        status_repr["COMPLETE"] = T("Completed")
+        billing_status_opts["IN PROGRESS"] = T("In Progress")
+        billing_status_opts["COMPLETE"] = T("Completed")
 
         tablename = "fin_voucher_billing"
         define_table(tablename,
@@ -372,7 +370,7 @@ class FinVoucherModel(DataModel):
                            requires = IS_IN_SET(billing_status,
                                                 zero = None,
                                                 ),
-                           represent = represent_option(status_repr),
+                           represent = S3Represent(options=billing_status_opts),
                            writable = False, # Only writable while scheduled
                            ),
                      Field("vouchers_total", "integer",
@@ -679,12 +677,12 @@ class FinVoucherModel(DataModel):
                         #("INVOICED", T("Invoiced")),
                         #("PAID", T("Paid")),
                         )
-        status_repr = dict(claim_status)
+        claim_status_opts = dict(claim_status)
 
         # Additional statuses that cannot be entered or imported
-        status_repr["INVOICED"] = T("Invoiced")
+        claim_status_opts["INVOICED"] = T("Invoiced")
         paid_label = settings.get_fin_voucher_claim_paid_label()
-        status_repr["PAID"] = T(paid_label) if paid_label else T("Paid")
+        claim_status_opts["PAID"] = T(paid_label) if paid_label else T("Paid")
 
         tablename = "fin_voucher_claim"
         define_table(tablename,
@@ -769,7 +767,7 @@ class FinVoucherModel(DataModel):
                            requires = IS_IN_SET(claim_status,
                                                 zero = None,
                                                 ),
-                           represent = represent_option(dict(status_repr)),
+                           represent = represent_option(claim_status_opts),
                            writable = False,
                            ),
 
@@ -1190,6 +1188,8 @@ class FinVoucherModel(DataModel):
         # Pass names back to global scope (s3.*)
         #
         return {"fin_voucher_invoice_status": dict(invoice_status),
+                "fin_voucher_claim_status_opts": claim_status_opts,
+                "fin_voucher_billing_status_opts": billing_status_opts,
                 }
 
     # -------------------------------------------------------------------------
@@ -1198,6 +1198,8 @@ class FinVoucherModel(DataModel):
         """ Safe defaults for names in case the module is disabled """
 
         return {"fin_voucher_invoice_status": {},
+                "fin_voucher_claim_status_opts": {},
+                "fin_voucher_billing_status_opts": {},
                 }
 
     # -------------------------------------------------------------------------
@@ -1736,7 +1738,8 @@ class FinVoucherModel(DataModel):
             - generate voucher signature
             - set expiration date
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         # Get record ID
@@ -1912,9 +1915,10 @@ class FinVoucherModel(DataModel):
     def debit_create_onaccept(form):
         """
             Onaccept of debit:
-            - transfer credit (redeem)
+                - transfer credit (redeem)
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         # Get record ID
@@ -1990,11 +1994,10 @@ class fin_VoucherInvoiceRepresent(S3Represent):
 
     def __init__(self, show_link=False, show_reason=True):
         """
-            Constructor
-
-            @param show_link: show representation as clickable link
-            @param show_reason: if invoice was rejected, include the
-                                reason for rejection
+            Args:
+                show_link: show representation as clickable link
+                show_reason: if invoice was rejected, include the
+                             reason for rejection
         """
 
         super(fin_VoucherInvoiceRepresent, self).__init__(
@@ -2014,7 +2017,8 @@ class fin_VoucherInvoiceRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if hasattr(row, "fin_voucher_invoice"):
@@ -2114,16 +2118,15 @@ def fin_rheader(r, tabs=None):
     return rheader
 
 # =============================================================================
-class fin_VoucherProgram(object):
+class fin_VoucherProgram:
     """
         Helper to record transactions in voucher programs
     """
 
     def __init__(self, program_id):
         """
-            Constructor
-
-            @param program_id: the voucher program ID
+            Args:
+                program_id: the voucher program ID
         """
 
         self.program_id = program_id
@@ -2135,7 +2138,8 @@ class fin_VoucherProgram(object):
         """
             The program record (lazy property)
 
-            @returns: the program record (Row)
+            Returns:
+                the program record (Row)
         """
 
         program = self._program
@@ -2168,11 +2172,13 @@ class fin_VoucherProgram(object):
         """
             Transfer credit from the program to the voucher
 
-            @param voucher_id: the new voucher
-            @param credit: the initial credit to transfer to the voucher
+            Args:
+                voucher_id: the new voucher
+                credit: the initial credit to transfer to the voucher
 
-            @returns: the number of credit transferred to the voucher,
-                      or None on failure
+            Returns:
+                the number of credit transferred to the voucher,
+                or None on failure
         """
 
         program = self.program
@@ -2231,10 +2237,12 @@ class fin_VoucherProgram(object):
             Charge back the remaining balance of a voucher to the program,
             thereby voiding the voucher
 
-            @param voucher_id: the voucher ID
+            Args:
+                voucher_id: the voucher ID
 
-            @returns: the number of credits charged back to the program,
-                      or None on failure
+            Returns:
+                the number of credits charged back to the program,
+                or None on failure
         """
 
         program = self.program
@@ -2283,17 +2291,20 @@ class fin_VoucherProgram(object):
             Transfer credit to the provider when redeeming a voucher, i.e.
             debit a voucher.
 
-            Actually a double transaction:
+            Args:
+                voucher_id: the voucher ID
+                debit_id: the debit ID
+                credit: the credit to transfer (default 1)
+
+            Returns:
+                the credit deducted from the voucher
+
+            Notes:
+                Actually a double transaction:
                 1) transfer credit from the program's compensation account
                    to the debit
                 2) return credit from the voucher to the program's credit
                    account
-
-            @param voucher_id: the voucher ID
-            @param debit_id: the debit ID
-            @param credit: the credit to transfer (default 1)
-
-            @returns: the credit deducted from the voucher
         """
 
         program = self.program
@@ -2381,20 +2392,22 @@ class fin_VoucherProgram(object):
             adjusts the program's credit/compensation balances accordingly,
             also reverses any voiding of single-debit vouchers
 
-            @param debit_id: the debit ID
-            @param reason: the reason for cancellation (required)
+            Args:
+                debit_id: the debit ID
+                reason: the reason for cancellation (required)
 
-            @returns: tuple (credits, error)
-                      - the number of credits returned, or None on failure
-                      - the failure reason
+            Returns:
+                tuple (credits, error)
+                - the number of credits returned, or None on failure
+                - the failure reason
 
-            NB Cancelling a debit is only possible while the debit is not
-               part of any other transactions, and has not yet been included
-               in a billing or compensated
-
-            NB Implementations should ensure that debits can only be cancelled
-               by the organisation that originally created them (i.e. the provider
-               who has accepted the voucher), so as to not breach trust
+            Notes:
+                - Cancelling a debit is only possible while the debit is not
+                  part of any other transactions, and has not yet been included
+                  in a billing or compensated
+                - Implementations should ensure that debits can only be cancelled
+                  by the organisation that originally created them (i.e. the provider
+                  who has accepted the voucher), so as to not breach trust
         """
 
         program = self.program
@@ -2499,10 +2512,13 @@ class fin_VoucherProgram(object):
         """
             Verify if a debit can still be cancelled
 
-            @param debit_id: the debit ID
-            @returns: tuple (debit, error)
-                      - the debit record if cancellable
-                      - otherwise None, and the reason why not
+            Args:
+                debit_id: the debit ID
+
+            Returns:
+                tuple (debit, error)
+                    - the debit record if cancellable
+                    - otherwise None, and the reason why not
         """
 
         program = self.program
@@ -2553,10 +2569,12 @@ class fin_VoucherProgram(object):
             Compensate a debit (transfer credit back to the program), usually
             when the provider is compensated for the service rendered
 
-            @param debit_id: the debit ID
-            @param credit: the number of credits compensated
+            Args:
+                debit_id: the debit ID
+                credit: the number of credits compensated
 
-            @returns: the number of credits transferred, None on failure
+            Returns:
+                the number of credits transferred, None on failure
         """
 
         program = self.program
@@ -2608,9 +2626,11 @@ class fin_VoucherProgram(object):
         """
             Verify integrity of a transaction (=check the vhash)
 
-            @param transaction_id: the transaction record ID
+            Args:
+                transaction_id: the transaction record ID
 
-            @returns: True|False whether the transaction is intact
+            Returns:
+                True|False whether the transaction is intact
         """
 
         db = current.db
@@ -2657,14 +2677,16 @@ class fin_VoucherProgram(object):
     def audit(self, correct=False):
         """
             Run a full audit of the entire program:
-            - verify all transactions
-            - verify all balances, vouchers and debits
+                - verify all transactions
+                - verify all balances, vouchers and debits
 
-            @param correct: correct any incorrect balances
+            Args:
+                correct: correct any incorrect balances
 
-            @returns: audit report
+            Returns:
+                audit report
 
-            TODO: implement
+            TODO implement
         """
 
         return True
@@ -2673,13 +2695,15 @@ class fin_VoucherProgram(object):
     def earliest_billing_date(self, billing_id=None, configure=None):
         """
             Get the earliest possible billing date for the program
-              - must be after any active or completed billing processes
+                - must be after any active or completed billing processes
 
-            @param billing_id: the billing ID
-            @param configure: a Field to configure accordingly
-                              (typically fin_voucher_billing.date itself)
+            Args:
+                billing_id: the billing ID
+                configure: a Field to configure accordingly
+                           (typically fin_voucher_billing.date itself)
 
-            @returns: the earliest possible billing date
+            Returns:
+                the earliest possible billing date
         """
 
         program = self.program
@@ -2716,10 +2740,12 @@ class fin_VoucherProgram(object):
         """
             Generate a verification hash (vhash) for the transaction
 
-            @param transaction: the transaction data
-            @param ohash: the hash of the preceding transaction
+            Args:
+                transaction: the transaction data
+                ohash: the hash of the preceding transaction
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         # Generate signature from transaction data
@@ -2732,7 +2758,7 @@ class fin_VoucherProgram(object):
                 "ohash": ohash,
                 "signature": signature,
                 }
-        inp = json.dumps(data, separators=SEPARATORS)
+        inp = json.dumps(data, separators=JSONSEPARATORS)
 
         crypt = CRYPT(key = current.deployment_settings.hmac_key,
                       digest_alg = "sha512",
@@ -2745,9 +2771,11 @@ class fin_VoucherProgram(object):
         """
             Record a transaction under this program
 
-            @param data: the transaction details
+            Args:
+                data: the transaction details
 
-            @returns: True|False for success or failure
+            Returns:
+                True|False for success or failure
         """
 
         program = self.program
@@ -2807,7 +2835,7 @@ class fin_VoucherProgram(object):
         return True
 
 # =============================================================================
-class fin_VoucherBilling(object):
+class fin_VoucherBilling:
     """
         Helper to facilitate the billing process for a voucher program
     """
@@ -2827,9 +2855,8 @@ class fin_VoucherBilling(object):
 
     def __init__(self, billing_id):
         """
-            Constructor
-
-            @param billing_id: the billing record ID
+            Args:
+                billing_id: the billing record ID
         """
 
         self.billing_id = billing_id
@@ -2843,9 +2870,11 @@ class fin_VoucherBilling(object):
         """
             Get the billing record (lazy property)
 
-            @returns: Row
+            Returns:
+                Row
 
-            @raises: ValueError if the billing reference is invalid
+            Raises:
+                ValueError: if the billing reference is invalid
         """
 
         billing = self._record
@@ -2871,9 +2900,11 @@ class fin_VoucherBilling(object):
         """
             Get the voucher program for this billing process (lazy property)
 
-            @returns: fin_VoucherProgram
+            Returns:
+                fin_VoucherProgram
 
-            @raises: ValueError if the program reference is invalid
+            Raises:
+                ValueError: if the program reference is invalid
         """
 
         program = self._program
@@ -2890,7 +2921,8 @@ class fin_VoucherBilling(object):
         """
             Verify all relevant debits, fix any incorrect balances
 
-            @returns: number of invalid transactions
+            Returns:
+                number of invalid transactions
         """
 
         db = current.db
@@ -2964,9 +2996,11 @@ class fin_VoucherBilling(object):
             Generate claims for compensation for any unprocessed debits
             under this billing process
 
-            @returns: number of claims generated, None on error
+            Returns:
+                number of claims generated, None on error
 
-            @raises: ValueError if the action is invalid
+            Raises:
+                ValueError: if the action is invalid
         """
 
         # Activate the billing process
@@ -3096,9 +3130,11 @@ class fin_VoucherBilling(object):
         """
             Generate an invoice for a claim
 
-            @param claim_id: the claim record ID
+            Args:
+                claim_id: the claim record ID
 
-            @returns: tuple (invoice_id, error)
+            Returns:
+                tuple (invoice_id, error)
         """
 
         db = current.db
@@ -3211,9 +3247,11 @@ class fin_VoucherBilling(object):
         """
             Check the integrity of an invoice/claim pair (=check the hashes)
 
-            @param invoice_id: the invoice ID
+            Args:
+                invoice_id: the invoice ID
 
-            @returns: True|False
+            Returns:
+                True|False
         """
 
         db = current.db
@@ -3374,9 +3412,11 @@ class fin_VoucherBilling(object):
             Check whether this billing process is complete (+update status
             if so)
 
-            @param claims_complete: confirm that claim generation is complete
+            Args:
+                claims_complete: confirm that claim generation is complete
 
-            @returns: True|False
+            Returns:
+                True|False
         """
 
         db = current.db
@@ -3412,7 +3452,8 @@ class fin_VoucherBilling(object):
             Check if this billing process has generated any claims
             or invoices
 
-            @returns: True|False
+            Returns:
+                True|False
         """
 
         db = current.db
@@ -3442,18 +3483,20 @@ class fin_VoucherBilling(object):
         """
             Generate a verification hash (vhash)
 
-            @param uuid: the uuid of the reference record
-            @param date: the date of the reference record
-            @param data: the data to hash
+            Args:
+                uuid: the uuid of the reference record
+                date: the date of the reference record
+                data: the data to hash
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         data = {"data": data,
                 "date": date.isoformat(),
                 "uuid": uuid,
                 }
-        inp = json.dumps(data, separators=SEPARATORS)
+        inp = json.dumps(data, separators=JSONSEPARATORS)
 
         crypt = CRYPT(key = current.deployment_settings.hmac_key,
                       digest_alg = "sha512",
@@ -3468,10 +3511,12 @@ class fin_VoucherBilling(object):
                 - allocate all relevant debits of the program to the billing
                 - set the process status to "in progress"
 
-            @returns: the billing record (Row)
+            Returns:
+                the billing record (Row)
 
-            @raises: ValueError if the billing reference is invalid,
-                     or when the billing process is already closed
+            Raises:
+                ValueError: if the billing reference is invalid,
+                            or when the billing process is already closed
         """
 
         billing = self.billing
@@ -3515,10 +3560,12 @@ class fin_VoucherBilling(object):
                 - release all debits allocated to this process
                 - set the process status to "aborted" and record reason
 
-            @param reason: the reason to abort the process
+            Args:
+                reason: the reason to abort the process
 
-            @raises: ValueError if the billing reference is invalid,
-                     or when the billing process is already closed
+            Raises:
+                ValueError: if the billing reference is invalid,
+                            or when the billing process is already closed
         """
 
         db = current.db
@@ -3553,10 +3600,11 @@ class fin_VoucherCancelDebit(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         resource = r.resource
@@ -3580,8 +3628,9 @@ class fin_VoucherCancelDebit(CRUDMethod):
         """
             Cancel a voucher debit
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         # User must be permitted to update the debit
@@ -3665,9 +3714,9 @@ class fin_VoucherCancelDebit(CRUDMethod):
             # Redirect to the debit
             self.next = r.url(id=r.id, method="")
 
-        return {"title": self.crud_string("fin_voucher_debit",
-                                          "title_display",
-                                          ),
+        return {"title": get_crud_string("fin_voucher_debit",
+                                         "title_display",
+                                         ),
                 "form": form,
                 }
 
@@ -3676,10 +3725,12 @@ def fin_voucher_eligibility_types(program_ids, organisation_ids=None):
     """
         Look up permissible eligibility types for programs
 
-        @param program_ids: voucher program IDs
-        @param organisation_ids: issuer organisation IDs
+        Args:
+            program_ids: voucher program IDs
+            organisation_ids: issuer organisation IDs
 
-        @returns: dict {program_id: [eligibility_type_ids]}
+        Returns:
+            dict {program_id: [eligibility_type_ids]}
     """
 
     db = current.db
@@ -3730,17 +3781,19 @@ def fin_voucher_permitted_programs(mode = "issuer",
         Get a list of programs and organisations the current user
         is permitted to issue/accept vouchers for
 
-        @param mode: the permission to look for ('issuer'|'provider')
-        @param partners_only: organisations must also be project partners
-                              for the project under which a voucher program
-                              runs, in order to issue/accept vouchers under
-                              that program
-        @param c: override request.controller to look up for a
-                  different controller context
-        @param f: override request.function to look up for a
-                  different controller context
+        Args:
+            mode: the permission to look for ('issuer'|'provider')
+            partners_only: organisations must also be project partners
+                           for the project under which a voucher program
+                           runs, in order to issue/accept vouchers under
+                           that program
+            c: override request.controller to look up for a
+               different controller context
+            f: override request.function to look up for a
+               different controller context
 
-        @returns: tuple of lists (program_ids, org_ids, pe_ids)
+        Reutrns:
+            tuple of lists (program_ids, org_ids, pe_ids)
     """
 
     s3db = current.s3db
@@ -3811,8 +3864,11 @@ def fin_voucher_start_billing(billing_id=None):
         Scheduler task to start a billing process, to be scheduled
         via s3db_task
 
-        @param billing_id: the billing ID
-        @returns: success message
+        Args:
+            billing_id: the billing ID
+
+        Returns:
+            success message
     """
 
     if not billing_id:
@@ -3829,10 +3885,12 @@ def fin_voucher_settle_invoice(invoice_id=None, ptoken=None, user_id=None):
         Scheduler task to settle an invoice, to be scheduled
         via s3db_task
 
-        @param invoice_id: the invoice ID
-        @param ptoken: the processing authorization token
+        Args:
+            invoice_id: the invoice ID
+            ptoken: the processing authorization token
 
-        @returns: success message
+        Returns:
+            success message
     """
 
     auth = current.auth

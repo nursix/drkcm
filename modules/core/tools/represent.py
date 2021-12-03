@@ -95,27 +95,26 @@ class S3Represent:
                  field_sep = " "
                  ):
         """
-            Constructor
-
-            @param lookup: the name of the lookup table
-            @param key: the field name of the primary key of the lookup table,
-                        a field name
-            @param fields: the fields to extract from the lookup table, a list
-                           of field names
-            @param labels: string template or callable to represent rows from
-                           the lookup table, callables must return a string
-            @param options: dictionary of options to lookup the representation
-                            of a value, overrides lookup and key
-            @param multiple: web2py list-type (all values will be lists)
-            @param hierarchy: render a hierarchical representation, either
-                              True or a string template like "%s > %s"
-            @param translate: translate all representations (using T)
-            @param linkto: a URL (as string) to link representations to,
-                           with "[id]" as placeholder for the key
-            @param show_link: whether to add a URL to representations
-            @param default: default representation for unknown options
-            @param none: representation for empty fields (None or empty list)
-            @param field_sep: separator to use to join fields
+            Args:
+                lookup: the name of the lookup table
+                key: the field name of the primary key of the lookup table,
+                     a field name
+                fields: the fields to extract from the lookup table, a list
+                        of field names
+                labels: string template or callable to represent rows from
+                        the lookup table, callables must return a string
+                options: dictionary of options to lookup the representation
+                         of a value, overrides lookup and key
+                multiple: web2py list-type (all values will be lists)
+                hierarchy: render a hierarchical representation, either
+                           True or a string template like "%s > %s"
+                translate: translate all representations (using T)
+                linkto: a URL (as string) to link representations to,
+                        with "[id]" as placeholder for the key
+                show_link: whether to add a URL to representations
+                default: default representation for unknown options
+                none: representation for empty fields (None or empty list)
+                field_sep: separator to use to join fields
         """
 
         self.tablename = lookup
@@ -155,12 +154,12 @@ class S3Represent:
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
         """
-            Lookup all rows referenced by values.
-            (in foreign key representations)
+            Lookup all rows referenced by values (in foreign key representations)
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: the fields to retrieve
+            Args:
+                key: the key Field
+                values: the values
+                fields: the fields to retrieve
         """
 
         if fields is None:
@@ -176,16 +175,16 @@ class S3Represent:
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
-            Represent the referenced row.
-            (in foreign key representations)
+            Represent the referenced row (in foreign key representations)
 
-            @param row: the row
-            @param prefix: prefix for hierarchical representation
+            Args:
+                row: the row
 
-            @return: the representation of the Row, or None if there
-                     is an error in the Row
+            Returns:
+                the representation of the Row, or None if there is an error
+                in the Row
         """
 
         labels = self.labels
@@ -235,26 +234,22 @@ class S3Represent:
         else:
             output = v
 
-        if prefix and self.hierarchy:
-            return self.htemplate % (prefix, output)
-
         return output
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
         """
             Represent a (key, value) as hypertext link.
-
                 - Typically, k is a foreign key value, and v the
                   representation of the referenced record, and the link
                   shall open a read view of the referenced record.
-
                 - In the base class, the linkto-parameter expects a URL (as
                   string) with "[id]" as placeholder for the key.
 
-            @param k: the key
-            @param v: the representation of the key
-            @param row: the row with this key (unused in the base class)
+            Args:
+                k: the key
+                v: the representation of the key
+                row: the row with this key (unused in the base class)
         """
 
         if self.linkto:
@@ -269,9 +264,10 @@ class S3Represent:
         """
             Represent a single value (standard entry point).
 
-            @param value: the value
-            @param row: the referenced row (if value is a foreign key)
-            @param show_link: render the representation as link
+            Args:
+                value: the value
+                row: the referenced row (if value is a foreign key)
+                show_link: render the representation as link
         """
 
         self._setup()
@@ -306,9 +302,10 @@ class S3Represent:
         """
             Represent multiple values as a comma-separated list.
 
-            @param values: list of values
-            @param rows: the referenced rows (if values are foreign keys)
-            @param show_link: render each representation as link
+            Args:
+                values: list of values
+                rows: the referenced rows (if values are foreign keys)
+                show_link: render each representation as link
         """
 
         self._setup()
@@ -357,16 +354,19 @@ class S3Represent:
         """
             Represent multiple values as dict {value: representation}
 
-            @param values: list of values
-            @param rows: the rows
-            @param show_link: render each representation as link
+            Args:
+                values: list of values
+                rows: the rows
+                show_link: render each representation as link
 
-            @return: a dict {value: representation}
+            Returns:
+                a dict {value: representation}
 
-            @note: for list-types, the dict keys will be the individual
-                   values within all lists - and not the lists (simply
-                   because lists can not be dict keys). Thus, the caller
-                   would still have to construct the final string/HTML.
+            Note:
+                For list-types, the dict keys will be the individual
+                values within all lists - and not the lists (simply
+                because lists can not be dict keys). Thus, the caller
+                would still have to construct the final string/HTML.
         """
 
         self._setup()
@@ -417,10 +417,11 @@ class S3Represent:
             Helper method to render list-type representations from
             bulk()-results.
 
-            @param value: the list
-            @param labels: the labels as returned from bulk()
-            @param show_link: render references as links, should
-                              be the same as used with bulk()
+            Args:
+                value: the list
+                labels: the labels as returned from bulk()
+                show_link: render references as links, should be the same as
+                           used with bulk()
         """
 
         show_link = show_link and self.show_link
@@ -502,9 +503,10 @@ class S3Represent:
         """
             Lazy lookup values.
 
-            @param values: list of values to lookup
-            @param rows: rows referenced by values (if values are foreign keys)
-                         optional
+            Args:
+                values: list of values to lookup
+                rows: rows referenced by values (if values are foreign keys)
+                      optional
         """
 
         theset = self.theset
@@ -624,10 +626,11 @@ class S3Represent:
             Recursive helper method to represent value as path in
             a hierarchy.
 
-            @param value: the value
-            @param row: the row containing the value
-            @param rows: all rows from _loopup as dict
-            @param hierarchy: the S3Hierarchy instance
+            Args:
+                value: the value
+                row: the row containing the value
+                rows: all rows from _loopup as dict
+                hierarchy: the S3Hierarchy instance
         """
 
         theset = self.theset
@@ -647,7 +650,10 @@ class S3Represent:
                                               rows=rows,
                                               hierarchy=hierarchy)
 
-        result = self.represent_row(row, prefix=prefix)
+        result = self.represent_row(row)
+        if prefix:
+            result = self.htemplate % (prefix, result)
+
         theset[value] = result
         return result
 
@@ -660,10 +666,9 @@ class S3RepresentLazy:
 
     def __init__(self, value, renderer):
         """
-            Constructor
-
-            @param value: the value
-            @param renderer: the renderer (S3Represent instance)
+            Args:
+                value: the value
+                renderer: the renderer (S3Represent instance)
         """
 
         self.value = value
@@ -730,9 +735,10 @@ class S3RepresentLazy:
         """
             Render as text or attribute of an XML element
 
-            @param element: the element
-            @param attributes: the attributes dict of the element
-            @param name: the attribute name
+            Args:
+                element: the element
+                attributes: the attributes dict of the element
+                name: the attribute name
         """
 
         # Render value
@@ -763,11 +769,10 @@ class S3PriorityRepresent:
 
     def __init__(self, options, classes=None):
         """
-            Constructor
-
-            @param options: the options (as dict or anything that can be
-                            converted into a dict)
-            @param classes: a dict mapping keys to CSS class suffixes
+            Args:
+                options: the options (as dict or anything that can be
+                         converted into a dict)
+                classes: a dict mapping keys to CSS class suffixes
         """
 
         self.options = dict(options)
@@ -778,8 +783,9 @@ class S3PriorityRepresent:
         """
             Representation function
 
-            @param value: the value to represent
-            @param row: the Row (unused, for API compatibility)
+            Args:
+                value: the value to represent
+                row: the Row (unused, for API compatibility)
         """
 
         css_class = base_class = "prio"
@@ -807,10 +813,12 @@ def represent_option(options, default="-"):
     """
         Representation function for option dicts
 
-        :param options: the options dict
-        :param default: the default value for unknown options
+        Args:
+            options: the options dict
+            default: the default value for unknown options
 
-        :returns function: the representation function
+        Returns:
+            function: the representation function
     """
 
     def represent(value, row=None):
@@ -877,14 +885,15 @@ def s3_qrcode_represent(value, row=None, show_value=True):
         Simple QR Code representer, produces a DIV with embedded SVG,
         useful to embed QR Codes that are to be scanned directly from
         the screen, or for previews
+            - requires python-qrcode (pip install qrcode), and PIL
 
-        @requires: python-qrcode (pip install qrcode), and PIL
+        Args:
+            value: the value to render (will be converted to str)
+            row: the Row (unused, for API-compatibility)
+            show_value: include the value (as str) in the representation
 
-        @param value: the value to render (will be converted to str)
-        @param row: the Row (unused, for API-compatibility)
-        @param show_value: include the value (as str) in the representation
-
-        @returns: DIV
+        Returns:
+            a DIV containing the QR code (SVG)
     """
 
     try:
@@ -929,7 +938,8 @@ def s3_URLise(text):
     """
         Convert all URLs in a text into an HTML <A> tag.
 
-        @param text: the text
+        Args:
+            text: the text
     """
 
     output = URLSCHEMA.sub(lambda m: '<a href="%s" target="_blank">%s</a>' %
@@ -941,9 +951,10 @@ def s3_avatar_represent(user_id, tablename="auth_user", gravatar=False, **attr):
     """
         Represent a User as their profile picture or Gravatar
 
-        @param tablename: either "auth_user" or "pr_person" depending on which
-                          table the 'user_id' refers to
-        @param attr: additional HTML attributes for the IMG(), such as _class
+        Args:
+            tablename: either "auth_user" or "pr_person" depending on which
+                       table the 'user_id' refers to
+            attr: additional HTML attributes for the IMG(), such as _class
     """
 
     size = (50, 50)
@@ -1041,9 +1052,10 @@ def s3_truncate(text, length=48, nice=True):
     """
         Nice truncating of text
 
-        @param text: the text
-        @param length: the maximum length
-        @param nice: do not truncate words
+        Args:
+            text: the text
+            length: the maximum length
+            nice: do not truncate words
     """
 
 
@@ -1070,14 +1082,16 @@ def s3_datatable_truncate(string, maxlength=40):
         Representation method to override the dataTables-internal truncation
         of strings per field, like:
 
-        if not r.id and not r.method:
-            table.field.represent = lambda string: \
-                                    s3_datatable_truncate(string, maxlength=40)
+        Example:
+            table.field.represent = lambda v, row=None: \
+                                    s3_datatable_truncate(v, maxlength=40)
 
-        @param string: the string
-        @param maxlength: the maximum string length
+        Args:
+            string: the string
+            maxlength: the maximum string length
 
-        @note: the JS click-event will be attached by s3.ui.datatable.js
+        Note:
+            The JS click-event will be attached by s3.ui.datatable.js
     """
 
     # Make sure text is multi-byte-aware before truncating it
@@ -1104,8 +1118,9 @@ def s3_trunk8(selector=None, lines=None, less=None, more=None):
     """
         Intelligent client-side text truncation
 
-        @param selector: the jQuery selector (default: .s3-truncate)
-        @param lines: maximum number of lines (default: 1)
+        Args:
+            selector: the jQuery selector (default: .s3-truncate)
+            lines: maximum number of lines (default: 1)
     """
 
     T = current.T
@@ -1154,11 +1169,12 @@ def s3_text_represent(text, truncate=True, lines=5, _class=None):
         Representation function for text fields with intelligent
         truncation and preserving whitespace.
 
-        @param text: the text
-        @param truncate: whether to truncate or not
-        @param lines: maximum number of lines to show
-        @param _class: CSS class to use for truncation (otherwise using
-                       the text-body class itself)
+        Args:
+            text: the text
+            truncate: whether to truncate or not
+            lines: maximum number of lines to show
+            _class: CSS class to use for truncation (otherwise using the
+                    text-body class itself)
     """
 
     if not text:
@@ -1181,10 +1197,11 @@ def s3_format_fullname(fname=None, mname=None, lname=None, truncate=True):
     """
         Formats the full name of a person
 
-        @param fname: the person's pr_person.first_name value
-        @param mname: the person's pr_person.middle_name value
-        @param lname: the person's pr_person.last_name value
-        @param truncate: truncate the name to max 24 characters
+        Args:
+            fname: the person's pr_person.first_name value
+            mname: the person's pr_person.middle_name value
+            lname: the person's pr_person.last_name value
+            truncate: truncate the name to max 24 characters
     """
 
     name = ""
@@ -1214,9 +1231,10 @@ def s3_fullname(person=None, pe_id=None, truncate=True):
     """
         Returns the full name of a person
 
-        @param person: the pr_person record or record_id
-        @param pe_id: alternatively, the person entity ID
-        @param truncate: truncate the name to max 24 characters
+        Args:
+            person: the pr_person record or record_id
+            pe_id: alternatively, the person entity ID
+            truncate: truncate the name to max 24 characters
     """
 
     record = None
@@ -1263,10 +1281,11 @@ def s3_fullname(person=None, pe_id=None, truncate=True):
 def s3_fullname_bulk(record_ids=None, truncate=True):
     """
         Returns the full name for a set of Persons
-        - currently unused
+            - currently unused
 
-        @param record_ids: a list of record_ids
-        @param truncate: truncate the name to max 24 characters
+        Args:
+            record_ids: a list of record_ids
+            truncate: truncate the name to max 24 characters
     """
 
     represents = {}

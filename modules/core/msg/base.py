@@ -54,7 +54,8 @@ from gluon import current, redirect, IS_IN_SET
 from gluon.html import *
 
 from ..methods import S3CRUD
-from ..tools import s3_decode_iso_datetime, s3_str, IS_ONE_OF
+from ..tools import IS_ONE_OF, get_crud_string, s3_decode_iso_datetime, \
+                    s3_str
 from ..ui import S3SQLDefaultForm, S3PentityAutocompleteWidget
 
 PHONECHARS = string.digits
@@ -178,7 +179,8 @@ class S3Msg:
             Decode an RFC2047-encoded email header (e.g.
             "Dominic =?ISO-8859-1?Q?K=F6nig?=") and return it as unicode.
 
-            @param header: the header
+            Args:
+                header: the header
         """
 
         # Deal with missing word separation (thanks Ingmar Hupp)
@@ -228,11 +230,12 @@ class S3Msg:
     @staticmethod
     def parse(channel_id, function_name):
         """
-           Parse unparsed Messages from Channel with Parser
-           - called from Scheduler
+            Parse unparsed Messages from Channel with Parser
+                - called from Scheduler
 
-           @param channel_id: Channel
-           @param function_name: Parser
+            Args:
+                channel_id: Channel
+                function_name: Parser
         """
 
         from .parser import S3Parsing
@@ -270,19 +273,20 @@ class S3Msg:
         """
             Form to Compose a Message
 
-            @param type: The default message type: None, EMAIL, SMS or TWITTER
-            @param recipient_type: Send to Persons or Groups? (pr_person or pr_group)
-            @param recipient: The pe_id of the person/group to send the message to
+            Args:
+                type: The default message type: None, EMAIL, SMS or TWITTER
+                recipient_type: Send to Persons or Groups? (pr_person or pr_group)
+                recipient: The pe_id of the person/group to send the message to
                               - this can also be set by setting one of
                                 (in priority order, if multiple found):
                                 request.vars.pe_id
                                 request.vars.person_id @ToDo
                                 request.vars.group_id  @ToDo
                                 request.vars.hrm_id    @ToDo
-            @param subject: The default subject text (for Emails)
-            @param message: The default message text
-            @param url: Redirect to the specified URL() after message sent
-            @param formid: If set, allows multiple forms open in different tabs
+                subject: The default subject text (for Emails)
+                message: The default message text
+                url: Redirect to the specified URL() after message sent
+                formid: If set, allows multiple forms open in different tabs
         """
 
         if not url:
@@ -330,9 +334,10 @@ class S3Msg:
         """
             Send a single message to an Address
 
-            @param recipient: "email@address", "+4412345678", "@nick"
-            @param message: message body
-            @param subject: message subject (Email only)
+            Args:
+                recipient: "email@address", "+4412345678", "@nick"
+                message: message body
+                subject: message subject (Email only)
         """
 
         # Determine channel to send on based on format of recipient
@@ -361,11 +366,11 @@ class S3Msg:
         """
             Send a single message to a Person Entity (or list thereof)
 
-            @ToDo: contact_method = ALL
-                - look up the pr_contact options available for the pe & send via all
+            TODO contact_method = ALL
+                 - look up the pr_contact options available for the pe & send via all
 
-            @ToDo: This is not transaction safe
-              - power failure in the middle will cause no message in the outbox
+            TODO This is not transaction safe
+                 - power failure in the middle will cause no message in the outbox
         """
 
         s3db = current.s3db
@@ -460,9 +465,10 @@ class S3Msg:
         """
             Send pending messages from outbox (usually called from scheduler)
 
-            @param contact_method: the output channel (see pr_contact.method)
+            Args:
+                contact_method: the output channel (see pr_contact.method)
 
-            @todo: contact_method = "ALL"
+            TODO contact_method = "ALL"
         """
 
         db = current.db
@@ -534,13 +540,14 @@ class S3Msg:
             """
                 Helper method to send messages by pe_id
 
-                @param pe_id: the pe_id
-                @param subject: the message subject
-                @param message: the message body
-                @param outbox_id: the outbox record ID
-                @param message_id: the message_id
-                @param organisation_id: the organisation_id (for SMS)
-                @param contact_method: the contact method
+                Args:
+                    pe_id: the pe_id
+                    subject: the message subject
+                    message: the message body
+                    outbox_id: the outbox record ID
+                    message_id: the message_id
+                    organisation_id: the organisation_id (for SMS)
+                    contact_method: the contact method
             """
 
             # Get the recipient's contact info
@@ -877,11 +884,12 @@ class S3Msg:
         """
             Push the message relating to google cloud messaging server
 
-            @param title: The title for notification
-            @param message: The message to be sent to GCM server
-            @param api_key: The API key for GCM server
-            @param registration_ids: The list of id that will be notified
-            @param channel_id: The specific channel_id to use for GCM push
+            Args:
+                title: The title for notification
+                message: The message to be sent to GCM server
+                api_key: The API key for GCM server
+                registration_ids: The list of id that will be notified
+                channel_id: The specific channel_id to use for GCM push
         """
 
         if not title or not uri or not message or not len(registration_ids):
@@ -942,7 +950,7 @@ class S3Msg:
                    ):
         """
             Function to send Email
-            - simple Wrapper over Web2Py's Email API
+                - simple Wrapper over Web2Py's Email API
         """
 
         if not to:
@@ -1001,8 +1009,11 @@ class S3Msg:
             Sanitize the email sender string to prevent MIME-encoding
             of the from-address (RFC2047)
 
-            @param: the sender-string
-            @returns: the sanitized sender-string
+            Args:
+                the sender-string
+
+            Returns:
+                the sanitized sender-string
         """
 
         if not sender:
@@ -1049,16 +1060,18 @@ class S3Msg:
         """
             Function to create an OpenGeoSMS
 
-            @param: location_id - reference to record in gis_location table
-            @param: code - the type of OpenGeoSMS:
-                S = Sahana
-                SI = Incident Report
-                ST = Task Dispatch
-            @param: map: "google" or "osm"
-            @param: text - the rest of the message
+            Args:
+                location_id - reference to record in gis_location table
+                code - the type of OpenGeoSMS:
+                            S = Sahana
+                            SI = Incident Report
+                            ST = Task Dispatch
+                map: "google" or "osm"
+                text: the rest of the message
 
-            Returns the formatted OpenGeoSMS or None if it can't find
-                an appropriate location
+            Returns:
+                the formatted OpenGeoSMS or None if it can't find an
+                appropriate location
         """
 
         if not location_id:
@@ -1097,9 +1110,13 @@ class S3Msg:
     @staticmethod
     def parse_opengeosms(message):
         """
-           Function to parse an OpenGeoSMS
-           @param: message - Inbound message to be parsed for OpenGeoSMS.
-           Returns the lat, lon, code and text contained in the message.
+            Function to parse an OpenGeoSMS
+
+            Args:
+                message: Inbound message to be parsed for OpenGeoSMS.
+
+            Returns:
+                tuple (lat, lon, code, text) contained in the message.
         """
 
         lat = ""
@@ -1237,10 +1254,13 @@ class S3Msg:
         """
             Function to send SMS via SMTP
 
-            NB Different Gateways have different requirements for presence/absence of International code
+            Note:
+                Different Gateways have different requirements for
+                presence/absence of International code.
 
-            http://en.wikipedia.org/wiki/List_of_SMS_gateways
-            http://www.obviously.com/tech_tips/SMS_Text_Email_Gateway.html
+            See Also:
+                http://en.wikipedia.org/wiki/List_of_SMS_gateways
+                http://www.obviously.com/tech_tips/SMS_Text_Email_Gateway.html
         """
 
         table = current.s3db.msg_sms_smtp_channel
@@ -1447,12 +1467,12 @@ class S3Msg:
     # -------------------------------------------------------------------------
     def send_tweet(self, text="", recipient=None, **data):
         """
-            Function to tweet.
-            If a recipient is specified then we send via direct message if the recipient follows us.
-            - falls back to @mention (leaves less characters for the message).
-            Breaks long text to chunks if needed.
+            Function to tweet. If a recipient is specified then we send via
+            direct message if the recipient follows us.
+                - falls back to @mention (leaves less characters for the message).
+                - dreaks long text to chunks if needed.
 
-            @ToDo: Option to Send via Tropo
+            TODO Option to Send via Tropo
         """
 
         # Initialize Twitter API
@@ -1548,7 +1568,8 @@ class S3Msg:
         """
             Posts a message on Facebook
 
-            https://developers.facebook.com/docs/graph-api
+            See Also:
+                https://developers.facebook.com/docs/graph-api
         """
 
         db = current.db
@@ -1646,17 +1667,17 @@ class S3Msg:
             This is a simple mailbox polling script for the Messaging Module.
             It is normally called from the scheduler.
 
-            @ToDo: If there is a need to collect from non-compliant mailers
-                   then suggest using the robust Fetchmail to collect & store
-                   in a more compliant mailer!
-            @ToDo: If delete_from_server is false, we don't want to download the
-                   same messages repeatedly.  Perhaps record time of fetch runs
-                   (or use info from the scheduler_run table), compare w/ message
-                   timestamp, as a filter. That may not be completely accurate,
-                   so could check msg_email for messages close to the last
-                   fetch time. Or just advise people to have a dedicated account
-                   to which email is sent, that does not also need to be read
-                   by humans. Or don't delete the fetched mail until the next run.
+            TODO If there is a need to collect from non-compliant mailers
+                 then suggest using the robust Fetchmail to collect & store
+                 in a more compliant mailer!
+            TODO If delete_from_server is false, we don't want to download the
+                 same messages repeatedly.  Perhaps record time of fetch runs
+                 (or use info from the scheduler_run table), compare w/ message
+                 timestamp, as a filter. That may not be completely accurate,
+                 so could check msg_email for messages close to the last
+                 fetch time. Or just advise people to have a dedicated account
+                 to which email is sent, that does not also need to be read
+                 by humans. Or don't delete the fetched mail until the next run.
         """
 
         db = current.db
@@ -1878,7 +1899,9 @@ class S3Msg:
     def poll_mcommons(channel_id):
         """
             Fetches the inbound SMS from Mobile Commons API
-            http://www.mobilecommons.com/mobile-commons-api/rest/#ListIncomingMessages
+
+            See Also:
+                http://www.mobilecommons.com/mobile-commons-api/rest/#ListIncomingMessages
         """
 
         db = current.db
@@ -1963,7 +1986,9 @@ class S3Msg:
     def poll_twilio(channel_id):
         """
             Fetches the inbound SMS from Twilio API
-            http://www.twilio.com/docs/api/rest
+
+            See Also:
+                http://www.twilio.com/docs/api/rest
         """
 
         db = current.db
@@ -2312,9 +2337,10 @@ class S3Msg:
     def poll_twitter(channel_id):
         """
             Function  to call to fetch tweets into msg_twitter table
-            - called via Scheduler or twitter_inbox controller
+                - called via Scheduler or twitter_inbox controller
 
-            http://tweepy.readthedocs.org/en/v3.3.0/api.html
+            See Also:
+                http://tweepy.readthedocs.org/en/v3.3.0/api.html
         """
 
         try:
@@ -2632,8 +2658,9 @@ class S3Compose(S3CRUD):
         """
             API entry point
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes for the request
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes for the request
         """
 
         if r.http in ("GET", "POST"):
@@ -2647,8 +2674,9 @@ class S3Compose(S3CRUD):
         """
             Generate a form to send a message
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes for the request
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes for the request
         """
 
         T = current.T
@@ -2699,11 +2727,11 @@ class S3Compose(S3CRUD):
 
         # Complete the page
         if r.representation == "html":
-            title = self.crud_string(self.tablename, "title_compose")
+            title = get_crud_string(self.tablename, "title_compose")
             if not title:
                 title = T("Send Message")
 
-            # subtitle = self.crud_string(self.tablename, "subtitle_compose")
+            # subtitle = get_crud_string(self.tablename, "subtitle_compose")
             # if not subtitle:
                 # subtitle = ""
 
@@ -2804,12 +2832,12 @@ class S3Compose(S3CRUD):
         if not recipient_type and resource:
             # See if we have defined a custom recipient type for this table
             # pr_person or pr_group
-            recipient_type = self._config("msg_recipient_type", None)
+            recipient_type = resource.get_config("msg_recipient_type", None)
 
         contact_method = self.contact_method # from msg.compose()
         if not contact_method and resource:
             # See if we have defined a custom default contact method for this table
-            contact_method = self._config("msg_contact_method", "EMAIL")
+            contact_method = resource.get_config("msg_contact_method", "EMAIL")
 
         otable.contact_method.default = contact_method
 

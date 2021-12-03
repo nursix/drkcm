@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Helper functions and classes for RLPPTM template
+    Helper functions and classes for RLPPTM
 
-    @license: MIT
+    License: MIT
 """
 
 import json
@@ -22,12 +20,14 @@ def get_role_realms(role):
     """
         Get all realms for which a role has been assigned
 
-        @param role: the role ID or role UUID
+        Args:
+            role: the role ID or role UUID
 
-        @returns: list of pe_ids the current user has the role for,
-                  None if the role is assigned site-wide, or an
-                  empty list if the user does not have the role, or
-                  no realm for the role
+        Returns:
+            list of pe_ids the current user has the role for,
+            None if the role is assigned site-wide, or an
+            empty list if the user does not have the role, or
+            no realm for the role
     """
 
     db = current.db
@@ -54,14 +54,16 @@ def get_role_realms(role):
     return role_realms
 
 # =============================================================================
-def get_managed_facilities(role="ORG_ADMIN", public_only=True):
+def get_managed_facilities(role="ORG_ADMIN", public_only=True, cacheable=True):
     """
         Get test stations managed by the current user
 
-        @param role: the user role to consider
-        @param public_only: only include sites with PUBLIC=Y tag
+        Args:
+            role: the user role to consider
+            public_only: only include sites with PUBLIC=Y tag
 
-        @returns: list of site_ids
+        Returns:
+            list of site_ids
     """
 
 
@@ -88,7 +90,7 @@ def get_managed_facilities(role="ORG_ADMIN", public_only=True):
         join = None
 
     sites = current.db(query).select(ftable.site_id,
-                                     cache = s3db.cache,
+                                     cache = s3db.cache if cacheable else None,
                                      join = join,
                                      )
     return [s.site_id for s in sites]
@@ -98,10 +100,12 @@ def get_org_accounts(organisation_id):
     """
         Get all user accounts linked to an organisation
 
-        @param organisation_id: the organisation ID
+        Args:
+            organisation_id: the organisation ID
 
-        @returns: tuple (active, disabled, invited), each being
-                  a list of user accounts (auth_user Rows)
+        Returns:
+            tuple (active, disabled, invited), each being
+            a list of user accounts (auth_user Rows)
     """
 
     auth = current.auth
@@ -145,12 +149,14 @@ def get_role_users(role_uid, pe_id=None, organisation_id=None):
     """
         Look up users with a certain user role for a certain organisation
 
-        @param role_uid: the role UUID
-        @param pe_id: the pe_id of the organisation, or
-        @param organisation_id: the organisation_id
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
 
-        @returns: a dict {user_id: pe_id} of all active users with this
-                  role for the organisation
+        Returns:
+            a dict {user_id: pe_id} of all active users with this
+            role for the organisation
     """
 
     db = current.db
@@ -204,11 +210,13 @@ def get_role_emails(role_uid, pe_id=None, organisation_id=None):
         Look up the emails addresses of users with a certain user role
         for a certain organisation
 
-        @param role_uid: the role UUID
-        @param pe_id: the pe_id of the organisation, or
-        @param organisation_id: the organisation_id
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
 
-        @returns: a list of email addresses
+        Returns:
+            a list of email addresses
     """
 
     contacts = None
@@ -237,11 +245,13 @@ def get_role_hrs(role_uid, pe_id=None, organisation_id=None):
         Look up the HR records of users with a certain user role
         for a certain organisation
 
-        @param role_uid: the role UUID
-        @param pe_id: the pe_id of the organisation, or
-        @param organisation_id: the organisation_id
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
 
-        @returns: a list of hrm_human_resource IDs
+        Returns:
+            a list of hrm_human_resource IDs
     """
 
     hr_ids = None
@@ -272,7 +282,8 @@ def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)
 
-        @param r: the CRUDRequest
+        Args:
+            r: the CRUDRequest
     """
 
     settings = current.deployment_settings
@@ -293,9 +304,10 @@ def assign_pending_invoices(billing_id, organisation_id=None, invoice_id=None):
         Auto-assign pending invoices in a billing to accountants,
         taking into account their current workload
 
-        @param billing_id: the billing ID
-        @param organisation_id: the ID of the accountant organisation
-        @param invoice_id: assign only this invoice
+        Args:
+            billing_id: the billing ID
+            organisation_id: the ID of the accountant organisation
+            invoice_id: assign only this invoice
     """
 
     db = current.db
@@ -371,9 +383,11 @@ def check_invoice_integrity(row):
     """
         Rheader-helper to check and report invoice integrity
 
-        @param row: the invoice record
+        Args:
+            row: the invoice record
 
-        @returns: integrity check result
+        Returns:
+            integrity check result
     """
 
     billing = current.s3db.fin_VoucherBilling(row.billing_id)
@@ -449,9 +463,11 @@ def can_cancel_debit(debit):
           that originally accepted the voucher (not even ADMIN-role can
           override this requirement)
 
-        @param debit: the debit (Row, must contain the debit pe_id)
+        Args:
+            debit: the debit (Row, must contain the debit pe_id)
 
-        @returns: True|False
+        Returns:
+            True|False
     """
 
     auth = current.auth
@@ -493,8 +509,9 @@ def configure_binary_tags(resource, tag_components):
     """
         Configure representation of binary tags
 
-        @param resource: the CRUDResource
-        @param tag_components: tuple|list of filtered tag component aliases
+        Args:
+            resource: the CRUDResource
+            tag_components: tuple|list of filtered tag component aliases
     """
 
     T = current.T
@@ -516,7 +533,8 @@ def workflow_tag_represent(options):
         Color-coded and icon-supported representation of
         facility approval workflow tags
 
-        @param options: the tag options as dict {value: label}
+        Args:
+            options: the tag options as dict {value: label}
     """
 
     icons = {"REVISE": "fa fa-exclamation-triangle",
@@ -552,11 +570,13 @@ def configure_workflow_tags(resource, role="applicant", record_id=None):
     """
         Configure facility approval workflow tags
 
-        @param resource: the org_facility resource
-        @param role: the user's role in the workflow (applicant|approver)
-        @param record_id: the facility record ID
+        Args:
+            resource: the org_facility resource
+            role: the user's role in the workflow (applicant|approver)
+            record_id: the facility record ID
 
-        @returns: the list of visible workflow tags [(label, selector)]
+        Returns:
+            the list of visible workflow tags [(label, selector)]
     """
 
     T = current.T
@@ -664,7 +684,8 @@ def facility_approval_workflow(site_id):
     """
         Update facility approval workflow tags
 
-        @param site_id: the site ID
+        Args:
+            site_id: the site ID
     """
 
     db = current.db
@@ -773,10 +794,12 @@ def facility_review_notification(site_id, tags):
     """
         Notify the OrgAdmin of a test station about the status of the review
 
-        @param site_id: the test facility site ID
-        @param tags: the current workflow tags
+        Args:
+            site_id: the test facility site ID
+            tags: the current workflow tags
 
-        @returns: error message on error, else None
+        Returns:
+            error message on error, else None
     """
 
     db = current.db
@@ -882,7 +905,8 @@ def add_organisation_default_tags(organisation_id):
     """
         Add default tags to a new organisation
 
-        @param organisation_id: the organisation record ID
+        Args:
+            organisation_id: the organisation record ID
     """
 
     db = current.db
@@ -939,8 +963,9 @@ def add_facility_default_tags(facility_id, approve=False):
     """
         Add default tags to a new facility
 
-        @param facility_id: the facility record ID
-        @param approve: whether called from approval-workflow
+        Args:
+            facility_id: the facility record ID
+            approve: whether called from approval-workflow
     """
 
     db = current.db
@@ -996,9 +1021,11 @@ def set_facility_code(facility_id):
     """
         Generate and set a unique facility code
 
-        @param facility_id: the facility ID
+        Args:
+            facility_id: the facility ID
 
-        @returns: the facility code
+        Returns:
+            the facility code
     """
 
     db = current.db
@@ -1036,12 +1063,14 @@ def applicable_org_types(organisation_id, group=None, represent=False):
     """
         Look up organisation types by OrgGroup-tag
 
-        @param organisation_id: the record ID of an existing organisation
-        @param group: alternatively, the organisation group name
-        @param represent: include type labels in the result
+        Args:
+            organisation_id: the record ID of an existing organisation
+            group: alternatively, the organisation group name
+            represent: include type labels in the result
 
-        @returns: a list of organisation type IDs, for filtering,
-                  or a dict {type_id: label}, for selecting
+        Returns:
+            a list of organisation type IDs, for filtering,
+            or a dict {type_id: label}, for selecting
     """
 
     db = current.db
@@ -1098,9 +1127,11 @@ def facility_map_popup(record):
     """
         Custom map popup for facilities
 
-        @param record: the facility record (Row)
+        Args:
+            record: the facility record (Row)
 
-        @returns: the map popup contents as DIV
+        Returns:
+            the map popup contents as DIV
     """
 
     db = current.db
@@ -1179,9 +1210,10 @@ def update_daily_report(site_id, result_date, disease_id):
         Update daily testing activity report (without subtotals per demographic)
         - called when a new individual test result is registered
 
-        @param site_id: the test station site ID
-        @param result_date: the result date of the test
-        @param disease_id: the disease ID
+        Args:
+            site_id: the test station site ID
+            result_date: the result date of the test
+            disease_id: the disease ID
     """
 
     db = current.db
@@ -1244,9 +1276,10 @@ def update_daily_report_by_demographic(site_id, result_date, disease_id):
         Update daily testing activity report (with subtotals per demographic)
         - called when a new individual test result is registered
 
-        @param site_id: the test station site ID
-        @param result_date: the result date of the test
-        @param disease_id: the disease ID
+        Args:
+            site_id: the test station site ID
+            result_date: the result date of the test
+            disease_id: the disease ID
     """
 
     db = current.db
@@ -1400,10 +1433,11 @@ class ServiceListRepresent(S3Represent):
             Helper method to render list-type representations from
             bulk()-results.
 
-            @param value: the list
-            @param labels: the labels as returned from bulk()
-            @param show_link: render references as links, should
-                              be the same as used with bulk()
+            Args:
+                value: the list
+                labels: the labels as returned from bulk()
+                show_link: render references as links, should
+                           be the same as used with bulk()
         """
 
         show_link = show_link and self.show_link
@@ -1448,7 +1482,8 @@ class OrganisationRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the organisation IDs
+            Args:
+                values: the organisation IDs
         """
 
         db = current.db
@@ -1504,12 +1539,12 @@ class OrganisationRepresent(S3Represent):
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
             Represent a single Row
 
-            @param row: the org_organisation Row
-            @param prefix: the hierarchy prefix (unused here)
+            Args:
+                row: the org_organisation Row
         """
 
         name = s3_str(row.name)
@@ -1538,7 +1573,8 @@ class ContactRepresent(pr_PersonRepresentContact):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         output = DIV(SPAN(s3_fullname(row),
@@ -1585,8 +1621,9 @@ class InviteUserOrg(CRUDMethod):
         """
             Page-render entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         output = {}
@@ -1608,8 +1645,9 @@ class InviteUserOrg(CRUDMethod):
         """
             Prepare and process invitation form
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         T = current.T
@@ -1807,10 +1845,12 @@ class InviteUserOrg(CRUDMethod):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -1828,8 +1868,9 @@ class InvoicePDF(CRUDMethod):
         """
             Generate a PDF of an Invoice
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         if r.representation != "pdf":
@@ -1865,7 +1906,8 @@ class InvoicePDF(CRUDMethod):
         """
             Generate the invoice header
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -1910,7 +1952,8 @@ class InvoicePDF(CRUDMethod):
         """
             Generate the invoice body
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -1976,7 +2019,8 @@ class InvoicePDF(CRUDMethod):
         """
             Generate the invoice footer
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -2020,9 +2064,11 @@ class InvoicePDF(CRUDMethod):
         """
             Look up data for the invoice header
 
-            @param invoice: the invoice record
+            Args:
+                invoice: the invoice record
 
-            @returns: dict with header data
+            Returns:
+                dict with header data
         """
 
         db = current.db
@@ -2108,9 +2154,11 @@ class InvoicePDF(CRUDMethod):
         """
             Look up additional data for invoice body
 
-            @param invoice: the invoice record
+            Args:
+                invoice: the invoice record
 
-            @returns: dict with invoice data
+            Returns:
+                dict with invoice data
         """
 
         db = current.db
@@ -2146,8 +2194,9 @@ class ClaimPDF(CRUDMethod):
         """
             Generate a PDF of a Claim
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         if r.representation != "pdf":
@@ -2201,7 +2250,8 @@ class ClaimPDF(CRUDMethod):
         """
             Generate the claim header
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -2250,7 +2300,8 @@ class ClaimPDF(CRUDMethod):
         """
             Generate the claim body
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -2316,7 +2367,8 @@ class ClaimPDF(CRUDMethod):
         """
             Generate the claim footer
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
         """
 
         T = current.T
@@ -2360,9 +2412,11 @@ class ClaimPDF(CRUDMethod):
         """
             Look up data for the claim header
 
-            @param claim: the claim record
+            Args:
+                claim: the claim record
 
-            @returns: dict with header data
+            Returns:
+                dict with header data
         """
 
         db = current.db
@@ -2460,9 +2514,11 @@ class ClaimPDF(CRUDMethod):
         """
             Look up additional data for claim body
 
-            @param claim: the claim record
+            Args:
+                claim: the claim record
 
-            @returns: dict with claim data
+            Returns:
+                dict with claim data
         """
 
         db = current.db
@@ -2497,8 +2553,9 @@ class TestFacilityInfo(CRUDMethod):
         """
             Report test facility information
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         if r.http == "POST":
@@ -2530,6 +2587,7 @@ class TestFacilityInfo(CRUDMethod):
                  "name": "FACILITY-NAME",   - the facility name
                  "phone": "phone #",        - the facility phone number
                  "email": "email",          - the facility email address
+                 "public": True|False,      - whether the facility is listed in the public registry
                  "organisation":
                     {"id": "ORG-ID",        - the organisation ID tag
                      "name": "ORG-NAME",    - the organisation name
@@ -2594,26 +2652,38 @@ class TestFacilityInfo(CRUDMethod):
                 r.error(400, current.ERROR.BAD_REQUEST)
             query = (table.code.upper() == code.upper())
 
-        query &= (table.deleted == False)
-        facility = db(query).select(table.code,
-                                    table.name,
-                                    table.phone1,
-                                    table.email,
-                                    table.website,
-                                    table.organisation_id,
-                                    table.location_id,
-                                    table.site_id,
-                                    limitby = (0, 1),
-                                    ).first()
+        ttable = s3db.org_site_tag
+        left = ttable.on((ttable.site_id == table.site_id) & \
+                         (ttable.tag == "PUBLIC") & \
+                         (ttable.deleted == False))
 
-        if not facility:
+        query &= (table.deleted == False)
+        row = db(query).select(table.code,
+                               table.name,
+                               table.phone1,
+                               table.email,
+                               table.website,
+                               table.organisation_id,
+                               table.location_id,
+                               table.site_id,
+                               ttable.id,
+                               ttable.value,
+                               left = left,
+                               limitby = (0, 1),
+                               ).first()
+
+        if not row:
             r.error(404, current.ERROR.BAD_RECORD)
+        else:
+            facility = row.org_facility
+            public = row.org_site_tag
 
         # Prepare facility info
         output = {"code": facility.code,
                   "name": facility.name,
                   "phone": facility.phone1,
                   "email": facility.email,
+                  "public": True if public.value == "Y" else False,
                   }
 
         # Look up organisation data

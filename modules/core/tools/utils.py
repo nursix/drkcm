@@ -26,12 +26,13 @@
 """
 
 __all__ = ("RCVARS",
-           "SEPARATORS",
+           "JSONSEPARATORS",
            "S3CustomController",
            "S3MarkupStripper",
            "StringTemplateParser",
            "Traceback",
            "URL2",
+           "get_crud_string",
            "s3_addrow",
            "s3_dev_toolbar",
            "s3_flatlist",
@@ -76,16 +77,39 @@ from s3dal import Expression, Field, Row, S3DAL
 from .convert import s3_str
 
 # Compact JSON encoding
-SEPARATORS = (",", ":")
+JSONSEPARATORS = (",", ":")
 
 RCVARS = "rcvars"
+
+# =============================================================================
+def get_crud_string(tablename, key):
+    """
+        Get a CRUD string (label) for a table
+
+        Args:
+            tablename: the table name
+            key: the CRUD string key
+
+        Returns:
+            the CRUD string (usually lazyT)
+    """
+
+    crud_strings = current.response.s3.crud_strings
+
+    labels = crud_strings.get(tablename)
+    label = labels.get(key) if labels else None
+    if label is None:
+        label = crud_strings.get(key)
+
+    return label
 
 # =============================================================================
 def s3_get_last_record_id(tablename):
     """
         Reads the last record ID for a resource from a session
 
-        @param table: the the tablename
+        Args:
+            tablename: the tablename
     """
 
     session = current.session
@@ -100,8 +124,9 @@ def s3_store_last_record_id(tablename, record_id):
     """
         Stores a record ID for a resource in a session
 
-        @param tablename: the tablename
-        @param record_id: the record ID to store
+        Args:
+            tablename: the tablename
+            record_id: the record ID to store
     """
 
     session = current.session
@@ -124,7 +149,8 @@ def s3_remove_last_record_id(tablename=None):
     """
         Clears one or all last record IDs stored in a session
 
-        @param tablename: the tablename, None to remove all last record IDs
+        Args:
+            tablename: the tablename, None to remove all last record IDs
     """
 
     session = current.session
@@ -142,12 +168,14 @@ def s3_validate(table, field, value, record=None):
     """
         Validates a value for a field
 
-        @param table: Table
-        @param field: Field or name of the field
-        @param value: value to validate
-        @param record: the existing database record, if available
+        Args:
+            table: Table
+            field: Field or name of the field
+            value: value to validate
+            record: the existing database record, if available
 
-        @return: tuple (value, error)
+        Returns:
+            tuple (value, error)
     """
 
     default = (value, None)
@@ -221,14 +249,15 @@ def s3_represent_value(field,
     """
         Represent a field value
 
-        @param field: the field (Field)
-        @param value: the value
-        @param record: record to retrieve the value from
-        @param linkto: function or format string to link an ID column
-        @param strip_markup: strip away markup from representation
-        @param xml_escape: XML-escape the output
-        @param non_xml_output: Needed for output such as pdf or xls
-        @param extended_comments: Typically the comments are abbreviated
+        Args:
+            field: the field (Field)
+            value: the value
+            record: record to retrieve the value from
+            linkto: function or format string to link an ID column
+            strip_markup: strip away markup from representation
+            xml_escape: XML-escape the output
+            non_xml_output: Needed for output such as pdf or xls
+            extended_comments: Typically the comments are abbreviated
     """
 
     xml_encode = current.xml.xml_encode
@@ -400,13 +429,16 @@ def s3_mark_required(fields,
     """
         Add asterisk to field label if a field is required
 
-        @param fields: list of fields (or a table)
-        @param mark_required: list of field names which are always required
-        @param label_html: function to render labels of requried fields
-        @param map_names: dict of alternative field names and labels
-                          {fname: (name, label)}, used for inline components
-        @return: tuple, (dict of form labels, has_required) with has_required
-                 indicating whether there are required fields in this form
+        Args:
+            fields: list of fields (or a table)
+            mark_required: list of field names which are always required
+            label_html: function to render labels of requried fields
+            map_names: dict of alternative field names and labels
+                       {fname: (name, label)}, used for inline components
+
+        Returns:
+            tuple, (dict of form labels, has_required) with has_required
+            indicating whether there are required fields in this form
     """
 
     if not mark_required:
@@ -478,13 +510,14 @@ def s3_addrow(form, label, widget, comment, formstyle, row_id, position=-1):
     """
         Add a row to a form, applying formstyle
 
-        @param form: the FORM
-        @param label: the label
-        @param widget: the widget
-        @param comment: the comment
-        @param formstyle: the formstyle
-        @param row_id: the form row HTML id
-        @param position: position where to insert the row
+        Args:
+            form: the FORM
+            label: the label
+            widget: the widget
+            comment: the comment
+            formstyle: the formstyle
+            row_id: the form row HTML id
+            position: position where to insert the row
     """
 
     if callable(formstyle):
@@ -524,20 +557,21 @@ def s3_redirect_default(location="", how=303, client_side=False, headers=None):
         Redirect preserving response messages, useful when redirecting from
         index() controllers.
 
-        @param location: the url where to redirect
-        @param how: what HTTP status code to use when redirecting
-        @param client_side: if set to True, it triggers a reload of
-                            the entire page when the fragment has been
-                            loaded as a component
-        @param headers: response headers
+        Args:
+            location: the url where to redirect
+            how: what HTTP status code to use when redirecting
+            client_side: if set to True, it triggers a reload of
+                         the entire page when the fragment has been
+                         loaded as a component
+            headers: response headers
     """
 
     s3_keep_messages()
 
     redirect(location,
-             how=how,
-             client_side=client_side,
-             headers=headers,
+             how = how,
+             client_side = client_side,
+             headers = headers,
              )
 
 # =============================================================================
@@ -545,12 +579,14 @@ def s3_has_foreign_key(field, m2m=True):
     """
         Check whether a field contains a foreign key constraint
 
-        @param field: the field (Field instance)
-        @param m2m: also detect many-to-many links
+        Args:
+            field: the field (Field instance)
+            m2m: also detect many-to-many links
 
-        @note: many-to-many references (list:reference) are not DB constraints,
-               but pseudo-references implemented by the DAL. If you only want
-               to find real foreign key constraints, then set m2m=False.
+        Note:
+            many-to-many references (list:reference) are not DB constraints,
+            but pseudo-references implemented by the DAL. If you only want
+            to find real foreign key constraints, then set m2m=False.
     """
 
     try:
@@ -572,18 +608,21 @@ def s3_get_foreign_key(field, m2m=True):
         Resolve a field type into the name of the referenced table,
         the referenced key and the reference type (M:1 or M:N)
 
-        @param field: the field (Field instance)
-        @param m2m: also detect many-to-many references
+        Args:
+            field: the field (Field instance)
+            m2m: also detect many-to-many references
 
-        @return: tuple (tablename, key, multiple), where tablename is
-                 the name of the referenced table (or None if this field
-                 has no foreign key constraint), key is the field name of
-                 the referenced key, and multiple indicates whether this is
-                 a many-to-many reference (list:reference) or not.
+        Returns:
+            tuple (tablename, key, multiple), where tablename is
+            the name of the referenced table (or None if this field
+            has no foreign key constraint), key is the field name of
+            the referenced key, and multiple indicates whether this is
+            a many-to-many reference (list:reference) or not.
 
-        @note: many-to-many references (list:reference) are not DB constraints,
-               but pseudo-references implemented by the DAL. If you only want
-               to find real foreign key constraints, then set m2m=False.
+        Note:
+            many-to-many references (list:reference) are not DB constraints,
+            but pseudo-references implemented by the DAL. If you only want
+            to find real foreign key constraints, then set m2m=False.
     """
 
     ftype = str(field.type)
@@ -611,6 +650,7 @@ def s3_get_foreign_key(field, m2m=True):
 # =============================================================================
 def s3_flatlist(nested):
     """ Iterator to flatten mixed iterables of arbitrary depth """
+
     for item in nested:
         if isinstance(item, collections.Iterable) and \
            not isinstance(item, str):
@@ -625,8 +665,9 @@ def s3_set_match_strings(matchDict, value):
         Helper method for gis_search_ac and org_search_ac
         Find which field the search term matched & where
 
-        @param matchDict: usually the record
-        @param value: the search term
+        Args:
+            matchDict: usually the record
+            value: the search term
     """
 
     for key in matchDict:
@@ -659,10 +700,11 @@ def s3_orderby_fields(table, orderby, expr=False):
         Introspect and yield all fields involved in a DAL orderby
         expression.
 
-        @param table: the Table
-        @param orderby: the orderby expression
-        @param expr: True to yield asc/desc expressions as they are,
-                     False to yield only Fields
+        Args:
+            table: the Table
+            orderby: the orderby expression
+            expr: True to yield asc/desc expressions as they are,
+                  False to yield only Fields
     """
 
     if not orderby:
@@ -723,8 +765,9 @@ def s3_get_extension(request=None):
     """
         Get the file extension in the path of the request
 
-        @param request: the request object (web2py request or CRUDRequest),
-                        defaults to current.request
+        Args:
+            request: the request object (web2py request or CRUDRequest),
+                     defaults to current.request
     """
 
 
@@ -754,9 +797,11 @@ def s3_get_extension_from_url(url):
     """
         Helper to read the format extension from a URL string
 
-        @param url: the URL string
+        Args:
+            url: the URL string
 
-        @returns: the format extension as string, if any
+        Returns:
+            the format extension as string, if any
     """
 
     ext = None
@@ -790,9 +835,10 @@ def s3_set_extension(url, extension=None):
         Add a file extension to the path of a url, replacing all
         other extensions in the path.
 
-        @param url: the URL (as string)
-        @param extension: the extension, defaults to the extension
-                          of current. request
+        Args:
+            url: the URL (as string)
+            extension: the extension, defaults to the extension
+                       of current. request
     """
 
     if extension == None:
@@ -912,6 +958,7 @@ def URL2(a=None, c=None, r=None):
         The function (& optionally args/vars) are expected to be added
         via jquery based on attributes of the item.
     """
+
     application = controller = None
     if r:
         application = r.application
@@ -931,8 +978,8 @@ class S3CustomController:
     """
         Common helpers for custom controllers (template/controllers.py)
 
-        @ToDo: Add Helper Function for dataTables
-        @ToDo: Add Helper Function for dataLists
+        TODO Add Helper Function for dataTables
+        TODO Add Helper Function for dataLists
     """
 
     @staticmethod
@@ -940,8 +987,9 @@ class S3CustomController:
         """
             Use a custom view template
 
-            @param template: name of the template (determines the path)
-            @param filename: name of the view template file
+            Args:
+                template: name of the template (determines the path)
+                filename: name of the view template file
         """
 
         if "." in template:
@@ -962,14 +1010,8 @@ class S3CustomController:
 class StringTemplateParser:
     """
         Helper to parse string templates with named keys
-
-        @return: a list of keys (in order of appearance),
-                 None for invalid string templates
-
-        @example:
-            keys = StringTemplateParser.keys("%(first_name)s %(last_name)s")
-            # Returns: ["first_name", "last_name"]
     """
+
     def __init__(self):
         self._keys = []
 
@@ -978,6 +1020,18 @@ class StringTemplateParser:
 
     @classmethod
     def keys(cls, template):
+        """
+            Get the keys from a string template
+
+            Returns:
+                a list of keys (in order of appearance),
+                None for invalid string templates
+
+            Example:
+                keys = StringTemplateParser.keys("%(first_name)s %(last_name)s")
+                # Returns: ["first_name", "last_name"]
+        """
+
         parser = cls()
         try:
             template % parser
@@ -986,7 +1040,7 @@ class StringTemplateParser:
         return parser._keys
 
 # =============================================================================
-class S3MarkupStripper(HTMLParser, object):
+class S3MarkupStripper(HTMLParser):
     """ Simple markup stripper """
 
     def __init__(self):
@@ -1016,7 +1070,8 @@ def system_info():
         System Information, for issue reporting and support; visible e.g. on
         the default/about page
 
-        :returns: a DIV with the system information
+        Returns:
+            a DIV with the system information
     """
 
     request = current.request
@@ -1171,7 +1226,8 @@ def version_info():
     """
         Base system version info
 
-        :returns tuple: the base system version number as integer tuple
+        Returns:
+            tuple: the base system version number as integer tuple
     """
 
     from ...._version import __version__

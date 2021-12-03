@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """
-    Sahana Eden Volunteers Management
-    (Extends modules/eden/hrm.py)
+    Volunteers Management (extends modules/eden/hrm.py)
 
-    @copyright: 2012-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2012-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -509,7 +506,8 @@ def vol_activity_hours_month(row):
 
         Requires "date" to be in the additional report_fields
 
-        @param row: the Row
+        Args:
+            row: the Row
     """
 
     try:
@@ -719,9 +717,11 @@ class VolunteerAwardModel(DataModel):
         """
             File representation
 
-            @param filename: the stored file name (field value)
+            Args:
+                filename: the stored file name (field value)
 
-            @return: a link to download the file
+            Returns:
+                a link to download the file
         """
 
         if filename:

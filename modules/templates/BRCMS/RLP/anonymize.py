@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Anonymization Rules for BRCMS/RLP
+
+    License: MIT
+"""
 
 from uuid import uuid4
 

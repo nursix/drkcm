@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Supply Model
 
-""" Sahana Eden Supply Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,10 +25,10 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3SupplyModel",
-           "S3SupplyDistributionModel",
-           "S3SupplyDistributionDVRActivityModel",
-           "S3SupplyPersonModel",
+__all__ = ("SupplyModel",
+           "SupplyDistributionModel",
+           "SupplyDistributionDVRActivityModel",
+           "SupplyPersonModel",
            "supply_item_rheader",
            "supply_item_controller",
            "supply_item_entity_controller",
@@ -65,7 +63,7 @@ um_patterns = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
                )
 
 # =============================================================================
-class S3SupplyModel(DataModel):
+class SupplyModel(DataModel):
     """
         Generic Supply functionality such as catalogs and items that is used
         across multiple modules.
@@ -1053,7 +1051,8 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the ImportItem to check
+            Args:
+                item: the ImportItem to check
         """
 
         data = item.data
@@ -1100,7 +1099,8 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the ImportItem to check
+            Args:
+                item: the ImportItem to check
         """
 
         data = item.data
@@ -1131,7 +1131,8 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the ImportItem to check
+            Args:
+                item: the ImportItem to check
         """
 
         data = item.data
@@ -1159,7 +1160,8 @@ $.filterOptionsS3({
             Callback function used to look for duplicates during
             the import process
 
-            @param item: the ImportItem to check
+            Args:
+                item: the ImportItem to check
         """
 
         data = item.data
@@ -1264,17 +1266,13 @@ $.filterOptionsS3({
                                    )
 
 # =============================================================================
-class S3SupplyDistributionModel(DataModel):
+class SupplyDistributionModel(DataModel):
     """
         Supply Distribution Model
         - depends on Stats module
 
         A Distribution is an Item (which could be a Kit) distributed to a single Location
         - usually as part of an Activity
-
-        @ToDo: Deprecate this in favour of S3ProjectActivityItemModel?
-               - not based on stats, but simpler as less joins.
-               - could be based on stats if we make all supply_item into stats_parameter instances
     """
 
     names = ("supply_distribution_item",
@@ -1754,7 +1752,7 @@ class S3SupplyDistributionModel(DataModel):
             return list(range(date.year, end_date.year + 1))
 
 # =============================================================================
-class S3SupplyDistributionDVRActivityModel(DataModel):
+class SupplyDistributionDVRActivityModel(DataModel):
     """
         Model to link distributions to DVR activities / case activities
     """
@@ -1784,7 +1782,7 @@ class S3SupplyDistributionDVRActivityModel(DataModel):
         return None
 
 # =============================================================================
-class S3SupplyPersonModel(DataModel):
+class SupplyPersonModel(DataModel):
     """
         Link table between People & Items
         - e.g. Donations
@@ -1927,7 +1925,8 @@ class supply_ItemRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the supply_item IDs
+            Args:
+                values: the supply_item IDs
         """
 
         db = current.db
@@ -1955,7 +1954,8 @@ class supply_ItemRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the supply_item Row
+            Args:
+                row: the supply_item Row
         """
 
         name = row["supply_item.name"]
@@ -1991,10 +1991,11 @@ class supply_ItemPackRepresent(S3Represent):
             Custom lookup method for item_pack rows, does a left join with
             the item.
 
-            @param key: the primary key of the lookup table
-            @param values: the supply_item_pack IDs
-            @param fields: the fields to lookup (unused in this class,
-                           retained for API compatibility)
+            Args:
+                key: the primary key of the lookup table
+                values: the supply_item_pack IDs
+                fields: the fields to lookup (unused in this class,
+                        retained for API compatibility)
         """
 
         db = current.db
@@ -2025,9 +2026,10 @@ class supply_ItemPackRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the Row (usually joined supply_item_pack/supply_item)
+            Args:
+                row: the Row (usually joined supply_item_pack/supply_item)
 
-            @todo: implement translate option
+            TODO implement translate option
         """
 
         try:
@@ -2095,7 +2097,8 @@ class supply_ItemCategoryRepresent(S3Represent):
             key and fields are not used, but are kept for API
             compatibility reasons.
 
-            @param values: the supply_item_category IDs
+            Args:
+                values: the supply_item_category IDs
         """
 
         db = current.db
@@ -2129,7 +2132,8 @@ class supply_ItemCategoryRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the supply_item_category Row
+            Args:
+                row: the supply_item_category Row
         """
 
         name = row["supply_item_category.name"]
@@ -2325,7 +2329,7 @@ def supply_item_rheader(r):
     return None
 
 # =============================================================================
-class SupplyItemPackQuantity(object):
+class SupplyItemPackQuantity:
     """
         Field method for pack quantity of an item, used in req and inv
     """
@@ -2356,7 +2360,8 @@ def supply_item_pack_quantities(pack_ids):
         Helper function to look up the pack quantities for
         multiple item_pack_ids in-bulk
 
-        @param pack_ids: iterable of item_pack_ids
+        Args:
+            pack_ids: iterable of item_pack_ids
     """
 
     table = current.s3db.supply_item_pack
@@ -2998,10 +3003,11 @@ def supply_get_shipping_code(doctype, site_id, field):
     """
         Get a reference number for a shipping document
 
-        @param doctype: short name for the document type (e.g. WB, GRN)
-        @param site_id: the sending/receiving site
-        @param field: the field where the reference numbers are stored
-                      (to look up the previous number for incrementing)
+        Args:
+            doctype: short name for the document type (e.g. WB, GRN)
+            site_id: the sending/receiving site
+            field: the field where the reference numbers are stored
+                   (to look up the previous number for incrementing)
     """
 
     # Custom shipping code generator?

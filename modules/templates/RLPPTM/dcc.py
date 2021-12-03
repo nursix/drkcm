@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Infection test result reporting for RLPPTM template
+    Infection test result reporting for RLPPTM
 
-    @license: MIT
+    License: MIT
 """
 
 import base64
@@ -80,14 +78,13 @@ CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ<"
 PEM_TEMPLATE = "-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----"
 
 # =============================================================================
-class DCC(object):
+class DCC:
     """ Helper class to handle Digital Covid Certificates (DCCs) """
 
     def __init__(self, instance_id):
         """
-            Constructor
-
-            @param instance_id: the instance ID
+            Args:
+                instance_id: the instance ID
         """
 
         self.instance_id = instance_id
@@ -103,16 +100,19 @@ class DCC(object):
         """
             Create a DCC instance from a test result
 
-            @param test_id: the identifier under which the result has been
-                            reported to CWA (report to CWA is mandatory for DCC)
-            @param result_id: case diagnostics record ID
-            @param first_name: the first name to use in the DCC
-            @param last_name: the last name to use in the DCC
-            @param dob: the date of birth to use in the DCC (date instance or ISO-formatted)
+            Args:
+                test_id: the identifier under which the result has been
+                         reported to CWA (report to CWA is mandatory for DCC)
+                result_id: case diagnostics record ID
+                first_name: the first name to use in the DCC
+                last_name: the last name to use in the DCC
+                dob: the date of birth to use in the DCC (date instance or ISO-formatted)
 
-            @returns: DCC instance
+            Returns:
+                DCC instance
 
-            @raises: ValueError if the data are invalid
+            Raises:
+                ValueError if the data are invalid
         """
 
         # Generate instance ID (=hash of the test ID)
@@ -211,12 +211,15 @@ class DCC(object):
         """
             Instantiate a DCC from stored HCERT data record
 
-            @param instance_id: the instance ID
+            Args:
+                instance_id: the instance ID
 
-            @returns: DCC instance
+            Returns:
+                DCC instance
 
-            @raises: ValueError for invalid data
-                     TODO make sure these errors appear in the scheduler logs
+            Raises:
+                ValueError for invalid data
+                TODO make sure these errors appear in the scheduler logs
         """
 
         db = current.db
@@ -276,7 +279,8 @@ class DCC(object):
         """
             Store/update this instance as HCERT data record
 
-            @param errors: error messages to store in the record
+            Args:
+                errors: error messages to store in the record
         """
 
         db = current.db
@@ -334,10 +338,12 @@ class DCC(object):
         """
             Send the encrypted DCC to the server
 
-            @param dcci: the DCC ID
-            @param public_key: public key to encrypt the AES key
+            Args:
+                dcci: the DCC ID
+                public_key: public key to encrypt the AES key
 
-            @returns: error message on error, else None
+            Returns:
+                error message on error, else None
         """
 
         # Check status
@@ -400,7 +406,8 @@ class DCC(object):
         """
             Generate a verification hash from instance ID and data
 
-            @returns: the verification hash
+            Returns:
+                the verification hash
         """
 
         data = self.data
@@ -421,16 +428,17 @@ class DCC(object):
         """
             Encode and encrypt this instance for transmission to the DCC server
 
-            @param dcci: the certificate ID from the DCC request,
-                         e.g. "URN:UVCI:V1:DE:DMN3L94E7PBDYYLAPNNSS5T218"
-            @param public_key: the base64-encoded public RSA key from the
-                               DCC request
+            Args:
+                dcci: the certificate ID from the DCC request,
+                      e.g. "URN:UVCI:V1:DE:DMN3L94E7PBDYYLAPNNSS5T218"
+                public_key: the base64-encoded public RSA key from the
+                            DCC request
 
-            @returns: dict {
-                        "dataEncryptionKey": the encrypted AES-key (base64-encoded),
-                        "encryptedDcc":      the encrypted DCC (base64-encoded),
-                        "dccHash":           hash of the DCC (hex),
-                        }
+            Returns:
+                dict {"dataEncryptionKey": the encrypted AES-key (base64-encoded),
+                      "encryptedDcc":      the encrypted DCC (base64-encoded),
+                      "dccHash":           hash of the DCC (hex),
+                      }
         """
 
         data = self.data
@@ -504,14 +512,15 @@ class DCC(object):
         """
             Encrypt the HCERT
 
-            @param hcert: the HCERT as CBOR-bytestring
-            @param public_key: base64-encoded public key to encrypt the AES key with
+            Args:
+                hcert: the HCERT as CBOR-bytestring
+                public_key: base64-encoded public key to encrypt the AES key with
 
-            @returns: dict {
-                        "dataEncryptionKey": the encrypted AES-key (base64-encoded),
-                        "encryptedDcc":      the encrypted DCC (base64-encoded),
-                        "dccHash":           hash of the DCC (hex),
-                        }
+            Returns:
+                dict {"dataEncryptionKey": the encrypted AES-key (base64-encoded),
+                      "encryptedDcc":      the encrypted DCC (base64-encoded),
+                      "dccHash":           hash of the DCC (hex),
+                      }
         """
 
         # Generate AES symmetric key (32 bytes)
@@ -627,7 +636,8 @@ class DCC(object):
         """
             Upload the requested DCCs
 
-            @param dcc_request_list: a list of dicts:
+            Args:
+                dcc_request_list: a list of dicts:
                         {"testId":    DCC instance ID,
                          "dcci":      certificate ID,
                          "publicKey": public RSA key to encrypt the AES key
@@ -665,7 +675,8 @@ class DCC(object):
             Get the Point-of-Care ID for a site
             - a string consisting of a common prefix and the site UUID
 
-            @returns: the ID as string, or None if site not found
+            Returns:
+                the ID as string, or None if site not found
         """
 
         s3db = current.s3db
@@ -691,7 +702,8 @@ class DCC(object):
             Check whether an issuer_id is new (=has not been used in
             a HCERT data record yet)
 
-            @param issuer_id: the issuer ID
+            Args:
+                issuer_id: the issuer ID
         """
 
         db = current.db
@@ -710,9 +722,11 @@ class DCC(object):
         """
             Register an issuer ID (labID) with the DCC server
 
-            @param issuer_id: the issuer ID as string
+            Args:
+                issuer_id: the issuer ID as string
 
-            @returns: success True|False
+            Returns:
+                success True|False
         """
 
         settings = current.deployment_settings
@@ -752,13 +766,14 @@ class DCC(object):
         """
             Get the credentials for access to the DCC server
 
-            @returns: tuple (cert, key, verify)
-                      - cert   = absolute pathname of the SSL client certificate
-                      - key    = absolute pathname of the key for the client
-                                 certificate
-                      - verify = absolute pathname to the CA certificate chain
-                                 for the server certificate, or True to use
-                                 python-certifi
+            Returns:
+                tuple (cert, key, verify)
+                    - cert   = absolute pathname of the SSL client certificate
+                    - key    = absolute pathname of the key for the client
+                               certificate
+                    - verify = absolute pathname to the CA certificate chain
+                               for the server certificate, or True to use
+                               python-certifi
         """
 
         settings = current.deployment_settings
@@ -789,9 +804,11 @@ class DCC(object):
         """
             Convert a tz-naive datetime instance into a UTC timestamp
 
-            @param dt: the datetime
+            Args:
+                dt: the datetime
 
-            @returns: timestamp (int)
+            Returns:
+                timestamp (int)
         """
 
         return dt.replace(microsecond = 0,
@@ -804,9 +821,11 @@ class DCC(object):
         """
             Transliterate+format a name according to ICAO conventions
 
-            @param name: the name
+            Args:
+                name: the name
 
-            @returns: the transliterated/formatted name as string
+            Returns:
+                the transliterated/formatted name as string
         """
 
         # Remove any non-latin characters
@@ -843,7 +862,8 @@ class DCC(object):
                   date to expired
                 - anonymize all records which are no longer pending
 
-            @returns: tuple (num_expired, num_anonymized)
+            Returns:
+                tuple (num_expired, num_anonymized)
         """
 
         db = current.db

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Pool Assignment Rules Helpers for RLP Template
+    Pool Assignment Rules Helpers for RLP
 
-    @license MIT
+    License: MIT
 """
 
 import os
@@ -13,7 +11,7 @@ from lxml import etree
 from gluon import current
 
 # =============================================================================
-class PoolRules(object):
+class PoolRules:
     """
         Helper object to represent pool assignment rules
     """
@@ -22,8 +20,8 @@ class PoolRules(object):
         """
             Constructor
 
-            @param rules: the path to the rules file, using default
-                          path if omitted
+            Args:
+                rules: the path to the rules file, using default path if omitted
         """
 
         if rules is None:
@@ -46,7 +44,8 @@ class PoolRules(object):
             The root element of the pool assignment rules
                 - lazy-parses the rules XML file
 
-            @returns: the root Element
+            Returns:
+                the root Element
         """
 
         if self._rules is None:
@@ -63,9 +62,11 @@ class PoolRules(object):
         """
             Get the ID of the pool to assign the person to
 
-            @param person_id: the person ID
+            Args:
+                person_id: the person ID
 
-            @returns: the pool ID
+            Returns:
+                the pool ID
         """
 
         rules = self.rules
@@ -114,8 +115,9 @@ class PoolRules(object):
         """
             Check if a rule applies to item
 
-            @param item: the item
-            @param rule: the rule Element
+            Args:
+                item: the item
+                rule: the rule Element
         """
 
         tag = rule.tag
@@ -137,9 +139,10 @@ class PoolRules(object):
         """
             Check if the item has the required property value
 
-            @param item: the item
-            @param rule: the rule Element, representing a key-value-pair with
-                         key=tagname and value=element text
+            Args:
+                item: the item
+                rule: the rule Element, representing a key-value-pair with
+                      key=tagname and value=element text
         """
 
         k, v = rule.tag, rule.text
@@ -158,9 +161,11 @@ class PoolRules(object):
             Look up the relevant properties (pools, skills, occupations)
             of a person record
 
-            @param person_id: the person ID
+            Args:
+                person_id: the person ID
 
-            @returns: a dict {property-name: {set of names}}
+            Returns:
+                a dict {property-name: {set of names}}
         """
 
         db = current.db

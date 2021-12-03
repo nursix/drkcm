@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Common Alerting Protocol (CAP) Model
 
-""" Sahana Eden Common Alerting Protocol (CAP) Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -70,7 +68,8 @@ def get_cap_options():
     """
         Common categories of the CAP model
 
-        @returns: dict of dicts {type: {key: label, ...}, ...}
+        Returns:
+            dict of dicts {type: {key: label, ...}, ...}
     """
 
     T = current.T
@@ -795,7 +794,8 @@ $.filterOptionsS3({
         """
             Generate an alert identifier for a new (internal) alert
 
-            @returns: a string of the format "urn:oid:<oid>.<date>.<alert_id>"
+            Returns:
+                a string of the format "urn:oid:<oid>.<date>.<alert_id>"
         """
 
         db = current.db
@@ -831,7 +831,8 @@ $.filterOptionsS3({
             Generate a sender name for a new (internal) alert
                 - use email address of current user
 
-            @returns: the sender name as string
+            Returns:
+                the sender name as string
         """
 
         try:
@@ -850,7 +851,8 @@ $.filterOptionsS3({
         """
             Generate a source designation for a new (internal) alert
 
-            @returns: the message source designation as string
+            Returns:
+                the message source designation as string
         """
         return "%s@%s" % (current.xml.domain,
                           current.deployment_settings.get_base_public_url(),
@@ -862,7 +864,8 @@ $.filterOptionsS3({
         """
             Validate an alert form
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         T = current.T
@@ -903,7 +906,8 @@ $.filterOptionsS3({
             Onaccept-routine for alerts:
                 - automatically approve if template
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -923,7 +927,8 @@ $.filterOptionsS3({
                 - notify the record owner of the approval
                 - create history entry for the approved record
 
-            @param record: the alert record
+            Args:
+                record: the alert record
 
             TODO set approved_on even when approval is not required
                  (we want to allow auto-approval for editors)
@@ -978,10 +983,12 @@ $.filterOptionsS3({
         """
             Represent an alert template concisely
 
-            @param alert_id: the alert record ID
-            @param row: the alert record (if already loaded)
+            Args:
+                alert_id: the alert record ID
+                row: the alert record (if already loaded)
 
-            @returns: a string representation for the alert ID
+            Returns:
+                a string representation for the alert ID
 
             TODO make S3Represent at module level
         """
@@ -1423,7 +1430,8 @@ $.filterOptionsS3({
                 - for actual alerts: make sure urgency, severity, certainty
                   and category have been specified
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         T = current.T
@@ -1473,7 +1481,8 @@ $.filterOptionsS3({
                 - sanitize and complete input data
                 - sync all info-segments of the same alert
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         if "vars" in form:
@@ -1592,7 +1601,8 @@ $.filterOptionsS3({
         """
             Duplicate detection for info-segments
 
-            @param item: the ImportItem
+            Args:
+                item: the ImportItem
         """
 
         data = item.data
@@ -1618,7 +1628,8 @@ $.filterOptionsS3({
             Form validation for info_parameter
                 - currently unused (TODO: document why)
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -1638,7 +1649,8 @@ $.filterOptionsS3({
             Onaccept-routine of info parameters
                 - inherit alert_id from info segment
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -1683,8 +1695,11 @@ $.filterOptionsS3({
         """
             Sanitize malformed JSON for key-value fields
 
-            @param string: the JSON string
-            @returns: the sanitized JSON string
+            Args:
+                string: the JSON string
+
+            Returns:
+                the sanitized JSON string
 
             TODO unclear why this is needed? => document, or remove?
         """
@@ -2073,7 +2088,8 @@ class CAPAreaModel(DataModel):
         """
             Validate an area form
 
-            @param form: the Form
+            Args:
+                form: the Form
         """
 
         T = current.T
@@ -2095,7 +2111,8 @@ class CAPAreaModel(DataModel):
             Onaccept-routine for area segments
                 - inherit alert_id from info segment if not set in form
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -2127,7 +2144,8 @@ class CAPAreaModel(DataModel):
         """
             Detect an area duplicate
 
-            @param item: the ImportItem
+            Args:
+                item: the ImportItem
         """
 
         data = item.data
@@ -2497,7 +2515,8 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                 - post-process S3ImageCropWidget
                 - Determine MIME type and file size of uploaded image
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -2535,7 +2554,8 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
             Onaccept-routine for resources
                 - inherit alert_id from info segment if not set in form
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -2734,7 +2754,8 @@ class CAPWarningPriorityModel(DataModel):
                 - check for duplicates
                 - currently unused (TODO: document why)
 
-            @param form: the FORM
+            Args:
+                form: the FORM
         """
 
         form_vars = form.vars
@@ -2809,9 +2830,11 @@ class CAPWarningPriorityModel(DataModel):
         """
             Represent a hex color code as a colored DIV
 
-            @param color_code: the color code
+            Args:
+                color_code: the color code
 
-            @returns: the representation XML
+            Returns:
+                the representation XML
         """
 
         if not color_code:
@@ -3926,10 +3949,12 @@ def list_string_represent(value, fmt=lambda v: v):
     """
         Represent a list:string field value as comma-separated list
 
-        @param value: the field value
-        @param fmt: callable to format each list element (optional)
+        Args:
+            value: the field value
+            fmt: callable to format each list element (optional)
 
-        @returns: the comma-separated list as string
+        Returns:
+            the comma-separated list as string
     """
 
     if isinstance(value, list):
@@ -3949,7 +3974,8 @@ def cap_expirydate():
     """
         Default expiry date for info segments based on setting
 
-        @returns: datetime.datetime, or None if setting is falsy
+        Returns:
+            datetime.datetime, or None if setting is falsy
     """
 
     interval = current.deployment_settings.get_cap_info_effective_period()
@@ -3964,10 +3990,11 @@ def cap_expirydate():
 def cap_sendername():
     """
         Default sender name for alerts
-        - sender name is the name of the organisation if user is
-          associated with one, otherwise the user email
+            - sender name is the name of the organisation if user is
+              associated with one, otherwise the user email
 
-        @returns: the sender name
+        Returns:
+            the sender name
     """
 
     db = current.db
@@ -3996,16 +4023,17 @@ def cap_sendername():
 def get_cap_alert_addresses_opts():
     """
         Get selectable options for the cap_alert.addresses field
-        - currently uses pr_group as selectable recipients, and
-          pr_group.id as identifier
-        - however, neither the pr_group.id or the pr_group.name are
-          valid addresses or identifiers in the sense of cap:addresses
-        - a possible solution to produce an addresses-list from an
-          internal selection of recipients could be to introduce a
-          separate "recipients" field (list:reference pr_pentity),
-          and translate it into an addresses-list onaccept (TODO)
+            - currently uses pr_group as selectable recipients, and
+              pr_group.id as identifier
+            - however, neither the pr_group.id or the pr_group.name are
+              valid addresses or identifiers in the sense of cap:addresses
+            - a possible solution to produce an addresses-list from an
+              internal selection of recipients could be to introduce a
+              separate "recipients" field (list:reference pr_pentity),
+              and translate it into an addresses-list onaccept (TODO)
 
-        @returns: list of tuples (id, translated_group_name)
+        Returns:
+            list of tuples (id, translated_group_name)
     """
 
     T = current.T
@@ -4021,9 +4049,11 @@ def cap_alert_is_template(alert_id):
     """
         Check whether a cap_alert is a template
 
-        @param alert_id: the alert record ID
+        Args:
+            alert_id: the alert record ID
 
-        @returns: True|False whether the alert is a template
+        Returns:
+            True|False whether the alert is a template
     """
 
     if not alert_id:
@@ -4392,11 +4422,12 @@ def cap_alert_list_layout(list_id, item_id, resource, rfields, record):
     """
         Default dataList item renderer for CAP Alerts on the Home page.
 
-        @param list_id: the HTML ID of the list
-        @param item_id: the HTML ID of the item
-        @param resource: the CRUDResource to render
-        @param rfields: the S3ResourceFields to render
-        @param record: the record as dict
+        Args:
+            list_id: the HTML ID of the list
+            item_id: the HTML ID of the item
+            resource: the CRUDResource to render
+            rfields: the S3ResourceFields to render
+            record: the record as dict
     """
 
     record_id = record["cap_alert.id"]
@@ -4542,9 +4573,10 @@ class cap_AreaRepresent(S3Represent):
             Custom lookup method for area Rows; to look up local name if
             required.
 
-            @param key: unused (retained for API compatibility)
-            @param values: the cap_area IDs
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: unused (retained for API compatibility)
+                values: the cap_area IDs
+                fields: unused (retained for API compatibility)
         """
 
         table = self.table
@@ -4572,7 +4604,8 @@ class cap_AreaRepresent(S3Represent):
         """
             Represent a single Row
 
-            @param row: the cap_area Row
+            Args:
+                row: the cap_area Row
         """
 
         name = row["cap_area.name"]
@@ -4594,10 +4627,11 @@ class cap_ImportAlert(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         # Requires permission to create alerts
@@ -4701,11 +4735,14 @@ class cap_ImportAlert(CRUDMethod):
         """
             Accept the import-form
 
-            @param resource: the target import resource
-            @param form: the FORM
-            @returns: tuple (error, msg)
-                      error - error message (if an error occured)
-                      msg - confirmation message of the import
+            Args:
+                resource: the target import resource
+                form: the FORM
+
+            Returns:
+                tuple (error, msg)
+                    - error: error message (if an error occured)
+                    - msg: confirmation message of the import
         """
 
         formvars_get = form.vars.get
@@ -4752,12 +4789,13 @@ class cap_ImportAlert(CRUDMethod):
         """
             Import a CAP-XML element tree into a cap_alert resource
 
-            @param tree: the ElementTree
-            @param version: the detected CAP version (see parse_cap)
-            @param resource: the cap_alert resource to import to,
-                             will be instantiated if not passed in
-            @param url: the CAP-XML source URL
-            @param ignore_errors: skip invalid cap_alert records
+            Args:
+                tree: the ElementTree
+                version: the detected CAP version (see parse_cap)
+                resource: the cap_alert resource to import to,
+                          will be instantiated if not passed in
+                url: the CAP-XML source URL
+                ignore_errors: skip invalid cap_alert records
 
             TODO ignore_errors gives no benefit because it means to
                  skip invalid master records, but a CAP-XML source
@@ -4820,12 +4858,14 @@ class cap_ImportAlert(CRUDMethod):
         """
             Parse a CAP-XML source and detect the CAP version
 
-            @param source: the CAP-XML source
+            Args:
+                source: the CAP-XML source
 
-            @returns: tuple (tree, version, error)
-                      - tree    = ElementTree of the CAP source
-                      - version = the detected CAP version
-                      - error   = error message if parsing failed, else None
+            Returns:
+                tuple (tree, version, error)
+                    - tree: ElementTree of the CAP source
+                    - version: the detected CAP version
+                    - error: error message if parsing failed, else None
         """
 
         version = error = None
@@ -4868,18 +4908,19 @@ class cap_ImportAlert(CRUDMethod):
         """
             Configure a HTTP opener to fetch CAP messages
 
-            @param url: the target URL
-            @param headers: HTTP request headers, list of tuples (header, value)
-            @param username: user name for auth
-            @param password: password for auth
-            @param preemptive_auth: send credentials without waiting for a
-                                    HTTP401 challenge
-            @param proxy: proxy URL (if required)
+            Args:
+                url: the target URL
+                headers: HTTP request headers, list of tuples (header, value)
+                username: user name for auth
+                password: password for auth
+                preemptive_auth: send credentials without waiting for a
+                                 HTTP401 challenge
+                proxy: proxy URL (if required)
 
-            @returns: an OpenerDirector instance with proxy and
-                      auth handlers installed
+            Returns:
+                an OpenerDirector instance with proxy and auth handlers installed
 
-            @example:
+            Example:
                 url = "http://example.com/capfile.xml"
                 opener = self._opener(url, username="user", password="password")
                 content = opener.open(url)
@@ -4940,9 +4981,11 @@ class cap_AssignArea(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method.
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Applies the method (controller entry point).
+
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         if not r.record:
@@ -5063,8 +5106,7 @@ class cap_AssignArea(CRUDMethod):
             filteredrows = data.numrows
 
             # Instantiate the datatable
-            dt = S3DataTable(data.rfields, data.rows)
-            dt_id = "datatable"
+            dt = DataTable(data.rfields, data.rows, "datatable")
 
             # Bulk actions
             dt_bulk_actions = [(T("Assign"), "assign")]
@@ -5090,15 +5132,14 @@ class cap_AssignArea(CRUDMethod):
                 # Render the datatable (will be "items" in the output dict)
                 items = dt.html(totalrows,
                                 filteredrows,
-                                dt_id,
                                 dt_ajax_url = URL(args = r.args,
                                                   extension="aadata",
                                                   vars={},
                                                   ),
                                 dt_bulk_actions = dt_bulk_actions,
                                 dt_pageLength = display_length,
-                                dt_pagination = "true",
-                                dt_searching = "false",
+                                dt_pagination = True,
+                                dt_searching = False,
                                 )
 
                 # Filter form
@@ -5151,7 +5192,6 @@ class cap_AssignArea(CRUDMethod):
                     echo = None
                 items = dt.json(totalrows,
                                 filteredrows,
-                                dt_id,
                                 echo,
                                 dt_bulk_actions=dt_bulk_actions,
                                 )
@@ -5170,10 +5210,12 @@ class cap_AssignArea(CRUDMethod):
             Add a new area to an alert from a template area including
             location links and tags
 
-            @param template_area_id: the template cap_area record ID
-            @param alert_id: the record ID of the alert
+            Args:
+                template_area_id: the template cap_area record ID
+                alert_id: the record ID of the alert
 
-            @returns: the new area record ID
+            Returns:
+                the new area record ID
         """
 
         db = current.db
@@ -5268,10 +5310,11 @@ class cap_CloneAlert(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Apply method
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller options for this request
+            Args:
+                r: the CRUDRequest
+                attr: controller options for this request
         """
 
         output = {}
@@ -5289,11 +5332,13 @@ def clone(r, record=None, **attr):
     """
         Clone the cap_alert
 
-        @param r: the CRUDRequest instance
-        @param record: the record row
-        @param attr: controller attributes
+        Args:
+            r: the CRUDRequest instance
+            record: the record row
+            attr: controller attributes
+
+        TODO make a class method of cap_CloneAlert
     """
-    # TODO make a class method of cap_CloneAlert
 
     if record and not r.env.request_method == "POST":
         current.log.error(current.ERROR.BAD_METHOD)
@@ -5641,7 +5686,7 @@ def clone(r, record=None, **attr):
     return
 
 # -----------------------------------------------------------------------------
-class cap_AlertProfileWidget(object):
+class cap_AlertProfileWidget:
     """ Custom profile widget builder """
 
     def __init__(self, title, label=None, value=None):
@@ -5658,9 +5703,10 @@ class cap_AlertProfileWidget(object):
         """
             Widget builder
 
-            @param f: the calling function
+            Args:
+                f: the calling function
 
-            TODO: explain return value and use as decorator
+            TODO explain return value and use as decorator
         """
 
         def widget(r, **attr):
@@ -5709,14 +5755,16 @@ class cap_AlertProfileWidget(object):
                   ):
         """
             Component builder
-            @param label: name for the component label
-            @param value: value for the component
-            @param represent: representation used for the value
-            @param uppercase: whether to display label in upper case
-            @param strong: whether to display with strong color
-            @param hide_empty: whether to hide empty records
-            @param headline: is headline?
-            @param resource_segment: belongs to resource segment?
+
+            Args:
+                label: name for the component label
+                value: value for the component
+                represent: representation used for the value
+                uppercase: whether to display label in upper case
+                strong: whether to display with strong color
+                hide_empty: whether to hide empty records
+                headline: is headline?
+                resource_segment: belongs to resource segment?
         """
 
         if not value and hide_empty:

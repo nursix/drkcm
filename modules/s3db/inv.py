@@ -890,7 +890,8 @@ $.filterOptionsS3({
         """
             Update detection for inv_inv_item
 
-            @param item: the ImportItem
+            Args:
+                item: the ImportItem
         """
 
         table = item.table
@@ -4457,7 +4458,8 @@ def inv_item_total_weight(row):
     """
         Compute the total weight of an inventory item (Field.Method)
 
-        @param row: the Row
+        Args:
+            row: the Row
     """
 
     try:
@@ -4517,7 +4519,8 @@ def inv_item_total_volume(row):
     """
         Compute the total volume of an inventory item (Field.Method)
 
-        @param row: the Row
+        Args:
+            row: the Row
     """
 
     try:
@@ -4577,16 +4580,18 @@ def inv_stock_movements(resource, selectors, orderby):
     """
         Extraction method for stock movements report
 
-        @param resource: the CRUDResource (inv_inv_item)
-        @param selectors: the field selectors
-        @param orderby: orderby expression
+        Args:
+            resource: the CRUDResource (inv_inv_item)
+            selectors: the field selectors
+            orderby: orderby expression
 
-        @note: transactions can be filtered by earliest/latest date
-               using an S3DateFilter with selector="_transaction.date"
+        Note:
+            transactions can be filtered by earliest/latest date
+            using an S3DateFilter with selector="_transaction.date"
 
-        @todo: does not take manual stock adjustments into account
-        @todo: does not represent sites or Waybill/GRN as
-               links (breaks PDF export, but otherwise it's useful)
+        TODO does not take manual stock adjustments into account
+        TODO does not represent sites or Waybill/GRN as
+             links (breaks PDF export, but otherwise it's useful)
     """
 
     # Extract the stock item data
@@ -5346,9 +5351,6 @@ def inv_expiry_date_represent(date):
 class inv_InvItemRepresent(S3Represent):
 
     def __init__(self):
-        """
-            Constructor
-        """
 
         super(inv_InvItemRepresent, self).__init__(lookup = "inv_inv_item")
 
@@ -5357,9 +5359,10 @@ class inv_InvItemRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         s3db = current.s3db
@@ -5397,7 +5400,8 @@ class inv_InvItemRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         itable = current.s3db.inv_inv_item

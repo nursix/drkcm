@@ -50,7 +50,6 @@
     <s3:fields tables="gis_poi" select="poi_type_id"/>
     <s3:fields tables="hms_status" select="hospital_id"/>
     <s3:fields tables="project_activity_activity_type" select="activity_id"/>
-    <s3:fields tables="project_activity_group" select="activity_id"/>
     <s3:fields tables="project_activity_organisation" select="activity_id,organisation_id"/>
     <s3:fields tables="project_beneficiary_activity" select="activity_id"/>
     <s3:fields tables="project_sector_activity" select="activity_id"/>

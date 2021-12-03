@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Menu Layouts for BRCMS
+
+    License: MIT
+"""
 
 __all__ = ("S3MainMenuLayout",
            "S3AboutMenuLayout",

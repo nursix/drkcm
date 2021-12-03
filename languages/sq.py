@@ -1797,7 +1797,6 @@
 'Edit Distribution Item': 'Ndrysho artikullin e shpërndarjes',
 'Edit Document': 'Modifikoni dokumentin',
 'Edit Donor': 'Edit Donator',
-'Edit DRRPP Extensions': 'Ndrysho zgjerimet e DRRPP',
 'Edit Education Details': 'Modifikoni detajet e arsimit',
 'Edit Education Level': 'Ndrysho nivelin e arsimit',
 'Edit Eligibility Type': 'Ndrysho llojin e përshtatshmërisë',

@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-
-# 1st-run initialisation
+# =============================================================================
+#   1st-run initialisation
+# =============================================================================
 
 # Set settings.base.prepopulate to 0 in Production
 # (to save 1x DAL hit every page).

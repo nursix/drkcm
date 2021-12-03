@@ -58,7 +58,8 @@ class S3Codec:
         """
             Get a codec by representation format
 
-            @param fmt: the representation format (string)
+            Args:
+                fmt: the representation format (string)
         """
 
         codec = cls
@@ -83,9 +84,11 @@ class S3Codec:
             API Method to encode a resource in the target format,
             to be implemented by the subclass (mandatory)
 
-            @param resource: the CRUDResource
+            Args:
+                resource: the CRUDResource
 
-            @return: a handle to the output
+            Returns:
+                a handle to the output
         """
         raise NotImplementedError
 
@@ -94,10 +97,12 @@ class S3Codec:
             API Method to decode a source into an S3XML ElementTree,
             to be implemented by the subclass (if the class does decode)
 
-            @param resource: the CRUDResource
-            @param source: the source
+            Args:
+                resource: the CRUDResource
+                source: the source
 
-            @return: an S3XML ElementTree
+            Returns:
+                an S3XML ElementTree
         """
         return current.xml.tree()
 
@@ -110,7 +115,8 @@ class S3Codec:
         """
             XML-escape a string
 
-            @param s: the string
+            Args:
+                s: the string
         """
         if s:
             s = escape(s, cls.PY2XML)
@@ -123,28 +129,12 @@ class S3Codec:
         """
             XML-unescape a string
 
-            @param s: the string
+            Args:
+                s: the string
         """
         if s:
             s = unescape(s, cls.XML2PY)
         return s
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def crud_string(tablename, name):
-        """
-            Get a CRUD string
-
-            @param tablename: the table name
-            @param name: the name of the CRUD string
-        """
-
-        crud_strings = current.response.s3.crud_strings
-        # CRUD strings for this table
-        _crud_strings = crud_strings.get(tablename, crud_strings)
-        return _crud_strings.get(name,
-                                 # Default fallback
-                                 crud_strings.get(name, None))
 
     # -------------------------------------------------------------------------
     # Error handling
@@ -157,13 +147,15 @@ class S3Codec:
         """
             Provide a nicely-formatted JSON Message
 
-            @param success: action succeeded or failed
-            @param status_code: the HTTP status code
-            @param message: the message text
-            @param kwargs: other elements for the message
+            Args:
+                success: action succeeded or failed
+                status_code: the HTTP status code
+                message: the message text
+                kwargs: other elements for the message
 
-            @keyword tree: error tree to include as JSON object (rather
-                           than as string) for easy decoding
+            Keyword Args:
+                tree: error tree to include as JSON object (rather than as
+                      string) for easy decoding
         """
 
         if statuscode is None:

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
-"""
-    Import Modules
-    Configure the Database
-    Instantiate Classes
-"""
+# =============================================================================
+#    Import Modules
+#    Configure the Database
+#    Instantiate Classes
+# =============================================================================
 
 if settings.get_L10n_languages_readonly():
     # Make the Language files read-only for improved performance (default)
@@ -18,10 +16,9 @@ settings.check_debug()
 import datetime
 import json
 
-########################
+# -----------------------------------------------------------------------------
 # Database Configuration
-########################
-
+#
 migrate = settings.get_base_migrate()
 fake_migrate = settings.get_base_fake_migrate()
 
@@ -52,7 +49,9 @@ except:
 current.db = db
 db.set_folder("upload")
 
+# -----------------------------------------------------------------------------
 # Sessions Storage
+#
 if settings.get_base_session_db():
     # Store sessions in the database to avoid a locked session
     session.connect(request, response, db)
@@ -67,11 +66,10 @@ elif settings.get_base_session_memcache():
     ## Default to filesystem
     # pass
 
-####################################################################
-# Instantiate Classes from Modules                                 #
-# - store instances in current to be accessible from other modules #
-####################################################################
-
+# -----------------------------------------------------------------------------
+# Instantiate Classes from Modules
+# - store instances in current to be accessible from other modules
+#
 from gluon.tools import Mail
 mail = current.mail = Mail()
 

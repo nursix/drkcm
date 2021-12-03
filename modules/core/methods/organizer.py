@@ -44,7 +44,8 @@ from uuid import uuid4
 from gluon import current, DIV, INPUT
 from gluon.storage import Storage
 
-from ..tools import s3_decode_iso_datetime, S3DateTime, s3_str, JSONERRORS
+from ..tools import JSONERRORS, S3DateTime, get_crud_string, \
+                    s3_decode_iso_datetime, s3_str
 from ..ui import S3DateWidget
 
 from .base import CRUDMethod
@@ -58,8 +59,9 @@ class S3Organizer(CRUDMethod):
         """
             Page-render entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         output = {}
@@ -85,10 +87,12 @@ class S3Organizer(CRUDMethod):
         """
             Render the organizer view (HTML method)
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
 
-            @returns: dict of values for the view
+            Returns:
+                dict of values for the view
         """
 
         output = {}
@@ -178,12 +182,11 @@ class S3Organizer(CRUDMethod):
             output["list_filter_form"] = ""
 
         # Page Title
-        crud_string = self.crud_string
         if r.representation != "iframe":
             if r.component:
-                title = crud_string(r.tablename, "title_display")
+                title = get_crud_string(r.tablename, "title_display")
             else:
-                title = crud_string(self.tablename, "title_list")
+                title = get_crud_string(self.tablename, "title_list")
             output["title"] = title
 
         # Configure Resource
@@ -191,7 +194,7 @@ class S3Organizer(CRUDMethod):
         resource_config = {"ajaxURL": r.url(representation="json"),
                            "useTime": config.get("use_time"),
                            "baseURL": r.url(method=""),
-                           "labelCreate": s3_str(crud_string(self.tablename, "label_create")),
+                           "labelCreate": s3_str(get_crud_string(self.tablename, "label_create")),
                            "insertable": get_config("insertable", True) and \
                                          permitted("create"),
                            "editable": get_config("editable", True) and \
@@ -252,11 +255,12 @@ class S3Organizer(CRUDMethod):
         """
             Extract the resource data and return them as JSON (Ajax method)
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
 
-            TODO correct documentation!
-            @returns: JSON string containing an array of items, format:
+            Returns:
+                JSON string containing an array of items, format:
                       [{"id": the record ID,
                         "title": the record title,
                         "start": start date as ISO8601 string,
@@ -268,6 +272,8 @@ class S3Organizer(CRUDMethod):
                         },
                        ...
                        ]
+
+            TODO correct documentation!
         """
 
         db = current.db
@@ -412,8 +418,9 @@ class S3Organizer(CRUDMethod):
         """
             Update or delete calendar items (Ajax method)
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         # Read+parse body JSON
@@ -565,9 +572,11 @@ class S3Organizer(CRUDMethod):
         """
             Parse the resource configuration and add any fallbacks
 
-            @param resource: the CRUDResource
+            Args:
+                resource: the CRUDResource
 
-            @returns: the resource organizer configuration, format:
+            Returns:
+                the resource organizer configuration, format:
                       {"start": S3ResourceField,
                        "end": S3ResourceField or None,
                        "use_time": whether this resource has timed events,
@@ -675,10 +684,12 @@ class S3Organizer(CRUDMethod):
         """
             Parse an ISO8601-format date/datetime string as interval start|end
 
-            @param dtstr: the date/datetime string
-            @param end: interpret the string as interval end
+            Args:
+                dtstr: the date/datetime string
+                end: interpret the string as interval end
 
-            @returns: a UTC datetime
+            Returns:
+                a UTC datetime
         """
 
         date_only = "T" not in dtstr
@@ -703,9 +714,11 @@ class S3Organizer(CRUDMethod):
             Parse an interval string of the format "<ISO8601>--<ISO8601>"
             into a pair of datetimes
 
-            @param intervalstr: the interval string
+            Args:
+                intervalstr: the interval string
 
-            @returns: tuple of UTC datetimes (start, end)
+            Returns:
+                tuple of UTC datetimes (start, end)
         """
 
         start = end = None
@@ -726,10 +739,12 @@ class S3Organizer(CRUDMethod):
         """
             Helper method to prefix an unprefixed field selector
 
-            @param resource: the target resource
-            @param selector: the field selector
+            Args:
+                resource: the target resource
+                selector: the field selector
 
-            @return: the prefixed selector
+            Returns:
+                the prefixed selector
         """
 
         alias = resource.alias if resource.parent else None
@@ -767,10 +782,11 @@ class S3Organizer(CRUDMethod):
         """
             Format a date/datetime as ISO8601 datetime string
 
-            @param dt: the date/datetime instance
+            Args:
+                dt: the date/datetime instance
 
-            @returns: the ISO-formatted datetime string,
-                      or None if dt was None
+            Returns:
+                the ISO-formatted datetime string, or None if dt was None
         """
 
         if dt is None:
@@ -787,9 +803,8 @@ class S3OrganizerWidget:
 
     def __init__(self, resources):
         """
-            Constructor
-
-            @param resources: a list of resource specs, format:
+            Args:
+                resources: a list of resource specs, format:
                               [{"ajax_url": URL to retrieve events
                                 "start": start date field (selector)
                                 "end": end date field (selector)
@@ -805,7 +820,8 @@ class S3OrganizerWidget:
         """
             Render the organizer container and instantiate the UI widget
 
-            @param widget_id: the container's DOM ID
+            Args:
+                widget_id: the container's DOM ID
         """
 
         T = current.T
@@ -870,8 +886,9 @@ class S3OrganizerWidget:
         """
             Inject the necessary JavaScript
 
-            @param widget_id: the container's DOM ID
-            @param options: widget options (JSON-serializable dict)
+            Args:
+                widget_id: the container's DOM ID
+                options: widget options (JSON-serializable dict)
         """
 
         s3 = current.response.s3

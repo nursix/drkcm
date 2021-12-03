@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+"""
+    BRCMS: Beneficiary Registry and Case Management System
 
-# =============================================================================
+    License: MIT
+"""
+
 def config(settings):
-    """
-        BRCMS: Sahana Beneficiary Registry and Case Management System
-    """
 
     # PrePopulate data
     settings.base.prepopulate.append("BRCMS/Standard")

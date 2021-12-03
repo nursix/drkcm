@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Tool to adjust pool assignments of volunteers
 #
 # RLP Template Version 1.6.0

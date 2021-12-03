@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Request management customisations for RLPPTM template
+    Request management customisations for RLPPTM
 
-    @license: MIT
+    License: MIT
 """
 
 from collections import OrderedDict
@@ -29,7 +27,8 @@ def req_filter_widgets():
     """
         Filter widgets for requests
 
-        @returns: list of filter widgets
+        Returns:
+            list of filter widgets
     """
 
     T = current.T
@@ -94,7 +93,8 @@ def send_filter_widgets():
     """
         Filter widgets for outgoing shipments
 
-        @returns: list of filter widgets
+        Returns:
+            list of filter widgets
     """
 
     T = current.T
@@ -163,7 +163,8 @@ def recv_filter_widgets():
     """
         Filter widgets for incoming shipments
 
-        @returns: list of filter widgets
+        Returns:
+            list of filter widgets
     """
 
     T = current.T
@@ -211,10 +212,12 @@ def get_orderable_item_categories(orgs=None, site=None):
         Get the orderable item categories for a list of managed orgs,
         or for a particular site; e.g. to filter supply item selectors
 
-        @param orgs: a list of organisation_ids, or
-        @param site: a site ID
+        Args:
+            orgs: a list of organisation_ids, or
+            site: a site ID
 
-        @returns: a set of supply item category IDs
+        Returns:
+            a set of supply item category IDs
     """
 
     db = current.db
@@ -256,9 +259,11 @@ def get_managed_requester_orgs(cache=True):
         Get a list of organisations managed by the current user (as ORG_ADMIN)
         that have the REQUESTER-tag, i.e. can order equipment
 
-        @param cache: cache the result
+        Args:
+            cache: cache the result
 
-        @returns: list of organisation IDs
+        Returns:
+            list of organisation IDs
     """
 
     db = current.db
@@ -307,9 +312,11 @@ def is_active(site_id):
     """
         Verify whether a site is active (i.e. not marked obsolete)
 
-        @param site_id: the site ID
+        Args:
+            site_id: the site ID
 
-        @returns: True|False
+        Returns:
+            True|False
     """
 
     if not site_id:
@@ -328,9 +335,11 @@ def direct_delivery(site_id):
     """
         Verify whether a site is marked for direct delivery
 
-        @param site_id: the site ID
+        Args:
+            site_id: the site ID
 
-        @returns: True|False
+        Returns:
+            True|False
     """
 
     if not site_id:
@@ -360,8 +369,9 @@ class RegisterShipment(CRUDMethod):
         """
             Entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         output = {}
@@ -469,7 +479,8 @@ class RegisterShipment(CRUDMethod):
         """
             Find the central warehouse for direct delivery
 
-            @returns: site_id
+            Returns:
+                site_id
         """
 
         db = current.db
@@ -500,9 +511,11 @@ class RegisterShipment(CRUDMethod):
             Find a distribution site (warehouse) in the same L2/L3 as
             the requester site; conducts a path-based search
 
-            @param req_site_id: the requester site ID
+            Args:
+                req_site_id: the requester site ID
 
-            @returns: site_id
+            Returns:
+                site_id
         """
 
         db = current.db
@@ -566,9 +579,8 @@ class ShipmentCodeRepresent(S3Represent):
 
     def __init__(self, tablename, fieldname, show_link=True, pdf=False):
         """
-            Constructor
-
-            @param show_link: show representation as clickable link
+            Args:
+                show_link: show representation as clickable link
         """
 
         if not show_link:
@@ -597,9 +609,10 @@ class ShipmentCodeRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         table = self.table
@@ -623,7 +636,8 @@ class ShipmentCodeRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
         return str(row.id)
 
@@ -631,12 +645,12 @@ class ShipmentCodeRepresent(S3Represent):
     def link(self, k, v, row=None):
         """
             Represent a (key, value) as hypertext link.
-            - same as default, except with k and v reversed ;)
+                - same as default, except with k and v reversed ;)
 
-            @param k: the key [here: the shipment code]
-            @param v: the representation of the key [here: the record ID]
-
-            @param row: the row with this key
+            Args:
+                k: the key [here: the shipment code]
+                v: the representation of the key [here: the record ID]
+                row: the row with this key
         """
 
         if self.linkto:

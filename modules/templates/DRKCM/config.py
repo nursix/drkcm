@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    DRKCM: Case Management, German Red Cross
+
+    License: MIT
+"""
 
 import datetime
 
@@ -15,9 +19,6 @@ from .uioptions import get_ui_options, get_ui_option
 
 # =============================================================================
 def config(settings):
-    """
-        DRKCM Template: Case Management, German Red Cross
-    """
 
     T = current.T
 
@@ -205,6 +206,20 @@ def config(settings):
                 realm_entity = s3db.pr_get_pe_id("org_organisation",
                                                  case.organisation_id,
                                                  )
+            else:
+                # Human resources belong to their org's realm
+                htable = s3db.hrm_human_resource
+                otable = s3db.org_organisation
+
+                left = otable.on(otable.id == htable.organisation_id)
+                query = (htable.person_id == row.id) & \
+                        (htable.deleted == False)
+                org = db(query).select(otable.pe_id,
+                                       left = left,
+                                       limitby = (0, 1),
+                                       ).first()
+                if org:
+                    realm_entity = org.pe_id
 
         elif tablename in ("dvr_case_activity",
                            "dvr_case_details",
@@ -2671,9 +2686,11 @@ def config(settings):
         """
             Get the root organisation managing a case
 
-            @param person_id: the person record ID
+            Args:
+                person_id: the person record ID
 
-            @returns: the root organisation record ID
+            Returns:
+                the root organisation record ID
         """
 
         db = current.db
@@ -2708,13 +2725,14 @@ def config(settings):
         """
             Configure response theme selector
 
-            @param ui_options: the UI options for the current org
-            @param case_root_org: the case root organisation
-            @param person_id: the person record ID (to look up the root org)
-            @param record_id: the response action record ID (if updating)
-            @param case_activity: the case activity record
-            @param case_activity_id: the case activity record ID
-                                     (to look up the case activity record)
+            Args:
+                ui_options: the UI options for the current org
+                case_root_org: the case root organisation
+                person_id: the person record ID (to look up the root org)
+                record_id: the response action record ID (if updating)
+                case_activity: the case activity record
+                case_activity_id: the case activity record ID
+                                  (to look up the case activity record)
         """
 
         db = current.db

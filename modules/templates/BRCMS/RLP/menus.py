@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Menus for BRCMS/RLP
+
+    License: MIT
+"""
 
 from gluon import current, URL
 from core import IS_ISO639_2_LANGUAGE_CODE

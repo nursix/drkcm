@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Helper functions and classes for DRKCM template
+    Helper functions and classes for DRKCM
 
-    @license: MIT
+    License: MIT
 """
 
 import os
@@ -17,7 +15,8 @@ def case_read_multiple_orgs():
     """
         Check if the user has read access to cases of more than one org
 
-        @returns: tuple (multiple_orgs, org_ids)
+        Returns:
+            tuple (multiple_orgs, org_ids)
     """
 
     realms = current.auth.permission.permitted_realms("dvr_case", "read")
@@ -73,9 +72,11 @@ def get_total_consultations(person):
     """
         Get number of consultations for person
 
-        @param person: the beneficiary record (pr_person Row)
+        Args:
+            person: the beneficiary record (pr_person Row)
 
-        @returns: number of consultations
+        Returns:
+            number of consultations
     """
 
     s3db = current.s3db
@@ -105,9 +106,11 @@ def get_protection_themes(person):
     """
         Get response themes of a case that are linked to protection needs
 
-        @param person: the beneficiary record (pr_person Row)
+        Args:
+            person: the beneficiary record (pr_person Row)
 
-        @returns: list-representation of response themes
+        Returns:
+            list-representation of response themes
     """
 
     db = current.db
@@ -148,8 +151,9 @@ def user_mailmerge_fields(resource, record):
     """
         Lookup mailmerge-data about the current user
 
-        @param resource: the context resource (pr_person)
-        @param record: the context record (beneficiary)
+        Args:
+            resource: the context resource (pr_person)
+            record: the context record (beneficiary)
     """
 
     user = current.auth.user
@@ -248,10 +252,12 @@ def file_represent(value, row=None):
     """
         Represent an upload-field (file)
 
-        @param value: the uploaded file name
-        @param row: unused, for API compatibility
+        Args:
+            value: the uploaded file name
+            row: unused, for API compatibility
 
-        @returns: representation (DIV-type)
+        Returns:
+            representation (DIV-type)
     """
 
     if not value:
@@ -292,7 +298,7 @@ def file_represent(value, row=None):
     return output
 
 # =============================================================================
-class PriorityRepresent(object):
+class PriorityRepresent:
     """
         Color-coded representation of priorities
 
@@ -301,11 +307,10 @@ class PriorityRepresent(object):
 
     def __init__(self, options, classes=None):
         """
-            Constructor
-
-            @param options: the options (as dict or anything that can be
-                            converted into a dict)
-            @param classes: a dict mapping keys to CSS class suffixes
+            Args:
+                options: the options (as dict or anything that can be
+                         converted into a dict)
+                classes: a dict mapping keys to CSS class suffixes
         """
 
         self.options = dict(options)
@@ -315,7 +320,8 @@ class PriorityRepresent(object):
         """
             Representation function
 
-            @param value: the value to represent
+            Args:
+                value: the value to represent
         """
 
         css_class = base_class = "prio"

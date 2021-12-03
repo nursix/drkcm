@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Helper Script to get a list of organisation contacts (email addresses)
 # with a certain user role
 #

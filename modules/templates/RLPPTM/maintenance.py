@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Maintenance Tasks for RLPPTM
+
+    License: MIT
+"""
 
 import datetime
 import os
@@ -63,7 +67,9 @@ class Daily():
         DCC.cleanup()
 
         # On Sundays, cleanup public test station registry
-        if now.weekday() == 6:
+        settings = current.deployment_settings
+        if settings.get_custom(key="test_station_cleanup") and \
+           now.weekday() == 6:
             errors = self.cleanup_public_registry()
 
         return errors if errors else None
@@ -133,7 +139,8 @@ class Daily():
             activity reports for more than 4 four weeks; + notify OrgAdmins
             about deactivation
 
-            @returns: error message, or None if successful
+            Returns:
+                error message, or None if successful
         """
 
         db = current.db

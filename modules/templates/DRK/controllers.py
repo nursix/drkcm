@@ -1,15 +1,14 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom controllers for DRK/Village
 
-import json
-
-from os import path
+    License: MIT
+"""
 
 from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import FS, S3CustomController
-from s3theme import formstyle_foundation_inline
+from core import S3CustomController
 
 THEME = "DRK"
 
@@ -311,6 +310,8 @@ class surplus_meals(S3CustomController):
         s3 = current.response.s3
         controller = self.__class__.__name__
 
+        list_url = URL(args=[controller], vars={})
+
         def prep(r):
 
             SURPLUS_MEALS = "SURPLUS-MEALS"
@@ -391,10 +392,6 @@ class surplus_meals(S3CustomController):
                            "comments",
                            ]
 
-            # URL of the list view
-            list_url = URL(args=[controller], vars={})
-            s3.datatable_ajax_source = list_url
-
             resource.configure(insertable = True,
                                list_fields = list_fields,
                                # Fix redirects:
@@ -459,7 +456,7 @@ class surplus_meals(S3CustomController):
                          extension = current.auth.permission.format,
                          )
 
-        return r()
+        return r(dtargs = {"dt_ajax_url": list_url})
 
 # =============================================================================
 def update_transferability(site_id=None):
@@ -467,7 +464,8 @@ def update_transferability(site_id=None):
         Update transferability status of all cases, to be called either
         from scheduler task or manually through custom controller.
 
-        @param site_id: the site to check for transferability of cases
+        Args:
+            site_id: the site to check for transferability of cases
     """
 
     db = current.db

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Application Template for Rhineland-Palatinate (RLP) Crisis Management
-    - used to manage COVID-19 test stations
+    RLPPTM: Template for Rhineland-Palatinate (RLP) COVID-19 Test Stations Portal
 
-    @license MIT
+    License: MIT
 """
 
 from collections import OrderedDict
@@ -220,6 +217,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Custom settings
     settings.custom.test_station_registration = True
+    settings.custom.test_station_cleanup = True
 
     # -------------------------------------------------------------------------
     def poll_dcc():
@@ -435,16 +433,21 @@ def config(settings):
         if not person_id:
             return None
 
+        required = None
+
         has_role = auth.s3_has_role
         if has_role("ADMIN"):
             required = None
         elif has_role("VOUCHER_ISSUER"):
             required = ["STORE", "RULES_ISS"]
         else:
-            required = None
+            from .helpers import get_managed_facilities
+            if get_managed_facilities(cacheable=False):
+                required = ["TPNDO"]
 
         if required:
-            consent = current.s3db.auth_Consent(required)
+            from core import ConsentTracking
+            consent = ConsentTracking(required)
             pending = consent.pending_responses(person_id)
         else:
             pending = None
@@ -452,6 +455,41 @@ def config(settings):
         return pending
 
     settings.auth.consent_check = consent_check
+
+    # -------------------------------------------------------------------------
+    def customise_auth_consent_resource(r, tablename):
+
+        user_org = "person_id$user.user_id:org_organisation_user.organisation_id"
+
+        from core import S3DateFilter, S3OptionsFilter, S3TextFilter
+
+        filter_widgets = [S3TextFilter(["%s$name" % user_org,
+                                        "person_id$first_name",
+                                        "person_id$last_name",
+                                        "option_id$name",
+                                        ],
+                                        label = T("Search"),
+                                        ),
+                          S3OptionsFilter("consenting", cols=2),
+                          S3DateFilter("date", hidden=True),
+                          ]
+
+        # Custom list fields to include the user organisation
+        list_fields = ["date",
+                       user_org,
+                       "person_id",
+                       "option_id",
+                       "consenting",
+                       "expires_on",
+                       ]
+
+        current.s3db.configure("auth_consent",
+                               filter_widgets = filter_widgets,
+                               list_fields = list_fields,
+                               orderby = "auth_consent.date desc",
+                               )
+
+    settings.customise_auth_consent_resource = customise_auth_consent_resource
 
     # -------------------------------------------------------------------------
     def customise_auth_user_resource(r, tablename):
@@ -1704,19 +1742,16 @@ def config(settings):
         table = current.s3db.fin_voucher_billing
 
         # Color-coded representation of billing process status
-        from core import S3PriorityRepresent
         field = table.status
-        try:
-            status_opts = field.represent.options
-        except AttributeError:
-            pass
-        else:
-            field.represent = S3PriorityRepresent(status_opts,
-                                                  {"SCHEDULED": "lightblue",
-                                                   "IN PROGRESS": "amber",
-                                                   "ABORTED": "black",
-                                                   "COMPLETE": "green",
-                                                   }).represent
+
+        from core import S3PriorityRepresent
+        status_opts = s3db.fin_voucher_billing_status_opts
+        field.represent = S3PriorityRepresent(status_opts,
+                                              {"SCHEDULED": "lightblue",
+                                               "IN PROGRESS": "amber",
+                                               "ABORTED": "black",
+                                               "COMPLETE": "green",
+                                               }).represent
 
         # Custom onaccept to maintain realm-assignment of invoices
         # when accountant organisation changes
@@ -1838,19 +1873,16 @@ def config(settings):
             field.readable = field.writable = False
 
         # Color-coded representation of claim status
-        from core import S3PriorityRepresent
         field = table.status
-        try:
-            status_opts = field.represent.options
-        except AttributeError:
-            pass
-        else:
-            field.represent = S3PriorityRepresent(status_opts,
-                                                  {"NEW": "lightblue",
-                                                   "CONFIRMED": "blue",
-                                                   "INVOICED": "amber",
-                                                   "PAID": "green",
-                                                   }).represent
+
+        from core import S3PriorityRepresent
+        status_opts = s3db.fin_voucher_claim_status_opts
+        field.represent = S3PriorityRepresent(status_opts,
+                                              {"NEW": "lightblue",
+                                               "CONFIRMED": "blue",
+                                               "INVOICED": "amber",
+                                               "PAID": "green",
+                                               }).represent
 
         # Custom list fields
         list_fields = [#"refno",
@@ -1979,7 +2011,8 @@ def config(settings):
         """
             Callback to notify the provider that an invoice has been settled
 
-            @param invoice: the invoice (Row)
+            Args:
+                invoice: the invoice (Row)
         """
 
         db = current.db
@@ -2944,6 +2977,7 @@ def config(settings):
         # Custom list fields
         list_fields = ["name",
                        #"organisation_id",
+                       "organisation_id$organisation_type__link.organisation_type_id",
                        (T("Telephone"), "phone1"),
                        "email",
                        (T("Opening Hours"), "opening_times"),
@@ -3188,6 +3222,7 @@ def config(settings):
                     "service_site.service_id",
                     (T("Project"), "organisation_id$project.name"),
                     (T("Organization Group"), "organisation_id$group_membership.group_id"),
+                    "organisation_id$organisation_type__link.organisation_type_id",
                     (T("Requested Items"), "req.req_item.item_id"),
                     ]
 

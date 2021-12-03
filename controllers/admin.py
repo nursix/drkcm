@@ -264,6 +264,18 @@ def user():
                     (registration_key != None) & \
                     (registration_key != "")
             r.resource.add_filter(query)
+        #else:
+        #    # Add some highlighting to the rows
+        #    query = (table.registration_key.belongs(["disabled", "pending"]))
+        #    rows = db(query).select(table.id,
+        #                            table.registration_key,
+        #                            )
+        #    disabled_rows = [str(row.id) for row in rows if row.registration_key == "disabled"]
+        #    pending_rows = [str(row.id) for row in rows if row.registration_key == "pending"]
+        #    s3.dataTableStyle = {
+        #        "dtdisable": disabled_rows,
+        #        "dtalert": pending_rows,
+        #        }
 
         if r.interactive:
             s3db.configure(r.tablename,
@@ -361,23 +373,7 @@ def user():
                                 "_class": "action-btn",
                                 })
 
-                # Add some highlighting to the rows
-                query = (table.registration_key.belongs(["disabled", "pending"]))
-                rows = db(query).select(table.id,
-                                        table.registration_key,
-                                        )
-                s3.dataTableStyleDisabled = s3.dataTableStyleWarning = [str(row.id) for row in rows if row.registration_key == "disabled"]
-                s3.dataTableStyleAlert = [str(row.id) for row in rows if row.registration_key == "pending"]
-
             s3.actions = actions
-
-            # Translate the status values
-            values = [{"col": 6, "key": "", "display": s3_str(T("Active"))},
-                      {"col": 6, "key": "None", "display": s3_str(T("Active"))},
-                      {"col": 6, "key": "pending", "display": s3_str(T("Pending"))},
-                      {"col": 6, "key": "disabled", "display": s3_str(T("Disabled"))}
-                      ]
-            s3.dataTableDisplay = values
 
             # @ToDo: Merge these with the code in s3aaa.py and use S3SQLCustomForm to implement
             form = output.get("form", None)
@@ -623,123 +619,9 @@ def consent_option():
 
 # -----------------------------------------------------------------------------
 @auth.s3_requires_membership(1)
-def consent_question():
-    """
-        Controller to request consent on data processing from
-        the currently logged-in user
+def consent():
 
-        - currently only for TESTING
-        - to be moved into default/user/consent once completed (WIP)
-        - can be used as standalone controller for consent renewal after expiry
-     """
-
-    person_id = auth.s3_logged_in_person()
-    if not person_id:
-        redirect(URL(c="default", f="user", args=["login"], vars={"_next": URL()}))
-
-    output = {}
-
-    widget_id = "consent_question"
-
-    consent = s3db.auth_Consent()
-    formfields = [Field("question",
-                        label = T("Consent"),
-                        widget = consent.widget,
-                        ),
-                  ]
-
-    # Generate the form and add it to the output
-    formstyle = settings.get_ui_formstyle()
-    form = SQLFORM.factory(record = None,
-                           showid = False,
-                           formstyle = formstyle,
-                           table_name = "auth_consent",
-                           #buttons = buttons,
-                           #hidden = hidden,
-                           _id = widget_id,
-                           *formfields)
-
-    # Process the form
-    formname = "consent_question/None"
-    if form.accepts(request.post_vars,
-                    current.session,
-                    formname = formname,
-                    keepvalues = False,
-                    hideerror = False,
-                    ):
-
-        consent.track(person_id, form.vars.question)
-
-    output["form"] = form
-    response.view = "create.html"
-
-    return output
-
-# =============================================================================
-@auth.s3_requires_membership(1)
-def acl():
-    """
-        Preliminary controller for ACLs
-        for testing purposes, not for production use!
-    """
-
-    table = auth.permission.table
-    tablename = table._tablename
-    table.group_id.requires = IS_ONE_OF(db, "auth_group.id", "%(role)s")
-    table.group_id.represent = lambda opt: opt and db.auth_group[opt].role or opt
-
-    table.controller.requires = IS_EMPTY_OR(IS_IN_SET(set(settings.modules.keys()),
-                                                      zero="ANY"))
-    table.controller.represent = lambda opt: opt and \
-        "%s (%s)" % (opt,
-                     auth.permission.modules.get(opt, {}).get("name_nice", opt)) or "ANY"
-
-    table.function.represent = lambda val: val and val or T("ANY")
-
-    table.tablename.requires = IS_EMPTY_OR(IS_IN_SET([t._tablename for t in db],
-                                                     zero=T("ANY")))
-    table.tablename.represent = lambda val: val and val or T("ANY")
-
-    table.uacl.label = T("All Resources")
-    table.uacl.widget = S3ACLWidget.widget
-    table.uacl.requires = IS_ACL(auth.permission.PERMISSION_OPTS)
-    table.uacl.represent = lambda val: acl_represent(val,
-                                                     auth.permission.PERMISSION_OPTS)
-
-    table.oacl.label = T("Owned Resources")
-    table.oacl.widget = S3ACLWidget.widget
-    table.oacl.requires = IS_ACL(auth.permission.PERMISSION_OPTS)
-    table.oacl.represent = lambda val: acl_represent(val,
-                                                     auth.permission.PERMISSION_OPTS)
-
-    s3db.configure(tablename,
-                   create_next = URL(r=request),
-                   update_next = URL(r=request))
-
-    if "_next" in request.vars:
-        next = request.vars._next
-        s3db.configure(tablename, delete_next=next)
-
-    return crud_controller("s3", "permission")
-
-# -----------------------------------------------------------------------------
-def acl_represent(acl, options):
-    """
-        Represent ACLs in tables
-        for testing purposes, not for production use!
-    """
-
-    values = []
-
-    for o in options.keys():
-        if o == 0 and acl == 0:
-            values.append("%s" % options[o][0])
-        elif acl and acl & o == o:
-            values.append("%s" % options[o][0])
-        else:
-            values.append("_")
-
-    return " ".join(values)
+    return crud_controller("auth", "consent")
 
 # =============================================================================
 # Ticket viewing

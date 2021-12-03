@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Helper functions and classes for RLP template
+    Helper functions and classes for RLP
 
-    @license: MIT
+    License: MIT
 """
 
 from gluon import current, A, URL, XML
@@ -16,11 +14,13 @@ def rlp_active_deployments(ctable, from_date=None, to_date=None):
         Helper to construct a component filter expression
         for active deployments within the given interval (or now)
 
-        @param ctable: the (potentially aliased) component table
-        @param from_date: start of the interval
-        @param to_date: end of the interval
+        Args:
+            ctable: the (potentially aliased) component table
+            from_date: start of the interval
+            to_date: end of the interval
 
-        @note: with no dates, today is assumed as the interval start+end
+        Note:
+            With no dates, today is assumed as the interval start+end
     """
 
     start = ctable.date
@@ -47,7 +47,8 @@ def rlp_deployed_with_org(person_id):
         deployments managed by the current user (i.e. where user is
         either HRMANAGER for the deploying organisation, or COORDINATOR)
 
-        @param person_id: a pr_person record ID, or a set|list|tuple thereof
+        Args:
+            person_id: a pr_person record ID, or a set|list|tuple thereof
     """
 
     s3 = current.response.s3
@@ -89,12 +90,14 @@ def rlp_delegation_read_multiple_orgs():
         Check if user can manage delegations of multiple orgs, and if yes,
         which.
 
-        @returns: tuple (multiple_orgs, org_ids), where:
-                        multiple (boolean) - user can manage multiple orgs
-                        org_ids (list) - list of the orgs the user can manage
+        Returns:
+            tuple (multiple_orgs, org_ids), where:
+                multiple (boolean) - user can manage multiple orgs
+                org_ids (list) - list of the orgs the user can manage
 
-        @note: multiple=True and org_ids=[] means the user can manage
-               delegations for all organisations (site-wide role)
+        Note:
+            multiple=True and org_ids=[] means the user can manage
+            delegations for all organisations (site-wide role)
     """
 
     realms = current.auth.permission.permitted_realms("hrm_delegation", "read")
@@ -116,12 +119,14 @@ def rlp_deployment_sites(managed_orgs=False, organisation_id=None):
     """
         Lookup deployment sites
 
-        @param managed_orgs: limit to sites of organisations the user
-                             can manage delegations for
-        @param organisation_id: limit to sites of this organisation
-                                (overrides managed_orgs)
+        Args:
+            managed_orgs: limit to sites of organisations the user
+                          can manage delegations for
+            organisation_id: limit to sites of this organisation
+                             (overrides managed_orgs)
 
-        @returns: a dict {site_id:site_name}
+        Returns:
+            a dict {site_id:site_name}
     """
 
     db = current.db
@@ -180,8 +185,9 @@ def rlp_update_pool(form, tablename=None):
             - called directly by custom onaccept/ondelete of
               default/person/X/competency
 
-        @param form: a person FORM, or a nested Storage containing
-                     the person_id as form.vars.id
+        Args:
+            form: a person FORM, or a nested Storage containing
+                  the person_id as form.vars.id
     """
 
     try:
@@ -227,12 +233,14 @@ def get_cms_intro(module, resource, name, cmsxml=False):
     """
         Get intro from CMS
 
-        @param module: the module prefix
-        @param resource: the resource name
-        @param name: the post name
-        @param cmsxml: whether to XML-escape the contents or not
+        Args:
+            module: the module prefix
+            resource: the resource name
+            name: the post name
+            cmsxml: whether to XML-escape the contents or not
 
-        @returns: the post contents, or None if not available
+        Returns:
+            the post contents, or None if not available
     """
 
     # Get intro text from CMS
@@ -370,9 +378,10 @@ class RLPDelegatedPersonRepresent(S3Represent):
         """
             Constructor
 
-            @param show_link: show representation as clickable link
-            @param linkto: URL for the link, using "[id]" as placeholder
-                           for the record ID
+            Args:
+                show_link: show representation as clickable link
+                linkto: URL for the link, using "[id]" as placeholder
+                        for the record ID
         """
 
         super(RLPDelegatedPersonRepresent, self).__init__(
@@ -388,9 +397,10 @@ class RLPDelegatedPersonRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         db = current.db
@@ -433,11 +443,12 @@ class RLPDelegatedPersonRepresent(S3Represent):
         return rows
 
     # -------------------------------------------------------------------------
-    def represent_row(self, row, prefix=None):
+    def represent_row(self, row):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if self.coordinator or \
@@ -453,9 +464,10 @@ class RLPDelegatedPersonRepresent(S3Represent):
         """
             Represent a (key, value) as hypertext link
 
-            @param k: the key (br_case_activity.id)
-            @param v: the representation of the key
-            @param row: the row with this key
+            Args:
+                k: the key (br_case_activity.id)
+                v: the representation of the key
+                row: the row with this key
         """
 
         url = URL(c = "vol", f = "person", args = [row.id], extension = "")

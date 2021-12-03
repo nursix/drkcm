@@ -1598,11 +1598,6 @@ form.jeditable-input input {
     max-width: 400px !important;
 }
 
-.pt-form legend {
-    font-size: 14px;
-    margin-bottom: 0;
-    border: 0 !important;
-}
 button.toggle-text {
     font-size: 10px !important;
     margin-left: 12px !important;

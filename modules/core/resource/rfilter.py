@@ -50,19 +50,18 @@ class S3ResourceFilter:
                  extra_filters = None,
                  filter_component = None):
         """
-            Constructor
-
-            @param resource: the CRUDResource
-            @param id: the record ID (or list of record IDs)
-            @param uid: the record UID (or list of record UIDs)
-            @param filter: a filter query (S3ResourceQuery or Query)
-            @param vars: the dict of GET vars (URL filters)
-            @param extra_filters: extra filters (to be applied on
-                                  pre-filtered subsets), as list of
-                                  tuples (method, expression)
-            @param filter_component: the alias of the component the URL
-                                     filters apply for (filters for this
-                                     component must be handled separately)
+            Args:
+                resource: the CRUDResource
+                id: the record ID (or list of record IDs)
+                uid: the record UID (or list of record UIDs)
+                filter: a filter query (S3ResourceQuery or Query)
+                vars: the dict of GET vars (URL filters)
+                extra_filters: extra filters (to be applied on
+                               pre-filtered subsets), as list of
+                               tuples (method, expression)
+                filter_component: the alias of the component the URL
+                                  filters apply for (filters for this
+                                  component must be handled separately)
         """
 
         self.resource = resource
@@ -206,9 +205,10 @@ class S3ResourceFilter:
             Getter for extra filter methods, lazy property so methods
             are only imported/initialized when needed
 
-            @todo: document the expected signature of filter methods
+            Returns:
+                dict {name: callable} of known named filter methods
 
-            @return: dict {name: callable} of known named filter methods
+            TODO document the expected signature of filter methods
         """
 
         methods = self._extra_filter_methods
@@ -228,10 +228,11 @@ class S3ResourceFilter:
         """
             Extend this filter
 
-            @param query: a Query or S3ResourceQuery object
-            @param component: alias of the component the filter shall be
-                              added to (None for master)
-            @param master: False to filter only component
+            Args:
+                query: a Query or S3ResourceQuery object
+                component: alias of the component the filter shall be
+                           added to (None for master)
+                master: False to filter only component
         """
 
         alias = None
@@ -267,9 +268,10 @@ class S3ResourceFilter:
         """
             Add an extra filter
 
-            @param method: a name of a known filter method, or a
-                           callable filter method
-            @param expression: the filter expression (string)
+            Args:
+                method: a name of a known filter method, or a
+                        callable filter method
+                expression: the filter expression (string)
         """
 
         efilters = self.efilters
@@ -282,8 +284,9 @@ class S3ResourceFilter:
         """
             Replace the current extra filters
 
-            @param filters: list of tuples (method, expression), or None
-                            to remove all extra filters
+            Args:
+                filters: list of tuples (method, expression), or None
+                         to remove all extra filters
         """
 
         self.efilters = []
@@ -352,7 +355,8 @@ class S3ResourceFilter:
         """
             Get the list of extra filters
 
-            @return: list of tuples (method, expression)
+            Returns:
+                list of tuples (method, expression)
         """
 
         return list(self.efilters)
@@ -362,8 +366,9 @@ class S3ResourceFilter:
         """
             Get the joins required for this filter
 
-            @param left: get the left joins
-            @param as_list: return a flat list rather than a nested dict
+            Args:
+                left: get the left joins
+                as_list: return a flat list rather than a nested dict
         """
 
         if self.query is None:
@@ -418,9 +423,10 @@ class S3ResourceFilter:
         """
             Filter a set of rows by the effective virtual filter
 
-            @param rows: a Rows object
-            @param start: index of the first matching record to select
-            @param limit: maximum number of records to select
+            Args:
+                rows: a Rows object
+                start: index of the first matching record to select
+                limit: maximum number of records to select
         """
 
         vfltr = self.get_filter()
@@ -462,11 +468,13 @@ class S3ResourceFilter:
         """
             Apply all extra filters on a list of record ids
 
-            @param ids: the pre-filtered set of record IDs
-            @param limit: the maximum number of matching IDs to establish,
-                          None to find all matching IDs
+            Args:
+                ids: the pre-filtered set of record IDs
+                limit: the maximum number of matching IDs to establish,
+                       None to find all matching IDs
 
-            @return: a sequence of matching IDs
+            Returns:
+                a sequence of matching IDs
         """
 
         # Get the resource
@@ -546,8 +554,9 @@ class S3ResourceFilter:
         """
             Get the total number of matching records
 
-            @param left: left outer joins
-            @param distinct: count only distinct rows
+            Args:
+                left: left outer joins
+                distinct: count only distinct rows
         """
 
         distinct |= self.distinct
@@ -638,8 +647,9 @@ class S3ResourceFilter:
             Generate a Query from a URL boundary box query; supports multiple
             bboxes, but optimised for the usual case of just 1
 
-            @param resource: the resource
-            @param get_vars: the URL GET vars
+            Args:
+                resource: the resource
+                get_vars: the URL GET vars
         """
 
         tablenames = ("gis_location",
@@ -806,7 +816,8 @@ class S3ResourceFilter:
         """
             Serialize this filter as URL query
 
-            @return: a Storage of URL GET variables
+            Returns:
+                a Storage of URL GET variables
         """
 
         resource = self.resource

@@ -34,7 +34,7 @@ class Marker:
     """
         Represents a Map Marker
 
-        @ToDo: Support Markers in Themes
+        TODO Support Markers in Themes
     """
 
     def __init__(self,
@@ -43,10 +43,11 @@ class Marker:
                  layer_id=None,
                  tablename=None):
         """
-            @param marker: Storage object with image/height/width (looked-up in bulk)
-            @param marker_id: id of record in gis_marker
-            @param layer_id: layer_id to lookup marker in gis_style (unused)
-            @param tablename: used to identify whether to provide a default marker as fallback
+            Args:
+                marker: Storage object with image/height/width (looked-up in bulk)
+                marker_id: id of record in gis_marker
+                layer_id: layer_id to lookup marker in gis_style (unused)
+                tablename: used to identify whether to provide a default marker as fallback
         """
 
         no_default = False
@@ -143,7 +144,7 @@ class Marker:
     #                  h = self.height,
     #                  w = self.width,
     #                  )
-    #    return json.dumps(output, separators=SEPARATORS)
+    #    return json.dumps(output, separators=JSONSEPARATORS)
 
     # -------------------------------------------------------------------------
     def as_json_dict(self):

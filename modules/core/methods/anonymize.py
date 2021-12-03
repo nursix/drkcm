@@ -54,10 +54,12 @@ class S3Anonymize(CRUDMethod):
         """
             Entry point for REST API
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
 
-            @return: output data (JSON)
+            Returns:
+                output data (JSON)
         """
 
         output = {}
@@ -89,11 +91,13 @@ class S3Anonymize(CRUDMethod):
         """
             Handle POST (anonymize-request), i.e. anonymize the target record
 
-            @param r: the CRUDRequest
-            @param table: the target Table
-            @param record_id: the target record ID
+            Args:
+                r: the CRUDRequest
+                table: the target Table
+                record_id: the target record ID
 
-            @returns: JSON message
+            Returns:
+                JSON message
         """
 
         # Read+parse body JSON
@@ -177,7 +181,8 @@ class S3Anonymize(CRUDMethod):
         """
             Determine the target table and record ID
 
-            @return: tuple (table, record_id)
+            Returns:
+                tuple (table, record_id)
         """
 
         resource = self.resource
@@ -194,10 +199,12 @@ class S3Anonymize(CRUDMethod):
         """
             Check permissions to anonymize the target record
 
-            @param table: the target Table
-            @param record_id: the target record ID
+            Args:
+                table: the target Table
+                record_id: the target record ID
 
-            @return: True|False
+            Returns:
+                True|False
         """
 
         has_permission = current.auth.s3_has_permission
@@ -211,13 +218,15 @@ class S3Anonymize(CRUDMethod):
         """
             Apply cascade of rules to anonymize records
 
-            @param table: the Table
-            @param record_ids: a set of record IDs
-            @param rules: the rules for this Table
+            Args:
+                table: the Table
+                record_ids: a set of record IDs
+                rules: the rules for this Table
 
-            @raises Exception: if the cascade failed due to DB constraints
-                               or invalid rules; callers should roll back
-                               the transaction if an exception is raised
+            Raises:
+                Exception: if the cascade failed due to DB constraints
+                           or invalid rules; callers should roll back
+                           the transaction if an exception is raised
         """
 
         from ..resource import FS, S3Joins
@@ -289,14 +298,16 @@ class S3Anonymize(CRUDMethod):
         """
             Apply field rules on a set of records in a table
 
-            @param table: the Table
-            @param record_ids: the record IDs
-            @param rules: the rules
+            Args:
+                table: the Table
+                record_ids: the record IDs
+                rules: the rules
 
-            @raises Exception: if the field rules could not be applied
-                               due to DB constraints or invalid rules;
-                               callers should roll back the transaction
-                               if an exception is raised
+            Raises:
+                Exception: if the field rules could not be applied
+                           due to DB constraints or invalid rules;
+                           callers should roll back the transaction
+                           if an exception is raised
         """
 
         fields = [table[fn] for fn in rules if fn in table.fields]
@@ -379,15 +390,17 @@ class S3AnonymizeWidget:
             target record of an CRUDRequest, which can be embedded in
             the record view
 
-            @param r: the CRUDRequest
-            @param label: The label for the action item
-            @param ajaxURL: The URL for the AJAX request
-            @param _class: HTML class for the action item
+            Args:
+                r: the CRUDRequest
+                label: The label for the action item
+                ajaxURL: The URL for the AJAX request
+                _class: HTML class for the action item
 
-            @returns: the action item (a HTML helper instance), or an empty
-                      string if no anonymize-rules are configured for the
-                      target table, no target record was specified or the
-                      user is not permitted to anonymize it
+            Returns:
+                the action item (a HTML helper instance), or an empty
+                string if no anonymize-rules are configured for the
+                target table, no target record was specified or the
+                user is not permitted to anonymize it
         """
 
         T = current.T
@@ -487,9 +500,12 @@ class S3AnonymizeWidget:
             Generate a unique STP token for the widget (CSRF protection) and
             store it in session
 
-            @param widget_id: the widget ID (which includes the target
-                              table name and record ID)
-            @return: a unique identifier (as string)
+            Args:
+                widget_id: the widget ID (which includes the target
+                           table name and record ID)
+
+            Returns:
+                a unique identifier (as string)
         """
 
         session_s3 = current.session.s3
@@ -507,9 +523,11 @@ class S3AnonymizeWidget:
         """
             Generate the rule selector for anonymize-form
 
-            @param rules: the list of configured rules
+            Args:
+                rules: the list of configured rules
 
-            @return: the selector (DIV)
+            Returns:
+                the selector (DIV)
         """
 
         T = current.T
@@ -542,7 +560,8 @@ class S3AnonymizeWidget:
         """
             Generate the submit/cancel buttons for the anonymize-form
 
-            @return: the buttons row (DIV)
+            Returns:
+                the buttons row (DIV)
         """
 
         T = current.T
@@ -565,8 +584,9 @@ class S3AnonymizeWidget:
         """
             Inject the necessary JavaScript for the UI dialog
 
-            @param widget_id: the widget ID
-            @param options: JSON-serializable dict of widget options
+            Args:
+                widget_id: the widget ID
+                options: JSON-serializable dict of widget options
         """
 
         request = current.request
@@ -608,10 +628,12 @@ class S3AnonymizeBulk(S3Anonymize):
         """
             Entry point for REST API
 
-            @param r: the CRUDRequest instance
-            @param attr: controller parameters
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
 
-            @return: output data (JSON)
+            Returns:
+                output data (JSON)
         """
 
         resource = self.resource
@@ -665,11 +687,13 @@ class S3AnonymizeBulk(S3Anonymize):
         """
             Handle POST (anonymize-request), i.e. anonymize the target record
 
-            @param r: the CRUDRequest
-            @param table: the target Table
-            @param record_ids: the target record IDs
+            Args:
+                r: the CRUDRequest
+                table: the target Table
+                record_ids: the target record IDs
 
-            @returns: JSON message
+            Returns:
+                JSON message
         """
 
         post_vars_get = r.post_vars.get
@@ -756,14 +780,16 @@ class S3AnonymizeBulkWidget(S3AnonymizeWidget):
             Render an action item (link or button) to anonymize the
             provided records
 
-            @param r: the CRUDRequest
-            @param record_ids: The list of record_ids to act on
-            @param _class: HTML class for the action item
+            Args:
+                r: the CRUDRequest
+                record_ids: The list of record_ids to act on
+                _class: HTML class for the action item
 
-            @returns: the action item (a HTML helper instance), or an empty
-                      string if no anonymize-rules are configured for the
-                      target table, no target record was specified or the
-                      user is not permitted to anonymize it
+            Returns:
+                the action item (a HTML helper instance), or an empty
+                string if no anonymize-rules are configured for the
+                target table, no target record was specified or the
+                user is not permitted to anonymize it
         """
 
         T = current.T

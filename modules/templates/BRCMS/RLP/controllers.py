@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Custom Controllers for BRCMS/RLP
+
+    License: MIT
+"""
 
 import json
 import os
@@ -13,7 +17,8 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
+from core import ConsentTracking, \
+                 FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                  JSONERRORS, S3CRUD, S3CustomController, S3LocationSelector, \
                  S3Represent, S3Report, CRUDRequest, S3WithIntro, \
                  s3_comments_widget, s3_get_extension, s3_mark_required, \
@@ -145,9 +150,11 @@ class index(S3CustomController):
         """
             Get current announcements
 
-            @param roles: filter announcement by these roles
+            Args:
+                roles: filter announcement by these roles
 
-            @returns: any announcements (Rows)
+            Returns:
+                any announcements (Rows)
         """
 
         db = current.db
@@ -192,7 +199,8 @@ class index(S3CustomController):
         """
             Get intro from CMS
 
-            @param intro: the intro spec as tuple (module, resource, postname)
+            Args:
+                intro: the intro spec as tuple (module, resource, postname)
         """
 
         # Get intro text from CMS
@@ -599,15 +607,15 @@ class register(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
+            Returns:
+                a tuple (formfields, required_fields)
+                - formfields = list of form fields
+                - required_fields = list of field names of required fields
         """
 
         T = current.T
         request = current.request
 
-        s3db = current.s3db
         auth = current.auth
         auth_settings = auth.settings
         auth_messages = auth.messages
@@ -621,7 +629,7 @@ class register(S3CustomController):
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["TOS_PRIVATE", "STORE", "SHARE_OFFERS"])
+        consent = ConsentTracking(processing_types=["TOS_PRIVATE", "STORE", "SHARE_OFFERS"])
 
         # Form fields
         formfields = [# -- User Account --
@@ -692,7 +700,8 @@ class register(S3CustomController):
             Custom validation of registration form
             - currently doing nothing except standard onvalidation
 
-            @returns: callback function
+            Returns:
+                callback function
         """
 
         def register_onvalidation(form):
@@ -808,10 +817,12 @@ class register(S3CustomController):
             Generate a hash of the activation code using
             the registration key
 
-            @param key: the registration key
-            @param code: the activation code
+            Args:
+                key: the registration key
+                code: the activation code
 
-            @returns: the hash as string
+            Returns:
+                the hash as string
         """
 
         crypt = CRYPT(key=key, digest_alg="sha512", salt=None)
@@ -939,7 +950,8 @@ class verify_email(S3CustomController):
         """
             Send a welcome email to the new user
 
-            @param user: the auth_user Row
+            Agrs:
+                user: the auth_user Row
         """
 
         register.customise_auth_messages()
@@ -1060,8 +1072,8 @@ class geocode(S3CustomController):
             results["lat"] = lat
             results["lon"] = lon
 
-            from core import SEPARATORS
-            output = json.dumps(results, separators=SEPARATORS)
+            from core import JSONSEPARATORS
+            output = json.dumps(results, separators=JSONSEPARATORS)
 
         current.response.headers["Content-Type"] = "application/json"
         return output
@@ -1265,18 +1277,16 @@ class register_org(S3CustomController):
         """
             Generate the form fields for the registration form
 
-            @returns: a tuple (formfields, required_fields, subheadings)
-                      - formfields = list of form fields
-                      - required_fields = list of field names of required fields
-                      - subheadings = list of tuples (position, heading) to
-                                      insert into the form
+            Returns:
+                a tuple (formfields, required_fields, subheadings)
+                - formfields = list of form fields
+                - required_fields = list of field names of required fields
+                - subheadings = list of tuples (position, heading) to
+                                insert into the form
         """
 
         T = current.T
         request = current.request
-
-        #db = current.db
-        s3db = current.s3db
 
         auth = current.auth
         auth_settings = auth.settings
@@ -1286,7 +1296,7 @@ class register_org(S3CustomController):
         passfield = auth_settings.password_field
 
         # Instantiate Consent Tracker
-        consent = s3db.auth_Consent(processing_types=["TOS_CORPORATE", "STORE", "SHARE_OFFERS"])
+        consent = ConsentTracking(processing_types=["TOS_CORPORATE", "STORE", "SHARE_OFFERS"])
 
         # Last name is required
         utable.last_name.requires = IS_NOT_EMPTY(error_message=T("input required"))
@@ -1399,7 +1409,8 @@ class register_org(S3CustomController):
         """
             Look up applicable org types for registration
 
-            @returns: a dict {org_type_id: org_type_name}
+            Returns:
+                a dict {org_type_id: org_type_name}
         """
 
         db = current.db
@@ -1417,9 +1428,12 @@ class register_org(S3CustomController):
             Identify the organisation the user attempts to register for,
             by name, office Lx and if necessary office email address
 
-            @param formvars: the FORM vars
-            @returns: organisation_id if found, or None if this is a new
-                      organisation
+            Args:
+                formvars: the FORM vars
+
+            Returns:
+                organisation_id if found, or None if this is a new
+                organisation
         """
 
         orgname = formvars.get("organisation")
@@ -2079,14 +2093,12 @@ class approve_org(S3CustomController):
             if representation in CRUDRequest.INTERACTIVE_FORMATS:
 
                 # How many records per page?
-                if s3.dataTable_pageLength:
-                    display_length = s3.dataTable_pageLength
-                else:
-                    display_length = 25
+                settings = current.deployment_settings
+                display_length = settings.get_ui_datatables_pagelength()
 
                 # Server-side pagination?
                 if not s3.no_sspag:
-                    dt_pagination = "true"
+                    dt_pagination = True
                     if not limit:
                         limit = 2 * display_length
                     session.s3.filter = get_vars
@@ -2106,7 +2118,7 @@ class approve_org(S3CustomController):
                                                                   dt_sorting,
                                                                   )[1:3]
                 else:
-                    dt_pagination = "false"
+                    dt_pagination = False
 
                 # Disable exports
                 s3.no_formats = True
@@ -2118,6 +2130,7 @@ class approve_org(S3CustomController):
                                                    left = left,
                                                    orderby = orderby,
                                                    distinct = distinct,
+                                                   list_id = list_id,
                                                    )
                 displayrows = totalrows
 
@@ -2130,10 +2143,7 @@ class approve_org(S3CustomController):
                 dtargs["dt_pageLength"] = display_length
                 dtargs["dt_base_url"] = URL(c="default", f="index", args="approve_org")
                 dtargs["dt_permalink"] = URL(c="default", f="index", args="approve_org")
-                datatable = dt.html(totalrows,
-                                    displayrows,
-                                    id = list_id,
-                                    **dtargs)
+                datatable = dt.html(totalrows, displayrows, **dtargs)
 
                 # Action Buttons
                 s3.actions = [{"label": s3_str(T("Review")),
@@ -2169,6 +2179,7 @@ class approve_org(S3CustomController):
                                                          left = left,
                                                          orderby = orderby,
                                                          distinct = distinct,
+                                                         list_id = list_id,
                                                          )
                 else:
                     dt, displayrows = None, 0
@@ -2182,15 +2193,13 @@ class approve_org(S3CustomController):
                 if dt is not None:
                     output = dt.json(totalrows,
                                      displayrows,
-                                     list_id,
                                      draw,
                                      **dtargs)
                 else:
                     output = '{"recordsTotal":%s,' \
                              '"recordsFiltered":0,' \
-                             '"dataTable_id":"%s",' \
                              '"draw":%s,' \
-                             '"data":[]}' % (totalrows, list_id, draw)
+                             '"data":[]}' % (totalrows, draw)
             else:
                 CRUDRequest("auth", "user").error(415, current.ERROR.BAD_FORMAT)
 

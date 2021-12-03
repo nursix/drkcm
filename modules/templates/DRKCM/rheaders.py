@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Custom rheaders for DRKCM template
+    Custom rheaders for DRKCM
 
-    @license: MIT
+    License: MIT
 """
 
 from gluon import current, A, DIV, SPAN, URL

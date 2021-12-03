@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Disease Tracking Models
 
-""" Sahana Eden Disease Tracking Models
-
-    @ToDo Extend to Vector Tracking for Dengue/Malaria
-
-    @copyright: 2014-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2014-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -27,13 +23,15 @@
     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
+
+    TODO Extend to Vector Tracking for Dengue/Malaria
 """
 
 __all__ = ("DiseaseDataModel",
            "DiseaseMonitoringModel",
            "DiseaseCertificateModel",
-           "CaseTrackingModel",
-           "ContactTracingModel",
+           "DiseaseCaseTrackingModel",
+           "DiseaseContactTracingModel",
            "DiseaseStatsModel",
            "disease_rheader",
            )
@@ -293,7 +291,8 @@ class DiseaseDataModel(DataModel):
         """
             Disease import update detection
 
-            @param item: the import item
+            Args:
+                item: the import item
         """
 
         data = item.data
@@ -528,10 +527,10 @@ class DiseaseMonitoringModel(DataModel):
                        ]
 
         # Report options
-        facts = ((T("Number of Tests"), "sum(tests_total)"),
+        facts = [(T("Number of Tests"), "sum(tests_total)"),
                  (T("Number of Positive Test Results"), "sum(tests_positive)"),
                  (T("Number of Reports"), "count(id)"),
-                 )
+                 ]
         axes = ["site_id",
                 "site_id$location_id$L2",
                 "site_id$location_id$L3",
@@ -548,6 +547,16 @@ class DiseaseMonitoringModel(DataModel):
                          },
             }
 
+        timeplot_options = {
+            "fact": facts,
+            "timestamp": ((T("per interval"), "date,date"),
+                          (T("cumulative"), "date"),
+                          ),
+            "defaults": {"fact": facts[:2],
+                         "timestamp": "date,date",
+                         },
+            }
+
         # Table Configuration
         configure(tablename,
                   crud_form = crud_form,
@@ -556,6 +565,7 @@ class DiseaseMonitoringModel(DataModel):
                   onvalidation = self.testing_report_onvalidation,
                   orderby = "%s.date desc" % tablename,
                   report_options = report_options,
+                  timeplot_options = timeplot_options,
                   )
 
         # CRUD Strings
@@ -902,7 +912,7 @@ class DiseaseCertificateModel(DataModel):
         return None
 
 # =============================================================================
-class CaseTrackingModel(DataModel):
+class DiseaseCaseTrackingModel(DataModel):
 
     names = ("disease_case",
              "disease_case_id",
@@ -1418,8 +1428,9 @@ class CaseTrackingModel(DataModel):
         """
             Find the case record for a person for a disease
 
-            @param person_id: the person record ID
-            @param disease_id: the disease record ID
+            Args:
+                person_id: the person record ID
+                disease_id: the disease record ID
         """
 
         ctable = current.s3db.disease_case
@@ -1463,7 +1474,8 @@ class CaseTrackingModel(DataModel):
         """
             Case import update detection
 
-            @param item: the import item
+            Args:
+                item: the import item
         """
 
         data = item.data
@@ -1622,7 +1634,6 @@ class CaseTrackingModel(DataModel):
 class disease_CaseRepresent(S3Represent):
 
     def __init__(self):
-        """ Constructor """
 
         super(disease_CaseRepresent, self).__init__(lookup = "disease_case")
 
@@ -1631,9 +1642,10 @@ class disease_CaseRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         s3db = current.s3db
@@ -1664,7 +1676,8 @@ class disease_CaseRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         try:
@@ -1703,7 +1716,7 @@ class disease_CaseRepresent(S3Represent):
             return full_name
 
 # =============================================================================
-class ContactTracingModel(DataModel):
+class DiseaseContactTracingModel(DataModel):
 
     names = ("disease_tracing",
              "disease_exposure",
@@ -1902,7 +1915,7 @@ class ContactTracingModel(DataModel):
     @staticmethod
     def exposure_onaccept(form):
         """
-            @todo: docstring
+            TODO docstring
         """
 
         formvars = form.vars
@@ -1931,7 +1944,7 @@ class ContactTracingModel(DataModel):
 # =============================================================================
 def disease_propagate_case_status(case_id):
     """
-        @todo: docstring
+        TODO docstring
     """
 
     db = current.db
@@ -2013,7 +2026,7 @@ def disease_propagate_case_status(case_id):
 # =============================================================================
 def disease_create_case(disease_id, person_id, monitoring_level=None):
     """
-        @todo: docstring
+        TODO docstring
     """
 
     ctable = current.s3db.disease_case
@@ -2042,7 +2055,7 @@ def disease_create_case(disease_id, person_id, monitoring_level=None):
 # =============================================================================
 def disease_upgrade_monitoring(case_id, level, case=None):
     """
-        @todo: docstring
+        TODO docstring
     """
 
     if level not in MONITORING_UPGRADE:
@@ -2548,10 +2561,11 @@ class DiseaseStatsModel(DataModel):
             Calculates the disease_stats_aggregate for a specific parameter at a
             specific location over the range of dates.
 
-            @param location_id: location to aggregate at
-            @param children: locations to aggregate from
-            @param parameter_id: arameter to aggregate
-            @param dates: dates to aggregate for (as JSON string)
+            Args:
+                location_id: location to aggregate at
+                children: locations to aggregate from
+                parameter_id: arameter to aggregate
+                dates: dates to aggregate for (as JSON string)
         """
 
         db = current.db

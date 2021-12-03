@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Custom rheaders for RLPPTM template
+    Custom rheaders for RLPPTM
 
-    @license: MIT
+    License: MIT
 """
 
 from gluon import current, A, URL

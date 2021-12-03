@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
-    Helper functions and classes for RLPCM template
+    Helper functions and classes for BRCMS/RLP
 
-    @license: MIT
+    License: MIT
 """
 
 import datetime
@@ -20,12 +18,14 @@ def get_role_realms(role):
     """
         Get all realms for which a role has been assigned
 
-        @param role: the role ID or role UUID
+        Args:
+            role: the role ID or role UUID
 
-        @returns: list of pe_ids the current user has the role for,
-                  None if the role is assigned site-wide, or an
-                  empty list if the user does not have the role, or
-                  no realm for the role
+        Returns:
+            list of pe_ids the current user has the role for,
+            None if the role is assigned site-wide, or an
+            empty list if the user does not have the role, or
+            no realm for the role
     """
 
     db = current.db
@@ -56,9 +56,11 @@ def get_managed_orgs(role):
     """
         Get the organisations for which the current user has a role
 
-        @param role: the role id or UUID
+        Args:
+            role: the role id or UUID
 
-        @returns: list of organisation pe_ids
+        Returns:
+            list of organisation pe_ids
     """
 
     db = current.db
@@ -80,10 +82,12 @@ def get_current_events(record):
     """
         Look up all current events
 
-        @param record: include the event_id of this record even
-                       if the event is closed
+        Args:
+            record: include the event_id of this record even if the event
+                    is closed
 
-        @returns: list of event_ids, most recent first
+        Returns:
+            list of event_ids, most recent first
     """
 
     db = current.db
@@ -104,10 +108,12 @@ def get_current_location(person_id=None):
     """
         Look up the current tracking location of a person
 
-        @param person_id: the person ID (defaults to logged-in person)
+        Args:
+            person_id: the person ID (defaults to logged-in person)
 
-        @returns: the ID of the lowest-level Lx of the current
-                  tracking location of the person
+        Returns:
+            the ID of the lowest-level Lx of the current
+            tracking location of the person
     """
 
     if not person_id:
@@ -135,12 +141,14 @@ def get_offer_filters(person_id=None):
         Get filters for br_assistance_offer matching a person's
         current needs
 
-        @param person_id: the person ID
+        Args:
+            person_id: the person ID
 
-        @returns: S3ResourceQuery to apply to an br_assistance_offer
-                  resource, or None, if matching is not possible
+        Returns:
+            S3ResourceQuery to apply to an br_assistance_offer
+            resource, or None, if matching is not possible
 
-        # TODO move client-side
+        TODO move client-side?
     """
 
     db = current.db
@@ -274,12 +282,11 @@ class ProviderRepresent(pr_PersonEntityRepresent):
 
     def __init__(self, as_string=False):
         """
-            Constructor
-
-            @param show_label: show the ID tag label for persons
-            @param default_label: the default for the ID tag label
-            @param show_type: show the instance_type
-            @param multiple: assume a value list by default
+            Args:
+                show_label: show the ID tag label for persons
+                default_label: the default for the ID tag label
+                show_type: show the instance_type
+                multiple: assume a value list by default
         """
 
         self.as_string = as_string
@@ -293,7 +300,8 @@ class ProviderRepresent(pr_PersonEntityRepresent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         pentity = row.pr_pentity
@@ -313,7 +321,7 @@ class ProviderRepresent(pr_PersonEntityRepresent):
         return pe_str
 
 # =============================================================================
-class OverviewData(object):
+class OverviewData:
     """
         Data extraction for overview page
     """
@@ -335,9 +343,11 @@ class OverviewData(object):
         """
             Get a color from the palette
 
-            @param category: an integer representing the category
+            Args:
+                category: an integer representing the category
 
-            @returns: CSS hex color (string)
+            Returns:
+                CSS hex color (string)
         """
 
         palette = cls.palette
@@ -446,8 +456,8 @@ class OverviewData(object):
         """
             Establish site usage statistics
 
-            @returns: the usage stats, a dict:
-
+            Returns:
+                the usage stats, a dict:
                      {"au": 0,   # Number of active users
                       "ao": 0,   # Number of active organisations
                       "nr": 0,   # Number of active need reports
@@ -572,7 +582,7 @@ class OverviewData(object):
             json_dump(data, outfile, separators=SEPARATORS)
 
 # =============================================================================
-class OfferDetails(object):
+class OfferDetails:
     """
         Field methods for compact representation of place and
         contact information of offers
@@ -734,10 +744,11 @@ class ServiceListRepresent(S3Represent):
             Helper method to render list-type representations from
             bulk()-results.
 
-            @param value: the list
-            @param labels: the labels as returned from bulk()
-            @param show_link: render references as links, should
-                              be the same as used with bulk()
+            Args:
+                value: the list
+                labels: the labels as returned from bulk()
+                show_link: render references as links, should
+                           be the same as used with bulk()
         """
 
         show_link = show_link and self.show_link
@@ -765,7 +776,8 @@ def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)
 
-        @param r: the CRUDRequest
+        Args:
+            the CRUDRequest
     """
 
     settings = current.deployment_settings
@@ -784,9 +796,11 @@ def notify_direct_offer(record_id):
     """
         Send notification to activity manager about a direct offer
 
-        @param record_id: the direct offer record ID
+        Args:
+            record_id: the direct offer record ID
 
-        @returns: error message if failed, otherwise None
+        Returns:
+            error message if failed, otherwise None
     """
 
     T = current.T

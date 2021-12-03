@@ -30,7 +30,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from .auth import *
+from .aaa import *
 from .controller import *
 from .errors import *
 from .filters import *

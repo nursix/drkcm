@@ -1,4 +1,8 @@
-# -*- coding: utf-8 -*-
+"""
+    Notification functions for RLP
+
+    License: MIT
+"""
 
 import json
 import re
@@ -17,8 +21,9 @@ def formatmap(template, mapping):
     """
         Helper to replace placeholders in template using mapping
 
-        @param: template, a string containing placeholders of the format {name}
-        @param: mapping, a dict mapping placeholders to values
+        Args:
+            template, a string containing placeholders of the format {name}
+            mapping, a dict mapping placeholders to values
     """
     def repl(match):
         key = match.group(1)
@@ -26,17 +31,16 @@ def formatmap(template, mapping):
     return PLACEHOLDER.sub(repl, template)
 
 # =============================================================================
-class DeploymentNotifications(object):
+class DeploymentNotifications:
     """
         Helper class to send deployment approval notifications
     """
 
     def __init__(self, delegation_id, sender=None):
         """
-            Constructor
-
-            @param delegation_id: the hrm_delegation record ID
-            @param sender: the sender type
+            Args:
+                delegation_id: the hrm_delegation record ID
+                sender: the sender type
         """
 
         self.delegation_id = delegation_id
@@ -58,11 +62,13 @@ class DeploymentNotifications(object):
         """
             Compose subject/message from templates using data
 
-            @param templates: a tuple of string templates (subject, message),
-                              or the name of the template-pair, e.g. "Volunteer"
-            @param data: a dict of data to substitute placeholders in the templates
+            Args:
+                templates: a tuple of string templates (subject, message),
+                           or the name of the template-pair, e.g. "Volunteer"
+                data: a dict of data to substitute placeholders in the templates
 
-            @returns: tuple (subject, message), or None if disabled
+            Returns:
+                tuple (subject, message), or None if disabled
 
             Placeholders that are substituted (if data are available):
                 {system}..........................System Name
@@ -115,9 +121,11 @@ class DeploymentNotifications(object):
         """
             Get message templates
 
-            @param name: the name of the template-pair, e.g. "Volunteer"
+            Args:
+                name: the name of the template-pair, e.g. "Volunteer"
 
-            @returns: tuple (subject_template, message_template), or None
+            Returns:
+                tuple (subject_template, message_template), or None
         """
 
         db = current.db
@@ -168,7 +176,8 @@ class DeploymentNotifications(object):
         """
             Lookup data to pass into template
 
-            @returns: the data as dict
+            Returns:
+                the data as dict
         """
 
         db = current.db
@@ -358,10 +367,12 @@ class DeploymentNotifications(object):
         """
             Look up contact number/address for a PE
 
-            @param pe_id: the PE_ID
-            @param contact_method: the contact method
+            Args:
+                pe_id: the PE_ID
+                contact_method: the contact method
 
-            @returns: the contact/number address, or None if not found
+            Returns:
+                the contact/number address, or None if not found
         """
 
         db = current.db
@@ -452,8 +463,9 @@ class DeploymentNotifications(object):
         """
             Produce the notification emails as JSON-serializable dict
 
-            @returns: a dict of dicts of the structure:
-                         {recipient_type: {email, subject, message}}
+            Returns:
+                a dict of dicts of the structure:
+                    {recipient_type: {email, subject, message}}
         """
 
         data = self.data()
@@ -507,10 +519,11 @@ class DeploymentNotifications(object):
             Save a notification in the message journal of the
             delegation.
 
-            @param recipient: the recipient name or email
-            @param subject: the message subject
-            @param message: the message text
-            @param status: the status of the message SENT|FAILED
+            Args:
+                recipient: the recipient name or email
+                subject: the message subject
+                message: the message text
+                status: the status of the message SENT|FAILED
         """
 
         s3db = current.s3db
@@ -534,8 +547,9 @@ class InlineNotificationsData(CRUDMethod):
         """
             Entry point for REST interface.
 
-            @param r: the CRUDRequest instance
-            @param attr: controller attributes
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
         """
 
         response = current.response
@@ -585,8 +599,11 @@ class InlineNotifications(S3SQLSubForm):
         """
             Method to resolve this form element against the calling resource.
 
-            @param resource: the resource
-            @return: a tuple (self, None, Field instance)
+            Args:
+                resource: the resource
+
+            Returns:
+                a tuple (self, None, Field instance)
         """
 
         # Check permission
@@ -623,7 +640,8 @@ class InlineNotifications(S3SQLSubForm):
         """
             Produce a unique prefix for elements in this subform
 
-            @returns: the prefix as string
+            Returns:
+                the prefix as string
         """
 
         return "%s_%s" % (self.alias, self.selector)
@@ -635,11 +653,13 @@ class InlineNotifications(S3SQLSubForm):
             method will be called by the form renderer to populate the
             form for an existing record.
 
-            @param resource: the resource the record belongs to
-            @param record_id: the record ID
+            Args:
+                resource: the resource the record belongs to
+                record_id: the record ID
 
-            @return: the value for the input field that corresponds
-                     to the specified record.
+            Returns:
+                the value for the input field that corresponds
+                to the specified record.
         """
 
         return {"delegationID": record_id} if record_id else {}
@@ -650,11 +670,14 @@ class InlineNotifications(S3SQLSubForm):
             Validator method, converts the JSON returned from the input
             field into a Python object.
 
-            @param value: the JSON from the input field.
-            @param record_id: usused (for API compatibility with validators)
-            @return: tuple of (value, error), where value is the converted
-                      JSON, and error the error message if the decoding
-                      fails, otherwise None
+            Args:
+                value: the JSON from the input field.
+                record_id: usused (for API compatibility with validators)
+
+            Returns:
+                tuple of (value, error), where value is the converted
+                JSON, and error the error message if the decoding
+                fails, otherwise None
         """
 
         if isinstance(value, str):
@@ -678,10 +701,13 @@ class InlineNotifications(S3SQLSubForm):
             Widget renderer for the input field; to be set as widget=self
             for the field returned by the resolve()-method.
 
-            @param field: the input field
-            @param value: the value to populate the widget
-            @param attributes: attributes for the widget
-            @return: the widget for this form element as HTML helper
+            Args:
+                field: the input field
+                value: the value to populate the widget
+                attributes: attributes for the widget
+
+            Returns:
+                the widget for this form element as HTML helper
         """
 
         T = current.T
@@ -804,9 +830,12 @@ class InlineNotifications(S3SQLSubForm):
         """
             Read-only representation of this form element.
 
-            @param value: the value as returned from extract()
-            @return: the read-only representation of this element as
-                     string or HTML helper
+            Args:
+                value: the value as returned from extract()
+
+            Returns:
+                the read-only representation of this element as
+                string or HTML helper
         """
 
         return "-"
@@ -819,11 +848,13 @@ class InlineNotifications(S3SQLSubForm):
             form has been accepted, where the master record ID will
             be provided.
 
-            @param form: the form
-            @param master_id: the master record ID
-            @param format: the data format extension
+            Args:
+                form: the form
+                master_id: the master record ID
+                format: the data format extension
 
-            @return: True on success, False on error
+            Returns:
+                True on success, False on error
         """
 
         form_vars = form.vars
@@ -946,9 +977,10 @@ class InlineNotifications(S3SQLSubForm):
         """
             Widget to edit and preview a notification subject line
 
-            @param field: the Field
-            @param value: the current field value
-            @param attr: DOM attributes for the widget
+            Args:
+                field: the Field
+                value: the current field value
+                attr: DOM attributes for the widget
         """
 
         widget_id = attr.get("_id")
@@ -975,9 +1007,10 @@ class InlineNotifications(S3SQLSubForm):
         """
             Widget to edit and preview a notification message body
 
-            @param field: the Field
-            @param value: the current field value
-            @param attr: DOM attributes for the widget
+            Args:
+                field: the Field
+                value: the current field value
+                attr: DOM attributes for the widget
         """
 
         widget_id = attr.get("_id")
@@ -1005,8 +1038,9 @@ class InlineNotifications(S3SQLSubForm):
             Helper function to inject static JS and instantiate
             the foodRegistration widget
 
-            @param widget_id: the node ID where to instantiate the widget
-            @param options: dict of widget options (JSON-serializable)
+            Args:
+                widget_id: the node ID where to instantiate the widget
+                options: dict of widget options (JSON-serializable)
         """
 
         s3 = current.response.s3

@@ -1,5 +1,5 @@
 """
-    CRUD Access Methods
+    CRUD Methods
 
     Copyright: 2009-2021 (c) Sahana Software Foundation
 
@@ -36,19 +36,9 @@ from gluon.storage import Storage
 
 # =============================================================================
 class CRUDMethod:
-    """
-        CRUD Access Method
-
-        @note: instances of subclasses don't have any of the instance
-               attributes available until they actually get invoked
-               from a request - i.e. apply_method() should never be
-               called directly.
-    """
+    """ CRUD Access Method """
 
     def __init__(self):
-        """
-            Constructor
-        """
 
         self.request = None
         self.method = None
@@ -70,14 +60,26 @@ class CRUDMethod:
     # -------------------------------------------------------------------------
     def __call__(self, r, method=None, widget_id=None, **attr):
         """
-            Entry point for the REST interface
+            Entry point for the CRUD controller
 
-            @param r: the CRUDRequest
-            @param method: the method established by the REST interface
-            @param widget_id: widget ID
-            @param attr: dict of parameters for the method handler
+            Args:
+                r: the CRUDRequest
+                method: the method established by the CRUD controller
+                widget_id: widget ID
+                attr: dict of parameters for the method handler
 
-            @return: output object to send to the view
+            Keyword Args:
+                hide_filter: whether to hide filter forms
+                    - None  = show filters on master, hide for components
+                    - False = show all filters (on all tabs)
+                    - True  = hide all filters (on all tabs)
+                    - {alias=setting} = setting per component,
+                                        alias None means master resource,
+                                        alias "_default" to specify an
+                                        alternative default
+
+            Returns:
+                output object to send to the view
         """
 
         # Environment of the request
@@ -88,10 +90,7 @@ class CRUDMethod:
         self.download_url = response.s3.download_url
 
         # Override request method
-        if method is not None:
-            self.method = method
-        else:
-            self.method = r.method
+        self.method = method if method else r.method
 
         # Find the target resource and record
         if r.component:
@@ -122,24 +121,7 @@ class CRUDMethod:
         self.table = resource.table
         self.resource = resource
 
-        if self.method == "_init":
-            # Just init, don't execute
-            return None
-
         if r.interactive:
-            # hide_filter policy:
-            #
-            #   None            show filters on master,
-            #                   hide for components (default)
-            #   False           show all filters (on all tabs)
-            #   True            hide all filters (on all tabs)
-            #
-            #   dict(alias=setting)     setting per component, alias
-            #                           None means master resource,
-            #                           use special alias _default
-            #                           to specify an alternative
-            #                           default
-            #
             hide_filter = attr.get("hide_filter")
             if isinstance(hide_filter, dict):
                 component_name = r.component_name
@@ -158,8 +140,8 @@ class CRUDMethod:
         # Apply method
         if widget_id and hasattr(self, "widget"):
             output = self.widget(r,
-                                 method=self.method,
-                                 widget_id=widget_id,
+                                 method = self.method,
+                                 widget_id = widget_id,
                                  **attr)
         else:
             output = self.apply_method(r, **attr)
@@ -185,10 +167,12 @@ class CRUDMethod:
             Stub, to be implemented in subclass. This method is used
             to get the results as a standalone page.
 
-            @param r: the CRUDRequest
-            @param attr: dictionary of parameters for the method handler
+            Args:
+                r: the CRUDRequest
+                attr: dictionary of parameters for the method handler
 
-            @return: output object to send to the view
+            Returns:
+                output object to send to the view
         """
 
         output = {}
@@ -200,8 +184,17 @@ class CRUDMethod:
             Stub, to be implemented in subclass. This method is used
             by other method handlers to embed this method as widget.
 
-            @note:
+            Args:
+                r: the CRUDRequest
+                method: the URL method
+                widget_id: the widget ID
+                visible: whether the widget is initially visible
+                attr: dictionary of parameters for the method handler
 
+            Returns:
+                output, see below
+
+            Notes:
                 For "html" format, the widget method must return an XML
                 component that can be embedded in a DIV. If a dict is
                 returned, it will be rendered against the view template
@@ -227,14 +220,6 @@ class CRUDMethod:
                 receive its data layer immediately. Widgets can ignore this
                 parameter if delayed loading of the data layer is not
                 all([possible, useful, supported]).
-
-            @param r: the CRUDRequest
-            @param method: the URL method
-            @param widget_id: the widget ID
-            @param visible: whether the widget is initially visible
-            @param attr: dictionary of parameters for the method handler
-
-            @return: output
         """
 
         return None
@@ -246,8 +231,12 @@ class CRUDMethod:
         """
             Check permission for the requested resource
 
-            @param method: method to check, defaults to the actually
-                           requested method
+            Args:
+                method: method to check, defaults to the actually
+                        requested method
+
+            Returns:
+                bool: whether the action is allowed for the target resource
         """
 
         auth = current.auth
@@ -257,9 +246,6 @@ class CRUDMethod:
 
         if not method:
             method = self.method
-        if method in ("list", "datatable", "datalist"):
-            # Rest handled in S3Permission.METHODS
-            method = "read"
 
         if r.component is None:
             table = r.table
@@ -291,7 +277,11 @@ class CRUDMethod:
         """
             Get the ID of the target record of a CRUDRequest
 
-            @param r: the CRUDRequest
+            Args:
+                r: the CRUDRequest
+
+            Returns:
+                the target record ID
         """
 
         master_id = r.id
@@ -324,24 +314,17 @@ class CRUDMethod:
         return None
 
     # -------------------------------------------------------------------------
-    def _config(self, key, default=None):
-        """
-            Get a configuration setting of the current table
-
-            @param key: the setting key
-            @param default: the default value
-        """
-
-        return current.s3db.get_config(self.tablename, key, default)
-
-    # -------------------------------------------------------------------------
     @staticmethod
     def _view(r, default):
         """
             Get the path to the view template
 
-            @param r: the CRUDRequest
-            @param default: name of the default view template
+            Args:
+                r: the CRUDRequest
+                default: name of the default view template
+
+            Returns:
+                path to view
         """
 
         folder = r.folder
@@ -405,12 +388,14 @@ class CRUDMethod:
         """
             Add additional view variables (invokes all callables)
 
-            @param output: the output dict
-            @param r: the CRUDRequest
-            @param attr: the view variables (e.g. 'rheader')
+            Args:
+                output: the output dict
+                r: the CRUDRequest
+                attr: the view variables (e.g. 'rheader')
 
-            @note: overload this method in subclasses if you don't want
-                   additional view variables to be added automatically
+            Note:
+                Overload this method in subclasses if you don't want
+                additional view variables to be added automatically
         """
 
         if r.interactive and isinstance(output, dict):
@@ -444,7 +429,11 @@ class CRUDMethod:
         """
             Remove all filters from URL vars
 
-            @param get_vars: the URL vars as dict
+            Args:
+                get_vars: the URL vars as dict
+
+            Returns:
+                the filtered URL vars (Storage)
         """
 
         regex_filter = re.compile(r".+\..+|.*\(.+\).*")
@@ -458,10 +447,14 @@ class CRUDMethod:
         """
             Extract page limits (start and limit) from GET vars
 
-            @param get_vars: the GET vars
-            @param default_limit: the default limit, explicit value or:
+            Args:
+                get_vars: the GET vars
+                default_limit: the default limit, explicit value or:
                                   0 => response.s3.ROWSPERPAGE
                                   None => no default limit
+
+            Returns:
+                a tuple (start, limit)
         """
 
         start = get_vars.get("start", None)
@@ -493,23 +486,6 @@ class CRUDMethod:
             limit = default_limit
 
         return start, limit
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def crud_string(tablename, name):
-        """
-            Get a CRUD info string for interactive pages
-
-            @param tablename: the table name
-            @param name: the name of the CRUD string
-        """
-
-        crud_strings = current.response.s3.crud_strings
-        # CRUD strings for this table
-        _crud_strings = crud_strings.get(tablename, crud_strings)
-        return _crud_strings.get(name,
-                                 # Default fallback
-                                 crud_strings.get(name))
 
 # END =========================================================================
 

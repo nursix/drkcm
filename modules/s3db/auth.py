@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Auth Model
 
-""" Sahana Eden Auth Model
-
-    @copyright: 2009-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2009-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -31,13 +29,10 @@ __all__ = ("AuthDomainApproverModel",
            "AuthUserOptionsModel",
            "AuthConsentModel",
            "AuthMasterKeyModel",
-           "auth_Consent",
+           "AuthUserTempModel",
            "auth_user_options_get_osm",
            "auth_UserRepresent",
-           "AuthUserTempModel",
            )
-
-import datetime
 
 from gluon import *
 from gluon.storage import Storage
@@ -313,6 +308,7 @@ class AuthConsentModel(DataModel):
                      *s3_meta_fields())
 
         # Read-only hash fields (enabled in controller if permissible)
+        # NB order matters! (for verification hashes)
         hash_fields = ("name", "description")
 
         # List fields
@@ -342,7 +338,7 @@ class AuthConsentModel(DataModel):
             msg_record_modified = T("Consent Option updated"),
             msg_record_deleted = T("Consent Option deleted"),
             msg_list_empty = T("No Consent Options currently defined"),
-        )
+            )
 
         # ---------------------------------------------------------------------
         # Consent Question Responses
@@ -353,21 +349,49 @@ class AuthConsentModel(DataModel):
                      Field("vsign"),
                      Field("vhash", "text"),
                      Field("option_id", "reference auth_consent_option",
+                           label = T("Consent Question"),
                            ondelete = "RESTRICT",
-                           represent = S3Represent(lookup="auth_consent_option"),
+                           represent = S3Represent(lookup="auth_consent_option",
+                                                   fields = ["name", "valid_from"],
+                                                   labels = "%(name)s (%(valid_from)s)",
+                                                   ),
                            ),
                      Field("consenting", "boolean",
+                           label = T("Consenting"),
                            default = False,
+                           represent = s3_yes_no_represent,
                            ),
                      s3_date(default = "now",
                              ),
-                     s3_date("expires_on"),
+                     s3_date("expires_on",
+                             label = T("Expires on"),
+                             ),
                      *s3_meta_fields())
+
+        # List Fields
+        list_fields = ["person_id",
+                       "option_id",
+                       "consenting",
+                       "date",
+                       "expires_on",
+                       ]
 
         # Table Configuration
         self.configure(tablename,
+                       list_fields = list_fields,
                        onaccept = self.consent_onaccept,
+                       insertable = False,
+                       editable = False,
+                       deletable = False,
                        )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            title_display = T("Consent Details"),
+            title_list = T("Consent##plural"),
+            label_list_button = T("List Consent"),
+            msg_list_empty = T("No Consent currently registered"),
+            )
 
         # ---------------------------------------------------------------------
         # Consent Assertion
@@ -552,772 +576,6 @@ class AuthMasterKeyModel(DataModel):
                 }
 
 # =============================================================================
-class auth_Consent(object):
-    """ Helper class to track consent """
-
-    def __init__(self, processing_types=None):
-        """
-            Constructor
-
-            @param processing_types: the processing types (default: all types
-                                     for which there is a valid consent option)
-        """
-
-        self.processing_types = processing_types
-
-    # -------------------------------------------------------------------------
-    def widget(self, field, value, **attributes):
-        """
-            Produce a form widget to request consent, for embedding of consent
-            questions in other forms
-
-            @param field: the Field (to hold the response)
-            @param value: the current or default value
-            @param attributes: HTML attributes for the widget
-        """
-
-        T = current.T
-        fieldname = field.name
-
-        # Consent options to ask
-        opts = self.extract()
-
-        # Current consent status (from form)
-        selected = self.parse(value)
-        value = {}
-
-        # Widget ID
-        widget_id = attributes.get("_id")
-        if not widget_id:
-            widget_id = "%s-consent" % fieldname
-
-        # The widget
-        widget = DIV(_id = widget_id,
-                     _class = "consent-widget",
-                     )
-
-        # Construct the consent options
-        has_mandatory_opts = False
-        for code, spec in opts.items():
-
-            # Title
-            title = spec.get("name")
-            if not title:
-                continue
-
-            # Current selected-status of this option
-            status = selected.get(code)
-            v = status[1] if status is not None else spec.get("default", False)
-
-            # The question for this option
-            question = LABEL(INPUT(_type="checkbox",
-                                   _class = "consent-checkbox",
-                                   value = v,
-                                   data = {"code": code},
-                                   ),
-                             SPAN(title,
-                                 _class = "consent-title",
-                                 ),
-                             _class = "consent-question",
-                             )
-
-            if spec.get("mandatory"):
-                has_mandatory_opts = True
-                question.append(SPAN("*", _class="req"))
-
-            # The option
-            option = DIV(question, _class="consent-option")
-
-            # Optional explanation
-            description = spec.get("description")
-            if description:
-                option.append(P(XML(description), _class="consent-explanation"))
-
-            # Append to widget
-            widget.append(option)
-
-            # Add selected-status to hidden input
-            # JSON format: {"code": [id, consenting]}
-            value[code] = [spec.get("id"), v]
-
-        # Mandatory options advice
-        if has_mandatory_opts:
-            widget.append(P("* %s" % T("Consent required"), _class="req_key"))
-
-        # The hidden input
-        hidden_input = INPUT(_type = "hidden",
-                             _name = attributes.get("_name", fieldname),
-                             _id = "%s-response" % widget_id,
-                             _value = json.dumps(value),
-                             requires = self.validate,
-                             )
-        widget.append(hidden_input)
-
-        # Inject client-side script and instantiate UI widget
-        self.inject_script(widget_id, {})
-
-        return widget
-
-    # -------------------------------------------------------------------------
-    def extract(self):
-        """ Extract the current consent options """
-
-        db = current.db
-        s3db = current.s3db
-
-        ttable = s3db.auth_processing_type
-        otable = s3db.auth_consent_option
-
-        left = ttable.on((ttable.id == otable.type_id) & \
-                         (ttable.deleted == False))
-        today = current.request.utcnow.date()
-        query = (otable.valid_from <= today) & \
-                (otable.obsolete == False) & \
-                (otable.deleted == False)
-        if self.processing_types:
-            query = (ttable.code.belongs(self.processing_types)) & query
-
-        rows = db(query).select(otable.id,
-                                ttable.code,
-                                otable.name,
-                                otable.description,
-                                otable.opt_out,
-                                otable.mandatory,
-                                left = left,
-                                orderby = (~otable.valid_from, ~otable.created_on),
-                                )
-        options = {}
-        for row in rows:
-            code = row.auth_processing_type.code
-            if code in options:
-                continue
-            option = row.auth_consent_option
-            options[code] = {"id": option.id,
-                             "name": option.name,
-                             "description": option.description,
-                             "default": True if option.opt_out else False,
-                             "mandatory": option.mandatory,
-                             }
-        return options
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def parse(cls, value):
-        """
-            Parse the JSON string returned by the widget
-
-            @param value: the JSON string
-            @returns: dict with consent question responses,
-                      format {code: [id, consenting], ...}
-        """
-
-        parsed = {}
-        if value is not None:
-            try:
-                parsed = json.loads(value)
-            except JSONERRORS:
-                pass
-        return parsed
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def validate(cls, value, record_id=None):
-        """
-            Validate a consent response (for use with Field.requires)
-
-            @param value: the value returned from the widget
-        """
-
-        T = current.T
-        invalid = T("Invalid value")
-
-        error = None
-        parsed = cls.parse(value)
-        if not parsed or not isinstance(parsed, dict):
-            error = invalid
-        else:
-            try:
-                option_ids = {v[0] for v in parsed.values()}
-            except (TypeError, IndexError):
-                error = invalid
-            else:
-                # Retrieve the relevant consent options
-                s3db = current.s3db
-                ttable = s3db.auth_processing_type
-                otable = s3db.auth_consent_option
-                join = ttable.on(ttable.id == otable.type_id)
-                query = otable.id.belongs(option_ids)
-                rows = current.db(query).select(otable.id,
-                                                otable.obsolete,
-                                                otable.mandatory,
-                                                ttable.code,
-                                                join = join,
-                                                )
-                options = {}
-                for row in rows:
-                    processing = row.auth_processing_type
-                    option = row.auth_consent_option
-                    options[option.id] = (processing.code, option.obsolete, option.mandatory)
-
-                # Validate each response
-                for code, spec in parsed.items():
-                    option_id, consenting = spec
-                    option = options.get(option_id)
-
-                    if not option or option[0] != code:
-                        # Option does not exist or does not match the code
-                        error = invalid
-                        break
-                    if option[1]:
-                        # Option is obsolete
-                        error = T("Obsolete option: %(code)s") % {"code": code}
-                        break
-                    if option[2] and not consenting:
-                        # Required consent has not been given
-                        error = T("Required consent not given")
-                        break
-
-        return (None, error) if error else (value, None)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def inject_script(widget_id, options):
-        """
-            Inject static JS and instantiate client-side UI widget
-
-            @param widget_id: the widget ID
-            @param options: JSON-serializable dict with UI widget options
-        """
-
-        request = current.request
-        s3 = current.response.s3
-
-        # Static script
-        if s3.debug:
-            script = "/%s/static/scripts/S3/s3.ui.consent.js" % \
-                     request.application
-        else:
-            script = "/%s/static/scripts/S3/s3.ui.consent.min.js" % \
-                     request.application
-        scripts = s3.scripts
-        if script not in scripts:
-            scripts.append(script)
-
-        # Widget options
-        opts = {}
-        if options:
-            opts.update(options)
-
-        # Widget instantiation
-        script = '''$('#%(widget_id)s').consentQuestion(%(options)s)''' % \
-                 {"widget_id": widget_id,
-                  "options": json.dumps(opts),
-                  }
-        jquery_ready = s3.jquery_ready
-        if script not in jquery_ready:
-            jquery_ready.append(script)
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def track(cls, person_id, value, timestmp=None, allow_obsolete=True):
-        """
-            Record response to consent question
-
-            @param person_id: the person consenting
-            @param value: the value returned from the widget
-            @param timestmp: the date/time when the consent was given
-            @param allow_obsolete: allow tracking of obsolete consent options
-        """
-
-        db = current.db
-        s3db = current.s3db
-        request = current.request
-
-        today = timestmp.date() if timestmp else request.utcnow.date()
-        vsign = request.env.remote_addr
-
-        # Consent option hash fields
-        hash_fields = s3db.auth_consent_option_hash_fields
-
-        # Parse the value
-        parsed = cls.parse(value)
-
-        # Get all current+valid options matching the codes
-        ttable = s3db.auth_processing_type
-        otable = s3db.auth_consent_option
-
-        option_fields = {"id", "validity_period"} | set(hash_fields)
-        fields = [ttable.code] + [otable[fn] for fn in option_fields]
-
-        join = ttable.on(ttable.id == otable.type_id)
-        query = (ttable.code.belongs(set(parsed.keys()))) & \
-                (otable.deleted == False)
-        if not allow_obsolete:
-            query &= (otable.obsolete == False)
-        rows = db(query).select(join=join, *fields)
-
-        valid_options = {}
-        for row in rows:
-            option = row.auth_consent_option
-            context = {fn: option[fn] for fn in hash_fields}
-            valid_options[option.id] = {"code": row.auth_processing_type.code,
-                                        "hash": cls.get_hash(context),
-                                        "valid_for": option.validity_period,
-                                        }
-
-        ctable = s3db.auth_consent
-        record_ids = []
-        for code, response in parsed.items():
-
-            option_id, consenting = response
-
-            # Verify option_id
-            option = valid_options.get(option_id)
-            if not option or option["code"] != code:
-                raise ValueError("Invalid consent option: %s#%s" % (code, option_id))
-
-            # Generate consent record
-            consent = {"date": today.isoformat(),
-                       "option_id": option_id,
-                       "person_id": person_id,
-                       "vsign": vsign,
-                       "ohash": option["hash"],
-                       "consenting": consenting,
-                       }
-
-            # Store the hash for future verification
-            consent["vhash"] = cls.get_hash(consent)
-
-            # Update data
-            consent["date"] = today
-            valid_for = option["valid_for"]
-            if valid_for:
-                consent["expires_on"] = today + datetime.timedelta(days=valid_for)
-            del consent["ohash"]
-
-            # Create new consent record
-            record_id = ctable.insert(**consent)
-            if record_id:
-                consent["id"] = record_id
-                s3db.onaccept(ctable, consent)
-                record_ids.append(record_id)
-
-        return record_ids
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def register_consent(cls, user_id):
-        """
-            Track consent responses given during user self-registration
-
-            @param user_id: the auth_user ID
-        """
-
-        db = current.db
-        s3db = current.s3db
-
-        ltable = s3db.pr_person_user
-        ptable = s3db.pr_person
-
-        # Look up the person ID
-        join = ptable.on(ptable.pe_id == ltable.pe_id)
-        person = db(ltable.user_id == user_id).select(ptable.id,
-                                                      join = join,
-                                                      limitby = (0, 1),
-                                                      ).first()
-        if person:
-            person_id = person.id
-
-            # Look up the consent response from temp user record
-            ttable = s3db.auth_user_temp
-            row = db(ttable.user_id == user_id).select(ttable.id,
-                                                       ttable.consent,
-                                                       ttable.created_on,
-                                                       limitby = (0, 1),
-                                                       ).first()
-            if row and row.consent:
-                # Track consent
-                cls.track(person_id, row.consent,
-                          timestmp = row.created_on,
-                          )
-
-                # Reset consent response in temp user record
-                row.update_record(consent=None)
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def assert_consent(cls,
-                       context,
-                       code,
-                       value,
-                       person_id = None,
-                       timestmp = None,
-                       allow_obsolete = False,
-                       ):
-        """
-            Assert consent of a non-local entity
-
-            @param context: string specifying the transaction to which
-                            consent was to be obtained
-            @param code: the processing type code
-            @param value: the value returned from the consent widget
-            @param person_id: the person asserting consent (defaults to
-                              the current user)
-            @param timestmp: datetime when consent was obtained (defaults
-                             to current time)
-            @param allow_obsolete: allow recording assertions for obsolete
-                                   consent options
-
-            @raises TypeError for invalid parameter types
-            @raises ValueError for invalid input data
-
-            @returns: the consent assertion record ID
-        """
-
-        if not context:
-            raise ValueError("Context is required")
-        context = str(context)
-
-        now = current.request.utcnow
-        if not timestmp:
-            timestmp = now
-        elif not isinstance(timestmp, datetime.datetime):
-            raise TypeError("Invalid timestmp type, expected datetime but got %s" % type(timestmp))
-        elif timestmp > now:
-            raise ValueError("Future timestmp not permitted")
-
-        if not person_id:
-            person_id = current.auth.s3_logged_in_person()
-        if not person_id:
-            raise ValueError("Must be logged in or specify a person_id")
-
-        # Parse the value and extract the option_id
-        parsed = cls.parse(value)
-        consent = parsed.get(code)
-        if not consent:
-            raise ValueError("Invalid JSON, or no response for processing type found")
-        option_id, response = consent
-
-        # Get all current+valid options matching the codes
-        db = current.db
-        s3db = current.s3db
-
-        ttable = s3db.auth_processing_type
-        otable = s3db.auth_consent_option
-
-        hash_fields = s3db.auth_consent_option_hash_fields
-        option_fields = {"id"} | set(hash_fields)
-        fields = [otable[fn] for fn in option_fields]
-
-        join = ttable.on((ttable.id == otable.type_id) & \
-                         (ttable.code == code))
-        query = (otable.id == option_id) & \
-                (otable.deleted == False)
-        if not allow_obsolete:
-            query &= (otable.obsolete == False)
-        option = db(query).select(*fields,
-                                  join = join,
-                                  limitby = (0, 1),
-                                  ).first()
-        if not option:
-            raise ValueError("Invalid consent option for processing type")
-
-        ohash = cls.get_hash([(fn, option[fn]) for fn in hash_fields])
-        consent = (("person_id", person_id),
-                   ("context", context),
-                   ("date", timestmp.isoformat()),
-                   ("option_id", option.id),
-                   ("consented", bool(response)),
-                   ("ohash", ohash),
-                   )
-        # Generate verification hash
-        vhash = cls.get_hash(consent)
-        consent = dict(consent[:4])
-        consent["vhash"] = vhash
-        consent["date"] = timestmp
-
-        atable = s3db.auth_consent_assertion
-        record_id = atable.insert(**consent)
-        if record_id:
-            consent["id"] = record_id
-            s3db.onaccept(atable, consent)
-
-        return record_id
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def verify(cls, record_id):
-        """
-            Verify a consent record (checks the hash, not expiry)
-
-            @param record_id: the consent record ID
-        """
-
-        db = current.db
-        s3db = current.s3db
-
-        # Consent option hash fields
-        hash_fields = s3db.auth_consent_option_hash_fields
-
-        # Load consent record and referenced option
-        otable = s3db.auth_consent_option
-        ctable = s3db.auth_consent
-
-        join = otable.on(otable.id == ctable.option_id)
-        query = (ctable.id == record_id) & (ctable.deleted == False)
-
-        fields = [otable.id,
-                  ctable.date,
-                  ctable.person_id,
-                  ctable.option_id,
-                  ctable.vsign,
-                  ctable.vhash,
-                  ctable.consenting,
-                  ] + [otable[fn] for fn in hash_fields]
-
-        row = db(query).select(join=join, limitby=(0, 1), *fields).first()
-        if not row:
-            return False
-
-        option = row.auth_consent_option
-        context = {fn: option[fn] for fn in hash_fields}
-
-        consent = row.auth_consent
-        verify = {"date": consent.date.isoformat(),
-                  "option_id": consent.option_id,
-                  "person_id": consent.person_id,
-                  "vsign": consent.vsign,
-                  "ohash": cls.get_hash(context),
-                  "consenting": consent.consenting,
-                  }
-
-        return consent.vhash == cls.get_hash(verify)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_hash(data):
-        """
-            Produce a hash for JSON-serializable data
-
-            @param data: the JSON-serializable data (normally a dict)
-
-            @returns: the hash as string
-        """
-
-        inp = json.dumps(data, separators=SEPARATORS)
-
-        crypt = CRYPT(key = current.deployment_settings.hmac_key,
-                      digest_alg = "sha512",
-                      salt = False,
-                      )
-        return str(crypt(inp)[0])
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_consent_options(code):
-        """
-            Get all currently valid consent options for a processing type
-
-            @param code: the processing type code
-
-            @returns: set of record IDs
-        """
-
-        s3db = current.s3db
-
-        today = current.request.utcnow.date()
-
-        ttable = s3db.auth_processing_type
-        otable = s3db.auth_consent_option
-        join = ttable.on((ttable.id == otable.type_id) & \
-                         (ttable.deleted == False))
-        query = (ttable.code == code) & \
-                (otable.valid_from <= today) & \
-                (otable.obsolete == False) & \
-                (otable.deleted == False)
-        rows = current.db(query).select(otable.id, join=join)
-
-        return set(row.id for row in rows)
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def has_consented(cls, person_id, code):
-        """
-            Check valid+current consent for a particular processing type
-
-            @param person_id: the person to check consent for
-            @param code: the data processing type code
-
-            @returns: True|False whether or not the person has consented
-                      to this type of data processing and consent has not
-                      expired
-
-            @example:
-                consent = s3db.auth_Consent()
-                if consent.has_consented(auth.s3_logged_in_person(), "PIDSHARE"):
-                    # perform PIDSHARE...
-        """
-
-        # Get all current consent options for the code
-        option_ids = cls.get_consent_options(code)
-        if not option_ids:
-            return False
-
-        # Check if there is a positive consent record for this person
-        # for any of these consent options that has not expired
-        today = current.request.utcnow.date()
-
-        ctable = current.s3db.auth_consent
-        query = (ctable.person_id == person_id) & \
-                (ctable.option_id.belongs(option_ids)) & \
-                ((ctable.expires_on == None) | (ctable.expires_on > today)) & \
-                (ctable.consenting == True) & \
-                (ctable.deleted == False)
-        row = current.db(query).select(ctable.id, limitby = (0, 1)).first()
-
-        return row is not None
-
-    # -------------------------------------------------------------------------
-    def pending_responses(self, person_id):
-        """
-            Identify all processing types for which a person has not
-            responded to the updated consent questions, or where their
-            previously given consent has expired
-
-            @param person_id: the person ID
-            @returns: list of processing type codes
-        """
-
-        # Get all current consent options for the given processing types
-        options = self.extract()
-        option_ids = {spec["id"] for spec in options.values()}
-
-        # Find all responses of this person to these options
-        today = current.request.utcnow.date()
-        ctable = current.s3db.auth_consent
-        query = (ctable.person_id == person_id) & \
-                (ctable.option_id.belongs(option_ids)) & \
-                ((ctable.consenting == False) | \
-                 (ctable.expires_on == None) | \
-                 (ctable.expires_on > today)) & \
-                (ctable.deleted == False)
-        rows = current.db(query).select(ctable.option_id)
-
-        # Identify any pending responses
-        responded = {row.option_id for row in rows}
-        pending = []
-        for code, spec in options.items():
-            if spec["id"] not in responded:
-                pending.append(code)
-
-        return pending
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def consent_query(cls, table, code, field=None):
-        """
-            Get a query for table for records where the person identified
-            by field has consented to a certain type of data processing.
-
-            - useful to limit background processing that requires consent
-
-            @param table: the table to query
-            @param code: the processing type code to check
-            @param field: the field in the table referencing pr_person.id
-
-            @returns: Query
-
-            @example:
-                consent = s3db.auth_Consent()
-                query = consent.consent_query(table, "PIDSHARE") & (table.deleted == False)
-                # Perform PIDSHARE with query result...
-                rows = db(query).select(*fields)
-        """
-
-        if field is None:
-            if original_tablename(table) == "pr_person":
-                field = table.id
-            else:
-                field = table.person_id
-        elif isinstance(field, str):
-            field = table[field]
-
-        option_ids = cls.get_consent_options(code)
-        today = current.request.utcnow.date()
-
-        ctable = current.s3db.auth_consent
-        query = (ctable.person_id == field) & \
-                (ctable.option_id.belongs(option_ids)) & \
-                ((ctable.expires_on == None) | (ctable.expires_on > today)) & \
-                (ctable.consenting == True) & \
-                (ctable.deleted == False)
-
-        return query
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def consent_filter(cls, code, selector=None):
-        """
-            Filter resource for records where the person identified by
-            selector has consented to a certain type of data processing.
-
-            - useful to limit REST methods that require consent
-
-            @param code: the processing type code to check
-            @param selector: a field selector (string) that references
-                             pr_person.id; if not specified pr_person is
-                             assumed to be the master resource
-
-            @returns: S3ResourceQuery
-
-            @example:
-                consent = s3db.auth_Consent
-                resource.add_filter(consent.consent_filter("PIDSHARE", "~.person_id"))
-
-            NB only one consent filter can be used for the same resource;
-               if multiple consent options must be checked and/or multiple
-               person_id references apply independently, then either aliased
-               auth_consent components can be used to construct a filter, or
-               the query must be split (the latter typically performs better).
-               Ideally, however, the consent decision for a single operation
-               should not be complex or second-guessing.
-        """
-
-        option_ids = cls.get_consent_options(code)
-        today = current.request.utcnow.date()
-
-        # Construct sub-selectors
-        if selector and selector not in ("id", "~.id"):
-            consent = "%s$person_id:auth_consent" % selector
-        else:
-            # Assume pr_person is master
-            consent = "person_id:auth_consent"
-        option_id = FS("%s.option_id" % consent)
-        expires_on = FS("%s.expires_on" % consent)
-        consenting = FS("%s.consenting" % consent)
-
-        query = (option_id.belongs(option_ids)) & \
-                ((expires_on == None) | (expires_on > today)) & \
-                (consenting == True)
-
-        return query
-
-# =============================================================================
-def auth_user_options_get_osm(pe_id):
-    """
-        Gets the OSM-related options for a pe_id
-    """
-
-    db = current.db
-    table = current.s3db.auth_user_options
-    query = (table.pe_id == pe_id)
-    record = db(query).select(limitby=(0, 1)).first()
-    if record:
-        return record.osm_oauth_consumer_key, record.osm_oauth_consumer_secret
-    else:
-        return None
-
-# =============================================================================
 class AuthUserTempModel(DataModel):
     """
         Model to store complementary data for pending user accounts
@@ -1358,6 +616,20 @@ class AuthUserTempModel(DataModel):
         #
         return None
 
+# =============================================================================
+def auth_user_options_get_osm(pe_id):
+    """
+        Gets the OSM-related options for a pe_id
+    """
+
+    db = current.db
+    table = current.s3db.auth_user_options
+    query = (table.pe_id == pe_id)
+    record = db(query).select(limitby=(0, 1)).first()
+    if record:
+        return record.osm_oauth_consumer_key, record.osm_oauth_consumer_secret
+    else:
+        return None
 
 # =============================================================================
 class auth_UserRepresent(S3Represent):
@@ -1380,24 +652,20 @@ class auth_UserRepresent(S3Represent):
                  show_link = True,
                  ):
         """
-            Constructor
-
-            @param labels: callable to render the name part
-                           (defaults to s3_fullname)
-            @param linkto: a URL (as string) to link representations to,
-                           with "[id]" as placeholder for the key
-                           (defaults see pr_PersonRepresent)
-
-            @param show_name: include name in representation
-            @param show_email: include email address in representation
-            @param show_phone: include phone number in representation
-
-            @param access: access level for contact details,
-                           None = ignore access level
-                           1 = show private only
-                           2 = show public only
-
-            @param show_link: render as HTML hyperlink
+            Args:
+                labels: callable to render the name part
+                        (defaults to s3_fullname)
+                linkto: a URL (as string) to link representations to,
+                        with "[id]" as placeholder for the key
+                        (defaults see pr_PersonRepresent)
+                show_name: include name in representation
+                show_email: include email address in representation
+                show_phone: include phone number in representation
+                access: access level for contact details,
+                            None = ignore access level
+                            1 = show private only
+                            2 = show public only
+                show_link: render as HTML hyperlink
         """
 
         if labels is None:
@@ -1423,7 +691,8 @@ class auth_UserRepresent(S3Represent):
         """
             Represent a row
 
-            @param row: the Row
+            Args:
+                row: the Row
         """
 
         if self.show_name:
@@ -1464,9 +733,10 @@ class auth_UserRepresent(S3Represent):
         """
             Custom rows lookup
 
-            @param key: the key Field
-            @param values: the values
-            @param fields: unused (retained for API compatibility)
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
         """
 
         # Lookup pe_ids and name fields

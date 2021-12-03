@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
+"""
+    Data Collection Models
+    - a front-end UI to manage Assessments which uses the
+      Dynamic Tables back-end
 
-""" Sahana Eden Data Collection Models
-    - a front-end UI to manage Assessments which uses the Dynamic Tables
-      back-end
-
-    @copyright: 2014-2021 (c) Sahana Software Foundation
-    @license: MIT
+    Copyright: 2014-2021 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1541,10 +1539,11 @@ class dc_TargetReport(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
-            Entry point for REST API
+            Applies the method (controller entry point).
 
-            @param r: the CRUDRequest
-            @param attr: controller arguments
+            Args:
+                r: the CRUDRequest
+                attr: controller arguments
         """
 
         if r.name == "target":
