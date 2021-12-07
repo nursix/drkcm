@@ -15,7 +15,9 @@
 <div class='row'>
 {{pass}}
  <div class='small-12 columns'>
-  {{include "key.html"}}
+  <div class='form-info'>
+   {{include "key.html"}}
+  </div>
   <div class='form-container'>
    {{try:}}{{=form}}{{except:}}{{pass}}
   </div>

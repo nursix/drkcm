@@ -989,7 +989,7 @@ def vol_service_record(r, **attr):
 
         inner_table = TABLE(TR(TH(vol_name)),
                             TR(TD(org_name)))
-        if current.response.s3.rtl:
+        if current.response.s3.direction == "rtl":
             # Right-to-Left
             person_details = TABLE(TR(TD(inner_table),
                                       TD(logo),
@@ -1396,7 +1396,7 @@ def vol_volunteer_controller():
                                )
 
         if r.interactive:
-            if s3.rtl:
+            if s3.direction == "rtl":
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
                 f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
@@ -1643,7 +1643,7 @@ def vol_person_controller():
         if r.representation == "s3json":
             current.xml.show_ids = True
         elif r.interactive and method != "import":
-            if s3.rtl:
+            if s3.direction == "rtl":
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
                 f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value

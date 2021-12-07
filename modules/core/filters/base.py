@@ -591,7 +591,7 @@ class S3RangeFilter(S3FilterWidget):
 
         input_class = self._input_class
         input_labels = self.input_labels
-        input_elements = DIV()
+        input_elements = DIV(_class="range-filter")
         ie_append = input_elements.append
 
         _id = attr["_id"]

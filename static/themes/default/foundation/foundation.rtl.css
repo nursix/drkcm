@@ -7879,13 +7879,7 @@ th.hide-for-touch {
     display: table-cell !important;
   }
 }
-/* line 12, ../scss/foundation.rtl.scss */
-.top-bar-section .right li .dropdown {
-  left: auto;
-  right: 0;
-}
-/* line 16, ../scss/foundation.rtl.scss */
-.top-bar-section .left li .dropdown {
-  left: 0;
-  right: auto;
+/* line 10, ../scss/foundation.rtl.scss */
+.top-bar-section ul li > a {
+  padding-right: 0.75rem !important;
 }

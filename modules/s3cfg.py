@@ -2268,7 +2268,7 @@ class S3Config(Storage):
             Render clear-button for calendar inputs just as an icon
             (S3CalendarWidget, requires Foundation + font-awesome)
         """
-        return self.ui.get("calendar_clear_icon", False)
+        return self.ui.get("calendar_clear_icon", True)
 
     # -------------------------------------------------------------------------
     def get_ui_auto_keyvalue(self):

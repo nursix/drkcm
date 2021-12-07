@@ -1000,7 +1000,7 @@ class S3AddPersonWidget(FormWidget):
                 first_name_only = self.first_name_only
                 if first_name_only is None:
                     # Activate by default if using RTL
-                    first_name_only = current.response.s3.rtl
+                    first_name_only = current.response.s3.direction == "rtl"
 
                 if first_name_only:
 

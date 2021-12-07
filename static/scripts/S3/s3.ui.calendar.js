@@ -342,7 +342,11 @@
             // Add trigger button
             if (opts.triggerButton) {
                 var triggerButton = $('<button class="ui-datepicker-trigger" type="button">');
-                el.after(triggerButton);
+                if (this.clearButton) {
+                    this.clearButton.after(triggerButton);
+                } else {
+                    el.after(triggerButton);
+                }
                 this.triggerButton = triggerButton;
             }
 

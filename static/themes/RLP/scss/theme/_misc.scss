@@ -510,5 +510,53 @@ body.rtl {
         font-size: 0.9rem;
     }
 }
+.map-popup {
+    min-width: 20rem;
+    h4 {
+        font-size: 1rem;
+    }
+    .map-popup-details {
+        font-size: 0.8rem;
+        td {
+            padding: 0.1rem 0.3rem 0 0;
+            &.map-popup-label {
+                font-weight: bold;
+            }
+        }
+    }
+}
+.olPopupCloseBox {
+    margin-right: 20px;
+}
+
+.place-repr {
+    .place-name {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .place-info {
+        white-space: pre-line;
+        font-size: 0.8rem;
+    }
+}
+.contact-repr {
+    background-color: #FFF0C1;
+    border: 1px solid #E0E0E0;
+    padding: 0.25rem 0.5rem;
+    .contact-name {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .contact-info {
+        white-space: nowrap;
+        font-size: 0.8rem;
+        .fa {
+            padding-right: 0.4rem;
+        }
+    }
+}
+
 
 // END ========================================================================

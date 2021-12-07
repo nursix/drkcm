@@ -824,7 +824,7 @@ def comment_parse(comment, comments, post_id=None):
         @param: post_id - a reference ID: optional post commented on
     """
 
-    author = B(T("Anonymous"))
+    author = T("Anonymous")
     if comment.created_by:
         utable = s3db.auth_user
         ptable = s3db.pr_person
@@ -845,7 +845,7 @@ def comment_parse(comment, comments, post_id=None):
             import hashlib
             hash = hashlib.md5(email).hexdigest()
             url = "http://www.gravatar.com/%s" % hash
-            author = B(A(username, _href=url, _target="top"))
+            author = A(username, _href=url, _target="top")
     if not post_id and comment.post_id:
         post = "re: %s" % s3db.cms_post[comment.post_id].name
         header = DIV(author, " ", post)
@@ -974,7 +974,7 @@ def posts():
     output = UL(_id="comments")
     import hashlib
     for post in posts:
-        author = B(T("Anonymous"))
+        author = T("Anonymous")
         if post.created_by:
             utable = s3db.auth_user
             ptable = s3db.pr_person
@@ -996,7 +996,7 @@ def posts():
                 email = user.email.strip().lower()
                 hash = hashlib.md5(email.encode("utf-8")).hexdigest()
                 url = "http://www.gravatar.com/%s" % hash
-                author = B(A(username, _href=url, _target="top"))
+                author = A(username, _href=url, _target="top")
         header = H4(post.name)
         if post.avatar:
             avatar = s3base.s3_avatar_represent(post.created_by)

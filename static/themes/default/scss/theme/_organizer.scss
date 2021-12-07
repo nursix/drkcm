@@ -1,0 +1,39 @@
+// ============================================================================
+// Organizer Styles
+// ============================================================================
+// VARIABLES
+
+// -- none --
+
+// ============================================================================
+// STYLES
+
+.s3-organizer-popup {
+    label {
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+    p {
+        font-size: 0.8rem;
+        font-weight: normal;
+        margin-bottom: 0.3rem;
+    }
+    .action-btn {
+        margin-left: 0;
+        margin-right: 0.3rem;
+    }
+}
+.s3-organizer-create {
+    .action-btn {
+        display: block;
+    }
+}
+
+// ---------------------------------------------------------------------------
+/* Full Calendar */
+.fc table,
+.fc table tr {
+    background: transparent;
+}
+
+// END ========================================================================

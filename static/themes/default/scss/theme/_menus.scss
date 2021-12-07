@@ -46,6 +46,15 @@ $side_bar_divider_color: $side_bar_border_color !default;
         color: white;
         padding: 0.5rem;
     }
+    [dir=rtl] & {
+        .logo {
+            padding: 0.625rem 0.7rem 0 0.5rem;
+        }
+        .menu-toggle input {
+            margin-right: 0;
+            margin-left: 5px;
+        }
+    }
 }
 .top-bar-section li.menu-home a {
     font-weight: bold !important;
@@ -53,6 +62,7 @@ $side_bar_divider_color: $side_bar_border_color !default;
     text-transform: capitalize !important;
 }
 
+// ----------------------------------------------------------------------------
 /* Side Menu */
 .sidebar {
     background: none repeat scroll 0 0 $side_bar_bgcolor;
@@ -87,6 +97,7 @@ $side_bar_divider_color: $side_bar_border_color !default;
     }
 }
 
+// ----------------------------------------------------------------------------
 /* Page Header */
 .main-title {
     .org-logo {
@@ -125,15 +136,20 @@ $side_bar_divider_color: $side_bar_border_color !default;
         margin-top: 0.625rem;
         margin-bottom: 0.125rem;
     }
-
-}
-body.rtl .main-title {
-    .personal-menu {
-        float: left;
-        clear: left;
-    }
-    .language-selector {
-        float: left;
+    [dir=rtl] & {
+        .org-logo {
+            padding: 0.4rem 0 0.3rem 0.8rem;
+        }
+        .personal-menu-area {
+            text-align: left;
+        }
+        .personal-menu {
+            float: left;
+            clear: left;
+        }
+        .language-selector {
+            float: left;
+        }
     }
 }
 

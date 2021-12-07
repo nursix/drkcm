@@ -8106,7 +8106,7 @@ def hrm_human_resource_controller(extra_filter = None):
             # Apply availability filter
             s3db.pr_availability_filter(r)
 
-        if s3.rtl:
+        if s3.direction == "rtl":
             # Ensure that + appears at the beginning of the number
             # - using table alias to only apply to filtered component
             f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
@@ -8759,7 +8759,7 @@ def hrm_person_controller(**attr):
         # Filter to just those people with an active HR record
         r.resource.add_filter(FS("human_resource.id") != None)
 
-        if s3.rtl:
+        if s3.direction == "rtl":
             # Ensure that + appears at the beginning of the number
             # - using table alias to only apply to filtered component
             f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value

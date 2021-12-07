@@ -1,12 +1,19 @@
 // THEME MODULES
 @import "theme/base";       // required
-@import "theme/page";
-@import "theme/forms";
-@import "theme/rheader";
 @import "theme/buttons";
-@import "theme/menus";
+@import "theme/represent";
+@import "theme/widgets";
+@import "theme/forms";
+@import "theme/filters";
 @import "theme/tables";
 @import "theme/datalists";
+@import "theme/rheader";
+@import "theme/menus";
+@import "theme/page";
+//@import "theme/dashboard";
+@import "theme/organizer";
 @import "theme/profile";
-@import "theme/widgets";
+@import "theme/reports";
+@import "theme/rolemgr";
+@import "theme/homepage";
 @import "theme/misc";

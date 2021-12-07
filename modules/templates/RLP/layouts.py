@@ -95,7 +95,7 @@ class S3MainMenuLayout(S3NavigationItem):
                     else:
                         left.append(item)
                 right.reverse()
-                if current.response.s3.rtl:
+                if current.response.s3.direction == "rtl":
                     right, left = left, right
 
                 T = current.T

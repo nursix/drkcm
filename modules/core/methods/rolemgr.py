@@ -208,6 +208,7 @@ class S3RoleManager(CRUDMethod):
                                crud_button(T("Export Roles"),
                                            _href = r.url(representation="csv"),
                                            ),
+                               _class = "rm-roles-actions",
                                )
 
             # Output
@@ -1435,7 +1436,7 @@ class S3PermissionWidget:
                      )
 
         # Module header icons
-        rtl = current.response.s3.rtl
+        rtl = current.response.s3.direction == "rtl"
         icons = {"expanded": "fa fa-caret-down",
                  "collapsed": "fa fa-caret-left" if rtl else "fa fa-caret-right",
                  }

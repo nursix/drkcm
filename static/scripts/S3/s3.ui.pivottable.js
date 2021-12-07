@@ -812,13 +812,12 @@
                 return;
             }
 
-            // Container width + height
+            // Container height
             // @todo: adapt dynamically?
             var height = 360;
             $(chart).css({height: height + 'px'})
                     .closest('.pt-chart-contents')
-                    .show()
-                    .css({width: '98%'});
+                    .show();
 
             // Add title
             if (title) {
@@ -1380,7 +1379,7 @@
             // Show the container
             $(chart).removeAttr('style')
                     .closest('.pt-chart-contents')
-                    .css({'width': '98%', 'height': 'auto'})
+                    .css({'height': 'auto'})
                     .show();
 
             // Remove previous title

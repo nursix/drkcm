@@ -147,6 +147,21 @@ body.rtl .latest-updates  .action-btn.s3_modal {
 .card-footer a.delete-btn:first-child {
     margin-left: 0;
 }
+/* Cards */
+.card_1_line, .card_manylines {
+    color: #666;
+    font-size: 0.7rem;
+    padding: 0.05rem;
+}
+.card_1_line {
+    height: auto;
+    margin-bottom: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+.card_1_line i {
+    margin-right: 5px;
+}
 
 /* Card body */
 .dl-item .pull-right {

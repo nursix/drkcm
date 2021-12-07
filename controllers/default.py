@@ -150,9 +150,6 @@ def index():
               "announcements_title": announcements_title,
               }
 
-    # Custom view and homepage styles
-    s3.stylesheets.append("../themes/default/homepage.css")
-
     return output
 
 # -----------------------------------------------------------------------------

@@ -8,19 +8,35 @@
 // ============================================================================
 // STYLES
 
-/* Data Lists */
 .dl {
+    border-bottom: 1px solid #aaa;
     .dl-1-cols {
         width: 100%;
     }
+    .dl-2-cols {
+        width: 50%;
+    }
+    .dl-3-cols {
+        width: 33%;
+    }
+    .dl-4-cols {
+        width: 25%;
+    }
     .dl-header {
-        float: none;
+        padding: 3px;
         text-align: right;
     }
     .dl-row {
         border: 0;
+        &.even, &.even .dlitem {
+            background-color: white;
+        }
+        &.odd, &.odd .dl-item {
+            background-color: #e2e4ff;
+        }
     }
     .dl-item {
+        padding: 3px 5px 3px 5px;
         .dropdown .caret {
             margin-left: 0.2rem;
             margin-top: 0.4rem;
@@ -29,19 +45,39 @@
             margin-right: 0.2rem;
         }
     }
-}
-body.rtl .dl {
-    .dl-header {
-        text-align: left;
+    .dl-field {
+        padding: 0.1rem 0;
     }
-    .dl-item {
-        .dropdown .caret {
-            margin-left: 0;
-            margin-right: 0.2rem;
+    .dl-field-label,
+    .dl-field-value {
+        display: inline-block;
+    }
+    .dl-field-label {
+        font-weight: normal;
+    }
+    .dl-field-value {
+        margin: 0 0.5rem;
+        font-weight: bold;
+    }
+    .edit-bar.fright {
+        float: right;
+    }
+    [dir=rtl] & {
+        .dl-header {
+            text-align: left;
         }
-        .attachments {
-            margin-right: 0;
-            margin-left: 0.2rem;
+        .dl-item {
+            .dropdown .caret {
+                margin-left: 0;
+                margin-right: 0.2rem;
+            }
+            .attachments {
+                margin-right: 0;
+                margin-left: 0.2rem;
+            }
+        }
+        .edit-bar.fright {
+            float: left;
         }
     }
 }
@@ -51,16 +87,6 @@ body.rtl .dl {
 }
 .dl-exports.list_formats {
     padding: 0;
-}
-.card_1_line, .card_manylines {
-    color: #666;
-    font-size: 0.7rem;
-    padding: 0.05rem;
-}
-.card_1_line {
-    height: auto;
-    margin-bottom: 0;
-    overflow: hidden;
 }
 
 // END ========================================================================

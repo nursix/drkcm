@@ -149,7 +149,7 @@ from core import *
 #                right.reverse()
 #
 #                # Reverse if right-to-left
-#                if current.response.s3.rtl:
+#                if current.response.s3.direction == "rtl":
 #                    right, left = left, right
 #
 #                # Build top-bar HTML

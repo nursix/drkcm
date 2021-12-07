@@ -18,17 +18,124 @@ $anonymize_button_bgcolor_hover: $alert-button-bg-hover !default;
 // ============================================================================
 // STYLES
 
-/* Blinker configuration */
-@keyframes blinker {
-    50% {
-        opacity: 0;
+// ----------------------------------------------------------------------------
+/* General Widgets */
+input[type="text"],
+input[type="password"],
+input[type="date"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="time"],
+input[type="url"],
+select,
+textarea {
+    max-width: 100%;
+    display: inline-block;
+    height: 1.75rem;
+    width: auto;
+    margin: 0;
+    padding: 0.25rem;
+    font-weight: normal;
+    &:focus {
+        background-color: #fffbe0;
+    }
+}
+input {
+    &[type=file] {
+        width: auto;
+    }
+    // Date Picker Widget
+    &.datetimepicker,
+    &.date-filter-input,
+    &.range-filter-input {
+        max-width: 8rem;
+    }
+    // Saved Filters Page; Inline Editor for Filter Titles
+    form.jeditable-input & {
+        max-width: rem-calc(400) !important;
+    }
+}
+select {
+    [dir=ltr] & {
+        padding: 0 1rem 0 0.25rem;
+    }
+    [dir=rtl] & {
+        padding: 0 0.25rem 0 1rem;
+    }
+}
+textarea {
+    resize: both;
+    vertical-align: top;
+    font-size: 0.8rem;
+    &.comments {
+        height: 50px;
+    }
+    &.richtext {
+        height: 100px;
+    }
+}
+select[disabled='disabled'],
+input[disabled='disabled'] {
+    /* A lighter background so the text is more readable */
+    background: #eee;
+    color: #333;
+    /* Make the cursor not change to editable */
+    cursor: default;
+}
+
+// ----------------------------------------------------------------------------
+/* jQuery UI widgets */
+.ui-dialog {
+    padding: 0;
+    width: 750px !important;
+    .ui-dialog-content {
+        // Ensure maximal space for iframe within Dialog
+        padding: 0 !important;
     }
 }
 
-/* jQuery UI widgets */
+/* UI Multiselect */
+label.ui-corner-all span {
+    [dir=ltr] & {
+        left: 10px;
+    }
+    [dir=rtl] & {
+        right: 10px;
+    }
+}
+
+/* S3SelectWidget() icons */
+.ui-selectmenu-menu .ui-menu.customicons {
+    height: 400px;
+    .ui-menu-item {
+        padding: 1em 0 1em 4em;
+        .ui-icon {
+            background-repeat: no-repeat !important;
+            background-position: left top;
+            top: 0.1em;
+        }
+    }
+    [dir=rtl] & {
+        .ui-menu-item {
+            padding: 1em 4em 1em 0;
+            .ui-icon {
+                background-position: right top;
+            }
+        }
+    }
+}
 .ui-widget-header {
     background: none;
     border: 1px solid #ADA6A0;
+    &.ui-slider-range {
+        background: #cccccc;
+    }
     a {
         color: #222222 !important;
         border-color: #C7C7C7;
@@ -36,11 +143,8 @@ $anonymize_button_bgcolor_hover: $alert-button-bg-hover !default;
         //background: none;
         font-weight: bold;
         text-decoration: none !important;
-        font-size: 0.7em;
+        font-size: 0.85rem;
     }
-}
-.ui-widget-header.ui-slider-range {
-    background: #cccccc;
 }
 .ui-state-active,
 .ui-widget-content .ui-state-active,
@@ -55,101 +159,207 @@ $anonymize_button_bgcolor_hover: $alert-button-bg-hover !default;
     span.ui-icon {
         margin-top: 4px;
     }
+    [dir=rtl] & {
+        .ui-multiselect-filter {
+            direction: rtl;
+            float: right;
+            margin-right: 3px;
+            margin-left: 10px;
+        }
+        ul li {
+            float: right;
+            padding: 0 3px 0 10px;
+        }
+        li.ui-multiselect-close {
+            float: left;
+            text-align: left;
+            padding-left: 0;
+        }
+    }
 }
 .ui-multiselect-checkboxes li label input {
     margin-left: 0.2rem;
     margin-right: 0.3rem;
 }
+button.ui-multiselect {
+    min-height: 1.75rem;
+    background-color: #FAFAFA;
+    &:focus, &:focus:hover, &.ui-state-active {
+        color: #222222;
+        background-color: #fffbe0;
+    }
+    &:hover {
+        color: #222222;
+        background-color: #F8F8F8;
+    }
+    .filter-form &,
+    .report-options & {
+        max-width: 60%;
+    }
+}
 .ui-widget {
     font-family: $body-font-family;
 }
-
-/* List-Add Button */
-#list-btn-add {
-    float: right;
-    margin-right: 0.35rem;
+.ui-icon-triangle-1-s {
+    background-position: -68px -12px;
 }
 
-/* Summary tabs */
-.ui-tabs .ui-tabs-panel {
-    padding: 0.5em;
+// ----------------------------------------------------------------------------
+/* Simile Timeline */
+.s3-timeline  {
+    height: 400px;
+    border: 1px solid #aaa;
+    font-family: Trebuchet MS,sans-serif;
+    font-size: 85%;
 }
-#summary-tabs {
-    margin-top: 10px;
-    &.ui-widget-content {
-        background: none;
-        border: none;
-    }
+
+// ----------------------------------------------------------------------------
+/* Password Widget */
+.s3-password-widget {
+    display: inline-block;
 }
-#summary-tab-headers {
-    .ui-tabs-nav {
-        border: none;
-        margin: 0 10px;
-    }
-    a {
-        border-color: #CCC;
-    }
-    .ui-tabs-active a {
-        border-bottom: 1px solid white;
-    }
-    li {
-        margin-right: 5px;
-        box-shadow: none;
-    }
+.s3-unmask {
+    margin-left: 10px;
+    cursor: pointer;
 }
-#summary-sections {
-    // Fit Summary Map Inside Summary Section
-    .x-panel-body {
-        border: none;
-        border-radius: 4px;
+
+// ----------------------------------------------------------------------------
+/* Tweet Display */
+.s3-twitter-container {
+    width: 350px;
+    height: 130px;
+}
+
+// ----------------------------------------------------------------------------
+/* Checkboxes Widget */
+.controls .checkboxes-widget-s3 {
+  display: inline-flex;
+}
+
+// ----------------------------------------------------------------------------
+/* Action Toolbar (Saved Filters Page) */
+.action-bar {
+    color: #8a8989;
+    font-size: 14px;
+    position: relative;
+    top: 4px;
+    &.fleft {
+        margin-right: 8px;
+    }
+    a:hover,
+    a:visited:hover {
+        color: #ffa500;
+        text-decoration: none;
     }
 }
 
-button.btn.toggle-text {
-    font-size: 0.7rem !important;
-    margin-left: 0.7rem !important;
-    line-height: 1.0;
-    padding: 0.2rem 0.3rem;
+// ----------------------------------------------------------------------------
+/* Hierarchy Widget */
+.s3-hierarchy-tree.jstree,
+.s3-hierarchy-header {
+    border: 1px solid #ccc;
+    padding: 2px 3px 4px 3px;
+    background: white;
+}
+.jstree-contextmenu {
+    z-index: 9999;
+}
+.s3-hierarchy-wrapper {
+    z-index: 9998;
+}
+.s3-hierarchy-header {
+    font-size: 0.8rem;
+    display: none;
+}
+.s3-hierarchy-action-node,
+.s3-hierarchy-none {
+    font-style: italic;
 }
 
+// ----------------------------------------------------------------------------
+/* Translate module */
+.form-container form .translation_module_table td {
+    padding: 0.3rem;
+}
+
+// ----------------------------------------------------------------------------
+/* S3SQLInlineLink read-only list representation */
+ul.s3-inline-link {
+    font-size: inherit;
+}
+
+// ----------------------------------------------------------------------------
+/* Location Selector */
+option.missing {
+    background-color: yellow;
+}
+.geocode_fail,
+.geocode_success {
+    margin: 0.2rem 0.7rem;
+}
+.geocode_success {
+    color: #0a0;
+}
+.geocode_fail {
+    color: #f00;
+}
+.dms-label {
+    padding: 4px;
+    font-weight: bold;
+}
+.dms-input.invalidinput {
+    border: solid thin red;
+}
+
+// ----------------------------------------------------------------------------
+/* GIS */
+ul.x-tab-strip,
+ul.x-tree-node-ct,
+ul.x-tree-root-ct {
+    list-style: none outside none;
+}
+
+// ----------------------------------------------------------------------------
 /* Date picker */
+.calendar-widget-container {
+    white-space: nowrap;
+}
 input.date.hasDatepicker {
     display: inline-block;
 }
 .ui-datepicker-trigger {
     background-color: rgba(0, 0, 0, 0);
-    background-image: url("../../img/bootstrap/calendar.gif");
-    margin-left: 10px;
+    background-image: url(../../img/calendar.gif);
+    background-repeat: no-repeat;
+    height: 15px;
+    width: 16px;
+    padding: 0;
+    margin: 0;
+    margin-left: 5px;
+    .form-container form & {
+        margin-left: 5px;
+    }
+    border: 0; // Make it not like a button
+    vertical-align: middle;
+    [dir=rtl] &,
+    [dir=rtl] .form-container form & {
+        margin-left: 0;
+        margin-right: 5px;
+    }
 }
 .ui-datepicker.ui-widget {
     z-index: 1000!important;
-}
-
-/* Range filter widgets */
-.range-filter-label label {
-    font-size: 1.0em;
-}
-.range-filter-widget {
-    input.date-filter-input {
-        width: auto;
-        margin-right: 2px;
+    dl dd, dl dt {
+        font-size: 0.8rem;
     }
-    button.date-clear-btn {
-        font-size: 0.85em;
-        padding: 0.325em;
-        margin-top: 0.5em;
-    }
-    .postfix.calendar-clear-btn {
-        margin-left: -2px;
+    dl dt {
+        margin-bottom: 0;
     }
 }
 .btn.date-clear-btn {
-    font-size: 0.85em;
-    padding: 0.325em;
-    margin-top: 0.5em;
-}
-.calendar-widget-container {
-    white-space: nowrap;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    margin: 0 0.25rem;
 }
 .postfix.calendar-clear-btn {
     cursor: pointer;
@@ -157,25 +367,62 @@ input.date.hasDatepicker {
         color: #B0B0B0;
     }
     display: inline-block;
-    margin-top: 2px;
     width: 1.2rem;
     vertical-align: top;
 }
 
-/* GroupedOptions widget */
-.s3-groupedopts-label {
-    float: none;
-    margin-bottom: 0.3rem;
+// ----------------------------------------------------------------------------
+/* Range filter widgets */
+.range-filter,
+.date-filter {
+    display: inline-block;
 }
-.s3-groupedopts-widget table {
-    margin-left: 0;
-    margin-bottom: 0.5rem;
+.range-filter-label label {
+    font-size: 1.0em;
+}
+.range-filter-widget {
+    button.date-clear-btn {
+        font-size: 0.85em;
+        padding: 0.325em;
+        margin-top: 0.5em;
+    }
+}
+
+// ----------------------------------------------------------------------------
+/* GroupedOptions widget */
+.s3-groupedopts-widget {
+    table {
+        margin-left: 0;
+        margin-bottom: 0.5rem;
+    }
+    label {
+        display: inline;
+        margin-left: 5px;
+        font-weight: normal;
+        .optlabel {
+            vertical-align: middle;
+        }
+        .form-container form fieldset & {
+            white-space: nowrap;
+            text-align: left;
+        }
+        &[title] .optlabel {
+            border-bottom: dotted 1px #ccc;
+        }
+    }
+    .optLabel {
+        display: inline-block;
+    }
+    .filter-form &,
+    .report-options & {
+        display: inline-block;
+    }
 }
 table.s3-groupedopts-widget {
     td {
         white-space: nowrap;
         input.s3-groupedopts-option {
-            vertical-align: text-top;
+            vertical-align: middle;
             margin: 0 0.3rem 0 0;
         }
         label {
@@ -183,7 +430,6 @@ table.s3-groupedopts-widget {
             margin: 0 0.5rem;
         }
     }
-/*     border: 0; TODO make configurable */
     margin-bottom: 0;
 }
 div.s3-groupedopts-widget {
@@ -196,22 +442,56 @@ div.s3-groupedopts-widget {
         margin: 0 0.3rem 0 0;
     }
 }
+.s3-groupedopts-label {
+    margin: 10px 0 0 7px;
+    margin-bottom: 0.3rem;
+    padding-left: 20px;
+    min-height: 16px;
+    min-width: 20px;
+    background: url(../../img/icon_blue_plus15px.png) no-repeat;
+    cursor: pointer;
+    font-size: 0.7rem;
+    &.expanded {
+        background: url(../../img/icon_blue_minus15px.png) no-repeat;
+    }
+}
 
+// ----------------------------------------------------------------------------
 /* ImageCropWidget */
+.imagecrop-drag {
+    font-weight: bold;
+    text-align: center;
+    padding: 3em 0;
+    margin: 1em 0;
+    color: #555;
+    border: 2px dashed #555;
+    border-radius: 7px;
+    cursor: default;
+    &.hover {
+        border-style: solid;
+        background-color: #F7F8F9;
+    }
+}
+.imagecrop-btn {
+    display: none;
+    cursor: pointer;
+}
 .imagecrop-btn {
     font-size: 1em;
     margin-left: 0.2em;
     padding: 0.3em;
 }
 
+// ----------------------------------------------------------------------------
 /* Widget Intro-Wrapper */
 .s3-widget-intro {
     max-width: 42rem;
-    padding: 0.5rem 0;
+    padding: 0.2rem 0 0.5rem 0;
     font-size: 0.8rem;
 }
 
-/* pr_Contacts widgets */
+// ----------------------------------------------------------------------------
+/* pr_Contacts */
 .pr-contacts-wrapper h3 {
   margin-top: 0.5rem;
   padding-bottom: 0 !important;
@@ -255,43 +535,59 @@ div.s3-groupedopts-widget {
         line-height: 1.2rem;
         font-size: 0.8rem;
     }
+    [dir=rtl] & {
+        margin: 0.25rem 0 1rem 0;
+    }
 }
 
-/* Checkboxes Widget */
-.controls .checkboxes-widget-s3 {
-  display: inline-flex;
-}
-
-/* Comment feeds */
-.comment-box {
-    background: none repeat scroll 0 0 $comments_feed_item_bgcolor;
-}
-
-/* Text representation */
-.text-body {
-    white-space: pre-wrap;
-}
-
-/* Iframe Map (Location Represent links) TODO move into page or forms? */
-#close-iframe-map {
-    padding: 7px;
-    margin-top: 5px;
-}
-
-/* Truncated Texts */
-.s3-truncate-more,
-.s3-truncate-less {
-    font-style: italic;
-}
-.s3-truncate-more:before,
-.s3-truncate-less:before {
-    font-style: italic;
-    content: "...";
-}
-
+// ----------------------------------------------------------------------------
 /* AddPersonWidget */
+.box_top,
+.box_top_inner {
+    border-top: #bbb 1px solid;
+    label {
+        display: inline-block;
+    }
+}
+.box_top {
+    padding-top: 1rem;
+    &.form-row.row {
+        margin: 0.7rem 0 0 0;
+        .columns {
+            padding: 0;
+        }
+    }
+}
+.box_top_inner {
+    padding-top: 0.2rem;
+    padding-bottom: 0.5rem;
+}
 .box_bottom {
-    clear: left;
+    border-bottom: 1px solid #bbb ;
+    padding-bottom: 1rem;
+}
+.add_person_edit_bar {
+    cursor: pointer;
+    display: inline-block;
+    padding-left: 1.2rem;
+    margin-top: 1rem;
+    a {
+        text-decoration: none;
+    }
+    [dir=rtl] & {
+        padding-left: 0;
+        padding-right: 1.2rem;
+    }
+}
+.card > .fleft {
+    margin-right: 10px;
+    [dir=rtl] & {
+        margin-right: 0;
+        margin-left: 10px;
+    }
+}
+.media-object {
+    display: block;
 }
 .ui-menu-item .pe-label {
     font-size: 0.7rem;
@@ -299,13 +595,28 @@ div.s3-groupedopts-widget {
     vertical-align: super;
 }
 
+// ----------------------------------------------------------------------------
 /* QR Input */
 .qrinput {
     display: inline-block;
     .qrscan-btn {
-        padding: 0.4rem 1.2rem;
-        margin: 3px 0.5rem;
         vertical-align: top;
+        padding: 0.4rem 0.8rem;
+        text-align: center;
+        margin: 0 0.5rem;
+        .fa {
+            font-size: 16px;
+            margin: 0 0.2rem;
+            vertical-align: middle;
+        }
+    }
+    .postfix.clear-btn {
+        cursor: pointer;
+        .fa {
+            color: #B0B0B0;
+        }
+        display: inline-block;
+        width: 1.2rem;
     }
 }
 .qrinput-success {
@@ -315,6 +626,7 @@ div.s3-groupedopts-widget {
     color: darkgreen;
 }
 
+// ----------------------------------------------------------------------------
 /* Anonymize-Widget */
 form.anonymize-form,
 .anonymize-success {
@@ -323,6 +635,10 @@ form.anonymize-form,
 .anonymize-select,
 .anonymize-confirm {
     margin-left: 1rem;
+    [dir=rtl] & {
+        margin-left: 0;
+        margin-right: 1rem;
+    }
 }
 .anonymize-buttons {
     margin-top: 1rem;
@@ -338,129 +654,7 @@ form.anonymize-form,
     margin: 0.2rem;
 }
 
-/* Role Manager */
-.rm-form {
-    .controls {
-        width: 100%;
-    }
-    .rm-assign .action-lnk,
-    .rm-rules .action-lnk {
-        display: inline-block;
-        color: $primary-color;
-        font-style: normal;
-    }
-    .rm-toggle-all {
-        margin-top: 0.2rem;
-        margin-bottom: 0.5rem;
-    }
-    .rm-assign {
-        width: 80%;
-        border-collapse: separate;
-        border-spacing: 0;
-        th {
-            min-width: 10rem;
-        }
-        th:first-child {
-            width: 25%;
-        }
-        td {
-            padding: 0.5rem;
-        }
-        tfoot td {
-            border-top: 1px solid #C0C0C0;
-        }
-        .rm-item-name,
-        .rm-item-title {
-            display: block;
-        }
-        .rm-item-title {
-            font-size: 0.8rem;
-            font-style: italic;
-            color: #A0A0A0;
-        }
-        .rm-duplicate {
-            td {
-                border-top: 1px solid red;
-                border-bottom: 1px solid red;
-                &:first-child {
-                    border-left: 1px solid red;
-                }
-                &:last-child {
-                    border-right: 1px solid red;
-                }
-            }
-        }
-    }
-    .rm-module-rules {
-        width: 100%;
-        .rm-module-header {
-            cursor: pointer;
-            background-color: #F0F0F0;
-            div {
-                margin-right: 0.3rem;
-                display: inline-block;
-            }
-            .rm-module-toggle {
-                width: 0.5rem;
-            }
-            .rm-module-prefix {
-                width: 6.5rem;
-            }
-            .rm-module-numrules {
-                font-weight: normal;
-            }
-        }
-        &.hasrules .rm-module-header {
-            background-color: #D0D0D0;
-        }
-
-        th, td {
-            padding: 0.5rem;
-        }
-
-        .rm-default-rule td,
-        .rm-default-permissions td {
-            font-style: italic;
-            color: #a0a0a0;
-        }
-        .rm-rule-target {
-            width: 20%;
-        }
-    }
-    input.rm-invalid {
-        background-color: #FFA0A0;
-    }
-}
-.rm-fixed,
-.rm-hint {
-    display: block;
-    font-style: italic;
-    font-size: 0.8rem;
-    color: #AAAAAA;
-}
-
-/* Organizer */
-.s3-organizer-popup {
-    label {
-        font-size: 0.7rem;
-        font-weight: bold;
-    }
-    p {
-        font-size: 0.8rem;
-        font-weight: normal;
-        margin-bottom: 0.3rem;
-    }
-    .action-btn {
-        margin-left: 0;
-        margin-right: 0.3rem;
-    }
-}
-.s3-organizer-create {
-    .action-btn {
-        display: block;
-    }
-}
-
+// ----------------------------------------------------------------------------
 /* Consent Widget */
 .consent-widget {
     border: 1px solid #E0E0E0;
@@ -470,7 +664,7 @@ form.anonymize-form,
     }
     .consent-explanation {
         white-space: pre-wrap;
-        padding: 0.3rem 2rem;
+        padding: 0.3rem 1.7rem;
         font-size: 0.8rem;
         font-style: italic;
         color: #7F7F7F;
@@ -480,7 +674,7 @@ form.anonymize-form,
     }
     .consent-checkbox {
         vertical-align: bottom;
-        margin-right: 0.5rem;
+        margin-right: 0.5rem!important;
     }
     .req {
         padding: 0 0.2rem;
@@ -493,35 +687,8 @@ form.anonymize-form,
     }
 }
 
-/* Priority Representation */
-.prio {
-    padding: 0 4px;
-    border: 1px solid black;
-    text-align: center;
-    white-space: pre;
-    font-weight: normal;
-}
-.prio-red {
-    color: white;
-    background-color: #d10000;
-}
-.prio-blue {
-    color: white;
-    background-color: #10427b;
-}
-.prio-lightblue {
-    background-color: #b7ddff;
-}
-.prio-grey {
-    background-color: silver;
-}
-
+// ----------------------------------------------------------------------------
 /* Weekly Hours Widget */
-.wh-intro {
-    max-width: 42rem;
-    padding: 0.5rem 0;
-    font-size: 0.8rem;
-}
 .wh-raster {
     margin-top: 0.3rem;
     tr {
@@ -574,29 +741,12 @@ form.anonymize-form,
     }
 }
 
-/* Weekly Hours Representation */
-.wh-schedule {
-    list-style: none;
-    white-space: pre;
-    margin: 0;
-    font-size: 0.7rem;
-    .wh-dayname {
-        width: 1.5rem;
-        display: inline-block;
-    }
-    .wh-dayname::after {
-        content: ":";
-    }
-}
+// ----------------------------------------------------------------------------
+/* Comment feeds (cms/project) */
 
-.announcements-title {
-    font-variant: petite-caps;
-    font-weight: normal;
-}
-.announcements {
+#comments {
     margin: 0;
-    padding: 0 0 0 1rem;
-    border-left: 1px solid $primary-color;
+    padding: 0;
     list-style: none outside none;
     ul, ol {
         padding-left: 20px;
@@ -604,120 +754,114 @@ form.anonymize-form,
     }
     li {
         padding: 10px 0 0;
+        a.jcollapsible:hover {
+            background: none;
+        }
     }
-    .announcement-box {
-        display: block;
-        background: #fff7d9;
-        border: 1px solid #aaa;
+    .comment-box {
         overflow: hidden;
-        padding: 0.7rem;
-        margin-bottom: 1.5rem;
-        &.announcement-important {
-            .announcement-icon {
-                color: #0088ca;
+        padding: 15px 0;
+        background: none repeat scroll 0 0 $comments_feed_item_bgcolor;
+        display: block;
+        overflow: hidden;
+        padding: 10px;
+        .avatar {
+            display: inline-block;
+            vertical-align: top;
+        }
+    }
+    .comment-text {
+        padding: 0 0 0 0.5rem;
+        display: inline-block;
+        ul {
+            list-style: disc outside none;
+        }
+        ol {
+            list-style: decimal outside none;
+        }
+        li {
+            padding: 0;
+        }
+        div {
+            white-space: pre-line;
+        }
+        .comment-header {
+            font-size: 0.8rem;
+        }
+        .comment-body {
+            p, li {
+                font-size: 0.9rem;
             }
         }
-        &.announcement-critical {
-            border: 1px solid #ca0000;
-            background-color: #ffebea;
-            .announcement-icon {
-                color: #ca0000;
-                animation: blinker 0.7s step-start 4;
-            }
+    }
+    .fright {
+        float: right;
+        text-align: right;
+    }
+    .comment-date {
+        font-size: 0.7rem;
+        margin-bottom: 0.5rem;
+    }
+    //.comment-reply {}
+    .comment-footer {
+        clear: left;
+    }
+    // Override Ext styles:
+    em {
+        font-style: italic;
+    }
+    strong {
+        font-weight: bold;
+    }
+    [dir=rtl] & {
+        ul, ol {
+            padding-left: 0;
+            padding-right: 20px;
         }
-        .announcement-header {
-            .announcement-icon {
-                display: inline-block;
-                font-size: 1.3rem;
-                padding: 0 0.7rem 0 0;
-            }
-            h4 {
-                display: inline-block;
-            }
+        .comment-text {
+            padding: 0 0.5rem 0 0;
         }
-        .announcement-text {
-            font-size: 0.9rem;
-            line-height: 1.3;
-            h4 {
-                font-size: 1.2rem;
-            }
-            ul {
-                list-style: disc outside none;
-            }
-            ol {
-                list-style: decimal outside none;
-            }
-            li {
-                padding: 0;
-            }
-            div {
-                white-space: pre-line;
-            }
-            .announcement-header {
-                margin: 0 0 0.8rem 0;
-            }
-            announcement-body {
-                white-space: pre-line;
-                p {
-                    margin-left: 1rem;;
-                }
-            }
+        .fright {
+            float: left;
+            text-align: left;
         }
-        .announcement-date {
-            font-size: 0.7rem;
-            margin-top: 0.4rem;
+        .comment-footer {
+            clear: right;
         }
     }
 }
+#comment-form {
+    width: 40rem;
+    max-width: 100%;
+    border: 1px #9c9c9c dashed;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
 
-// Overrides for right-to-left orientation
-body.rtl {
-    .ui-multiselect-header {
-        .ui-multiselect-filter {
-            direction: rtl;
-            float: right;
-            margin-right: 3px;
-            margin-left: 10px;
-        }
-        ul li {
-            float: right;
-            padding: 0 3px 0 10px;
-        }
-        li.ui-multiselect-close {
-            float: left;
-            text-align: left;
-            padding-left: 0;
-        }
-    }
-    .range-filter-widget {
-        input.date-filter-input {
-            margin-right: 0;
-            margin-left: 2px;
-        }
-    }
-    #list-btn-add {
+// ----------------------------------------------------------------------------
+/* Req quantity */
+.ajax_more {
+    float: right;
+    margin: 0 2px 2px 0;
+    [dir=rtl] & {
         float: left;
-        margin-right: 0;
-        margin-left: 0.35rem;
+        margin: 0 0 2px 2px;
     }
-    .rm-form {
-        .rm-module-rules .rm-module-header div {
-            margin-right: 0;
-            margin-left: 0.3rem;
-        }
-        .rm-assign .rm-duplicate {
-            td {
-                &:first-child {
-                    border-left: 0;
-                    border-right: 1px solid red;
-                }
-                &:last-child {
-                    border-right: 0;
-                    border-left: 1px solid red;
-                }
-            }
-        }
+    width: 16px;
+    height: 16px;
+    &.collapsed {
+        background: url(../../img/icon_blue_plus15px.png) no-repeat left top;
     }
+    &.expanded {
+        background: url(../../img/icon_blue_minus15px.png) no-repeat left top;
+    }
+}
+
+// ----------------------------------------------------------------------------
+/* Supply */
+.rfilter {
+    float: left;
+    padding: 10px 20px 10px 10px;
 }
 
 // END ========================================================================
