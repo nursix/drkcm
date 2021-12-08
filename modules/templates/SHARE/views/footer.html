@@ -1,4 +1,5 @@
-{{if settings.ui.get("social_buttons"):}}<div id="socialmedia_share"></div>{{pass}}
+<div id="socialmedia_share"></div>
 <p id="poweredby">{{poweredby=T("Powered by Eden ASP")}}
  <a href='https://eden-asp.readthedocs.io' target='_blank'><img src='/{{=appname}}/static/img/eden_asp_small.png' width="18px" alt='{{=poweredby}}'></img>{{=poweredby}}</a>
 </p>
+{{s3.scripts.append("/%s/static/themes/SHARE/js/smshare.js" % appname)}}

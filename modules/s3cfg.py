@@ -2427,13 +2427,6 @@ class S3Config(Storage):
         """
         return self.ui.get("search_submit_button", "search-button")
 
-    def get_ui_social_buttons(self):
-        """
-            Display social media Buttons in the footer?
-            - requires support in the Theme
-        """
-        return self.ui.get("social_buttons", False)
-
     def get_ui_summary(self):
         """
             Default Summary Page Configuration (can also be

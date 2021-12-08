@@ -998,11 +998,8 @@
             var c = action._class;
 
             // Construct button label and on-hover title
-            var label = action.label;
-            if (!this.tableConfig.rowActionsJSON && this.tableConfig.utf8) {
-               label = S3.Utf8.decode(action.label);
-            }
-            var title = action._title || label;
+            var label = action.label,
+                title = action._title || label;
 
             // Display the button as icon or image?
             if (action.icon) {

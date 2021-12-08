@@ -4,7 +4,7 @@ import dateutil
 import json
 
 from gluon import current, A, BR, DIV, H3, H4, HR, LI, P, SPAN, TAG, TEXTAREA, UL, URL, XML
-from core import ICON,
+from core import ICON, \
                  get_crud_string, s3_str, \
                  S3CustomController, \
                  S3FilterForm, S3LocationFilter, S3OptionsFilter, S3TextFilter, \
