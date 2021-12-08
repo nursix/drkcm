@@ -16,14 +16,14 @@ def config(settings):
 
     T = current.T
 
-    settings.base.system_name = "SAHANA Case Management"
-    settings.base.system_name_short = "Sahana BRCMS"
+    settings.base.system_name = "BRCMS Case Management"
+    settings.base.system_name_short = "BRCMS"
 
     # PrePopulate data
     settings.base.prepopulate.append("BRCMS")
 
     # Theme (folder to use for views/layout.html)
-    settings.base.theme = "BRCMS"
+    #settings.base.theme = "BRCMS"
 
     # Authentication settings
     # Should users be allowed to register themselves?
