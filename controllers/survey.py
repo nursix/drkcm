@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     survey - Assessment Data Analysis Tool
 

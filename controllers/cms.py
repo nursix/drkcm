@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
-    CMS
-
-    Simple Content Management System
+    CMS - Simple Content Management System
 """
 
 module = request.controller
@@ -28,7 +24,9 @@ def index_alt():
     # Just redirect to the list of Posts
     s3_redirect_default(URL(f="post"))
 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Series Management
+#
 def series():
     """ RESTful CRUD controller """
 
@@ -104,43 +102,25 @@ def series():
 
     return crud_controller(rheader=s3db.cms_rheader)
 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Statuses
+#
 def status():
     """ RESTful CRUD controller """
 
     return crud_controller()
 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Tags
+#
 def tag():
     """ RESTful CRUD controller """
 
     return crud_controller()
 
-# -----------------------------------------------------------------------------
-def blog():
-    """
-        RESTful CRUD controller for display of a series of posts as a full-page
-        read-only showing last 5 items in reverse time order
-
-        @ToDo: Convert to dataList
-    """
-
-    # Pre-process
-    def prep(r):
-        s3db.configure(r.tablename, listadd=False)
-        return True
-    s3.prep = prep
-
-    # Post-process
-    def postp(r, output):
-        if r.record:
-            response.view = s3base.S3CRUD._view(r, "cms/blog.html")
-        return output
-    s3.postp = postp
-
-    return crud_controller("cms", "series")
-
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Post authoring
+#
 def post():
     """ RESTful CRUD controller """
 
@@ -296,7 +276,9 @@ def post():
 
     return crud_controller(rheader=s3db.cms_rheader)
 
-# -----------------------------------------------------------------------------
+# =============================================================================
+# Posts Rendering
+#
 def page():
     """
         RESTful CRUD controller for display of a post as a full-page read-only
@@ -362,6 +344,112 @@ function comment_reply(id){
     return crud_controller("cms", "post")
 
 # -----------------------------------------------------------------------------
+def posts():
+    """
+        Function accessed by AJAX to handle a Series of Posts
+    """
+
+    try:
+        series_id = request.args[0]
+    except:
+        raise HTTP(400)
+
+    try:
+        recent = request.args[1]
+    except:
+        recent = 5
+
+    table = s3db.cms_post
+
+    # List of Posts in this Series
+    query = (table.series_id == series_id)
+    posts = db(query).select(table.name,
+                             table.body,
+                             table.avatar,
+                             table.created_by,
+                             table.created_on,
+                             limitby = (0, recent)
+                             )
+
+    output = UL(_id="comments")
+    import hashlib
+    for post in posts:
+        author = T("Anonymous")
+        if post.created_by:
+            utable = s3db.auth_user
+            ptable = s3db.pr_person
+            ltable = s3db.pr_person_user
+            query = (utable.id == post.created_by)
+            left = [ltable.on(ltable.user_id == utable.id),
+                    ptable.on(ptable.pe_id == ltable.pe_id)]
+            row = db(query).select(utable.email,
+                                   ptable.first_name,
+                                   ptable.middle_name,
+                                   ptable.last_name,
+                                   left = left,
+                                   limitby = (0, 1)
+                                   ).first()
+            if row:
+                person = row.pr_person
+                user = row[utable._tablename]
+                username = s3_fullname(person)
+                email = user.email.strip().lower()
+                hash = hashlib.md5(email.encode("utf-8")).hexdigest()
+                url = "http://www.gravatar.com/%s" % hash
+                author = A(username, _href=url, _target="top")
+        header = H4(post.name)
+        if post.avatar:
+            avatar = s3base.s3_avatar_represent(post.created_by)
+        else:
+            avatar = ""
+        row = LI(DIV(avatar,
+                     DIV(DIV(header,
+                             _class = "comment-header",
+                             ),
+                         DIV(XML(post.body),
+                             _class = "comment-body",
+                             ),
+                         _class="comment-text"),
+                         DIV(DIV(post.created_on,
+                                 _class = "comment-date",
+                                 ),
+                             _class="fright"),
+                         DIV(author,
+                             _class = "comment-footer",
+                             ),
+                     _class = "comment-box",
+                     ))
+        output.append(row)
+
+    return XML(output)
+
+# -----------------------------------------------------------------------------
+def blog():
+    """
+        RESTful CRUD controller for display of a series of posts as a full-page
+        read-only showing last 5 items in reverse time order
+
+        @ToDo: Convert to dataList
+    """
+
+    # Pre-process
+    def prep(r):
+        s3db.configure(r.tablename, listadd=False)
+        return True
+    s3.prep = prep
+
+    # Post-process
+    def postp(r, output):
+        if r.record:
+            response.view = s3base.S3CRUD._view(r, "cms/blog.html")
+        return output
+    s3.postp = postp
+
+    return crud_controller("cms", "series")
+
+# =============================================================================
+# Newsfeed
+#
 def cms_post_age(row):
     """
         The age of the post
@@ -770,7 +858,7 @@ def newsfeed():
 
 # =============================================================================
 # Comments
-# =============================================================================
+#
 def comment():
     """ RESTful CRUD controller """
 
@@ -943,84 +1031,177 @@ $('#submit_record__row input').click(function(){
 
     return XML(output)
 
+# =============================================================================
+# Newsletters
+#
+def configure_newsletter_attachments(file_icons=False):
+    """
+        Configure newsletter attachments (doc_document)
+
+        Args:
+            file_icons: show files as icon+size rather than filename
+    """
+
+    dtable = s3db.doc_document
+
+    # Document Title is required
+    field = dtable.name
+    requires = field.requires
+    field.requires = IS_NOT_EMPTY()
+    if requires:
+        field.requires = [field.requires, requires]
+
+    # Hide URL and Date
+    field = dtable.url
+    field.readable = field.writable = False
+    field = dtable.date
+    field.readable = field.writable = False
+
+    if file_icons:
+        # Represent files as icon+size
+        from core import represent_file
+        field = dtable.file
+        field.represent = represent_file
+
+    # Reduced list fields
+    s3db.configure("doc_document",
+                   list_fields = ["name", "file", "comments"],
+                   )
+
 # -----------------------------------------------------------------------------
-def posts():
-    """
-        Function accessed by AJAX to handle a Series of Posts
-    """
+def newsletter():
+    """ Newsletters, Author Perspective """
 
-    try:
-        series_id = request.args[0]
-    except:
-        raise HTTP(400)
+    # Configure send-method
+    s3db.set_method("cms_newsletter",
+                    method = "send",
+                    action = s3db.cms_SendNewsletter,
+                    )
 
-    try:
-        recent = request.args[1]
-    except:
-        recent = 5
+    def prep(r):
 
-    table = s3db.cms_post
+        configure_newsletter_attachments()
 
-    # List of Posts in this Series
-    query = (table.series_id == series_id)
-    posts = db(query).select(table.name,
-                             table.body,
-                             table.avatar,
-                             table.created_by,
-                             table.created_on,
-                             limitby = (0, recent)
-                             )
+        resource = r.resource
 
-    output = UL(_id="comments")
-    import hashlib
-    for post in posts:
-        author = T("Anonymous")
-        if post.created_by:
-            utable = s3db.auth_user
-            ptable = s3db.pr_person
-            ltable = s3db.pr_person_user
-            query = (utable.id == post.created_by)
-            left = [ltable.on(ltable.user_id == utable.id),
-                    ptable.on(ptable.pe_id == ltable.pe_id)]
-            row = db(query).select(utable.email,
-                                   ptable.first_name,
-                                   ptable.middle_name,
-                                   ptable.last_name,
-                                   left = left,
-                                   limitby = (0, 1)
-                                   ).first()
-            if row:
-                person = row.pr_person
-                user = row[utable._tablename]
-                username = s3_fullname(person)
-                email = user.email.strip().lower()
-                hash = hashlib.md5(email.encode("utf-8")).hexdigest()
-                url = "http://www.gravatar.com/%s" % hash
-                author = A(username, _href=url, _target="top")
-        header = H4(post.name)
-        if post.avatar:
-            avatar = s3base.s3_avatar_represent(post.created_by)
+        component_name = r.component_name
+        if not r.component:
+            # TODO Default organisation_id, limit selector
+            # TODO Default person_id, limit selector
+            if r.record:
+                table = resource.table
+                field = table.message
+                field.represent = lambda v, row=None: \
+                                  DIV(v, _class="newsletter-text") if v else "-"
+
+        elif component_name == "newsletter_recipient":
+
+            # If add_recipients method is configured, disable
+            # create+update methods on this tab:
+            if s3db.get_method("cms_newsletter", "add_recipients"):
+                resource.configure(insertable = False,
+                                   editable = False,
+                                   )
+
+            # If notify_recipients method is configured, show notification
+            # status information for each recipient:
+            list_fields = ["pe_id"]
+            if s3db.get_method("cms_newsletter", "notify_recipients"):
+                for fn in ("status", "notified_on", "errors"):
+                    field.readable = True
+                list_fields.extend(["status", "notified_on"])
+            r.component.configure(list_fields = list_fields)
+
+            # TODO Filter pe_id to prevent duplication
+
+        return True
+    s3.prep = prep
+
+    return crud_controller(rheader=s3db.cms_rheader)
+
+# -----------------------------------------------------------------------------
+def read_newsletter():
+    """ Newsletters, Reader Perspective """
+
+    def prep(r):
+
+        configure_newsletter_attachments(file_icons=True)
+
+        from core import accessible_pe_query, \
+                         S3SQLCustomForm, \
+                         S3SQLInlineComponent
+
+        resource = r.resource
+        table = resource.table
+
+        # Filter by accessible recipient
+        rtable = s3db.cms_newsletter_recipient
+        query = accessible_pe_query(table=rtable,
+                                    instance_types=("org_organisation",
+                                                    "org_facility",
+                                                    "pr_group",
+                                                    ),
+                                    )
+        if auth.user:
+            query |= (rtable.pe_id == auth.user.pe_id)
+        resource.add_filter(query, "newsletter_recipient")
+
+        # Filter by SENT-status
+        query = FS("status") == "SENT"
+        resource.add_filter(query)
+
+        component = r.component
+        if not component:
+            if r.record:
+                table = resource.table
+                field = table.message
+                field.represent = lambda v, row=None: \
+                                  DIV(v, _class="newsletter-text") if v else "-"
+
+            # CRUD Form
+            crud_form = S3SQLCustomForm(
+                            #"organisation_id",
+                            "person_id", # TODO enhanced representation
+                            #"date_sent",
+                            #"subject",
+                            "message",
+                            S3SQLInlineComponent("document",
+                                                 name = "file",
+                                                 label = T("Attachments"),
+                                                 fields = ["name", "file", "comments"],
+                                                 filterby = {"field": "file",
+                                                             "options": "",
+                                                             "invert": True,
+                                                             },
+                                                 ),
+                            )
+
+            # Filter Widgets
+            # TODO adjust filters for perspective
+
+            # List Fields
+            list_fields = ["organisation_id",
+                           "subject",
+                           #"message",
+                           "date_sent",
+                           ]
+
+            resource.configure(crud_form = crud_form,
+                               list_fields = list_fields,
+                               insertable = False,
+                               editable = False,
+                               deletable = False,
+                               )
+
         else:
-            avatar = ""
-        row = LI(DIV(avatar,
-                     DIV(DIV(header,
-                             _class = "comment-header",
-                             ),
-                         DIV(XML(post.body),
-                             _class = "comment-body",
-                             ),
-                         _class="comment-text"),
-                         DIV(DIV(post.created_on,
-                                 _class = "comment-date",
-                                 ),
-                             _class="fright"),
-                         DIV(author,
-                             _class = "comment-footer",
-                             ),
-                     _class = "comment-box",
-                     ))
-        output.append(row)
+            # All components are read-only, too
+            component.configure(insertable = False,
+                                editable = False,
+                                deletable = False,
+                                )
+        return True
+    s3.prep = prep
 
-    return XML(output)
+    return crud_controller("cms", "newsletter", rheader=s3db.cms_rheader)
 
 # END =========================================================================

@@ -42,9 +42,11 @@ __all__ = ("S3Represent",
            "s3_trunk8",
            "s3_url_represent",
            "s3_yes_no_represent",
+           "represent_file",
            "represent_option",
            )
 
+import os
 import re
 import sys
 
@@ -55,7 +57,7 @@ from gluon.storage import Storage
 from gluon.languages import lazyT
 
 from .convert import s3_str
-from .utils import S3MarkupStripper
+from .utils import MarkupStripper
 
 URLSCHEMA = re.compile(r"((?:(())(www\.([^/?#\s]*))|((http(s)?|ftp):)"
                        r"(//([^/?#\s]*)))([^?#\s]*)(\?([^#\s]*))?(#([^\s]*))?)")
@@ -747,7 +749,7 @@ class S3RepresentLazy:
         # Strip markup + XML-escape
         if text and "<" in text:
             try:
-                stripper = S3MarkupStripper()
+                stripper = MarkupStripper()
                 stripper.feed(text)
                 text = stripper.stripped()
             except:
@@ -807,6 +809,73 @@ class S3PriorityRepresent:
         """
 
         return self(value, row=row)
+
+# =============================================================================
+# Uploaded file representation
+#
+FILE_ICONS = {".pdf": "file-pdf",
+              ".xls": "file-xls",
+              ".xlsx": "file-xls",
+              ".doc": "file-doc",
+              ".docx": "file-doc",
+              ".odt": "file-text",
+              ".txt": "file-text",
+              ".png": "file-image",
+              ".jpg": "file-image",
+              ".jpeg": "file-image",
+              ".bmp": "file-image",
+              }
+
+def represent_file(value, row=None):
+    """
+        Represent an upload-field (file) as icon+size
+
+        Args:
+            value: the uploaded file name
+            row: unused, for API compatibility
+
+        Returns:
+            representation (DIV-type)
+    """
+
+    if not value:
+        return current.messages["NONE"]
+
+    try:
+        # Check whether file exists and extract the original
+        # file name from the stored file name
+        name, f = current.db.doc_document.file.retrieve(value)
+    except IOError:
+        return current.T("File not found")
+
+    # Get the file extension and generate corresponding icon
+    ext = os.path.splitext(name)[1].lower()
+    icon_type = FILE_ICONS.get(ext)
+    if not icon_type:
+        icon_type = "file-generic"
+
+    from ..ui import ICON
+    icon = ICON(icon_type)
+
+    output = A(icon,
+               _href = URL(c="default", f="download", args=[value]),
+               _title = name,
+               _class = "file-repr",
+               )
+
+    # Determine the file size
+    fsize = f.seek(0, 2) if f else None
+    if fsize is not None:
+        for u in ("B", "kB", "MB", "GB"):
+            unit = u
+            if fsize < 1024:
+                break
+            else:
+                fsize /= 1024
+        fsize = "%s %s" % (round(fsize), unit)
+        output.append(SPAN(fsize, _class="file-size"))
+
+    return output
 
 # =============================================================================
 def represent_option(options, default="-"):

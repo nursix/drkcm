@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Data Collection:
     - a front-end UI to manage Assessments which uses the Dynamic Tables back-end

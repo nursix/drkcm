@@ -2621,7 +2621,7 @@ def config(settings):
 
             if r.controller == "vol" and volunteer_id and isinstance(output, dict):
 
-                from core import S3CustomController
+                from core import CustomController
 
                 method = r.method
                 if not method:
@@ -2633,7 +2633,7 @@ def config(settings):
                                              )
 
                     # Use custom view to keep organizer-link above form
-                    S3CustomController._view("RLP", "delegation.html")
+                    CustomController._view("RLP", "delegation.html")
 
                 elif method == "organize":
                     # Add hint how to use the organizer
@@ -2652,7 +2652,7 @@ def config(settings):
                                          _title = T("Manage deployments in a table view"),
                                          )
                     # Use custom view
-                    S3CustomController._view("RLP", "organize.html")
+                    CustomController._view("RLP", "organize.html")
 
             return output
         s3.postp = custom_postp

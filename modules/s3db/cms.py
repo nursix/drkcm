@@ -33,6 +33,8 @@ __all__ = ("CMSContentModel",
            "CMSContentTeamModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
+           "CMSNewsletterModel",
+           "cms_SendNewsletter",
            "cms_index",
            "cms_announcements",
            "cms_documentation",
@@ -48,6 +50,8 @@ import datetime
 import json
 import os
 import re
+
+from collections import OrderedDict
 
 from gluon import *
 from gluon.storage import Storage
@@ -1252,45 +1256,525 @@ class CMSContentRoleModel(DataModel):
         return None
 
 # =============================================================================
+class CMSNewsletterModel(DataModel):
+    """ Newsletters / Circulars """
+
+    names = ("cms_newsletter",
+             "cms_newsletter_recipient",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        db = current.db
+        s3 = current.response.s3
+
+        define_table = self.define_table
+        crud_strings = s3.crud_strings
+
+        configure = self.configure
+
+        # ---------------------------------------------------------------------
+        # Newsletter
+        #
+        status = (("NEW", T("New")),
+                  ("SENT", T("Sent")),
+                  )
+        status_represent = S3PriorityRepresent(status,
+                                               classes = {"NEW": "lightblue",
+                                                          "SENT": "green",
+                                                          },
+                                               )
+        tablename = "cms_newsletter"
+        define_table(tablename,
+                     self.super_link("doc_id", "doc_entity"),
+                     # Sender Organisation
+                     self.org_organisation_id(
+                         label = T("Sender Organisation"),
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     # Contact person
+                     self.pr_person_id(
+                         label = T("Contact"),
+                         ondelete = "SET NULL",
+                         widget = None,
+                         comment = None,
+                         ),
+                     Field("subject",
+                           label = T("Subject"),
+                           requires = IS_NOT_EMPTY(),
+                           ),
+                     Field("message", "text",
+                           label = T("Message"),
+                           requires = IS_NOT_EMPTY(),
+                           represent = s3_text_represent,
+                           ),
+                     s3_datetime("date_sent",
+                                 label = T("Date Sent"),
+                                 readable = False,
+                                 writable = False,
+                                 ),
+                     Field("status",
+                           label = T("Status"),
+                           default = "NEW",
+                           requires = IS_IN_SET(status, zero=None),
+                           represent = status_represent,
+                           readable = False,
+                           writable = False,
+                           ),
+                     Field("total_recipients", "integer",
+                           default = 0,
+                           label = T("Total Recipients"),
+                           represent = lambda v, row=None: v if v is not None else "-",
+                           readable = False,
+                           writable = False,
+                           ),
+                     s3_comments(),
+                     *s3_meta_fields())
+
+        # Components
+        self.add_components(tablename,
+                            cms_newsletter_recipient = "newsletter_id",
+                            )
+
+        # CRUD Form
+        crud_form = S3SQLCustomForm(
+                        "organisation_id",
+                        "person_id",
+                        "subject",
+                        "message",
+                        S3SQLInlineComponent("document",
+                                             name = "file",
+                                             label = T("Attachments"),
+                                             fields = ["name", "file", "comments"],
+                                             filterby = {"field": "file",
+                                                         "options": "",
+                                                         "invert": True,
+                                                         },
+                                             ),
+                        "comments",
+                        )
+
+        # List Fields
+        list_fields = ["organisation_id",
+                       "subject",
+                       "message",
+                       "status",
+                       "date_sent",
+                       ]
+
+        # Filter Widgets
+        filter_widgets = [S3TextFilter(["subject", "message", "comments"],
+                                       label = T("Search") ,
+                                       ),
+                          S3OptionsFilter("status",
+                                          options = OrderedDict(status),
+                                          cols = 3,
+                                          sort = False,
+                                          ),
+                          S3DateFilter("date_sent"),
+                          ]
+
+        # Table Configuration
+        configure(tablename,
+                  crud_form = crud_form,
+                  filter_widgets = filter_widgets,
+                  list_fields = list_fields,
+                  orderby = "%s.date_sent desc" % tablename,
+                  super_entity = "doc_entity",
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Newsletter"),
+            title_display = T("Newsletter Details"),
+            title_list = T("Newsletters"),
+            title_update = T("Edit Newsletter"),
+            label_list_button = T("List Newsletters"),
+            label_delete_button = T("Delete Newsletter"),
+            msg_record_created = T("Newsletter created"),
+            msg_record_modified = T("Newsletter updated"),
+            msg_record_deleted = T("Newsletter deleted"),
+            msg_list_empty = T("No Newsletters currently registered"),
+            )
+
+        # ---------------------------------------------------------------------
+        # Newsletter Recipients
+        #
+        status = (("PENDING", T("Pending")),
+                  ("NOTIFIED", T("Notified")),
+                  ("ERROR", T("Error")),
+                  )
+        status_represent = S3PriorityRepresent(status,
+                                               classes = {"PENDING": "lightblue",
+                                                          "NOTIFIED": "green",
+                                                          "ERROR": "red",
+                                                          },
+                                               )
+        pe_represent = self.pr_PersonEntityRepresent(show_label = False,
+                                                     show_link = False,
+                                                     show_type = True,
+                                                     )
+        tablename = "cms_newsletter_recipient"
+        define_table(tablename,
+                     Field("newsletter_id", "reference cms_newsletter",
+                           readable = False,
+                           writable = False,
+                           ),
+                     Field("pe_id", "reference pr_pentity",
+                           label = T("Recipient"),
+                           represent = pe_represent,
+                           requires = IS_EMPTY_OR(IS_ONE_OF(db,
+                                            "pr_pentity.pe_id",
+                                            pe_represent,
+                                            instance_types = ["pr_person",
+                                                              "org_organisation",
+                                                              ],
+                                            )),
+                           ),
+                     # Activated in prep when notification-method is configured:
+                     s3_datetime("notified_on",
+                                 label = T("Notified on"),
+                                 readable = False,
+                                 writable = False,
+                                 ),
+                     Field("status",
+                           default = "PENDING",
+                           requires = IS_IN_SET(status, zero=None),
+                           represent = status_represent,
+                                 readable = False,
+                           writable = False,
+                           ),
+                     Field("errors", "text",
+                           readable = False,
+                           writable = False,
+                           represent = s3_text_represent,
+                           ),
+                     *s3_meta_fields())
+
+        # Table Configuration
+        configure(tablename,
+                  onvalidation = self.recipient_onvalidation,
+                  onaccept = self.recipient_onaccept,
+                  ondelete = self.recipient_ondelete,
+                  )
+
+        # CRUD Strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Add Recipient"),
+            title_display = T("Recipient Details"),
+            title_list = T("Recipients"),
+            title_update = T("Edit Recipient"),
+            label_list_button = T("List Recipients"),
+            label_delete_button = T("Delete Recipient"),
+            msg_record_created = T("Recipient added"),
+            msg_record_modified = T("Recipient updated"),
+            msg_record_deleted = T("Recipient deleted"),
+            msg_list_empty = T("No Recipients currently registered"),
+            )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def recipient_onvalidation(form):
+        """
+            Onvalidation of newsletter recipient:
+                - prevent duplication of recipient
+        """
+
+        form_vars = form.vars
+
+        table = current.s3db.cms_newsletter_recipient
+
+        newsletter_id = form_vars.get("newsletter_id")
+        if not newsletter_id:
+            newsletter_id = table.newsletter_id.default
+        if not newsletter_id:
+            return
+
+        pe_id = form_vars.get("pe_id")
+        if not pe_id:
+            return
+
+        query = (table.newsletter_id == newsletter_id) & \
+                (table.pe_id == pe_id) & \
+                (table.deleted == False)
+        record_id = get_form_record_id(form)
+        if record_id:
+            query &= (table.id != record_id)
+
+        if current.db(query).select(table.id, limitby=(0, 1)).first():
+            form.errors["pe_id"] = current.T("Recipient already registered")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def update_total_recipients(newsletter_id):
+        """
+            Update the total number of recipients in a newsletter
+
+            Args:
+                newsletter_id: the newsletter record ID
+        """
+
+        if not newsletter_id:
+            return
+
+        db = current.db
+        s3db = current.s3db
+
+        rtable = s3db.cms_newsletter_recipient
+        total = rtable.id.count()
+        query = (rtable.newsletter_id == newsletter_id) & \
+                (rtable.deleted == False)
+        row = db(query).select(total).first()
+        if row:
+            table = s3db.cms_newsletter
+            query = (table.id == newsletter_id)
+            db(query).update(total_recipients=row[total])
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def recipient_onaccept(cls, form):
+        """
+            Onaccept of newsletter recipients:
+                - update the total number of recipients in the newsletter
+        """
+
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        table = current.s3db.cms_newsletter_recipient
+        query = (table.id == record_id)
+        record = current.db(query).select(table.newsletter_id,
+                                          limitby = (0, 1),
+                                          ).first()
+        if record:
+            cls.update_total_recipients(record.newsletter_id)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def recipient_ondelete(cls, row):
+        """
+            Ondelete of newsletter recipients:
+                - update the total number of recipients in the newsletter
+        """
+
+        cls.update_total_recipients(row.newsletter_id)
+
+# =============================================================================
+class cms_SendNewsletter(CRUDMethod):
+    """
+        Sends a newsletter, i.e.:
+            - sets the status to SENT to make the newsletter accessible by
+              designated recipients
+            - invokes the notification callback (if configured)
+    """
+
+    def apply_method(self, r, **attr):
+
+        # Inspect request
+        if r.http != "POST":
+            r.error(405, current.ERROR.BAD_METHOD)
+        if not r.interactive:
+            r.error(415, current.ERROR.BAD_FORMAT)
+
+        # Must be related to a particular newsletter
+        record = r.record
+        if not record:
+            r.error(400, current.ERROR.BAD_RECORD)
+
+        newsletter_id = record.id
+        next_url = URL(c="cms", f="newsletter", args=[newsletter_id])
+
+        # Verify form key
+        from core import FormKey
+        formkey = FormKey("send-newsletter-%s" % newsletter_id)
+        if not formkey.verify(r.post_vars):
+            r.error(403, current.ERROR.NOT_PERMITTED)
+
+        # Must have update-permission
+        if not current.auth.s3_has_permission("update", r.table,
+                                              record_id = newsletter_id,
+                                              ):
+            r.unauthorised()
+
+        # Can only send if current status is NEW
+        if record.status != "NEW":
+            r.error(403, current.ERROR.NOT_PERMITTED, next=next_url)
+
+        T = current.T
+        output = {}
+
+        method = r.method
+        if r.http == "POST" and method == "send":
+            record.update_record(status="SENT", date_sent=r.utcnow)
+
+            notify = current.s3db.get_config("cms_newsletter", "notify_recipients")
+            if callable(notify):
+                notify(record.id)
+
+            current.response.confirmation = T("Newsletter sent")
+            self.next = next_url
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+# =============================================================================
+def newsletter_send_action(newsletter):
+    """
+        Generates an action button to send a newsletter
+
+        Args:
+            newsletter: the newsletter record (including id and status)
+
+        Returns:
+            a list of action buttons
+    """
+
+    s3db = current.s3db
+
+    table = s3db.cms_newsletter
+    newsletter_id = newsletter.id
+
+    actions = None
+
+    if newsletter.status == "NEW" and \
+       current.auth.s3_has_permission("update", table, record_id=newsletter_id):
+
+        T = current.T
+
+        # Probe whether at least one recipient has been added
+        rtable = current.s3db.cms_newsletter_recipient
+        query = (rtable.newsletter_id == newsletter_id) & \
+                (rtable.deleted == False)
+        recipient = current.db(query).select(rtable.id,
+                                             limitby = (0, 1),
+                                             ).first()
+        if recipient:
+            # Generate formkey
+            from core import FormKey
+            formkey = FormKey("send-newsletter-%s" % newsletter_id).generate()
+
+            # Confirmation question
+            s3 = current.response.s3
+            confirm = '''i18n.send_newsletter="%s"''' % \
+                        T("Do you want to send this newsletter?")
+            if confirm not in s3.js_global:
+                s3.js_global.append(confirm)
+
+            # Inject script for action
+            appname = current.request.application
+            script = "/%s/static/scripts/S3/s3.cms.js" % appname
+            if script not in s3.scripts:
+                s3.scripts.append(script)
+
+            title = T("Send this newsletter")
+            data = {"key": formkey}
+            disabled = None
+        else:
+            # Render a disabled Send-button
+            title = T("No recipients assigned")
+            data = {}
+            disabled = "disabled"
+
+        # Send button
+        send_btn = A(T("Send"),
+                     _class = "action-btn newsletter-send-btn",
+                     _db_id = str(newsletter_id),
+                     _disabled = disabled,
+                     _title = title,
+                     data = data,
+                     )
+
+        actions = [send_btn]
+
+    return actions
+
+# =============================================================================
 def cms_rheader(r, tabs=None):
     """ CMS Resource Headers """
 
-    if r.representation != "html":
-        # RHeaders only used in interactive views
-        return None
-    record = r.record
-    if record is None:
-        # List or Create form: rheader makes no sense here
-        return None
-
-    table = r.table
-    resourcename = r.name
     T = current.T
+    if r.representation != "html":
+        return None
 
-    if resourcename == "series":
-        # Tabs
-        tabs = [(T("Basic Details"), None),
-                (T("Posts"), "post"),
-                ]
-        rheader_tabs = s3_rheader_tabs(r, tabs)
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
 
-        rheader = DIV(TABLE(TR(TH("%s: " % table.name.label),
-                               record.name
-                               ),
-                            ), rheader_tabs)
+    rheader = None
+    rheader_fields = []
 
-    elif resourcename == "post":
-        # Tabs
-        tabs = [(T("Basic Details"), None),
-                ]
-        if record.replies:
-            tabs.append((T("Comments"), "discuss"))
-        rheader_tabs = s3_rheader_tabs(r, tabs)
+    if record:
+        actions = None
 
-        rheader = DIV(TABLE(TR(TH("%s: " % table.name.label),
-                               record.name
-                               ),
-                            ), rheader_tabs)
+        if tablename == "cms_series":
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        (T("Posts"), "post"),
+                        ]
+
+            rheader_fields = []
+            title = "name"
+
+        elif tablename == "cms_post":
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        ]
+                if record.replies:
+                    tabs.append((T("Comments"), "discuss"))
+
+            rheader_fields = []
+            title = "name"
+
+        elif tablename == "cms_newsletter":
+            if r.function == "newsletter":
+                # Author perspective
+                if not tabs:
+                    tabs = [(T("Content"), None, {"native": True}),
+                            (T("Recipients"), "newsletter_recipient"),
+                            (T("Attachments"), "document"),
+                            ]
+                    if current.s3db.get_method(resource, "add_recipients"):
+                        tabs.insert(2, (T("Add Recipients"), "add_recipients"))
+                rheader_fields = [["status", "organisation_id"],
+                                  ["date_sent"], #, "person_id"],
+                                  ["total_recipients"],
+                                  ]
+                # Add send-action
+                actions = newsletter_send_action(record)
+            else:
+                # Reader perspective
+                if not tabs:
+                    tabs = [(T("Content"), None, {"native": True}),
+                            (T("Attachments"), "document"),
+                            ]
+                rheader_fields = [["organisation_id"],
+                                  ["date_sent"],
+                                  ]
+            title = "subject"
+
+        else:
+            return None
+
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=title)(
+                        r,
+                        table = resource.table,
+                        record = record,
+                        actions = actions,
+                        )
+    else:
+        rheader = None
 
     return rheader
 
@@ -1402,7 +1886,7 @@ def cms_index(module,
         try:
             # Pass view as file not str to work in compiled mode
             response.view = open(view, "rb")
-        except IOError as e:
+        except IOError:
             raise HTTP(404, "Unable to open Custom View: %s" % view)
     else:
         response.view = "index.html"
@@ -2204,17 +2688,22 @@ class cms_Calendar(CRUDMethod):
         if r.name == "post":
             if r.representation == "html":
                 output = self.html(r, **attr)
-                return output
             #elif r.representation == "pdf":
             #    output = self.pdf(r, **attr)
             #    return output
             #elif r.representation == "xls":
             #    output = self.xls(r, **attr)
             #    return output
-        r.error(405, current.ERROR.BAD_METHOD)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
 
     # -------------------------------------------------------------------------
-    def _extract(self, days, r, **attr):
+    @staticmethod
+    def _extract(days, r, **attr):
         """
             Extract the Data
         """
@@ -2378,8 +2867,9 @@ class cms_TagList(CRUDMethod):
             tag_list = [tag.name for tag in tags]
             output = json.dumps(tag_list, separators=SEPARATORS)
             current.response.headers["Content-Type"] = "application/json"
-            return output
+        else:
+            r.error(415, current.ERROR.BAD_FORMAT)
 
-        r.error(405, current.ERROR.BAD_METHOD)
+        return output
 
 # END =========================================================================

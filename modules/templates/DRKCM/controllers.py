@@ -8,12 +8,12 @@ from gluon import current
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import FS, S3CustomController
+from core import FS, CustomController
 
 THEME = "DRK"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):
@@ -155,7 +155,7 @@ class index(S3CustomController):
         return posts
 
 # =============================================================================
-class userstats(S3CustomController):
+class userstats(CustomController):
     """
         Custom controller to provide user account statistics per
         root organisation (for accounting in a shared instance)

@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+"""
+    Fire Rescue - Controllers
+"""
 
 module = request.controller
 

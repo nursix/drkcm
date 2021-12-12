@@ -792,8 +792,8 @@ def config(settings):
 
             # Custom view for shelter inspection
             if r.method == "inspection":
-                from core import S3CustomController
-                S3CustomController._view("DRK", "shelter_inspection.html")
+                from core import CustomController
+                CustomController._view("DRK", "shelter_inspection.html")
 
             return output
         s3.postp = custom_postp
@@ -2343,8 +2343,8 @@ def config(settings):
                 output = standard_postp(r, output)
 
             if r.method == "register":
-                from core import S3CustomController
-                S3CustomController._view("DRK", "register_case_event.html")
+                from core import CustomController
+                CustomController._view("DRK", "register_case_event.html")
             return output
         s3.postp = custom_postp
 
@@ -2493,8 +2493,8 @@ def config(settings):
                 output = standard_postp(r, output)
 
             if r.method in ("register", "register_food"):
-                from core import S3CustomController
-                S3CustomController._view("DRK", "register_case_event.html")
+                from core import CustomController
+                CustomController._view("DRK", "register_case_event.html")
             return output
         s3.postp = custom_postp
 

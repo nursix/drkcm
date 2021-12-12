@@ -231,7 +231,7 @@ def config(settings):
         "edit": "ucce-edit",
         "export": "ucce-export",
         "eye": "ucce-survey-preview",
-        "file-text-alt": "ucce-guides",
+        "file-text": "ucce-guides",
         "folder-alt": "ucce-projects",
         "hashtag": "ucce-number-question",
         "info-circle": "ucce-info",

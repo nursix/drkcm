@@ -16,7 +16,7 @@ import uuid
 from gluon import current, Field, IS_EMPTY_OR, IS_IN_SET, SQLFORM, URL, \
                   BUTTON, DIV, FORM, H5, INPUT, TABLE, TD, TR
 
-from core import ConsentTracking, IS_ONE_OF, S3CustomController, CRUDMethod, \
+from core import ConsentTracking, IS_ONE_OF, CustomController, CRUDMethod, \
                  s3_date, s3_mark_required, s3_qrcode_represent, \
                  JSONERRORS
 
@@ -321,7 +321,7 @@ class TestResultRegistration(CRUDMethod):
                             # Remove DCC flag if hcert could not be generated
                             cwa_report.dcc = False
 
-                    S3CustomController._view("RLPPTM", "certificate.html")
+                    CustomController._view("RLPPTM", "certificate.html")
 
                     # Title
                     field = table.disease_id
@@ -346,7 +346,7 @@ class TestResultRegistration(CRUDMethod):
             current.response.error = T("There are errors in the form, please check your input")
 
         # Custom View
-        S3CustomController._view("RLPPTM", "testresult.html")
+        CustomController._view("RLPPTM", "testresult.html")
 
         return {"title": title,
                 "intro": intro,

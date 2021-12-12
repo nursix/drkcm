@@ -8,12 +8,12 @@ from gluon import current, redirect
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import S3CustomController
+from core import CustomController
 
 THEME = "DRK"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):
@@ -156,7 +156,7 @@ class index(S3CustomController):
         return posts
 
 # =============================================================================
-class transferability(S3CustomController):
+class transferability(CustomController):
     """ Custom controller to update transferability status """
 
     def __call__(self):
@@ -206,7 +206,7 @@ class transferability(S3CustomController):
             auth.permission.fail()
 
 # =============================================================================
-class surplus_meals(S3CustomController):
+class surplus_meals(CustomController):
     """
         Custom controller to register surplus meals
     """

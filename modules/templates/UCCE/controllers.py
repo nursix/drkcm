@@ -9,7 +9,7 @@ from io import StringIO
 from gluon import *
 from gluon.storage import Storage
 
-from core import json, s3_str, ICON, S3CustomController, S3DateTime, CRUDMethod
+from core import json, s3_str, ICON, CustomController, S3DateTime, CRUDMethod
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -17,7 +17,7 @@ SEPARATORS = (",", ":")
 THEME = "UCCE"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):
@@ -710,7 +710,7 @@ class dc_TargetActivate(CRUDMethod):
                                _target="_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -986,7 +986,7 @@ class dc_TargetEdit(CRUDMethod):
                                _target = "_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -1116,7 +1116,7 @@ class dc_TargetDelete(CRUDMethod):
                                _target="_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -1734,7 +1734,7 @@ class dc_TargetReport(CRUDMethod):
             s3.scripts_modules.append("/%s/static/themes/UCCE/js/s3.ui.heatmap.min.js" % appname)
             scripts_append("/%s/static/themes/UCCE/js/report.min.js" % appname)
 
-        S3CustomController._view(THEME, "report_custom.html")
+        CustomController._view(THEME, "report_custom.html")
         return output
 
     # -------------------------------------------------------------------------
@@ -2273,7 +2273,7 @@ class dc_TargetReportFilters(CRUDMethod):
 
                 title = T("Questions to use as Report Filters")
                 response.title = title
-                S3CustomController._view(THEME, "form.html")
+                CustomController._view(THEME, "form.html")
                 return {"form": form,
                         "title": title,
                         }
@@ -2665,7 +2665,7 @@ class dc_TemplateEditor(CRUDMethod):
                     response.title = title = T("Editor")
                 s3.jquery_ready.append(script)
 
-                S3CustomController._view(THEME, "template_editor.html")
+                CustomController._view(THEME, "template_editor.html")
                 output = {"header": header,
                           "layout": layout,
                           "title": title,
@@ -3248,7 +3248,7 @@ class dc_ProjectDelete(CRUDMethod):
                                _target="_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Disease Case Tracking and Contact Tracing
 """

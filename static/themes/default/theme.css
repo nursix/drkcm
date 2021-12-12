@@ -376,6 +376,28 @@ button.toggle-text {
   margin: 0 20px 0 -50px;
 }
 
+/* CMS Newsletter Text Represent */
+/* line 127, ../scss/theme/_represent.scss */
+.newsletter-text {
+  white-space: pre-line;
+  background: #fffdef;
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  width: 48rem;
+  max-width: 100%;
+}
+
+/* File-Represent */
+/* line 139, ../scss/theme/_represent.scss */
+.file-repr i.fa {
+  font-size: 1.1rem;
+}
+/* line 142, ../scss/theme/_represent.scss */
+.file-repr .file-size {
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+}
+
 /* General Widgets */
 /* line 23, ../scss/theme/_widgets.scss */
 input[type="text"],

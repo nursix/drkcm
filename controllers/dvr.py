@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+"""
+    DVR Beneficiary Registry and Case Management
+"""
 
 module = request.controller
 resourcename = request.function

@@ -14,12 +14,12 @@ from gluon import current
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import FS, S3CustomController, S3FilterForm, S3DateFilter, S3LocationFilter, S3OptionsFilter, s3_str
+from core import FS, CustomController, S3FilterForm, S3DateFilter, S3LocationFilter, S3OptionsFilter, s3_str
 
 THEME = "SAMBRO"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom home page for the Public """
 
     # -------------------------------------------------------------------------
@@ -215,7 +215,7 @@ class index(S3CustomController):
         return output
 
 # =============================================================================
-class subscriptions(S3CustomController):
+class subscriptions(CustomController):
     """ Custom page to manage subscriptions """
 
     # -------------------------------------------------------------------------
@@ -1539,7 +1539,7 @@ $('#method_selector').change(function(){
         return None
 
 # =============================================================================
-class user_info(S3CustomController):
+class user_info(CustomController):
     """
         User Info API, used by Mobile Client
     """
@@ -1579,7 +1579,7 @@ class user_info(S3CustomController):
             return json.dumps(response)
 
 # =============================================================================
-class alert_hub_cop(S3CustomController):
+class alert_hub_cop(CustomController):
     """ Secondary (home) page for the Alert Hub """
 
     # -------------------------------------------------------------------------

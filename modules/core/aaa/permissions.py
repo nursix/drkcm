@@ -1546,8 +1546,10 @@ class S3Permission:
         acl = acls.get(ANY, {})
 
         # Default page ACL
-        if "c" in acl:
-            default_page_acl = acl["f"] if "f" in acl else acl["c"]
+        if "f" in acl:
+            default_page_acl = acl["f"]
+        elif "c" in acl:
+            default_page_acl = acl["c"]
         elif page_restricted:
             default_page_acl = NONE
         else:

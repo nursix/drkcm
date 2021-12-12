@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-
-""" Missing Person Registry """
+"""
+    Missing Person Registry
+"""
 
 module = request.controller
 prefix = request.controller

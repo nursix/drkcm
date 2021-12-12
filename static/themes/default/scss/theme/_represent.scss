@@ -122,5 +122,28 @@
     margin: 0 20px 0 -50px;
 }
 
+// ----------------------------------------------------------------------------
+/* CMS Newsletter Text Represent */
+.newsletter-text {
+    white-space: pre-line;
+    background: #fffdef;
+    padding: 0.7rem;
+    border: 1px solid #ccc;
+    width: 48rem;
+    max-width: 100%;
+}
+
+// ----------------------------------------------------------------------------
+/* File-Represent */
+.file-repr {
+    i.fa {
+        font-size: 1.1rem;
+    }
+    .file-size {
+        padding: 0 0.4rem;
+        font-size: 0.7rem;
+    }
+}
+
 // END ========================================================================
 

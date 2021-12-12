@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Beneficiary Registry and Case Management Controllers
 """

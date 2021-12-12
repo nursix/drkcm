@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
     Event Module - Controllers
-
-    http://eden.sahanafoundation.org/wiki/BluePrintScenario
 """
 
 module = request.controller

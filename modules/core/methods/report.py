@@ -48,7 +48,7 @@ from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
 from ..resource import FS, S3XMLFormat, S3Joins
 from ..tools import IS_NUMBER, JSONERRORS, JSONSEPARATORS, \
-                    S3MarkupStripper, get_crud_string, s3_flatlist, \
+                    MarkupStripper, get_crud_string, s3_flatlist, \
                     s3_has_foreign_key, s3_represent_value, s3_str
 
 from .base import CRUDMethod
@@ -2868,7 +2868,7 @@ class S3PivotTable:
                     represent = s3_str
 
                 # Wrap with markup stripper
-                stripper = S3MarkupStripper()
+                stripper = MarkupStripper()
                 def repr_method(val):
                     if val is None:
                         return "-"

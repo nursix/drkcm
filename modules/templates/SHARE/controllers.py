@@ -6,14 +6,14 @@ import json
 from gluon import current, A, BR, DIV, H3, H4, HR, LI, P, SPAN, TAG, TEXTAREA, UL, URL, XML
 from core import ICON, \
                  get_crud_string, s3_str, \
-                 S3CustomController, \
+                 CustomController, \
                  S3FilterForm, S3LocationFilter, S3OptionsFilter, S3TextFilter, \
                  S3Represent
 
 THEME = "SHARE"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """
         Custom Home Page
     """
@@ -552,7 +552,7 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
     return item
 
 # =============================================================================
-class dashboard(S3CustomController):
+class dashboard(CustomController):
     """
         Custom Dashboard
         - recent Events

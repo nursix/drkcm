@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Setup Tool:
         Assists with Installation, Configuration & Maintenance of Sahana Eden Deployment(s)

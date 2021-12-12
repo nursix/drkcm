@@ -235,6 +235,8 @@ class S3ResourceFilter:
                 master: False to filter only component
         """
 
+        rquery = isinstance(query, S3ResourceQuery)
+
         alias = None
         if not master:
             if not component:
@@ -242,12 +244,11 @@ class S3ResourceFilter:
             if component != self.resource.alias:
                 alias = component
 
-        if isinstance(query, S3ResourceQuery):
+        if rquery:
             self.transformed = None
             filters = self.filters
             cfilters = self.cfilters
             self.distinct |= query._joins(self.resource)[1]
-
         else:
             # DAL Query
             filters = self.queries
@@ -259,9 +260,14 @@ class S3ResourceFilter:
                 cfilters[alias].append(query)
             else:
                 cfilters[alias] = [query]
+        elif component and not rquery:
+            c = self.resource.components.get(component)
+            if c:
+                filters.append(query)
+                self.ijoins[c._alias] = [c.table.on(c.get_join())]
+                self.distinct = True
         else:
             filters.append(query)
-        return
 
     # -------------------------------------------------------------------------
     def add_extra_filter(self, method, expression):
