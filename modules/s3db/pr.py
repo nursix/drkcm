@@ -6814,6 +6814,10 @@ class PRSavedFilterModel(DataModel):
                           # Query is used for both Saved Filters and Subscriptions
                           # Can use a Context to have this work across multiple resources if a simple selector is insufficient
                           Field("query", "text"),
+                          Field("serverside", "json",
+                                readable = False,
+                                writable = False,
+                                ),
                           s3_comments(),
                           *s3_meta_fields())
 

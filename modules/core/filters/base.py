@@ -1591,9 +1591,10 @@ class S3LocationFilter(S3FilterWidget):
             # Multiselect is default
             T = current.T
 
-            # Multiselect Dropdown with Checkboxes
             if "multiselect-filter-widget" not in _class:
                 _class = "%s multiselect-filter-widget" % _class
+            if not opts.get("hidden") and "active" not in _class:
+                _class = "%s active" % _class
 
             header_opt = opts.get("header", False)
             if header_opt is False or header_opt is True:
@@ -1603,15 +1604,18 @@ class S3LocationFilter(S3FilterWidget):
                     header_opt = setting
 
             # Add one widget per level
-            first = True
-            hide = True
             s3 = current.response.s3
-            for level in levels:
-                # Dummy field
-                name = "%s-%s" % (base_name, level)
+            for index, level in enumerate(levels):
+
+                w_attr = dict(attr)
+
                 # Unique ID/name
-                attr["_id"] = "%s-%s" % (base_id, level)
-                attr["_name"] = name
+                w_attr["_id"] = "%s-%s" % (base_id, level)
+                w_attr["_name"] = name = "%s-%s" % (base_name, level)
+
+                # Dummy field
+                dummy_field = Storage(name=name, type=ftype)
+
                 # Find relevant values to pre-populate the widget
                 _values = values.get("%s$%s__%s" % (fname, level, operator))
                 w = S3MultiSelectWidget(search = opts.get("search", "auto"),
@@ -1619,38 +1623,35 @@ class S3LocationFilter(S3FilterWidget):
                                         selectedList = opts.get("selectedList", 3),
                                         noneSelectedText = T("Select %(location)s") % \
                                                              {"location": levels[level]["label"]})
-                if first:
+                if index == 0:
                     # Visible Multiselect Widget added to the page
-                    attr["_class"] = _class
+                    w_attr["_class"] = _class
+
                     options = levels[level]["options"]
-                    dummy_field = Storage(name = name,
-                                          type = ftype,
-                                          requires = IS_IN_SET(options,
-                                                               multiple=True))
-                    widget = w(dummy_field, _values, **attr)
-                    first = False
+                    dummy_field.requires = IS_IN_SET(options, multiple=True)
+
+                    widget = w(dummy_field, _values, **w_attr)
                 else:
-                    # Hidden, empty dropdown added to the page, whose options and multiselect will be activated when the higher level is selected
-                    if hide:
-                        _class = "%s hide" % _class
-                        attr["_class"] = _class
-                        hide = False
+                    # Hidden+empty dropdown added to the page, options and
+                    # multiselect will be activated when the higher level is selected
+                    w_attr["_class"] = "%s hide" % _class
+
                     # Store the current jquery_ready
                     jquery_ready = s3.jquery_ready
-                    # Build the widget with the MultiSelect activation script
                     s3.jquery_ready = []
-                    dummy_field = Storage(name = name,
-                                          type = ftype,
-                                          requires = IS_IN_SET([],
-                                                               multiple=True))
-                    widget = w(dummy_field, _values, **attr)
-                    # Extract the MultiSelect activation script
+
+                    # Build the widget with the MultiSelect activation script
+                    dummy_field.requires = IS_IN_SET([], multiple=True)
+                    widget = w(dummy_field, _values, **w_attr)
+
+                    # Extract the MultiSelect activation script from updated jquery_ready
                     script = s3.jquery_ready[0]
-                    # Restore jquery_ready
                     s3.jquery_ready = jquery_ready
+
                     # Wrap the script & reinsert
                     script = '''S3.%s=function(){%s}''' % (name.replace("-", "_"), script)
                     s3.js_global.append(script)
+
                 w_append(widget)
 
         # Restore id and name for the data_element
@@ -1668,21 +1669,21 @@ class S3LocationFilter(S3FilterWidget):
 
             Args:
                 variable: the URL query variable
+
+            Returns:
+                list of hidden inputs
         """
 
-        output = []
-        oappend = output.append
-        i = 0
-        for level in self.levels:
-            widget = INPUT(_type = "hidden",
-                           _id = "%s-%s-data" % (self.attr["_id"], level),
-                           _class = "filter-widget-data %s-data" % self._class,
-                           _value = variable[i],
-                           )
-            oappend(widget)
-            i += 1
+        widget_id = self.attr["_id"]
+        css_class = self._class
 
-        return output
+        return [INPUT(_type = "hidden",
+                      _id = "%s-%s-data" % (widget_id, level),
+                      _class = "filter-widget-data %s-data" % css_class,
+                      _value = variable[i],
+                      )
+                for i, level in enumerate(self.levels)
+                ]
 
     # -------------------------------------------------------------------------
     def ajax_options(self, resource):

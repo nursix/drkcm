@@ -2094,7 +2094,7 @@ S3.search = {};
         }
     };
 
-    var toggleAdvanced = function(form) {
+    var toggleAdvanced = function(form, state) {
 
         var $form = $(form), hidden;
 
@@ -2105,29 +2105,29 @@ S3.search = {};
             if (widget.hasClass('hide')) {
                 // Show the Widgets
                 widget.removeClass('hide')
-                        .show()
-                        .find(selectors).each( function() {
-                            var selector = $(this);
-                            // Mark them as Active
-                            selector.addClass('active');
-                            // Refresh the contents
-                            if (selector.hasClass('groupedopts-filter-widget') &&
-                                selector.groupedopts('instance')) {
-                                selector.groupedopts('refresh');
-                            } else
-                            if (selector.hasClass('multiselect-filter-widget') &&
-                                selector.multiselect('instance')) {
-                                selector.multiselect('refresh');
-                            }
-                        });
+                      .show()
+                      .find(selectors).each( function() {
+                          var selector = $(this);
+                          // Mark them as Active
+                          selector.addClass('active');
+                          // Refresh the contents
+                          if (selector.hasClass('groupedopts-filter-widget') &&
+                              selector.groupedopts('instance')) {
+                              selector.groupedopts('refresh');
+                          } else
+                          if (selector.hasClass('multiselect-filter-widget') &&
+                              selector.multiselect('instance')) {
+                              selector.multiselect('refresh');
+                          }
+                      });
                 hidden = true;
             } else {
                 // Hide the Widgets
                 widget.addClass('hide')
-                        .hide()
-                        // Mark them as Inactive
-                        .find(selectors)
-                        .removeClass('active');
+                      .hide()
+                      // Mark them as Inactive
+                      .find(selectors)
+                      .removeClass('active');
                 hidden = false;
             }
         });
