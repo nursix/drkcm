@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 {
-'Municipality': 'општина',
 'Macedonian': 'македонски',
+'Municipality': 'општина',
 'Region': 'регион',
 }

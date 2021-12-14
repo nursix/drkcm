@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 '1-2 times per week': 'in-1 na in-2 isaky ny herinandro',
 '1-3 times per month': 'in-1 na in-3 isam-bolana',
@@ -14,7 +13,6 @@
 'Email': 'Mailaka',
 'End Date': 'Daty Farany',
 'Exceptional Cases': 'Tranga Manokana',
-'female': 'vavy',
 'Female': 'Vavy',
 'First Name': 'Anarana',
 'Frequent': 'Matetika',
@@ -27,7 +25,6 @@
 'Large': 'Be',
 'Last Name': 'Fanampiny',
 'Little': 'Kely',
-'male': 'lahy',
 'Male': 'Lahy',
 'Man': 'Lahy',
 'Men': 'Lahy',
@@ -35,8 +32,8 @@
 'Normal Job': 'Asa Atao',
 'North': 'Avaratra',
 'Once per month': 'in-1 isam-bolana',
-'Other': 'Hafa',
 'Other Trainings': 'Fiofanana Hafa',
+'Other': 'Hafa',
 'Person': 'Olona',
 'Projects': "Tetik'asa",
 'Red Cross Trainings': 'Fiofanana azo CR',
@@ -58,7 +55,9 @@
 'When needed': 'Raha ilaina',
 'Woman': 'Vavy',
 'Women': 'Vavy',
-'Year': 'Taona',
 'Year Started': 'Taona Nidirana',
+'Year': 'Taona',
+'female': 'vavy',
+'male': 'lahy',
 'Мalagasy': 'Мalagasy',
 }

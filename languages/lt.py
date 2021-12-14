@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 {
-'Lithuanian': 'Lietuvių',
 'County': 'Apskritis',
-'Municipality': 'Savivaldybė',
 'Eldership': 'Seniūnija',
+'Lithuanian': 'Lietuvių',
+'Municipality': 'Savivaldybė',
 }

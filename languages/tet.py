@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 "Acronym of the organization's name, eg. IFRC.": 'Lista organizasaun nia naran sira e.g IFRC',
 "If you don't see the Office in the list, you can add a new one by clicking link 'Create Office'.": 'Se ita la hare eskritorio iha lista laran, ita bele hatama foun fali hodi klik iha ligasaun : Tipu naran eskritoriu foun',
@@ -26,8 +25,8 @@
 'Acronym': 'Lista Oragnizasaun',
 'Activate': 'Ativa',
 'Activity': 'Aktividade',
-'Add Contact': 'Aumenta kontaktu',
 'Add Contact Information': 'Aumenta informasaun kontaktu',
+'Add Contact': 'Aumenta kontaktu',
 'Add Document': 'Aumenta dukomentu',
 'Add Documents': 'Aumenta dokumentus',
 'Add Location': 'Aumenta fatin/lokasi',
@@ -127,8 +126,8 @@
 'Create Organization Type': 'Aumenta organizasaun Tipu',
 'Create Organization': 'Aumenta organizasaun foun',
 'Create Project': 'Aumenta projetu',
-'Create Resource': 'Aumenta rekursus',
 'Create Resource Type': 'Aumenta Rekursu Tipu',
+'Create Resource': 'Aumenta rekursus',
 'Create Role': 'Kria regulamentu foun',
 'Create Theme': 'Aumenta titlu ba projetu',
 'Create User': 'Kria uza foun',

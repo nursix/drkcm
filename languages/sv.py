@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 '!langcode!': 'sv',
 '!langname!': 'sv',
@@ -27,8 +26,9 @@
 'New Organization': 'Lägg Till Organisation',
 'New': 'Lägg till',
 'No Projects currently registered': 'Inga projekt registrerade',
-'Open': 'Öppna',
+'North Macedonia': 'Nordmakedonien',
 'Open##status': 'Öppet',
+'Open': 'Öppna',
 'Parish': 'Församling',
 'Project': 'Projekt',
 'Projects': 'Projekt',

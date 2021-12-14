@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 "'Cancel' will indicate an asset log entry did not occur": "'Abbrechen' zeigt an, dass ein Asset Log Eintrag nicht eingetreten ist",
 "A location that specifies the geographic area for this region. This can be a location from the location hierarchy, or a 'group location', or a location that has a boundary for the area.": 'Eine Position, die den geografischen Bereich für diese Region definiert. Dies kann ein Standort aus der Standorthierarchie, oder ein Gruppenstandort, oder ein Standort mit Grenzbereich sein.',
@@ -3896,6 +3895,7 @@
 'Normal Address': 'Normale Adresse',
 'Normal Job': 'Normaler Beruf',
 'Normal': 'Normal',
+'North Macedonia': 'Nordmazedonien',
 'Northern Mariana Islands': 'Nördliche Marianen-Inseln',
 'Norway': 'Norwegen',
 'Not Applicable': 'Nicht zutreffend',
@@ -5764,7 +5764,6 @@
 'The first or only name of the person (mandatory).': 'Der erste oder einzige Name der Person (erforderlich)',
 'The following information will be deleted from the record': 'Die folgenden Informationen werden aus dem Datensatz gelöscht',
 'The form of the URL is http://your/web/map/service?service=WMS&request=GetCapabilities where your/web/map/service stands for the URL path to the WMS.': 'Das Format der URL ist http://your/web/map/service?service=WMS&request=GetCapabilities wobei your/web/map/service für den Pfad der URL zum WMS steht',
-'The former Yugoslav Republic of Macedonia': 'Mazedonien, Ehemalige Jugoslawische Republik',
 'The language you wish the site to be displayed in.': 'Die Sprache in der die Seite angezeigt werden soll.',
 'The list of Brands are maintained by the Administrators.': 'Die Liste der Marken wird von den Administratoren verwaltet.',
 'The list of Catalogs are maintained by the Administrators.': 'Die Liste der Kataloge wird vom Administrator verwaltet.',

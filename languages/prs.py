@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 "A location that specifies the geographic area for this region. This can be a location from the location hierarchy, or a 'group location', or a location that has a boundary for the area.": "یک موقعیت که منطقه جغرافیایی را برای این ساحه مشخص می کند. این یک موقعیت از سلسله موقعیت ها یا 'موقعیت گروپ' یا موقعیت است که دارای سرحد با منطقه می باشد.",
 "A volunteer is defined as active if they've participated in an average of 8 or more hours of Program work or Trainings per month in the last year": 'یک رضاکار فعال گفته می شود اگر حد اوسط در برنامه های کاری یا تربیوی 8 ساعته یا بیشتر از 8 ساعته در یک ماه در سال گذشته اشتراک کرده باشد.',
@@ -1138,7 +1137,6 @@
 'Fingerprint': 'اثر انگشت',
 'First Aid Refresher': 'کمک ها ی اولیه کورس مجدد',
 'First Aid': 'کمک اولیه',
-'First Aid': 'کمک ها ی اولیه',
 'First Name': 'نام',
 'First': 'اول',
 'Fleet Manager': 'مدیر سریع',
@@ -1722,9 +1720,9 @@
 'Member': 'عضو',
 'Members': 'اعضا',
 'Membership Details': 'جزئیات عضویت',
-'Membership Fee': 'فیس عضویت',
 'Membership Fee Due Date': 'آغاز از آخرین پرداخت',
 'Membership Fee Last Paid': 'پرداخت آخرین حق العضویت',
+'Membership Fee': 'فیس عضویت',
 'Membership Paid': 'عضویت پرداخته شد',
 'Membership Type Details': 'جزئیات نوع عضویت',
 'Membership Type added': 'نوع عضویت اضافه گردید',

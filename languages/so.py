@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 'Agree': 'Ogolow',
 'Always': 'Had iyo jeer',
