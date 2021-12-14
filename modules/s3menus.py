@@ -614,12 +614,16 @@ class S3OptionsMenu(object):
                     M("Series", f="series")(
                         M("Create", m="create"),
                         M("View as Pages", f="blog"),
-                    ),
+                        ),
                     M("Posts", f="post")(
                         M("Create", m="create"),
                         M("View as Pages", f="page"),
-                    ),
-                )
+                        ),
+                    M("Newsletters", f="read_newsletter")(
+                        M("Inbox", p="create", t="cms_newsletter"),
+                        M("Outbox", f="newsletter", p="create"),
+                        ),
+                    )
 
     # -------------------------------------------------------------------------
     @staticmethod

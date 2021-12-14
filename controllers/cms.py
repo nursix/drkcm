@@ -1080,6 +1080,8 @@ def newsletter():
 
     def prep(r):
 
+        s3.crud_strings["cms_newsletter"]["title_list"] = T("Newsletter Outbox")
+
         configure_newsletter_attachments()
 
         resource = r.resource
@@ -1160,6 +1162,8 @@ def read_newsletter():
     """ Newsletters, Reader Perspective """
 
     def prep(r):
+
+        s3.crud_strings["cms_newsletter"]["title_list"] = T("Newsletter Inbox")
 
         configure_newsletter_attachments(file_icons=True)
 

@@ -252,6 +252,15 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 )
 
     # -------------------------------------------------------------------------
+    @classmethod
+    def cms(cls):
+
+        if not current.auth.s3_has_role("ADMIN"):
+            return cls.org()
+
+        return super().cms()
+
+    # -------------------------------------------------------------------------
     @staticmethod
     def disease():
 
@@ -367,7 +376,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
             M("Create Organization", m="create", restrict="ORG_GROUP_ADMIN"),
             )
 
-        return M(c=("org", "hrm"))(
+        return M(c=("org", "hrm", "cms"))(
                     org_menu,
                     M("Facilities", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
                         M("Test Stations to review",
@@ -385,6 +394,10 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Staff", c="hrm", f=("staff", "person"),
                       restrict=("ORG_ADMIN", "ORG_GROUP_ADMIN"),
                       ),
+                    M("Newsletters", c="cms", f="read_newsletter")(
+                        M("Inbox", f="read_newsletter", p="create", t="cms_newsletter"),
+                        M("Outbox", f="newsletter", p="create"),
+                        ),
                     M("Administration", restrict=("ADMIN"))(
                         M("Facility Types", f="facility_type"),
                         M("Organization Types", f="organisation_type"),
