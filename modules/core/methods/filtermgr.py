@@ -271,6 +271,7 @@ class S3Filter(CRUDMethod):
         else:
             filter_data["id"] = record_id = table.insert(**filter_data)
             current.audit("create", "pr", "filter", form, record_id, "json")
+            auth.s3_set_record_owner(table, record_id)
             s3db.onaccept(table, record, method="create")
             info = {"created": record_id}
 

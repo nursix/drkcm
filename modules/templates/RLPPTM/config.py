@@ -530,6 +530,70 @@ def config(settings):
     settings.customise_auth_user_resource = customise_auth_user_resource
 
     # -------------------------------------------------------------------------
+    def lookup_newsletter_recipients(resource):
+        """
+            Callback function to look up the recipients corresponding to a
+            distribution list entry (in this instance: send all newsletters
+            to orgs)
+
+            Args:
+                the (filtered) resource
+
+            Returns:
+                a list of pe_ids of the recipients
+        """
+
+        if resource.tablename == "org_facility":
+            rows = resource.select(["organisation_id$pe_id"], as_rows=True)
+            return [row.org_organisation.pe_id for row in rows]
+
+        elif resource.tablename == "org_organisation":
+            rows = resource.select(["pe_id"], as_rows=True)
+            return [row.pe_id for row in rows]
+
+        else:
+            return []
+
+    # -------------------------------------------------------------------------
+    def resolve_newsletter_recipient(pe_id):
+        """
+            Callback function to look up the email address(es) for
+            a recipient
+
+            Args:
+                pe_id: the pe_id of the recipient
+
+            Returns:
+                email address or list of email addresses of the
+                recipient
+        """
+
+        s3db = current.s3db
+
+        # Retrieve the instance record
+        tablename, record_id = s3db.get_instance("pr_pentity", pe_id)
+
+        if tablename == "org_organisation":
+            # Send to all ORG_ADMINs
+            from .helpers import get_role_emails
+            return get_role_emails("ORG_ADMIN", organisation_id=record_id)
+
+        else:
+            # Fall back to default behavior (direct pr_contact lookup)
+            return s3db.cms_SendNewsletter.resolve(pe_id)
+
+    # -------------------------------------------------------------------------
+    def customise_cms_newsletter_resource(r, tablename):
+
+        # Configure callbacks for newsletter distribution
+        current.s3db.configure("cms_newsletter",
+                               lookup_recipients = lookup_newsletter_recipients,
+                               resolve_recipient = resolve_newsletter_recipient,
+                               )
+
+    settings.customise_cms_newsletter_resource = customise_cms_newsletter_resource
+
+    # -------------------------------------------------------------------------
     def customise_cms_post_resource(r, tablename):
 
         s3db = current.s3db

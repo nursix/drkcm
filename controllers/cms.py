@@ -1083,36 +1083,64 @@ def newsletter():
         configure_newsletter_attachments()
 
         resource = r.resource
+        record = r.record
+
+        lookup = resource.get_config("lookup_recipients")
 
         component_name = r.component_name
         if not r.component:
             # TODO Default organisation_id, limit selector
             # TODO Default person_id, limit selector
-            if r.record:
+            if record:
                 table = resource.table
                 field = table.message
                 field.represent = lambda v, row=None: \
                                   DIV(v, _class="newsletter-text") if v else "-"
 
+            if lookup:
+                # Add distribution list to CRUD form
+                from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
+                crud_form = S3SQLCustomForm(
+                                "organisation_id",
+                                "person_id",
+                                "subject",
+                                "message",
+                                S3SQLInlineComponent(
+                                    "document",
+                                    name = "file",
+                                    label = T("Attachments"),
+                                    fields = ["name", "file", "comments"],
+                                    filterby = {"field": "file",
+                                                "options": "",
+                                                "invert": True,
+                                                },
+                                    ),
+                                S3SQLInlineLink(
+                                    "distribution",
+                                    field = "filter_id",
+                                    filterby = {
+                                        "pe_id": auth.user.pe_id if auth.user else None,
+                                        "resource": ["org_organisation",
+                                                    "org_facility",
+                                                    ],
+                                        }
+                                    ),
+                                "comments",
+                                )
+                resource.configure(crud_form = crud_form)
+
         elif component_name == "newsletter_recipient":
 
-            # If add_recipients method is configured, disable
-            # create+update methods on this tab:
-            if s3db.get_method("cms_newsletter", "add_recipients"):
-                resource.configure(insertable = False,
-                                   editable = False,
-                                   )
+            if not lookup:
+                # No lookup from distribution lists configured, so
+                # allow manual insertion of recipients
+                r.component.configure(insertable = True)
 
-            # If notify_recipients method is configured, show notification
-            # status information for each recipient:
-            list_fields = ["pe_id"]
-            if s3db.get_method("cms_newsletter", "notify_recipients"):
-                for fn in ("status", "notified_on", "errors"):
-                    field.readable = True
-                list_fields.extend(["status", "notified_on"])
-            r.component.configure(list_fields = list_fields)
+                # TODO Filter pe_id to prevent duplication
 
-            # TODO Filter pe_id to prevent duplication
+            # Allow adding of individual recipients after sending
+            if record.status == "SENT":
+                resource.configure(insertable=True)
 
         return True
     s3.prep = prep

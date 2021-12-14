@@ -305,8 +305,9 @@ class ProjectModel(DataModel):
                                     cols = 4,
                                     translate = True,
                                     # Filter Theme by Sector
-                                    #filterby = "theme_id:project_theme_sector.sector_id",
-                                    #match = "sector_project.sector_id",
+                                    #match = {
+                                    #    "theme_id:project_theme_sector.sector_id": "sector_project.sector_id",
+                                    #    },
                                     #script = '''
 #$.filterOptionsS3({
 # 'trigger':{'alias':'sector','name':'sector_id','inlineType':'link'},

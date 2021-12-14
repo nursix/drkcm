@@ -293,8 +293,9 @@ class VolunteerActivityModel(DataModel):
                                                     cols = 4,
                                                     translate = True,
                                                     # Filter Activity Type by Sector
-                                                    filterby = "activity_type_id:vol_activity_type_sector.sector_id",
-                                                    match = "sector_id",
+                                                    match = {
+                                                        "activity_type_id:vol_activity_type_sector.sector_id": "sector_id",
+                                                        },
                                                     script = '''
 $.filterOptionsS3({
  'trigger':'sector_id',

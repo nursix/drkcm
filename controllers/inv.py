@@ -1442,12 +1442,10 @@ def adj_close():
     db(atable.id == adj_id).update(status = 1)
 
     # Go to the Inventory of the Site which has adjusted these items
-    (prefix, resourcename, id) = s3db.get_instance(s3db.org_site,
-                                                   site_id)
-    redirect(URL(c = prefix,
-                 f = resourcename,
-                 args = [id, "inv_item"],
-                 ))
+    resourcename, id = s3db.get_instance(s3db.org_site, site_id)
+    prefix, name = resourcename.split("_", 1)
+
+    redirect(URL(c=prefix, f=name, args=[id, "inv_item"]))
 
 # =============================================================================
 def recv_item_json():

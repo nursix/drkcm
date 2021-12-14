@@ -1629,14 +1629,13 @@ def commit_req():
                                           limitby=(0, 1)).first()
 
     # User must have permissions over facility which is sending
-    (prefix, resourcename, id) = s3db.get_instance(s3db.org_site, site_id)
+    resourcename, id = s3db.get_instance(s3db.org_site, site_id)
     if not site_id or not auth.s3_has_permission("update",
-                                                 "%s_%s" % (prefix,
-                                                            resourcename),
-                                                 record_id=id):
+                                                 resourcename,
+                                                 record_id = id,
+                                                 ):
         session.error = T("You do not have permission to make this commitment.")
-        redirect(URL(c="req", f="req",
-                     args=[req_id]))
+        redirect(URL(c="req", f="req", args=[req_id]))
 
     # Create a new commit record
     commit_id = s3db.req_commit.insert(date = request.utcnow,
@@ -1713,14 +1712,13 @@ def send_req():
                                           limitby=(0, 1)).first()
 
     # User must have permissions over facility which is sending
-    (prefix, resourcename, id) = s3db.get_instance(db.org_site, site_id)
+    resourcename, id = s3db.get_instance(db.org_site, site_id)
     if not site_id or not auth.s3_has_permission("update",
-                                                 "%s_%s" % (prefix,
-                                                            resourcename),
-                                                 record_id=id):
+                                                 resourcename,
+                                                 record_id = id,
+                                                 ):
         session.error = T("You do not have permission to send this shipment.")
-        redirect(URL(c="req", f="req",
-                     args = [req_id]))
+        redirect(URL(c="req", f="req", args=[req_id]))
 
     ritable = s3db.req_req_item
     iitable = s3db.inv_inv_item

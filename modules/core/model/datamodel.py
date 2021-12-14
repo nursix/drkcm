@@ -1746,14 +1746,15 @@ class DataModel:
                 superid: the super-entity record ID
 
             Returns:
-                a tuple (prefix, name, ID) of the instance record (if it exists)
+                a tuple (tablename, ID) of the instance record (if it exists)
         """
 
         if not hasattr(supertable, "_tablename"):
             # tablename passed instead of Table
             supertable = cls.table(supertable)
         if supertable is None:
-            return (None, None, None)
+            return None, None
+
         db = current.db
         query = (supertable._id == superid)
         entry = db(query).select(supertable.instance_type,
@@ -1761,13 +1762,14 @@ class DataModel:
                                  limitby=(0, 1)).first()
         if entry:
             instance_type = entry.instance_type
-            prefix, name = instance_type.split("_", 1)
             instancetable = current.s3db[entry.instance_type]
-            query = instancetable.uuid == entry.uuid
+            query = (instancetable.uuid == entry.uuid)
             record = db(query).select(instancetable.id,
-                                      limitby=(0, 1)).first()
+                                      limitby = (0, 1),
+                                      ).first()
             if record:
-                return (prefix, name, record.id)
-        return (None, None, None)
+                return instance_type, record.id
+
+        return None, None
 
 # END =========================================================================

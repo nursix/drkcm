@@ -52,6 +52,7 @@ from gluon.validators import Validator
 
 from s3dal import Field, original_tablename
 
+from ..resource import FS
 from ..tools import s3_mark_required, s3_store_last_record_id, s3_str, \
                     s3_validate, JSONERRORS, JSONSEPARATORS, S3Represent
 
@@ -3893,12 +3894,12 @@ class S3SQLInlineLink(S3SQLInlineComponent):
 
             requires: validator to determine the selectable options (defaults
                       to field validator)
-            filterby: filter look-up options by this field (can be a field in
-                      the look-up table itself or in another table linked to it),
-                      str (field selector)
-            options: filter for these values, OR:
-            match: lookup the filter value from this field (can be a field in the
-                   master table, or in linked table), str (field selector)
+            filterby: filter look-up options, a dict {selector: values}, each
+                      selector can be a field in the look-up table itself or
+                      in another table linked to it
+            match: filter look-up options, analogous to filterby, but instead
+                   of values, specifies selectors to retrieve the filter values
+                   from the master resource, i.e. {selector: master_selector}
 
             ** Options for hierarchy and cascade widgets:
 
@@ -3950,7 +3951,6 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             if customise:
                 customise(r, tablename)
 
-        self.initialized = True
         if record_id:
             rkey = component.rkey
             rows = link.select([rkey], as_rows=True)
@@ -4280,8 +4280,6 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                 dict {value: representation} of options
         """
 
-        from ..resource import FS
-
         resource = self.resource
         component, link = self.get_link()
 
@@ -4298,57 +4296,82 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                 validator = validator.other
             try:
                 opts = validator.options()
-            except:
+            except AttributeError:
                 pass
 
         # Filter these options?
         widget_opts_get = self.options.get
+
+        filter_query = None
+        subquery = self.subquery
         filterby = widget_opts_get("filterby")
-        filteropts = widget_opts_get("options")
-        filterexpr = widget_opts_get("match")
+        if filterby:
+            # Field shall match one of the specified values
+            for selector, values in filterby.items():
 
-        if filterby and \
-           (filteropts is not None or filterexpr and resource._rows):
+                q = subquery(selector, values)
+                filter_query = filter_query & q if filter_query else q
 
-            # filterby is a field selector for the component
-            # that shall match certain conditions
-            filter_selector = FS(filterby)
-            filter_query = None
+        filterby = widget_opts_get("match")
+        if filterby and resource._rows:
+            # Field shall match one of the values in the field
+            # specified by expr
+            for selector, expr in filterby.items():
 
-            if filteropts is not None:
-                # filterby-field shall match one of the given filteropts
-                if isinstance(filteropts, (list, tuple, set)):
-                    filter_query = (filter_selector.belongs(list(filteropts)))
-                else:
-                    filter_query = (filter_selector == filteropts)
-
-            elif filterexpr:
-                # filterby-field shall match one of the values for the
-                # filterexpr-field of the master record
-                rfield = resource.resolve_selector(filterexpr)
+                # Get the values in the match-field
+                rfield = resource.resolve_selector(expr)
                 colname = rfield.colname
+                rows = resource.select([expr], as_rows=True)
+                values = [row[colname] for row in rows]
 
-                rows = resource.select([filterexpr], as_rows=True)
-                values = set(row[colname] for row in rows)
-                values.discard(None)
+                q = subquery(selector, values)
+                filter_query = filter_query & q if filter_query else q
 
-                if values:
-                    filter_query = (filter_selector.belongs(values)) | \
-                                   (filter_selector == None)
-
+        if filter_query is not None:
             # Select the filtered component rows
             filter_resource = current.s3db.resource(component.tablename,
-                                                    filter = filter_query)
+                                                    filter = filter_query,
+                                                    )
             rows = filter_resource.select(["id"], as_rows=True)
 
-            filtered_opts = []
+            # Reduce the options to the thus selected rows
             values = set(str(row[component.table._id]) for row in rows)
-            for opt in opts:
-                if str(opt[0]) in values:
-                    filtered_opts.append(opt)
+            filtered_opts = [opt for opt in opts if str(opt[0]) in values]
             opts = filtered_opts
 
         return dict(opts)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def subquery(selector, values):
+        """
+            Construct a query for selector to match values; taking
+            into account the special case of None (helper function
+            for get_options).
+
+            Args:
+                selector: the field selector (str)
+                values: the values to match (list|tuple|set or single value)
+
+            Returns:
+                the query
+        """
+
+        field = FS(selector)
+
+        if isinstance(values, (list, tuple, set)):
+            if None in values:
+                filter_values = [v for v in values if v is not None]
+                if filter_values:
+                    query = (field.belongs(filter_values)) | (field == None)
+                else:
+                    query = (field == None)
+            else:
+                query = (field.belongs(list(values)))
+        else:
+            query = (field == values)
+
+        return query
 
     # -------------------------------------------------------------------------
     def get_link(self):

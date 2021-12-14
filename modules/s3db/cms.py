@@ -35,6 +35,7 @@ __all__ = ("CMSContentModel",
            "CMSContentRoleModel",
            "CMSNewsletterModel",
            "cms_SendNewsletter",
+           "cms_newsletter_notify",
            "cms_index",
            "cms_announcements",
            "cms_documentation",
@@ -1261,6 +1262,7 @@ class CMSNewsletterModel(DataModel):
 
     names = ("cms_newsletter",
              "cms_newsletter_recipient",
+             "cms_newsletter_distribution",
              )
 
     def model(self):
@@ -1337,6 +1339,12 @@ class CMSNewsletterModel(DataModel):
         # Components
         self.add_components(tablename,
                             cms_newsletter_recipient = "newsletter_id",
+                            pr_filter = {"name": "distribution",
+                                         "link": "cms_newsletter_distribution",
+                                         "joinby": "newsletter_id",
+                                         "key": "filter_id",
+                                         # TODO filter by resource?
+                                         },
                             )
 
         # CRUD Form
@@ -1345,15 +1353,16 @@ class CMSNewsletterModel(DataModel):
                         "person_id",
                         "subject",
                         "message",
-                        S3SQLInlineComponent("document",
-                                             name = "file",
-                                             label = T("Attachments"),
-                                             fields = ["name", "file", "comments"],
-                                             filterby = {"field": "file",
-                                                         "options": "",
-                                                         "invert": True,
-                                                         },
-                                             ),
+                        S3SQLInlineComponent(
+                            "document",
+                            name = "file",
+                            label = T("Attachments"),
+                            fields = ["name", "file", "comments"],
+                            filterby = {"field": "file",
+                                        "options": "",
+                                        "invert": True,
+                                        },
+                            ),
                         "comments",
                         )
 
@@ -1437,28 +1446,31 @@ class CMSNewsletterModel(DataModel):
                      # Activated in prep when notification-method is configured:
                      s3_datetime("notified_on",
                                  label = T("Notified on"),
-                                 readable = False,
                                  writable = False,
                                  ),
                      Field("status",
                            default = "PENDING",
                            requires = IS_IN_SET(status, zero=None),
                            represent = status_represent,
-                                 readable = False,
                            writable = False,
                            ),
                      Field("errors", "text",
-                           readable = False,
                            writable = False,
                            represent = s3_text_represent,
                            ),
                      *s3_meta_fields())
+
+        # List fields
+        list_fields = ["pe_id", "status", "notified_on"]
 
         # Table Configuration
         configure(tablename,
                   onvalidation = self.recipient_onvalidation,
                   onaccept = self.recipient_onaccept,
                   ondelete = self.recipient_ondelete,
+                  insertable = False,
+                  editable = False,
+                  deletable = False,
                   )
 
         # CRUD Strings
@@ -1474,6 +1486,16 @@ class CMSNewsletterModel(DataModel):
             msg_record_deleted = T("Recipient deleted"),
             msg_list_empty = T("No Recipients currently registered"),
             )
+
+        # ---------------------------------------------------------------------
+        # Saved filters as distribution list
+        # - link table pr_filter <> cms_newsletter
+        #
+        tablename = "cms_newsletter_distribution"
+        define_table(tablename,
+                     Field("newsletter_id", "reference cms_newsletter"),
+                     self.pr_filter_id(),
+                     *s3_meta_fields())
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1550,13 +1572,25 @@ class CMSNewsletterModel(DataModel):
         if not record_id:
             return
 
-        table = current.s3db.cms_newsletter_recipient
-        query = (table.id == record_id)
-        record = current.db(query).select(table.newsletter_id,
-                                          limitby = (0, 1),
-                                          ).first()
-        if record:
-            cls.update_total_recipients(record.newsletter_id)
+        s3db = current.s3db
+        rtable = s3db.cms_newsletter_recipient
+        ntable = s3db.cms_newsletter
+
+        join = ntable.on(ntable.id == rtable.newsletter_id)
+        query = (rtable.id == record_id)
+        newsletter = current.db(query).select(ntable.id,
+                                              ntable.status,
+                                              join = join,
+                                              limitby = (0, 1),
+                                              ).first()
+        if newsletter:
+            # Update total number of recipients
+            cls.update_total_recipients(newsletter.id)
+
+            # Notify pending recipients immediately when already SENT
+            notify = s3db.get_config("cms_newsletter", "notify_recipients")
+            if notify and newsletter.status == "SENT":
+                notify(newsletter.id)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1614,21 +1648,329 @@ class cms_SendNewsletter(CRUDMethod):
 
         method = r.method
         if r.http == "POST" and method == "send":
-            record.update_record(status="SENT", date_sent=r.utcnow)
 
-            notify = current.s3db.get_config("cms_newsletter", "notify_recipients")
-            if callable(notify):
-                notify(record.id)
+            total, pending = self.add_recipients(r, record.id)
+            if pending:
+                record.update_record(status = "SENT",
+                                     date_sent = r.utcnow,
+                                     total_recipients = total,
+                                     )
+                # Commit here to allow async task to pick up newly
+                # inserted recipients
+                current.db.commit()
 
-            current.response.confirmation = T("Newsletter sent")
+                # Schedule task
+                current.s3task.run_async("s3db_task",
+                                         args = ["cms_newsletter_notify"],
+                                         vars = {"newsletter_id": record.id},
+                                         timeout = 1800,
+                                         )
+
+                current.response.confirmation = T("Newsletter sent")
+            else:
+                current.response.warning = T("No new recipients found")
+
             self.next = next_url
         else:
             r.error(405, current.ERROR.BAD_METHOD)
 
         return output
 
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def add_recipients(r, newsletter_id):
+        """
+            Add recipients to a newsletter according to its distribution list
+
+            Args:
+                r: the current CRUDRequest
+                newsletter_id: the newsletter record_id
+
+            Returns:
+                tuple (total_recipients, pending_recipients)
+
+            Note:
+                This function expects a hook "lookup_recipients" for the
+                cms_newsletter table to be configured with a callback
+                function that accepts a (filtered) resource, and returns
+                the list of pe_ids of all relevant recipients.
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup existing recipients
+        rtable = s3db.cms_newsletter_recipient
+        query = (rtable.newsletter_id == newsletter_id) & \
+                (rtable.deleted == False)
+        rows = db(query).select(rtable.pe_id, rtable.status)
+        existing = set(row.pe_id for row in rows)
+
+        total = len(existing)
+        pending = len({row.pe_id for row in rows if row.status == "PENDING"})
+
+        # Get the lookup-callback
+        lookup = s3db.get_config("cms_newsletter", "lookup_recipients")
+        if not lookup:
+            return total, pending
+
+        recipients = set()
+
+        ltable = s3db.cms_newsletter_distribution
+        ftable = s3db.pr_filter
+
+        join = ftable.on(ftable.id == ltable.filter_id)
+        query = (ltable.newsletter_id == newsletter_id) & \
+                (ltable.deleted == False)
+        filters = db(query).select(ftable.resource,
+                                   ftable.query,
+                                   ftable.serverside,
+                                   join = join,
+                                   )
+        for row in filters:
+
+            # Get the filter query
+            queries = row.serverside
+            if queries is None:
+                # Fallback for backwards-compatibility
+                queries = row.query
+
+            # Convert into filter_vars
+            filter_vars = {}
+            for selector, value in queries:
+                v = filter_vars.get(selector)
+                if v:
+                    filter_vars[selector] = [v, value]
+                else:
+                    filter_vars[selector] = value
+
+            # Instantiate the resource and lookup recipient pe_ids
+            tablename = row.resource
+            r.customise_resource(tablename)
+            resource = s3db.resource(tablename, vars=filter_vars)
+            pe_ids = lookup(resource)
+
+            if pe_ids:
+                recipients |= set(pe_ids)
+
+        if recipients:
+            # Insert new recipients
+            recipients -= existing
+            ids = rtable.bulk_insert({"newsletter_id": newsletter_id,
+                                      "pe_id": pe_id,
+                                      } for pe_id in recipients)
+            pending += len(ids)
+            total += len(ids)
+
+        return total, pending
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def notify_recipients(cls, newsletter_id):
+        """
+            Notify newsletter recipients (=send the newsletter per email)
+
+            Args:
+                newsletter_id: the newsletter record ID
+
+            Returns:
+                error message on failure, otherwise None
+
+            Raises:
+                RuntimeError if message cannot be composed (e.g. missing subject)
+
+            Note:
+                This function applies the "resolve_recipient" callback
+                if it is configured for the cms_newsletter table, to find
+                the email address(es) for a recipient. If no callback is
+                configured, the internal resolve() method is used instead.
+        """
+
+        # Customise resource to pick up resolve-callback
+        from core import crud_request
+        r = crud_request("cms", "newsletter")
+        r.customise_resource("cms_newsletter")
+
+        s3db = current.s3db
+
+        # Get pending recipients
+        rtable = s3db.cms_newsletter_recipient
+        query = (rtable.newsletter_id == newsletter_id) & \
+                (rtable.status == "PENDING") & \
+                (rtable.deleted == False)
+        recipients = current.db(query).select(rtable.id,
+                                              rtable.pe_id,
+                                              )
+        if not recipients:
+            return "No pending recipients"
+
+        # Compose message
+        message = cls.compose(newsletter_id)
+        if not message:
+            raise RuntimeError("Could not compose newsletter message")
+
+        # Resolve-callback to lookup email address
+        resolve = s3db.get_config("cms_newsletter", "resolve_recipient")
+        if not resolve:
+            # Fallback to direct pr_contact lookup
+            resolve = cls.resolve
+
+        seen = set()
+        send_email = current.msg.send_email
+
+        for recipient in recipients:
+
+            errors = []
+
+            email = resolve(recipient.pe_id)
+            if not email:
+                recipient.update_record(status = "ERROR",
+                                        errors = "No email address found",
+                                        )
+                continue
+            if not isinstance(email, (list, tuple, set)):
+                email = [email]
+
+            for mailaddress in email:
+                if mailaddress in seen:
+                    continue
+                seen.add(mailaddress)
+                # TODO reply-to from contact
+                if not send_email(to = mailaddress,
+                                  subject = message[0],
+                                  message = message[1],
+                                  attachments = message[2],
+                                  ):
+                    errors.append('Failed to send email to "%s"' % mailaddress)
+
+            if errors:
+                recipient.update_record(status = "ERROR",
+                                        errors = "\n".join(errors),
+                                        )
+            else:
+                recipient.update_record(status = "NOTIFIED")
+
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def resolve(pe_id):
+        """
+            Look up the email address for the given person entity from
+            pr_contact.
+
+            Args:
+                the pe_id
+
+            Returns:
+                the email address, if any - or None
+        """
+
+        ctable = current.s3db.pr_contact
+        query = (ctable.pe_id == pe_id) & \
+                (ctable.contact_method == "EMAIL") & \
+                (ctable.deleted == False)
+        contact = current.db(query).select(ctable.value,
+                                           limitby = (0, 1),
+                                           orderby = [ctable.priority,
+                                                      ~ctable.created_on,
+                                                      ],
+                                           ).first()
+
+        return contact.value if contact else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def compose(newsletter_id):
+        """
+            Compose the newsletter email
+
+            Args:
+                newsletter_id: the newsletter record ID
+
+            Returns:
+                tuple (subject, message, attachments), for use with
+                current.msg.send_email
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.cms_newsletter
+        query = (table.id == newsletter_id) & \
+                (table.deleted == False)
+        row = db(query).select(table.id,
+                               table.doc_id,
+                               table.person_id,
+                               table.subject,
+                               table.message,
+                               limitby = (0, 1),
+                               ).first()
+        if not row or not row.subject:
+            return None
+
+        subject = row.subject
+        if len(subject) > 78:
+            # Limit to 78 chars as per RFC2822 recommendation
+            subject = s3_truncate(subject, length=78)
+
+        message = row.message or "--- no message text ---"
+
+        # TODO contact information
+
+        # Look up attachments
+        attachments, info = [], ["%s:" % current.T("Attachments")]
+        if row:
+            dtable = s3db.doc_document
+            query = (dtable.doc_id == row.doc_id) & \
+                    (dtable.file != None) & (dtable.file != "") & \
+                    (dtable.deleted == False)
+            rows = db(query).select(dtable.name,
+                                    dtable.file,
+                                    )
+            for row in rows:
+                filename, stream = dtable.file.retrieve(row.file)
+                attachments.append(current.mail.Attachment(stream, filename=filename))
+                info.append("- %s (%s)" % (row.name, filename))
+
+        if attachments:
+            message = "\n\n".join((message, "\n".join(info)))
+        else:
+            attachments = None
+
+        # TODO link to online version
+
+        return subject, message, attachments
+
 # =============================================================================
-def newsletter_send_action(newsletter):
+def cms_newsletter_notify(newsletter_id=None):
+    """
+        Async task to notify newsletter recipients
+
+        Args:
+            newsletter_id: the newsletter record ID
+
+        Returns:
+            error message on failure, otherwise None
+    """
+
+    if not newsletter_id:
+        return None
+
+    try:
+        error = cms_SendNewsletter.notify_recipients(newsletter_id)
+    except Exception:
+        # Reset status, so can retry sending
+        table = current.s3db.cms_newsletter
+        db = current.db
+        db(table.id == newsletter_id).update(status="NEW")
+        db.commit()
+        raise
+
+    return error
+
+# =============================================================================
+def cms_newsletter_send_action(newsletter):
     """
         Generates an action button to send a newsletter
 
@@ -1650,15 +1992,22 @@ def newsletter_send_action(newsletter):
        current.auth.s3_has_permission("update", table, record_id=newsletter_id):
 
         T = current.T
+        db = current.db
 
-        # Probe whether at least one recipient has been added
-        rtable = current.s3db.cms_newsletter_recipient
-        query = (rtable.newsletter_id == newsletter_id) & \
-                (rtable.deleted == False)
-        recipient = current.db(query).select(rtable.id,
-                                             limitby = (0, 1),
-                                             ).first()
-        if recipient:
+        # Check whether we have a distribution list
+        dtable = s3db.cms_newsletter_distribution
+        query = (dtable.newsletter_id == newsletter_id) & \
+                (dtable.deleted == False)
+        rows = db(query).select(dtable.id, limitby=(0, 1)).first()
+
+        if not rows:
+            # Check whether recipients have been added in other ways
+            rtable = s3db.cms_newsletter_recipient
+            query = (rtable.newsletter_id == newsletter_id) & \
+                    (rtable.deleted == False)
+            rows = db(query).select(rtable.id, limitby=(0, 1)).first()
+
+        if rows:
             # Generate formkey
             from core import FormKey
             formkey = FormKey("send-newsletter-%s" % newsletter_id).generate()
@@ -1745,14 +2094,12 @@ def cms_rheader(r, tabs=None):
                             (T("Recipients"), "newsletter_recipient"),
                             (T("Attachments"), "document"),
                             ]
-                    if current.s3db.get_method(resource, "add_recipients"):
-                        tabs.insert(2, (T("Add Recipients"), "add_recipients"))
                 rheader_fields = [["status", "organisation_id"],
                                   ["date_sent"], #, "person_id"],
                                   ["total_recipients"],
                                   ]
                 # Add send-action
-                actions = newsletter_send_action(record)
+                actions = cms_newsletter_send_action(record)
             else:
                 # Reader perspective
                 if not tabs:
