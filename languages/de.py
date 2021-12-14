@@ -3896,6 +3896,7 @@
 'Normal Address': 'Normale Adresse',
 'Normal Job': 'Normaler Beruf',
 'Normal': 'Normal',
+'North Macedonia': 'Nordmazedonien',
 'Northern Mariana Islands': 'Nördliche Marianen-Inseln',
 'Norway': 'Norwegen',
 'Not Applicable': 'Nicht zutreffend',
