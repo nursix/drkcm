@@ -1350,7 +1350,6 @@ class CMSNewsletterModel(DataModel):
         # CRUD Form
         crud_form = S3SQLCustomForm(
                         "organisation_id",
-                        "person_id",
                         "subject",
                         "message",
                         S3SQLInlineComponent(
@@ -1363,6 +1362,7 @@ class CMSNewsletterModel(DataModel):
                                         "invert": True,
                                         },
                             ),
+                        "person_id",
                         "comments",
                         )
 

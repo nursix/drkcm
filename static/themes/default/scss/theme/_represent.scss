@@ -126,11 +126,14 @@
 /* CMS Newsletter Text Represent */
 .newsletter-text {
     white-space: pre-line;
-    background: #fffdef;
+    background: #fcfcfc;
     padding: 0.7rem;
     border: 1px solid #ccc;
+    box-shadow: 2px 2px 4px #ddd;
     width: 48rem;
     max-width: 100%;
+    min-height: 8rem;
+    font-size: 0.85rem;
 }
 
 // ----------------------------------------------------------------------------
@@ -142,6 +145,26 @@
     .file-size {
         padding: 0 0.4rem;
         font-size: 0.7rem;
+    }
+}
+
+// ----------------------------------------------------------------------------
+/* PersonRepresentContact */
+.contact-repr {
+    background-color: #FFF0C1;
+    border: 1px solid #E0E0E0;
+    padding: 0.25rem 0.5rem;
+    .contact-name {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .contact-info {
+        white-space: nowrap;
+        font-size: 0.8rem;
+        .fa {
+            padding-right: 0.4rem;
+        }
     }
 }
 

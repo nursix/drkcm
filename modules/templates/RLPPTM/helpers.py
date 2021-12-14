@@ -10,10 +10,8 @@ from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
-from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
+from core import IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
                  CRUDMethod, S3Represent, s3_fullname, s3_mark_required, s3_str
-
-from s3db.pr import pr_PersonRepresentContact
 
 # =============================================================================
 def get_role_realms(role):
@@ -1562,55 +1560,6 @@ class OrganisationRepresent(S3Represent):
                 name = "%s (%s)" % (name, ", ".join(types))
 
         return name
-
-# =============================================================================
-class ContactRepresent(pr_PersonRepresentContact):
-    """
-        Visually enhanced version of pr_PersonRepresentContact
-    """
-
-    def represent_row(self, row):
-        """
-            Represent a row
-
-            Args:
-                row: the Row
-        """
-
-        output = DIV(SPAN(s3_fullname(row),
-                          _class = "contact-name",
-                          ),
-                     _class = "contact-repr",
-                     )
-
-        try:
-            pe_id = row.pe_id
-        except AttributeError:
-            pass
-        else:
-            if self.show_email:
-                email = self._email.get(pe_id)
-            if self.show_phone:
-                phone = self._phone.get(pe_id)
-            if email or phone:
-                details = DIV(_class="contact-details")
-                if email:
-                    details.append(DIV(ICON("mail"),
-                                       SPAN(A(email,
-                                              _href="mailto:%s" % email,
-                                              ),
-                                            _class = "contact-email"),
-                                       _class = "contact-info",
-                                       ))
-                if phone:
-                    details.append(DIV(ICON("phone"),
-                                       SPAN(phone,
-                                            _class = "contact-phone"),
-                                       _class = "contact-info",
-                                       ))
-                output.append(details)
-
-        return output
 
 # =============================================================================
 class InviteUserOrg(CRUDMethod):

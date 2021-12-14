@@ -382,22 +382,48 @@ button.toggle-text {
 /* line 127, ../../default/scss/theme/_represent.scss */
 .newsletter-text {
   white-space: pre-line;
-  background: #fffdef;
+  background: #fcfcfc;
   padding: 0.7rem;
   border: 1px solid #ccc;
+  box-shadow: 2px 2px 4px #ddd;
   width: 48rem;
   max-width: 100%;
+  min-height: 8rem;
+  font-size: 0.85rem;
 }
 
 /* File-Represent */
-/* line 139, ../../default/scss/theme/_represent.scss */
+/* line 142, ../../default/scss/theme/_represent.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 142, ../../default/scss/theme/_represent.scss */
+/* line 145, ../../default/scss/theme/_represent.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;
+}
+
+/* PersonRepresentContact */
+/* line 153, ../../default/scss/theme/_represent.scss */
+.contact-repr {
+  background-color: #FFF0C1;
+  border: 1px solid #E0E0E0;
+  padding: 0.25rem 0.5rem;
+}
+/* line 157, ../../default/scss/theme/_represent.scss */
+.contact-repr .contact-name {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+/* line 162, ../../default/scss/theme/_represent.scss */
+.contact-repr .contact-info {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+/* line 165, ../../default/scss/theme/_represent.scss */
+.contact-repr .contact-info .fa {
+  padding-right: 0.4rem;
 }
 
 /* General Widgets */
@@ -4899,26 +4925,4 @@ body.rtl .event-type-header {
 .place-repr .place-info {
   white-space: pre-line;
   font-size: 0.8rem;
-}
-
-/* line 543, ../scss/theme/_misc.scss */
-.contact-repr {
-  background-color: #FFF0C1;
-  border: 1px solid #E0E0E0;
-  padding: 0.25rem 0.5rem;
-}
-/* line 547, ../scss/theme/_misc.scss */
-.contact-repr .contact-name {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 0.2rem;
-}
-/* line 552, ../scss/theme/_misc.scss */
-.contact-repr .contact-info {
-  white-space: nowrap;
-  font-size: 0.8rem;
-}
-/* line 555, ../scss/theme/_misc.scss */
-.contact-repr .contact-info .fa {
-  padding-right: 0.4rem;
 }

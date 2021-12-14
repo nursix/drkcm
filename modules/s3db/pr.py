@@ -7511,6 +7511,7 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                  show_phone = True,
                  access = None,
                  show_link = True,
+                 styleable = False,
                  ):
         """
             Args:
@@ -7526,6 +7527,7 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                             1 = show private only
                             2 = show public only
                 show_link: render as HTML hyperlink
+                styleable: render as styleable HTML
         """
 
         super(pr_PersonRepresentContact, self).__init__(
@@ -7539,13 +7541,30 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
         self.show_phone = show_phone
         self.access = access
 
+        self.styleable = styleable
+
         self._email = {}
         self._phone = {}
 
     # -------------------------------------------------------------------------
     def represent_row(self, row):
         """
-            Represent a row
+            Represent a row with contact information
+
+            Args:
+                row: the Row
+        """
+
+        if self.styleable and \
+           current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
+            return self.represent_row_html(row)
+        else:
+            return self.represent_row_string(row)
+
+    # -------------------------------------------------------------------------
+    def represent_row_string(self, row):
+        """
+            Represent a row with contact information, simple string
 
             Args:
                 row: the Row
@@ -7569,6 +7588,50 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                     reprstr = "%s %s" % (reprstr, s3_phone_represent(phone))
 
         return reprstr
+
+    # -------------------------------------------------------------------------
+    def represent_row_html(self, row):
+        """
+            Represent a row with contact information, styleable HTML
+
+            Args:
+                row: the Row
+        """
+
+        output = DIV(SPAN(s3_fullname(row),
+                          _class = "contact-name",
+                          ),
+                     _class = "contact-repr",
+                     )
+
+        try:
+            pe_id = row.pe_id
+        except AttributeError:
+            pass
+        else:
+            if self.show_email:
+                email = self._email.get(pe_id)
+            if self.show_phone:
+                phone = self._phone.get(pe_id)
+            if email or phone:
+                details = DIV(_class="contact-details")
+                if email:
+                    details.append(DIV(ICON("mail"),
+                                       SPAN(A(email,
+                                              _href="mailto:%s" % email,
+                                              ),
+                                            _class = "contact-email"),
+                                       _class = "contact-info",
+                                       ))
+                if phone:
+                    details.append(DIV(ICON("phone"),
+                                       SPAN(phone,
+                                            _class = "contact-phone"),
+                                       _class = "contact-info",
+                                       ))
+                output.append(details)
+
+        return output
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):

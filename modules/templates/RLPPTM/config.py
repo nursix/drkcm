@@ -4532,12 +4532,12 @@ def config(settings):
                             action = RegisterShipment,
                             )
             # Show contact details for requester
-            from .helpers import ContactRepresent
             field = table.requester_id
-            field.represent = ContactRepresent(show_email = True,
-                                               show_phone = True,
-                                               show_link = False,
-                                               )
+            field.represent = s3db.pr_PersonRepresentContact(show_email = True,
+                                                             show_phone = True,
+                                                             show_link = False,
+                                                             styleable = True,
+                                                             )
         else:
             # Simpler represent of requester, no link
             field = table.requester_id

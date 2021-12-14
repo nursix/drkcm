@@ -1093,16 +1093,23 @@ def newsletter():
             # TODO Default person_id, limit selector
             if record:
                 table = resource.table
+
                 field = table.message
                 field.represent = lambda v, row=None: \
                                   DIV(v, _class="newsletter-text") if v else "-"
 
+                field = table.person_id
+                field.represent = s3db.pr_PersonRepresentContact(
+                                            show_email = True,
+                                            show_phone = True,
+                                            show_link = False,
+                                            styleable = True,
+                                            )
             if lookup:
                 # Add distribution list to CRUD form
                 from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
                 crud_form = S3SQLCustomForm(
                                 "organisation_id",
-                                "person_id",
                                 "subject",
                                 "message",
                                 S3SQLInlineComponent(
@@ -1115,6 +1122,7 @@ def newsletter():
                                                 "invert": True,
                                                 },
                                     ),
+                                "person_id",
                                 S3SQLInlineLink(
                                     "distribution",
                                     field = "filter_id",
@@ -1156,8 +1164,11 @@ def read_newsletter():
         configure_newsletter_attachments(file_icons=True)
 
         from core import accessible_pe_query, \
+                         S3DateFilter, \
+                         S3OptionsFilter, \
                          S3SQLCustomForm, \
-                         S3SQLInlineComponent
+                         S3SQLInlineComponent, \
+                         S3TextFilter
 
         resource = r.resource
         table = resource.table
@@ -1167,7 +1178,7 @@ def read_newsletter():
         query = accessible_pe_query(table=rtable,
                                     instance_types=("org_organisation",
                                                     "org_facility",
-                                                    "pr_group",
+                                                    #"pr_group",
                                                     ),
                                     )
         if auth.user:
@@ -1182,16 +1193,20 @@ def read_newsletter():
         if not component:
             if r.record:
                 table = resource.table
+
                 field = table.message
                 field.represent = lambda v, row=None: \
                                   DIV(v, _class="newsletter-text") if v else "-"
 
+                field = table.person_id
+                field.represent = s3db.pr_PersonRepresentContact(
+                                            show_email = True,
+                                            show_phone = True,
+                                            show_link = False,
+                                            styleable = True,
+                                            )
             # CRUD Form
             crud_form = S3SQLCustomForm(
-                            #"organisation_id",
-                            "person_id", # TODO enhanced representation
-                            #"date_sent",
-                            #"subject",
                             "message",
                             S3SQLInlineComponent("document",
                                                  name = "file",
@@ -1202,10 +1217,19 @@ def read_newsletter():
                                                              "invert": True,
                                                              },
                                                  ),
+                            "person_id",
                             )
 
             # Filter Widgets
-            # TODO adjust filters for perspective
+            filter_widgets = [S3TextFilter(["subject",
+                                            "message",
+                                            "comments",
+                                            "organisation_id$name",
+                                            ],
+                                           label = T("Search") ,
+                                           ),
+                              S3DateFilter("date_sent", hidden=True),
+                              ]
 
             # List Fields
             list_fields = ["organisation_id",
@@ -1215,6 +1239,7 @@ def read_newsletter():
                            ]
 
             resource.configure(crud_form = crud_form,
+                               filter_widgets = filter_widgets,
                                list_fields = list_fields,
                                insertable = False,
                                editable = False,
