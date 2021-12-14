@@ -17,17 +17,4 @@
             diff = now - today;
         return Math.round(diff / 1000);
     }
-    var autoHide = function() {
-        setTimeout(function() {
-            $('.wac').fadeOut(5000, function() {
-                $('.wac-alt').removeClass('hide').fadeIn('slow');
-            });
-            $('main').one('mousemove', function() {
-                $('.wac-alt').hide();
-                $('.wac').show();
-                autoHide();
-            });
-        }, 150000);
-    };
-    autoHide();
 })();

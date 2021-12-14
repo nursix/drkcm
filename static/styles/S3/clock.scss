@@ -55,12 +55,12 @@ $highlight: $base;
         height: #{($size / 2) - 20};
         margin-top: 20px;
         opacity: 0.75;
-        animation: time 3600s linear infinite;
+        animation: time 3600s infinite steps(60);
     }
     &__h {
         height: #{($size / 2) - 30};
         margin-top: 30px;
-        animation: time 43200s linear infinite;
+        animation: time 43200s infinite steps(60);
     }
     &__i {
         height: #{($size / 2) - 2};
