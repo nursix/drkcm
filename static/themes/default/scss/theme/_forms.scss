@@ -26,10 +26,19 @@ form {
             margin-top: 0.7rem;
         }
         .button {
-            margin-right: 0.5rem;
-            i.fa {
-                margin-right: 0.3rem;
+            [dir=ltr] & {
+                margin-right: 0.5rem;
+                i.fa {
+                    margin-right: 0.3rem;
+                }
             }
+            [dir=rtl] & {
+                margin-left: 0.5rem;
+                i.fa {
+                    margin-left: 0.3rem;
+                }
+            }
+            margin-bottom: 0.3rem;
         }
         & > .columns {
             &:first-child {
@@ -40,7 +49,12 @@ form {
             }
         }
         & > a {
-            margin-left: 0.625rem;
+            [dir=ltr] & {
+                margin-left: 0.625rem;
+            }
+            [dir=rtl] & {
+                margin-right: 0.625rem;
+            }
         }
         select {
             min-width: 4rem;
@@ -72,19 +86,29 @@ form {
         &.inline {
             padding: 0;
             line-height: normal;
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.5rem;
         }
     }
     .gis_loc_select_btn {
         font-size: 0.8em;
         i {
             font-size: 1.0em;
-            margin-right: 4px;
+            [dir=ltr] & {
+                margin-right: 4px;
+            }
+            [dir=rtl] & {
+                margin-left: 4px;
+            }
         }
     }
     .error {
         display: block;
-        padding: 0.2rem 0 0 0.2rem;
+        [dir=ltr] {
+            padding: 0.2rem 0 0 0.2rem;
+        }
+        [dir=rtl] {
+            padding: 0.2rem 0.2rem 0 0;
+        }
         margin-top: 0;
         margin-bottom: 0.2rem;
         font-size: 0.75rem;
@@ -112,15 +136,18 @@ form {
         border-collapse: separate;
         td {
             border: none;
-            padding: 0.15rem 5px 0.05rem 5px;
+            padding: 0.15rem 5px 0.05rem;
             text-align: left;
+            [dir=rtl] & {
+                text-align: right;
+            }
             vertical-align: top;
         }
         &.subform-vertical {
             .add-row, .edit-row {
                 td {
                     border-top: 1px solid #dddddd;
-                    padding: 0 0.4rem 0.4rem 0.4rem;
+                    padding: 0 0.4rem 0.4rem;
                     &.subform-action {
                         vertical-align: bottom;
                     }
@@ -231,26 +258,43 @@ form {
     }
 
     .s3_inline_add_resource_link a {
-        margin-left: 2px;
-        padding-left: 2px;
+        [dir=ltr] & {
+            margin-left: 2px;
+            padding-left: 2px;
+        }
+        [dir=rtl] & {
+            margin-left: 2px;
+            padding-left: 2px;
+        }
     }
 
     .inline-open-add {
         display: inline-block;
         margin-bottom: 1.25rem;
-        margin-left: 0;
+        [dir=ltr] {
+            margin-left: 0;
+        }
+        [dir=rtl] {
+            margin-right: 0;
+        }
     }
     .subheading {
         background-color: #FFEDCB;
         font-size: 0.9rem;
         font-weight: bold;
         border-top: solid 1px #FFD7A3;
-        border-left: solid 1px #FFD7A3;
+        [dir=ltr] & {
+            border-left: solid 1px #FFD7A3;
+            padding: 0.5rem 0.25rem 0.25rem 0.75rem;
+        }
+        [dir=rtl] & {
+            border-right: solid 1px #FFD7A3;
+            padding: 0.5rem 0.75rem 0.25rem 0.25rem;
+        }
         margin: 1.5rem 0 0.75rem;
         &:first-of-type {
             margin-top: 0;
         }
-        padding: 0.5rem 0.25rem 0.25rem 0.75rem;
         max-width: 80%;
     }
     // Login-form on homepage
@@ -273,12 +317,17 @@ form {
             padding: 3px 0 0 3px;
         }
         background: $form_container_bgcolor;
-        padding: 5px 10px;
+        padding: 1rem;
         tr td {
             padding: rem-calc(3);
         }
         .embeddedComponent td {
-            padding-right: rem-calc(9);
+            [dir=ltr] & {
+                padding-right: rem-calc(9);
+            }
+            [dir=rtl] & {
+                padding-left: rem-calc(9);
+            }
         }
     }
     .controls {
@@ -292,7 +341,12 @@ form {
     .no-options-available {
         color: #aaa;
         font-style: italic;
-        padding-left: 0.7rem;
+        [dir=ltr] & {
+            padding-left: 0.7rem;
+        }
+        [dir=rtl] & {
+            padding-right: 0.7rem;
+        }
     }
 }
 
@@ -345,19 +399,6 @@ form {
                 width: 20rem !important;
             }
         }
-    }
-    .controlset {
-        label,
-        input {
-            display: inline;
-            float: none;
-        }
-        div {
-            margin-left: 15em;
-        }
-    }
-    .buttonrow {
-        margin-left: 180px;
     }
 }
 
