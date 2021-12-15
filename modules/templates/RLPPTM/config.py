@@ -553,7 +553,6 @@ def config(settings):
 
         if resource.tablename == "org_facility":
             rows = resource.select(["organisation_id$pe_id"], as_rows=True)
-            print(rows, resource.rfilter)
             return [row.org_organisation.pe_id for row in rows]
 
         elif resource.tablename == "org_organisation":
