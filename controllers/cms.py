@@ -1085,17 +1085,32 @@ def newsletter():
         configure_newsletter_attachments()
 
         resource = r.resource
-        record = r.record
+        table = resource.table
+
+        # Filter by accessible sender
+        otable = s3db.org_organisation
+        query = auth.s3_accessible_query("update", otable) & \
+                (otable.deleted == False)
+        permitted = db(query)._select(otable.id)
+        resource.add_filter(table.organisation_id.belongs(permitted))
+
+        # Limit selection of sender, too
+        field = table.organisation_id
+        field.requires = IS_ONE_OF(db(query), "org_organisation.id",
+                                   field.represent,
+                                   )
+
+        # Default contact person
+        # TODO limit selection to HRs of permitted orgs
+        field = table.person_id
+        field.default = auth.s3_logged_in_person()
 
         lookup = resource.get_config("lookup_recipients")
 
+        record = r.record
         component_name = r.component_name
         if not r.component:
-            # TODO Default organisation_id, limit selector
-            # TODO Default person_id, limit selector
             if record:
-                table = resource.table
-
                 field = table.message
                 field.represent = lambda v, row=None: \
                                   DIV(v, _class="newsletter-text") if v else "-"
