@@ -34,7 +34,7 @@ __all__ = ("CMSContentModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
            "CMSNewsletterModel",
-           "cms_SendNewsletter",
+           "cms_UpdateNewsletter",
            "cms_newsletter_notify",
            "cms_index",
            "cms_announcements",
@@ -1271,6 +1271,7 @@ class CMSNewsletterModel(DataModel):
 
         db = current.db
         s3 = current.response.s3
+        settings = current.deployment_settings
 
         define_table = self.define_table
         crud_strings = s3.crud_strings
@@ -1422,6 +1423,8 @@ class CMSNewsletterModel(DataModel):
                                                           "ERROR": "red",
                                                           },
                                                )
+
+        types = settings.get_cms_newsletter_recipient_types()
         pe_represent = self.pr_PersonEntityRepresent(show_label = False,
                                                      show_link = False,
                                                      show_type = True,
@@ -1438,9 +1441,7 @@ class CMSNewsletterModel(DataModel):
                            requires = IS_EMPTY_OR(IS_ONE_OF(db,
                                             "pr_pentity.pe_id",
                                             pe_represent,
-                                            instance_types = ["pr_person",
-                                                              "org_organisation",
-                                                              ],
+                                            instance_types = types,
                                             )),
                            ),
                      # Activated in prep when notification-method is configured:
@@ -1603,7 +1604,7 @@ class CMSNewsletterModel(DataModel):
         cls.update_total_recipients(row.newsletter_id)
 
 # =============================================================================
-class cms_SendNewsletter(CRUDMethod):
+class cms_UpdateNewsletter(CRUDMethod):
     """
         Sends a newsletter, i.e.:
             - sets the status to SENT to make the newsletter accessible by
@@ -1629,7 +1630,7 @@ class cms_SendNewsletter(CRUDMethod):
 
         # Verify form key
         from core import FormKey
-        formkey = FormKey("send-newsletter-%s" % newsletter_id)
+        formkey = FormKey("update-newsletter-%s" % newsletter_id)
         if not formkey.verify(r.post_vars):
             r.error(403, current.ERROR.NOT_PERMITTED)
 
@@ -1639,28 +1640,46 @@ class cms_SendNewsletter(CRUDMethod):
                                               ):
             r.unauthorised()
 
-        # Can only send if current status is NEW
+        # Can only update if current status is NEW
         if record.status != "NEW":
             r.error(403, current.ERROR.NOT_PERMITTED, next=next_url)
 
         T = current.T
+        s3db = current.s3db
+
         output = {}
 
         method = r.method
-        if r.http == "POST" and method == "send":
+        if method == "update_recipients":
 
-            # TODO Separate adding recipients and notifications
-            #      into independent methods, +add clear-method
-            total, pending = self.add_recipients(r, record.id)
-            if pending:
-                record.update_record(status = "SENT",
-                                     date_sent = r.utcnow,
-                                     total_recipients = total,
-                                     )
-                # Commit here to allow async task to pick up newly
-                # inserted recipients
-                current.db.commit()
+            self.update_recipients(r, record.id)
+            current.response.confirmation = T("Recipient list updated")
+            self.next = URL(c = "cms",
+                            f = "newsletter",
+                            args = [newsletter_id, "newsletter_recipient"],
+                            )
 
+        elif method == "remove_recipients":
+
+            if record.total_recipients > 0:
+                query = (FS("newsletter_id") == newsletter_id)
+                rresource = s3db.resource("cms_newsletter_recipient", filter=query)
+                numrows = rresource.delete()
+                if not numrows:
+                    r.error(404, rresource.error, next=next_url)
+                current.response.confirmation = T("%(number)s recipients removed") % \
+                                                    {"number": numrows}
+            else:
+                current.response.warning = T("No recipients assigned")
+
+            self.next = URL(c = "cms",
+                            f = "newsletter",
+                            args = [newsletter_id, "newsletter_recipient"],
+                            )
+
+        elif method == "send":
+
+            if record.total_recipients > 0:
                 # Schedule task
                 current.s3task.run_async("s3db_task",
                                          args = ["cms_newsletter_notify"],
@@ -1668,11 +1687,16 @@ class cms_SendNewsletter(CRUDMethod):
                                          timeout = 1800,
                                          )
 
+                # Update status
+                record.update_record(status = "SENT",
+                                     date_sent = r.utcnow,
+                                     )
                 current.response.confirmation = T("Newsletter sent")
             else:
-                current.response.warning = T("No new recipients found")
+                current.response.warning = T("No recipients assigned")
 
             self.next = next_url
+
         else:
             r.error(405, current.ERROR.BAD_METHOD)
 
@@ -1680,16 +1704,14 @@ class cms_SendNewsletter(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def add_recipients(r, newsletter_id):
+    def update_recipients(r, newsletter_id):
         """
-            Add recipients to a newsletter according to its distribution list
+            Updates the recipients to a newsletter according to its
+            distribution list
 
             Args:
                 r: the current CRUDRequest
                 newsletter_id: the newsletter record_id
-
-            Returns:
-                tuple (total_recipients, pending_recipients)
 
             Note:
                 This function expects a hook "lookup_recipients" for the
@@ -1709,12 +1731,11 @@ class cms_SendNewsletter(CRUDMethod):
         existing = set(row.pe_id for row in rows)
 
         total = len(existing)
-        pending = len({row.pe_id for row in rows if row.status == "PENDING"})
 
         # Get the lookup-callback
         lookup = s3db.get_config("cms_newsletter", "lookup_recipients")
         if not lookup:
-            return total, pending
+            return
 
         recipients = set()
 
@@ -1775,15 +1796,24 @@ class cms_SendNewsletter(CRUDMethod):
             permissions.controller, permissions.function = c, f
 
         if recipients:
+            # Remove irrelevant recipients
+            to_delete = existing - recipients
+            if to_delete:
+                query = (FS("newsletter_id") == newsletter_id) & \
+                        (FS("pe_id").belongs(to_delete))
+                s3db.resource(rtable, filter=query).delete()
+                existing -= to_delete
+
             # Insert new recipients
-            recipients -= existing
+            to_add = recipients - existing
             ids = rtable.bulk_insert({"newsletter_id": newsletter_id,
                                       "pe_id": pe_id,
-                                      } for pe_id in recipients)
-            pending += len(ids)
-            total += len(ids)
+                                      } for pe_id in to_add)
+            set_record_owner = current.auth.s3_set_record_owner
+            for record_id in ids:
+                set_record_owner(rtable, record_id)
 
-        return total, pending
+        CMSNewsletterModel.update_total_recipients(newsletter_id)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1979,7 +2009,7 @@ def cms_newsletter_notify(newsletter_id=None):
         return None
 
     try:
-        error = cms_SendNewsletter.notify_recipients(newsletter_id)
+        error = cms_UpdateNewsletter.notify_recipients(newsletter_id)
     except Exception:
         # Reset status, so can retry sending
         table = current.s3db.cms_newsletter
@@ -1991,7 +2021,7 @@ def cms_newsletter_notify(newsletter_id=None):
     return error
 
 # =============================================================================
-def cms_newsletter_send_action(newsletter):
+def cms_newsletter_actions(newsletter):
     """
         Generates an action button to send a newsletter
 
@@ -2015,56 +2045,57 @@ def cms_newsletter_send_action(newsletter):
         T = current.T
         db = current.db
 
-        # Check whether we have a distribution list
-        dtable = s3db.cms_newsletter_distribution
-        query = (dtable.newsletter_id == newsletter_id) & \
-                (dtable.deleted == False)
-        rows = db(query).select(dtable.id, limitby=(0, 1)).first()
+        # Generate formkey
+        from core import FormKey
+        formkey = FormKey("update-newsletter-%s" % newsletter_id).generate()
 
-        if not rows:
-            # Check whether recipients have been added in other ways
-            rtable = s3db.cms_newsletter_recipient
-            query = (rtable.newsletter_id == newsletter_id) & \
-                    (rtable.deleted == False)
-            rows = db(query).select(rtable.id, limitby=(0, 1)).first()
+        # Confirmation questions
+        s3 = current.response.s3
+        confirm = {"send_newsletter": T("Do you want to send this newsletter?"),
+                   "update_recipients": T("Update recipients from distribution list?"),
+                   "remove_recipients": T("Remove all assigned recipients?"),
+                   }
+        i18n = "\n".join('i18n.%s="%s"' % (k, v) for k, v in confirm.items())
+        if i18n not in s3.js_global:
+            s3.js_global.append(i18n)
 
-        if rows:
-            # Generate formkey
-            from core import FormKey
-            formkey = FormKey("send-newsletter-%s" % newsletter_id).generate()
+        # Inject script for actions
+        appname = current.request.application
+        script = "/%s/static/scripts/S3/s3.cms.js" % appname
+        if script not in s3.scripts:
+            s3.scripts.append(script)
 
-            # Confirmation question
-            s3 = current.response.s3
-            confirm = '''i18n.send_newsletter="%s"''' % \
-                        T("Do you want to send this newsletter?")
-            if confirm not in s3.js_global:
-                s3.js_global.append(confirm)
+        # Action buttons
+        update_btn = A(T("Update recipients"),
+                       _class = "action-btn newsletter-update-btn",
+                       _db_id = str(newsletter_id),
+                       _title = T("Update recipients from distribution list"),
+                       data = {"key": formkey},
+                       )
 
-            # Inject script for action
-            appname = current.request.application
-            script = "/%s/static/scripts/S3/s3.cms.js" % appname
-            if script not in s3.scripts:
-                s3.scripts.append(script)
+        # Check whether recipients have been added
+        rtable = s3db.cms_newsletter_recipient
+        query = (rtable.newsletter_id == newsletter_id) & \
+                (rtable.deleted == False)
+        recipient = db(query).select(rtable.id, limitby=(0, 1)).first()
 
-            title = T("Send this newsletter")
-            data = {"key": formkey}
-            disabled = None
+        if not recipient:
+            title = T("No Recipients assigned")
+            attr = {"_disabled": "disabled"}
         else:
-            # Render a disabled Send-button
-            title = T("No recipients assigned")
-            data = {}
-            disabled = "disabled"
+            title = None
+            attr = {"_db_id": str(newsletter_id), "data": {"key": formkey}}
 
-        # Send button
+        remove_btn = A(T("Remove recipients"),
+                       _class = "action-btn newsletter-remove-btn",
+                       _title = title if title else T("Remove all recipients"),
+                       **attr)
         send_btn = A(T("Send"),
                      _class = "action-btn newsletter-send-btn",
-                     _db_id = str(newsletter_id),
-                     _disabled = disabled,
-                     _title = title,
-                     data = data,
-                     )
+                     _title = title if title else T("Send this newsletter"),
+                     **attr)
 
-        actions = [send_btn]
+        actions = [update_btn, remove_btn, send_btn]
 
     return actions
 
@@ -2120,7 +2151,7 @@ def cms_rheader(r, tabs=None):
                                   ["total_recipients"],
                                   ]
                 # Add send-action
-                actions = cms_newsletter_send_action(record)
+                actions = cms_newsletter_actions(record)
             else:
                 # Reader perspective
                 if not tabs:

@@ -587,16 +587,40 @@ def config(settings):
 
         else:
             # Fall back to default behavior (direct pr_contact lookup)
-            return s3db.cms_SendNewsletter.resolve(pe_id)
+            return s3db.cms_UpdateNewsletter.resolve(pe_id)
 
     # -------------------------------------------------------------------------
     def customise_cms_newsletter_resource(r, tablename):
 
+        s3db = current.s3db
+
         # Configure callbacks for newsletter distribution
-        current.s3db.configure("cms_newsletter",
-                               lookup_recipients = lookup_newsletter_recipients,
-                               resolve_recipient = resolve_newsletter_recipient,
-                               )
+        s3db.configure("cms_newsletter",
+                       lookup_recipients = lookup_newsletter_recipients,
+                       resolve_recipient = resolve_newsletter_recipient,
+                       )
+
+        if r.component_name == "newsletter_recipient":
+            # Only organisations as recipients
+            ctable = s3db.cms_newsletter_recipient
+            field = ctable.pe_id
+            from core import accessible_pe_query
+            query = accessible_pe_query(instance_types = ["org_organisation"],
+                                        method = "read",
+                                        c = "org",
+                                        f = "facility",
+                                        )
+            field.requires = IS_ONE_OF(current.db(query), "pr_pentity.pe_id",
+                                       field.represent,
+                                       )
+
+            # Allow manual insertion of recipients in unsent newsletters
+            if r.tablename == "cms_newsletter":
+                record = r.record
+                if record and record.status == "NEW":
+                    s3db.configure("cms_newsletter_recipient",
+                                   insertable = True,
+                                   )
 
     settings.customise_cms_newsletter_resource = customise_cms_newsletter_resource
 

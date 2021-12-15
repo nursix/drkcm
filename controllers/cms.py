@@ -1072,11 +1072,13 @@ def configure_newsletter_attachments(file_icons=False):
 def newsletter():
     """ Newsletters, Author Perspective """
 
-    # Configure send-method
-    s3db.set_method("cms_newsletter",
-                    method = "send",
-                    action = s3db.cms_SendNewsletter,
-                    )
+    # Configure newsletter methods
+    update_newsletter = s3db.cms_UpdateNewsletter
+    for method in ("update_recipients", "remove_recipients", "send"):
+        s3db.set_method("cms_newsletter",
+                        method = method,
+                        action = update_newsletter,
+                        )
 
     def prep(r):
 
@@ -1157,16 +1159,9 @@ def newsletter():
 
         elif component_name == "newsletter_recipient":
 
-            if not lookup:
-                # No lookup from distribution lists configured, so
-                # allow manual insertion of recipients
-                r.component.configure(insertable = True)
-
-                # TODO Filter pe_id to prevent duplication
-
-            # Allow adding of individual recipients after sending
-            if record.status == "SENT":
-                resource.configure(insertable=True)
+            if record.status == "NEW":
+                # Unsent newsletter, so allow deletion of recipients
+                r.component.configure(deletable = True)
 
         return True
     s3.prep = prep
@@ -1196,7 +1191,7 @@ def read_newsletter():
         # Filter by accessible recipient
         rtable = s3db.cms_newsletter_recipient
         types = settings.get_cms_newsletter_recipient_types()
-        query = accessible_pe_query(table=rtable,
+        query = accessible_pe_query(table = rtable,
                                     instance_types = types,
                                     c = "cms",
                                     f = "newsletter_recipient",

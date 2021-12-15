@@ -178,8 +178,8 @@ VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher_debit,CREATE|READ|UPDATE,,
 VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher_program,READ,,any
 VOUCHER_PROVIDER,Voucher Provider,,,,,project_project,READ,,any
 NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,CREATE|READ|UPDATE|DELETE,,
-NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,READ,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,READ|DELETE,,any
 NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,CREATE|READ|UPDATE|DELETE,,
 NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,NONE,,any
-NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter_recipient,CREATE|READ|UPDATE|DELETE,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter_recipient,CREATE|READ|DELETE,,any
 NEWSLETTER_AUTHOR,Newsletter Author,,,,,pr_filter,,READ,
