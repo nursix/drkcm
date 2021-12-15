@@ -1730,8 +1730,6 @@ class cms_UpdateNewsletter(CRUDMethod):
         rows = db(query).select(rtable.pe_id, rtable.status)
         existing = set(row.pe_id for row in rows)
 
-        total = len(existing)
-
         # Get the lookup-callback
         lookup = s3db.get_config("cms_newsletter", "lookup_recipients")
         if not lookup:
