@@ -1733,7 +1733,10 @@ class cms_SendNewsletter(CRUDMethod):
             queries = row.serverside
             if queries is None:
                 # Fallback for backwards-compatibility
-                queries = row.query
+                try:
+                    queries = json.loads(row.query)
+                except JSONERRORS:
+                    queries = []
 
             # Convert into filter_vars
             filter_vars = {}
