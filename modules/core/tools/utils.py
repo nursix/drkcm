@@ -129,7 +129,12 @@ def get_form_record_id(form):
     return record_id
 
 # =============================================================================
-def accessible_pe_query(table=None, instance_types=None, method="update"):
+def accessible_pe_query(table = None,
+                        instance_types = None,
+                        method = "update",
+                        c = None,
+                        f = None,
+                        ):
     """
         Construct a query for accessible person entities (pe_ids),
         for pe_id-based filters and selectors
@@ -138,6 +143,8 @@ def accessible_pe_query(table=None, instance_types=None, method="update"):
             table: the table to query (default: pr_pentity)
             instance_types: the instance types to authorize
             method: the access method for which permission is required
+            c: override current.request.controller for permission check
+            f: override current.request.function for permission check
 
         Returns:
             the Query
@@ -160,7 +167,7 @@ def accessible_pe_query(table=None, instance_types=None, method="update"):
         if not itable:
             continue
 
-        dbset = db(accessible_query(method, itable))._select(itable.pe_id)
+        dbset = db(accessible_query(method, itable, c=c, f=f))._select(itable.pe_id)
         subquery = table.pe_id.belongs(dbset)
         query = subquery if query is None else (query | subquery)
 

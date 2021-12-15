@@ -69,10 +69,11 @@ class S3MainMenu(default.S3MainMenu):
                     MM("Deliveries", c="inv", f="recv", check=supply_requester),
                     MM("Items", c="supply", f="item", restrict="SUPPLY_COORDINATOR"),
                     ),
-                MM("Organizations",
-                   c="org", f="organisation", restrict=("ORG_GROUP_ADMIN", "ORG_ADMIN"),
-                   vars = {"mine": 1} if not has_role("ORG_GROUP_ADMIN") else None,
-                   ),
+                MM("Organizations", c=("org", "hrm", "cms"), link=False, restrict=("ORG_GROUP_ADMIN", "ORG_ADMIN"))(
+                    MM("Organizations", c="org", f="organisation", vars = {"mine": 1} if not has_role("ORG_GROUP_ADMIN") else None),
+                    MM("Staff", c="hrm", f="staff"),
+                    MM("Newsletters", c="cms", f="read_newsletter"),
+                    ),
                 MM("Projects",
                    c = "project", f="project",
                    restrict = "ADMIN",
@@ -395,7 +396,9 @@ class S3OptionsMenu(default.S3OptionsMenu):
                       restrict=("ORG_ADMIN", "ORG_GROUP_ADMIN"),
                       ),
                     M("Newsletters", c="cms", f="read_newsletter")(
-                        M("Inbox", f="read_newsletter", p="create", t="cms_newsletter"),
+                        M("Inbox", f="read_newsletter",
+                          check = lambda this: this.following()[0].check_permission(),
+                          ),
                         M("Outbox", f="newsletter", p="create"),
                         ),
                     M("Administration", restrict=("ADMIN"))(

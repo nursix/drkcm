@@ -1798,7 +1798,7 @@ form.auth_login #submit_record__row {
 .item-container form {
   border: 1px solid #E0E0E0;
   background: #fefefe;
-  padding: 1rem;
+  padding: 0.35rem 0.7rem;
 }
 /* line 313, ../../default/scss/theme/_forms.scss */
 .form-container form td.w2p_fl,

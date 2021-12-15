@@ -1109,6 +1109,7 @@ def newsletter():
                                             )
             if lookup:
                 # Add distribution list to CRUD form
+                types = settings.get_cms_newsletter_recipient_types()
                 from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
                 crud_form = S3SQLCustomForm(
                                 "organisation_id",
@@ -1127,13 +1128,13 @@ def newsletter():
                                 "person_id",
                                 S3SQLInlineLink(
                                     "distribution",
+                                    label = T("Distribution##list"),
                                     field = "filter_id",
                                     filterby = {
                                         "pe_id": auth.user.pe_id if auth.user else None,
-                                        "resource": ["org_organisation",
-                                                    "org_facility",
-                                                    ],
-                                        }
+                                        "resource": types,
+                                        },
+                                    comment = T("Create saved filters for possible recipients to be able to select them here"),
                                     ),
                                 "comments",
                                 )
@@ -1179,11 +1180,11 @@ def read_newsletter():
 
         # Filter by accessible recipient
         rtable = s3db.cms_newsletter_recipient
+        types = settings.get_cms_newsletter_recipient_types()
         query = accessible_pe_query(table=rtable,
-                                    instance_types=("org_organisation",
-                                                    "org_facility",
-                                                    #"pr_group",
-                                                    ),
+                                    instance_types = types,
+                                    c = "cms",
+                                    f = "newsletter_recipient",
                                     )
         if auth.user:
             query |= (rtable.pe_id == auth.user.pe_id)

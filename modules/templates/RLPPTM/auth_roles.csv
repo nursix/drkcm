@@ -42,6 +42,8 @@ DISEASE_TEST_READER,Disease Test Reader,,,,,disease_testing_report,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,,,project_project,READ,,any
 MAP_ADMIN,,,true,gis,location,,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,admin,user,,CREATE|READ|UPDATE|DELETE,,
+ORG_ADMIN,Organisation Admin,,,cms,read_newsletter,,READ,,any
+ORG_ADMIN,Organisation Admin,,,cms,newsletter_recipient,,UPDATE,,
 ORG_ADMIN,Organisation Admin,,,hrm,person,,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,hrm,staff,,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,inv,recv,,READ|UPDATE,,
@@ -54,6 +56,8 @@ ORG_ADMIN,Organisation Admin,,,req,,,READ,,
 ORG_ADMIN,Organisation Admin,,,supply,item,,NONE,,
 ORG_ADMIN,Organisation Admin,,,supply,item_pack,,READ,,
 ORG_ADMIN,Organisation Admin,,,supply,,,NONE,,
+ORG_ADMIN,Organisation Admin,,,,,cms_newsletter,READ,,any
+ORG_ADMIN,Organisation Admin,,,,,cms_newsletter_recipient,READ,,
 ORG_ADMIN,Organisation Admin,,,,,gis_location,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,hrm_human_resource,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,inv_recv,READ|UPDATE,,
@@ -65,6 +69,7 @@ ORG_ADMIN,Organisation Admin,,,,,org_organisation,READ|UPDATE,,
 ORG_ADMIN,Organisation Admin,,,,,org_service_site,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,pr_address,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,pr_contact,CREATE|READ|UPDATE|DELETE,,
+ORG_ADMIN,Organisation Admin,,,,,pr_contact,READ,,any
 ORG_ADMIN,Organisation Admin,,,,,pr_contact_emergency,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,pr_person,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,pr_person_details,CREATE|READ|UPDATE|DELETE,,
@@ -172,3 +177,6 @@ VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher,READ,,any
 VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher_debit,CREATE|READ|UPDATE,,
 VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher_program,READ,,any
 VOUCHER_PROVIDER,Voucher Provider,,,,,project_project,READ,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,CREATE|READ|UPDATE|DELETE,,
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,CREATE|READ|UPDATE|DELETE,,
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter_recipient,CREATE|READ|UPDATE|DELETE,,any

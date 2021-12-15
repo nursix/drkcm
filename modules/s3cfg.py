@@ -3482,6 +3482,13 @@ class S3Config(Storage):
         else:
             return hide
 
+    def get_cms_newsletter_recipient_types(self):
+        """
+            Types of newsletter recipients: tuple|list of table names (PEs)
+        """
+
+        return self.cms.get("newsletter_recipient_types", ("org_organisation",))
+
     # -------------------------------------------------------------------------
     # Shelters
     #

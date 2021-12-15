@@ -145,6 +145,9 @@ def config(settings):
     settings.security.policy = 7
 
     # -------------------------------------------------------------------------
+    settings.cms.newsletter_recipient_types = ("org_organisation", "org_facility")
+
+    # -------------------------------------------------------------------------
     settings.pr.hide_third_gender = False
     settings.pr.separate_name_fields = 2
     settings.pr.name_format= "%(last_name)s, %(first_name)s"
