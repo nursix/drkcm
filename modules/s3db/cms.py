@@ -1649,6 +1649,8 @@ class cms_SendNewsletter(CRUDMethod):
         method = r.method
         if r.http == "POST" and method == "send":
 
+            # TODO Separate adding recipients and notifications
+            #      into independent methods, +add clear-method
             total, pending = self.add_recipients(r, record.id)
             if pending:
                 record.update_record(status = "SENT",
@@ -1722,13 +1724,16 @@ class cms_SendNewsletter(CRUDMethod):
         join = ftable.on(ftable.id == ltable.filter_id)
         query = (ltable.newsletter_id == newsletter_id) & \
                 (ltable.deleted == False)
-        filters = db(query).select(ftable.resource,
+        filters = db(query).select(ftable.controller,
+                                   ftable.function,
+                                   ftable.resource,
                                    ftable.query,
                                    ftable.serverside,
                                    join = join,
                                    )
-        for row in filters:
 
+        permissions = current.auth.permission
+        for row in filters:
             # Get the filter query
             queries = row.serverside
             if queries is None:
@@ -1747,14 +1752,27 @@ class cms_SendNewsletter(CRUDMethod):
                 else:
                     filter_vars[selector] = value
 
-            # Instantiate the resource and lookup recipient pe_ids
+            # Apply permissions of the original controller/function
+            # where the filter was created - otherwise, the lookup would
+            # happen with permissions for the cms/newsletter controller,
+            # which may not grant access to the recipient resource at all
+            c, f = permissions.controller, permissions.function
+            permissions.controller = row.controller
+            permissions.function = row.controller
+
+            # Instantiate the recipient resource with these filters
             tablename = row.resource
             r.customise_resource(tablename)
             resource = s3db.resource(tablename, vars=filter_vars)
-            pe_ids = lookup(resource)
 
+            # Apply callback to look up the recipients for the filtered
+            # recipient resource
+            pe_ids = lookup(resource)
             if pe_ids:
                 recipients |= set(pe_ids)
+
+            # Restore permission controller/function
+            permissions.controller, permissions.function = c, f
 
         if recipients:
             # Insert new recipients

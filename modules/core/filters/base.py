@@ -3437,7 +3437,11 @@ class S3FilterForm:
 
         SELECT_FILTER = current.T("Saved Filters")
 
-        ajaxurl = self.opts.get("saveurl", URL(args=["filter.json"], vars={}))
+        ajaxurl = self.opts.get("saveurl")
+        if not ajaxurl:
+            ajaxurl = URL(args = ["filter.json"],
+                          vars = current.request.get_vars,
+                          )
 
         # Current user
         auth = current.auth

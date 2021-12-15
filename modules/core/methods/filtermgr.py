@@ -259,7 +259,7 @@ class S3Filter(CRUDMethod):
         for f in resource.rfilter.filters:
             filters.update(f.serialize_url(resource))
         queries.extend(filters.items())
-        filter_data["serverside"] = queries if queries else None
+        filter_data["serverside"] = queries if queries else []
 
         # Store record
         form = Storage(vars=filter_data)

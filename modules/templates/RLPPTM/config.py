@@ -580,7 +580,6 @@ def config(settings):
 
         # Retrieve the instance record
         tablename, record_id = s3db.get_instance("pr_pentity", pe_id)
-
         if tablename == "org_organisation":
             # Send to all ORG_ADMINs
             from .helpers import get_role_emails
