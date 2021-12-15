@@ -273,6 +273,10 @@ def config(settings):
             if org:
                 realm_entity = org.pe_id
 
+        elif tablename == "pr_filter":
+
+            realm_entity = None
+
         elif tablename in ("disease_case_diagnostics",
                            "disease_testing_report",
                            ):

@@ -180,3 +180,4 @@ VOUCHER_PROVIDER,Voucher Provider,,,,,project_project,READ,,any
 NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,CREATE|READ|UPDATE|DELETE,,
 NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,CREATE|READ|UPDATE|DELETE,,
 NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter_recipient,CREATE|READ|UPDATE|DELETE,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,pr_filter,,READ,
