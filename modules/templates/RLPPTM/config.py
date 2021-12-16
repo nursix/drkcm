@@ -7,7 +7,6 @@
 from collections import OrderedDict
 
 from gluon import current
-
 from gluon.storage import Storage
 
 from .rlpgeonames import rlp_GeoNames

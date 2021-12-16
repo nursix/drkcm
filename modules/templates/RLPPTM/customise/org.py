@@ -290,7 +290,6 @@ def org_organisation_controller(**attr):
 
     # Custom rheader
     from ..rheaders import rlpptm_org_rheader
-    attr = dict(attr)
     attr["rheader"] = rlpptm_org_rheader
 
     return attr

@@ -9,31 +9,24 @@ from gluon import current
 # -------------------------------------------------------------------------
 def human_resource_onvalidation(form):
 
-    db = current.db
-    s3db = current.s3db
-
-    form_vars = form.vars
-
-    person_id = form_vars.get("person_id")
+    person_id = form.vars.get("person_id")
     if person_id:
-        table = s3db.hrm_human_resource
+        table = current.s3db.hrm_human_resource
         query = (table.person_id == person_id) & \
                 (table.deleted == False)
-        duplicate = db(query).select(table.id,
-                                     limitby = (0, 1),
-                                     ).first()
+        duplicate = current.db(query).select(table.id,
+                                             limitby = (0, 1),
+                                             ).first()
         if duplicate:
             form.errors.person_id = current.T("Person already has a staff record")
 
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
 
-    s3db = current.s3db
-
-    s3db.add_custom_callback("hrm_human_resource",
-                             "onvalidation",
-                             human_resource_onvalidation,
-                             )
+    current.s3db.add_custom_callback("hrm_human_resource",
+                                     "onvalidation",
+                                     human_resource_onvalidation,
+                                     )
 
 # -------------------------------------------------------------------------
 def hrm_human_resource_controller(**attr):

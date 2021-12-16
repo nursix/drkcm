@@ -2050,7 +2050,7 @@ def cms_newsletter_actions(newsletter):
         # Confirmation questions
         s3 = current.response.s3
         confirm = {"send_newsletter": T("Do you want to send this newsletter?"),
-                   "update_recipients": T("Update recipients from distribution list?"),
+                   "update_recipients": T("Assign recipients from distribution list?"),
                    "remove_recipients": T("Remove all assigned recipients?"),
                    }
         i18n = "\n".join('i18n.%s="%s"' % (k, v) for k, v in confirm.items())
@@ -2064,10 +2064,10 @@ def cms_newsletter_actions(newsletter):
             s3.scripts.append(script)
 
         # Action buttons
-        update_btn = A(T("Update recipients"),
+        update_btn = A(T("Assign recipients"),
                        _class = "action-btn newsletter-update-btn",
                        _db_id = str(newsletter_id),
-                       _title = T("Update recipients from distribution list"),
+                       _title = T("Assign recipients from distribution list"),
                        data = {"key": formkey},
                        )
 

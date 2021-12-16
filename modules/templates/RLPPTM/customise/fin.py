@@ -6,9 +6,7 @@
 
 from collections import OrderedDict
 
-from gluon import current
-
-from gluon import A, DIV, IS_EMPTY_OR, IS_INT_IN_RANGE, TAG
+from gluon import current, A, DIV, IS_EMPTY_OR, IS_INT_IN_RANGE, TAG
 
 from core import FS, IS_ONE_OF, s3_str
 

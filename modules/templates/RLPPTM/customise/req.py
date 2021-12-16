@@ -6,7 +6,7 @@
 
 from gluon import current, A, TAG, URL
 
-from core import IS_FLOAT_AMOUNT, IS_ONE_OF, S3CRUD, s3_str
+from core import IS_FLOAT_AMOUNT, IS_ONE_OF, JSONERRORS, S3CRUD, s3_str
 
 from .org import add_org_tags
 
@@ -34,14 +34,12 @@ def req_onvalidation(form):
     db = current.db
     s3db = current.s3db
 
-    import json
-    from core import JSONERRORS
-
     if "site_id" in form_vars: # if site is selectable
         site_id = form_vars.site_id
 
         if "sub_defaultreq_item" in form_vars:
             # Items inline
+            import json
             try:
                 items = json.loads(form_vars.sub_defaultreq_item)
             except JSONERRORS:
@@ -76,9 +74,6 @@ def req_onvalidation(form):
 def req_req_resource(r, tablename):
 
     T = current.T
-    db = current.db
-
-    auth = current.auth
     s3db = current.s3db
 
     table = s3db.req_req
@@ -93,7 +88,7 @@ def req_req_resource(r, tablename):
                                              show_type = False,
                                              )
 
-    if auth.s3_has_role("SUPPLY_COORDINATOR"):
+    if current.auth.s3_has_role("SUPPLY_COORDINATOR"):
         # Custom method to register a shipment
         from ..requests import RegisterShipment
         s3db.set_method("req_req",
@@ -111,11 +106,12 @@ def req_req_resource(r, tablename):
         # Simpler represent of requester, no link
         field = table.requester_id
         field.represent = s3db.pr_PersonRepresent(show_link = False)
+
     # Filter out obsolete items
     ritable = s3db.req_req_item
     sitable = s3db.supply_item
     field = ritable.item_id
-    dbset = db((sitable.obsolete == False) | (sitable.obsolete == None))
+    dbset = current.db((sitable.obsolete == False) | (sitable.obsolete == None))
     field.requires = IS_ONE_OF(dbset, "supply_item.id",
                                field.represent,
                                sort = True,
