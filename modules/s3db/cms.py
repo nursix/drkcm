@@ -1727,8 +1727,8 @@ class cms_UpdateNewsletter(CRUDMethod):
         rtable = s3db.cms_newsletter_recipient
         query = (rtable.newsletter_id == newsletter_id) & \
                 (rtable.deleted == False)
-        rows = db(query).select(rtable.pe_id, rtable.status)
-        existing = set(row.pe_id for row in rows)
+        rows = db(query).select(rtable.pe_id)
+        existing = {row.pe_id for row in rows}
 
         # Get the lookup-callback
         lookup = s3db.get_config("cms_newsletter", "lookup_recipients")
@@ -1793,17 +1793,17 @@ class cms_UpdateNewsletter(CRUDMethod):
             # Restore permission controller/function
             permissions.controller, permissions.function = c, f
 
-        if recipients:
-            # Remove irrelevant recipients
-            to_delete = existing - recipients
-            if to_delete:
-                query = (FS("newsletter_id") == newsletter_id) & \
-                        (FS("pe_id").belongs(to_delete))
-                s3db.resource(rtable, filter=query).delete()
-                existing -= to_delete
+        # Remove irrelevant recipients
+        to_delete = existing - recipients
+        if to_delete:
+            query = (FS("newsletter_id") == newsletter_id) & \
+                    (FS("pe_id").belongs(to_delete))
+            s3db.resource(rtable, filter=query).delete()
+            existing -= to_delete
 
-            # Insert new recipients
-            to_add = recipients - existing
+        # Insert new recipients
+        to_add = recipients - existing
+        if to_add:
             ids = rtable.bulk_insert({"newsletter_id": newsletter_id,
                                       "pe_id": pe_id,
                                       } for pe_id in to_add)
