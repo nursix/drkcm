@@ -32,8 +32,10 @@ __all__ = ("S3NavigationItem",
            "s3_rheader_resource",
            )
 
-from gluon import *
+from gluon import current, A, DIV, H6, SPAN, TABLE, TD, TH, TR, URL
 from gluon.storage import Storage
+
+from s3dal import Field
 
 from ..tools import s3_str
 
@@ -883,31 +885,50 @@ class S3NavigationItem:
                 kwargs: override URL query vars
         """
 
-        aURL = current.auth.permission.accessible_url
-
         if not self.link:
             return None
 
-        args = self.args
         if self.vars:
             link_vars = Storage(self.vars)
             link_vars.update(kwargs)
         else:
             link_vars = Storage(kwargs)
+
         if extension is None:
             extension = self.extension
+
         a = self.get("application")
         if a is None:
             a = current.request.application
+
         c = self.get("controller")
         if c is None:
             c = "default"
+
         f = self.get("function")
         if f is None:
             f = "index"
+
+        args = self.args
         f, args = self.__format(f, args, extension)
-        return aURL(c=c, f=f, p=self.p, a=a, t=self.tablename,
-                    args=args, vars=link_vars)
+
+        if self.tablename:
+            return current.auth.accessible_url(c = c,
+                                               f = f,
+                                               p = self.p,
+                                               a = a,
+                                               t = self.tablename,
+                                               args = args,
+                                               vars = link_vars,
+                                               )
+        else:
+            return current.auth.accessible_url(c = c,
+                                               f = f,
+                                               p = self.p,
+                                               a = a,
+                                               args = args,
+                                               vars = link_vars,
+                                               )
 
     # -------------------------------------------------------------------------
     @staticmethod

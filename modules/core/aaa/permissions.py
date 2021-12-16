@@ -1346,8 +1346,7 @@ class S3Permission:
 
         if t is None:
             t = "%s_%s" % (c, f)
-            table = current.s3db.table(t)
-            if not table:
+            if not current.s3db.has(t):
                 t = None
         if not p:
             p = "read"
