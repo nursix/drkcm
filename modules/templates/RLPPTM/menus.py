@@ -379,14 +379,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         return M(c=("org", "hrm", "cms"))(
                     org_menu,
-                    M("Facilities", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
-                        M("Test Stations to review",
-                          vars = {"$$review": "1"},
-                          ),
-                        M("Unapproved Test Stations",
-                          vars = {"$$pending": "1"},
-                          ),
-                        M("Public Registry", m="summary"),
+                    M("Test Stations", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
+                        M("Test Stations to review", vars = {"$$review": "1"}),
+                        M("Unapproved##actionable", vars = {"$$pending": "1"}),
+                        M("Defunct", vars = {"$$obsolete": "1"}),
+                        M("All Test Stations", vars={"$$all": "1"}),
                         ),
                     M("Statistics", link=False, restrict="ORG_GROUP_ADMIN")(
                         M("Organizations", f="organisation", m="report"),
