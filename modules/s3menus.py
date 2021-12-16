@@ -619,9 +619,11 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                         M("View as Pages", f="page"),
                         ),
-                    M("Newsletters", f="read_newsletter")(
-                        M("Inbox", p="create", t="cms_newsletter"),
-                        M("Outbox", f="newsletter", p="create"),
+                    M("Newsletters", c="cms", f="read_newsletter")(
+                        M("Inbox", f="read_newsletter",
+                          check = lambda this: this.following()[0].check_permission(),
+                          ),
+                        M("Compose and Send", f="newsletter", p="create"),
                         ),
                     )
 

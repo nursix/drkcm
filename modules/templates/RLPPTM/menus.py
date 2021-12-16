@@ -396,7 +396,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Inbox", f="read_newsletter",
                           check = lambda this: this.following()[0].check_permission(),
                           ),
-                        M("Outbox", f="newsletter", p="create"),
+                        M("Compose and Send", f="newsletter", p="create"),
                         ),
                     M("Administration", restrict=("ADMIN"))(
                         M("Facility Types", f="facility_type"),

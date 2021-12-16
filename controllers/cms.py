@@ -1082,7 +1082,7 @@ def newsletter():
 
     def prep(r):
 
-        s3.crud_strings["cms_newsletter"]["title_list"] = T("Newsletter Outbox")
+        s3.crud_strings["cms_newsletter"]["title_list"] = T("Newsletters")
 
         configure_newsletter_attachments()
 
