@@ -39,6 +39,8 @@ from ..model import S3MetaFields
 from ..errors import S3PermissionError
 from ..tools import s3_get_extension
 
+DEFAULT = lambda: None
+
 # =============================================================================
 class S3Permission:
     """ S3 Class to handle permissions """
@@ -1308,7 +1310,7 @@ class S3Permission:
                        c = None,
                        f = None,
                        p = None,
-                       t = None,
+                       t = DEFAULT,
                        a = None,
                        args = None,
                        vars = None,
@@ -1344,7 +1346,7 @@ class S3Permission:
             if not settings.has_module(c):
                 return False
 
-        if t is None:
+        if t is DEFAULT:
             t = "%s_%s" % (c, f)
             if not current.s3db.has(t):
                 t = None

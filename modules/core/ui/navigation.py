@@ -39,6 +39,8 @@ from s3dal import Field
 
 from ..tools import s3_str
 
+DEFAULT = lambda: None
+
 # =============================================================================
 class S3NavigationItem:
     """
@@ -93,7 +95,7 @@ class S3NavigationItem:
                  r = None,
                  m = None,
                  p = None,
-                 t = None,
+                 t = DEFAULT,
                  url = None,
                  tags = None,
                  parent = None,
@@ -912,23 +914,24 @@ class S3NavigationItem:
         args = self.args
         f, args = self.__format(f, args, extension)
 
-        if self.tablename:
-            return current.auth.accessible_url(c = c,
-                                               f = f,
-                                               p = self.p,
-                                               a = a,
-                                               t = self.tablename,
-                                               args = args,
-                                               vars = link_vars,
-                                               )
+        accessible_url = current.auth.permission.accessible_url
+        if self.tablename is DEFAULT:
+            return accessible_url(c = c,
+                                  f = f,
+                                  p = self.p,
+                                  a = a,
+                                  args = args,
+                                  vars = link_vars,
+                                  )
         else:
-            return current.auth.accessible_url(c = c,
-                                               f = f,
-                                               p = self.p,
-                                               a = a,
-                                               args = args,
-                                               vars = link_vars,
-                                               )
+            return accessible_url(c = c,
+                                  f = f,
+                                  p = self.p,
+                                  a = a,
+                                  t = self.tablename,
+                                  args = args,
+                                  vars = link_vars,
+                                  )
 
     # -------------------------------------------------------------------------
     @staticmethod
