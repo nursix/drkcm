@@ -2989,6 +2989,7 @@ def config(settings):
                          S3SQLInlineLink, \
                          S3WithIntro
 
+        visible_tags = postprocess = None
         if fresource:
             # Inline service selector and documents
             services = S3SQLInlineLink(
