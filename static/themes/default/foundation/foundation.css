@@ -87,7 +87,7 @@ body {
   background: #FAFAFA;
   color: #222;
   cursor: auto;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-style: normal;
   font-weight: normal;
   line-height: 1.5;
@@ -2369,7 +2369,7 @@ button, .button {
   border-style: solid;
   border-width: 0;
   cursor: pointer;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-weight: normal;
   line-height: normal;
   margin: 0 0 1.25rem;
@@ -4881,7 +4881,7 @@ label.error {
 /* line 91, ../../foundation/scss/components/_labels.scss */
 .label {
   display: inline-block;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-weight: normal;
   line-height: 1;
   margin-bottom: auto;
@@ -5412,7 +5412,7 @@ ul.pagination li {
 /* line 118, ../../foundation/scss/components/_side-nav.scss */
 .side-nav {
   display: block;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   list-style-position: inside;
   list-style-type: none;
   margin: 0;
@@ -5443,7 +5443,7 @@ ul.pagination li {
 /* line 91, ../../foundation/scss/components/_side-nav.scss */
 .side-nav li.active > a:first-child:not(.button) {
   color: #444444;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-weight: normal;
 }
 /* line 97, ../../foundation/scss/components/_side-nav.scss */
@@ -5480,7 +5480,7 @@ ul.pagination li {
 .sub-nav li {
   color: #999999;
   float: left;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-size: 0.75rem;
   font-weight: normal;
   margin-left: 1rem;
@@ -5623,7 +5623,7 @@ table tr td {
   display: block;
   background-color: #EFEFEF;
   color: #222222;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-size: 1rem;
   padding: 1rem 2rem;
 }
@@ -6070,7 +6070,7 @@ meta.foundation-mq-topbar {
 .top-bar-section ul li > a {
   color: #FFFFFF;
   display: block;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-size: 0.8125rem;
   font-weight: normal;
   padding-left: 0.75rem;
@@ -6943,7 +6943,7 @@ p aside {
 /* line 255, ../../foundation/scss/components/_type.scss */
 h1, h2, h3, h4, h5, h6 {
   color: #222222;
-  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
   font-style: normal;
   font-weight: normal;
   line-height: 1.4;
