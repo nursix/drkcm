@@ -64,7 +64,7 @@ def config(settings):
                                       "VOUCHER_ISSUER": "VOUCHER_ISSUER",
                                       "VOUCHER_PROVIDER": "VOUCHER_PROVIDER",
                                       "TEST_PROVIDER": "TEST_PROVIDER",
-                                      "NEWSLETTER_AUTHOR": "ADMIN",
+                                      "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
                                       }
 
     settings.auth.password_min_length = 8
