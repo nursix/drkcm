@@ -10,7 +10,8 @@ from dateutil.relativedelta import relativedelta
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
 from gluon.storage import Storage
 
-from core import IS_ONE_OF, IS_UTC_DATE, S3CRUD, S3Represent
+from core import IS_ONE_OF, IS_UTC_DATE, S3CRUD, S3Represent, \
+                 get_form_record_id
 
 # -------------------------------------------------------------------------
 def case_diagnostics_onaccept(form):
@@ -19,16 +20,11 @@ def case_diagnostics_onaccept(form):
         - auto-generate/update corresponding daily testing report
     """
 
-    settings = current.deployment_settings
-
-    # Get record ID
-    form_vars = form.vars
-    if "id" in form_vars:
-        record_id = form_vars.id
-    elif hasattr(form, "record_id"):
-        record_id = form.record_id
-    else:
+    record_id = get_form_record_id(form)
+    if not record_id:
         return
+
+    settings = current.deployment_settings
 
     db = current.db
     s3db = current.s3db
@@ -354,6 +350,8 @@ def disease_case_diagnostics_controller(**attr):
 # -------------------------------------------------------------------------
 def disease_testing_report_resource(r, tablename):
 
+    from core import S3CalendarWidget, S3DateFilter, S3TextFilter
+
     T = current.T
     settings = current.deployment_settings
 
@@ -420,7 +418,6 @@ def disease_testing_report_resource(r, tablename):
             field.default = active.first().site_id
 
     # Allow daily reports up to 3 months back in time (1st of month)
-    from core import S3CalendarWidget, S3DateFilter, S3TextFilter
     today = current.request.utcnow.date()
     earliest = today - relativedelta(months=3, day=1)
     field = table.date
@@ -431,9 +428,6 @@ def disease_testing_report_resource(r, tablename):
                                     maximum = today,
                                     month_selector = True,
                                     )
-
-    # Daily reports only writable for ORG_ADMINs of test stations
-    writable = current.auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
 
     # Limit report by setting date filter default start date
     if r.method == "report":
@@ -452,6 +446,9 @@ def disease_testing_report_resource(r, tablename):
                                    default = default,
                                    ),
                       ]
+
+    # Daily reports only writable for ORG_ADMINs of test stations
+    writable = current.auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
 
     s3db.configure("disease_testing_report",
                    filter_widgets = filter_widgets,
