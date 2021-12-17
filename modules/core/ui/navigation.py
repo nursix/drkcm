@@ -890,15 +890,6 @@ class S3NavigationItem:
         if not self.link:
             return None
 
-        if self.vars:
-            link_vars = Storage(self.vars)
-            link_vars.update(kwargs)
-        else:
-            link_vars = Storage(kwargs)
-
-        if extension is None:
-            extension = self.extension
-
         a = self.get("application")
         if a is None:
             a = current.request.application
@@ -911,27 +902,30 @@ class S3NavigationItem:
         if f is None:
             f = "index"
 
-        args = self.args
-        f, args = self.__format(f, args, extension)
+        if extension is None:
+            extension = self.extension
+        f, args = self.__format(f, self.args, extension)
 
-        accessible_url = current.auth.permission.accessible_url
-        if self.tablename is DEFAULT:
-            return accessible_url(c = c,
-                                  f = f,
-                                  p = self.p,
-                                  a = a,
-                                  args = args,
-                                  vars = link_vars,
-                                  )
+        if self.vars:
+            link_vars = dict(self.vars)
+            link_vars.update(kwargs)
         else:
-            return accessible_url(c = c,
-                                  f = f,
-                                  p = self.p,
-                                  a = a,
-                                  t = self.tablename,
-                                  args = args,
-                                  vars = link_vars,
-                                  )
+            link_vars = kwargs
+
+        urldata = {"a": a,
+                   "c": c,
+                   "f": f,
+                   "p": self.p,
+                   "args": args,
+                   "vars": link_vars,
+                   }
+        tablename = self.tablename
+        if tablename is not DEFAULT:
+            urldata["t"] = tablename
+        elif f == "index":
+            urldata["t"] = None
+
+        return current.auth.permission.accessible_url(**urldata)
 
     # -------------------------------------------------------------------------
     @staticmethod
