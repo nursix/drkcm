@@ -5,6 +5,7 @@
 """
 
 from collections import OrderedDict
+from dateutil.relativedelta import relativedelta
 
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
 from gluon.storage import Storage
@@ -193,34 +194,46 @@ def disease_case_diagnostics_resource(r, tablename):
                                 )
 
     # Filters
+
+    # Limit report by setting date filter default start date
+    if r.method == "report":
+        start = current.request.utcnow.date() - relativedelta(weeks=1)
+        default = {"~.probe_date__ge": {"ge": start}}
+    else:
+        default = None
+
     from core import S3DateFilter, S3OptionsFilter, s3_get_filter_opts
     filter_widgets = [S3DateFilter("probe_date",
                                    label = T("Date"),
                                    hide_time = True,
+                                   default = default,
                                    ),
-                        S3OptionsFilter("result",
-                                        options = OrderedDict(result_options),
-                                        hidden = True,
-                                        ),
-                        S3DateFilter("result_date",
-                                     label = T("Result Date"),
-                                     hidden = True,
-                                     ),
-                        ]
+                      S3OptionsFilter("result",
+                                      options = OrderedDict(result_options),
+                                      hidden = True,
+                                      ),
+                      S3DateFilter("result_date",
+                                   label = T("Result Date"),
+                                   hidden = True,
+                                   ),
+                      ]
     if site_id:
         # Better to use text filter for site name?
         # - better scalability, but cannot select multiple
-        filter_widgets.append(S3OptionsFilter("site_id", hidden=True))
+        filter_widgets.append(
+            S3OptionsFilter("site_id", hidden=True))
     if disease_id:
-        filter_widgets.append(S3OptionsFilter("disease_id",
-                                              options = lambda: s3_get_filter_opts("disease_disease"),
-                                              hidden=True,
-                                              ))
+        filter_widgets.append(
+            S3OptionsFilter("disease_id",
+                            options = lambda: s3_get_filter_opts("disease_disease"),
+                            hidden=True,
+                            ))
     if demographic_id:
-        filter_widgets.append(S3OptionsFilter("demographic_id",
-                                              options = lambda: s3_get_filter_opts("disease_demographic"),
-                                              hidden=True,
-                                              ))
+        filter_widgets.append(
+            S3OptionsFilter("demographic_id",
+                            options = lambda: s3_get_filter_opts("disease_demographic"),
+                            hidden=True,
+                            ))
 
     # Report options
     facts = ((T("Number of Tests"), "count(id)"),
@@ -339,12 +352,46 @@ def disease_case_diagnostics_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def disease_testing_demographic_resource(r, tablename):
+
+    # Limit report by setting date filter default start date
+    if r.method == "report":
+        start = current.request.utcnow.date() - relativedelta(weeks=1)
+        default = {"~.report_id$date__ge": {"ge": start}}
+    else:
+        default = None
+
+    from core import S3DateFilter, \
+                     S3OptionsFilter, \
+                     S3TextFilter, \
+                     s3_get_filter_opts
+
+    filter_widgets = [S3TextFilter(["report_id$site_id$name",
+                                    "report_id$comments",
+                                    ],
+                                   label = current.T("Search"),
+                                   ),
+                      S3DateFilter("report_id$date",
+                                   default = default,
+                                   ),
+                      S3OptionsFilter("demographic_id",
+                                      options = s3_get_filter_opts("disease_demographic"),
+                                      hidden = True,
+                                      ),
+                      ]
+
+    current.s3db.configure("disease_testing_demographic",
+                           filter_widgets = filter_widgets,
+                           )
+
+# -------------------------------------------------------------------------
 def disease_testing_report_resource(r, tablename):
 
     T = current.T
+    settings = current.deployment_settings
+
     db = current.db
     s3db = current.s3db
-    settings = current.deployment_settings
 
     table = s3db.disease_testing_report
 
@@ -406,13 +453,10 @@ def disease_testing_report_resource(r, tablename):
             field.default = active.first().site_id
 
     # Allow daily reports up to 3 months back in time (1st of month)
-    field = table.date
-
-    from dateutil.relativedelta import relativedelta
+    from core import S3CalendarWidget, S3DateFilter, S3TextFilter
     today = current.request.utcnow.date()
     earliest = today - relativedelta(months=3, day=1)
-
-    from core import S3CalendarWidget, S3DateFilter, S3TextFilter
+    field = table.date
     field.requires = IS_UTC_DATE(minimum = earliest,
                                  maximum = today,
                                  )
@@ -424,13 +468,21 @@ def disease_testing_report_resource(r, tablename):
     # Daily reports only writable for ORG_ADMINs of test stations
     writable = current.auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
 
+    # Limit report by setting date filter default start date
+    if r.method == "report":
+        start = current.request.utcnow.date() - relativedelta(weeks=1)
+        default = {"~.date__ge": {"ge": start}}
+    else:
+        default = None
+
     filter_widgets = [S3TextFilter(["site_id$name",
                                     "site_id$org_facility.code",
                                     "comments",
                                     ],
-                                    label = T("Search"),
-                                    ),
+                                   label = T("Search"),
+                                   ),
                       S3DateFilter("date",
+                                   default = default,
                                    ),
                       ]
 
