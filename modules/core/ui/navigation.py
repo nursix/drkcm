@@ -39,8 +39,6 @@ from s3dal import Field
 
 from ..tools import s3_str
 
-DEFAULT = lambda: None
-
 # =============================================================================
 class S3NavigationItem:
     """
@@ -95,7 +93,7 @@ class S3NavigationItem:
                  r = None,
                  m = None,
                  p = None,
-                 t = DEFAULT,
+                 t = None,
                  url = None,
                  tags = None,
                  parent = None,
@@ -120,8 +118,8 @@ class S3NavigationItem:
                 m: the URL method (will be appended to args)
                 p: the method to check authorization for
                    (will not be appended to args)
-                t: the table concerned by this request
-                   (overrides c_f for auth)
+                t: the table concerned by this request, defaults to c_f in
+                   permission checks (except for index pages, or if set to "")
                 url: a URL to use instead of building one manually
                      - e.g. for external websites or mailto: links
                 tags: list of tags for this item
@@ -912,20 +910,14 @@ class S3NavigationItem:
         else:
             link_vars = kwargs
 
-        urldata = {"a": a,
-                   "c": c,
-                   "f": f,
-                   "p": self.p,
-                   "args": args,
-                   "vars": link_vars,
-                   }
-        tablename = self.tablename
-        if tablename is not DEFAULT:
-            urldata["t"] = tablename
-        elif f == "index":
-            urldata["t"] = None
-
-        return current.auth.permission.accessible_url(**urldata)
+        return current.auth.permission.accessible_url(a = a,
+                                                      c = c,
+                                                      f = f,
+                                                      p = self.p,
+                                                      t = self.tablename,
+                                                      args = args,
+                                                      vars = link_vars,
+                                                      )
 
     # -------------------------------------------------------------------------
     @staticmethod
