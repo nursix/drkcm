@@ -11,3 +11,12 @@ $text-direction: rtl;
         padding-right: 0.75rem;
     }
 }
+label.inline {
+    &.left {
+        float: none !important;
+        text-align: right;
+    }
+    &.right {
+        float: left;
+    }
+}

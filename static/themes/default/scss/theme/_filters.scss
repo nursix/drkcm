@@ -92,7 +92,7 @@ select.multiselect-filter-widget {
 // ----------------------------------------------------------------------------
 /* Filter Manager */
 .filter-manager-widget {
-    float: left;
+    display: inline-block;
 }
 .fm-load,
 .fm-save,
@@ -100,36 +100,30 @@ select.multiselect-filter-widget {
 .fm-create,
 .fm-accept,
 .fm-cancel {
-    float: left;
-    margin-left: 5px;
-}
-
-div.fm-load,
-div.fm-save,
-div.fm-delete,
-div.fm-create,
-div.fm-accept,
-div.fm-cancel {
-    margin-top: 7px;
+    display: inline-block;
+    margin: 0 0.3rem;
     width: 16px;
     height: 16px;
+    cursor: pointer;
+    vertical-align: middle;
 }
-div.fm-load {
+
+.fm-load {
     background: url(../../img/filter/load.png) no-repeat;
 }
-div.fm-save {
+.fm-save {
     background: url(../../img/filter/save.png) no-repeat;
 }
-div.fm-delete {
+.fm-delete {
     background: url(../../img/filter/delete.png) no-repeat;
 }
-div.fm-create {
+.fm-create {
     background: url(../../img/filter/create.png) no-repeat;
 }
-div.fm-accept {
+.fm-accept {
     background: url(../../img/crud/apply.png) no-repeat;
 }
-div.fm-cancel {
+.fm-cancel {
     background: url(../../img/crud/cancel.png) no-repeat;
 }
 
