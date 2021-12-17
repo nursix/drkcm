@@ -352,39 +352,6 @@ def disease_case_diagnostics_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
-def disease_testing_demographic_resource(r, tablename):
-
-    # Limit report by setting date filter default start date
-    if r.method == "report":
-        start = current.request.utcnow.date() - relativedelta(weeks=1)
-        default = {"~.report_id$date__ge": {"ge": start}}
-    else:
-        default = None
-
-    from core import S3DateFilter, \
-                     S3OptionsFilter, \
-                     S3TextFilter, \
-                     s3_get_filter_opts
-
-    filter_widgets = [S3TextFilter(["report_id$site_id$name",
-                                    "report_id$comments",
-                                    ],
-                                   label = current.T("Search"),
-                                   ),
-                      S3DateFilter("report_id$date",
-                                   default = default,
-                                   ),
-                      S3OptionsFilter("demographic_id",
-                                      options = s3_get_filter_opts("disease_demographic"),
-                                      hidden = True,
-                                      ),
-                      ]
-
-    current.s3db.configure("disease_testing_demographic",
-                           filter_widgets = filter_widgets,
-                           )
-
-# -------------------------------------------------------------------------
 def disease_testing_report_resource(r, tablename):
 
     T = current.T
@@ -496,6 +463,47 @@ def disease_testing_report_resource(r, tablename):
 
 # -------------------------------------------------------------------------
 def disease_testing_report_controller(**attr):
+
+    # Enable bigtable features
+    current.deployment_settings.base.bigtable = True
+
+    return attr
+
+# -------------------------------------------------------------------------
+def disease_testing_demographic_resource(r, tablename):
+
+    # Limit report by setting date filter default start date
+    if r.method == "report":
+        start = current.request.utcnow.date() - relativedelta(weeks=1)
+        default = {"~.report_id$date__ge": {"ge": start}}
+    else:
+        default = None
+
+    from core import S3DateFilter, \
+                     S3OptionsFilter, \
+                     S3TextFilter, \
+                     s3_get_filter_opts
+
+    filter_widgets = [S3TextFilter(["report_id$site_id$name",
+                                    "report_id$comments",
+                                    ],
+                                   label = current.T("Search"),
+                                   ),
+                      S3DateFilter("report_id$date",
+                                   default = default,
+                                   ),
+                      S3OptionsFilter("demographic_id",
+                                      options = s3_get_filter_opts("disease_demographic"),
+                                      hidden = True,
+                                      ),
+                      ]
+
+    current.s3db.configure("disease_testing_demographic",
+                           filter_widgets = filter_widgets,
+                           )
+
+# -------------------------------------------------------------------------
+def disease_testing_demographic_controller(**attr):
 
     # Enable bigtable features
     current.deployment_settings.base.bigtable = True
