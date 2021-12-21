@@ -301,10 +301,6 @@ if len(pop_list) > 0:
 
         path = path_join(request_folder, "modules", "templates", task)
         if task != "default" and not os.path.exists(path):
-            # Legacy template?
-            # TODO remove this
-            #path = path_join(request_folder, "private", "templates", task)
-            #if not os.path.exists(path):
             info("Unable to install data %s no valid directory found" % task)
             continue
 
