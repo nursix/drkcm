@@ -11,6 +11,8 @@ import time
 from gluon import current
 from gluon.settings import global_settings
 
+SESSIONS_TTL = 1 # days
+
 # =============================================================================
 class Daily():
     """ Daily Maintenance Tasks """
@@ -36,24 +38,36 @@ class Daily():
         db(table.timestmp < week_past).delete()
 
         # Cleanup Sessions
-        osjoin = os.path.join
-        osstat = os.stat
-        osremove = os.remove
-        folder = osjoin(global_settings.applications_parent,
-                        request.folder,
-                        "sessions",
-                        )
 
-        # Convert to UNIX time
-        week_past_u = time.mktime(week_past.timetuple())
-        for file in os.listdir(folder):
-            filepath = osjoin(folder, file)
-            status = osstat(filepath)
-            if status.st_mtime < week_past_u:
-                try:
-                    osremove(filepath)
-                except:
-                    pass
+        path_join = os.path.join
+        folder = path_join(global_settings.applications_parent,
+                           request.folder,
+                           "sessions",
+                           )
+
+        earliest = now - datetime.timedelta(SESSIONS_TTL)
+        earliest_u = time.mktime(earliest.timetuple())
+
+        stat = os.stat
+        listdir = os.listdir
+        rm = os.remove
+        rmdir = os.rmdir
+
+        for path, sub, files in os.walk(folder, topdown=False):
+            for filename in files:
+                filepath = path_join(path, filename)
+                if stat(filepath).st_mtime < earliest_u:
+                    try:
+                        rm(filepath)
+                    except Exception: # (OSError, FileNotFoundError):
+                        pass
+            for dirname in sub:
+                dirpath = path_join(path, dirname)
+                if not listdir(dirpath):
+                    try:
+                        rmdir(dirpath)
+                    except Exception: # (OSError, FileNotFoundError):
+                        pass
 
         # Cleanup unverified accounts
         self.cleanup_unverified_accounts()
@@ -115,7 +129,7 @@ class Daily():
 
             try:
                 success = db(ttable.user_id == row.id).delete()
-            except:
+            except Exception:
                 success = False
             if not success:
                 current.log.warning("Could not delete temp data for user %s" % email)
@@ -123,7 +137,7 @@ class Daily():
 
             try:
                 success = row.delete_record()
-            except:
+            except Exception:
                 success = False
             if not success:
                 current.log.warning("Could not delete unverified user %s" % email)
