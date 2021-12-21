@@ -1295,7 +1295,7 @@ class CMSNewsletterModel(DataModel):
                      self.super_link("doc_id", "doc_entity"),
                      # Sender Organisation
                      self.org_organisation_id(
-                         label = T("Sender Organisation"),
+                         label = T("Sender"),
                          ondelete = "CASCADE",
                          comment = None,
                          ),
