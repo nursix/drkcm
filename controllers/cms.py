@@ -1102,11 +1102,6 @@ def newsletter():
                                    field.represent,
                                    )
 
-        # Default contact person
-        # TODO limit selection to HRs of permitted orgs
-        field = table.person_id
-        field.default = auth.s3_logged_in_person()
-
         lookup = resource.get_config("lookup_recipients")
 
         record = r.record
@@ -1116,14 +1111,6 @@ def newsletter():
                 field = table.message
                 field.represent = lambda v, row=None: \
                                   DIV(v, _class="newsletter-text") if v else "-"
-
-                field = table.person_id
-                field.represent = s3db.pr_PersonRepresentContact(
-                                            show_email = True,
-                                            show_phone = True,
-                                            show_link = False,
-                                            styleable = True,
-                                            )
             if lookup:
                 # Add distribution list to CRUD form
                 types = settings.get_cms_newsletter_recipient_types()
@@ -1142,7 +1129,9 @@ def newsletter():
                                                 "invert": True,
                                                 },
                                     ),
-                                "person_id",
+                                "contact_name",
+                                "contact_email",
+                                #"contact_phone",
                                 S3SQLInlineLink(
                                     "distribution",
                                     label = T("Distribution##list"),
@@ -1215,13 +1204,17 @@ def read_newsletter():
                 field.represent = lambda v, row=None: \
                                   DIV(v, _class="newsletter-text") if v else "-"
 
-                field = table.person_id
-                field.represent = s3db.pr_PersonRepresentContact(
-                                            show_email = True,
-                                            show_phone = True,
-                                            show_link = False,
-                                            styleable = True,
-                                            )
+                # Compact representation of contact information
+                from core import s3_fieldmethod, S3SQLVirtualField
+                details = s3db.cms_NewsletterDetails
+                table.contact = s3_fieldmethod("contact",
+                                               details.contact,
+                                               represent = details.contact_represent,
+                                               )
+                contact = S3SQLVirtualField("contact", label=T("Contact"))
+            else:
+                contact = None
+
             # CRUD Form
             crud_form = S3SQLCustomForm(
                             "message",
@@ -1234,7 +1227,7 @@ def read_newsletter():
                                                              "invert": True,
                                                              },
                                                  ),
-                            "person_id",
+                            contact,
                             )
 
             # Filter Widgets

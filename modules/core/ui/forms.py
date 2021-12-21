@@ -1857,9 +1857,17 @@ class S3SQLVirtualField(S3SQLFormElement):
         if not label:
             label = " ".join(s.capitalize() for s in selector.split("_"))
 
+        # Apply represent if defined
+        method = table[selector]
+        if hasattr(method, "handler") and \
+           hasattr(method.handler, "represent"):
+            represent = method.handler.represent
+        else:
+            represent = None
+
         field = Field(selector,
                       label = label,
-                      widget = self,
+                      represent = represent,
                       )
 
         return None, selector, field

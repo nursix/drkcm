@@ -946,7 +946,7 @@ class S3Msg:
                    reply_to = None,
                    sender = None,
                    encoding = "utf-8",
-                   #from_address = None,
+                   from_address = None,
                    ):
         """
             Function to send Email
@@ -1001,9 +1001,7 @@ class S3Msg:
                                    encoding = encoding,
                                    # e.g. Return-Receipt-To:<user@domain>
                                    headers = {},
-                                   # Added to Web2Py 2014-03-04
-                                   # - defaults to sender
-                                   #from_address = from_address,
+                                   from_address = from_address,
                                    )
         if not result:
             current.session.error = current.mail.error
