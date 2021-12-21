@@ -912,7 +912,7 @@
 'Date of Latest Information on Beneficiaries Reached': 'لقد وصل تاريخ آخر المعلومات عن المستفيدين',
 'Date of Re-recruitment': 'تاريخ إعادة التوظيف',
 'Date of Recruitment': 'تاريخ التوظيف',
-'Date': '',
+'Date': 'تاريخ',
 'Date/Time is required!': 'التأريخ / الوقت مطلوب',
 'Date/Time must be %(max)s or earlier!': 'يجب أن يكون تاريخ / وقت %(max)s الصورة أو في وقت سابق!',
 'Date/Time must be %(min)s or later!': 'ويجب أن يكون تاريخ / وقت %(min)s الصورة أو في وقت لاحق!',

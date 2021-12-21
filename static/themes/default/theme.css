@@ -2122,7 +2122,7 @@ select.multiselect-filter-widget {
 /* Filter Manager */
 /* line 94, ../scss/theme/_filters.scss */
 .filter-manager-widget {
-  float: left;
+  display: inline-block;
 }
 
 /* line 97, ../scss/theme/_filters.scss */
@@ -2132,49 +2132,41 @@ select.multiselect-filter-widget {
 .fm-create,
 .fm-accept,
 .fm-cancel {
-  float: left;
-  margin-left: 5px;
-}
-
-/* line 107, ../scss/theme/_filters.scss */
-div.fm-load,
-div.fm-save,
-div.fm-delete,
-div.fm-create,
-div.fm-accept,
-div.fm-cancel {
-  margin-top: 7px;
+  display: inline-block;
+  margin: 0 0.3rem;
   width: 16px;
   height: 16px;
+  cursor: pointer;
+  vertical-align: middle;
 }
 
-/* line 117, ../scss/theme/_filters.scss */
-div.fm-load {
+/* line 111, ../scss/theme/_filters.scss */
+.fm-load {
   background: url(../../img/filter/load.png) no-repeat;
 }
 
-/* line 120, ../scss/theme/_filters.scss */
-div.fm-save {
+/* line 114, ../scss/theme/_filters.scss */
+.fm-save {
   background: url(../../img/filter/save.png) no-repeat;
 }
 
-/* line 123, ../scss/theme/_filters.scss */
-div.fm-delete {
+/* line 117, ../scss/theme/_filters.scss */
+.fm-delete {
   background: url(../../img/filter/delete.png) no-repeat;
 }
 
-/* line 126, ../scss/theme/_filters.scss */
-div.fm-create {
+/* line 120, ../scss/theme/_filters.scss */
+.fm-create {
   background: url(../../img/filter/create.png) no-repeat;
 }
 
-/* line 129, ../scss/theme/_filters.scss */
-div.fm-accept {
+/* line 123, ../scss/theme/_filters.scss */
+.fm-accept {
   background: url(../../img/crud/apply.png) no-repeat;
 }
 
-/* line 132, ../scss/theme/_filters.scss */
-div.fm-cancel {
+/* line 126, ../scss/theme/_filters.scss */
+.fm-cancel {
   background: url(../../img/crud/cancel.png) no-repeat;
 }
 

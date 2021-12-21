@@ -1172,6 +1172,8 @@ def newsletter():
 def read_newsletter():
     """ Newsletters, Reader Perspective """
 
+    s3.hide_last_update = True
+
     def prep(r):
 
         s3.crud_strings["cms_newsletter"]["title_list"] = T("Newsletter Inbox")

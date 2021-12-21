@@ -64,7 +64,7 @@ def config(settings):
                                       "VOUCHER_ISSUER": "VOUCHER_ISSUER",
                                       "VOUCHER_PROVIDER": "VOUCHER_PROVIDER",
                                       "TEST_PROVIDER": "TEST_PROVIDER",
-                                      "NEWSLETTER_AUTHOR": "ADMIN",
+                                      "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
                                       }
 
     settings.auth.password_min_length = 8
@@ -251,12 +251,16 @@ def config(settings):
     from .customise.disease import disease_case_diagnostics_resource, \
                                    disease_case_diagnostics_controller, \
                                    disease_testing_report_resource, \
-                                   disease_testing_report_controller
+                                   disease_testing_report_controller, \
+                                   disease_testing_demographic_resource, \
+                                   disease_testing_demographic_controller
 
     settings.customise_disease_case_diagnostics_resource = disease_case_diagnostics_resource
     settings.customise_disease_case_diagnostics_controller = disease_case_diagnostics_controller
     settings.customise_disease_testing_report_resource = disease_testing_report_resource
     settings.customise_disease_testing_report_controller = disease_testing_report_controller
+    settings.customise_disease_testing_demographic_resource = disease_testing_demographic_resource
+    settings.customise_disease_testing_demographic_controller = disease_testing_demographic_controller
 
     # -------------------------------------------------------------------------
     from .customise.doc import doc_document_resource

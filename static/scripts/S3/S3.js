@@ -752,10 +752,10 @@ S3.showAlert = function(message, type, callback) {
         type = 'success';
     }
     var alertSpace = $('#alert-space'),
-        alert = $('<div class="alert alert-' + type + '">' + message + '<button type="button" class="close" data-dismiss="alert">×</button></div>');
+        alert = $('<div class="alert alert-' + type + '">' + message + '</div>');
 
-    alertSpace.append(alert).undelegate('.s3').delegate('.alert', 'click.s3', function() {
-        $(this).fadeOut('slow').remove();
+    alertSpace.append(alert).off('.s3').on('click.s3', '.alert', function() {
+        $(this).fadeOut(300).remove();
         if (callback) {
             callback();
         }
@@ -1909,24 +1909,24 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
     // ========================================================================
     $(document).ready(function() {
         // Web2Py Layer
-        $('.alert-error').hide().slideDown('slow');
+        $('.alert-error').hide().slideDown(300);
         $('.alert-error').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
-        $('.alert-warning').hide().slideDown('slow');
+        $('.alert-warning').hide().slideDown(300);
         $('.alert-warning').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
-        $('.alert-info').hide().slideDown('slow');
+        $('.alert-info').hide().slideDown(300);
         $('.alert-info').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
-        $('.alert-success').hide().slideDown('slow');
+        $('.alert-success').hide().slideDown(300);
         $('.alert-success').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
         $("input[type='checkbox'].delete").click(function() {

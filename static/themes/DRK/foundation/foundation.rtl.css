@@ -8689,3 +8689,13 @@ th.hide-for-touch {
 .top-bar-section ul li > a {
   padding-right: 0.75rem;
 }
+
+/* line 15, ../scss/foundation.rtl.scss */
+label.inline.left {
+  float: none !important;
+  text-align: right;
+}
+/* line 19, ../scss/foundation.rtl.scss */
+label.inline.right {
+  float: left;
+}

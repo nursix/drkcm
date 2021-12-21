@@ -1394,6 +1394,7 @@ class CMSNewsletterModel(DataModel):
                   list_fields = list_fields,
                   orderby = "%s.date_sent desc" % tablename,
                   super_entity = "doc_entity",
+                  update_realm = True,
                   )
 
         # CRUD Strings
