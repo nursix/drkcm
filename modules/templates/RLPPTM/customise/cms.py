@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current, URL
+from gluon import current, URL, IS_EMAIL
 
 from core import IS_ONE_OF
 
@@ -70,6 +70,11 @@ def cms_newsletter_resource(r, tablename):
                    lookup_recipients = lookup_newsletter_recipients,
                    resolve_recipient = resolve_newsletter_recipient,
                    )
+
+    # Contact email is required
+    table = s3db.cms_newsletter
+    field = table.contact_email
+    field.requires = IS_EMAIL()
 
     if r.component_name == "newsletter_recipient":
         # Only organisations as recipients

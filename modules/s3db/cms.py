@@ -1313,7 +1313,7 @@ class CMSNewsletterModel(DataModel):
                            represent = lambda v, row=None: v if v else "-",
                            ),
                      Field("contact_email",
-                           label = T("Email"),
+                           label = T("Contact Email"),
                            requires = IS_EMPTY_OR(IS_EMAIL()),
                            represent = lambda v, row=None: v if v else "-",
                            ),
