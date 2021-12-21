@@ -2034,7 +2034,7 @@ class S3RolesExport:
     def as_csv(self):
         """
             Export the current roles and permissions as CSV,
-            suitable for prepop (see S3BulkImporter.import_role)
+            suitable for prepop (see BulkImporter.import_roles)
 
             Returns:
                 a StringIO containing the CSV

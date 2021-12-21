@@ -61,6 +61,8 @@ class DataModel:
         self.classes = {}
         self._module_map = None
 
+        self._customised = {}
+
         # Initialize current.model
         if not hasattr(current, "model"):
             current.model = {"config": {},
@@ -232,6 +234,28 @@ class DataModel:
                         else:
                             mmap[k].append(v)
         return mmap
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def customised(tablename, update=None):
+        """
+            Check (or mark) that customisations for a table model have
+            been run
+
+            Args:
+                tablename: the name of the table
+                update: True to mark that customisations have been run
+
+            Returns:
+                True|False whether customisations have been run
+        """
+
+        tables = current.s3db._customised
+
+        if update is not None:
+            tables[tablename] = bool(update)
+
+        return tables.get(tablename, False)
 
     # -------------------------------------------------------------------------
     @classmethod

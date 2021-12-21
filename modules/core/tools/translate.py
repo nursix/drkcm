@@ -826,9 +826,7 @@ class TranslateReadFiles:
             which are to be considered for translation.
         """
 
-        from ..resource import S3BulkImporter
-
-
+        from ..tools import BulkImporter
 
         # List of database strings
         database_strings = []
@@ -869,7 +867,6 @@ class TranslateReadFiles:
                            )
 
         # Use bulk importer class to parse tasks.cfg in template folder
-        bi = S3BulkImporter()
         S = Strings()
         read_csv = S.read_csv
         for template in template_list:
@@ -879,10 +876,9 @@ class TranslateReadFiles:
             pth = join(base_dir, "modules", "templates", template)
             if path.exists(join(pth, "tasks.cfg")) is False:
                 continue
-            bi.load_descriptor(pth)
 
             s3db = current.s3db
-            for csv in bi.tasks:
+            for csv in BulkImporter.parse_task_config(pth):
                 # Ignore special import files
                 if csv[0] != 1:
                     continue

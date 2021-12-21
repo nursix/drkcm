@@ -1084,6 +1084,14 @@ class S3Config(Storage):
         """For demo sites, which additional options to add to the list """
         return self.base.get("prepopulate_demo", 0)
 
+    def get_base_import_handlers(self):
+        """
+            Template-specific import handlers for prepop
+            - a dict {name: function}
+            - function takes (filepath, **kwargs) as arguments
+        """
+        return self.base.get("import_handlers")
+
     def get_base_public_url(self):
         """
             The Public URL for the site - for use in email links, etc
