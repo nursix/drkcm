@@ -11,8 +11,6 @@ import time
 from gluon import current
 from gluon.settings import global_settings
 
-SESSIONS_TTL = 1 # days
-
 # =============================================================================
 class Daily():
     """ Daily Maintenance Tasks """
@@ -21,7 +19,6 @@ class Daily():
 
         db = current.db
         s3db = current.s3db
-        request = current.request
 
         current.log.info("Daily Maintenance RLPPTM")
         errors = None
@@ -37,37 +34,8 @@ class Daily():
         table = s3db.sync_log
         db(table.timestmp < week_past).delete()
 
-        # Cleanup Sessions
-
-        path_join = os.path.join
-        folder = path_join(global_settings.applications_parent,
-                           request.folder,
-                           "sessions",
-                           )
-
-        earliest = now - datetime.timedelta(SESSIONS_TTL)
-        earliest_u = time.mktime(earliest.timetuple())
-
-        stat = os.stat
-        listdir = os.listdir
-        rm = os.remove
-        rmdir = os.rmdir
-
-        for path, sub, files in os.walk(folder, topdown=False):
-            for filename in files:
-                filepath = path_join(path, filename)
-                if stat(filepath).st_mtime < earliest_u:
-                    try:
-                        rm(filepath)
-                    except Exception: # (OSError, FileNotFoundError):
-                        pass
-            for dirname in sub:
-                dirpath = path_join(path, dirname)
-                if not listdir(dirpath):
-                    try:
-                        rmdir(dirpath)
-                    except Exception: # (OSError, FileNotFoundError):
-                        pass
+        # Cleanup old sessions
+        self.cleanup_sessions(ttl=1)
 
         # Cleanup unverified accounts
         self.cleanup_unverified_accounts()
@@ -87,6 +55,53 @@ class Daily():
             errors = self.cleanup_public_registry()
 
         return errors if errors else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def cleanup_sessions(ttl=7):
+        """
+            Clean up old sessions
+
+            Args:
+                ttl: time-to-live for unused sessions (days)
+        """
+
+        request = current.request
+
+        path_join = os.path.join
+        folder = path_join(global_settings.applications_parent,
+                           request.folder,
+                           "sessions",
+                           )
+
+        now = datetime.datetime.utcnow()
+        earliest = now - datetime.timedelta(days=ttl)
+        earliest_u = time.mktime(earliest.timetuple())
+
+        stat = os.stat
+        listdir = os.listdir
+        rm = os.remove
+        rmdir = os.rmdir
+
+        for path, sub, files in os.walk(folder, topdown=False):
+
+            # Remove all session files with mtime before earliest
+            for filename in files:
+                filepath = path_join(path, filename)
+                if stat(filepath).st_mtime < earliest_u:
+                    try:
+                        rm(filepath)
+                    except Exception: # (OSError, FileNotFoundError):
+                        pass
+
+            # Remove empty subfolders
+            for dirname in sub:
+                dirpath = path_join(path, dirname)
+                if not listdir(dirpath):
+                    try:
+                        rmdir(dirpath)
+                    except Exception: # (OSError, FileNotFoundError):
+                        pass
 
     # -------------------------------------------------------------------------
     @staticmethod
