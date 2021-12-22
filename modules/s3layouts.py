@@ -336,7 +336,7 @@ class S3OrgMenuDefaultLayout(S3NavigationItem):
     @staticmethod
     def layout(item):
 
-        name = "Humanitarian Management System"
+        name = current.T("Humanitarian Management System")
 
         current_user = current.auth.user
         if current_user:

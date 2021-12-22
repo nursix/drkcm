@@ -268,6 +268,7 @@ def config(settings):
         ("pt", "Portuguese"),
         #("pt-br", "Portuguese (Brazil)"),
         #("ru", "Russian"),
+        ("sv", "Swedish"),
         #("tet", "Tetum"),
         ##("si", "Sinhala"), # Sri Lanka
         ##("so", "Somali"),

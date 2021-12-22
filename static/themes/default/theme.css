@@ -70,7 +70,8 @@ meta.foundation-data-attribute-namespace {
 .selected-action {
   display: inline-block;
   margin: 0.15rem;
-  padding: 0.25rem 0.5rem 0.375rem;
+  /*     margin-bottom: inherit; */
+  padding: 0.3rem 0.5rem;
   border: 0;
   border-radius: 0;
   line-height: 1;
@@ -205,7 +206,8 @@ button.toggle-text {
 #footer button.btn {
   display: inline-block;
   margin: 0.15rem;
-  padding: 0.25rem 0.5rem 0.375rem;
+  /*     margin-bottom: inherit; */
+  padding: 0.3rem 0.5rem;
   border: 0;
   border-radius: 0;
   line-height: 1;
@@ -1008,7 +1010,8 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
 .pr-contacts-editable button {
   display: inline-block;
   margin: 0.15rem;
-  padding: 0.25rem 0.5rem 0.375rem;
+  /*     margin-bottom: inherit; */
+  padding: 0.3rem 0.5rem;
   border: 0;
   border-radius: 0;
   line-height: 1;
@@ -3045,7 +3048,7 @@ table.fixedHeader th {
   background: url(../../img/dialog-confirmation.png) #e5ffe5 no-repeat 0.8rem 50%;
   color: #070;
 }
-/* line 50, ../scss/theme/_base.scss */
+/* line 51, ../scss/theme/_base.scss */
 .alert-success p em {
   color: #070;
 }
@@ -3056,7 +3059,7 @@ table.fixedHeader th {
   background: url(../../img/dialog-error.png) #ffe5e5 no-repeat 0.8rem 50%;
   color: #c60f13;
 }
-/* line 50, ../scss/theme/_base.scss */
+/* line 51, ../scss/theme/_base.scss */
 .alert-error p em {
   color: #c60f13;
 }
@@ -3067,7 +3070,7 @@ table.fixedHeader th {
   background: url(../../img/dialog-information.png) #ecfdff no-repeat 0.8rem 50%;
   color: #037aa8;
 }
-/* line 50, ../scss/theme/_base.scss */
+/* line 51, ../scss/theme/_base.scss */
 .alert-info p em {
   color: #037aa8;
 }
@@ -3078,7 +3081,7 @@ table.fixedHeader th {
   background: url(../../img/dialog-warning.png) #ffc no-repeat 0.8rem 50%;
   color: #d0440d;
 }
-/* line 50, ../scss/theme/_base.scss */
+/* line 51, ../scss/theme/_base.scss */
 .alert-warning p em {
   color: #d0440d;
 }

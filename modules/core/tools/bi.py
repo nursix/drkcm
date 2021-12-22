@@ -200,11 +200,7 @@ class BulkImporter:
             # Source file location
             filepath = cls._addpath(path, filename)
 
-            args = line[3:] if len(line) > 3 else None
-            if args:
-                return (2, handler, filepath, *args)
-            else:
-                return (2, handler, filepath)
+            return (2, handler, filepath, *line[3:])
         else:
             # Import using XMLImporter (mod,res,csv_name,xslt_name,extra_data)
             mod, res, csv_name, xslt_name, extra_data = (line + EMPTYLINE)[:5]
