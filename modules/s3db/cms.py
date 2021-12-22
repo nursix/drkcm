@@ -1854,7 +1854,7 @@ class cms_UpdateNewsletter(CRUDMethod):
             # which may not grant access to the recipient resource at all
             c, f = permissions.controller, permissions.function
             permissions.controller = row.controller
-            permissions.function = row.controller
+            permissions.function = row.function
 
             # Instantiate the recipient resource with these filters
             tablename = row.resource
