@@ -1299,15 +1299,6 @@ class CMSNewsletterModel(DataModel):
                          ondelete = "CASCADE",
                          comment = None,
                          ),
-                     # DEPRECATED Contact person
-                     self.pr_person_id(
-                         label = T("Contact"),
-                         ondelete = "SET NULL",
-                         widget = None,
-                         comment = None,
-                         readable = False,
-                         writable = False,
-                         ),
                      Field("contact_name",
                            label = T("Contact Name"),
                            represent = lambda v, row=None: v if v else "-",
@@ -1465,11 +1456,11 @@ class CMSNewsletterModel(DataModel):
                      Field("pe_id", "reference pr_pentity",
                            label = T("Recipient"),
                            represent = pe_represent,
-                           requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                            "pr_pentity.pe_id",
-                                            pe_represent,
-                                            instance_types = types,
-                                            )),
+                           requires = IS_ONE_OF(db,
+                                                "pr_pentity.pe_id",
+                                                pe_represent,
+                                                instance_types = types,
+                                                ),
                            ),
                      # Activated in prep when notification-method is configured:
                      s3_datetime("notified_on",
@@ -2248,7 +2239,7 @@ def cms_rheader(r, tabs=None):
                             (T("Attachments"), "document"),
                             ]
                 rheader_fields = [["status", "organisation_id"],
-                                  ["date_sent"], #, "person_id"],
+                                  ["date_sent"],
                                   ["total_recipients"],
                                   ]
                 # Add send-action

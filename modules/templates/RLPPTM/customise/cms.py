@@ -76,27 +76,57 @@ def cms_newsletter_resource(r, tablename):
     field = table.contact_email
     field.requires = IS_EMAIL()
 
-    if r.component_name == "newsletter_recipient":
-        # Only organisations as recipients
-        ctable = s3db.cms_newsletter_recipient
-        field = ctable.pe_id
-        from core import accessible_pe_query
-        query = accessible_pe_query(instance_types = ["org_organisation"],
-                                    method = "read",
-                                    c = "org",
-                                    f = "facility",
-                                    )
-        field.requires = IS_ONE_OF(current.db(query), "pr_pentity.pe_id",
-                                   field.represent,
-                                   )
+# -------------------------------------------------------------------------
+def cms_newsletter_controller(**attr):
 
-        # Allow manual insertion of recipients in unsent newsletters
-        if r.tablename == "cms_newsletter":
+    db = current.db
+    s3db = current.s3db
+
+    s3 = current.response.s3
+
+    # Custom prep
+    standard_prep = s3.prep
+    def prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        if r.component_name == "newsletter_recipient":
+
             record = r.record
-            if record and record.status == "NEW":
+
+            if record.status == "NEW":
+                # Allow manual adding of new recipients
                 s3db.configure("cms_newsletter_recipient",
                                insertable = True,
                                )
+
+            ctable = s3db.cms_newsletter_recipient
+            etable = s3db.pr_pentity
+
+            # Only organisations as recipients
+            from core import accessible_pe_query
+            types = ["org_organisation"]
+            query = accessible_pe_query(instance_types = types,
+                                        method = "read",
+                                        c = "org",
+                                        f = "facility",
+                                        )
+
+            # Filter out existing recipients
+            existing = db((ctable.newsletter_id == record.id) &
+                          (ctable.deleted == False))._select(ctable.pe_id)
+            query &= ~(etable.pe_id.belongs(existing))
+
+            field = ctable.pe_id
+            field.requires = IS_ONE_OF(db(query), "pr_pentity.pe_id",
+                                       field.represent,
+                                       instance_types = types,
+                                       )
+        return result
+    s3.prep = prep
+
+    return attr
+
 
 # -------------------------------------------------------------------------
 def cms_post_resource(r, tablename):
