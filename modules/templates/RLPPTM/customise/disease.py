@@ -357,6 +357,7 @@ def disease_testing_report_resource(r, tablename):
 
     db = current.db
     s3db = current.s3db
+    auth = current.auth
 
     table = s3db.disease_testing_report
 
@@ -388,7 +389,7 @@ def disease_testing_report_resource(r, tablename):
     if r.tablename == "disease_testing_report" and r.record and \
        settings.get_disease_testing_report_by_demographic() and \
        r.method != "read" and \
-       current.auth.s3_has_permission("update", table, record_id=r.record.id):
+       auth.s3_has_permission("update", table, record_id=r.record.id):
         # Hide totals in create/update form
         table.tests_total.readable = False
         table.tests_positive.readable = False
@@ -419,7 +420,11 @@ def disease_testing_report_resource(r, tablename):
 
     # Allow daily reports up to 3 months back in time (1st of month)
     today = current.request.utcnow.date()
-    earliest = today - relativedelta(months=3, day=1)
+    if auth.s3_has_role("ORG_GROUP_ADMIN"):
+        # No limit for OrgGroupAdmins/Admins
+        earliest = None
+    else:
+        earliest = today - relativedelta(months=3, day=1)
     field = table.date
     field.requires = IS_UTC_DATE(minimum = earliest,
                                  maximum = today,
@@ -448,7 +453,7 @@ def disease_testing_report_resource(r, tablename):
                       ]
 
     # Daily reports only writable for ORG_ADMINs of test stations
-    writable = current.auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
+    writable = auth.s3_has_roles(["ORG_ADMIN", "TEST_PROVIDER"], all=True)
 
     s3db.configure("disease_testing_report",
                    filter_widgets = filter_widgets,
