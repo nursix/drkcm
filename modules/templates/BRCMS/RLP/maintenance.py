@@ -19,7 +19,6 @@ class Daily():
 
         db = current.db
         s3db = current.s3db
-        request = current.request
 
         current.log.info("Daily Maintenance RLPCM")
 
@@ -35,27 +34,57 @@ class Daily():
         db(table.timestmp < week_past).delete()
 
         # Cleanup Sessions
-        osjoin = os.path.join
-        osstat = os.stat
-        osremove = os.remove
-        folder = osjoin(global_settings.applications_parent,
-                        request.folder,
-                        "sessions",
-                        )
-
-        # Convert to UNIX time
-        week_past_u = time.mktime(week_past.timetuple())
-        for file in os.listdir(folder):
-            filepath = osjoin(folder, file)
-            status = osstat(filepath)
-            if status.st_mtime < week_past_u:
-                try:
-                    osremove(filepath)
-                except:
-                    pass
+        self.cleanup_sessions(ttl=1)
 
         # Cleanup unverified accounts
         self.cleanup_unverified_accounts()
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def cleanup_sessions(ttl=7):
+        """
+            Clean up old sessions
+
+            Args:
+                ttl: time-to-live for unused sessions (days)
+        """
+
+        request = current.request
+
+        path_join = os.path.join
+        folder = path_join(global_settings.applications_parent,
+                           request.folder,
+                           "sessions",
+                           )
+
+        now = datetime.datetime.utcnow()
+        earliest = now - datetime.timedelta(days=ttl)
+        earliest_u = time.mktime(earliest.timetuple())
+
+        stat = os.stat
+        listdir = os.listdir
+        rm = os.remove
+        rmdir = os.rmdir
+
+        for path, sub, files in os.walk(folder, topdown=False):
+
+            # Remove all session files with mtime before earliest
+            for filename in files:
+                filepath = path_join(path, filename)
+                if stat(filepath).st_mtime < earliest_u:
+                    try:
+                        rm(filepath)
+                    except Exception: # (OSError, FileNotFoundError):
+                        pass
+
+            # Remove empty subfolders
+            for dirname in sub:
+                dirpath = path_join(path, dirname)
+                if not listdir(dirpath):
+                    try:
+                        rmdir(dirpath)
+                    except Exception: # (OSError, FileNotFoundError):
+                        pass
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -98,7 +127,7 @@ class Daily():
 
             try:
                 success = db(ttable.user_id == row.id).delete()
-            except:
+            except Exception:
                 success = False
             if not success:
                 current.log.warning("Could not delete temp data for user %s" % email)
@@ -106,7 +135,7 @@ class Daily():
 
             try:
                 success = row.delete_record()
-            except:
+            except Exception:
                 success = False
             if not success:
                 current.log.warning("Could not delete unverified user %s" % email)

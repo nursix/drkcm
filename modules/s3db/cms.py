@@ -34,6 +34,7 @@ __all__ = ("CMSContentModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
            "CMSNewsletterModel",
+           "cms_NewsletterDetails",
            "cms_UpdateNewsletter",
            "cms_newsletter_notify",
            "cms_index",
@@ -1294,17 +1295,27 @@ class CMSNewsletterModel(DataModel):
                      self.super_link("doc_id", "doc_entity"),
                      # Sender Organisation
                      self.org_organisation_id(
-                         label = T("Sender Organisation"),
+                         label = T("Sender"),
                          ondelete = "CASCADE",
                          comment = None,
                          ),
-                     # Contact person
-                     self.pr_person_id(
-                         label = T("Contact"),
-                         ondelete = "SET NULL",
-                         widget = None,
-                         comment = None,
-                         ),
+                     Field("contact_name",
+                           label = T("Contact Name"),
+                           represent = lambda v, row=None: v if v else "-",
+                           ),
+                     Field("contact_email",
+                           label = T("Contact Email"),
+                           requires = IS_EMPTY_OR(IS_EMAIL()),
+                           represent = lambda v, row=None: v if v else "-",
+                           ),
+                     Field("contact_phone",
+                           label = T("Contact Phone"),
+                           requires = IS_EMPTY_OR(IS_PHONE_NUMBER_SINGLE()),
+                           represent = lambda v, row=None: v if v else "-",
+                           # Enable in template if desired:
+                           readable = False,
+                           writable = False,
+                           ),
                      Field("subject",
                            label = T("Subject"),
                            requires = IS_NOT_EMPTY(),
@@ -1363,7 +1374,9 @@ class CMSNewsletterModel(DataModel):
                                         "invert": True,
                                         },
                             ),
-                        "person_id",
+                        "comment_name",
+                        "comment_email",
+                        #"comment_phone",
                         "comments",
                         )
 
@@ -1395,6 +1408,10 @@ class CMSNewsletterModel(DataModel):
                   orderby = "%s.date_sent desc" % tablename,
                   super_entity = "doc_entity",
                   update_realm = True,
+                  extra_fields = ["contact_name",
+                                  "contact_phone",
+                                  "contact_email",
+                                  ],
                   )
 
         # CRUD Strings
@@ -1439,11 +1456,11 @@ class CMSNewsletterModel(DataModel):
                      Field("pe_id", "reference pr_pentity",
                            label = T("Recipient"),
                            represent = pe_represent,
-                           requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                            "pr_pentity.pe_id",
-                                            pe_represent,
-                                            instance_types = types,
-                                            )),
+                           requires = IS_ONE_OF(db,
+                                                "pr_pentity.pe_id",
+                                                pe_represent,
+                                                instance_types = types,
+                                                ),
                            ),
                      # Activated in prep when notification-method is configured:
                      s3_datetime("notified_on",
@@ -1603,6 +1620,65 @@ class CMSNewsletterModel(DataModel):
         """
 
         cls.update_total_recipients(row.newsletter_id)
+
+# =============================================================================
+class cms_NewsletterDetails:
+    """
+        Field methods for compact representation contact information
+        for newsletters
+    """
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def contact(row):
+
+        if hasattr(row, "cms_newsletter"):
+            row = row.cms_newsletter
+
+        return tuple(row.get(detail)
+                     for detail in ("contact_name",
+                                    "contact_phone",
+                                    "contact_email",
+                                    ))
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def contact_represent(value, row=None):
+
+        if isinstance(value, tuple) and len(value) == 3:
+
+            if not any(value):
+                return "-"
+            name, phone, email = value
+
+            output = DIV(_class = "contact-repr",
+                         )
+            if name:
+                output.append(SPAN(name,
+                                   _class = "contact-name",
+                                   ))
+
+            if email or phone:
+                details = DIV(_class="contact-details")
+                if phone:
+                    details.append(DIV(ICON("phone"),
+                                       SPAN(phone,
+                                            _class = "contact-phone"),
+                                       _class = "contact-info",
+                                       ))
+                if email:
+                    details.append(DIV(ICON("mail"),
+                                       SPAN(A(email,
+                                              _href="mailto:%s" % email,
+                                              ),
+                                            _class = "contact-email"),
+                                       _class = "contact-info",
+                                       ))
+                output.append(details)
+
+            return output
+        else:
+            return value if value else "-"
 
 # =============================================================================
 class cms_UpdateNewsletter(CRUDMethod):
@@ -1778,7 +1854,7 @@ class cms_UpdateNewsletter(CRUDMethod):
             # which may not grant access to the recipient resource at all
             c, f = permissions.controller, permissions.function
             permissions.controller = row.controller
-            permissions.function = row.controller
+            permissions.function = row.function
 
             # Instantiate the recipient resource with these filters
             tablename = row.resource
@@ -1885,11 +1961,12 @@ class cms_UpdateNewsletter(CRUDMethod):
                 if mailaddress in seen:
                     continue
                 seen.add(mailaddress)
-                # TODO reply-to from contact
                 if not send_email(to = mailaddress,
                                   subject = message[0],
                                   message = message[1],
                                   attachments = message[2],
+                                  from_address = message[3],
+                                  reply_to = message[3],
                                   ):
                     errors.append('Failed to send email to "%s"' % mailaddress)
 
@@ -1943,6 +2020,7 @@ class cms_UpdateNewsletter(CRUDMethod):
                 current.msg.send_email
         """
 
+        T = current.T
         db = current.db
         s3db = current.s3db
 
@@ -1951,7 +2029,8 @@ class cms_UpdateNewsletter(CRUDMethod):
                 (table.deleted == False)
         row = db(query).select(table.id,
                                table.doc_id,
-                               table.person_id,
+                               table.contact_name,
+                               table.contact_email,
                                table.subject,
                                table.message,
                                limitby = (0, 1),
@@ -1966,10 +2045,26 @@ class cms_UpdateNewsletter(CRUDMethod):
 
         message = row.message or "--- no message text ---"
 
-        # TODO contact information
+        # Contact info and from-address
+        contact_email = row.contact_email
+        if contact_email:
+            contact_email = contact_email.strip()
+        contact_name = row.contact_name
+        if contact_name:
+            contact_name = contact_name.strip()
+        if contact_email:
+            contact_info = from_address = contact_email
+            if contact_name:
+                from email.header import Header
+                from_address = "%s <%s>" % (Header(contact_name).encode(), contact_email)
+                contact_info = "%s (%s)" % (contact_name, contact_email)
+            message = "%s\n\n%s: %s" % (message, T("Contact"), contact_info)
+        else:
+            # TODO fallback to organisation email address?
+            from_address = None
 
         # Look up attachments
-        attachments, info = [], ["%s:" % current.T("Attachments")]
+        attachments, info = [], ["%s:" % T("Attachments")]
         if row:
             dtable = s3db.doc_document
             query = (dtable.doc_id == row.doc_id) & \
@@ -1988,9 +2083,7 @@ class cms_UpdateNewsletter(CRUDMethod):
         else:
             attachments = None
 
-        # TODO link to online version
-
-        return subject, message, attachments
+        return subject, message, attachments, from_address
 
 # =============================================================================
 def cms_newsletter_notify(newsletter_id=None):
@@ -2146,7 +2239,7 @@ def cms_rheader(r, tabs=None):
                             (T("Attachments"), "document"),
                             ]
                 rheader_fields = [["status", "organisation_id"],
-                                  ["date_sent"], #, "person_id"],
+                                  ["date_sent"],
                                   ["total_recipients"],
                                   ]
                 # Add send-action
