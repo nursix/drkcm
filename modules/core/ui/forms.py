@@ -428,7 +428,7 @@ class S3SQLForm:
             if formfields:
                 for f in formfields:
                     fname = f.name
-                    if fname not in record and f.writable:
+                    if fname not in record:
                         missing_fields[fname] = f.default
             else:
                 for f in table.fields:

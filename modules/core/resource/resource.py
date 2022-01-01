@@ -40,7 +40,7 @@ from gluon.validators import IS_EMPTY_OR
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from s3dal import Row, Rows, Table
+from s3dal import Row, Rows, Table, original_tablename
 from ..tools import IS_ONE_OF, s3_format_datetime, s3_get_last_record_id, \
                     s3_has_foreign_key, s3_remove_last_record_id, s3_str
 from ..ui import DataTable, S3DataList
@@ -140,7 +140,7 @@ class CRUDResource:
                 if isinstance(tablename, Table):
                     table = tablename
                     table_alias = table._tablename
-                    tablename = table_alias
+                    tablename = original_tablename(table)
                 elif isinstance(tablename, CRUDResource):
                     table = tablename.table
                     table_alias = table._tablename
