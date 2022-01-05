@@ -259,8 +259,8 @@ class S3Config(Storage):
 
                 parameters = {"host": get_param("host", "localhost"),
                               "port": get_param("port", default_port),
-                              "database": get_param("database", "sahana"),
-                              "username": get_param("username", "sahana"),
+                              "database": get_param("database", "eden"),
+                              "username": get_param("username", "eden"),
                               "password": get_param("password", "password"),
                               "pool_size": pool_size,
                               }
@@ -1143,7 +1143,7 @@ class S3Config(Storage):
 
         db_params = {
             "type": db_type,
-            "user": csget("server_db_username") or dbget("username", "sahana"),
+            "user": csget("server_db_username") or dbget("username", "eden"),
             "pass": csget("server_db_password") or dbget("password", "password"),
             "host": csget("server_db_ip") or dbget("host", "localhost"),
             "port": csget("server_db_port") or dbget("port", default_port),
