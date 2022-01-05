@@ -1321,11 +1321,11 @@ def system_info():
             psycopg_version = INCORRECT
             pgsql_version = UNKNOWN
         else:
-            con = psycopg2.connect(host = settings.database.get("host", "localhost"),
-                                   port = settings.database.get("port", None) or 5432,
-                                   database = settings.database.get("database", "sahana"),
-                                   user = settings.database.get("username", "sahana"),
-                                   password = settings.database.get("password", "password")
+            con = psycopg2.connect(host = settings.db_params.get("host", "localhost"),
+                                   port = settings.db_params.get("port", None) or 5432,
+                                   database = settings.db_params.get("database", "eden"),
+                                   user = settings.db_params.get("username", "eden"),
+                                   password = settings.db_params.get("password", "password")
                                    )
             cur = con.cursor()
             cur.execute("SELECT version()")
