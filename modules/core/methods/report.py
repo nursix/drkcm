@@ -110,9 +110,9 @@ class S3Report(CRUDMethod):
             filter_widgets = get_config("filter_widgets", None)
             if filter_widgets and not self.hide_filter:
                 # Apply filter defaults (before rendering the data!)
-                from ..filters import S3FilterForm
+                from ..filters import FilterForm
                 show_filter_form = True
-                S3FilterForm.apply_filter_defaults(r, resource)
+                FilterForm.apply_filter_defaults(r, resource)
 
         widget_id = "pivottable"
 
@@ -189,13 +189,13 @@ class S3Report(CRUDMethod):
                         break
 
                 filter_formstyle = get_config("filter_formstyle", None)
-                filter_form = S3FilterForm(filter_widgets,
-                                           formstyle = filter_formstyle,
-                                           advanced = advanced,
-                                           submit = False,
-                                           _class = "filter-form",
-                                           _id = "%s-filter-form" % widget_id,
-                                           )
+                filter_form = FilterForm(filter_widgets,
+                                         formstyle = filter_formstyle,
+                                         advanced = advanced,
+                                         submit = False,
+                                         _class = "filter-form",
+                                         _id = "%s-filter-form" % widget_id,
+                                         )
                 fresource = current.s3db.resource(tablename)
                 alias = resource.alias if r.component else None
                 filter_widgets = filter_form.fields(fresource,

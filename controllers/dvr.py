@@ -170,9 +170,9 @@ def person():
 
                 from core import S3SQLCustomForm, \
                                  S3SQLInlineComponent, \
-                                 S3TextFilter, \
-                                 S3OptionsFilter, \
-                                 s3_get_filter_opts
+                                 TextFilter, \
+                                 OptionsFilter, \
+                                 get_filter_options
 
                 # Expose the "archived"-flag? (update forms only)
                 if r.record and r.method != "read":
@@ -232,50 +232,50 @@ def person():
 
                 # Module-specific filter widgets
                 filter_widgets = [
-                    S3TextFilter(["pe_label",
-                                  "first_name",
-                                  "middle_name",
-                                  "last_name",
-                                  #"email.value",
-                                  #"phone.value",
-                                  #"dvr_case.reference",
-                                  ],
-                                  label = T("Search"),
-                                  comment = T("You can search by name, ID or case number"),
+                    TextFilter(["pe_label",
+                                "first_name",
+                                "middle_name",
+                                "last_name",
+                                #"email.value",
+                                #"phone.value",
+                                #"dvr_case.reference",
+                                ],
+                                label = T("Search"),
+                                comment = T("You can search by name, ID or case number"),
+                                ),
+                    OptionsFilter("dvr_case.status_id",
+                                  cols = 3,
+                                  default = default_status,
+                                  #label = T("Case Status"),
+                                  options = status_opts,
+                                  sort = False,
                                   ),
-                    S3OptionsFilter("dvr_case.status_id",
-                                    cols = 3,
-                                    default = default_status,
-                                    #label = T("Case Status"),
-                                    options = status_opts,
-                                    sort = False,
-                                    ),
-                    S3OptionsFilter("person_details.nationality",
-                                    ),
+                    OptionsFilter("person_details.nationality",
+                                  ),
                     ]
 
                 # Add filter for case flags
                 if settings.get_dvr_case_flags():
                     filter_widgets.append(
-                        S3OptionsFilter("case_flag_case.flag_id",
-                                        label = T("Flags"),
-                                        options = s3_get_filter_opts("dvr_case_flag",
-                                                                     translate = True,
-                                                                     ),
-                                        cols = 3,
-                                        hidden = True,
-                                        ))
+                        OptionsFilter("case_flag_case.flag_id",
+                                      label = T("Flags"),
+                                      options = get_filter_options("dvr_case_flag",
+                                                                   translate = True,
+                                                                   ),
+                                      cols = 3,
+                                      hidden = True,
+                                      ))
 
                 # Add filter for transferability if relevant for deployment
                 if settings.get_dvr_manage_transferability():
                     filter_widgets.append(
-                        S3OptionsFilter("dvr_case.transferable",
-                                        options = {True: T("Yes"),
-                                                   False: T("No"),
-                                                   },
-                                        cols = 2,
-                                        hidden = True,
-                                        ))
+                        OptionsFilter("dvr_case.transferable",
+                                      options = {True: T("Yes"),
+                                                 False: T("No"),
+                                                 },
+                                      cols = 2,
+                                      hidden = True,
+                                      ))
 
                 resource.configure(crud_form = crud_form,
                                    filter_widgets = filter_widgets,

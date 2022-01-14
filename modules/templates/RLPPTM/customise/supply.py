@@ -51,13 +51,13 @@ def supply_item_resource(r, tablename):
     field.represent = lambda v, row=None: ICON("remove") if v else ""
 
     # Filter widgets
-    from core import S3TextFilter
-    filter_widgets = [S3TextFilter(["name",
-                                    "code",
-                                    "comments",
-                                    ],
-                                   label = T("Search"),
-                                   ),
+    from core import TextFilter
+    filter_widgets = [TextFilter(["name",
+                                  "code",
+                                  "comments",
+                                  ],
+                                 label = T("Search"),
+                                 ),
                       ]
     s3db.configure("supply_item",
                    filter_widgets = filter_widgets,

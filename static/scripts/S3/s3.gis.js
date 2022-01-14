@@ -5421,7 +5421,7 @@ S3.gis.yx = [
                             draftLayer.features[0].destroy();
                         }
                         if (undefined !== s3.polygonButtonOff) {
-                            // Call Custom Call-back (used by S3MapFilter)
+                            // Call Custom Call-back (used by MapFilter)
                             s3.polygonButtonOff();
                         }
                     }
@@ -5437,7 +5437,7 @@ S3.gis.yx = [
                 deactivateOnDisable: true
             });
             toolbar.add(polygonButton);
-            // Pass to Global scope for LocationSelectorWidget & S3MapFilter
+            // Pass to Global scope for LocationSelectorWidget & MapFilter
             s3.polygonButton = polygonButton;
         } else {
             // Simply add straight to the map
@@ -5478,7 +5478,7 @@ S3.gis.yx = [
             control.finishSketch();
 
             if (undefined !== s3.polygonPanelFinish) {
-                // Call Custom Call-back (used by S3MapFilter in WACOP)
+                // Call Custom Call-back (used by MapFilter in WACOP)
                 s3.polygonPanelFinish();
             } else {
                 if (s3.lastDraftFeature) {
@@ -5502,14 +5502,14 @@ S3.gis.yx = [
             control.deactivate();
             $('#' + map_id + '_panel .olMapViewport').removeClass('crosshair');
             if (undefined !== s3.polygonPanelClear) {
-                // Call Custom Call-back (used by S3MapFilter in WACOP)
+                // Call Custom Call-back (used by MapFilter in WACOP)
                 s3.polygonPanelClear();
             }
         });
 
         return control;
     };
-    // Pass to global scope so that it can be called from custom S3MapFilter buttons
+    // Pass to global scope so that it can be called from custom MapFilter buttons
     S3.gis.addPolygonPanel = addPolygonPanel;
 
     // Enable this once CIRCULARSTRING is fully supported

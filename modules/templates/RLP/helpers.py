@@ -6,7 +6,7 @@
 
 from gluon import current, A, URL, XML
 
-from core import FS, S3DateFilter, S3OptionsFilter, S3Represent, s3_fullname
+from core import FS, DateFilter, OptionsFilter, S3Represent, s3_fullname
 
 # =============================================================================
 def rlp_active_deployments(ctable, from_date=None, to_date=None):
@@ -267,7 +267,7 @@ def get_cms_intro(module, resource, name, cmsxml=False):
     return XML(row.body) if cmsxml else row.body
 
 # =============================================================================
-class RLPAvailabilityFilter(S3DateFilter):
+class RLPAvailabilityFilter(DateFilter):
     """
         Date-Range filter with custom variable
         - without this then we parse as a vfilter which clutters error console
@@ -308,7 +308,7 @@ class RLPAvailabilityFilter(S3DateFilter):
                 resource.add_filter(~FS("id").belongs(unavailable))
 
 # =============================================================================
-class RLPAvailabilitySiteFilter(S3OptionsFilter):
+class RLPAvailabilitySiteFilter(OptionsFilter):
     """
         Options filter with custom variable
         - without this then we parse as a vfilter which clutters error console
@@ -336,7 +336,7 @@ class RLPAvailabilitySiteFilter(S3OptionsFilter):
             resource.add_filter(query)
 
 # =============================================================================
-class RLPWeeklyAvailabilityFilter(S3OptionsFilter):
+class RLPWeeklyAvailabilityFilter(OptionsFilter):
     """
         Options filter with custom variable
         - without this then we parse as a vfilter which clutters error console

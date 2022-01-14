@@ -4,7 +4,7 @@
 
 S3.supply = Object();
 
-/* Globals called by S3OptionsFilter */
+/* Globals called by FilterOptionsS3 */
 
 // Filter Item Packs based on Items
 S3.supply.fncPrepItem = function(data) {
@@ -30,7 +30,7 @@ $(document).ready(function() {
         // Cancel previous request
         try {S3.JSONRequest[$(this).attr('id')].abort();} catch(err) {}
 
-        $('#TotalQuantity').remove();   
+        $('#TotalQuantity').remove();
         if ($('[name="inv_item_id"]').length > 0) {
             id = $('[name="inv_item_id"]').val();
         } else if  ($('[name="send_inv_item_id"]').length > 0) {
@@ -47,14 +47,14 @@ $(document).ready(function() {
 
         var url = S3.Ap.concat('/inv/inv_item_quantity.json/' + id);
         if ($('#inv_quantity_throbber').length === 0) {
-            $('[name="quantity"]').after('<div id="inv_quantity_throbber" class="throbber"/>'); 
+            $('[name="quantity"]').after('<div id="inv_quantity_throbber" class="throbber"/>');
         }
-        
+
         // Save JSON Request by element id
         S3.JSONRequest[$(this).attr('id')] = $.getJSON(url, function(data) {
             // @ToDo: Error Checking
-            var InvQuantity = data.iquantity; 
-            var InvPackQuantity = data.pquantity; 
+            var InvQuantity = data.iquantity;
+            var InvPackQuantity = data.pquantity;
 
             var PackName = $('[name="item_pack_id"] option:selected').text();
             var re = /\(([0-9]*)\sx/;
@@ -78,20 +78,20 @@ $(document).ready(function() {
     var InvRecvTypeChange = function() {
         var RecvType = $("#inv_recv_type").val();
         if (RecvType != undefined) {
-            if ( RecvType == 11) { // @ToDo: pass this value instead of hardcoding it base on s3cfg.py 
-                // Internal Shipment 
+            if ( RecvType == 11) { // @ToDo: pass this value instead of hardcoding it base on s3cfg.py
+                // Internal Shipment
                 $('[id^="inv_recv_from_site_id__row"]').show();
                 $('[id^="inv_recv_organisation_id__row"]').hide();
-            } else if ( RecvType >= 32) { // @ToDo: pass this value instead of hardcoding it base on s3cfg.py 
-                // External Shipment 
+            } else if ( RecvType >= 32) { // @ToDo: pass this value instead of hardcoding it base on s3cfg.py
+                // External Shipment
                 $('[id^="inv_recv_from_site_id__row"]').hide();
                 $('[id^="inv_recv_organisation_id__row"]').show();
-            } else { // @ToDo: pass this value instead of hardcoding it base on s3cfg.py 
-                // External Shipment 
+            } else { // @ToDo: pass this value instead of hardcoding it base on s3cfg.py
+                // External Shipment
                 $('[id^="inv_recv_from_site_id__row"]').hide();
                 $('[id^="inv_recv_organisation_id__row"]').hide();
             }
-            
+
         }
     }
 
@@ -125,7 +125,7 @@ $(document).ready(function() {
 		'fncPrep':		S3.supply.fncPrepItem,
 		'fncRepresent':	S3.supply.fncRepresentItem
 	});
-    
+
     // Req Item Field
     S3FilterFieldChange({
 		'FilterField':	'req_item_id',
@@ -249,20 +249,20 @@ $(document).ready(function() {
 	/*
 	$('#asset_log_site_id').change( function() {
 		// Cancel previous request
-		
+
 		if ($('#asset_log_person_id').val() != '' || $('#asset_log_organisation_id').val() != '') {
 			// Don't populate if the person & org are already set
-		
+
 			try {S3.JSONRequest[$(this).attr('id')].abort()} catch(err) {};
-			
+
 			var site_id = $('#asset_log_site_id').val()
 			if (site_id != "") {
 				$('#dummy_asset_log_organisation_id').after('<div id="organisation_ajax_throbber" class="ajax_throbber"/>')
 													 .hide()
-				var url = S3.Ap.concat('/org/site_org_json/', site_id);	
-				
+				var url = S3.Ap.concat('/org/site_org_json/', site_id);
+
 				// Save JSON Request by element id
-				S3.JSONRequest[$(this).attr('id')] = $.ajax( { 
+				S3.JSONRequest[$(this).attr('id')] = $.ajax( {
 					url: url,
 					dataType: 'json'
 				}).done(function(data) {
@@ -278,7 +278,7 @@ $(document).ready(function() {
                                                              .prop('disabled', false);
                         $('#asset_log_organisation_id').val('');
                     }
-                    
+
                 });
 			} else {
 				$('#dummy_asset_log_organisation_id').val('')
@@ -294,20 +294,20 @@ $(document).ready(function() {
 	/*$('#asset_log_person_id').change( function() {
 		// Cancel previous request
 		try {S3.JSONRequest[$(this).attr('id')].abort()} catch(err) {};
-		
+
 		// Do NOT Populate Organisation based on Site
-		$('#asset_log_site_id').change( function() {}); 
-		
+		$('#asset_log_site_id').change( function() {});
+
 		var person_id = $('#asset_log_person_id').val()
 		if (person_id != '') {
 			$('#asset_log_site_id').after('<div id="site_ajax_throbber" class="ajax_throbber"/>')
 								   .hide()
 			$('#dummy_asset_log_organisation_id').after('<div id="organisation_ajax_throbber" class="ajax_throbber"/>')
 												 .hide()
-			var url = S3.Ap.concat('/hrm/staff_org_site_json/', person_id);	
-			
+			var url = S3.Ap.concat('/hrm/staff_org_site_json/', person_id);
+
 			// Save JSON Request by element id
-			S3.JSONRequest[$(this).attr('id')] = $.ajax({ 
+			S3.JSONRequest[$(this).attr('id')] = $.ajax({
 				url: url,
 				dataType: 'json'
 			}).done(function(data) {
@@ -332,7 +332,7 @@ $(document).ready(function() {
                                            .prop('disabled', false)
                                            .change();
                 }
-                
+
             });
 		} else {
 			$('#asset_log_site_id').show()

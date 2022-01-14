@@ -708,17 +708,17 @@ def monitor_run():
 # -----------------------------------------------------------------------------
 def monitor_task():
 
-    from core import S3OptionsFilter, s3_set_default_filter
+    from core import OptionsFilter, set_default_filter
 
     tablename = "setup_monitor_task"
 
-    filter_widgets = [S3OptionsFilter("enabled",
-                                      label = T("Enabled"),
-                                      options = {True: T("Yes"),
-                                                 False: T("No"),
-                                                 },
-                                      cols = 2,
-                                      ),
+    filter_widgets = [OptionsFilter("enabled",
+                                    label = T("Enabled"),
+                                    options = {True: T("Yes"),
+                                               False: T("No"),
+                                               },
+                                    cols = 2,
+                                    ),
                       ]
 
     s3db.configure(tablename,
@@ -728,9 +728,9 @@ def monitor_task():
 
     # Only show Enabled Tasks by default
     # @ToDo: Also hide those from disabled Servers
-    s3_set_default_filter("~.enabled",
-                          lambda selector, tablename: True,
-                          tablename = tablename)
+    set_default_filter("~.enabled",
+                       lambda selector, tablename: True,
+                       tablename = tablename)
 
     def postp(r, output):
         if r.interactive and not r.id:

@@ -684,11 +684,11 @@ def config(settings):
 
             s3.crud_strings["br_assistance_offer"]["title_list"] = title_list
 
-            from core import S3LocationFilter, \
+            from core import LocationFilter, \
                              S3LocationSelector, \
-                             S3OptionsFilter, \
-                             S3TextFilter, \
-                             s3_get_filter_opts
+                             OptionsFilter, \
+                             TextFilter, \
+                             get_filter_options
 
             if not r.component:
 
@@ -772,49 +772,49 @@ def config(settings):
                                 resource.add_filter(filters)
 
                         filter_widgets = [
-                            S3TextFilter(["name",
-                                          "refno",
-                                          "description",
-                                          "website",
-                                          ],
-                                          label = T("Search"),
+                            TextFilter(["name",
+                                        "refno",
+                                        "description",
+                                        "website",
+                                        ],
+                                       label = T("Search"),
+                                       ),
+                            OptionsFilter("need_id",
+                                          options = lambda: \
+                                                    get_filter_options("br_need",
+                                                                       translate = True,
+                                                                       ),
                                           ),
-                            S3OptionsFilter("need_id",
-                                            options = lambda: \
-                                                s3_get_filter_opts("br_need",
-                                                                   translate = True,
-                                                                   ),
-                                            ),
-                            S3OptionsFilter("chargeable",
-                                            cols = 2,
-                                            hidden = mine,
-                                            ),
+                            OptionsFilter("chargeable",
+                                          cols = 2,
+                                          hidden = mine,
+                                          ),
                             ]
 
                         if not mine:
                             # Add location filter for all-offers perspective
                             filter_widgets.append(
-                                S3LocationFilter("location_id",
-                                                 levels = ("L2", "L3"),
-                                                 ))
+                                LocationFilter("location_id",
+                                               levels = ("L2", "L3"),
+                                               ))
 
                         if mine or is_event_manager:
                             # Add filter for availability / status
                             availability_opts = s3db.br_assistance_offer_availability
                             status_opts = s3db.br_assistance_offer_status
                             filter_widgets.extend([
-                                S3OptionsFilter("availability",
-                                                options = OrderedDict(availability_opts),
-                                                hidden = True,
-                                                sort = False,
-                                                cols = 3,
-                                                ),
-                                S3OptionsFilter("status",
-                                                options = OrderedDict(status_opts),
-                                                hidden = True,
-                                                sort = False,
-                                                cols = 3,
-                                                ),
+                                OptionsFilter("availability",
+                                              options = OrderedDict(availability_opts),
+                                              hidden = True,
+                                              sort = False,
+                                              cols = 3,
+                                              ),
+                                OptionsFilter("status",
+                                              options = OrderedDict(status_opts),
+                                              hidden = True,
+                                              sort = False,
+                                              cols = 3,
+                                              ),
                                 ])
                         if not mine:
                             # Add availability date range filter for all-offers perspective
@@ -1173,40 +1173,40 @@ def config(settings):
                         field.represent = s3db.pr_PersonRepresent(show_link=True)
 
                 # Filters
-                from core import S3DateFilter, \
-                                 S3TextFilter, \
-                                 S3LocationFilter, \
-                                 S3OptionsFilter, \
-                                 s3_get_filter_opts
+                from core import DateFilter, \
+                                 TextFilter, \
+                                 LocationFilter, \
+                                 OptionsFilter, \
+                                 get_filter_options
                 filter_widgets = [
-                    S3TextFilter(["subject",
-                                  "need_details",
-                                  ],
-                                 label = T("Search"),
-                                 ),
-                    S3OptionsFilter("need_id",
-                                    options = lambda: \
-                                        s3_get_filter_opts("br_need",
-                                                           translate = True,
+                    TextFilter(["subject",
+                                "need_details",
+                                ],
+                               label = T("Search"),
+                               ),
+                    OptionsFilter("need_id",
+                                  options = lambda: \
+                                            get_filter_options("br_need",
+                                                               translate = True,
                                                            ),
                                     ),
-                    S3LocationFilter("location_id",
-                                     label = T("Place"),
-                                     levels = ("L2", "L3"),
-                                     ),
-                    S3DateFilter("date",
-                                 hidden = True,
-                                 ),
+                    LocationFilter("location_id",
+                                   label = T("Place"),
+                                   levels = ("L2", "L3"),
+                                   ),
+                    DateFilter("date",
+                               hidden = True,
+                               ),
                     ]
                 if mine or is_event_manager:
                     filter_widgets.append(
-                        S3OptionsFilter("status_id",
-                                        options = lambda: \
-                                            s3_get_filter_opts("br_case_activity_status",
-                                                               translate = True,
-                                                               ),
-                                        hidden = True,
-                                        ))
+                        OptionsFilter("status_id",
+                                      options = lambda: \
+                                                get_filter_options("br_case_activity_status",
+                                                                   translate = True,
+                                                                   ),
+                                      hidden = True,
+                                      ))
 
                 resource.configure(filter_widgets = filter_widgets,
                                    list_fields = list_fields,
@@ -1451,15 +1451,15 @@ def config(settings):
                                            (1, T("Closed")),
                                            ))
 
-        from core import S3LocationFilter, \
+        from core import LocationFilter, \
                          S3LocationSelector, \
-                         S3OptionsFilter, \
+                         OptionsFilter, \
                          S3PriorityRepresent, \
                          S3SQLCustomForm, \
                          S3SQLInlineLink, \
-                         S3TextFilter, \
+                         TextFilter, \
                          s3_fieldmethod, \
-                         s3_get_filter_opts
+                         get_filter_options
 
         from .helpers import ShelterDetails, ServiceListRepresent
 
@@ -1551,32 +1551,30 @@ def config(settings):
                        ]
 
         # Filter widgets
-        filter_widgets = [S3TextFilter(["name",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("status",
-                                          options = shelter_status_opts,
-                                          default = 2,
-                                          cols = 2,
-                                          sort = False,
-                                          ),
-                          S3OptionsFilter("shelter_service__link.service_id",
-                                          options = lambda: s3_get_filter_opts("cr_shelter_service",
-                                                                               ),
-                                          ),
-                          S3LocationFilter("location_id",
-                                           levels = ["L2", "L3"],
-                                           hidden = True,
-                                           ),
-                          S3OptionsFilter("shelter_type_id",
-                                          options = lambda: s3_get_filter_opts("cr_shelter_type",
-                                                                               ),
-                                          hidden = True,
-                                          ),
-                          S3OptionsFilter("organisation_id",
-                                          hidden = True,
-                                          ),
+        filter_widgets = [TextFilter(["name",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("status",
+                                        options = shelter_status_opts,
+                                        default = 2,
+                                        cols = 2,
+                                        sort = False,
+                                        ),
+                          OptionsFilter("shelter_service__link.service_id",
+                                        options = lambda: get_filter_options("cr_shelter_service"),
+                                        ),
+                          LocationFilter("location_id",
+                                         levels = ["L2", "L3"],
+                                         hidden = True,
+                                         ),
+                          OptionsFilter("shelter_type_id",
+                                        options = lambda: get_filter_options("cr_shelter_type"),
+                                        hidden = True,
+                                        ),
+                          OptionsFilter("organisation_id",
+                                        hidden = True,
+                                        ),
                           ]
 
         # List fields
@@ -1688,9 +1686,9 @@ def config(settings):
                     from core import S3SQLCustomForm, \
                                      S3SQLInlineComponent, \
                                      S3SQLInlineLink, \
-                                     S3OptionsFilter, \
-                                     S3TextFilter, \
-                                     s3_get_filter_opts
+                                     OptionsFilter, \
+                                     TextFilter, \
+                                     get_filter_options
 
                     # Custom form
                     if is_org_group_admin:
@@ -1735,16 +1733,16 @@ def config(settings):
                         text_fields.extend(["office.location_id$L3",
                                             "office.location_id$L1",
                                             ])
-                    filter_widgets = [S3TextFilter(text_fields,
-                                                   label = T("Search"),
-                                                   ),
+                    filter_widgets = [TextFilter(text_fields,
+                                                 label = T("Search"),
+                                                 ),
                                       ]
                     if is_org_group_admin:
                         filter_widgets.extend([
-                            S3OptionsFilter(
+                            OptionsFilter(
                                 "organisation_type__link.organisation_type_id",
                                 label = T("Type"),
-                                options = lambda: s3_get_filter_opts("org_organisation_type"),
+                                options = lambda: get_filter_options("org_organisation_type"),
                                 ),
                             ])
 
@@ -1984,19 +1982,19 @@ def config(settings):
                                    ]
 
                     # Filters
-                    from core import S3LocationFilter, \
-                                     S3OptionsFilter, \
-                                     S3TextFilter, \
-                                     s3_get_filter_opts
-                    filter_widgets = [S3TextFilter(["pe_label",
-                                                    "last_name",
-                                                    "first_name",
-                                                    ],
-                                                   label = T("Search"),
-                                                   ),
-                                      S3LocationFilter("address.location_id",
-                                                       levels = ("L2", "L3"),
-                                                       ),
+                    from core import LocationFilter, \
+                                     OptionsFilter, \
+                                     TextFilter, \
+                                     get_filter_options
+                    filter_widgets = [TextFilter(["pe_label",
+                                                  "last_name",
+                                                  "first_name",
+                                                  ],
+                                                 label = T("Search"),
+                                                 ),
+                                      LocationFilter("address.location_id",
+                                                     levels = ("L2", "L3"),
+                                                     ),
                                       ]
 
                     # List fields
@@ -2009,9 +2007,9 @@ def config(settings):
                     # Add organisation if user can see cases from multiple orgs
                     if multiple_orgs:
                         filter_widgets.insert(-1,
-                            S3OptionsFilter("case.organisation_id",
-                                            options = lambda: s3_get_filter_opts("org_organisation"),
-                                            ))
+                            OptionsFilter("case.organisation_id",
+                                          options = lambda: get_filter_options("org_organisation"),
+                                          ))
                         list_fields.insert(-2, "case.organisation_id")
 
                     # Insert name fields in name-format order

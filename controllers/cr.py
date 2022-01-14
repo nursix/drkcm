@@ -106,7 +106,7 @@ def shelter():
     table = s3db.cr_shelter
 
     # Filter to just Open shelters (status=2)
-    s3base.s3_set_default_filter("~.status", [2, None], tablename=tablename)
+    s3base.set_default_filter("~.status", [2, None], tablename=tablename)
 
     # Pre-processor
     def prep(r):

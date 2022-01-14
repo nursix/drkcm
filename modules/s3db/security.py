@@ -513,31 +513,31 @@ class SecuritySeizedItemsModel(DataModel):
                      *s3_meta_fields())
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["person_id$pe_label",
-                                        "person_id$first_name",
-                                        "person_id$middle_name",
-                                        "person_id$last_name",
-                                        "status_comment",
-                                        "comments",
-                                        ],
-                                        label = T("Search"),
-                                       ),
-                          S3OptionsFilter("item_type_id",
-                                          options = lambda: s3_get_filter_opts(
-                                              "security_seized_item_type"),
-                                          ),
-                          S3OptionsFilter("status",
-                                          options = seized_item_status,
-                                          cols = 2,
-                                          default = "DEP",
-                                          ),
-                          S3OptionsFilter("depository_id",
-                                          options = lambda: s3_get_filter_opts(
-                                              "security_seized_item_depository"),
-                                          ),
-                          S3DateFilter("date",
-                                       hidden = True,
-                                       ),
+        filter_widgets = [TextFilter(["person_id$pe_label",
+                                      "person_id$first_name",
+                                      "person_id$middle_name",
+                                      "person_id$last_name",
+                                      "status_comment",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("item_type_id",
+                                        options = lambda: \
+                                                  get_filter_options("security_seized_item_type"),
+                                        ),
+                          OptionsFilter("status",
+                                        options = seized_item_status,
+                                        cols = 2,
+                                        default = "DEP",
+                                        ),
+                          OptionsFilter("depository_id",
+                                        options = lambda: \
+                                                  get_filter_options("security_seized_item_depository"),
+                                        ),
+                          DateFilter("date",
+                                     hidden = True,
+                                     ),
                           ]
 
         # List Fields

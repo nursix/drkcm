@@ -103,7 +103,7 @@ def alert():
     tablename = "cap_alert"
 
     def prep(r):
-        from core import S3OptionsFilter
+        from core import OptionsFilter
         resource = r.resource
         table = r.table
         itable = s3db.cap_info
@@ -127,28 +127,28 @@ def alert():
 
         filter_widgets = s3db.get_config(tablename, "filter_widgets")
         filter_widgets_insert = filter_widgets.insert
-        filter_widgets_insert(0, S3OptionsFilter("info.id",
-                                                 label = T("Expiration"),
-                                                 options = OrderedDict(
-                                                        [(expired_ids, T("Expired")),
-                                                         (unexpired_ids, T("Unexpired")),
-                                                         ("*", T("All")),
-                                                         ]),
-                                                 cols = 3,
-                                                 multiple = False,
-                                                 default = default_filter,
-                                                 ))
-        filter_widgets_insert(1, S3OptionsFilter("id",
-                                                 label = T("Source"),
-                                                 options = OrderedDict(
-                                                        [(internal_alerts, T("Internal")),
-                                                         (external_alerts, T("External")),
-                                                         ("*", T("All")),
-                                                         ]),
-                                                 cols = 3,
-                                                 multiple = False,
-                                                 default = default_alert,
-                                                 ))
+        filter_widgets_insert(0, OptionsFilter("info.id",
+                                               label = T("Expiration"),
+                                               options = OrderedDict(
+                                                            [(expired_ids, T("Expired")),
+                                                             (unexpired_ids, T("Unexpired")),
+                                                             ("*", T("All")),
+                                                             ]),
+                                               cols = 3,
+                                               multiple = False,
+                                               default = default_filter,
+                                               ))
+        filter_widgets_insert(1, OptionsFilter("id",
+                                               label = T("Source"),
+                                               options = OrderedDict(
+                                                            [(internal_alerts, T("Internal")),
+                                                             (external_alerts, T("External")),
+                                                             ("*", T("All")),
+                                                             ]),
+                                               cols = 3,
+                                               multiple = False,
+                                               default = default_alert,
+                                               ))
         # No need to put them back - the edit happens in-place
         #s3db.configure(tablename,
         #               filter_widgets = filter_widgets,
@@ -321,18 +321,18 @@ def alert():
                         event_type_id = row.event_type_id
                         event_type_options[event_type_id] = itable.event_type_id.represent(event_type_id)
                     filter_widgets = [
-                        S3OptionsFilter("info.sender_name",
-                                        label = T("Sender"),
-                                        options = sender_options,
-                                        ),
-                        S3OptionsFilter("info.event_type_id",
-                                        options = event_type_options,
-                                        ),
-                        S3OptionsFilter("scope",
-                                        ),
-                        S3OptionsFilter("msg_type",
-                                        default = "Alert",
-                                        ),
+                        OptionsFilter("info.sender_name",
+                                      label = T("Sender"),
+                                      options = sender_options,
+                                      ),
+                        OptionsFilter("info.event_type_id",
+                                      options = event_type_options,
+                                      ),
+                        OptionsFilter("scope",
+                                      ),
+                        OptionsFilter("msg_type",
+                                      default = "Alert",
+                                      ),
                         ]
                     s3.crud_strings["cap_alert"].title_list = T("Alerts Hub")
                     s3base.S3CRUD.action_buttons(r, deletable=False)

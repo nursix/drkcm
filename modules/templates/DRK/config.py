@@ -1562,9 +1562,9 @@ def config(settings):
                         filter_widgets = resource.get_config("filter_widgets")
                         if filter_widgets:
 
-                            from core import S3DateFilter, \
-                                             S3OptionsFilter, \
-                                             S3TextFilter
+                            from core import DateFilter, \
+                                             OptionsFilter, \
+                                             TextFilter
                             extend_text_filter = True
                             for fw in filter_widgets:
                                 # No filter default for case status
@@ -1573,7 +1573,7 @@ def config(settings):
                                 if fw.field == "case_flag_case.flag_id":
                                     fw.opts.size = None
                                 # Text filter includes EasyOpt Number and Case Comments
-                                if extend_text_filter and isinstance(fw, S3TextFilter):
+                                if extend_text_filter and isinstance(fw, TextFilter):
                                     fw.field.extend(("eo_number.value",
                                                      "dvr_case.comments",
                                                      ))
@@ -1581,7 +1581,7 @@ def config(settings):
                                     extend_text_filter = False
 
                             # Add filter for date of birth
-                            dob_filter = S3DateFilter("date_of_birth")
+                            dob_filter = DateFilter("date_of_birth")
                             #dob_filter.operator = ["eq"]
                             filter_widgets.insert(1, dob_filter)
 
@@ -1589,45 +1589,45 @@ def config(settings):
                             if privileged():
                                 # Add filter for family transferability
                                 if show_family_transferable:
-                                    ft_filter = S3OptionsFilter("dvr_case.household_transferable",
-                                                                label = FAMILY_TRANSFERABLE,
-                                                                options = {True: T("Yes"),
-                                                                        False: T("No"),
-                                                                        },
-                                                                cols = 2,
-                                                                hidden = True,
-                                                                )
+                                    ft_filter = OptionsFilter("dvr_case.household_transferable",
+                                                              label = FAMILY_TRANSFERABLE,
+                                                              options = {True: T("Yes"),
+                                                                         False: T("No"),
+                                                                         },
+                                                              cols = 2,
+                                                              hidden = True,
+                                                              )
                                     filter_widgets.append(ft_filter)
 
                                 # Add filter for registration date
-                                reg_filter = S3DateFilter("dvr_case.date",
-                                                          hidden = True,
-                                                          )
+                                reg_filter = DateFilter("dvr_case.date",
+                                                        hidden = True,
+                                                        )
                                 filter_widgets.append(reg_filter)
 
                                 # Add filter for registration status
-                                reg_filter = S3OptionsFilter("shelter_registration.registration_status",
-                                                             label = T("Presence"),
-                                                             options = s3db.cr_shelter_registration_status_opts,
-                                                             hidden = True,
-                                                             cols = 3,
-                                                             )
+                                reg_filter = OptionsFilter("shelter_registration.registration_status",
+                                                           label = T("Presence"),
+                                                           options = s3db.cr_shelter_registration_status_opts,
+                                                           hidden = True,
+                                                           cols = 3,
+                                                           )
                                 filter_widgets.append(reg_filter)
 
                                 # Add filter for BAMF Registration Number
-                                bamf_filter = S3TextFilter(["bamf.value"],
-                                                           label = T("BAMF Ref.No."),
-                                                           hidden = True,
-                                                           )
+                                bamf_filter = TextFilter(["bamf.value"],
+                                                         label = T("BAMF Ref.No."),
+                                                         hidden = True,
+                                                         )
                                 filter_widgets.append(bamf_filter)
 
                             # Add filter for IDs
-                            id_filter = S3TextFilter(["pe_label"],
-                                                     label = T("IDs"),
-                                                     match_any = True,
-                                                     hidden = True,
-                                                     comment = T("Search for multiple IDs (separated by blanks)"),
-                                                     )
+                            id_filter = TextFilter(["pe_label"],
+                                                   label = T("IDs"),
+                                                   match_any = True,
+                                                   hidden = True,
+                                                   comment = T("Search for multiple IDs (separated by blanks)"),
+                                                   )
                             filter_widgets.append(id_filter)
 
                     # Custom list fields (must be outside of r.interactive)
@@ -2081,9 +2081,9 @@ def config(settings):
 
                     configure_person_tags()
 
-                    from core import S3TextFilter
+                    from core import TextFilter
                     for fw in filter_widgets:
-                        if isinstance(fw, S3TextFilter):
+                        if isinstance(fw, TextFilter):
                             fw.field.append("person_id$eo_number.value")
                             break
 
@@ -2168,55 +2168,54 @@ def config(settings):
                 if r.interactive and not r.id:
 
                     # Custom filter widgets
-                    from core import S3TextFilter, S3OptionsFilter, S3DateFilter, s3_get_filter_opts
+                    from core import TextFilter, OptionsFilter, DateFilter, get_filter_options
                     filter_widgets = [
-                        S3TextFilter(["person_id$pe_label",
-                                      "person_id$first_name",
-                                      "person_id$last_name",
-                                      "person_id$eo_number.value",
-                                      ],
-                                      label = T("Search"),
+                        TextFilter(["person_id$pe_label",
+                                    "person_id$first_name",
+                                    "person_id$last_name",
+                                    "person_id$eo_number.value",
+                                    ],
+                                   label = T("Search"),
+                                   ),
+                        OptionsFilter("type_id",
+                                      options = get_filter_options("dvr_case_appointment_type",
+                                                                   translate = True,
+                                                                   ),
+                                      cols = 3,
                                       ),
-                        S3OptionsFilter("type_id",
-                                        options = s3_get_filter_opts("dvr_case_appointment_type",
-                                                                     translate = True,
-                                                                     ),
-                                        cols = 3,
-                                        ),
-                        S3OptionsFilter("status",
-                                        options = s3db.dvr_appointment_status_opts,
-                                        default = 2,
-                                        ),
-                        S3DateFilter("date",
-                                     ),
-                        S3OptionsFilter("person_id$dvr_case.status_id$is_closed",
-                                        cols = 2,
-                                        default = False,
-                                        #hidden = True,
-                                        label = T("Case Closed"),
-                                        options = {True: T("Yes"),
-                                                   False: T("No"),
-                                                   },
-                                        ),
-                        S3TextFilter(["person_id$pe_label"],
-                                     label = T("IDs"),
-                                     match_any = True,
-                                     hidden = True,
-                                     comment = T("Search for multiple IDs (separated by blanks)"),
-                                     ),
+                        OptionsFilter("status",
+                                      options = s3db.dvr_appointment_status_opts,
+                                      default = 2,
+                                      ),
+                        DateFilter("date",
+                                   ),
+                        OptionsFilter("person_id$dvr_case.status_id$is_closed",
+                                      cols = 2,
+                                      default = False,
+                                      #hidden = True,
+                                      label = T("Case Closed"),
+                                      options = {True: T("Yes"),
+                                                 False: T("No"),
+                                                 },
+                                      ),
+                        TextFilter(["person_id$pe_label"],
+                                   label = T("IDs"),
+                                   match_any = True,
+                                   hidden = True,
+                                   comment = T("Search for multiple IDs (separated by blanks)"),
+                                   ),
                         ]
 
                     resource.configure(filter_widgets = filter_widgets)
 
                 # Default filter today's and tomorrow's appointments
-                from core import s3_set_default_filter
+                from core import set_default_filter
                 now = r.utcnow
                 today = now.replace(hour=0, minute=0, second=0, microsecond=0)
                 tomorrow = today + datetime.timedelta(days=1)
-                s3_set_default_filter("~.date",
-                                      {"ge": today, "le": tomorrow},
-                                      tablename = "dvr_case_appointment",
-                                      )
+                set_default_filter("~.date", {"ge": today, "le": tomorrow},
+                                   tablename = "dvr_case_appointment",
+                                   )
 
                 # Field Visibility
                 table = resource.table
@@ -2278,28 +2277,28 @@ def config(settings):
 
                 if r.interactive and not r.id:
                     # Custom filter widgets
-                    from core import S3TextFilter, \
-                                     S3OptionsFilter, \
-                                     S3DateFilter
+                    from core import TextFilter, \
+                                     OptionsFilter, \
+                                     DateFilter
 
                     filter_widgets = [
-                        S3TextFilter(["person_id$pe_label",
-                                      "person_id$first_name",
-                                      "person_id$middle_name",
-                                      "person_id$last_name",
-                                      ],
-                                      label = T("Search"),
+                        TextFilter(["person_id$pe_label",
+                                    "person_id$first_name",
+                                    "person_id$middle_name",
+                                    "person_id$last_name",
+                                    ],
+                                   label = T("Search"),
+                                   ),
+                        OptionsFilter("status",
+                                      default = 1,
+                                      cols = 4,
+                                      options = s3db.dvr_allowance_status_opts,
                                       ),
-                        S3OptionsFilter("status",
-                                        default = 1,
-                                        cols = 4,
-                                        options = s3db.dvr_allowance_status_opts,
-                                        ),
-                        S3DateFilter("date"),
-                        S3DateFilter("paid_on"),
-                        S3DateFilter("entitlement_period",
-                                     hidden = True,
-                                     )
+                        DateFilter("date"),
+                        DateFilter("paid_on"),
+                        DateFilter("entitlement_period",
+                                   hidden = True,
+                                   )
                         ]
                     resource.configure(filter_widgets = filter_widgets)
 
@@ -2380,7 +2379,7 @@ def config(settings):
                 event_code: code for the default event type
         """
 
-        from core import s3_set_default_filter
+        from core import set_default_filter
 
         if event_code:
             ttable = current.s3db.dvr_case_event_type
@@ -2398,21 +2397,21 @@ def config(settings):
             rows = current.db(query).select(ttable.id)
             event_ids = [row.id for row in rows]
             if event_ids:
-                s3_set_default_filter("~.type_id",
-                                      event_ids,
-                                      tablename = "dvr_case_event",
-                                      )
+                set_default_filter("~.type_id",
+                                   event_ids,
+                                   tablename = "dvr_case_event",
+                                   )
 
         # Minimum date: one week
         WEEK_AGO = datetime.datetime.now() - \
                     datetime.timedelta(days=7)
         min_date = WEEK_AGO.replace(hour=7, minute=0, second=0)
 
-        s3_set_default_filter("~.date",
-                              {"ge": min_date,
-                               },
-                              tablename = "dvr_case_event",
-                              )
+        set_default_filter("~.date",
+                           {"ge": min_date,
+                            },
+                           tablename = "dvr_case_event",
+                           )
 
     # -------------------------------------------------------------------------
     def customise_dvr_case_event_controller(**attr):
@@ -2600,29 +2599,29 @@ def config(settings):
                        ]
 
         # Custom filter widgets
-        from core import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
-        filter_widgets = [S3TextFilter(["name",
-                                        "organisation_id$name",
-                                        "organisation_id$acronym",
-                                        "comments",
-                                        ],
-                                        label = T("Search"),
-                                       ),
-                          S3OptionsFilter("site_facility_type.facility_type_id",
-                                          options = lambda: s3_get_filter_opts(
-                                                              "org_facility_type",
-                                                              translate = True,
-                                                              ),
-                                          ),
-                          S3OptionsFilter("organisation_id",
-                                          ),
-                          S3OptionsFilter("obsolete",
-                                          options = {False: T("No"),
-                                                     True: T("Yes"),
-                                                     },
-                                          default = [False],
-                                          cols = 2,
-                                          )
+        from core import TextFilter, OptionsFilter, get_filter_options
+        filter_widgets = [TextFilter(["name",
+                                      "organisation_id$name",
+                                      "organisation_id$acronym",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("site_facility_type.facility_type_id",
+                                        options = lambda: get_filter_options(
+                                                                "org_facility_type",
+                                                                translate = True,
+                                                                ),
+                                        ),
+                          OptionsFilter("organisation_id",
+                                        ),
+                          OptionsFilter("obsolete",
+                                        options = {False: T("No"),
+                                                   True: T("Yes"),
+                                                   },
+                                        default = [False],
+                                        cols = 2,
+                                        )
                           ]
 
         s3db.configure("org_facility",
@@ -2712,13 +2711,13 @@ def config(settings):
         """
 
         from gluon import IS_IN_SET
-        from core import S3DateFilter, \
-                         S3OptionsFilter, \
+        from core import DateFilter, \
+                         OptionsFilter, \
                          S3Represent, \
                          S3SQLCustomForm, \
                          S3SQLInlineComponent, \
-                         S3TextFilter, \
-                         s3_get_filter_opts
+                         TextFilter, \
+                         get_filter_options
 
         s3db = current.s3db
 
@@ -2790,38 +2789,37 @@ def config(settings):
                                         )
 
             # Custom filter Widgets
-            filter_widgets = [S3TextFilter(["person_id$pe_label",
-                                            "person_id$first_name",
-                                            "person_id$middle_name",
-                                            "person_id$last_name",
-                                            "status_comment",
-                                            "comments",
-                                            ],
-                                            label = T("Search"),
-                                            comment = T("Search by owner ID, name or comments"),
-                                           ),
-                              S3OptionsFilter("item_type_id",
-                                              options = lambda: s3_get_filter_opts(
-                                                  "security_seized_item_type",
-                                                  translate = True,
-                                                  ),
-                                              ),
-                              S3OptionsFilter("status",
-                                              options = status_opts,
-                                              cols = 2,
-                                              default = "DEP",
-                                              ),
-                              S3OptionsFilter("depository_id",
-                                              options = lambda: s3_get_filter_opts(
-                                                  "security_seized_item_depository",
-                                                  ),
-                                              ),
-                              S3DateFilter("date",
-                                           hidden = True,
-                                           ),
-                              S3DateFilter("person_id$dvr_case.closed_on",
-                                           hidden = True,
-                                           ),
+            filter_widgets = [TextFilter(["person_id$pe_label",
+                                          "person_id$first_name",
+                                          "person_id$middle_name",
+                                          "person_id$last_name",
+                                          "status_comment",
+                                          "comments",
+                                          ],
+                                         label = T("Search"),
+                                         comment = T("Search by owner ID, name or comments"),
+                                         ),
+                              OptionsFilter("item_type_id",
+                                            options = lambda: \
+                                                      get_filter_options("security_seized_item_type",
+                                                                         translate = True,
+                                                                         ),
+                                            ),
+                              OptionsFilter("status",
+                                            options = status_opts,
+                                            cols = 2,
+                                            default = "DEP",
+                                            ),
+                              OptionsFilter("depository_id",
+                                            options = lambda: \
+                                                      get_filter_options("security_seized_item_depository"),
+                                            ),
+                              DateFilter("date",
+                                         hidden = True,
+                                         ),
+                              DateFilter("person_id$dvr_case.closed_on",
+                                         hidden = True,
+                                         ),
                               ]
 
             s3db.configure("security_seized_item",

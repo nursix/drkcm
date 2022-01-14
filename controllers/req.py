@@ -1024,7 +1024,7 @@ def req_item():
 # -----------------------------------------------------------------------------
 def req_item_packs():
     """
-        Called by S3OptionsFilter to provide the pack options for an Item
+        Called by OptionsFilter to provide the pack options for an Item
 
         Access via the .json representation to avoid work rendering menus, etc
     """
@@ -1278,9 +1278,9 @@ def commit():
                 for s in m:
                     skills.append(s)
             return skills
-        s3base.s3_set_default_filter("competency.skill_id",
-                                     skill_default_filter,
-                                     tablename = "hrm_human_resource")
+        s3base.set_default_filter("competency.skill_id",
+                                  skill_default_filter,
+                                  tablename = "hrm_human_resource")
 
     def prep(r):
         if r.interactive and r.record:
@@ -1989,10 +1989,10 @@ def fema():
 
     # Filter Widgets
     filter_widgets = [
-        s3base.S3OptionsFilter("req_id$site_id",
-                               label = T("Facility"),
-                               #cols = 3,
-                               ),
+        s3base.OptionsFilter("req_id$site_id",
+                             label = T("Facility"),
+                             #cols = 3,
+                             ),
     ]
     s3db.configure("req_req_item", filter_widgets = filter_widgets)
 

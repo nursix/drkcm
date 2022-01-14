@@ -160,9 +160,9 @@ def org_organisation_controller(**attr):
                 from core import S3SQLCustomForm, \
                                  S3SQLInlineComponent, \
                                  S3SQLInlineLink, \
-                                 S3OptionsFilter, \
-                                 S3TextFilter, \
-                                 s3_get_filter_opts
+                                 OptionsFilter, \
+                                 TextFilter, \
+                                 get_filter_options
 
                 # Custom form
                 if is_org_group_admin:
@@ -223,21 +223,21 @@ def org_organisation_controller(**attr):
                 text_fields = ["name", "acronym", "website", "phone"]
                 if is_org_group_admin:
                     text_fields.append("email.value")
-                filter_widgets = [S3TextFilter(text_fields,
-                                               label = T("Search"),
-                                               ),
+                filter_widgets = [TextFilter(text_fields,
+                                             label = T("Search"),
+                                             ),
                                   ]
                 if is_org_group_admin:
                     filter_widgets.extend([
-                        S3OptionsFilter(
+                        OptionsFilter(
                             "group__link.group_id",
                             label = T("Group"),
-                            options = lambda: s3_get_filter_opts("org_group"),
+                            options = lambda: get_filter_options("org_group"),
                             ),
-                        S3OptionsFilter(
+                        OptionsFilter(
                             "organisation_type__link.organisation_type_id",
                             label = T("Type"),
-                            options = lambda: s3_get_filter_opts("org_organisation_type"),
+                            options = lambda: get_filter_options("org_organisation_type"),
                             ),
                         ])
 
@@ -636,11 +636,11 @@ def org_facility_resource(r, tablename):
     in_org_controller = r.tablename == "org_organisation"
     from core import (S3SQLCustomForm,
                       S3SQLInlineLink,
-                      S3LocationFilter,
+                      LocationFilter,
                       S3LocationSelector,
-                      S3OptionsFilter,
-                      S3TextFilter,
-                      s3_get_filter_opts,
+                      OptionsFilter,
+                      TextFilter,
+                      get_filter_options,
                       s3_text_represent,
                       )
 
@@ -778,67 +778,66 @@ def org_facility_resource(r, tablename):
 
     # Custom filter widgets
     filter_widgets = [
-        S3TextFilter(["name",
-                      "location_id$L2",
-                      "location_id$L3",
-                      "location_id$L4",
-                      "location_id$addr_postcode",
-                      ],
-                     label = T("Search"),
-                     ),
-        S3LocationFilter("location_id",
-                         levels = ("L1", "L2", "L3", "L4"),
-                         bigtable = True,
-                         translate = False,
-                         ),
-        S3OptionsFilter("service_site.service_id",
-                        label = T("Services"),
-                        options = lambda: s3_get_filter_opts("org_service"),
-                        cols = 1,
-                        hidden = True,
-                        ),
+        TextFilter(["name",
+                    "location_id$L2",
+                    "location_id$L3",
+                    "location_id$L4",
+                    "location_id$addr_postcode",
+                    ],
+                   label = T("Search"),
+                   ),
+        LocationFilter("location_id",
+                       levels = ("L1", "L2", "L3", "L4"),
+                       translate = False,
+                       ),
+        OptionsFilter("service_site.service_id",
+                      label = T("Services"),
+                      options = lambda: get_filter_options("org_service"),
+                      cols = 1,
+                      hidden = True,
+                      ),
         ]
 
     if is_org_group_admin:
         from ..requests import delivery_tag_opts
         delivery_opts = delivery_tag_opts()
         filter_widgets.extend([
-            S3OptionsFilter("organisation_id$delivery.value",
-                            label = T("Delivery##supplying"),
-                            options = delivery_opts,
-                            hidden = True,
-                            ),
-            S3OptionsFilter("organisation_id$organisation_type__link.organisation_type_id",
-                            hidden = True,
-                            options = lambda: s3_get_filter_opts("org_organisation_type",
-                                                                 translate = True,
-                                                                 ),
-                            ),
+            OptionsFilter("organisation_id$delivery.value",
+                          label = T("Delivery##supplying"),
+                          options = delivery_opts,
+                          hidden = True,
+                          ),
+            OptionsFilter("organisation_id$organisation_type__link.organisation_type_id",
+                          hidden = True,
+                          options = lambda: get_filter_options("org_organisation_type",
+                                                               translate = True,
+                                                               ),
+                          ),
             ])
 
         if show_all or r.method == "report":
             binary_tag_opts = OrderedDict([("Y", T("Yes")), ("N", T("No"))])
             filter_widgets.extend([
-                S3OptionsFilter("organisation_id$project_organisation.project_id",
-                                options = lambda: s3_get_filter_opts("project_project"),
-                                hidden = True,
-                                ),
-                S3OptionsFilter("public.value",
-                                label = T("Approved##actionable"),
-                                options = binary_tag_opts,
-                                cols = 2,
-                                hidden = True,
-                                ),
+                OptionsFilter("organisation_id$project_organisation.project_id",
+                              options = lambda: get_filter_options("project_project"),
+                              hidden = True,
+                              ),
+                OptionsFilter("public.value",
+                              label = T("Approved##actionable"),
+                              options = binary_tag_opts,
+                              cols = 2,
+                              hidden = True,
+                              ),
                 ])
         if show_all:
-            filter_widgets.append(S3OptionsFilter("obsolete",
-                                                  label = T("Status"),
-                                                  options = {True: T("Defunct"),
-                                                             False: T("Active"),
-                                                             },
-                                                  cols = 2,
-                                                  hidden = True,
-                                                  ))
+            filter_widgets.append(OptionsFilter("obsolete",
+                                                label = T("Status"),
+                                                options = {True: T("Defunct"),
+                                                           False: T("Active"),
+                                                           },
+                                                cols = 2,
+                                                hidden = True,
+                                                ))
 
     s3db.configure(tablename, filter_widgets=filter_widgets)
 

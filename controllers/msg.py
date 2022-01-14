@@ -1638,20 +1638,20 @@ def twitter_result():
         msg_list_empty = T("No Tweets Available."),
         )
 
-    from core import S3DateFilter, S3TextFilter
+    from core import DateFilter, TextFilter
 
     filter_widgets = [
-        S3DateFilter("date",
-                     label=T("Tweeted on"),
-                     hide_time=True,
-                     _class="date-filter-class",
-                     comment=T("Filter Tweets by the date they were tweeted on"),
-                     ),
-        S3TextFilter("from_address",
-                     label=T("Tweeted by"),
-                     _class="tweeter-filter-class",
-                     comment=T("Filter Tweets by who tweeted them"),
-                     )
+        DateFilter("date",
+                   label=T("Tweeted on"),
+                   hide_time=True,
+                   _class="date-filter-class",
+                   comment=T("Filter Tweets by the date they were tweeted on"),
+                   ),
+        TextFilter("from_address",
+                   label=T("Tweeted by"),
+                   _class="tweeter-filter-class",
+                   comment=T("Filter Tweets by who tweeted them"),
+                   )
         ]
 
     report_fields = ["search_id",

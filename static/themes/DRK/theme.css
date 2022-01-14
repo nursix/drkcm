@@ -2056,63 +2056,61 @@ form.auth_login #submit_record__row {
 /* line 40, ../../default/scss/theme/_filters.scss */
 .age-filter-unit {
   display: inline-block;
-  vertical-align: text-bottom;
-  line-height: normal;
 }
 
-/* line 46, ../../default/scss/theme/_filters.scss */
+/* line 44, ../../default/scss/theme/_filters.scss */
 .filter-form td {
   border-top: 1px solid #d9d9d9;
 }
 
-/* line 49, ../../default/scss/theme/_filters.scss */
+/* line 47, ../../default/scss/theme/_filters.scss */
 .filter-form tr:first-child > td {
   border-top: 0;
 }
 
-/* line 52, ../../default/scss/theme/_filters.scss */
+/* line 50, ../../default/scss/theme/_filters.scss */
 .filter-form table.s3-groupedopts-widget td {
   border-top: 0;
 }
 
-/* Vertical arrangement of multi-button multi-select filter widgets such as S3LocationFilter */
-/* line 57, ../../default/scss/theme/_filters.scss */
+/* Vertical arrangement of multi-button multi-select filter widgets such as LocationFilter */
+/* line 55, ../../default/scss/theme/_filters.scss */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
   display: block;
   min-width: 220px;
 }
 
-/* line 63, ../../default/scss/theme/_filters.scss */
+/* line 61, ../../default/scss/theme/_filters.scss */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type {
   clear: none;
 }
 
-/* line 68, ../../default/scss/theme/_filters.scss */
+/* line 66, ../../default/scss/theme/_filters.scss */
 .ui-selectmenu-button,
 .ui-multiselect-menu {
   min-width: 220px;
 }
 
 /* Don't display the default widget, only the multiselect generated widget is displayed */
-/* line 74, ../../default/scss/theme/_filters.scss */
+/* line 72, ../../default/scss/theme/_filters.scss */
 select.multiselect-filter-widget {
   display: none;
 }
 
-/* line 78, ../../default/scss/theme/_filters.scss */
+/* line 76, ../../default/scss/theme/_filters.scss */
 .filter-advanced {
   text-decoration: none;
   cursor: pointer;
 }
 
-/* line 82, ../../default/scss/theme/_filters.scss */
+/* line 80, ../../default/scss/theme/_filters.scss */
 .filter-advanced-label {
   padding-right: 4px;
 }
 
-/* line 86, ../../default/scss/theme/_filters.scss */
+/* line 84, ../../default/scss/theme/_filters.scss */
 .s3-options-filter-anyall label {
   display: inline;
   margin-right: 0.7rem;
@@ -2120,12 +2118,12 @@ select.multiselect-filter-widget {
 }
 
 /* Filter Manager */
-/* line 94, ../../default/scss/theme/_filters.scss */
+/* line 92, ../../default/scss/theme/_filters.scss */
 .filter-manager-widget {
   display: inline-block;
 }
 
-/* line 97, ../../default/scss/theme/_filters.scss */
+/* line 95, ../../default/scss/theme/_filters.scss */
 .fm-load,
 .fm-save,
 .fm-delete,
@@ -2140,32 +2138,32 @@ select.multiselect-filter-widget {
   vertical-align: middle;
 }
 
-/* line 111, ../../default/scss/theme/_filters.scss */
+/* line 109, ../../default/scss/theme/_filters.scss */
 .fm-load {
   background: url(../../img/filter/load.png) no-repeat;
 }
 
-/* line 114, ../../default/scss/theme/_filters.scss */
+/* line 112, ../../default/scss/theme/_filters.scss */
 .fm-save {
   background: url(../../img/filter/save.png) no-repeat;
 }
 
-/* line 117, ../../default/scss/theme/_filters.scss */
+/* line 115, ../../default/scss/theme/_filters.scss */
 .fm-delete {
   background: url(../../img/filter/delete.png) no-repeat;
 }
 
-/* line 120, ../../default/scss/theme/_filters.scss */
+/* line 118, ../../default/scss/theme/_filters.scss */
 .fm-create {
   background: url(../../img/filter/create.png) no-repeat;
 }
 
-/* line 123, ../../default/scss/theme/_filters.scss */
+/* line 121, ../../default/scss/theme/_filters.scss */
 .fm-accept {
   background: url(../../img/crud/apply.png) no-repeat;
 }
 
-/* line 126, ../../default/scss/theme/_filters.scss */
+/* line 124, ../../default/scss/theme/_filters.scss */
 .fm-cancel {
   background: url(../../img/crud/cancel.png) no-repeat;
 }

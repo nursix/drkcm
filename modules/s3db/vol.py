@@ -388,22 +388,22 @@ $.filterOptionsS3({
             msg_list_empty = T("Currently no hours recorded for this volunteer"))
 
         filter_widgets = [
-            S3OptionsFilter("person_id$human_resource.organisation_id",
-                            # Doesn't support translations
-                            #represent="%(name)s",
-                            ),
-            S3OptionsFilter("activity_hours_activity_type.activity_type_id",
-                            # Doesn't support translation
-                            #represent = "%(name)s",
-                            ),
-            S3OptionsFilter("job_title_id",
-                            #label = T("Volunteer Role"),
-                            # Doesn't support translation
-                            #represent = "%(name)s",
-                            ),
-            S3DateFilter("date",
-                         hide_time = True,
-                         ),
+            OptionsFilter("person_id$human_resource.organisation_id",
+                          # Doesn't support translations
+                          #represent="%(name)s",
+                          ),
+            OptionsFilter("activity_hours_activity_type.activity_type_id",
+                          # Doesn't support translation
+                          #represent = "%(name)s",
+                          ),
+            OptionsFilter("job_title_id",
+                          #label = T("Volunteer Role"),
+                          # Doesn't support translation
+                          #represent = "%(name)s",
+                          ),
+            DateFilter("date",
+                       hide_time = True,
+                       ),
             ]
 
         report_fields = [#"training",

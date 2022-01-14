@@ -10,7 +10,7 @@ import os
 
 from gluon import current, A, DIV, LI, SPAN, UL
 
-from core import FS, ICON, S3DateFilter, S3Represent, s3_str, s3_yes_no_represent
+from core import FS, ICON, DateFilter, S3Represent, s3_str, s3_yes_no_represent
 from s3db.pr import pr_PersonEntityRepresent
 
 # =============================================================================
@@ -676,7 +676,7 @@ class OfferDetails:
             return value if value else "-"
 
 # =============================================================================
-class OfferAvailabilityFilter(S3DateFilter):
+class OfferAvailabilityFilter(DateFilter):
     """
         Date-Range filter with custom variable
         - without this then we parse as a vfilter which clutters error console

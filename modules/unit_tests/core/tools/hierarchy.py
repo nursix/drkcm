@@ -1924,12 +1924,12 @@ class TypeOfTests(unittest.TestCase):
 
     # -------------------------------------------------------------------------
     def testHierarchyFilterTypeOf(self):
-        """ Test S3HierarchyFilter recognition of typeof queries """
+        """ Test HierarchyFilter recognition of typeof queries """
 
         uids = self.uids
         resource = current.s3db.resource("typeof_hierarchy_reference")
 
-        filter_widget = S3HierarchyFilter("typeof_hierarchy_id")
+        filter_widget = HierarchyFilter("typeof_hierarchy_id")
 
         # Test with belongs on filter field
         ids = str(uids["HIERARCHY1-1"])

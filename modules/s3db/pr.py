@@ -912,19 +912,19 @@ class PRPersonModel(DataModel):
 
         # Filter widgets
         filter_widgets = [
-            S3TextFilter(["pe_label",
-                          "first_name",
-                          "middle_name",
-                          "last_name",
-                          "local_name",
-                          "identity.value"
-                         ],
-                         label = T("Name and/or ID"),
-                         comment = T("To search for a person, enter any of the "
-                                     "first, middle or last names and/or an ID "
-                                     "number of a person, separated by spaces. "
-                                     "You may use % as wildcard."),
-                        ),
+            TextFilter(["pe_label",
+                        "first_name",
+                        "middle_name",
+                        "last_name",
+                        "local_name",
+                        "identity.value"
+                        ],
+                       label = T("Name and/or ID"),
+                       comment = T("To search for a person, enter any of the "
+                                   "first, middle or last names and/or an ID "
+                                   "number of a person, separated by spaces. "
+                                   "You may use % as wildcard."),
+                       ),
             ]
 
         # Custom Form
@@ -2857,20 +2857,20 @@ class PRGroupModel(DataModel):
 
         # Filter widgets
         filter_widgets = [
-            S3TextFilter(["group_id$name",
-                          "person_id$first_name",
-                          "person_id$middle_name",
-                          "person_id$last_name",
-                          ],
-                          label = T("Search"),
-                          comment = T("To search for a member, enter any portion of the name of the person or group. You may use % as wildcard. Press 'Search' without input to list all members."),
-                          _class="filter-search",
+            TextFilter(["group_id$name",
+                        "person_id$first_name",
+                        "person_id$middle_name",
+                        "person_id$last_name",
+                        ],
+                       label = T("Search"),
+                       comment = T("To search for a member, enter any portion of the name of the person or group. You may use % as wildcard. Press 'Search' without input to list all members."),
+                       _class="filter-search",
+                       ),
+            OptionsFilter("group_id",
                           ),
-            S3OptionsFilter("group_id",
-                            ),
-            S3LocationFilter("person_id$location_id",
-                             levels = levels,
-                             ),
+            LocationFilter("person_id$location_id",
+                           levels = levels,
+                           ),
             ]
 
         # Table configuration
@@ -8399,7 +8399,7 @@ class pr_AssignMethod(CRUDMethod):
 
                     # Default Filters (before selecting data!)
                     resource.configure(filter_widgets = filter_widgets)
-                    S3FilterForm.apply_filter_defaults(r, resource)
+                    FilterForm.apply_filter_defaults(r, resource)
 
                     # Where to retrieve updated filter options from:
                     filter_ajax_url = URL(f="person",
@@ -8410,16 +8410,16 @@ class pr_AssignMethod(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear = filter_clear,
-                                               formstyle = filter_formstyle,
-                                               submit = filter_submit,
-                                               ajax = True,
-                                               url = filter_submit_url,
-                                               ajaxurl = filter_ajax_url,
-                                               _class = "filter-form",
-                                               _id = "datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear = filter_clear,
+                                             formstyle = filter_formstyle,
+                                             submit = filter_submit,
+                                             ajax = True,
+                                             url = filter_submit_url,
+                                             ajaxurl = filter_ajax_url,
+                                             _class = "filter-form",
+                                             _id = "datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = r.component.alias if r.component else None
                     ff = filter_form.html(fresource,
@@ -11181,7 +11181,7 @@ def pr_filter_list_layout(list_id, item_id, resource, rfields, record):
     title = record["pr_filter.title"]
 
     # Filter Query
-    fstring = S3FilterString(resource, raw["pr_filter.query"])
+    fstring = URLQueryJSON(resource, raw["pr_filter.query"])
     query = fstring.represent()
 
     # Actions

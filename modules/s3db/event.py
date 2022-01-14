@@ -339,43 +339,43 @@ class EventModel(DataModel):
         # Which levels of Hierarchy are we using?
         levels = current.gis.get_relevant_hierarchy_levels()
 
-        filter_widgets = [S3LocationFilter("event_location.location_id",
-                                           levels = levels,
-                                           label = T("Location"),
-                                           ),
+        filter_widgets = [LocationFilter("event_location.location_id",
+                                         levels = levels,
+                                         label = T("Location"),
+                                         ),
                           # @ToDo: Filter for events which are open within a date range
-                          #S3DateFilter("start_date",
-                          #             label = None,
-                          #             hide_time = True,
-                          #             input_labels = {"ge": "From", "le": "To"}
-                          #             ),
+                          #DateFilter("start_date",
+                          #           label = None,
+                          #           hide_time = True,
+                          #           input_labels = {"ge": "From", "le": "To"}
+                          #           ),
                           # Typically we just need to filter by Year
-                          S3OptionsFilter("year",
-                                          label = T("Year"),
-                                          ),
-                          S3OptionsFilter("closed",
-                                          label = T("Status"),
-                                          options = OrderedDict([(False, T("Open")),
-                                                                 (True, T("Closed")),
-                                                                 ]),
-                                          cols = 2,
-                                          default = False,
-                                          sort = False,
-                                          ),
+                          OptionsFilter("year",
+                                        label = T("Year"),
+                                        ),
+                          OptionsFilter("closed",
+                                        label = T("Status"),
+                                        options = OrderedDict([(False, T("Open")),
+                                                               (True, T("Closed")),
+                                                               ]),
+                                        cols = 2,
+                                        default = False,
+                                        sort = False,
+                                        ),
                           ]
 
         if hierarchical_event_types:
-            filter_widgets.insert(0, S3HierarchyFilter("event_type_id",
-                                                       label = T("Type"),
-                                                       ))
-        else:
-            filter_widgets.insert(0, S3OptionsFilter("event_type_id",
+            filter_widgets.insert(0, HierarchyFilter("event_type_id",
                                                      label = T("Type"),
-                                                     #multiple = False,
-                                                     #options = lambda: \
-                                                     #  s3_get_filter_opts("event_event_type",
-                                                     #                     translate = True)
                                                      ))
+        else:
+            filter_widgets.insert(0, OptionsFilter("event_type_id",
+                                                   label = T("Type"),
+                                                   #multiple = False,
+                                                   #options = lambda: \
+                                                   #  get_filter_options("event_event_type",
+                                                   #                     translate = True)
+                                                   ))
         report_fields = ["event_type_id",
                          ]
         rappend = report_fields.append
@@ -422,15 +422,15 @@ class EventModel(DataModel):
         if exercise:
             crud_fields.insert(1, "exercise")
             list_fields.insert(4, "exercise")
-            filter_widgets.insert(2, S3OptionsFilter("exercise",
-                                                     label = T("Exercise"),
-                                                     options = OrderedDict([(True, T("Yes")),
-                                                                            (False, T("No")),
-                                                                            ]),
-                                                     cols = 2,
-                                                     default = False,
-                                                     sort = False,
-                                                     ))
+            filter_widgets.insert(2, OptionsFilter("exercise",
+                                                   label = T("Exercise"),
+                                                   options = OrderedDict([(True, T("Yes")),
+                                                                          (False, T("No")),
+                                                                          ]),
+                                                   cols = 2,
+                                                   default = False,
+                                                   sort = False,
+                                                   ))
 
         crud_form = S3SQLCustomForm(*crud_fields)
 
@@ -1254,42 +1254,42 @@ class EventIncidentModel(DataModel):
             text_fields.append(lfield)
             list_fields.append(lfield)
 
-        filter_widgets = [S3TextFilter(text_fields,
-                                       label = T("Search"),
-                                       ),
-                          S3LocationFilter("location_id",
-                                           levels = levels,
-                                           label = T("Location"),
-                                           ),
+        filter_widgets = [TextFilter(text_fields,
+                                     label = T("Search"),
+                                     ),
+                          LocationFilter("location_id",
+                                         levels = levels,
+                                         label = T("Location"),
+                                         ),
                           # @ToDo: Filter for events which are open within a date range
-                          #S3DateFilter("date",
-                          #             label = None,
-                          #             hide_time = True,
-                          #             input_labels = {"ge": "From", "le": "To"}
-                          #             ),
-                          S3OptionsFilter("closed",
-                                          label = T("Status"),
-                                          options = OrderedDict([(False, T("Open")),
-                                                                 (True, T("Closed")),
-                                                                 ]),
-                                          cols = 2,
-                                          default = False,
-                                          sort = False,
-                                          ),
+                          #DateFilter("date",
+                          #           label = None,
+                          #           hide_time = True,
+                          #           input_labels = {"ge": "From", "le": "To"}
+                          #           ),
+                          OptionsFilter("closed",
+                                        label = T("Status"),
+                                        options = OrderedDict([(False, T("Open")),
+                                                               (True, T("Closed")),
+                                                               ]),
+                                        cols = 2,
+                                        default = False,
+                                        sort = False,
+                                        ),
                           ]
 
         if settings.get_incident_types_hierarchical():
-            filter_widgets.insert(1, S3HierarchyFilter("incident_type_id",
-                                                       label = T("Type"),
-                                                       ))
-        else:
-            filter_widgets.insert(1, S3OptionsFilter("incident_type_id",
+            filter_widgets.insert(1, HierarchyFilter("incident_type_id",
                                                      label = T("Type"),
-                                                     #multiple = False,
-                                                     #options = lambda: \
-                                                     #  s3_get_filter_opts("event_incident_type",
-                                                     #                     translate = True)
                                                      ))
+        else:
+            filter_widgets.insert(1, OptionsFilter("incident_type_id",
+                                                   label = T("Type"),
+                                                   #multiple = False,
+                                                   #options = lambda: \
+                                                   #  get_filter_options("event_incident_type",
+                                                   #                     translate = True)
+                                                   ))
 
         represent = S3Represent(lookup=tablename)
         incident_id = S3ReusableField("incident_id", "reference %s" % tablename,
@@ -2168,35 +2168,35 @@ class EventIncidentReportModel(DataModel):
             text_fields.append(lfield)
             list_fields.append(lfield)
 
-        filter_widgets = [S3TextFilter(text_fields,
-                                       label = T("Search"),
-                                       ),
-                          S3LocationFilter("location_id",
-                                           levels = levels,
-                                           ),
-                          S3OptionsFilter("closed",
-                                          label = T("Status"),
-                                          options = OrderedDict([(False, T("Open")),
-                                                                 (True, T("Closed")),
-                                                                 ]),
-                                          cols = 2,
-                                          default = False,
-                                          sort = False,
-                                          ),
+        filter_widgets = [TextFilter(text_fields,
+                                     label = T("Search"),
+                                     ),
+                          LocationFilter("location_id",
+                                         levels = levels,
+                                         ),
+                          OptionsFilter("closed",
+                                        label = T("Status"),
+                                        options = OrderedDict([(False, T("Open")),
+                                                               (True, T("Closed")),
+                                                               ]),
+                                        cols = 2,
+                                        default = False,
+                                        sort = False,
+                                        ),
                           ]
 
         if current.deployment_settings.get_incident_types_hierarchical():
-            filter_widgets.insert(1, S3HierarchyFilter("incident_type_id",
-                                                       label = T("Type"),
-                                                       ))
-        else:
-            filter_widgets.insert(1, S3OptionsFilter("incident_type_id",
+            filter_widgets.insert(1, HierarchyFilter("incident_type_id",
                                                      label = T("Type"),
-                                                     #multiple = False,
-                                                     #options = lambda: \
-                                                     #  s3_get_filter_opts("event_incident_type",
-                                                     #                     translate = True)
                                                      ))
+        else:
+            filter_widgets.insert(1, OptionsFilter("incident_type_id",
+                                                   label = T("Type"),
+                                                   #multiple = False,
+                                                   #options = lambda: \
+                                                   #  get_filter_options("event_incident_type",
+                                                   #                     translate = True)
+                                                   ))
 
         self.configure(tablename,
                        filter_widgets = filter_widgets,
@@ -2465,16 +2465,16 @@ class EventResourceModel(DataModel):
         #               ]
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["organisation_id$name",
-                                        "location_id",
-                                        "parameter_id$name",
-                                        "comments",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("parameter_id",
-                                          label = T("Type"),
-                                          ),
+        filter_widgets = [TextFilter(["organisation_id$name",
+                                      "location_id",
+                                      "parameter_id$name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("parameter_id",
+                                        label = T("Type"),
+                                        ),
                           ]
 
         # Report options
@@ -4297,10 +4297,10 @@ class EventScenarioModel(DataModel):
                                       #                                current.messages.AUTOCOMPLETE_HELP))
                                     )
 
-        filter_widgets = [S3TextFilter("name",
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("incident_type_id"),
+        filter_widgets = [TextFilter("name",
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("incident_type_id"),
                           ]
 
         self.configure(tablename,
@@ -5062,22 +5062,22 @@ class EventSitRepModel(DataModel):
         if sitrep_edxl:
             org_filter = None
         elif settings.get_org_branches():
-            org_filter = S3HierarchyFilter("organisation_id",
-                                           leafonly = False,
-                                           )
-        else:
-            org_filter = S3OptionsFilter("organisation_id",
-                                         #search = True,
-                                         #header = "",
+            org_filter = HierarchyFilter("organisation_id",
+                                         leafonly = False,
                                          )
+        else:
+            org_filter = OptionsFilter("organisation_id",
+                                       #search = True,
+                                       #header = "",
+                                       )
 
-        filter_widgets = [S3OptionsFilter("event_id"),
+        filter_widgets = [OptionsFilter("event_id"),
                           org_filter,
-                          S3LocationFilter(),
-                          S3DateFilter("date"),
+                          LocationFilter(),
+                          DateFilter("date"),
                           ]
         if use_incidents:
-            filter_widgets.insert(1, S3OptionsFilter("incident_id"))
+            filter_widgets.insert(1, OptionsFilter("incident_id"))
 
         self.configure(tablename,
                        crud_form = crud_form,
@@ -6127,26 +6127,26 @@ class event_EventAssignMethod(CRUDMethod):
             # Which levels of Hierarchy are we using?
             levels = current.gis.get_relevant_hierarchy_levels()
 
-            filter_widgets = [S3LocationFilter("event_location.location_id",
-                                               default = location_defaults,
-                                               levels = levels,
-                                               label = T("Location"),
-                                               ),
+            filter_widgets = [LocationFilter("event_location.location_id",
+                                             default = location_defaults,
+                                             levels = levels,
+                                             label = T("Location"),
+                                             ),
                               # @ToDo: Filter for events which are open within a date range
-                              #S3DateFilter("start_date",
-                              #             label = None,
-                              #             hide_time = True,
-                              #             input_labels = {"ge": "From", "le": "To"}
-                              #             ),
-                              S3OptionsFilter("closed",
-                                              label = T("Status"),
-                                              options = OrderedDict([(False, T("Open")),
-                                                                     (True, T("Closed")),
-                                                                     ]),
-                                              cols = 2,
-                                              default = False,
-                                              sort = False,
-                                              ),
+                              #DateFilter("start_date",
+                              #           label = None,
+                              #           hide_time = True,
+                              #           input_labels = {"ge": "From", "le": "To"}
+                              #           ),
+                              OptionsFilter("closed",
+                                            label = T("Status"),
+                                            options = OrderedDict([(False, T("Open")),
+                                                                   (True, T("Closed")),
+                                                                   ]),
+                                            cols = 2,
+                                            default = False,
+                                            sort = False,
+                                            ),
                               ]
 
             # List fields
@@ -6221,7 +6221,7 @@ class event_EventAssignMethod(CRUDMethod):
                     resource.configure(filter_widgets=filter_widgets)
                     # @ToDo: This is currently not working
                     # - filter shows this option, but the resource isn't filtered
-                    #S3FilterForm.apply_filter_defaults(r, resource)
+                    #FilterForm.apply_filter_defaults(r, resource)
 
                     # Where to retrieve updated filter options from:
                     filter_ajax_url = URL(c = "event",
@@ -6233,16 +6233,16 @@ class event_EventAssignMethod(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear=filter_clear,
-                                               formstyle=filter_formstyle,
-                                               submit=filter_submit,
-                                               ajax=True,
-                                               url=filter_submit_url,
-                                               ajaxurl=filter_ajax_url,
-                                               _class="filter-form",
-                                               _id="datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear=filter_clear,
+                                             formstyle=filter_formstyle,
+                                             submit=filter_submit,
+                                             ajax=True,
+                                             url=filter_submit_url,
+                                             ajaxurl=filter_ajax_url,
+                                             _class="filter-form",
+                                             _id="datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = r.component.alias if r.component else None
                     ff = filter_form.html(fresource,
@@ -6513,26 +6513,26 @@ class event_IncidentAssignMethod(CRUDMethod):
             # Which levels of Hierarchy are we using?
             levels = current.gis.get_relevant_hierarchy_levels()
 
-            filter_widgets = [S3LocationFilter("location_id",
-                                               default = location_defaults,
-                                               levels = levels,
-                                               label = T("Location"),
-                                               ),
+            filter_widgets = [LocationFilter("location_id",
+                                             default = location_defaults,
+                                             levels = levels,
+                                             label = T("Location"),
+                                             ),
                               # @ToDo: Filter for events which are open within a date range
-                              #S3DateFilter("start_date",
-                              #             label = None,
-                              #             hide_time = True,
-                              #             input_labels = {"ge": "From", "le": "To"}
-                              #             ),
-                              S3OptionsFilter("closed",
-                                              label = T("Status"),
-                                              options = OrderedDict([(False, T("Open")),
-                                                                     (True, T("Closed")),
-                                                                     ]),
-                                              cols = 2,
-                                              default = False,
-                                              sort = False,
-                                              ),
+                              #DateFilter("start_date",
+                              #           label = None,
+                              #           hide_time = True,
+                              #           input_labels = {"ge": "From", "le": "To"}
+                              #           ),
+                              OptionsFilter("closed",
+                                            label = T("Status"),
+                                            options = OrderedDict([(False, T("Open")),
+                                                                   (True, T("Closed")),
+                                                                   ]),
+                                            cols = 2,
+                                            default = False,
+                                            sort = False,
+                                            ),
                               ]
 
             # List fields
@@ -6604,7 +6604,7 @@ class event_IncidentAssignMethod(CRUDMethod):
 
                     # Default Filters (before selecting data!)
                     resource.configure(filter_widgets=filter_widgets)
-                    S3FilterForm.apply_filter_defaults(r, resource)
+                    FilterForm.apply_filter_defaults(r, resource)
 
                     # Where to retrieve updated filter options from:
                     filter_ajax_url = URL(c = "event",
@@ -6617,16 +6617,16 @@ class event_IncidentAssignMethod(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear = filter_clear,
-                                               formstyle = filter_formstyle,
-                                               submit = filter_submit,
-                                               ajax = True,
-                                               url = filter_submit_url,
-                                               ajaxurl = filter_ajax_url,
-                                               _class = "filter-form",
-                                               _id = "datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear = filter_clear,
+                                             formstyle = filter_formstyle,
+                                             submit = filter_submit,
+                                             ajax = True,
+                                             url = filter_submit_url,
+                                             ajaxurl = filter_ajax_url,
+                                             _class = "filter-form",
+                                             _id = "datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = r.component.alias if r.component else None
                     ff = filter_form.html(fresource,

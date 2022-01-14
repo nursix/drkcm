@@ -113,8 +113,8 @@ class S3GroupedItemsReport(CRUDMethod):
             filter_widgets = get_config("filter_widgets", None)
             if filter_widgets and not self.hide_filter:
                 show_filter_form = True
-                from ..filters import S3FilterForm
-                S3FilterForm.apply_filter_defaults(r, resource)
+                from ..filters import FilterForm
+                FilterForm.apply_filter_defaults(r, resource)
 
         # Get the report configuration
         report_config = self.get_report_config()
@@ -179,14 +179,14 @@ class S3GroupedItemsReport(CRUDMethod):
                 filter_submit = get_config("filter_submit", True)
 
                 # Instantiate form
-                filter_form = S3FilterForm(filter_widgets,
-                                           formstyle = filter_formstyle,
-                                           submit = filter_submit,
-                                           clear = filter_clear,
-                                           ajax = True,
-                                           _class = "filter-form",
-                                           _id = "%s-filter-form" % widget_id,
-                                           )
+                filter_form = FilterForm(filter_widgets,
+                                         formstyle = filter_formstyle,
+                                         submit = filter_submit,
+                                         clear = filter_clear,
+                                         ajax = True,
+                                         _class = "filter-form",
+                                         _id = "%s-filter-form" % widget_id,
+                                         )
 
                 # Render against unfiltered resource
                 fresource = current.s3db.resource(tablename)

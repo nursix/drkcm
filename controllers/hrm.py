@@ -640,7 +640,7 @@ def competency():
 # =============================================================================
 def skill_competencies():
     """
-        Called by S3OptionsFilter to provide the competency options for a
+        Called by OptionsFilter to provide the competency options for a
             particular Skill Type
     """
 
@@ -794,26 +794,26 @@ def shift():
             s3db.hrm_human_resource_shift.human_resource_id.label = T("Currently Assigned")
 
             # Default Filters
-            from core import s3_set_default_filter
+            from core import set_default_filter
             tablename = "hrm_human_resource"
             record = r.record
             job_title_id = record.job_title_id
             if job_title_id:
-                s3_set_default_filter("~.job_title_id",
-                                      job_title_id,
-                                      tablename = tablename)
+                set_default_filter("~.job_title_id",
+                                   job_title_id,
+                                   tablename = tablename)
             skill_id = record.skill_id
             if skill_id:
-                s3_set_default_filter("competency.skill_id",
-                                      skill_id,
-                                      tablename = tablename)
+                set_default_filter("competency.skill_id",
+                                   skill_id,
+                                   tablename = tablename)
             # NB Availability Filter is custom,
             # so needs the pr_availability_filter applying manually to take effect
-            s3_set_default_filter("available",
-                                  {"ge": record.start_date,
-                                   "le": record.end_date,
-                                   },
-                                  tablename = tablename)
+            set_default_filter("available",
+                               {"ge": record.start_date,
+                                "le": record.end_date,
+                                },
+                               tablename = tablename)
 
         return True
 

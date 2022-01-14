@@ -11,7 +11,7 @@ from collections import OrderedDict
 from gluon import current, redirect, URL, A, DIV, TABLE, TAG, TR
 from gluon.storage import Storage
 
-from core import FS, IS_LOCATION, S3DateFilter, S3Represent, s3_fieldmethod, s3_fullname, s3_yes_no_represent
+from core import FS, IS_LOCATION, DateFilter, S3Represent, s3_fieldmethod, s3_fullname, s3_yes_no_represent
 from s3dal import original_tablename
 
 from .helpers import rlp_active_deployments
@@ -1361,15 +1361,15 @@ def config(settings):
             from gluon import IS_NOT_EMPTY
             from core import (IS_ONE_OF,
                               IS_PERSON_GENDER,
-                              S3AgeFilter,
-                              S3LocationFilter,
+                              AgeFilter,
+                              LocationFilter,
                               S3LocationSelector,
-                              S3OptionsFilter,
-                              S3RangeFilter,
+                              OptionsFilter,
+                              RangeFilter,
                               S3SQLCustomForm,
-                              S3TextFilter,
+                              TextFilter,
                               StringTemplateParser,
-                              s3_get_filter_opts,
+                              get_filter_options,
                               )
 
             # Make last name mandatory
@@ -1567,23 +1567,23 @@ def config(settings):
                     text_search_fields.append("person_details.occupation")
 
                     filter_widgets = [
-                        S3TextFilter(text_search_fields,
-                                     label = T("Search"),
-                                     comment = T("Search by ID or name (Note that records with hidden names can only be found by ID). Can use * or ? as wildcards."),
-                                     ),
-                        S3OptionsFilter("pool_membership.group_id",
-                                        label = T("Pool"),
-                                        options = get_pools,
-                                        ),
-                        S3OptionsFilter("occupation_type_person.occupation_type_id",
-                                        options = lambda: s3_get_filter_opts("pr_occupation_type"),
-                                        ),
-                        S3LocationFilter("current_address.location_id",
-                                         label = T("Place of Residence"),
-                                         levels = ("L2", "L3"),
-                                         bigtable = True,
-                                         translate = False,
-                                         ),
+                        TextFilter(text_search_fields,
+                                   label = T("Search"),
+                                   comment = T("Search by ID or name (Note that records with hidden names can only be found by ID). Can use * or ? as wildcards."),
+                                   ),
+                        OptionsFilter("pool_membership.group_id",
+                                      label = T("Pool"),
+                                      options = get_pools,
+                                      ),
+                        OptionsFilter("occupation_type_person.occupation_type_id",
+                                      options = lambda: get_filter_options("pr_occupation_type"),
+                                      ),
+                        LocationFilter("current_address.location_id",
+                                       label = T("Place of Residence"),
+                                       levels = ("L2", "L3"),
+                                       bigtable = True,
+                                       translate = False,
+                                       ),
                         RLPAvailabilityFilter("delegation.date",
                                               label = T("Available"),
                                               #hide_time = True,
@@ -1608,18 +1608,18 @@ def config(settings):
                                                   options = lambda: rlp_deployment_sites(managed_orgs=True),
                                                   sort = False,
                                                   ),
-                        S3RangeFilter("availability.hours_per_week",
-                                      ),
-                        S3OptionsFilter("competency.skill_id",
-                                        label = T("Skills / Resources"),
-                                        options = lambda: s3_get_filter_opts("hrm_skill"),
-                                        cols = 2,
-                                        ),
-                        S3AgeFilter("date_of_birth",
-                                    label = T("Age"),
-                                    minimum = 12,
-                                    maximum = 90,
+                        RangeFilter("availability.hours_per_week",
                                     ),
+                        OptionsFilter("competency.skill_id",
+                                      label = T("Skills / Resources"),
+                                      options = lambda: get_filter_options("hrm_skill"),
+                                      cols = 2,
+                                      ),
+                        AgeFilter("date_of_birth",
+                                  label = T("Age"),
+                                  minimum = 12,
+                                  maximum = 90,
+                                  ),
                         ]
 
                     # Reports
@@ -2509,18 +2509,18 @@ def config(settings):
             if r.interactive:
 
                 if not volunteer_id:
-                    from core import S3OptionsFilter, s3_get_filter_opts
+                    from core import OptionsFilter, get_filter_options
                     filter_widgets = [
-                        S3OptionsFilter("person_id$pool_membership.group_id",
-                                        label = T("Pool"),
-                                        options = get_pools(),
-                                        ),
-                        S3DateFilter("date",
-                                     hidden = True,
-                                     ),
-                        S3DateFilter("end_date",
-                                     hidden = True,
-                                     ),
+                        OptionsFilter("person_id$pool_membership.group_id",
+                                      label = T("Pool"),
+                                      options = get_pools(),
+                                      ),
+                        DateFilter("date",
+                                   hidden = True,
+                                   ),
+                        DateFilter("end_date",
+                                   hidden = True,
+                                   ),
                         ]
 
                     # Status-Filter
@@ -2533,19 +2533,19 @@ def config(settings):
                     if len(status_filter_opts) > 1:
                         #default = ["APPR", "IMPL"] if r.method == "report" else None
                         filter_widgets.insert(0,
-                            S3OptionsFilter("status",
-                                            options = OrderedDict(status_filter_opts),
-                                            #default = default,
-                                            sort = False,
-                                            cols = 3,
-                                            ))
+                            OptionsFilter("status",
+                                          options = OrderedDict(status_filter_opts),
+                                          #default = default,
+                                          sort = False,
+                                          cols = 3,
+                                          ))
 
                     # Organisation Filter
                     if coordinator or multiple_orgs:
                         filter_widgets.insert(0,
-                            S3OptionsFilter("organisation_id",
-                                            options = lambda: s3_get_filter_opts("org_organisation"),
-                                            ))
+                            OptionsFilter("organisation_id",
+                                          options = lambda: get_filter_options("org_organisation"),
+                                          ))
 
                     r.resource.configure(filter_widgets = filter_widgets,
                                          )

@@ -321,35 +321,35 @@ class AssetModel(DataModel):
                             "comments"))
 
         if settings.get_org_branches():
-            org_filter = S3HierarchyFilter("organisation_id",
-                                           # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
-                                           hidden = True,
-                                           leafonly = False,
-                                           )
-        else:
-            org_filter = S3OptionsFilter("organisation_id",
-                                         search = True,
-                                         header = "",
+            org_filter = HierarchyFilter("organisation_id",
                                          # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
                                          hidden = True,
+                                         leafonly = False,
                                          )
+        else:
+            org_filter = OptionsFilter("organisation_id",
+                                       search = True,
+                                       header = "",
+                                       # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
+                                       hidden = True,
+                                       )
 
         filter_widgets = [
-            S3TextFilter(text_fields,
-                         label = T("Search"),
-                         comment = T("You can search by asset number, item description or comments. You may use % as wildcard. Press 'Search' without input to list all assets."),
-                         #_class = "filter-search",
-                         ),
-            S3OptionsFilter("item_id$item_category_id",
-                            ),
+            TextFilter(text_fields,
+                       label = T("Search"),
+                       comment = T("You can search by asset number, item description or comments. You may use % as wildcard. Press 'Search' without input to list all assets."),
+                       #_class = "filter-search",
+                       ),
+            OptionsFilter("item_id$item_category_id",
+                          ),
             org_filter,
-            S3LocationFilter("location_id",
-                             levels = levels,
-                             hidden = True,
-                             ),
-            S3OptionsFilter("cond",
-                            hidden = True,
-                            ),
+            LocationFilter("location_id",
+                           levels = levels,
+                           hidden = True,
+                           ),
+            OptionsFilter("cond",
+                          hidden = True,
+                          ),
             ]
 
         report_options = Storage(

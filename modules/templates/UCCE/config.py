@@ -599,7 +599,7 @@ def config(settings):
     def customise_dc_target_resource(r, tablename):
 
         from gluon import IS_EMPTY_OR, URL
-        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
+        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, TextFilter
 
         from templates.UCCE.controllers import dc_target_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -649,13 +649,13 @@ def config(settings):
                                       ],
                        list_layout = dc_target_list_layout,
                        ondelete = dc_target_ondelete,
-                       filter_widgets = [S3TextFilter(["name",
-                                                       "project.name",
-                                                       ],
-                                                      formstyle = text_filter_formstyle,
-                                                      label = "",
-                                                      _placeholder = T("Search project or survey"),
-                                                      ),
+                       filter_widgets = [TextFilter(["name",
+                                                     "project.name",
+                                                     ],
+                                                    formstyle = text_filter_formstyle,
+                                                    label = "",
+                                                    _placeholder = T("Search project or survey"),
+                                                    ),
                                          ],
                        )
 
@@ -894,7 +894,7 @@ def config(settings):
     def customise_doc_document_resource(r, tablename):
 
         from gluon import URL
-        from core import S3SQLCustomForm, S3TextFilter
+        from core import S3SQLCustomForm, TextFilter
 
         from templates.UCCE.controllers import doc_document_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -930,12 +930,12 @@ def config(settings):
                                       "comments",
                                       ],
                        list_layout = doc_document_list_layout,
-                       filter_widgets = [S3TextFilter(["name",
-                                                       ],
-                                                      formstyle = text_filter_formstyle,
-                                                      label = "",
-                                                      _placeholder = T("Search guides"),
-                                                      ),
+                       filter_widgets = [TextFilter(["name",
+                                                     ],
+                                                    formstyle = text_filter_formstyle,
+                                                    label = "",
+                                                    _placeholder = T("Search guides"),
+                                                    ),
                                          ],
                        )
 
@@ -1086,7 +1086,7 @@ def config(settings):
     def customise_project_project_resource(r, tablename):
 
         from gluon import IS_EMPTY_OR, URL
-        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, S3TextFilter
+        from core import IS_ISO639_2_LANGUAGE_CODE, S3SQLCustomForm, TextFilter
 
         from templates.UCCE.controllers import project_project_list_layout
         from templates.UCCE.controllers import text_filter_formstyle
@@ -1131,13 +1131,13 @@ def config(settings):
                        #               ],
                        list_layout = project_project_list_layout,
                        ondelete = project_project_ondelete,
-                       filter_widgets = [S3TextFilter(["name",
-                                                       "target.name",
-                                                       ],
-                                                      formstyle = text_filter_formstyle,
-                                                      label = "",
-                                                      _placeholder = T("Search project or survey"),
-                                                      ),
+                       filter_widgets = [TextFilter(["name",
+                                                     "target.name",
+                                                     ],
+                                                    formstyle = text_filter_formstyle,
+                                                    label = "",
+                                                    _placeholder = T("Search project or survey"),
+                                                    ),
                                          ],
                        )
 

@@ -855,7 +855,7 @@ class BulkImporter:
                     kwargs[flag] = False
 
         # Parse the rule
-        rule = {param: row_get(keyword)
+        rule = {param: row_get(keyword) or None
                 for keyword, param in (("controller", "c"),
                                        ("function", "f"),
                                        ("table", "t"),

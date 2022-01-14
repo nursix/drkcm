@@ -1759,7 +1759,7 @@ S3.slider = function(fieldname, min, max, step, value) {
 };
 
 /**
- * Add a Range Slider to a field - used by S3SliderFilter
+ * Add a Range Slider to a field - used by SliderFilter
  */
 S3.range_slider = function(selector, min_id, max_id, min_value, max_value, step, values) {
     var slider_div = $('#' + selector),

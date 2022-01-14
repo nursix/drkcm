@@ -229,10 +229,10 @@ class SurveyTemplateModel(DataModel):
                         )
 
         filter_widgets = [
-            S3TextFilter("name",
-                         label = T("Search")),
-            S3OptionsFilter("status",
-                         label = T("Status")),
+            TextFilter("name",
+                       label = T("Search")),
+            OptionsFilter("status",
+                          label = T("Status")),
             ]
 
         configure(tablename,
@@ -1504,12 +1504,12 @@ class SurveySeriesModel(DataModel):
             msg_record_deleted = T("Disaster Assessment deleted"),
             msg_list_empty = T("No Disaster Assessments"))
 
-        filter_widgets = [S3TextFilter("name",
-                                       label = T("Search")),
-                          S3OptionsFilter("organisation_id",
-                                       label = T("Organization")),
-                          S3DateFilter("start_date",
-                                       label = T("Start Date")),
+        filter_widgets = [TextFilter("name",
+                                     label = T("Search")),
+                          OptionsFilter("organisation_id",
+                                        label = T("Organization")),
+                          DateFilter("start_date",
+                                     label = T("Start Date")),
                           ]
 
         self.configure(tablename,

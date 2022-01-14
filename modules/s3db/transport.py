@@ -671,14 +671,14 @@ class TransportModel(DataModel):
                        ]
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["name",
-                                        "comments",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("border_crossing_country.country",
-                                          label = T("Country"),
-                                          )
+        filter_widgets = [TextFilter(["name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("border_crossing_country.country",
+                                        label = T("Country"),
+                                        )
                           ]
 
         # Table Configuration

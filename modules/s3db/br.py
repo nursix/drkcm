@@ -1609,34 +1609,34 @@ class BRAssistanceModel(DataModel):
             list_fields.insert(-1, "hours")
 
         # Filter widgets
-        filter_widgets = [S3TextFilter(["person_id$pe_label",
-                                        "person_id$first_name",
-                                        "person_id$middle_name",
-                                        "person_id$last_name",
-                                        "comments",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("status_id",
-                                          options = lambda: s3_get_filter_opts("br_assistance_status"),
-                                          cols = 3,
-                                          translate = True,
-                                          ),
-                          S3DateFilter("start_date",
-                                       hidden = True,
-                                       hide_time = not use_time,
-                                       ),
+        filter_widgets = [TextFilter(["person_id$pe_label",
+                                      "person_id$first_name",
+                                      "person_id$middle_name",
+                                      "person_id$last_name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("status_id",
+                                        options = lambda: get_filter_options("br_assistance_status"),
+                                        cols = 3,
+                                        translate = True,
+                                        ),
+                          DateFilter("start_date",
+                                     hidden = True,
+                                     hide_time = not use_time,
+                                     ),
                           ]
         if use_type:
-            filter_widgets.append(S3OptionsFilter("assistance_type_id",
-                                                  hidden = True,
-                                                  options = lambda: s3_get_filter_opts("br_assistance_type"),
-                                                  ))
+            filter_widgets.append(OptionsFilter("assistance_type_id",
+                                                hidden = True,
+                                                options = lambda: get_filter_options("br_assistance_type"),
+                                                ))
         if use_themes:
-            filter_widgets.append(S3OptionsFilter("theme_ids",
-                                                  hidden = True,
-                                                  options = lambda: s3_get_filter_opts("br_assistance_theme"),
-                                                  ))
+            filter_widgets.append(OptionsFilter("theme_ids",
+                                                hidden = True,
+                                                options = lambda: get_filter_options("br_assistance_theme"),
+                                                ))
 
         # Organizer
         description = ["status_id"]
@@ -2246,18 +2246,18 @@ class BRAssistanceOfferModel(DataModel):
                        ]
 
         # Filters
-        filter_widgets = [S3TextFilter(["name",
-                                        "description",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("need_id",
-                                          ),
-                          S3OptionsFilter("chargeable",
-                                          cols = 2,
-                                          ),
-                          S3LocationFilter("location_id",
-                                           ),
+        filter_widgets = [TextFilter(["name",
+                                      "description",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("need_id",
+                                        ),
+                          OptionsFilter("chargeable",
+                                        cols = 2,
+                                        ),
+                          LocationFilter("location_id",
+                                         ),
                           ]
 
         self.configure(tablename,

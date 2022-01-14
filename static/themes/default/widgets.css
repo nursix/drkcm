@@ -1350,7 +1350,7 @@ ul.x-tree-root-ct {
     border-top: 0;
 }
 
-/* Vertical arrangement of multi-button multi-select filter widgets such as S3LocationFilter */
+/* Vertical arrangement of multi-button multi-select filter widgets such as LocationFilter */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
     display: block;

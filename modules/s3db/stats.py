@@ -423,27 +423,27 @@ class StatsDemographicModel(DataModel):
                              "source_id",
                              )))
 
-        filter_widgets = [S3OptionsFilter("parameter_id",
-                                          label = T("Type"),
-                                          multiple = False,
-                                          # Not translateable
-                                          #represent = "%(name)s",
-                                          ),
-                          S3OptionsFilter("year",
-                                          #multiple = False,
-                                          operator = "anyof",
-                                          options = lambda: \
-                                            stats_year_options("stats_demographic_data"),
-                                          ),
-                          S3OptionsFilter("location_id$level",
-                                          label = T("Level"),
-                                          multiple = False,
-                                          # Not translateable
-                                          #represent = "%(name)s",
-                                          ),
-                          S3LocationFilter("location_id",
-                                           levels = levels,
-                                           ),
+        filter_widgets = [OptionsFilter("parameter_id",
+                                        label = T("Type"),
+                                        multiple = False,
+                                        # Not translateable
+                                        #represent = "%(name)s",
+                                        ),
+                          OptionsFilter("year",
+                                        #multiple = False,
+                                        operator = "anyof",
+                                        options = lambda: \
+                                                  stats_year_options("stats_demographic_data"),
+                                        ),
+                          OptionsFilter("location_id$level",
+                                        label = T("Level"),
+                                        multiple = False,
+                                        # Not translateable
+                                        #represent = "%(name)s",
+                                        ),
+                          LocationFilter("location_id",
+                                         levels = levels,
+                                         ),
                           ]
 
         report_options = Storage(rows = location_fields + ["year"],
@@ -1362,11 +1362,11 @@ class StatsImpactModel(DataModel):
             msg_record_deleted=T("Impact deleted"),
             msg_list_empty=T("No Impacts defined"))
 
-        filter_widgets = [S3OptionsFilter("parameter_id",
-                                          label = T("Type"),
-                                          # Doesn't support Translation
-                                          #represent = "%(name)s",
-                                          ),
+        filter_widgets = [OptionsFilter("parameter_id",
+                                        label = T("Type"),
+                                        # Doesn't support Translation
+                                        #represent = "%(name)s",
+                                        ),
                           ]
 
         # Reusable Field
@@ -1498,15 +1498,15 @@ class StatsPeopleModel(DataModel):
             msg_record_deleted=T("People deleted"),
             msg_list_empty=T("No People defined"))
 
-        filter_widgets = [S3OptionsFilter("people_group.group_id",
-                                          label = T("Coalition"),
-                                          represent = "%(name)s",
-                                          ),
-                          S3OptionsFilter("parameter_id",
-                                          label = T("Type"),
-                                          # Doesn't support Translation
-                                          #represent = "%(name)s",
-                                          ),
+        filter_widgets = [OptionsFilter("people_group.group_id",
+                                        label = T("Coalition"),
+                                        represent = "%(name)s",
+                                        ),
+                          OptionsFilter("parameter_id",
+                                        label = T("Type"),
+                                        # Doesn't support Translation
+                                        #represent = "%(name)s",
+                                        ),
                           ]
 
         configure(tablename,

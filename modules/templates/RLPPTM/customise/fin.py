@@ -244,29 +244,29 @@ def fin_voucher_controller(**attr):
                 field.readable = True
 
             # Filter Widgets
-            from core import S3DateFilter, S3TextFilter
+            from core import DateFilter, TextFilter
             text_fields = ["signature", "comments", "program_id$name"]
             if is_program_manager:
                 text_fields.append("pe_id$pe_id:org_organisation.name")
             filter_widgets = [
-                S3TextFilter(text_fields,
-                             label = T("Search"),
-                             ),
-                S3DateFilter("date",
-                             ),
+                TextFilter(text_fields,
+                           label = T("Search"),
+                           ),
+                DateFilter("date",
+                           ),
                 ]
             if is_program_manager:
-                from core import S3OptionsFilter, s3_get_filter_opts
+                from core import OptionsFilter, get_filter_options
                 filter_widgets.extend([
-                    S3OptionsFilter("eligibility_type_id",
-                                    hidden = True,
-                                    label = T("Type of Eligibility"),
-                                    ),
-                    S3OptionsFilter(ISSUER_ORG_TYPE,
-                                    hidden = True,
-                                    label = T("Issuer Type"),
-                                    options = lambda: s3_get_filter_opts("org_organisation_type"),
-                                    ),
+                    OptionsFilter("eligibility_type_id",
+                                  hidden = True,
+                                  label = T("Type of Eligibility"),
+                                  ),
+                    OptionsFilter(ISSUER_ORG_TYPE,
+                                  hidden = True,
+                                  label = T("Issuer Type"),
+                                  options = lambda: get_filter_options("org_organisation_type"),
+                                  ),
                     ])
             resource.configure(filter_widgets = filter_widgets,
                                 )
@@ -385,15 +385,15 @@ def fin_voucher_debit_resource(r, tablename):
 
     # Filters
     if r.interactive:
-        from core import S3DateFilter, S3TextFilter
-        filter_widgets = [S3TextFilter(["program_id$name",
-                                        "signature",
-                                        ],
-                                        label = T("Search"),
-                                        ),
-                          S3DateFilter("date",
-                                       label = T("Date"),
-                                       ),
+        from core import DateFilter, TextFilter
+        filter_widgets = [TextFilter(["program_id$name",
+                                      "signature",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          DateFilter("date",
+                                     label = T("Date"),
+                                     ),
                           ]
         s3db.configure("fin_voucher_debit",
                        filter_widgets = filter_widgets,
@@ -813,13 +813,13 @@ def fin_voucher_claim_resource(r, tablename):
                        ]
 
     # Filter widgets
-    from core import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
-    filter_widgets = [S3TextFilter(text_fields,
-                                   label = T("Search"),
-                                   ),
-                      S3OptionsFilter("program_id",
-                                      options = lambda: s3_get_filter_opts("fin_voucher_program"),
-                                      ),
+    from core import TextFilter, OptionsFilter, get_filter_options
+    filter_widgets = [TextFilter(text_fields,
+                                 label = T("Search"),
+                                 ),
+                      OptionsFilter("program_id",
+                                    options = lambda: get_filter_options("fin_voucher_program"),
+                                    ),
                       ]
 
     s3db.configure("fin_voucher_claim",
@@ -1069,31 +1069,31 @@ def fin_voucher_invoice_resource(r, tablename):
         hr_filter_opts = None
 
     # Filter widgets
-    from core import S3DateFilter, S3OptionsFilter, S3TextFilter
+    from core import DateFilter, OptionsFilter, TextFilter
     if r.interactive:
-        filter_widgets = [S3TextFilter(["invoice_no",
-                                        "refno",
-                                        ],
-                                        label = T("Search"),
+        filter_widgets = [TextFilter(["invoice_no",
+                                      "refno",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("status",
+                                        default = default_status,
+                                        options = OrderedDict(status_opts),
+                                        sort = False,
                                         ),
-                          S3OptionsFilter("status",
-                                          default = default_status,
-                                          options = OrderedDict(status_opts),
-                                          sort = False,
-                                          ),
-                          S3OptionsFilter("human_resource_id",
-                                          default = default_hr,
-                                          options = hr_filter_opts,
-                                          ),
-                          S3DateFilter("date",
-                                       hidden = True,
-                                       ),
-                          S3OptionsFilter("pe_id",
-                                          hidden = True,
-                                          ),
-                          S3OptionsFilter("pe_id$pe_id:org_organisation.facility.location_id$L2",
-                                          hidden = True,
-                                          ),
+                          OptionsFilter("human_resource_id",
+                                        default = default_hr,
+                                        options = hr_filter_opts,
+                                        ),
+                          DateFilter("date",
+                                     hidden = True,
+                                     ),
+                          OptionsFilter("pe_id",
+                                        hidden = True,
+                                        ),
+                          OptionsFilter("pe_id$pe_id:org_organisation.facility.location_id$L2",
+                                        hidden = True,
+                                        ),
                           ]
         s3db.configure("fin_voucher_invoice",
                        filter_widgets = filter_widgets,

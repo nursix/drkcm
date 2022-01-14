@@ -272,19 +272,19 @@ class DVIModel(DataModel):
 
         # Filter widgets
         filter_widgets = [
-            S3TextFilter(["pe_label"],
-                         label = T("ID Tag"),
-                         comment = T("To search for a body, enter the ID "
-                                     "tag number of the body. You may use "
-                                     "% as wildcard."),
-                        ),
-            S3OptionsFilter("gender",
-                            options = self.pr_gender_opts),
-            S3OptionsFilter("age_group",
-                            options = self.pr_age_group_opts),
-            S3OptionsFilter("identification.status",
-                            options = dvi_id_status_filteropts,
-                            none = True),
+            TextFilter(["pe_label"],
+                       label = T("ID Tag"),
+                       comment = T("To search for a body, enter the ID "
+                                   "tag number of the body. You may use "
+                                   "% as wildcard."),
+                       ),
+            OptionsFilter("gender",
+                          options = self.pr_gender_opts),
+            OptionsFilter("age_group",
+                          options = self.pr_age_group_opts),
+            OptionsFilter("identification.status",
+                          options = dvi_id_status_filteropts,
+                          none = True),
         ]
 
         # Resource configuration

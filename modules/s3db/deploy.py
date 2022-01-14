@@ -472,31 +472,31 @@ class DeployModel(DataModel):
                              },
                   onaccept = self.deploy_assignment_onaccept,
                   filter_widgets = [
-                    S3TextFilter(["human_resource_id$person_id$first_name",
-                                  "human_resource_id$person_id$middle_name",
-                                  "human_resource_id$person_id$last_name",
-                                  "mission_id$code",
-                                  ],
-                                 label = T("Search")
-                                 ),
-                    S3OptionsFilter("mission_id$event_type_id",
-                                    widget = "multiselect",
-                                    hidden = True,
-                                    ),
-                    S3LocationFilter("mission_id$location_id",
-                                     label = messages.COUNTRY,
-                                     widget = "multiselect",
-                                     levels = ["L0"],
-                                     hidden = True,
-                                     ),
-                    S3OptionsFilter("job_title_id",
-                                    widget = "multiselect",
-                                    hidden = True,
-                                    ),
-                    S3DateFilter("start_date",
-                                 hide_time = True,
-                                 hidden = True,
-                                 ),
+                    TextFilter(["human_resource_id$person_id$first_name",
+                                "human_resource_id$person_id$middle_name",
+                                "human_resource_id$person_id$last_name",
+                                "mission_id$code",
+                                ],
+                               label = T("Search")
+                               ),
+                    OptionsFilter("mission_id$event_type_id",
+                                  widget = "multiselect",
+                                  hidden = True,
+                                  ),
+                    LocationFilter("mission_id$location_id",
+                                   label = messages.COUNTRY,
+                                   widget = "multiselect",
+                                   levels = ["L0"],
+                                   hidden = True,
+                                   ),
+                    OptionsFilter("job_title_id",
+                                  widget = "multiselect",
+                                  hidden = True,
+                                  ),
+                    DateFilter("start_date",
+                               hide_time = True,
+                               hidden = True,
+                               ),
                     ],
                   summary = [
                     {"name": "table",
@@ -1593,57 +1593,57 @@ def deploy_member_filters(status=False):
     """
 
     T = current.T
-    widgets = [S3TextFilter(["person_id$first_name",
-                             "person_id$middle_name",
-                             "person_id$last_name",
-                             ],
-                            label = T("Name"),
-                            ),
-               S3OptionsFilter("organisation_id",
-                               search = True,
-                               hidden = True,
-                               ),
-               S3OptionsFilter("credential.job_title_id",
-                               # @ToDo: Label setting
-                               label = T("Sector"),
-                               hidden = True,
-                               ),
+    widgets = [TextFilter(["person_id$first_name",
+                           "person_id$middle_name",
+                           "person_id$last_name",
+                           ],
+                          label = T("Name"),
+                          ),
+               OptionsFilter("organisation_id",
+                             search = True,
+                             hidden = True,
+                             ),
+               OptionsFilter("credential.job_title_id",
+                             # @ToDo: Label setting
+                             label = T("Sector"),
+                             hidden = True,
+                             ),
                ]
 
     settings = current.deployment_settings
     if settings.get_hrm_teams():
-        widgets.append(S3OptionsFilter("group_membership.group_id",
-                                       label = T("Teams"),
-                                       hidden = True,
-                                       ))
+        widgets.append(OptionsFilter("group_membership.group_id",
+                                     label = T("Teams"),
+                                     hidden = True,
+                                     ))
 
     if settings.get_org_regions():
         if settings.get_org_regions_hierarchical():
-            widgets.insert(1, S3HierarchyFilter("organisation_id$region_id",
-                                                lookup = "org_region",
-                                                hidden = True,
-                                                none = T("No Region"),
-                                                ))
-        else:
-            widgets.insert(1, S3OptionsFilter("organisation_id$region_id",
-                                              widget = "multiselect",
-                                              search = True,
+            widgets.insert(1, HierarchyFilter("organisation_id$region_id",
+                                              lookup = "org_region",
+                                              hidden = True,
+                                              none = T("No Region"),
                                               ))
+        else:
+            widgets.insert(1, OptionsFilter("organisation_id$region_id",
+                                            widget = "multiselect",
+                                            search = True,
+                                            ))
     if status:
         # Additional filter for roster status (default=active), allows
         # to explicitly include inactive roster members when selecting
         # alert recipients (only used there)
-        widgets.insert(1, S3OptionsFilter("application.active",
-                                          cols = 2,
-                                          default = True,
-                                          # Don't hide otherwise default
-                                          # doesn't apply:
-                                          #hidden = False,
-                                          label = T("Status"),
-                                          options = {"True": T("active"),
-                                                     "False": T("inactive"),
-                                                     },
-                                          ))
+        widgets.insert(1, OptionsFilter("application.active",
+                                        cols = 2,
+                                        default = True,
+                                        # Don't hide otherwise default
+                                        # doesn't apply:
+                                        #hidden = False,
+                                        label = T("Status"),
+                                        options = {"True": T("active"),
+                                                   "False": T("inactive"),
+                                                   },
+                                        ))
 
         if settings.get_deploy_select_ratings():
             rating_opts = {1: 1,
@@ -1651,26 +1651,26 @@ def deploy_member_filters(status=False):
                            3: 3,
                            4: 4,
                            }
-            widgets.extend((S3OptionsFilter("application.status",
-                                            label = T("Category"),
-                                            options = {1: "I",
-                                                       2: "II",
-                                                       3: "III",
-                                                       4: "IV",
-                                                       5: "V",
-                                                       },
-                                            cols = 5,
-                                            ),
-                            S3OptionsFilter("training.grade",
-                                            label = T("Training Grade"),
-                                            options = rating_opts,
-                                            cols = 4,
-                                            ),
-                            S3OptionsFilter("appraisal.rating",
-                                            label = T("Deployment Rating"),
-                                            options = rating_opts,
-                                            cols = 4,
-                                            ),
+            widgets.extend((OptionsFilter("application.status",
+                                          label = T("Category"),
+                                          options = {1: "I",
+                                                     2: "II",
+                                                     3: "III",
+                                                     4: "IV",
+                                                     5: "V",
+                                                     },
+                                          cols = 5,
+                                          ),
+                            OptionsFilter("training.grade",
+                                          label = T("Training Grade"),
+                                          options = rating_opts,
+                                          cols = 4,
+                                          ),
+                            OptionsFilter("appraisal.rating",
+                                          label = T("Deployment Rating"),
+                                          options = rating_opts,
+                                          cols = 4,
+                                          ),
                             ))
 
     return widgets
@@ -2078,16 +2078,16 @@ def deploy_apply(r, **attr):
                 filter_clear = get_config("filter_clear", True)
                 filter_formstyle = get_config("filter_formstyle", None)
                 filter_submit = get_config("filter_submit", True)
-                filter_form = S3FilterForm(filter_widgets,
-                                           clear = filter_clear,
-                                           formstyle = filter_formstyle,
-                                           submit = filter_submit,
-                                           ajax = True,
-                                           url = filter_submit_url,
-                                           ajaxurl = filter_ajax_url,
-                                           _class = "filter-form",
-                                           _id = "datatable-filter-form",
-                                           )
+                filter_form = FilterForm(filter_widgets,
+                                         clear = filter_clear,
+                                         formstyle = filter_formstyle,
+                                         submit = filter_submit,
+                                         ajax = True,
+                                         url = filter_submit_url,
+                                         ajaxurl = filter_ajax_url,
+                                         _class = "filter-form",
+                                         _id = "datatable-filter-form",
+                                         )
                 fresource = s3db.resource(resource.tablename)
                 alias = resource.alias if r.component else None
                 ff = filter_form.html(fresource,
@@ -2218,7 +2218,7 @@ def deploy_alert_select_recipients(r, **attr):
     if filter_widgets and representation == "html":
         # Apply filter defaults
         resource.configure(filter_widgets = filter_widgets)
-        S3FilterForm.apply_filter_defaults(r, resource)
+        FilterForm.apply_filter_defaults(r, resource)
 
     # List fields
     list_fields = ["id",
@@ -2301,16 +2301,16 @@ def deploy_alert_select_recipients(r, **attr):
             filter_clear = get_config("filter_clear", True)
             filter_formstyle = get_config("filter_formstyle", None)
             filter_submit = get_config("filter_submit", True)
-            filter_form = S3FilterForm(filter_widgets,
-                                       clear = filter_clear,
-                                       formstyle = filter_formstyle,
-                                       submit = filter_submit,
-                                       ajax = True,
-                                       url = filter_submit_url,
-                                       ajaxurl = filter_ajax_url,
-                                       _class = "filter-form",
-                                       _id = "datatable-filter-form",
-                                       )
+            filter_form = FilterForm(filter_widgets,
+                                     clear = filter_clear,
+                                     formstyle = filter_formstyle,
+                                     submit = filter_submit,
+                                     ajax = True,
+                                     url = filter_submit_url,
+                                     ajaxurl = filter_ajax_url,
+                                     _class = "filter-form",
+                                     _id = "datatable-filter-form",
+                                     )
             fresource = s3db.resource(resource.tablename)
             alias = resource.alias if r.component else None
             ff = filter_form.html(fresource,
@@ -2517,16 +2517,16 @@ def deploy_response_select_mission(r, **attr):
             filter_clear = get_config("filter_clear", True)
             filter_formstyle = get_config("filter_formstyle", None)
             filter_submit = get_config("filter_submit", True)
-            filter_form = S3FilterForm(filter_widgets,
-                                       clear = filter_clear,
-                                       formstyle = filter_formstyle,
-                                       submit = filter_submit,
-                                       ajax = True,
-                                       url = filter_submit_url,
-                                       ajaxurl = filter_ajax_url,
-                                       _class = "filter-form",
-                                       _id = "datatable-filter-form",
-                                       )
+            filter_form = FilterForm(filter_widgets,
+                                     clear = filter_clear,
+                                     formstyle = filter_formstyle,
+                                     submit = filter_submit,
+                                     ajax = True,
+                                     url = filter_submit_url,
+                                     ajaxurl = filter_ajax_url,
+                                     _class = "filter-form",
+                                     _id = "datatable-filter-form",
+                                     )
             fresource = s3db.resource(resource.tablename)
             alias = resource.alias if r.component else None
             ff = filter_form.html(fresource,

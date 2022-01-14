@@ -311,7 +311,7 @@ def experience():
 # =============================================================================
 def skill_competencies():
     """
-        Called by S3OptionsFilter to provide the competency options for a
+        Called by OptionsFilter to provide the competency options for a
             particular Skill Type
     """
 

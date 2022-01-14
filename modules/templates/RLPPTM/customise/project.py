@@ -33,8 +33,8 @@ def project_project_resource(r, tablename):
                         )
 
     from core import S3SQLCustomForm, \
-                     S3TextFilter, \
-                     S3OptionsFilter
+                     TextFilter, \
+                     OptionsFilter
 
     # Custom CRUD Form
     crud_fields = ["organisation_id",
@@ -54,13 +54,13 @@ def project_project_resource(r, tablename):
                    ]
 
     # Custom filters
-    filter_widgets = [S3TextFilter(["name",
-                                    "code",
-                                    ],
-                                   label = T("Search"),
-                                   ),
-                      S3OptionsFilter("organisation_id",
-                                      ),
+    filter_widgets = [TextFilter(["name",
+                                  "code",
+                                  ],
+                                 label = T("Search"),
+                                 ),
+                      OptionsFilter("organisation_id",
+                                    ),
                       ]
 
     s3db.configure("project_project",

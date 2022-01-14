@@ -240,18 +240,18 @@ def auth_consent_resource(r, tablename):
 
     user_org = "person_id$user.user_id:org_organisation_user.organisation_id"
 
-    from core import S3DateFilter, S3OptionsFilter, S3TextFilter
+    from core import DateFilter, OptionsFilter, TextFilter
 
-    filter_widgets = [S3TextFilter(["%s$name" % user_org,
-                                    "person_id$first_name",
-                                    "person_id$last_name",
-                                    "option_id$name",
-                                    ],
-                                    label = T("Search"),
-                                    ),
-                        S3OptionsFilter("consenting", cols=2),
-                        S3DateFilter("date", hidden=True),
-                        ]
+    filter_widgets = [TextFilter(["%s$name" % user_org,
+                                  "person_id$first_name",
+                                  "person_id$last_name",
+                                  "option_id$name",
+                                  ],
+                                 label = T("Search"),
+                                 ),
+                      OptionsFilter("consenting", cols=2),
+                      DateFilter("date", hidden=True),
+                      ]
 
     # Custom list fields to include the user organisation
     list_fields = ["date",

@@ -134,8 +134,8 @@ class S3Organizer(CRUDMethod):
             if filter_widgets:
                 show_filter_form = True
                 # Apply filter defaults (before rendering the data!)
-                from ..filters import S3FilterForm
-                S3FilterForm.apply_filter_defaults(r, resource)
+                from ..filters import FilterForm
+                FilterForm.apply_filter_defaults(r, resource)
 
         # Filter Form
         if show_filter_form:
@@ -160,16 +160,16 @@ class S3Organizer(CRUDMethod):
                                       current.deployment_settings.get_ui_filter_clear())
             filter_formstyle = get_config("filter_formstyle", None)
             filter_submit = get_config("filter_submit", True)
-            filter_form = S3FilterForm(filter_widgets,
-                                       clear = filter_clear,
-                                       formstyle = filter_formstyle,
-                                       submit = filter_submit,
-                                       ajax = True,
-                                       url = filter_submit_url,
-                                       ajaxurl = filter_ajax_url,
-                                       _class = "filter-form",
-                                       _id = "%s-filter-form" % widget_id
-                                       )
+            filter_form = FilterForm(filter_widgets,
+                                     clear = filter_clear,
+                                     formstyle = filter_formstyle,
+                                     submit = filter_submit,
+                                     ajax = True,
+                                     url = filter_submit_url,
+                                     ajaxurl = filter_ajax_url,
+                                     _class = "filter-form",
+                                     _id = "%s-filter-form" % widget_id
+                                     )
             fresource = current.s3db.resource(resource.tablename) # Use a clean resource
             alias = resource.alias if r.component else None
             output["list_filter_form"] = filter_form.html(fresource,

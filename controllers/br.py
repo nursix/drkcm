@@ -285,33 +285,33 @@ def person():
 
             # Filter Widgets
             if not record:
-                from core import S3TextFilter, S3DateFilter, S3OptionsFilter
+                from core import TextFilter, DateFilter, OptionsFilter
                 filter_widgets = [
-                    S3TextFilter(name_fields + ["pe_label", "case.comments"],
-                                 label = T("Search"),
-                                 comment = T("You can search by name, ID or comments"),
-                                 ),
-                    S3DateFilter("date_of_birth",
-                                 hidden = True,
-                                 ),
-                    S3OptionsFilter("case.status_id",
-                                   cols = 3,
-                                   options = status_filter_opts,
-                                   sort = False,
-                                   hidden = True,
-                                   ),
-                    S3OptionsFilter("person_details.nationality",
-                                    hidden = True,
-                                    ),
-                    S3DateFilter("case.date",
-                                 hidden = True,
-                                 ),
+                    TextFilter(name_fields + ["pe_label", "case.comments"],
+                               label = T("Search"),
+                               comment = T("You can search by name, ID or comments"),
+                               ),
+                    DateFilter("date_of_birth",
+                               hidden = True,
+                               ),
+                    OptionsFilter("case.status_id",
+                                  cols = 3,
+                                  options = status_filter_opts,
+                                  sort = False,
+                                  hidden = True,
+                                  ),
+                    OptionsFilter("person_details.nationality",
+                                  hidden = True,
+                                  ),
+                    DateFilter("case.date",
+                               hidden = True,
+                               ),
                     ]
 
                 # Org-filter if user can see cases from multiple orgs/branches
                 if multiple_orgs:
                     filter_widgets.insert(1,
-                                          S3OptionsFilter("case.organisation_id"),
+                                          OptionsFilter("case.organisation_id"),
                                           )
 
                 resource.configure(filter_widgets = filter_widgets)
@@ -883,10 +883,10 @@ def case_activity():
                 s3db.br_case_activity_default_status()
 
             # Filter widgets
-            from core import S3DateFilter, \
-                             S3OptionsFilter, \
-                             S3TextFilter, \
-                             s3_get_filter_opts
+            from core import DateFilter, \
+                             OptionsFilter, \
+                             TextFilter, \
+                             get_filter_options
 
             text_filter_fields = ["person_id$pe_label",
                                   "person_id$first_name",
@@ -898,14 +898,14 @@ def case_activity():
             if settings.get_br_case_activity_need_details():
                 text_filter_fields.append("need_details")
 
-            filter_widgets = [S3TextFilter(text_filter_fields,
-                                           label = T("Search"),
-                                           ),
+            filter_widgets = [TextFilter(text_filter_fields,
+                                         label = T("Search"),
+                                         ),
                              ]
 
             multiple_orgs = s3db.br_case_read_orgs()[0]
             if multiple_orgs:
-                filter_widgets.append(S3OptionsFilter("person_id$case.organisation_id"))
+                filter_widgets.append(OptionsFilter("person_id$case.organisation_id"))
 
             if case_activity_status:
                 stable = s3db.br_case_activity_status
@@ -918,40 +918,40 @@ def case_activity():
                                         )
                 status_filter_options = OrderedDict((row.id, T(row.name)) for row in rows)
                 status_filter_defaults = [row.id for row in rows if not row.is_closed]
-                filter_widgets.append(S3OptionsFilter("status_id",
-                                                      options = status_filter_options,
-                                                      default = status_filter_defaults,
-                                                      cols = 3,
-                                                      hidden = True,
-                                                      sort = False,
-                                                      ))
+                filter_widgets.append(OptionsFilter("status_id",
+                                                    options = status_filter_options,
+                                                    default = status_filter_defaults,
+                                                    cols = 3,
+                                                    hidden = True,
+                                                    sort = False,
+                                                    ))
 
             if not mine and settings.get_br_case_activity_manager():
-                filter_widgets.append(S3OptionsFilter("human_resource_id",
-                                                      hidden = True,
-                                                      ))
+                filter_widgets.append(OptionsFilter("human_resource_id",
+                                                    hidden = True,
+                                                    ))
 
-            filter_widgets.extend([S3DateFilter("date",
-                                                hidden = True,
-                                                ),
-                                   S3OptionsFilter("person_id$person_details.nationality",
-                                                   label = T("Client Nationality"),
-                                                   hidden = True,
-                                                   ),
+            filter_widgets.extend([DateFilter("date",
+                                              hidden = True,
+                                              ),
+                                   OptionsFilter("person_id$person_details.nationality",
+                                                 label = T("Client Nationality"),
+                                                 hidden = True,
+                                                 ),
                                    ])
 
             if case_activity_need:
                 org_specific_needs = settings.get_br_needs_org_specific()
-                filter_widgets.append(S3OptionsFilter("need_id",
-                                                      hidden = True,
-                                                      header = True,
-                                                      options = lambda: \
-                                                                s3_get_filter_opts(
-                                                                  "br_need",
-                                                                  org_filter = org_specific_needs,
-                                                                  translate = True,
-                                                                  ),
-                                                      ))
+                filter_widgets.append(OptionsFilter("need_id",
+                                                    hidden = True,
+                                                    header = True,
+                                                    options = lambda: \
+                                                              get_filter_options(
+                                                                "br_need",
+                                                                org_filter = org_specific_needs,
+                                                                translate = True,
+                                                                ),
+                                                    ))
 
             resource.configure(filter_widgets=filter_widgets)
 
@@ -1054,10 +1054,10 @@ def activities():
                 s3db.br_case_activity_default_status()
 
             # Filter widgets
-            from core import S3DateFilter, \
-                             S3OptionsFilter, \
-                             S3TextFilter, \
-                             s3_get_filter_opts
+            from core import DateFilter, \
+                             OptionsFilter, \
+                             TextFilter, \
+                             get_filter_options
 
             filter_widgets = []
 
@@ -1068,13 +1068,13 @@ def activities():
                 text_filter_fields.append("need_details")
 
             if text_filter_fields:
-                filter_widgets.append(S3TextFilter(text_filter_fields,
-                                                   label = T("Search"),
-                                                   ))
+                filter_widgets.append(TextFilter(text_filter_fields,
+                                                 label = T("Search"),
+                                                 ))
 
             multiple_orgs = s3db.br_case_read_orgs()[0]
             if multiple_orgs:
-                filter_widgets.append(S3OptionsFilter("person_id$case.organisation_id"))
+                filter_widgets.append(OptionsFilter("person_id$case.organisation_id"))
 
             if case_activity_status:
                 stable = s3db.br_case_activity_status
@@ -1087,7 +1087,7 @@ def activities():
                                         )
                 status_filter_options = OrderedDict((row.id, T(row.name)) for row in rows)
                 status_filter_defaults = [row.id for row in rows if not row.is_closed]
-                filter_widgets.append(S3OptionsFilter("status_id",
+                filter_widgets.append(OptionsFilter("status_id",
                                                       options = status_filter_options,
                                                       default = status_filter_defaults,
                                                       cols = 3,
@@ -1095,23 +1095,23 @@ def activities():
                                                       sort = False,
                                                       ))
 
-            filter_widgets.extend([S3DateFilter("date",
-                                                hidden = True,
-                                                ),
+            filter_widgets.extend([DateFilter("date",
+                                              hidden = True,
+                                              ),
                                    ])
 
             if case_activity_need:
                 org_specific_needs = settings.get_br_needs_org_specific()
-                filter_widgets.append(S3OptionsFilter("need_id",
-                                                      hidden = True,
-                                                      header = True,
-                                                      options = lambda: \
-                                                                s3_get_filter_opts(
-                                                                  "br_need",
-                                                                  org_filter = org_specific_needs,
-                                                                  translate = True,
-                                                                  ),
-                                                      ))
+                filter_widgets.append(OptionsFilter("need_id",
+                                                    hidden = True,
+                                                    header = True,
+                                                    options = lambda: \
+                                                              get_filter_options(
+                                                                "br_need",
+                                                                org_filter = org_specific_needs,
+                                                                translate = True,
+                                                                ),
+                                                    ))
 
             resource.configure(filter_widgets=filter_widgets)
 

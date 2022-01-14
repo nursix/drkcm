@@ -260,7 +260,7 @@ def site():
         - used by S3SiteAutocompleteWidget
           which doesn't yet support filtering to just updateable sites
         - used by site_contact_person()
-        - used by S3OptionsFilter (e.g. Asset Log)
+        - used by OptionsFilter (e.g. Asset Log)
     """
 
     # Pre-processor

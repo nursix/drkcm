@@ -939,10 +939,10 @@ def config(settings):
                         from core import S3SQLCustomForm, \
                                          S3SQLInlineComponent, \
                                          S3SQLInlineLink, \
-                                         S3TextFilter, \
-                                         S3DateFilter, \
-                                         S3OptionsFilter, \
-                                         s3_get_filter_opts, \
+                                         TextFilter, \
+                                         DateFilter, \
+                                         OptionsFilter, \
+                                         get_filter_options, \
                                          IS_PERSON_GENDER
 
                         # Default organisation
@@ -1190,76 +1190,76 @@ def config(settings):
                             status_opts = s3db.dvr_case_status_filter_opts
 
                         filter_widgets = [
-                            S3TextFilter(["pe_label",
-                                          "first_name",
-                                          "middle_name",
-                                          "last_name",
-                                          "dvr_case.comments",
-                                          ],
-                                          label = T("Search"),
-                                          comment = T("You can search by name, ID or comments"),
+                            TextFilter(["pe_label",
+                                        "first_name",
+                                        "middle_name",
+                                        "last_name",
+                                        "dvr_case.comments",
+                                        ],
+                                       label = T("Search"),
+                                       comment = T("You can search by name, ID or comments"),
+                                       ),
+                            DateFilter("date_of_birth",
+                                       hidden = True,
+                                       ),
+                            OptionsFilter("dvr_case.status_id",
+                                          cols = 3,
+                                          #default = None,
+                                          #label = T("Case Status"),
+                                          options = status_opts,
+                                          sort = False,
+                                          hidden = True,
                                           ),
-                            S3DateFilter("date_of_birth",
-                                         hidden = True,
-                                         ),
-                            S3OptionsFilter("dvr_case.status_id",
-                                            cols = 3,
-                                            #default = None,
-                                            #label = T("Case Status"),
-                                            options = status_opts,
-                                            sort = False,
-                                            hidden = True,
-                                            ),
-                            S3OptionsFilter("person_details.nationality",
-                                            hidden = True,
-                                            ),
-                            S3DateFilter("dvr_case.date",
-                                         hidden = True,
-                                         ),
+                            OptionsFilter("person_details.nationality",
+                                          hidden = True,
+                                          ),
+                            DateFilter("dvr_case.date",
+                                       hidden = True,
+                                       ),
                             ]
 
                         # BAMF-Ref.No.-filter if using BAMF
                         if use_bamf:
                             filter_widgets.append(
-                                S3TextFilter(["bamf.value"],
-                                             label = T("BAMF Ref.No."),
-                                             hidden = True,
-                                             ))
+                                TextFilter(["bamf.value"],
+                                           label = T("BAMF Ref.No."),
+                                           hidden = True,
+                                           ))
 
                         # Multi-ID filter if using ID
                         if pe_label is not None:
                             filter_widgets.append(
-                                S3TextFilter(["pe_label"],
-                                             label = T("IDs"),
-                                             match_any = True,
-                                             hidden = True,
-                                             comment = T("Search for multiple IDs (separated by blanks)"),
-                                             ))
+                                TextFilter(["pe_label"],
+                                           label = T("IDs"),
+                                           match_any = True,
+                                           hidden = True,
+                                           comment = T("Search for multiple IDs (separated by blanks)"),
+                                           ))
 
                         # Ref.No.-filter if using service contacts
                         if ui_options_get("case_use_service_contacts"):
                             filter_widgets.append(
-                                S3TextFilter(["service_contact.reference"],
-                                             label = T("Ref.No."),
-                                             hidden = True,
-                                             comment = T("Search by service contact reference number"),
-                                             ))
+                                TextFilter(["service_contact.reference"],
+                                           label = T("Ref.No."),
+                                           hidden = True,
+                                           comment = T("Search by service contact reference number"),
+                                           ))
 
                         # Flag-filter if using case flags
                         if case_flags:
                             filter_widgets.insert(2,
-                                S3OptionsFilter("case_flag_case.flag_id",
-                                                label = T("Flags"),
-                                                options = s3_get_filter_opts("dvr_case_flag",
-                                                                             translate = True,
-                                                                             ),
-                                                cols = 3,
-                                                hidden = True,
-                                                ))
+                                OptionsFilter("case_flag_case.flag_id",
+                                              label = T("Flags"),
+                                              options = get_filter_options("dvr_case_flag",
+                                                                           translate = True,
+                                                                           ),
+                                              cols = 3,
+                                              hidden = True,
+                                              ))
                         # Org-filter if user can see cases from multiple orgs/branches
                         if multiple_orgs:
                             filter_widgets.insert(1,
-                                S3OptionsFilter("dvr_case.organisation_id"))
+                                OptionsFilter("dvr_case.organisation_id"))
 
                         configure(crud_form = crud_form,
                                   filter_widgets = filter_widgets,
@@ -1291,22 +1291,22 @@ def config(settings):
 
                     if response_tab_need_filter:
                         # Configure filter widgets for response tab
-                        from core import S3DateFilter, S3OptionsFilter, S3TextFilter
+                        from core import DateFilter, OptionsFilter, TextFilter
                         r.component.configure(
                             filter_widgets = [
-                               S3TextFilter(["response_action_theme.theme_id$name",
-                                             "response_action_theme.comments",
-                                             ],
-                                            label = T("Search"),
-                                            ),
-                               S3OptionsFilter("response_action_theme.theme_id$need_id",
-                                               label = T("Counseling Reason"),
-                                               hidden = True,
-                                               ),
-                               S3DateFilter("start_date",
-                                            hidden = True,
-                                            hide_time = not ui_options_get("response_use_time"),
-                                            ),
+                               TextFilter(["response_action_theme.theme_id$name",
+                                           "response_action_theme.comments",
+                                           ],
+                                          label = T("Search"),
+                                          ),
+                               OptionsFilter("response_action_theme.theme_id$need_id",
+                                             label = T("Counseling Reason"),
+                                             hidden = True,
+                                             ),
+                               DateFilter("start_date",
+                                          hidden = True,
+                                          hide_time = not ui_options_get("response_use_time"),
+                                          ),
                                ],
                             )
                         settings.search.filter_manager = False
@@ -2321,8 +2321,8 @@ def config(settings):
 
             if not r.component and not r.record:
 
-                from core import S3TextFilter, \
-                                 S3OptionsFilter
+                from core import TextFilter, \
+                                 OptionsFilter
 
                 db = current.db
 
@@ -2345,12 +2345,12 @@ def config(settings):
                                                         for row in rows)
                     status_filter_defaults = [row.id for row in rows
                                                      if not row.is_closed]
-                    status_filter = S3OptionsFilter("status_id",
-                                                    options = status_filter_options,
-                                                    cols = 3,
-                                                    default = status_filter_defaults,
-                                                    sort = False,
-                                                    )
+                    status_filter = OptionsFilter("status_id",
+                                                  options = status_filter_options,
+                                                  cols = 3,
+                                                  default = status_filter_defaults,
+                                                  sort = False,
+                                                  )
                     status_id = "status_id"
                 else:
                     status_filter = None
@@ -2358,21 +2358,21 @@ def config(settings):
 
                 # Filter widgets
                 filter_widgets = [
-                    S3TextFilter(["person_id$pe_label",
-                                  "person_id$first_name",
-                                  "person_id$last_name",
-                                  "need_details",
-                                  ],
-                                  label = T("Search"),
+                    TextFilter(["person_id$pe_label",
+                                "person_id$first_name",
+                                "person_id$last_name",
+                                "need_details",
+                                ],
+                               label = T("Search"),
+                               ),
+                    OptionsFilter("person_id$person_details.nationality",
+                                  label = T("Client Nationality"),
+                                  hidden = True,
                                   ),
-                    S3OptionsFilter("person_id$person_details.nationality",
-                                    label = T("Client Nationality"),
-                                    hidden = True,
-                                    ),
                     ]
 
                 if sector_id.readable:
-                    filter_widgets.insert(1, S3OptionsFilter(
+                    filter_widgets.insert(1, OptionsFilter(
                                                 "sector_id",
                                                 hidden = True,
                                                 options = sector_options,
@@ -2384,11 +2384,11 @@ def config(settings):
                 if use_priority and not emergencies:
                     field = resource.table.priority
                     priority_opts = OrderedDict(field.requires.options())
-                    priority_filter = S3OptionsFilter("priority",
-                                                      options = priority_opts,
-                                                      cols = 4,
-                                                      sort = False,
-                                                      )
+                    priority_filter = OptionsFilter("priority",
+                                                    options = priority_opts,
+                                                    cols = 4,
+                                                    sort = False,
+                                                    )
                     filter_widgets.insert(2, priority_filter)
 
                 # Can the user see cases from more than one org?
@@ -2396,7 +2396,7 @@ def config(settings):
                 if multiple_orgs:
                     # Add org-filter widget
                     filter_widgets.insert(1,
-                                          S3OptionsFilter("person_id$dvr_case.organisation_id"),
+                                          OptionsFilter("person_id$dvr_case.organisation_id"),
                                           )
 
                 # Subject field (alternatives)
@@ -2427,7 +2427,7 @@ def config(settings):
 
                 # Person responsible filter and list_field
                 if not r.get_vars.get("mine"):
-                    filter_widgets.insert(2, S3OptionsFilter("human_resource_id"))
+                    filter_widgets.insert(2, OptionsFilter("human_resource_id"))
                     list_fields.insert(5, "human_resource_id")
 
                 # Reconfigure table
@@ -2539,57 +2539,57 @@ def config(settings):
                 if r.interactive and not r.id:
 
                     # Custom filter widgets
-                    from core import S3TextFilter, S3OptionsFilter, S3DateFilter, s3_get_filter_opts
+                    from core import TextFilter, OptionsFilter, DateFilter, get_filter_options
                     filter_widgets = [
-                        S3TextFilter(["person_id$pe_label",
-                                      "person_id$first_name",
-                                      "person_id$last_name",
-                                      ],
-                                      label = T("Search"),
+                        TextFilter(["person_id$pe_label",
+                                    "person_id$first_name",
+                                    "person_id$last_name",
+                                    ],
+                                   label = T("Search"),
+                                   ),
+                        OptionsFilter("type_id",
+                                      options = get_filter_options("dvr_case_appointment_type",
+                                                                   translate = True,
+                                                                   ),
+                                      cols = 3,
                                       ),
-                        S3OptionsFilter("type_id",
-                                        options = s3_get_filter_opts("dvr_case_appointment_type",
-                                                                     translate = True,
-                                                                     ),
-                                        cols = 3,
-                                        ),
-                        S3OptionsFilter("status",
-                                        options = s3db.dvr_appointment_status_opts,
-                                        default = 2,
-                                        ),
-                        S3DateFilter("date",
-                                     ),
-                        S3OptionsFilter("person_id$dvr_case.status_id$is_closed",
-                                        cols = 2,
-                                        default = False,
-                                        #hidden = True,
-                                        label = T("Case Closed"),
-                                        options = {True: T("Yes"),
-                                                   False: T("No"),
-                                                   },
-                                        ),
+                        OptionsFilter("status",
+                                      options = s3db.dvr_appointment_status_opts,
+                                      default = 2,
+                                      ),
+                        DateFilter("date",
+                                   ),
+                        OptionsFilter("person_id$dvr_case.status_id$is_closed",
+                                      cols = 2,
+                                      default = False,
+                                      #hidden = True,
+                                      label = T("Case Closed"),
+                                      options = {True: T("Yes"),
+                                                 False: T("No"),
+                                                 },
+                                      ),
                         ]
 
                     if use_pe_label:
                         filter_widgets.append(
-                            S3TextFilter(["person_id$pe_label"],
-                                         label = T("IDs"),
-                                         match_any = True,
-                                         hidden = True,
-                                         comment = T("Search for multiple IDs (separated by blanks)"),
-                                         ))
+                            TextFilter(["person_id$pe_label"],
+                                       label = T("IDs"),
+                                       match_any = True,
+                                       hidden = True,
+                                       comment = T("Search for multiple IDs (separated by blanks)"),
+                                       ))
 
                     resource.configure(filter_widgets = filter_widgets)
 
                 # Default filter today's and tomorrow's appointments
-                from core import s3_set_default_filter
+                from core import set_default_filter
                 now = r.utcnow
                 today = now.replace(hour=0, minute=0, second=0, microsecond=0)
                 tomorrow = today + datetime.timedelta(days=1)
-                s3_set_default_filter("~.date",
-                                      {"ge": today, "le": tomorrow},
-                                      tablename = "dvr_case_appointment",
-                                      )
+                set_default_filter("~.date",
+                                   {"ge": today, "le": tomorrow},
+                                   tablename = "dvr_case_appointment",
+                                   )
 
                 # Field Visibility
                 table = resource.table
@@ -3169,75 +3169,75 @@ def config(settings):
 
                 # Custom Filter Options
                 if r.interactive:
-                    from core import S3AgeFilter, \
-                                     S3DateFilter, \
-                                     S3HierarchyFilter, \
-                                     S3OptionsFilter, \
-                                     S3TextFilter, \
-                                     s3_get_filter_opts
+                    from core import AgeFilter, \
+                                     DateFilter, \
+                                     HierarchyFilter, \
+                                     OptionsFilter, \
+                                     TextFilter, \
+                                     get_filter_options
 
                     filter_widgets = [
-                        S3TextFilter(["person_id$pe_label",
-                                      "person_id$first_name",
-                                      "person_id$middle_name",
-                                      "person_id$last_name",
-                                      "comments",
-                                      ],
-                                     label = T("Search"),
-                                     ),
-                        S3OptionsFilter("status_id",
-                                        options = lambda: \
-                                                  s3_get_filter_opts("dvr_response_status",
-                                                                     orderby = "workflow_position",
-                                                                     ),
-                                        cols = 3,
-                                        orientation = "rows",
-                                        sort = False,
-                                        size = None,
-                                        translate = True,
-                                        ),
-                        S3DateFilter("start_date",
-                                     hidden = not is_report,
-                                     hide_time = not use_time,
-                                     ),
-                        S3OptionsFilter(
+                        TextFilter(["person_id$pe_label",
+                                    "person_id$first_name",
+                                    "person_id$middle_name",
+                                    "person_id$last_name",
+                                    "comments",
+                                    ],
+                                   label = T("Search"),
+                                   ),
+                        OptionsFilter("status_id",
+                                      options = lambda: \
+                                                get_filter_options("dvr_response_status",
+                                                                   orderby = "workflow_position",
+                                                                   ),
+                                      cols = 3,
+                                      orientation = "rows",
+                                      sort = False,
+                                      size = None,
+                                      translate = True,
+                                      ),
+                        DateFilter("start_date",
+                                   hidden = not is_report,
+                                   hide_time = not use_time,
+                                   ),
+                        OptionsFilter(
                             "response_theme_ids",
                             header = True,
                             hidden = True,
                             options = lambda: \
-                                      s3_get_filter_opts("dvr_response_theme",
+                                      get_filter_options("dvr_response_theme",
                                                          org_filter = True,
                                                          ),
                             ),
-                        S3OptionsFilter("person_id$person_details.nationality",
-                                        label = T("Client Nationality"),
-                                        hidden = True,
-                                        ),
-                        S3AgeFilter("person_id$date_of_birth",
-                                    label = T("Client Age"),
-                                    hidden = True,
-                                    )
+                        OptionsFilter("person_id$person_details.nationality",
+                                      label = T("Client Nationality"),
+                                      hidden = True,
+                                      ),
+                        AgeFilter("person_id$date_of_birth",
+                                  label = T("Client Age"),
+                                  hidden = True,
+                                  )
                         ]
 
                     if use_response_type:
                         filter_widgets.insert(3,
-                            S3HierarchyFilter("response_type_id",
-                                              hidden = True,
-                                              ))
+                            HierarchyFilter("response_type_id",
+                                            hidden = True,
+                                            ))
                     if use_due_date:
                         filter_widgets.insert(3,
-                            S3DateFilter("date_due",
-                                         hidden = is_report,
-                                         ))
+                            DateFilter("date_due",
+                                       hidden = is_report,
+                                       ))
                     if hr_filter_opts:
                         hr_filter_opts = dict(hr_filter_opts)
                         hr_filter_opts.pop('', None)
                         filter_widgets.insert(2,
-                            S3OptionsFilter("human_resource_id",
-                                            default = hr_filter_default,
-                                            header = True,
-                                            options = dict(hr_filter_opts),
-                                            ))
+                            OptionsFilter("human_resource_id",
+                                          default = hr_filter_default,
+                                          header = True,
+                                          options = dict(hr_filter_opts),
+                                          ))
 
                     if multiple_orgs:
                         # Add case organisation filter
@@ -3251,9 +3251,9 @@ def config(settings):
                         else:
                             # Look up from records
                             org_filter_opts = None
-                        filter_widgets.insert(1, S3OptionsFilter(org_context,
-                                                                 options = org_filter_opts,
-                                                                 ))
+                        filter_widgets.insert(1, OptionsFilter(org_context,
+                                                               options = org_filter_opts,
+                                                               ))
 
                     s3db.configure("dvr_response_action",
                                    filter_widgets = filter_widgets,
@@ -3635,7 +3635,7 @@ def config(settings):
                 filter_widgets = resource.get_config("filter_widgets")
                 if filter_widgets:
 
-                    from core import S3TextFilter
+                    from core import TextFilter
 
                     custom_filters = []
                     for fw in filter_widgets:
@@ -3643,7 +3643,7 @@ def config(settings):
                             continue
                         elif fw.field == "location_id":
                             fw.opts["levels"] = gis_levels
-                        if not isinstance(fw, S3TextFilter) and \
+                        if not isinstance(fw, TextFilter) and \
                            fw.field != "shelter_type_id":
                             fw.opts["hidden"] = True
                         custom_filters.append(fw)
@@ -3758,28 +3758,28 @@ def config(settings):
                        ]
 
         # Custom filter widgets
-        from core import S3TextFilter, S3OptionsFilter, s3_get_filter_opts
-        filter_widgets = [S3TextFilter(["name",
-                                        "organisation_id$name",
-                                        "organisation_id$acronym",
-                                        "comments",
-                                        ],
-                                        label = T("Search"),
-                                       ),
-                          S3OptionsFilter("site_facility_type.facility_type_id",
-                                          options = s3_get_filter_opts("org_facility_type",
-                                                                       translate = True,
-                                                                       ),
+        from core import TextFilter, OptionsFilter, get_filter_options
+        filter_widgets = [TextFilter(["name",
+                                      "organisation_id$name",
+                                      "organisation_id$acronym",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("site_facility_type.facility_type_id",
+                                        options = get_filter_options("org_facility_type",
+                                                                     translate = True,
+                                                                     ),
                                           ),
-                          S3OptionsFilter("organisation_id",
-                                          ),
-                          S3OptionsFilter("obsolete",
-                                          options = {False: T("No"),
-                                                     True: T("Yes"),
-                                                     },
-                                          default = [False],
-                                          cols = 2,
-                                          )
+                          OptionsFilter("organisation_id",
+                                        ),
+                          OptionsFilter("obsolete",
+                                        options = {False: T("No"),
+                                                   True: T("Yes"),
+                                                   },
+                                        default = [False],
+                                        cols = 2,
+                                        )
                           ]
 
         s3db.configure("org_facility",

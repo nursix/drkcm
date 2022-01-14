@@ -54,22 +54,22 @@ def person():
                  ]
 
     # Filter widgets
-    from core import S3TextFilter, S3OptionsFilter
-    filter_widgets = [S3TextFilter(["first_name",
-                                    "middle_name",
-                                    "last_name",
-                                    ],
-                                    label=T("Search"),
-                                    comment=T("You can search by first, middle or last name, and use * as wildcard."),
+    from core import TextFilter, OptionsFilter
+    filter_widgets = [TextFilter(["first_name",
+                                  "middle_name",
+                                  "last_name",
+                                  ],
+                                  label=T("Search"),
+                                  comment=T("You can search by first, middle or last name, and use * as wildcard."),
+                                  ),
+                      OptionsFilter("missing",
+                                    label = T("Status"),
+                                    options = {True: T("Missing"),
+                                               False: T("Found"),
+                                               },
+                                    default = True,
+                                    cols = 2,
                                     ),
-                      S3OptionsFilter("missing",
-                                      label = T("Status"),
-                                      options = {True: T("Missing"),
-                                                 False: T("Found"),
-                                                 },
-                                      default = True,
-                                      cols = 2,
-                                      ),
                       ]
 
     # Reconfigure table

@@ -97,32 +97,32 @@ def hrm_human_resource_controller(**attr):
                            "status",
                            ]
 
-        from core import S3OptionsFilter, S3TextFilter, s3_get_filter_opts
+        from core import OptionsFilter, TextFilter, get_filter_options
         filter_widgets = [
-            S3TextFilter(["person_id$first_name",
-                          "person_id$last_name",
-                          "organisation_id$name",
-                          "person_id$email.value",
-                          "person_id$phone.value",
-                          ],
-                         label = T("Search"),
-                         ),
-            S3OptionsFilter("job_title_id",
-                            options = lambda: s3_get_filter_opts("hrm_job_title"),
-                            hidden = True,
-                            ),
+            TextFilter(["person_id$first_name",
+                        "person_id$last_name",
+                        "organisation_id$name",
+                        "person_id$email.value",
+                        "person_id$phone.value",
+                        ],
+                       label = T("Search"),
+                       ),
+            OptionsFilter("job_title_id",
+                          options = lambda: get_filter_options("hrm_job_title"),
+                          hidden = True,
+                          ),
             ]
         if is_org_group_admin:
             filter_widgets[1:1] = [
-                S3OptionsFilter(
+                OptionsFilter(
                     "organisation_id$group__link.group_id",
                     label = T("Organization Group"),
-                    options = lambda: s3_get_filter_opts("org_group"),
+                    options = lambda: get_filter_options("org_group"),
                     ),
-                S3OptionsFilter(
+                OptionsFilter(
                     "organisation_id$organisation_type__link.organisation_type_id",
                     label = T("Organization Type"),
-                    options = lambda: s3_get_filter_opts("org_organisation_type"),
+                    options = lambda: get_filter_options("org_organisation_type"),
                     hidden = True,
                     ),
                 ]

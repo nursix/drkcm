@@ -3224,7 +3224,7 @@ class S3EmbeddedComponentWidget(FormWidget):
 #==============================================================================
 class S3GroupedOptionsWidget(FormWidget):
     """
-        Widget with checkboxes or radio buttons for S3OptionsFilter
+        Widget with checkboxes or radio buttons for OptionsFilter
         - checkboxes can be optionally grouped by letter
     """
 

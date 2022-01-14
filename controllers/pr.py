@@ -249,14 +249,14 @@ def contact():
                 # @ToDo: Document which workflow uses this?
                 field.label = T("Entity")
                 field.readable = field.writable = True
-                from core import S3TextFilter, S3OptionsFilter
-                filter_widgets = [S3TextFilter(["value",
-                                                "comments",
-                                                ],
-                                               label = T("Search"),
-                                               comment = T("You can search by value or comments."),
-                                               ),
-                                  S3OptionsFilter("contact_method"),
+                from core import TextFilter, OptionsFilter
+                filter_widgets = [TextFilter(["value",
+                                              "comments",
+                                              ],
+                                             label = T("Search"),
+                                             comment = T("You can search by value or comments."),
+                                             ),
+                                  OptionsFilter("contact_method"),
                                   ]
                 s3db.configure("pr_contact",
                                filter_widgets = filter_widgets,

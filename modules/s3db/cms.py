@@ -361,30 +361,30 @@ class CMSContentModel(DataModel):
         if org_field:
             list_fields.append(org_field)
 
-        filter_widgets = [S3TextFilter(["body"],
-                                       label = T("Search"),
-                                       _class = "filter-search",
-                                       #_placeholder = T("Search").upper(),
-                                       ),
-                          S3OptionsFilter("series_id",
-                                          label = T("Type"),
-                                          hidden = True,
-                                          ),
-                          S3LocationFilter("location_id",
-                                           label = T("Location"),
-                                           hidden = True,
-                                           ),
-                          S3OptionsFilter("created_by$organisation_id",
-                                          label = T("Organization"),
-                                          # Can't use this for integers, use field.represent instead
-                                          #represent = "%(name)s",
-                                          hidden = True,
-                                          ),
-                          S3DateFilter("created_on",
-                                       label = T("Date"),
-                                       hide_time = True,
-                                       hidden = True,
-                                       ),
+        filter_widgets = [TextFilter(["body"],
+                                     label = T("Search"),
+                                     _class = "filter-search",
+                                     #_placeholder = T("Search").upper(),
+                                     ),
+                          OptionsFilter("series_id",
+                                        label = T("Type"),
+                                        hidden = True,
+                                        ),
+                          LocationFilter("location_id",
+                                         label = T("Location"),
+                                         hidden = True,
+                                         ),
+                          OptionsFilter("created_by$organisation_id",
+                                        label = T("Organization"),
+                                        # Can't use this for integers, use field.represent instead
+                                        #represent = "%(name)s",
+                                        hidden = True,
+                                        ),
+                          DateFilter("created_on",
+                                     label = T("Date"),
+                                     hide_time = True,
+                                     hidden = True,
+                                     ),
                           ]
 
         # Resource Configuration
@@ -1389,15 +1389,15 @@ class CMSNewsletterModel(DataModel):
                        ]
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["subject", "message", "comments"],
-                                       label = T("Search") ,
-                                       ),
-                          S3OptionsFilter("status",
-                                          options = OrderedDict(status),
-                                          cols = 3,
-                                          sort = False,
-                                          ),
-                          S3DateFilter("date_sent"),
+        filter_widgets = [TextFilter(["subject", "message", "comments"],
+                                     label = T("Search") ,
+                                     ),
+                          OptionsFilter("status",
+                                        options = OrderedDict(status),
+                                        cols = 3,
+                                        sort = False,
+                                        ),
+                          DateFilter("date_sent"),
                           ]
 
         # Table Configuration

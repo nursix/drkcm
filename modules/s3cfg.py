@@ -1579,15 +1579,6 @@ class S3Config(Storage):
         " Label for the Map's Layer Tree "
         return self.gis.get("layers_label", "Layers")
 
-    def get_gis_location_filter_bigtable_lookups(self):
-        """
-            Location filter to use scalability-optimized option lookups
-            - can be overridden by filter widget option (bigtable)
-            - defaults to base.bigtable
-        """
-        setting = self.gis.get("location_filter_bigtable_lookups")
-        return setting if setting is not None else self.get_base_bigtable()
-
     def get_gis_location_represent_address_only(self):
         """
             Never use LatLon for Location Represents
@@ -2839,7 +2830,7 @@ class S3Config(Storage):
 
             NB has scalability problems, so disabled by default =>
                can be overridden per-widget using the "auto_range"
-               option (S3DateFilter)
+               option (DateFilter)
         """
         return self.search.get("dates_auto_range", False)
 

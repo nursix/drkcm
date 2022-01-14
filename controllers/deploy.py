@@ -528,26 +528,26 @@ def alert():
 
             elif r.component_name == "recipient":
                 settings.search.filter_manager = False
-                from core import S3TextFilter, S3OptionsFilter
+                from core import TextFilter, OptionsFilter
                 recipient_filters = [
-                    S3TextFilter([
-                            "human_resource_id$person_id$first_name",
-                            "human_resource_id$person_id$middle_name",
-                            "human_resource_id$person_id$last_name",
-                        ],
+                    TextFilter(
+                        ["human_resource_id$person_id$first_name",
+                         "human_resource_id$person_id$middle_name",
+                         "human_resource_id$person_id$last_name",
+                         ],
                         label=current.T("Name"),
-                    ),
-                    S3OptionsFilter(
+                        ),
+                    OptionsFilter(
                         "human_resource_id$organisation_id",
                         widget="multiselect",
                         search=True,
                         header="",
                         hidden=True,
-                    ),
+                        ),
                 ]
                 if settings.get_org_regions():
                     recipient_filters.insert(1,
-                        s3base.S3HierarchyFilter(
+                        s3base.HierarchyFilter(
                             "human_resource_id$organisation_id$region_id",
                             lookup="org_region",
                             hidden=True,

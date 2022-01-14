@@ -414,7 +414,7 @@ def inv_item_quantity():
 # -----------------------------------------------------------------------------
 def inv_item_packs():
     """
-        Called by S3OptionsFilter to provide the pack options for a
+        Called by OptionsFilter to provide the pack options for a
             particular Item
 
         Access via the .json representation to avoid work rendering menus, etc

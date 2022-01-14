@@ -517,68 +517,68 @@ def newsfeed():
 
     hidden = not settings.get_cms_filter_open()
 
-    from core import S3TextFilter, S3OptionsFilter, S3LocationFilter, S3DateFilter
-    filter_widgets = [S3TextFilter(["body"],
-                                   label = T("Search"),
-                                   _class = "filter-search",
-                                   #_placeholder = T("Search").upper(),
-                                   ),
-                      S3LocationFilter("location_id",
-                                       label = T("Filter by Location"),
-                                       hidden = hidden,
-                                       ),
+    from core import TextFilter, OptionsFilter, LocationFilter, DateFilter
+    filter_widgets = [TextFilter(["body"],
+                                 label = T("Search"),
+                                 _class = "filter-search",
+                                 #_placeholder = T("Search").upper(),
+                                 ),
+                      LocationFilter("location_id",
+                                     label = T("Filter by Location"),
+                                     hidden = hidden,
+                                     ),
                       ]
     fappend = filter_widgets.append
     finsert = filter_widgets.insert
 
     if show_events:
-        fappend(S3OptionsFilter("event_post.event_id",
-                                label = T("Filter by Disaster"),
-                                hidden = hidden,
-                                ))
+        fappend(OptionsFilter("event_post.event_id",
+                              label = T("Filter by Disaster"),
+                              hidden = hidden,
+                              ))
 
     if org_field:
-        fappend(S3OptionsFilter(org_field,
-                                label = T("Filter by Organization"),
-                                # Can't use this for created_by as integer, use field.represent instead
-                                #represent = "%(name)s",
-                                hidden = hidden,
-                                ))
+        fappend(OptionsFilter(org_field,
+                              label = T("Filter by Organization"),
+                              # Can't use this for created_by as integer, use field.represent instead
+                              #represent = "%(name)s",
+                              hidden = hidden,
+                              ))
 
     if org_group_field:
         group_label = settings.get_org_groups()
         if group_label:
-            fappend(S3OptionsFilter(org_group_field,
-                                    label = T("Filter by %(type)s") % dict(type=T(group_label)),
-                                    # Can't use this for created_by as integer, use field.represent instead
-                                    #represent = "%(name)s",
-                                    hidden = hidden,
-                                    ))
+            fappend(OptionsFilter(org_group_field,
+                                  label = T("Filter by %(type)s") % dict(type=T(group_label)),
+                                  # Can't use this for created_by as integer, use field.represent instead
+                                  #represent = "%(name)s",
+                                  hidden = hidden,
+                                  ))
 
-    fappend(S3DateFilter("date",
-                         label = T("Filter by Date"),
-                         hide_time = True,
-                         hidden = hidden,
-                         ))
+    fappend(DateFilter("date",
+                       label = T("Filter by Date"),
+                       hide_time = True,
+                       hidden = hidden,
+                       ))
 
     if settings.get_cms_show_tags():
-        finsert(1, S3OptionsFilter("tag_post.tag_id",
-                                   label = T("Filter by Tag"),
-                                   represent = "%(name)s",
-                                   hidden = hidden,
-                                   ))
+        finsert(1, OptionsFilter("tag_post.tag_id",
+                                 label = T("Filter by Tag"),
+                                 represent = "%(name)s",
+                                 hidden = hidden,
+                                 ))
 
     if settings.get_cms_bookmarks() and auth.user:
-        finsert(1, S3OptionsFilter("bookmark.user_id",
-                                   label = T("Filter by Bookmark"),
-                                   # Can't just use "" as this is then omitted from rendering
-                                   options = {"*": T("All"),
-                                              auth.user.id: T("My Bookmarks"),
-                                              },
-                                   cols = 2,
-                                   multiple = False,
-                                   hidden = hidden,
-                                   ))
+        finsert(1, OptionsFilter("bookmark.user_id",
+                                 label = T("Filter by Bookmark"),
+                                 # Can't just use "" as this is then omitted from rendering
+                                 options = {"*": T("All"),
+                                            auth.user.id: T("My Bookmarks"),
+                                            },
+                                 cols = 2,
+                                 multiple = False,
+                                 hidden = hidden,
+                                 ))
 
     notify_fields = [(T("Date"), "date"),
                      (T("Location"), "location_id"),
@@ -588,23 +588,23 @@ def newsfeed():
     if len_series > 3:
         notify_fields.insert(0, (T("Type"), "series_id"))
         # Multiselect widget
-        finsert(1, S3OptionsFilter("series_id",
-                                   label = T("Filter by Type"),
-                                   # We want translations
-                                   #represent = "%(name)s",
-                                   hidden = hidden,
-                                   ))
+        finsert(1, OptionsFilter("series_id",
+                                 label = T("Filter by Type"),
+                                 # We want translations
+                                 #represent = "%(name)s",
+                                 hidden = hidden,
+                                 ))
 
     elif len_series > 1:
         notify_fields.insert(0, (T("Type"), "series_id"))
         # Checkboxes
-        finsert(1, S3OptionsFilter("series_id",
-                                   label = T("Filter by Type"),
-                                   # We want translations
-                                   #represent = "%(name)s",
-                                   cols = 2,
-                                   hidden = hidden,
-                                   ))
+        finsert(1, OptionsFilter("series_id",
+                                 label = T("Filter by Type"),
+                                 # We want translations
+                                 #represent = "%(name)s",
+                                 cols = 2,
+                                 hidden = hidden,
+                                 ))
     else:
         # No Widget or notify_field
         pass
@@ -1170,11 +1170,11 @@ def read_newsletter():
         configure_newsletter_attachments(file_icons=True)
 
         from core import accessible_pe_query, \
-                         S3DateFilter, \
-                         S3OptionsFilter, \
+                         DateFilter, \
+                         OptionsFilter, \
                          S3SQLCustomForm, \
                          S3SQLInlineComponent, \
-                         S3TextFilter
+                         TextFilter
 
         resource = r.resource
         table = resource.table
@@ -1231,14 +1231,14 @@ def read_newsletter():
                             )
 
             # Filter Widgets
-            filter_widgets = [S3TextFilter(["subject",
-                                            "message",
-                                            "comments",
-                                            "organisation_id$name",
-                                            ],
-                                           label = T("Search") ,
-                                           ),
-                              S3DateFilter("date_sent", hidden=True),
+            filter_widgets = [TextFilter(["subject",
+                                          "message",
+                                          "comments",
+                                          "organisation_id$name",
+                                          ],
+                                         label = T("Search") ,
+                                         ),
+                              DateFilter("date_sent", hidden=True),
                               ]
 
             # List Fields

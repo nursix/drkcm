@@ -1277,7 +1277,7 @@ S3.search = {};
                     widget.find('.range-picker')
                           .trigger('resize', [min, max, newopts.ts]);
                 } else {
-                    // @todo: other filter types (e.g. S3LocationFilter)
+                    // @todo: other filter types (e.g. LocationFilter)
                 }
             }
         }

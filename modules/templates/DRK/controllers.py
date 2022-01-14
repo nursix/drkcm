@@ -217,8 +217,8 @@ class surplus_meals(CustomController):
         from core import FS, \
                          crud_request, \
                          S3CRUD, \
-                         S3TextFilter, \
-                         S3DateFilter, \
+                         TextFilter, \
+                         DateFilter, \
                          S3SQLCustomForm
 
         s3 = current.response.s3
@@ -284,12 +284,12 @@ class surplus_meals(CustomController):
                                             "comments",
                                             )
                 # Custom filter widgets
-                filter_widgets = [S3TextFilter(["created_by$email",
-                                                "comments",
-                                                ],
-                                                label = T("Search"),
-                                               ),
-                                  S3DateFilter("date"),
+                filter_widgets = [TextFilter(["created_by$email",
+                                              "comments",
+                                              ],
+                                             label = T("Search"),
+                                             ),
+                                  DateFilter("date"),
                                   ]
 
                 resource.configure(crud_form = crud_form,

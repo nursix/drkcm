@@ -1761,40 +1761,40 @@ class DVRResponseModel(DataModel):
         # Filter widgets
         if use_response_types:
             if hierarchical_response_types:
-                response_type_filter = S3HierarchyFilter(
+                response_type_filter = HierarchyFilter(
                                             "response_type_id",
                                             lookup = "dvr_response_type",
                                             hidden = True,
                                             )
             else:
-                response_type_filter = S3OptionsFilter(
+                response_type_filter = OptionsFilter(
                                             "response_type_id",
                                             options = lambda: \
-                                                      s3_get_filter_opts("dvr_response_type"),
+                                                      get_filter_options("dvr_response_type"),
                                             hidden = True,
                                             )
         else:
             response_type_filter = None
 
         if use_due_date:
-            due_filter = S3DateFilter("date_due")
+            due_filter = DateFilter("date_due")
         else:
             due_filter = None
 
-        filter_widgets = [S3TextFilter(["case_activity_id$person_id$pe_label",
-                                        "case_activity_id$person_id$first_name",
-                                        "case_activity_id$person_id$middle_name",
-                                        "case_activity_id$person_id$last_name",
-                                        "comments",
-                                        ],
-                                        label = T("Search"),
-                                       ),
-                          S3OptionsFilter("status_id",
-                                          options = lambda: \
-                                                    s3_get_filter_opts("dvr_response_status"),
-                                          cols = 3,
-                                          translate = True,
-                                          ),
+        filter_widgets = [TextFilter(["case_activity_id$person_id$pe_label",
+                                      "case_activity_id$person_id$first_name",
+                                      "case_activity_id$person_id$middle_name",
+                                      "case_activity_id$person_id$last_name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("status_id",
+                                        options = lambda: \
+                                                  get_filter_options("dvr_response_status"),
+                                        cols = 3,
+                                        translate = True,
+                                        ),
                           due_filter,
                           response_type_filter,
                           ]
@@ -3132,51 +3132,51 @@ class DVRCaseActivityModel(DataModel):
             list_fields[-1:-1] = ["followup", "followup_date"]
 
         # Filter widgets
-        filter_widgets = [S3TextFilter(["person_id$pe_label",
-                                        "person_id$first_name",
-                                        "person_id$last_name",
-                                        "case_id$reference",
-                                        "need_details",
-                                        "activity_details",
-                                        ],
-                                        label = T("Search"),
+        filter_widgets = [TextFilter(["person_id$pe_label",
+                                      "person_id$first_name",
+                                      "person_id$last_name",
+                                      "case_id$reference",
+                                      "need_details",
+                                      "activity_details",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("emergency",
+                                        options = {True: T("Yes"),
+                                                   False: T("No"),
+                                                   },
+                                        cols = 2,
                                         ),
-                          S3OptionsFilter("emergency",
-                                          options = {True: T("Yes"),
-                                                     False: T("No"),
-                                                     },
-                                          cols = 2,
-                                          ),
-                          S3OptionsFilter(need_field,
-                                          options = lambda: s3_get_filter_opts("dvr_need",
-                                                                               translate = True,
-                                                                               ),
-                                          ),
-                          S3OptionsFilter("completed",
-                                          default = False,
-                                          options = {True: T("Yes"),
-                                                     False: T("No"),
-                                                     },
-                                          cols = 2,
-                                          ),
+                          OptionsFilter(need_field,
+                                        options = lambda: get_filter_options("dvr_need",
+                                                                             translate = True,
+                                                                             ),
+                                        ),
+                          OptionsFilter("completed",
+                                        default = False,
+                                        options = {True: T("Yes"),
+                                                   False: T("No"),
+                                                   },
+                                        cols = 2,
+                                        ),
                           ]
         if follow_up:
-            filter_widgets.extend([S3OptionsFilter("followup",
-                                                   label = T("Follow-up required"),
-                                                   options = {True: T("Yes"),
-                                                              False: T("No"),
-                                                              },
-                                                   cols = 2,
-                                                   hidden = True,
-                                                   ),
-                                   S3DateFilter("followup_date",
-                                                cols = 2,
-                                                hidden = True,
-                                                ),
+            filter_widgets.extend([OptionsFilter("followup",
+                                                 label = T("Follow-up required"),
+                                                 options = {True: T("Yes"),
+                                                            False: T("No"),
+                                                            },
+                                                 cols = 2,
+                                                 hidden = True,
+                                                 ),
+                                   DateFilter("followup_date",
+                                              cols = 2,
+                                              hidden = True,
+                                              ),
                                    ])
 
         if service_type:
-            filter_widgets.insert(3, S3OptionsFilter("service_id"))
+            filter_widgets.insert(3, OptionsFilter("service_id"))
 
         # Report options
         axes = [need_field,
@@ -5155,21 +5155,21 @@ class DVRCaseEventModel(DataModel):
             )
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["person_id$pe_label",
-                                        "person_id$first_name",
-                                        "person_id$middle_name",
-                                        "person_id$last_name",
-                                        "created_by$email",
-                                        "comments",
-                                        ],
-                                        label = T("Search"),
-                                       ),
-                          S3OptionsFilter("type_id",
-                                          options = lambda: s3_get_filter_opts("dvr_case_event_type",
-                                                                               translate = True,
-                                                                               ),
-                                          ),
-                          S3DateFilter("date"),
+        filter_widgets = [TextFilter(["person_id$pe_label",
+                                      "person_id$first_name",
+                                      "person_id$middle_name",
+                                      "person_id$last_name",
+                                      "created_by$email",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("type_id",
+                                        options = lambda: get_filter_options("dvr_case_event_type",
+                                                                             translate = True,
+                                                                             ),
+                                        ),
+                          DateFilter("date"),
                           ]
 
         # Table Configuration
@@ -5977,13 +5977,13 @@ class DVRSiteActivityModel(DataModel):
         )
 
         # Filter widgets
-        date_filter = S3DateFilter("date")
+        date_filter = DateFilter("date")
         date_filter.operator = ["eq"]
         filter_widgets = [date_filter]
         if not default_site:
-            site_filter = S3OptionsFilter("site_id",
-                                          label = SITE,
-                                          )
+            site_filter = OptionsFilter("site_id",
+                                        label = SITE,
+                                        )
             filter_widgets.insert(0, site_filter)
 
         # Table configuration
@@ -7265,16 +7265,16 @@ class DVRManageAppointments(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear = filter_clear,
-                                               formstyle = filter_formstyle,
-                                               submit = filter_submit,
-                                               ajax = True,
-                                               url = filter_submit_url,
-                                               ajaxurl = filter_ajax_url,
-                                               _class = "filter-form",
-                                               _id = "datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear = filter_clear,
+                                             formstyle = filter_formstyle,
+                                             submit = filter_submit,
+                                             ajax = True,
+                                             url = filter_submit_url,
+                                             ajaxurl = filter_ajax_url,
+                                             _class = "filter-form",
+                                             _id = "datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = resource.alias if r.component else None
                     ff = filter_form.html(fresource,
@@ -9535,7 +9535,7 @@ class dvr_AssignMethod(CRUDMethod):
 
                     # Default Filters (before selecting data!)
                     resource.configure(filter_widgets=filter_widgets)
-                    S3FilterForm.apply_filter_defaults(r, resource)
+                    FilterForm.apply_filter_defaults(r, resource)
 
                     # Where to retrieve updated filter options from:
                     filter_ajax_url = URL(f="case",
@@ -9546,16 +9546,16 @@ class dvr_AssignMethod(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear=filter_clear,
-                                               formstyle=filter_formstyle,
-                                               submit=filter_submit,
-                                               ajax=True,
-                                               url=filter_submit_url,
-                                               ajaxurl=filter_ajax_url,
-                                               _class="filter-form",
-                                               _id="datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear=filter_clear,
+                                             formstyle=filter_formstyle,
+                                             submit=filter_submit,
+                                             ajax=True,
+                                             url=filter_submit_url,
+                                             ajaxurl=filter_ajax_url,
+                                             _class="filter-form",
+                                             _id="datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = r.component.alias if r.component else None
                     ff = filter_form.html(fresource,

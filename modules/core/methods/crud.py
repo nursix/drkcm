@@ -1180,8 +1180,8 @@ class S3CRUD(CRUDMethod):
                representation not in ("aadata", "dl"):
                 show_filter_form = True
                 # Apply filter defaults (before rendering the data!)
-                from ..filters import S3FilterForm
-                default_filters = S3FilterForm.apply_filter_defaults(r, resource)
+                from ..filters import FilterForm
+                default_filters = FilterForm.apply_filter_defaults(r, resource)
             else:
                 default_filters = None
 
@@ -1246,16 +1246,16 @@ class S3CRUD(CRUDMethod):
                                           current.deployment_settings.get_ui_filter_clear())
                 filter_formstyle = get_config("filter_formstyle", None)
                 filter_submit = get_config("filter_submit", True)
-                filter_form = S3FilterForm(filter_widgets,
-                                           clear = filter_clear,
-                                           formstyle = filter_formstyle,
-                                           submit = filter_submit,
-                                           ajax = filter_ajax,
-                                           url = filter_submit_url,
-                                           ajaxurl = filter_ajax_url,
-                                           _class = "filter-form",
-                                           _id = "%s-filter-form" % target
-                                           )
+                filter_form = FilterForm(filter_widgets,
+                                         clear = filter_clear,
+                                         formstyle = filter_formstyle,
+                                         submit = filter_submit,
+                                         ajax = filter_ajax,
+                                         url = filter_submit_url,
+                                         ajaxurl = filter_ajax_url,
+                                         _class = "filter-form",
+                                         _id = "%s-filter-form" % target
+                                         )
                 fresource = current.s3db.resource(resource.tablename) # Use a clean resource
                 alias = resource.alias if r.component else None
                 output["list_filter_form"] = filter_form.html(fresource,

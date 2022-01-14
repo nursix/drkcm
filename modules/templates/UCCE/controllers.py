@@ -1664,7 +1664,7 @@ class dc_TargetReport(CRUDMethod):
         if report_filters is None:
             ff = ""
         else:
-            from core import S3FilterForm, S3OptionsFilter, S3SliderFilter
+            from core import FilterForm, OptionsFilter, SliderFilter
 
             questions_lookup = {}
             for q in data["questions"]:
@@ -1674,28 +1674,28 @@ class dc_TargetReport(CRUDMethod):
             for question_id in report_filters:
                 question = report_filters[question_id]
                 if question["field_type"] == 2:
-                    filter_widgets.append(S3SliderFilter(questions_lookup[int(question_id)],
-                                                         label = question["label"],
-                                                         ))
+                    filter_widgets.append(SliderFilter(questions_lookup[int(question_id)],
+                                                       label = question["label"],
+                                                       ))
                 elif question["field_type"] == 6:
-                    filter_widgets.append(S3OptionsFilter(questions_lookup[int(question_id)],
-                                                          label = question["label"],
-                                                          ))
+                    filter_widgets.append(OptionsFilter(questions_lookup[int(question_id)],
+                                                        label = question["label"],
+                                                        ))
 
             request = current.request
             filter_submit_url = URL(args = request.args,
                                     extension = "div",
                                     )
-            filter_form = S3FilterForm(filter_widgets,
-                                       #clear = False,
-                                       #formstyle = filter_formstyle,
-                                       submit = True,
-                                       ajax = True,
-                                       url = filter_submit_url,
-                                       #ajaxurl = filter_ajax_url,
-                                       #_class = "filter-form",
-                                       #_id = "datatable-filter-form",
-                                       )
+            filter_form = FilterForm(filter_widgets,
+                                     #clear = False,
+                                     #formstyle = filter_formstyle,
+                                     submit = True,
+                                     ajax = True,
+                                     url = filter_submit_url,
+                                     #ajaxurl = filter_ajax_url,
+                                     #_class = "filter-form",
+                                     #_id = "datatable-filter-form",
+                                     )
             fresource = current.s3db.resource(data["dtablename"])
             ff = filter_form.html(fresource,
                                   request.get_vars,
@@ -3313,7 +3313,7 @@ class dc_ProjectDelete(CRUDMethod):
 # =============================================================================
 def text_filter_formstyle(form, fields, *args, **kwargs):
     """
-        Custom formstyle for S3TextFilter
+        Custom formstyle for TextFilter
     """
 
     def render_row(row_id, label, widget, comment, hidden=False):

@@ -619,17 +619,17 @@ class FinVoucherModel(DataModel):
                        ]
 
         # Filter widgets
-        filter_widgets = [S3TextFilter(["invoice_no",
-                                        "refno",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3OptionsFilter("status",
-                                          options = OrderedDict(invoice_status),
-                                          sort = False,
-                                          ),
-                          S3OptionsFilter("human_resource_id",
-                                          ),
+        filter_widgets = [TextFilter(["invoice_no",
+                                      "refno",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("status",
+                                        options = OrderedDict(invoice_status),
+                                        sort = False,
+                                        ),
+                          OptionsFilter("human_resource_id",
+                                        ),
                           ]
 
         self.configure(tablename,
