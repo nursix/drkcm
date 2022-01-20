@@ -807,6 +807,15 @@ Thank you"""
                 if pending_consent:
                     next = URL(c="default", f="user", args=["consent"])
 
+                # Check for mandatory page after login
+                mandatory = deployment_settings.get_auth_mandatory_page()
+                if mandatory:
+                    next_url = mandatory() if callable(mandatory) else mandatory
+                else:
+                    next_url = None
+                if next_url:
+                    next = next_url
+
             if next is DEFAULT:
                 if deployment_settings.get_auth_login_next_always():
                     next = deployment_settings.get_auth_login_next()

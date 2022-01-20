@@ -10,7 +10,7 @@ from dateutil.relativedelta import relativedelta
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
 from gluon.storage import Storage
 
-from core import IS_ONE_OF, IS_UTC_DATE, S3CRUD, S3Represent, \
+from core import CustomController, IS_ONE_OF, IS_UTC_DATE, S3CRUD, S3Represent, \
                  get_form_record_id
 
 # -------------------------------------------------------------------------
@@ -509,6 +509,109 @@ def disease_testing_demographic_controller(**attr):
 
     # Enable bigtable features
     current.deployment_settings.base.bigtable = True
+
+    return attr
+
+# -------------------------------------------------------------------------
+def disease_daycare_testing_controller(**attr):
+
+    T = current.T
+
+    s3db = current.s3db
+    is_admin = current.auth.s3_has_role("ADMIN")
+
+    s3 = current.response.s3
+
+    # Enable bigtable features
+    current.deployment_settings.base.bigtable = True
+
+    # Custom prep
+    standard_prep = s3.prep
+    def prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        resource = r.resource
+
+        # Get pending responders
+        managed_orgs = pending = None
+        if not is_admin:
+            from ..config import TESTSTATIONS
+            from ..helpers import get_managed_orgs
+            managed_orgs = get_managed_orgs(TESTSTATIONS)
+            if managed_orgs:
+                pending = s3db.disease_daycare_testing_get_pending_responders(managed_orgs)
+
+        if pending:
+            # Filter organisation_id selector to pending responders
+            table = resource.table
+            field = table.organisation_id
+            if len(pending) == 1:
+                field.default = pending[0]
+                field.writable = False
+            else:
+                otable = s3db.org_organisation
+                dbset = current.db(otable.id.belongs(pending))
+                field.requires = IS_ONE_OF(dbset, "org_organisation.id",
+                                           field.represent,
+                                           )
+            insertable = True
+            if not r.method and not r.record:
+                r.method = "create"
+            current.session.s3.mandatory_page = True
+        else:
+            insertable = False
+
+        editable = True if managed_orgs or is_admin else False
+        resource.configure(insertable = insertable,
+                           editable = editable,
+                           deletable = editable,
+                           )
+
+        if (insertable or editable) and not is_admin:
+            # Configure custom form
+            from core import S3SQLCustomForm
+            crud_form = S3SQLCustomForm("organisation_id",
+                                        (T("Does your organisation conduct tests in daycare centers?"),
+                                         "daycare_testing"),
+                                        (T("Do you test in daycare centers on a regular basis?"),
+                                         "regular_testing"),
+                                        (T("How frequently do you test in daycare centers?"),
+                                         "frequency"),
+                                        (T("How many daycare centers are regularly serviced by your organisation?"),
+                                         "number_of_dc"),
+                                        "comments",
+                                        )
+            resource.configure(crud_form = crud_form)
+
+        if r.method == "create":
+            current.menu.options = None
+
+        return result
+    s3.prep = prep
+
+    standard_postp = s3.postp
+    def custom_postp(r, output):
+
+        # Call standard postp
+        if callable(standard_postp):
+            output = standard_postp(r, output)
+
+        if r.method == "create":
+
+            CustomController._view("RLPPTM", "register.html")
+
+            if isinstance(output, dict):
+                output["title"] = s3.crud_strings["disease_daycare_testing"].title_list
+                intro = s3db.cms_get_content("DaycareTestingInquiry",
+                                             module = "disease",
+                                             resource = "daycare_testing",
+                                             )
+                if intro:
+                    output["intro"] = intro
+
+        return output
+    s3.postp = custom_postp
 
     return attr
 

@@ -94,6 +94,48 @@ def get_managed_facilities(role="ORG_ADMIN", public_only=True, cacheable=True):
     return [s.site_id for s in sites]
 
 # =============================================================================
+def get_managed_orgs(group=None, cacheable=True):
+    """
+        Get organisations managed by the current user
+
+        Args:
+            group: the organisation group
+            cacheable: whether the result can be cached
+
+        Returns:
+            list of organisation_ids
+    """
+
+    s3db = current.s3db
+
+    otable = s3db.org_organisation
+    query = (otable.deleted == False)
+
+    realms = get_role_realms("ORG_ADMIN")
+    if realms:
+        query = (otable.realm_entity.belongs(realms)) & query
+    elif realms is not None:
+        # User does not have the required role, or at least not for any realms
+        return []
+
+    if group:
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        join = [gtable.on((mtable.organisation_id == otable.id) & \
+                          (mtable.deleted == False) & \
+                          (gtable.id == mtable.group_id) & \
+                          (gtable.name == group)
+                          )]
+    else:
+        join = None
+
+    orgs = current.db(query).select(otable.id,
+                                    cache = s3db.cache if cacheable else None,
+                                    join = join,
+                                    )
+    return [o.id for o in orgs]
+
+# =============================================================================
 def get_org_accounts(organisation_id):
     """
         Get all user accounts linked to an organisation

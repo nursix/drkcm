@@ -133,7 +133,11 @@ class index(CustomController):
                   "login_form": login_form,
                   "announcements": announcements,
                   "announcements_title": announcements_title,
-                  "intro": self.get_cms_intro(("default", "index", "HomepageIntro"), cmsxml=True),
+                  "intro": current.s3db.cms_get_content("HomepageIntro",
+                                                        module = "default",
+                                                        resource = "index",
+                                                        cmsxml = True,
+                                                        ),
                   "buttons": buttons,
                   }
 
@@ -190,39 +194,6 @@ class index(CustomController):
                                  )
 
         return posts
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_cms_intro(intro, cmsxml=True):
-        """
-            Get intro from CMS
-
-            Args:
-                intro: the intro spec as tuple (module, resource, postname)
-        """
-
-        # Get intro text from CMS
-        db = current.db
-        s3db = current.s3db
-
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == intro[0]) & \
-                         (ltable.resource == intro[1]) & \
-                         (ltable.deleted == False))
-
-        query = (ctable.name == intro[2]) & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                               join = join,
-                               cache = s3db.cache,
-                               limitby = (0, 1),
-                               ).first()
-        if not row:
-            return ""
-
-        return XML(row.body) if cmsxml else row.body
 
 # =============================================================================
 class overview(CustomController):

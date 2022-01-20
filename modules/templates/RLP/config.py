@@ -2638,11 +2638,11 @@ def config(settings):
                 elif method == "organize":
                     # Add hint how to use the organizer
                     if not coordinator:
-                        from .helpers import get_cms_intro
-                        intro = get_cms_intro("hrm", "delegation",
-                                              "DelegationOrganizerIntro",
-                                              cmsxml = True,
-                                              )
+                        intro = current.s3db.cms_get_content("DelegationOrganizerIntro",
+                                                             module = "hrm",
+                                                             resource = "delegation",
+                                                             cmsxml = True,
+                                                             )
                         if intro:
                             output["intro"] = intro
                     # Add switch to list view

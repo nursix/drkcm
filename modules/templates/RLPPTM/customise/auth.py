@@ -307,4 +307,53 @@ def auth_user_resource(r, tablename):
                             approve_user = approve_user,
                             )
 
+# -------------------------------------------------------------------------
+def pending_response():
+    """
+        Check for pending responses to mandatory data inquiry
+
+        Returns:
+            URL to redirect
+    """
+
+    if not current.deployment_settings.get_custom("daycare_testing_inquiry"):
+        return None
+
+    pending = None
+
+    # Get pending responders
+    managed_orgs = pending = None
+    if current.auth.s3_has_role("ORG_ADMIN", include_admin=False):
+        from ..config import TESTSTATIONS
+        from ..helpers import get_managed_orgs
+        managed_orgs = get_managed_orgs(TESTSTATIONS)
+        if managed_orgs:
+            pending = current.s3db.disease_daycare_testing_get_pending_responders(managed_orgs)
+
+    request = current.request
+
+    if pending:
+        response_url = None
+        # Only set a direct URL when not already there
+        if request.controller != "disease" or request.function != "daycare_testing":
+            next_url = request.get_vars.get("_next")
+            if not next_url:
+                next_url = URL()
+            response_url = URL(c = "disease",
+                               f = "daycare_testing",
+                               args = ["create"],
+                               vars = {"_next": next_url},
+                               )
+        # Return to this page until there are no more pending responders
+        current.session.s3.mandatory_page = True
+        return response_url
+
+    else:
+        # No further pending responses, moving on
+        next_url = request.get_vars.get("_next")
+        if not next_url:
+            next_url = URL(c="default", f="index")
+        current.session.s3.mandatory_page = False
+        return next_url
+
 # END =========================================================================

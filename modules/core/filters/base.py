@@ -563,6 +563,14 @@ class FilterForm:
                 alias: the resource alias to use in widgets
         """
 
+        attr = self.attr
+        form_id = attr.get("_id")
+        if not form_id:
+            form_id = "filter-form"
+
+        opts_get = self.opts.get
+        settings = current.deployment_settings
+
         formstyle = self.opts.get("formstyle", None)
         if not formstyle:
             formstyle = current.deployment_settings.get_ui_filter_formstyle()
@@ -573,9 +581,23 @@ class FilterForm:
                                     formstyle = formstyle,
                                     )
 
-        controls = self._render_controls(resource)
+        # Filter Manager
+        fm = settings.get_search_filter_manager()
+        if fm and opts_get("filter_manager", resource is not None):
+            filter_manager = self._render_filters(resource, form_id)
+        else:
+            filter_manager = None
+
+        controls = self._render_controls(resource, filter_manager)
         if controls:
             rows.append(formstyle(None, "", controls, ""))
+
+        # Filter Manager (load/apply/save filters)
+        if filter_manager:
+            fmrow = formstyle(None, "", filter_manager, "")
+            if hasattr(fmrow, "add_class"):
+                fmrow.add_class("hide filter-manager-row")
+            rows.append(fmrow)
 
         # Adapt to formstyle: only render a TABLE if formstyle returns TRs
         if rows:

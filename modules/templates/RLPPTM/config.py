@@ -36,6 +36,11 @@ def config(settings):
     # Custom XSLT transformation stylesheets
     settings.base.xml_formats = {"wws": "RLPPTM"}
 
+    # Custom models/controllers
+    settings.base.models = "templates.RLPPTM.models"
+    settings.base.rest_controllers = {("disease", "daycare_testing"): ("disease", "daycare_testing"),
+                                      }
+
     # Custom Logo
     #settings.ui.menu_logo = "/%s/static/themes/<templatename>/img/logo.png" % current.request.application
 
@@ -216,6 +221,9 @@ def config(settings):
     settings.custom.test_station_registration = True
     settings.custom.test_station_cleanup = True
 
+    settings.custom.daycare_testing_data = False
+    settings.custom.daycare_testing_inquiry = False
+
     # -------------------------------------------------------------------------
     def poll_dcc():
         """
@@ -230,11 +238,14 @@ def config(settings):
     # -------------------------------------------------------------------------
     from .customise.auth import rlpptm_realm_entity, \
                                 consent_check, \
+                                pending_response, \
                                 auth_consent_resource, \
                                 auth_user_resource
 
     settings.auth.realm_entity = rlpptm_realm_entity
     settings.auth.consent_check = consent_check
+    settings.auth.mandatory_page = pending_response
+
     settings.customise_auth_consent_resource = auth_consent_resource
     settings.customise_auth_user_resource = auth_user_resource
 
@@ -255,7 +266,8 @@ def config(settings):
                                    disease_testing_report_resource, \
                                    disease_testing_report_controller, \
                                    disease_testing_demographic_resource, \
-                                   disease_testing_demographic_controller
+                                   disease_testing_demographic_controller, \
+                                   disease_daycare_testing_controller
 
     settings.customise_disease_case_diagnostics_resource = disease_case_diagnostics_resource
     settings.customise_disease_case_diagnostics_controller = disease_case_diagnostics_controller
@@ -263,6 +275,7 @@ def config(settings):
     settings.customise_disease_testing_report_controller = disease_testing_report_controller
     settings.customise_disease_testing_demographic_resource = disease_testing_demographic_resource
     settings.customise_disease_testing_demographic_controller = disease_testing_demographic_controller
+    settings.customise_disease_daycare_testing_controller = disease_daycare_testing_controller
 
     # -------------------------------------------------------------------------
     from .customise.doc import doc_document_resource

@@ -58,9 +58,15 @@ class S3MainMenu(default.S3MainMenu):
         order_access = lambda i: supply_coordinator(i) or supply_requester(i)
         supply_access = lambda i: order_access(i) or supply_distributor(i)
 
+        if settings.get_custom("daycare_testing_data"):
+            daycare_testing = MM("Daycare Testing", f="daycare_testing", restrict="ORG_GROUP_ADMIN")
+        else:
+            daycare_testing = None
+
         menu = [MM("Tests##disease", c="disease", link=False)(
                     MM("Test Results", f="case_diagnostics", restrict="TEST_PROVIDER"),
                     MM("Daily Reports", f="testing_report"),
+                    daycare_testing,
                     ),
                 MM("Equipment", c=("req", "inv", "supply"), link=False, check=supply_access)(
                     MM("Orders##delivery", f="req", vars={"type": 1}, check=order_access),
@@ -269,10 +275,18 @@ class S3OptionsMenu(default.S3OptionsMenu):
         daily_report = lambda i: has_role("ORG_ADMIN") and \
                                  has_role("TEST_PROVIDER", include_admin=False)
 
-        if current.deployment_settings.get_disease_testing_report_by_demographic():
+        settings = current.deployment_settings
+        if settings.get_disease_testing_report_by_demographic():
             report_function = "testing_demographic"
         else:
             report_function = "testing_report"
+
+        if settings.get_custom("daycare_testing_data"):
+            daycare_testing = M("Daycare Testing", f="daycare_testing", restrict="ORG_GROUP_ADMIN")(
+                                M("Statistics", m="report"),
+                                )
+        else:
+            daycare_testing = None
 
         return M(c="disease")(
                     M("Test Results", f="case_diagnostics", restrict="TEST_PROVIDER")(
@@ -283,6 +297,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Create", m="create", check=daily_report),
                         M("Statistics", f=report_function, m="report"),
                         ),
+                    daycare_testing,
                     M("Administration", restrict="ADMIN")(
                         M("Diseases", f="disease"),
                         M("Demographics", f="demographic"),

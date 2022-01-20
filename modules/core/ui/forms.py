@@ -4471,44 +4471,16 @@ class S3WithIntro(S3SQLFormElement):
         intro = self.intro
         if isinstance(intro, tuple):
             if len(intro) == 3 and current.deployment_settings.has_module("cms"):
-                intro = self.get_cms_intro(intro)
+                intro = current.s3db.cms_get_content(intro[2],
+                                                     module = intro[0],
+                                                     resource = intro[1],
+                                                     cmsxml = self.cmsxml,
+                                                     )
             else:
                 intro = None
         if intro:
             return TAG[""](DIV(intro, _class="s3-widget-intro"), w)
         else:
             return w
-
-    # -------------------------------------------------------------------------
-    def get_cms_intro(self, intro):
-        """
-            Get intro from CMS
-
-            Args:
-                intro: the intro spec as tuple (module, resource, postname)
-        """
-
-        # Get intro text from CMS
-        db = current.db
-        s3db = current.s3db
-
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == intro[0]) & \
-                         (ltable.resource == intro[1]) & \
-                         (ltable.deleted == False))
-
-        query = (ctable.name == intro[2]) & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                               join = join,
-                               cache = s3db.cache,
-                               limitby = (0, 1),
-                               ).first()
-        if not row:
-            return None
-
-        return XML(row.body) if self.cmsxml else row.body
 
 # END =========================================================================

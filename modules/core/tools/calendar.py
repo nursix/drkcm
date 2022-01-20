@@ -1776,7 +1776,7 @@ def s3_get_tzinfo():
         # 1st choice: use the _timezone parameter from the current form
         try:
             tzname = current.request.post_vars.get("_timezone")
-        except ValueError:
+        except (ValueError, TypeError):
             tzname = None
         if tzname:
             session.s3.tzname = tzname

@@ -908,6 +908,13 @@ class S3Config(Storage):
         """
         return self.auth.get("consent_check", None)
 
+    def get_auth_mandatory_page(self):
+        """
+            A mandatory page that must be visited after login
+            - a URL, or a function returning a URL
+        """
+        return self.auth.get("mandatory_page", None)
+
     def get_auth_registration_volunteer(self):
         """ Redirect the newly-registered user to their volunteer details page """
         return self.auth.get("registration_volunteer", False)
