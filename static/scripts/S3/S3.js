@@ -1973,8 +1973,8 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
 
             if (S3.FocusOnFirstField != false) {
                 // Focus On First Field
-                var s = 'input:text:visible:first';
-                $(s).not('.auth_login ' + s).focus();
+                var s = 'select:visible,input:text:visible';
+                $(s, '.form-container form:not(".auth_login")').first().not('select').focus();
             }
         }
 

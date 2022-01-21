@@ -142,7 +142,6 @@ class DiseaseDaycareTestingInquiryModel(DataModel):
                 "regular_testing",
                 "frequency",
                 "organisation_id",
-                "organisation_id$facility.location_id$L2",
                 ]
         facts = [(T("Number of Organizations"), "count(organisation_id)"),
                  (T("Number of Daycare Centers"), "sum(number_of_dc)"),
