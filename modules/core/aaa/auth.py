@@ -783,23 +783,7 @@ Thank you"""
 
         # How to continue
         if next is DEFAULT:
-            is_admin = self.s3_has_role("ADMIN")
-            if is_admin:
-                # Setup
-                if deployment_settings.has_module("setup") and \
-                   deployment_settings.get_setup_wizard_questions():
-                    itable = current.s3db.setup_instance
-                    instance = db(itable.url == "https://%s" % request.env.HTTP_HOST).select(itable.id,
-                                                                                             itable.deployment_id,
-                                                                                             itable.configured,
-                                                                                             limitby = (0, 1)
-                                                                                             ).first()
-                    if instance and not instance.configured:
-                        # Run Configuration Wizard
-                        next = URL(c="setup", f="deployment",
-                                   args = [instance.deployment_id, "instance", instance.id, "wizard"])
-
-            elif accepted_form:
+            if accepted_form:
                 # Check for pending consent upon login?
                 pending_consent = deployment_settings.get_auth_consent_check()
                 if callable(pending_consent):
@@ -839,9 +823,10 @@ Thank you"""
                     next = self.url(next.replace("[id]", str(form.vars.id)))
                 redirect(next)
             utable[userfield].requires = old_requires
-            return form
         else:
             redirect(next)
+
+        return form
 
     # -------------------------------------------------------------------------
     def change_password(self,

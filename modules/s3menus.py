@@ -303,20 +303,6 @@ class S3OptionsMenu(object):
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
         return M()(
-                    M("Setup", c="setup", f="deployment")(
-                        M("AWS Clouds", f="aws_cloud")(),
-                        M("OpenStack Clouds", f="openstack_cloud")(),
-                        M("GANDI DNS", f="gandi_dns")(),
-                        M("GoDaddy DNS", f="godaddy_dns")(),
-                        M("Google Email", f="google_email")(),
-                        M("SMTP SmartHosts", f="smtp")(),
-                        M("Deployments", f="deployment")(
-                            M("Create", m="create"),
-                        ),
-                    ),
-                    M("Settings", c="admin", f="setting")(
-                        settings_messaging,
-                    ),
                     M("User Management", c="admin", f="user")(
                         M("Create User", m="create"),
                         M("List All Users"),
@@ -326,24 +312,21 @@ class S3OptionsMenu(object):
                         #M("Roles", f="group"),
                         #M("Membership", f="membership"),
                     ),
+                    M("CMS", c="cms", f="post")(
+                    ),
                     M("Consent Tracking", c="admin", link=False, check=consent_tracking)(
                         M("Processing Types", f="processing_type"),
                         M("Consent Options", f="consent_option"),
                         M("Consent##plural", f="consent"),
                         ),
-                    M("CMS", c="cms", f="post")(
-                    ),
                     M("Database", c="appadmin", f="index")(
                         M("Raw Database access", c="appadmin", f="index")
                     ),
                     M("Error Tickets", c="admin", f="errors"),
-                    M("Monitoring", c="setup", f="server")(
-                        M("Checks", f="monitor_check"),
-                        M("Servers", f="server"),
-                        M("Tasks", f="monitor_task"),
-                        M("Logs", f="monitor_run"),
-                    ),
                     M("Scheduler", c="admin", f="task"),
+                    M("Settings", c="admin", f="setting")(
+                        settings_messaging,
+                    ),
                     M("Synchronization", c="sync", f="index")(
                         M("Settings", f="config", args=[1], m="update"),
                         M("Repositories", f="repository"),
@@ -1732,12 +1715,6 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                     ),
                 )
-
-    # -------------------------------------------------------------------------
-    def setup(self):
-        """ Setup """
-
-        return self.admin()
 
     # -------------------------------------------------------------------------
     @staticmethod

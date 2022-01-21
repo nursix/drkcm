@@ -422,59 +422,6 @@ if has_module("req"):
     tasks["req_add_from_template"] = req_add_from_template
 
 # -----------------------------------------------------------------------------
-if has_module("setup"):
-
-    def setup_run_playbook(playbook,
-                           instance_id = None,
-                           tags = None,
-                           hosts = None,
-                           user_id = None,
-                           ):
-        """
-            Run an Ansible Playbook
-            - to Deploy a new Eden instance
-        """
-        if user_id:
-            # Authenticate
-            auth.s3_impersonate(user_id)
-
-        # Run the Task & return the result
-        result = s3db.setup_run_playbook(playbook, instance_id, tags, hosts)
-        db.commit()
-        return result
-
-    tasks["setup_run_playbook"] = setup_run_playbook
-
-    # -------------------------------------------------------------------------
-    def setup_monitor_run_task(task_id, user_id=None):
-        """
-            Run a Monitoring Task
-        """
-        if user_id:
-            auth.s3_impersonate(user_id)
-        # Run the Task & return the result
-        result = s3db.setup_monitor_run_task(task_id)
-        db.commit()
-        return result
-
-    tasks["setup_monitor_run_task"] = setup_monitor_run_task
-
-    # -------------------------------------------------------------------------
-    def setup_monitor_check_email_reply(run_id, user_id=None):
-        """
-            Check whether we have received a reply to an Email check
-        """
-        if user_id:
-            auth.s3_impersonate(user_id)
-        # Run the Task & return the result
-        result = s3db.setup_monitor_check_email_reply(run_id)
-        db.commit()
-        return result
-
-    tasks["setup_monitor_check_email_reply"] = setup_monitor_check_email_reply
-
-
-# -----------------------------------------------------------------------------
 if has_module("stats"):
 
     def stats_demographic_update_aggregates(records = None,
