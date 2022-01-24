@@ -2859,6 +2859,7 @@ class S3PivotTable:
                     return s3_represent_value(rfield.field,
                                               value,
                                               strip_markup = True,
+                                              non_xml_output = True,
                                               )
             elif rfield.virtual:
 
