@@ -78,26 +78,6 @@ class TestResultRegistration(CRUDMethod):
 
         settings = current.deployment_settings
 
-        # Page title and intro text
-        title = T("Register Test Result")
-
-        # Get intro text from CMS
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == "disease") & \
-                         (ltable.resource == "case_diagnostics") & \
-                         (ltable.deleted == False))
-
-        query = (ctable.name == "TestResultRegistrationIntro") & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                                join = join,
-                                cache = s3db.cache,
-                                limitby = (0, 1),
-                                ).first()
-        intro = row.body if row else None
-
         # Instantiate Consent Tracker
         consent = ConsentTracking(processing_types=["CWA_ANONYMOUS", "CWA_PERSONAL"])
 
@@ -138,9 +118,10 @@ class TestResultRegistration(CRUDMethod):
                 (dtable.available == True)
         if default_disease:
             query = (dtable.disease_id == default_disease) & query
-        field.requires = IS_ONE_OF(db(query), "disease_testing_device.id",
-                                   field.represent,
-                                   )
+        field.requires = IS_EMPTY_OR(
+                            IS_ONE_OF(db(query), "disease_testing_device.id",
+                                      field.represent,
+                                      ))
 
         cwa_options = (("NO", T("Do not report")),
                        ("ANONYMOUS", T("Issue anonymous contact tracing code")),
@@ -151,7 +132,6 @@ class TestResultRegistration(CRUDMethod):
                       table.disease_id,
                       table.probe_date,
                       table.demographic_id,
-                      table.device_id,
                       table.result,
 
                       # -- Report to CWA --
@@ -174,6 +154,7 @@ class TestResultRegistration(CRUDMethod):
                             default = False,
                             label = T("Provide Digital %(title)s Certificate") % {"title": "COVID-19 Test"},
                             ),
+                      table.device_id,
                       Field("consent",
                             label = "",
                             widget = consent.widget,
@@ -181,11 +162,11 @@ class TestResultRegistration(CRUDMethod):
                       ]
 
         # Required fields
-        required_fields = []
+        required_fields = ["device_id"]
 
         # Subheadings
         subheadings = ((0, T("Test Result")),
-                       (4 + offset, CWA["system"]),
+                       (3 + offset, CWA["system"]),
                        )
 
         # Generate labels (and mark required fields in the process)
@@ -240,16 +221,14 @@ class TestResultRegistration(CRUDMethod):
             # Create disease_case_diagnostics record
             testresult = {"result": formvars.get("result"),
                           }
-            if "site_id" in formvars:
-                testresult["site_id"] = formvars["site_id"]
-            if "disease_id" in formvars:
-                testresult["disease_id"] = formvars["disease_id"]
-            if "probe_date" in formvars:
-                testresult["probe_date"] = formvars["probe_date"]
-            if "device_id" in formvars:
-                testresult["device_id"] = formvars["device_id"]
-            if "demographic_id" in formvars:
-                testresult["demographic_id"] = formvars["demographic_id"]
+            for fn in ("site_id",
+                       "disease_id",
+                       "probe_date",
+                       "device_id",
+                       "demographic_id",
+                       ):
+                if fn in formvars:
+                    testresult[fn] = formvars[fn]
 
             record_id = table.insert(**testresult)
             if not record_id:
@@ -289,13 +268,11 @@ class TestResultRegistration(CRUDMethod):
 
                 if cwa_report:
                     # Register consent
-                    if processing_type:
-                        cwa_report.register_consent(processing_type,
-                                                    formvars.get("consent"),
-                                                    )
+                    cwa_report.register_consent(processing_type,
+                                                formvars.get("consent"),
+                                                )
                     # Send to CWA
-                    success = cwa_report.send()
-                    if success:
+                    if cwa_report.send():
                         response.information = T("Result reported to %(system)s") % CWA
                         retry = False
                     else:
@@ -339,7 +316,6 @@ class TestResultRegistration(CRUDMethod):
                     response.information = T("Result not reported to %(system)s") % CWA
                     self.next = r.url(id=record_id, method="read")
 
-
             return None
 
         elif form.errors:
@@ -347,6 +323,13 @@ class TestResultRegistration(CRUDMethod):
 
         # Custom View
         CustomController._view("RLPPTM", "testresult.html")
+
+        # Page title and CMS intro text
+        title = T("Register Test Result")
+        intro = s3db.cms_get_content("TestResultRegistrationIntro",
+                                     module = "disease",
+                                     resource = "case_diagnostics",
+                                     )
 
         return {"title": title,
                 "intro": intro,
@@ -385,6 +368,12 @@ class TestResultRegistration(CRUDMethod):
             c = response.get("CWA_ANONYMOUS")
             if not c or not c[1]:
                 form.errors.consent = T("Consent required")
+
+        # Verify that device ID is specified if DCC option is selected
+        dcc = formvars.get("dcc_option")
+        if dcc:
+            if not formvars.get("device_id"):
+                form.errors.device_id = T("Enter a value")
 
         # Verify that the selected testing device matches the selected
         # disease (only if disease is selectable - otherwise, the device
