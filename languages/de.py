@@ -908,6 +908,7 @@
 'Central point to record details on People': 'Zentrale Personenregistrierungsstelle',
 'Certificate Catalog': 'Zertifikatskatalog',
 'Certificate Details': 'Details zum Zertifikat',
+'Certificate Form (PDF)': 'Bescheinigungsvordruck (PDF)',
 'Certificate Status': 'Status des Zertifikats',
 'Certificate added': 'Zertifikat hinzugefügt',
 'Certificate deleted': 'Zertifikat gelöscht',

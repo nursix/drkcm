@@ -340,6 +340,17 @@ def disease_case_diagnostics_controller(**attr):
                 regbtn = S3CRUD.crud_button(label = label,
                                             _href = r.url(id="", method="register"),
                                             )
+                if record:
+                    from gluon import BUTTON, TAG
+                    pdfbtn = BUTTON(T("Certificate Form (PDF)"),
+                                    _type = "button",
+                                    _class = "action-btn s3-download-button",
+                                    data = {"url": r.url(method = "certify",
+                                                         representation = "pdf",
+                                                         ),
+                                            },
+                                    )
+                    regbtn = TAG[""](regbtn, pdfbtn)
                 output["buttons"] = {key: regbtn}
 
         return output

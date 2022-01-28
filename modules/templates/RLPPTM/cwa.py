@@ -216,103 +216,7 @@ class TestResultRegistration(CRUDMethod):
                         onvalidation = self.validate,
                         ):
 
-            formvars = form.vars
-
-            # Create disease_case_diagnostics record
-            testresult = {"result": formvars.get("result"),
-                          }
-            for fn in ("site_id",
-                       "disease_id",
-                       "probe_date",
-                       "device_id",
-                       "demographic_id",
-                       ):
-                if fn in formvars:
-                    testresult[fn] = formvars[fn]
-
-            record_id = table.insert(**testresult)
-            if not record_id:
-                raise RuntimeError("Could not create testresult record")
-
-            testresult["id"] = record_id
-            # Set record owner
-            auth = current.auth
-            auth.s3_set_record_owner(table, record_id)
-            auth.s3_make_session_owner(table, record_id)
-            # Onaccept
-            s3db.onaccept(table, testresult, method="create")
-            response.confirmation = T("Test Result registered")
-
-            report_to_cwa = formvars.get("report_to_cwa")
-            # Report to CWA and show test certificate
-            dcc_option = False
-            if report_to_cwa == "ANONYMOUS":
-                processing_type = "CWA_ANONYMOUS"
-                cwa_report = CWAReport(record_id)
-            elif report_to_cwa == "PERSONAL":
-                dcc_option = formvars.get("dcc_option")
-                processing_type = "CWA_PERSONAL"
-                cwa_report = CWAReport(record_id,
-                                       anonymous = False,
-                                       first_name = formvars.get("first_name"),
-                                       last_name = formvars.get("last_name"),
-                                       dob = formvars.get("date_of_birth"),
-                                       dcc = dcc_option,
-                                       )
-            else:
-                processing_type = cwa_report = None
-
-            if cwa_report:
-                # Register consent
-                cwa_report.register_consent(processing_type,
-                                            formvars.get("consent"),
-                                            )
-                # Send to CWA
-                if cwa_report.send():
-                    response.information = T("Result reported to %(system)s") % CWA
-                    retry = False
-                else:
-                    response.error = T("Report to %(system)s failed") % CWA
-                    retry = True
-
-                # Store DCC data
-                if dcc_option:
-                    cwa_data = cwa_report.data
-                    try:
-                        hcert = DCC.from_result(cwa_data.get("hash"),
-                                                record_id,
-                                                cwa_data.get("fn"),
-                                                cwa_data.get("ln"),
-                                                cwa_data.get("dob"),
-                                                )
-                    except ValueError as e:
-                        hcert = None
-                        response.warning = str(e)
-                    if hcert:
-                        hcert.save()
-                    else:
-                        # Remove DCC flag if hcert could not be generated
-                        cwa_report.dcc = False
-
-                CustomController._view("RLPPTM", "certificate.html")
-
-                # Title
-                field = table.disease_id
-                if cwa_report.disease_id and field.represent:
-                    disease = field.represent(cwa_report.disease_id)
-                    title = "%s %s" % (disease, T("Test Result"))
-                else:
-                    title = T("Test Result")
-
-                return {"title": title,
-                        "intro": None, # TODO
-                        "form": cwa_report.formatted(retry=retry),
-                        }
-            else:
-                #response.information = T("Result not reported to %(system)s") % CWA
-                self.next = r.url(id=record_id, method="read")
-
-            return None
+            return self.accept(r, form)
 
         elif form.errors:
             current.response.error = T("There are errors in the form, please check your input")
@@ -389,6 +293,122 @@ class TestResultRegistration(CRUDMethod):
                     form.errors.device_id = T("Device not applicable for selected disease")
 
     # -------------------------------------------------------------------------
+    def accept(self, r, form):
+        """
+            Accept the test result form, and report to CWA if selected
+
+            Args:
+                r: the CRUDRequest
+                form: the test result form
+
+            Returns:
+                output dict for view, or None when redirecting
+        """
+
+        T = current.T
+        auth = current.auth
+        s3db = current.s3db
+        response = current.response
+
+        formvars = form.vars
+
+        # Create disease_case_diagnostics record
+        testresult = {"result": formvars.get("result"),
+                      }
+        for fn in ("site_id",
+                   "disease_id",
+                   "probe_date",
+                   "device_id",
+                   "demographic_id",
+                   ):
+            if fn in formvars:
+                testresult[fn] = formvars[fn]
+
+        table = s3db.disease_case_diagnostics
+
+        testresult["id"] = record_id = table.insert(**testresult)
+        if not record_id:
+            raise RuntimeError("Could not create testresult record")
+
+        auth.s3_set_record_owner(table, record_id)
+        auth.s3_make_session_owner(table, record_id)
+        s3db.onaccept(table, testresult, method="create")
+
+        response.confirmation = T("Test Result registered")
+
+        # Report to CWA?
+        report_to_cwa = formvars.get("report_to_cwa")
+        dcc_option = False
+        if report_to_cwa == "ANONYMOUS":
+            processing_type = "CWA_ANONYMOUS"
+            cwa_report = CWAReport(record_id)
+
+        elif report_to_cwa == "PERSONAL":
+            dcc_option = formvars.get("dcc_option")
+            processing_type = "CWA_PERSONAL"
+            cwa_report = CWAReport(record_id,
+                                   anonymous = False,
+                                   first_name = formvars.get("first_name"),
+                                   last_name = formvars.get("last_name"),
+                                   dob = formvars.get("date_of_birth"),
+                                   dcc = dcc_option,
+                                   )
+        else:
+            processing_type = cwa_report = None
+
+        if cwa_report:
+            # Register consent
+            cwa_report.register_consent(processing_type,
+                                        formvars.get("consent"),
+                                        )
+            # Send to CWA
+            if cwa_report.send():
+                response.information = T("Result reported to %(system)s") % CWA
+                retry = False
+            else:
+                response.error = T("Report to %(system)s failed") % CWA
+                retry = True
+
+            # Store DCC data
+            if dcc_option:
+                cwa_data = cwa_report.data
+                try:
+                    hcert = DCC.from_result(cwa_data.get("hash"),
+                                            record_id,
+                                            cwa_data.get("fn"),
+                                            cwa_data.get("ln"),
+                                            cwa_data.get("dob"),
+                                            )
+                except ValueError as e:
+                    hcert = None
+                    response.warning = str(e)
+                if hcert:
+                    hcert.save()
+                else:
+                    # Remove DCC flag if hcert could not be generated
+                    cwa_report.dcc = False
+
+            CustomController._view("RLPPTM", "certificate.html")
+
+            # Title
+            field = table.disease_id
+            if cwa_report.disease_id and field.represent:
+                disease = field.represent(cwa_report.disease_id)
+                title = "%s %s" % (disease, T("Test Result"))
+            else:
+                title = T("Test Result")
+
+            output = {"title": title,
+                      "intro": None,
+                      "form": cwa_report.formatted(retry=retry),
+                      }
+        else:
+            self.next = r.url(id=record_id, method="read")
+            output = None
+
+        return output
+
+    # -------------------------------------------------------------------------
     @classmethod
     def certify(cls, r, **attr):
         """
@@ -399,61 +419,71 @@ class TestResultRegistration(CRUDMethod):
                 attr: controller attributes
         """
 
-        if not r.record:
+        record = r.record
+        if not record:
             r.error(400, current.ERROR.BAD_REQUEST)
-        if r.http != "POST":
-            r.error(405, current.ERROR.BAD_METHOD)
         if r.representation != "pdf":
             r.error(415, current.ERROR.BAD_FORMAT)
 
-        post_vars = r.post_vars
+        testid = record.uuid
+        site_id = record.site_id
+        probe_date = record.probe_date
+        result = record.result
+        disease_id = record.disease_id
 
-        # Extract and check formkey from post data
-        formkey = post_vars.get("_formkey")
-        keyname = "_formkey[testresult/%s]" % r.id
-        if not formkey or formkey not in current.session.get(keyname, []):
-            r.error(403, current.ERROR.NOT_PERMITTED)
+        item = {"testid": testid,
+                "result_raw": result,
+                }
 
-        # Extract cwadata
-        cwadata = post_vars.get("cwadata")
-        if not cwadata:
-            r.error(400, current.ERROR.BAD_REQUEST)
-        try:
-            cwadata = json.loads(cwadata)
-        except JSONERRORS:
-            r.error(400, current.ERROR.BAD_REQUEST)
+        if r.http == "POST":
 
-        # Generate the CWAReport (implicitly validates the hash)
-        anonymous = "fn" not in cwadata
-        try:
-            cwareport = CWAReport(r.id,
-                                  anonymous = anonymous,
-                                  first_name = cwadata.get("fn"),
-                                  last_name = cwadata.get("ln"),
-                                  dob = cwadata.get("dob"),
-                                  dcc = post_vars.get("dcc") == "1",
-                                  salt = cwadata.get("salt"),
-                                  dhash = cwadata.get("hash"),
-                                  )
-        except ValueError:
-            r.error(400, current.ERROR.BAD_RECORD)
+            post_vars = r.post_vars
+
+            # Extract and check formkey from post data
+            formkey = post_vars.get("_formkey")
+            keyname = "_formkey[testresult/%s]" % r.id
+            if not formkey or formkey not in current.session.get(keyname, []):
+                r.error(403, current.ERROR.NOT_PERMITTED)
+
+            # Extract cwadata
+            cwadata = post_vars.get("cwadata")
+            if not cwadata:
+                r.error(400, current.ERROR.BAD_REQUEST)
+            try:
+                cwadata = json.loads(cwadata)
+            except JSONERRORS:
+                r.error(400, current.ERROR.BAD_REQUEST)
+
+            # Generate the CWAReport (implicitly validates the hash)
+            anonymous = "fn" not in cwadata
+            try:
+                cwareport = CWAReport(r.id,
+                                      anonymous = anonymous,
+                                      first_name = cwadata.get("fn"),
+                                      last_name = cwadata.get("ln"),
+                                      dob = cwadata.get("dob"),
+                                      dcc = post_vars.get("dcc") == "1",
+                                      salt = cwadata.get("salt"),
+                                      dhash = cwadata.get("hash"),
+                                      )
+            except ValueError:
+                r.error(400, current.ERROR.BAD_RECORD)
+
+            # Generate the data item
+            item["link"] = cwareport.get_link()
+            if not anonymous:
+                for k in ("ln", "fn", "dob"):
+                    value = cwadata.get(k)
+                    if k == "dob":
+                        value = CWAReport.to_local_dtfmt(value)
+                    item[k] = value
+
+        else:
+            cwareport = None
 
         s3db = current.s3db
 
-        # Generate the data item
-        item = {"link": cwareport.get_link(),
-                "testid": r.record.uuid,
-                "result_raw": cwareport.result,
-                }
-        if not anonymous:
-            for k in ("ln", "fn", "dob"):
-                value = cwadata.get(k)
-                if k == "dob":
-                    value = CWAReport.to_local_dtfmt(value)
-                item[k] = value
-
         # Test Station
-        site_id = cwareport.site_id
         table = s3db.disease_case_diagnostics
         field = table.site_id
         if field.represent:
@@ -464,16 +494,16 @@ class TestResultRegistration(CRUDMethod):
         # Probe date and test result
         field = table.probe_date
         if field.represent:
-            item["test_date"] = field.represent(cwareport.probe_date)
+            item["test_date"] = field.represent(probe_date)
         field = table.result
         if field.represent:
-            item["result"] = field.represent(cwareport.result)
+            item["result"] = field.represent(result)
 
         # Title
         T = current.T
         field = table.disease_id
-        if cwareport.disease_id and field.represent:
-            disease = field.represent(cwareport.disease_id)
+        if disease_id and field.represent:
+            disease = field.represent(disease_id)
             title = "%s %s" % (disease, T("Test Result"))
         else:
             title = T("Test Result")
