@@ -25,6 +25,11 @@ def add_org_tags():
                                                  "filterby": {"tag": "DELIVERY"},
                                                  "multiple": False,
                                                  },
+                                                {"name": "orgid",
+                                                 "joinby": "organisation_id",
+                                                 "filterby": {"tag": "OrgID"},
+                                                 "multiple": False,
+                                                 },
                                                 ),
                         )
 
@@ -222,7 +227,7 @@ def org_organisation_controller(**attr):
                 # Filters
                 text_fields = ["name", "acronym", "website", "phone"]
                 if is_org_group_admin:
-                    text_fields.append("email.value")
+                    text_fields.extend(["email.value", "orgid.value"])
                 filter_widgets = [TextFilter(text_fields,
                                              label = T("Search"),
                                              ),
@@ -777,13 +782,16 @@ def org_facility_resource(r, tablename):
     s3db.configure(tablename, list_fields=list_fields)
 
     # Custom filter widgets
+    text_fields = ["name",
+                   "location_id$L2",
+                   "location_id$L3",
+                   "location_id$L4",
+                   "location_id$addr_postcode",
+                   ]
+    if is_org_group_admin:
+        text_fields.append("code")
     filter_widgets = [
-        TextFilter(["name",
-                    "location_id$L2",
-                    "location_id$L3",
-                    "location_id$L4",
-                    "location_id$addr_postcode",
-                    ],
+        TextFilter(text_fields,
                    label = T("Search"),
                    ),
         LocationFilter("location_id",
