@@ -6,6 +6,8 @@
 
 import json
 
+from dateutil import rrule
+
 from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
@@ -1462,6 +1464,39 @@ def update_daily_report_by_demographic(site_id, result_date, disease_id):
         db(query).update(tests_total = row[total],
                          tests_positive = row[positive],
                          )
+
+# =============================================================================
+def rlp_holidays(start, end):
+    """
+        Date rules set for holidays in RLP
+
+        Args:
+            start: the start date
+            end: the end date
+
+        Returns:
+            a dateutil.rrule rule set for all holidays within the interval
+    """
+
+    rules = rrule.rruleset()
+    addrule = rules.rrule
+    newrule = rrule.rrule
+
+    # Fixed-date holidays
+    addrule(newrule(rrule.YEARLY, dtstart=start, until=end, bymonth=1, bymonthday=1))
+    addrule(newrule(rrule.YEARLY, dtstart=start, until=end, bymonth=5, bymonthday=1))
+    addrule(newrule(rrule.YEARLY, dtstart=start, until=end, bymonth=10, bymonthday=3))
+    addrule(newrule(rrule.YEARLY, dtstart=start, until=end, bymonth=11, bymonthday=1))
+    addrule(newrule(rrule.YEARLY, dtstart=start, until=end, bymonth=12, bymonthday=(25, 26)))
+
+    # Easter-related holidays:
+    # (Karfreitag, Ostermontag, Christi Himmelfahrt, Pfingstmontag, Fronleichnam)
+    addrule(newrule(rrule.YEARLY, dtstart=start, until=end, byeaster=(-2, 1, 39, 50, 60)))
+
+    # Exclude holidays on weekends
+    rules.exrule(newrule(rrule.WEEKLY, dtstart=start, until=end, byweekday=(rrule.SA,rrule.SU)))
+
+    return rules
 
 # =============================================================================
 class ServiceListRepresent(S3Represent):

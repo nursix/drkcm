@@ -4,7 +4,11 @@
     License: MIT
 """
 
+import calendar
+import datetime
+
 from collections import OrderedDict
+from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
@@ -358,6 +362,40 @@ def disease_case_diagnostics_controller(**attr):
 
     return attr
 
+# -----------------------------------------------------------------------------
+def earliest_reporting_date(today=None):
+    """
+        Returns the first day of the current month if we're past the
+        third business day of this month; otherwise the first of the
+        previous month
+
+        Args:
+            today: the date of today
+
+        Returns:
+            a date
+    """
+
+    from ..helpers import rlp_holidays
+
+    if today is None:
+        today = datetime.datetime.utcnow().date()
+
+    start = today.replace(day=1)
+    end = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+
+    rules = rrule.rruleset()
+    rules.rrule(rrule.rrule(rrule.MONTHLY, dtstart=start, until=end, bysetpos=3, count=1,
+                            byweekday=(rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR)))
+    rules.exrule(rlp_holidays(start, end))
+
+    if today > list(rules)[0].date():
+        earliest = start
+    else:
+        earliest = today - relativedelta(months=1, day=1)
+
+    return earliest
+
 # -------------------------------------------------------------------------
 def disease_testing_report_resource(r, tablename):
 
@@ -435,7 +473,7 @@ def disease_testing_report_resource(r, tablename):
         # No limit for OrgGroupAdmins/Admins
         earliest = None
     else:
-        earliest = today - relativedelta(months=3, day=1)
+        earliest = earliest_reporting_date(today)
     field = table.date
     field.requires = IS_UTC_DATE(minimum = earliest,
                                  maximum = today,
