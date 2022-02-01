@@ -1204,9 +1204,9 @@ class CWACardLayout(RLPCardLayout):
 
             # Hint for QR-Code
             if link:
-                hint = "Dieser QR-Code dient ausschließlich dem Abruf von digitalen Testnachweisen mit der Corona Warn App und kann nicht als Testnachweis mit anderen Apps (z.B. CovPass App) gelesen werden."
-                draw_string(LEFT, h-28*cm, "<super rise=1>*</super>%s" % hint,
-                            width=16*cm, height=2*cm, size=5, bold=False)
+                hint = "Dieser QR-Code dient ausschließlich dem Abruf des Testergebnisses mit der Corona Warn App und kann nicht als Testnachweis mit anderen Apps (z.B. CovPass App) gelesen werden."
+                draw_string(LEFT, h-28.3*cm, "<super rise=1>*</super>%s" % hint,
+                            width=16*cm, height=2*cm, size=7, bold=False)
 
             # Add a cutting line with multiple cards per page
             if self.multiple:
