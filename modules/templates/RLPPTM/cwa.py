@@ -1066,8 +1066,6 @@ class CWACardLayout(RLPCardLayout):
                card's frame, drawing must not overshoot self.width/self.height
         """
 
-        T = current.T
-
         c = self.canv
         #w = self.width
         h = self.height
@@ -1113,8 +1111,9 @@ class CWACardLayout(RLPCardLayout):
                                  valign = "top",
                                  level = "M",
                                  )
-                draw_string(13.5*cm, h-7.2*cm, T("Code for %(app)s") % CWA,
-                            width=3*cm, height=0.5*cm, size=6, bold=False, halign="center")
+                desc = "Code zum Abrufen des Testergebnisses mit %(app)s" % CWA
+                draw_string(11.5*cm, h-7.2*cm, "%s<super rise=1>*</super>" % desc,
+                            width=7*cm, height=0.5*cm, size=6, bold=False, halign="center")
 
             # Test ID
             draw_string(LEFT, h-8.6*cm, "Test ID:",
@@ -1202,6 +1201,12 @@ class CWACardLayout(RLPCardLayout):
             # Legal Information
             draw_string(LEFT, h-27*cm, "Wer dieses Dokument fälscht, einen nicht erfolgten Test bescheinigt, einen positiven Test fälschlicherweise als negativ bescheinigt oder wer ein falsches Dokument verwendet, um Zugang zu einer Einrichtung oder einem Angebot zu erhalten, begeht eine Ordnungswidrigkeit, die mit einer Geldbuße geahndet wird.",
                         width=16*cm, height=2*cm, size=8, bold=False, box=True)
+
+            # Hint for QR-Code
+            if link:
+                hint = "Dieser QR-Code dient ausschließlich dem Abruf von digitalen Testnachweisen mit der Corona Warn App und kann nicht als Testnachweis mit anderen Apps (z.B. CovPass App) gelesen werden."
+                draw_string(LEFT, h-28*cm, "<super rise=1>*</super>%s" % hint,
+                            width=16*cm, height=2*cm, size=5, bold=False)
 
             # Add a cutting line with multiple cards per page
             if self.multiple:
