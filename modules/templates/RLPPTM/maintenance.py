@@ -183,11 +183,10 @@ class Daily():
         rtable = s3db.disease_testing_report
         ltable = s3db.gis_location
 
+        today = datetime.datetime.utcnow().date()
+        four_weeks_ago = today - datetime.timedelta(days=28)
+
         from .config import TESTSTATIONS
-        from .customise.disease import earliest_reporting_date
-
-        earliest = earliest_reporting_date()
-
         join = [ttable.on((ttable.site_id == ftable.site_id) & \
                           (ttable.tag == "PUBLIC") & \
                           (ttable.deleted == False)),
@@ -198,13 +197,13 @@ class Daily():
                           (gtable.name == TESTSTATIONS)),
                 ]
         left = [rtable.on((rtable.site_id == ftable.site_id) & \
-                          (rtable.date >= earliest) & \
+                          (rtable.date >= four_weeks_ago) & \
                           (rtable.deleted == False)),
                 ltable.on((ltable.id == ftable.location_id)),
                 ]
         query = (rtable.id == None) & \
                 (ttable.value == "Y") & \
-                (ftable.created_on < earliest) & \
+                (ftable.created_on < four_weeks_ago) & \
                 (ftable.obsolete == False) & \
                 (ftable.deleted == False)
 
