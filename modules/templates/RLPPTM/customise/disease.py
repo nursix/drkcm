@@ -381,6 +381,9 @@ def earliest_reporting_date(today=None):
     if today is None:
         today = datetime.datetime.utcnow().date()
 
+    if today <= datetime.date(2022,3,3):
+        return today - relativedelta(months=3, day=1)
+
     start = today.replace(day=1)
     end = today.replace(day=calendar.monthrange(today.year, today.month)[1])
 
