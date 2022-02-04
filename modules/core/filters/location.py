@@ -563,9 +563,9 @@ class LocationFilter(FilterWidget):
         ltable = s3db.gis_location
         accessible = current.auth.s3_accessible_query("read", ltable)
 
-        fields = ["id"] + [l for l in levels]
+        fields = [ltable.id] + [ltable[l] for l in levels]
         if translate:
-            fields.append("path")
+            fields.append(ltable.path)
 
         for f, v in values.items():
             if not v:
