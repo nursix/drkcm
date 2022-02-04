@@ -9084,9 +9084,12 @@ class pr_Template(CRUDMethod):
 
                 # Merge
                 filename = "%s_%s.docx" % (template.name, person_id)
+                from io import BytesIO
+                stream = BytesIO()
                 with MailMerge(template_path) as document:
                     document.merge(**doc_data)
-                    document.write(filename)
+                    document.write(stream)
+                stream.seek(0)
 
                 # Output
                 from gluon.contenttype import contenttype
@@ -9098,7 +9101,6 @@ class pr_Template(CRUDMethod):
                 response.headers["Content-Type"] = contenttype(".docx")
                 response.headers["Content-disposition"] = disposition
 
-                stream = open(filename, "rb")
                 output = response.stream(stream,
                                          chunk_size = DEFAULT_CHUNK_SIZE,
                                          request = r,
