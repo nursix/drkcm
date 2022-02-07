@@ -482,14 +482,14 @@ def config(settings):
         field.represent = ProviderRepresent()
 
         if r.function == "assistance_offer":
-            from core import S3WithIntro
+            from core import WithAdvice
             field = table.description
-            field.widget = S3WithIntro(field.widget,
-                                       intro = ("br",
-                                                "assistance_offer",
-                                                "OfferDetailsIntro",
-                                                ),
-                                       )
+            field.widget = WithAdvice(field.widget,
+                                      text = ("br",
+                                              "assistance_offer",
+                                              "OfferDetailsIntro",
+                                              ),
+                                      )
 
         field = table.contact_phone
         field.label = T("Phone #")
@@ -1395,14 +1395,14 @@ def config(settings):
         table = s3db.br_direct_offer
 
         field = table.offer_id
-        from core import S3WithIntro
+        from core import WithAdvice
         from gluon.sqlhtml import OptionsWidget
-        field.widget = S3WithIntro(OptionsWidget.widget,
-                                   intro = ("br",
-                                            "direct_offer",
-                                            "DirectOfferSelectorIntro",
-                                            ),
-                                   )
+        field.widget = WithAdvice(OptionsWidget.widget,
+                                  text = ("br",
+                                          "direct_offer",
+                                          "DirectOfferSelectorIntro",
+                                          ),
+                                  )
 
         # Custom label+represent for case activity
         # - always link to activities-perspective ("Current Needs")

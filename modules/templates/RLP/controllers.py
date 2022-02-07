@@ -17,7 +17,7 @@ from gluon.storage import Storage
 from core import ConsentTracking, CustomController, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                  S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
-                 S3WeeklyHoursWidget, S3WithIntro, \
+                 S3WeeklyHoursWidget, WithAdvice, \
                  JSONERRORS, S3Represent, s3_comments_widget, s3_date, \
                  s3_mark_required, s3_str
 
@@ -672,13 +672,13 @@ class register(CustomController):
                             ),
                       Field("schedule_json", "json",
                             label = T("Availability Schedule"),
-                            widget = S3WithIntro(
+                            widget = WithAdvice(
                                         S3WeeklyHoursWidget(),
                                         # Widget intro from CMS
-                                        intro = ("pr",
-                                                 "person_availability",
-                                                 "HoursMatrixIntro",
-                                                 ),
+                                        text = ("pr",
+                                                "person_availability",
+                                                "HoursMatrixIntro",
+                                                ),
                                         ),
                             ),
                       Field("availability_sites", "list:integer",
@@ -687,13 +687,13 @@ class register(CustomController):
                                                              multiple = True,
                                                              sort = False,
                                                              )),
-                            widget = S3WithIntro(
+                            widget = WithAdvice(
                                         S3MultiSelectWidget(),
                                         # Widget intro from CMS
-                                        intro = ("pr",
-                                                 "person_availability_site",
-                                                 "AvailabilitySitesIntro",
-                                                 ),
+                                        text = ("pr",
+                                                "person_availability_site",
+                                                "AvailabilitySitesIntro",
+                                                ),
                                         ),
                             ),
                       Field("availability_comments", "text",

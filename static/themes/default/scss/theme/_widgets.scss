@@ -484,10 +484,13 @@ div.s3-groupedopts-widget {
 
 // ----------------------------------------------------------------------------
 /* Widget Intro-Wrapper */
-.s3-widget-intro {
+.widget-advice {
     max-width: 42rem;
-    padding: 0.2rem 0 0.5rem 0;
+    padding: 0.3rem 0.3rem 0.5rem;
     font-size: 0.8rem;
+    font-style: italic;
+    white-space: pre-line;
+    margin: 0.1rem 0;
 }
 
 // ----------------------------------------------------------------------------

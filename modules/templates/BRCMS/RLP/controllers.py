@@ -20,7 +20,7 @@ from gluon.storage import Storage
 from core import ConsentTracking, \
                  FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                  JSONERRORS, S3CRUD, CustomController, S3LocationSelector, \
-                 S3Represent, S3Report, CRUDRequest, S3WithIntro, \
+                 S3Represent, S3Report, CRUDRequest, WithAdvice, \
                  s3_comments_widget, s3_get_extension, s3_mark_required, \
                  s3_str, s3_text_represent, s3_truncate
 
@@ -1310,13 +1310,13 @@ class register_org(CustomController):
                       Field("comments", "text",
                             label = T("Description"),
                             requires = IS_NOT_EMPTY(),
-                            widget = S3WithIntro(widget = s3_comments_widget,
-                                                 # Widget intro from CMS
-                                                 intro = ("org",
-                                                          "organisation",
-                                                          "OrgSelfPresentationIntro",
-                                                          ),
-                                                 ),
+                            widget = WithAdvice(widget = s3_comments_widget,
+                                                # Widget intro from CMS
+                                                text = ("org",
+                                                        "organisation",
+                                                        "OrgSelfPresentationIntro",
+                                                        ),
+                                                ),
                             ),
                       # -- Address --
                       Field("location", "json",

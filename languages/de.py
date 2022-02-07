@@ -2062,6 +2062,7 @@
 'Edit Skill Type': 'Typ der Fähigkeit bearbeiten',
 'Edit Skill': 'Fähigkeit bearbeiten',
 'Edit Solution': 'Lösung bearbeiten',
+'Edit Staff Member Details': 'Mitarbeiterdetails bearbeiten',
 'Edit Staff Type': 'Typ von Mitarbeitern bearbeiten',
 'Edit Subscription': 'Abonnement bearbeiten',
 'Edit Subsector': 'Teilbereich bearbeiten',
@@ -5555,6 +5556,7 @@
 'Staff & Volunteers': 'Mitarbeiter & Freiwillige',
 'Staff ID': 'Mitarbeiter-ID',
 'Staff Management': 'Mitarbeitermanagement',
+'Staff Member Details updated': 'Mitarbeiterdetails aktualisiert',
 'Staff Member Details': 'Details zum Mitarbeiter',
 'Staff Member added': 'Mitarbeiter hinzugefügt',
 'Staff Member in Charge': 'Zuständiger Mitarbeiter',
@@ -5787,6 +5789,7 @@
 'Test Results Statistics': 'Testergebnis-Statistik',
 'Test Results': 'Testergebnisse',
 'Test Station ID': 'Teststellen-ID',
+'Test Station Manager': 'Teststellenverantwortlicher',
 'Test Station Name': 'Name der Teststelle',
 'Test Station': 'Teststelle',
 'Test Stations for Everybody': 'Teststellen für Alle',
@@ -6661,3 +6664,4 @@
 'yes': 'ja',
 'Åland Islands': 'Ålandinseln',
 }
+

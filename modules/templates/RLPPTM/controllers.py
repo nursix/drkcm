@@ -17,7 +17,7 @@ from gluon.storage import Storage
 from core import ConsentTracking, IS_PHONE_NUMBER_MULTI, \
                  ICON, S3GroupedOptionsWidget, S3LocationSelector, \
                  CRUDRequest, S3CRUD, CustomController, FS, JSONERRORS, \
-                 S3Represent, S3WithIntro, s3_comments_widget, \
+                 S3Represent, WithAdvice, s3_comments_widget, \
                  s3_get_extension, s3_mark_required, s3_str, \
                  s3_text_represent, s3_truncate
 
@@ -1268,13 +1268,13 @@ class register(CustomController):
                                                  multiple = True,
                                                  zero = None,
                                                  ),
-                            widget = S3WithIntro(S3GroupedOptionsWidget(cols=1),
-                                                 # Widget intro from CMS
-                                                 intro = ("org",
-                                                          "facility",
-                                                          "SiteServiceIntro",
-                                                          ),
-                                                 ),
+                            widget = WithAdvice(S3GroupedOptionsWidget(cols=1),
+                                                # Widget intro from CMS
+                                                text = ("org",
+                                                        "facility",
+                                                        "SiteServiceIntro",
+                                                        ),
+                                                ),
                            ),
                       # -- Contact and Appointments --
                       Field("facility_phone",
@@ -1308,13 +1308,13 @@ class register(CustomController):
                                                   ),
                                         IS_NOT_EMPTY(),
                                         ],
-                            widget = S3WithIntro(S3GroupedOptionsWidget(cols=1),
-                                                 # Widget intro from CMS
-                                                 intro = ("org",
-                                                          "organisation",
-                                                          "ProjectParticipationIntro",
-                                                          ),
-                                                 ),
+                            widget = WithAdvice(S3GroupedOptionsWidget(cols=1),
+                                                # Widget intro from CMS
+                                                text = ("org",
+                                                        "organisation",
+                                                        "ProjectParticipationIntro",
+                                                        ),
+                                                ),
                             ),
                       # -- Privacy and Consent --
                       Field("consent",

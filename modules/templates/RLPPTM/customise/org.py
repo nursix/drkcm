@@ -505,7 +505,7 @@ def configure_facility_form(r, is_org_group_admin=False):
     from core import S3SQLCustomForm, \
                      S3SQLInlineComponent, \
                      S3SQLInlineLink, \
-                     S3WithIntro
+                     WithAdvice
 
     visible_tags = postprocess = None
     if fresource:
@@ -541,18 +541,12 @@ def configure_facility_form(r, is_org_group_admin=False):
                                                        )
         else:
             # Add Intros for services and documents
-            services = S3WithIntro(services,
-                                   intro = ("org",
-                                            "facility",
-                                            "SiteServiceIntro",
-                                            ),
+            services = WithAdvice(services,
+                                  text = ("org", "facility", "SiteServiceIntro"),
+                                  )
+            documents = WithAdvice(documents,
+                                   text = ("org", "facility", "SiteDocumentsIntro"),
                                    )
-            documents = S3WithIntro(documents,
-                                    intro = ("org",
-                                             "facility",
-                                             "SiteDocumentsIntro",
-                                             ),
-                                    )
             # Add workflow tags
             if record_id:
                 visible_tags = configure_workflow_tags(fresource,

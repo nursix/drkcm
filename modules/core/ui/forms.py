@@ -37,7 +37,7 @@ __all__ = ("S3SQLCustomForm",
            "S3SQLVerticalSubFormLayout",
            "S3SQLInlineComponent",
            "S3SQLInlineLink",
-           "S3WithIntro",
+           "WithAdvice",
            )
 
 import json
@@ -4404,26 +4404,29 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         return (component, link)
 
 # =============================================================================
-class S3WithIntro(S3SQLFormElement):
+class WithAdvice(S3SQLFormElement):
     """
-        Wrapper for widgets to add an introductory text above them
+        Wrapper for form elements (or field widgets) to add an
+        introductory/advisory text above or below them
     """
 
-    def __init__(self, widget, intro=None, cmsxml=False):
+    def __init__(self, widget, text=None, below=False, cmsxml=False):
         """
             Args:
                 widget: the widget
-                intro: the intro, string|DIV|tuple,
-                       if specified as tuple (module, resource, name),
-                       the intro text will be looked up from CMS
+                text: the text, string|DIV|tuple,
+                      if specified as tuple (module, resource, name),
+                      the text will be looked up from CMS
+                below: render the advice below rather than above the widget
                 cmsxml: do not XML-escape CMS contents, should only
                         be used with safe origin content (=normally never)
         """
 
         self.widget = widget
 
-        self.intro = intro
+        self.text = text
         self.cmsxml = cmsxml
+        self.below = below
 
     # -------------------------------------------------------------------------
     def resolve(self, resource):
@@ -4435,10 +4438,20 @@ class S3WithIntro(S3SQLFormElement):
                           against
         """
 
-        resolved = self.widget.resolve(resource)
+        widget = self.widget
+
+        if isinstance(widget, str):
+            widget = S3SQLField(widget)
+
+        resolved = widget.resolve(resource)
 
         field = resolved[2]
         if field:
+            if isinstance(widget, S3SQLField):
+                if field.widget:
+                    self.widget = field.widget
+                else:
+                    self.widget = self.default_widget
             field.widget = self
         return resolved
 
@@ -4463,24 +4476,70 @@ class S3WithIntro(S3SQLFormElement):
     # -------------------------------------------------------------------------
     def __call__(self, *args, **kwargs):
         """
-            Widget renderer => map to widget, then add intro
+            Widget renderer => map to widget, then add advice
         """
 
         w = self.widget(*args, **kwargs)
 
-        intro = self.intro
-        if isinstance(intro, tuple):
-            if len(intro) == 3 and current.deployment_settings.has_module("cms"):
-                intro = current.s3db.cms_get_content(intro[2],
-                                                     module = intro[0],
-                                                     resource = intro[1],
-                                                     cmsxml = self.cmsxml,
-                                                     )
+        text = self.text
+        if isinstance(text, tuple):
+            if len(text) == 3 and current.deployment_settings.has_module("cms"):
+                text = current.s3db.cms_get_content(text[2],
+                                                    module = text[0],
+                                                    resource = text[1],
+                                                    cmsxml = self.cmsxml,
+                                                    )
             else:
-                intro = None
-        if intro:
-            return TAG[""](DIV(intro, _class="s3-widget-intro"), w)
+                text = None
+
+        if text:
+            elements = (DIV(text, _class="widget-advice"), w)
+            if self.below:
+                elements = elements[::-1]
+            return TAG[""](*elements)
         else:
             return w
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def default_widget(*args, **kwargs):
+        """
+            Default widget if enclosed field has no widget
+        """
+
+        from s3dal import SQLCustomType
+        from gluon.sqlhtml import REGEX_WIDGET_CLASS, OptionsWidget
+
+        widgets = SQLFORM.widgets
+
+        field = args[0]
+        ftype = field.type
+
+        if ftype == 'upload':
+            widget = widgets.upload.widget(*args, **kwargs)
+        elif ftype == 'boolean':
+            widget = widgets.boolean.widget(*args, **kwargs)
+        elif OptionsWidget.has_options(field):
+            if not field.requires.multiple:
+                widget = OptionsWidget.widget(*args, **kwargs)
+            else:
+                widget = widgets.multiple.widget(*args, **kwargs)
+        elif str(ftype).startswith('list:'):
+            widget = widgets.list.widget(*args, **kwargs)
+        elif ftype == 'text':
+            widget = widgets.text.widget(*args, **kwargs)
+        elif ftype == 'password':
+            widget = widgets.password.widget(*args, **kwargs)
+        elif ftype == 'blob':
+            raise TypeError('WithAdvice: unsupported field type %s' % ftype)
+        elif isinstance(ftype, SQLCustomType) and callable(ftype.widget):
+            widget = ftype.widget(*args, **kwargs)
+        else:
+            field_type = REGEX_WIDGET_CLASS.match(str(ftype)).group()
+            if not field_type or field_type not in widgets:
+                field_type = "string"
+            widget = widgets[field_type].widget(*args, **kwargs)
+
+        return widget
 
 # END =========================================================================

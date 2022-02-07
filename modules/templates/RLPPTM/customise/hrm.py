@@ -23,6 +23,50 @@ def human_resource_onvalidation(form):
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
 
+    if r.tablename == "hrm_human_resource":
+        resource = r.resource
+    elif r.component_name == "human_resource":
+        resource = r.component
+    else:
+        resource = None
+
+    if resource:
+        table = resource.table
+
+        field = table.org_contact
+        field.label = current.T("Test Station Manager")
+
+        has_role = current.auth.s3_has_role
+        if has_role("ORG_GROUP_ADMIN"):
+            field.readable = True
+            field.writable = False
+            org_contact = "org_contact"
+        elif has_role("ORG_ADMIN"):
+            field.readable = field.writable = True
+            from core import WithAdvice
+            org_contact = WithAdvice("org_contact",
+                                     text = ("hrm",
+                                             "human_resource",
+                                             "TestStationManagerIntro",
+                                             ),
+                                     below = True,
+                                     cmsxml = True,
+                                     )
+        else:
+            org_contact = None
+
+        from core import S3SQLCustomForm
+        crud_form = S3SQLCustomForm("organisation_id",
+                                    "site_id",
+                                    "job_title_id",
+                                    org_contact,
+                                    "start_date",
+                                    "end_date",
+                                    "status",
+                                    )
+        resource.configure(crud_form = crud_form,
+                           )
+
     current.s3db.add_custom_callback("hrm_human_resource",
                                      "onvalidation",
                                      human_resource_onvalidation,

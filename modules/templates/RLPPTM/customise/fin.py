@@ -32,7 +32,7 @@ def fin_voucher_resource(r, tablename):
     field = table.pe_id
     field.label = T("Issuer##fin")
 
-    from core import S3WithIntro
+    from core import WithAdvice
     field = table.bearer_dob
     if group_voucher:
         label = T("Group Representative Date of Birth")
@@ -41,12 +41,9 @@ def fin_voucher_resource(r, tablename):
         label = T("Beneficiary Date of Birth")
         intro = "BearerDoBIntro"
     field.label = label
-    field.widget = S3WithIntro(field.widget,
-                               intro = ("fin",
-                                       "voucher",
-                                       intro,
-                                       ),
-                               )
+    field.widget = WithAdvice(field.widget,
+                              text = ("fin", "voucher", intro),
+                              )
     if not has_role("VOUCHER_ISSUER"):
         field.readable = field.writable = False
 

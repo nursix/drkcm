@@ -1079,7 +1079,7 @@ def config(settings):
                 r: the current CRUDRequest
         """
 
-        from core import S3WeeklyHoursWidget, S3WithIntro, s3_text_represent
+        from core import S3WeeklyHoursWidget, WithAdvice, s3_text_represent
 
         avtable = current.s3db.pr_person_availability
         is_profile = r.controller == "default"
@@ -1093,9 +1093,9 @@ def config(settings):
         field.readable = field.writable = True
         if is_profile:
             # Add intro text for widget
-            field.widget = S3WithIntro(field.widget,
-                                       intro = ("pr", "person_availability", "HoursMatrixIntro"),
-                                       )
+            field.widget = WithAdvice(field.widget,
+                                      text = ("pr", "person_availability", "HoursMatrixIntro"),
+                                      )
         if r.representation == "xls":
             field.represent = lambda v: S3WeeklyHoursWidget.represent(v, html=False)
         else:
@@ -1673,7 +1673,7 @@ def config(settings):
 
                     # Custom Form
                     from gluon import IS_IN_SET
-                    from core import S3SQLInlineLink, S3WithIntro
+                    from core import S3SQLInlineLink, WithAdvice
                     from .helpers import rlp_deployment_sites
                     crud_fields = name_fields
                     if volunteer_id:
@@ -1690,7 +1690,7 @@ def config(settings):
                                             "volunteer_record.status",
                                             "availability.hours_per_week",
                                             "availability.schedule_json",
-                                            S3WithIntro(
+                                            WithAdvice(
                                                 S3SQLInlineLink("availability_sites",
                                                         field = "site_id",
                                                         label = T("Possible Deployment Sites"),
@@ -1702,7 +1702,7 @@ def config(settings):
                                                         render_list = True,
                                                         ),
                                                 # Widget intro text from CMS
-                                                intro = ("pr", "person_availability_site", "AvailabilitySitesIntro"),
+                                                text = ("pr", "person_availability_site", "AvailabilitySitesIntro"),
                                                 ),
                                             "availability.comments",
                                             "volunteer_record.comments",
@@ -2365,10 +2365,10 @@ def config(settings):
                     organisations = None
 
                 # Append inline-notifications
-                from core import S3WithIntro
+                from core import WithAdvice
                 from .notifications import InlineNotifications
                 crud_form.append(
-                    S3WithIntro(
+                    WithAdvice(
                         InlineNotifications("notifications",
                                             label = T("Notifications"),
                                             person_id = volunteer_id,
@@ -2376,7 +2376,7 @@ def config(settings):
                                             reply_to = "user", #"org",
                                             sender = "org",
                                             ),
-                        intro = ("hrm", "delegation", "NotificationIntroOrg"),
+                        text = ("hrm", "delegation", "NotificationIntroOrg"),
                         ))
             s3db.configure("hrm_delegation", crud_form=crud_form)
 
