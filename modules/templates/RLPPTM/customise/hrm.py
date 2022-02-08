@@ -23,26 +23,86 @@ def human_resource_onvalidation(form):
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
 
-    if r.tablename == "hrm_human_resource":
-        resource = r.resource
-    elif r.component_name == "human_resource":
-        resource = r.component
+    db = current.db
+    s3db = current.s3db
+
+    from ..config import TESTSTATIONS
+
+    # Determine user role
+    has_role = current.auth.s3_has_role
+
+    is_teststation_admin = has_role("ORG_ADMIN")
+    managed_orgs = None
+
+    if is_teststation_admin:
+        from ..helpers import get_managed_orgs
+        managed_orgs = get_managed_orgs(TESTSTATIONS)
+        if not managed_orgs:
+            is_teststation_admin = False
+
+    is_org_group_admin = False if is_teststation_admin else has_role("ORG_GROUP_ADMIN")
+
+    resource = organisation_id = None
+    if is_teststation_admin or is_org_group_admin:
+        # Determine organisation_id
+        record = r.record
+        master = r.tablename
+        if master == "hrm_human_resource":
+            resource = r.resource
+            organisation_id = record.organisation_id if record else None
+
+        elif master == "org_organisation":
+            resource = r.component
+            organisation_id = record.id
+
+        elif master == "pr_person":
+            resource = r.component
+            table = resource.table
+            if r.component_id:
+                query = (table.id == r.component_id)
+            else:
+                query = (table.person_id == record.id)
+            row = db(query).select(table.organisation_id,
+                                   limitby = (0, 1),
+                                   ).first()
+            organisation_id = row.organisation_id if row else None
+
+    if organisation_id:
+        # Check if organisation is a (managed) test station
+        if is_teststation_admin and organisation_id in managed_orgs:
+            show_org_contact = org_contact_writable = True
+        else:
+            otable = s3db.org_organisation
+            gtable = s3db.org_group
+            mtable = s3db.org_group_membership
+            join = [gtable.on((mtable.organisation_id == otable.id) & \
+                              (mtable.deleted == False) & \
+                              (gtable.id == mtable.group_id) & \
+                              (gtable.name == TESTSTATIONS)
+                              )]
+            query = (otable.id == organisation_id)
+            org = current.db(query).select(otable.id,
+                                           cache = s3db.cache,
+                                           join = join,
+                                           limitby = (0, 1),
+                                           ).first()
+            show_org_contact = bool(org)
+            org_contact_writable = False
     else:
-        resource = None
+        show_org_contact = org_contact_writable = False
 
-    if resource:
+    if resource and show_org_contact:
+        # Expose org_contact field
+        org_contact = "org_contact"
+
         table = resource.table
-
         field = table.org_contact
+
+        field.readable = True
+        field.writable = org_contact_writable
         field.label = current.T("Test Station Manager")
 
-        has_role = current.auth.s3_has_role
-        if has_role("ORG_GROUP_ADMIN"):
-            field.readable = True
-            field.writable = False
-            org_contact = "org_contact"
-        elif has_role("ORG_ADMIN"):
-            field.readable = field.writable = True
+        if is_teststation_admin:
             from core import WithAdvice
             org_contact = WithAdvice("org_contact",
                                      text = ("hrm",
@@ -52,20 +112,20 @@ def hrm_human_resource_resource(r, tablename):
                                      below = True,
                                      cmsxml = True,
                                      )
-        else:
-            org_contact = None
+    else:
+        org_contact = None
 
-        from core import S3SQLCustomForm
-        crud_form = S3SQLCustomForm("organisation_id",
-                                    "site_id",
-                                    "job_title_id",
-                                    org_contact,
-                                    "start_date",
-                                    "end_date",
-                                    "status",
-                                    )
-        resource.configure(crud_form = crud_form,
-                           )
+    # Use custom form for HR
+    from core import S3SQLCustomForm
+    crud_form = S3SQLCustomForm("organisation_id",
+                                "site_id",
+                                "job_title_id",
+                                org_contact,
+                                "start_date",
+                                "end_date",
+                                "status",
+                                )
+    resource.configure(crud_form=crud_form)
 
     current.s3db.add_custom_callback("hrm_human_resource",
                                      "onvalidation",
