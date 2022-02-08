@@ -12,8 +12,10 @@ from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
-from core import IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
+from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
                  CRUDMethod, S3Represent, s3_fullname, s3_mark_required, s3_str
+
+from s3db.pr import pr_PersonRepresentContact
 
 # =============================================================================
 def get_role_realms(role):
@@ -318,6 +320,35 @@ def get_role_hrs(role_uid, pe_id=None, organisation_id=None):
         hr_ids = list(set(row.id for row in rows))
 
     return hr_ids if hr_ids else None
+
+# -----------------------------------------------------------------------------
+def is_org_group(organisation_id, group, cacheable=True):
+    """
+        Check whether an organisation is member of an organisation group
+
+        Args:
+            organisation_id: the organisation ID
+            group: the organisation group name
+
+        Returns:
+            boolean
+    """
+
+    s3db = current.s3db
+
+    gtable = s3db.org_group
+    mtable = s3db.org_group_membership
+    join = [gtable.on((gtable.id == mtable.group_id) & \
+                      (gtable.name == group)
+                      )]
+    query = (mtable.organisation_id == organisation_id) & \
+            (mtable.deleted == False)
+    row = current.db(query).select(mtable.id,
+                                   cache = s3db.cache,
+                                   join = join,
+                                   limitby = (0, 1),
+                                   ).first()
+    return bool(row)
 
 # -----------------------------------------------------------------------------
 def restrict_data_formats(r):
@@ -2809,5 +2840,117 @@ class TestFacilityInfo(CRUDMethod):
         if response:
             response.headers["Content-Type"] = "application/json; charset=utf-8"
         return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
+
+# =============================================================================
+class PersonRepresentManager(pr_PersonRepresentContact):
+    """
+        Custom representation of person_id in read-perspective on
+        test station managers tab; include DoB and Tax-ID tag
+    """
+
+    # -------------------------------------------------------------------------
+    def represent_row_html(self, row):
+        """
+            Represent a row with contact information, styleable HTML
+
+            Args:
+                row: the Row
+        """
+
+        T = current.T
+
+        output = DIV(SPAN(s3_fullname(row),
+                          _class = "manager-name",
+                          ),
+                     _class = "manager-repr",
+                     )
+
+        table = self.table
+
+        try:
+            dob = row.date_of_birth
+        except AttributeError:
+            dob = None
+        dob = table.date_of_birth.represent(dob) if dob else "-"
+
+        try:
+            tax_id = row.tax_id
+        except AttributeError:
+            tax_id = None
+        if not tax_id:
+            tax_id = "-"
+
+        pe_id = row.pe_id
+        email = self._email.get(pe_id) if self.show_email else None
+        phone = self._phone.get(pe_id) if self.show_phone else None
+
+        details = TABLE(TR(TH("%s:" % T("Date of Birth")),
+                           TD(dob),
+                           _class = "manager-dob"
+                           ),
+                        TR(TH("%s:" % T("Tax ID")),
+                           TD(tax_id),
+                           _class = "manager-taxid"
+                           ),
+                        TR(TH(ICON("mail")),
+                           TD(A(email, _href="mailto:%s" % email) if email else "-"),
+                           _class = "manager-email"
+                           ),
+                        TR(TH(ICON("phone")),
+                           TD(phone if phone else "-"),
+                           _class = "manager-phone",
+                           ),
+                        _class="manager-details",
+                        )
+        output.append(details)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def lookup_rows(self, key, values, fields=None):
+        """
+            Custom rows lookup
+
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
+        """
+
+        rows = super(PersonRepresentManager, self).lookup_rows(key, values, fields=fields)
+
+        # Lookup pe_ids and name fields
+        db = current.db
+        s3db = current.s3db
+
+        count = len(values)
+
+        # Lookup dates of birth
+        table = self.table
+        query = (key == values[0]) if count == 1 else key.belongs(values)
+        dob = db(query).select(table.id,
+                               table.date_of_birth,
+                               limitby = (0, count),
+                               ).as_dict()
+        for row in rows:
+            date_of_birth = dob.get(row.id)
+            if date_of_birth:
+                row.date_of_birth = date_of_birth.get("date_of_birth")
+
+        # Lookup tax IDs
+        ttable = s3db.pr_person_tag
+        tkey = ttable.person_id
+        query = (ttable.tag == "TAXID") & \
+                ((tkey == values[0]) if count == 1 else tkey.belongs(values)) & \
+                (ttable.deleted == False)
+        taxids = db(query).select(ttable.person_id,
+                                  ttable.value,
+                                  limitby = (0, count),
+                                  ).as_dict(key="person_id")
+        for row in rows:
+            tax_id = taxids.get(row.id)
+            row.tax_id = tax_id.get("value") if tax_id else None
+
+        return rows
 
 # END =========================================================================

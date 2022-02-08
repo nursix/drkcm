@@ -132,56 +132,23 @@ def rlpptm_org_rheader(r, tabs=None):
 
         if tablename == "org_organisation":
 
-            auth = current.auth
-            is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
-
-            db = current.db
-            s3db = current.s3db
-
             if not tabs:
-
-                invite_tab = None
-                sites_tab = None
-                doc_tab = None
-
-                gtable = s3db.org_group
-                mtable = s3db.org_group_membership
-                query = (mtable.organisation_id == record.id) & \
-                        (mtable.group_id == gtable.id)
-                group = db(query).select(gtable.name,
-                                         limitby = (0, 1)
-                                         ).first()
-                if group:
-                    from .config import TESTSTATIONS, SCHOOLS, GOVERNMENT
-                    if group.name == TESTSTATIONS:
-                        sites_tab = (T("Test Stations"), "facility")
-                        doc_tab = (T("Documents"), "document")
-                    elif group.name == SCHOOLS:
-                        sites_tab = (T("Administrative Offices"), "office")
-                        if is_org_group_admin:
-                            invite_tab = (T("Invite"), "invite")
-                    elif group.name == GOVERNMENT:
-                        sites_tab = (T("Warehouses"), "warehouse")
-
-                tabs = [(T("Organisation"), None),
-                        invite_tab,
-                        sites_tab,
-                        (T("Staff"), "human_resource"),
-                        doc_tab,
-                        ]
+                tabs = default_org_tabs(record)
 
             # Look up the OrgID
             def org_id(row):
-                ttable = s3db.org_organisation_tag
+                ttable = current.s3db.org_organisation_tag
                 query = (ttable.organisation_id == row.id) & \
                         (ttable.tag == "OrgID") & \
                         (ttable.deleted == False)
-                tag = db(query).select(ttable.value, limitby=(0, 1)).first()
+                tag = current.db(query).select(ttable.value,
+                                               limitby = (0, 1),
+                                               ).first()
                 return tag.value if tag else "-"
 
             # Check for active user accounts:
             rheader_fields = [[(T("Organization ID"), org_id)]]
-            if is_org_group_admin:
+            if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
 
                 from .helpers import get_org_accounts
                 active = get_org_accounts(record.id)[0]
@@ -195,6 +162,51 @@ def rlpptm_org_rheader(r, tabs=None):
         rheader = rheader(r, table = resource.table, record = record)
 
     return rheader
+
+# -----------------------------------------------------------------------------
+def default_org_tabs(record):
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+
+    invite_tab = None
+    sites_tab = None
+    doc_tab = None
+    managers_tab = None
+
+    gtable = s3db.org_group
+    mtable = s3db.org_group_membership
+    query = (mtable.organisation_id == record.id) & \
+            (mtable.group_id == gtable.id)
+    group = db(query).select(gtable.name,
+                             limitby = (0, 1)
+                             ).first()
+    if group:
+
+        is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
+
+        from .config import TESTSTATIONS, SCHOOLS, GOVERNMENT
+        if group.name == TESTSTATIONS:
+            sites_tab = (T("Test Stations"), "facility")
+            doc_tab = (T("Documents"), "document")
+            if is_org_group_admin:
+                managers_tab = (T("Test Station Managers"), "managers")
+        elif group.name == SCHOOLS:
+            sites_tab = (T("Administrative Offices"), "office")
+            if is_org_group_admin:
+                invite_tab = (T("Invite"), "invite")
+        elif group.name == GOVERNMENT:
+            sites_tab = (T("Warehouses"), "warehouse")
+
+    return [(T("Organisation"), None),
+            invite_tab,
+            sites_tab,
+            (T("Staff"), "human_resource"),
+            managers_tab,
+            doc_tab,
+            ]
 
 # =============================================================================
 def rlpptm_project_rheader(r, tabs=None):

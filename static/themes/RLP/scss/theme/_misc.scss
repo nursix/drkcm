@@ -541,4 +541,38 @@ body.rtl {
     }
 }
 
+// Test Station Manager person_id representation
+.manager-repr {
+    border: 1px solid #eee;
+    margin-top: 0.5rem;
+    width: 25rem;
+    background-color: #fff3c6;
+    max-width: 100%;
+    .manager-name {
+        padding: 0.4rem;
+        font-size: 0.9rem;
+        display: block;
+    }
+    .manager-email {
+        th, td {
+            padding-top: 0.4rem;
+        }
+    }
+    .manager-details {
+        width: 100%;
+        border: 0;
+        margin-bottom: 0.3rem;
+        th {
+            width: 33%;
+        }
+        th, td {
+            background-color: #fff3c6;
+            font-size: 0.8rem;
+            line-height: 1;
+            padding: 0.4rem;
+        }
+    }
+}
+
+
 // END ========================================================================

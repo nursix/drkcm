@@ -23,7 +23,6 @@ def human_resource_onvalidation(form):
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
 
-    db = current.db
     s3db = current.s3db
 
     from ..config import TESTSTATIONS
@@ -62,40 +61,28 @@ def hrm_human_resource_resource(r, tablename):
                 query = (table.id == r.component_id)
             else:
                 query = (table.person_id == record.id)
-            row = db(query).select(table.organisation_id,
-                                   limitby = (0, 1),
-                                   ).first()
+            row = current.db(query).select(table.organisation_id,
+                                           limitby = (0, 1),
+                                           ).first()
             organisation_id = row.organisation_id if row else None
+
+    table = resource.table if resource else s3db.hrm_human_resource
 
     if organisation_id:
         # Check if organisation is a (managed) test station
         if is_teststation_admin and organisation_id in managed_orgs:
             show_org_contact = org_contact_writable = True
         else:
-            otable = s3db.org_organisation
-            gtable = s3db.org_group
-            mtable = s3db.org_group_membership
-            join = [gtable.on((mtable.organisation_id == otable.id) & \
-                              (mtable.deleted == False) & \
-                              (gtable.id == mtable.group_id) & \
-                              (gtable.name == TESTSTATIONS)
-                              )]
-            query = (otable.id == organisation_id)
-            org = current.db(query).select(otable.id,
-                                           cache = s3db.cache,
-                                           join = join,
-                                           limitby = (0, 1),
-                                           ).first()
-            show_org_contact = bool(org)
+            from ..helpers import is_org_group
+            show_org_contact = is_org_group(organisation_id, TESTSTATIONS)
             org_contact_writable = False
     else:
         show_org_contact = org_contact_writable = False
 
-    if resource and show_org_contact:
+    if show_org_contact:
         # Expose org_contact field
         org_contact = "org_contact"
 
-        table = resource.table
         field = table.org_contact
 
         field.readable = True
@@ -115,9 +102,36 @@ def hrm_human_resource_resource(r, tablename):
     else:
         org_contact = None
 
-    # Use custom form for HR
     from core import S3SQLCustomForm
+    if r.component_name == "managers":
+        # TODO add workflow-tags (with subheader)
+        # TODO all fields read-only except tags
+
+        field = table.organisation_id
+        field.readable = field.writable = False
+
+        if r.component_id:
+            from ..helpers import PersonRepresentManager
+            field = table.person_id
+            field.readable = True
+            field.writable = False
+            field.represent = PersonRepresentManager(show_email = True,
+                                                     show_phone = True,
+                                                     show_link = False,
+                                                     styleable = True,
+                                                     )
+        person_id = "person_id"
+        current.s3db.configure("hrm_human_resource",
+                               insertable = False,
+                               deletable = False,
+                               )
+    else:
+        person_id = None
+        table.organisation_id.writable = False
+
+    # Use custom-form for HRs
     crud_form = S3SQLCustomForm("organisation_id",
+                                person_id,
                                 "site_id",
                                 "job_title_id",
                                 org_contact,
@@ -125,7 +139,9 @@ def hrm_human_resource_resource(r, tablename):
                                 "end_date",
                                 "status",
                                 )
-    resource.configure(crud_form=crud_form)
+    current.s3db.configure("hrm_human_resource",
+                           crud_form = crud_form,
+                           )
 
     current.s3db.add_custom_callback("hrm_human_resource",
                                      "onvalidation",

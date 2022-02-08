@@ -1868,6 +1868,7 @@ class S3SQLVirtualField(S3SQLFormElement):
         field = Field(selector,
                       label = label,
                       represent = represent,
+                      widget = self,
                       )
 
         return None, selector, field

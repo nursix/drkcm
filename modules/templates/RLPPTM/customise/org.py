@@ -101,6 +101,16 @@ def org_organisation_controller(**attr):
     # Enable bigtable features
     settings.base.bigtable = True
 
+    # Add managers component
+    current.s3db.add_components("org_organisation",
+                                hrm_human_resource = {"name": "managers",
+                                                      "joinby": "organisation_id",
+                                                      "filterby": {"org_contact": True,
+                                                                   "status": 1, # active
+                                                                   },
+                                                      },
+                                )
+
     # Custom prep
     standard_prep = s3.prep
     def prep(r):
@@ -275,7 +285,7 @@ def org_organisation_controller(**attr):
                 field = ctable.obsolete
                 field.readable = field.writable = True
 
-        elif r.component_name == "human_resource":
+        elif r.component_name in ("human_resource", "managers"):
 
             phone_label = settings.get_ui_label_mobile_phone()
             list_fields = ["organisation_id",

@@ -4972,3 +4972,39 @@ body.rtl .event-type-header {
   white-space: pre-line;
   font-size: 0.8rem;
 }
+
+/* line 545, ../scss/theme/_misc.scss */
+.manager-repr {
+  border: 1px solid #eee;
+  margin-top: 0.5rem;
+  width: 25rem;
+  background-color: #fff3c6;
+  max-width: 100%;
+}
+/* line 551, ../scss/theme/_misc.scss */
+.manager-repr .manager-name {
+  padding: 0.4rem;
+  font-size: 0.9rem;
+  display: block;
+}
+/* line 557, ../scss/theme/_misc.scss */
+.manager-repr .manager-email th, .manager-repr .manager-email td {
+  padding-top: 0.4rem;
+}
+/* line 561, ../scss/theme/_misc.scss */
+.manager-repr .manager-details {
+  width: 100%;
+  border: 0;
+  margin-bottom: 0.3rem;
+}
+/* line 565, ../scss/theme/_misc.scss */
+.manager-repr .manager-details th {
+  width: 33%;
+}
+/* line 568, ../scss/theme/_misc.scss */
+.manager-repr .manager-details th, .manager-repr .manager-details td {
+  background-color: #fff3c6;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0.4rem;
+}
