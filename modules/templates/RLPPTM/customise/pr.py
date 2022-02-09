@@ -7,6 +7,24 @@
 from gluon import current, IS_NOT_EMPTY
 
 # -------------------------------------------------------------------------
+def add_person_tags():
+    """
+        Person tags as filtered components
+            - for embedding in form
+    """
+
+    s3db = current.s3db
+
+    s3db.add_components("pr_person",
+                        pr_person_tag = ({"name": "tax_id",
+                                          "joinby": "person_id",
+                                          "filterby": {"tag": "TAXID"},
+                                          "multiple": False,
+                                          },
+                                         ),
+                        )
+
+# -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
 
     s3db = current.s3db
@@ -44,7 +62,8 @@ def pr_person_controller(**attr):
         keys = StringTemplateParser.keys(settings.get_pr_name_format())
         name_fields = [fn for fn in keys if fn in NAMES]
 
-        if r.controller in ("default", "hrm") and not r.component:
+        controller = r.controller
+        if controller in ("default", "hrm") and not r.component:
             # Personal profile (default/person) or staff
 
             # Last name is required
@@ -53,6 +72,19 @@ def pr_person_controller(**attr):
 
             # Custom Form
             crud_fields = name_fields + ["date_of_birth", "gender"]
+
+            # Expose Tax ID in personal profile
+            if controller == "default":
+
+                add_person_tags()
+
+                component = r.resource.components.get("tax_id")
+                field = component.table.value
+                # Not translated as specific for the German context:
+                field.comment = "Nur Teststellenverantwortliche: Ihre bei der Kassenärztl. Vereinigung angegebene Steuer-ID"
+
+                crud_fields.append((T("Tax ID"), "tax_id.value"))
+
             r.resource.configure(crud_form = S3SQLCustomForm(*crud_fields),
                                  deletable = False,
                                  )
