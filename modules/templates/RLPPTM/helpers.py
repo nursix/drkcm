@@ -601,29 +601,38 @@ def configure_binary_tags(resource, tag_components):
             field.represent = lambda v, row=None: binary_tag_opts.get(v, "-")
 
 # -----------------------------------------------------------------------------
-def workflow_tag_represent(options):
+def workflow_tag_represent(options, none=None):
     """
         Color-coded and icon-supported representation of
         facility approval workflow tags
 
         Args:
             options: the tag options as dict {value: label}
+            none: treat None-values like this option (str)
     """
 
     icons = {"REVISE": "fa fa-exclamation-triangle",
+             "REJECT": "fa fa-exclamation-triangle",
              "REVIEW": "fa fa-hourglass",
              "APPROVED": "fa fa-check",
+             "N/A": "fa fa-minus-circle",
              "N": "fa fa-minus-circle",
              "Y": "fa fa-check",
              }
+
     css_classes = {"REVISE": "workflow-red",
+                   "REJECT": "workflow-red",
                    "REVIEW": "workflow-amber",
                    "APPROVED": "workflow-green",
+                   "N/A": "workflow-grey",
                    "N": "workflow-red",
                    "Y": "workflow-green",
                    }
 
     def represent(value, row=None):
+
+        if value is None and none:
+            value = none
 
         label = DIV(_class="approve-workflow")
         color = css_classes.get(value)
@@ -637,120 +646,6 @@ def workflow_tag_represent(options):
         return label
 
     return represent
-
-# -----------------------------------------------------------------------------
-def configure_workflow_tags(resource, role="applicant", record_id=None):
-    """
-        Configure facility approval workflow tags
-
-        Args:
-            resource: the org_facility resource
-            role: the user's role in the workflow (applicant|approver)
-            record_id: the facility record ID
-
-        Returns:
-            the list of visible workflow tags [(label, selector)]
-    """
-
-    T = current.T
-    components = resource.components
-
-    visible_tags = []
-
-    # Configure STATUS tag
-    status_tag_opts = {"REVISE": T("Completion/Adjustment Required"),
-                       "READY": T("Ready for Review"),
-                       "REVIEW": T("Review Pending"),
-                       "APPROVED": T("Approved##actionable"),
-                       }
-    selectable = None
-    status_visible = False
-    review_tags_visible = False
-
-    if role == "applicant" and record_id:
-        # Check current status
-        db = current.db
-        s3db = current.s3db
-        ftable = s3db.org_facility
-        ttable = s3db.org_site_tag
-        join = ftable.on((ftable.site_id == ttable.site_id) & \
-                         (ftable.id == record_id))
-        query = (ttable.tag == "STATUS") & (ttable.deleted == False)
-        row = db(query).select(ttable.value, join=join, limitby=(0, 1)).first()
-        if row:
-            if row.value == "REVISE":
-                review_tags_visible = True
-                selectable = (row.value, "READY")
-            elif row.value == "REVIEW":
-                review_tags_visible = True
-        status_visible = True
-
-    component = components.get("status")
-    if component:
-        ctable = component.table
-        field = ctable.value
-        field.default = "REVISE"
-        field.readable = status_visible
-        if status_visible:
-            if selectable:
-                selectable_statuses = [(status, status_tag_opts[status])
-                                       for status in selectable]
-                field.requires = IS_IN_SET(selectable_statuses, zero=None)
-                field.writable = True
-            else:
-                field.writable = False
-            visible_tags.append((T("Processing Status"), "status.value"))
-        field.represent = workflow_tag_represent(status_tag_opts)
-
-    # Configure review tags
-    review_tag_opts = (("REVISE", T("Completion/Adjustment Required")),
-                       ("REVIEW", T("Review Pending")),
-                       ("APPROVED", T("Approved##actionable")),
-                       )
-    selectable = review_tag_opts if role == "approver" else None
-
-    review_tags = (("mpav", T("MPAV Qualification")),
-                   ("hygiene", T("Hygiene Plan")),
-                   ("layout", T("Facility Layout Plan")),
-                   )
-    for cname, label in review_tags:
-        component = components.get(cname)
-        if component:
-            ctable = component.table
-            field = ctable.value
-            field.default = "REVISE"
-            if selectable:
-                field.requires = IS_IN_SET(selectable, zero=None, sort=False)
-                field.readable = field.writable = True
-            else:
-                field.readable = review_tags_visible
-                field.writable = False
-            if field.readable:
-                visible_tags.append((label, "%s.value" % cname))
-            field.represent = workflow_tag_represent(dict(review_tag_opts))
-
-    # Configure PUBLIC tag
-    binary_tag_opts = {"Y": T("Yes"),
-                       "N": T("No"),
-                       }
-    selectable = binary_tag_opts if role == "approver" else None
-
-    component = resource.components.get("public")
-    if component:
-        ctable = component.table
-        field = ctable.value
-        field.default = "N"
-        if selectable:
-            field.requires = IS_IN_SET(selectable, zero=None)
-            field.writable = True
-        else:
-            field.requires = IS_IN_SET(binary_tag_opts, zero=None)
-            field.writable = False
-        field.represent = workflow_tag_represent(binary_tag_opts)
-    visible_tags.append((T("In Public Registry"), "public.value"))
-    visible_tags.append("site_details.authorisation_advice")
-
-    return visible_tags
 
 # -----------------------------------------------------------------------------
 def facility_approval_workflow(site_id):

@@ -404,6 +404,9 @@ body.rtl {
     }
 }
 .approve-workflow {
+    &.workflow-grey {
+        color: #555;
+    }
     &.workflow-red {
         color: #c42626;
     }

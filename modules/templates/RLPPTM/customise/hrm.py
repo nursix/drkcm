@@ -4,7 +4,81 @@
     License: MIT
 """
 
-from gluon import current
+from gluon import current, IS_IN_SET
+
+# -------------------------------------------------------------------------
+def add_manager_tags():
+    """
+        Test Station Manager approval tags as filtered components
+            - for embedding in form
+    """
+
+    s3db = current.s3db
+
+    s3db.add_components("hrm_human_resource",
+                        hrm_human_resource_tag = (
+                            # Registration Form
+                            {"name": "reg_form",
+                             "joinby": "human_resource_id",
+                             "filterby": {"tag": "REGFORM"},
+                             "multiple": False,
+                             },
+                            # Criminal Record Certificate
+                            {"name": "crc",
+                             "joinby": "human_resource_id",
+                             "filterby": {"tag": "CRC"},
+                             "multiple": False,
+                             },
+                            # Statement on Criminal Proceedings
+                            {"name": "scp",
+                             "joinby": "human_resource_id",
+                             "filterby": {"tag": "SCP"},
+                             "multiple": False,
+                             },
+                            ),
+                        )
+
+# -----------------------------------------------------------------------------
+def configure_manager_tags(resource):
+    """
+        Configure test station manager approval tags
+            - labels
+            - selectable options
+            - representation
+
+        Args:
+            resource: the hrm_human_resource resource
+                      (with filtered components configured)
+    """
+
+    T = current.T
+    components = resource.components
+
+    # Document status options
+    doc_opts = (("N/A", T("not provided")),
+                ("APPROVED", T("provided / appropriate")),
+                ("REJECT", T("not up to requirements")),
+                )
+
+    labels = {"reg_form": T("Signed form for registration"),
+              "crc": T("Criminal Record Certificate"),
+              "scp": T("Statement on Pending Criminal Proceedings"),
+              }
+
+    from ..helpers import workflow_tag_represent
+
+    for alias in ("reg_form", "crc", "scp"):
+
+        component = components.get(alias)
+        if not component:
+            continue
+        table = component.table
+
+        field = table.value
+        field.label = labels.get(alias)
+        field.default = "N/A"
+        field.requires = IS_IN_SET(doc_opts, sort=False, zero=None)
+        field.represent = workflow_tag_represent(dict(doc_opts), none="N/A")
 
 # -------------------------------------------------------------------------
 def human_resource_onvalidation(form):
@@ -23,6 +97,9 @@ def human_resource_onvalidation(form):
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
 
+    T = current.T
+
+    s3 = current.response.s3
     s3db = current.s3db
 
     from ..config import TESTSTATIONS
@@ -104,11 +181,11 @@ def hrm_human_resource_resource(r, tablename):
 
     from core import S3SQLCustomForm
     if r.component_name == "managers":
-        # TODO add workflow-tags (with subheader)
-        # TODO all fields read-only except tags
 
-        field = table.organisation_id
-        field.readable = field.writable = False
+        current.deployment_settings.ui.open_read_first = True
+
+        field = table.site_id
+        field.writable = False
 
         if r.component_id:
             from ..helpers import PersonRepresentManager
@@ -120,27 +197,49 @@ def hrm_human_resource_resource(r, tablename):
                                                      show_link = False,
                                                      styleable = True,
                                                      )
-        person_id = "person_id"
+
+        crud_fields = ["person_id",
+                       "site_id",
+                       ]
+        if is_org_group_admin:
+            add_manager_tags()
+            configure_manager_tags(resource)
+            crud_fields.extend(["reg_form.value",
+                                "crc.value",
+                                "scp.value",
+                                ])
+            subheadings = {"person_id": T("Staff Member Details"),
+                           "reg_form_value": T("Documentation Status"),
+                           }
+        else:
+            subheadings = None
+
         current.s3db.configure("hrm_human_resource",
                                insertable = False,
                                deletable = False,
+                               subheadings = subheadings,
+                               update_next = r.url(method="read"),
                                )
+
+        # Adjust CRUD strings for perspective
+        s3.crud_strings["hrm_human_resource"].update({
+            "label_list_button": T("List Test Station Managers"),
+            })
     else:
-        person_id = None
         table.organisation_id.writable = False
 
+        crud_fields = ("organisation_id",
+                       "site_id",
+                       "job_title_id",
+                       org_contact,
+                       "start_date",
+                       "end_date",
+                       "status",
+                       )
+
     # Use custom-form for HRs
-    crud_form = S3SQLCustomForm("organisation_id",
-                                person_id,
-                                "site_id",
-                                "job_title_id",
-                                org_contact,
-                                "start_date",
-                                "end_date",
-                                "status",
-                                )
     current.s3db.configure("hrm_human_resource",
-                           crud_form = crud_form,
+                           crud_form = S3SQLCustomForm(*crud_fields),
                            )
 
     current.s3db.add_custom_callback("hrm_human_resource",
