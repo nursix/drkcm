@@ -32,6 +32,7 @@ AUTHENTICATED,Authenticated,,,,,pr_occupation_type,READ,,
 AUTHENTICATED,Authenticated,,,,,pr_occupation_type_person,CREATE|READ,UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,,,pr_person,NONE,READ|UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,,,pr_person_details,CREATE,READ|UPDATE,
+AUTHENTICATED,Authenticated,,,,,pr_person_tag,CREATE,READ|UPDATE|DELETE,
 DISEASE_TEST_READER,Disease Test Reader,,,disease,case_diagnostics,,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,disease,testing_report,,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,disease,testing_demographic,,READ,,any
@@ -101,6 +102,7 @@ ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_contact,CREATE|READ|UPDATE|DELET
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_contact_emergency,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_person,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_person_details,CREATE|READ|UPDATE|DELETE,,
+ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_person_tag,READ,,any
 PROGRAM_ACCOUNTANT,Program Accountant,,,fin,voucher,,NONE,,
 PROGRAM_ACCOUNTANT,Program Accountant,,,fin,voucher_debit,,READ,,any
 PROGRAM_ACCOUNTANT,Program Accountant,,,fin,voucher_invoice,,READ|UPDATE,,

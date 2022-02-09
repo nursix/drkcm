@@ -2940,7 +2940,8 @@ class PersonRepresentManager(pr_PersonRepresentContact):
         # Lookup tax IDs
         ttable = s3db.pr_person_tag
         tkey = ttable.person_id
-        query = (ttable.tag == "TAXID") & \
+        query = current.auth.s3_accessible_query("read", ttable) & \
+                (ttable.tag == "TAXID") & \
                 ((tkey == values[0]) if count == 1 else tkey.belongs(values)) & \
                 (ttable.deleted == False)
         taxids = db(query).select(ttable.person_id,
