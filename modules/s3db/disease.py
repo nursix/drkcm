@@ -548,7 +548,7 @@ class DiseaseMonitoringModel(DataModel):
             }
 
         timeplot_options = {
-            "fact": facts,
+            "facts": facts,
             "timestamp": ((T("per interval"), "date,date"),
                           (T("cumulative"), "date"),
                           ),
@@ -656,6 +656,16 @@ class DiseaseMonitoringModel(DataModel):
                          },
             }
 
+        timeplot_options = {
+            "facts": facts,
+            "timestamp": ((T("per interval"), "report_id$date,report_id$date"),
+                          (T("cumulative"), "report_id$date"),
+                          ),
+            "defaults": {"fact": list(facts[:2]),
+                         "timestamp": "report_id$date,report_id$date",
+                         },
+            }
+
         configure(tablename,
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,
@@ -663,6 +673,7 @@ class DiseaseMonitoringModel(DataModel):
                   onaccept = self.testing_demographic_onaccept,
                   ondelete = self.testing_demographic_ondelete,
                   report_options = report_options,
+                  timeplot_options = timeplot_options,
                   )
 
         # ---------------------------------------------------------------------

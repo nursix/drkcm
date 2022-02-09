@@ -29,7 +29,7 @@ The ``timeplot_options`` table setting is used to configure the report:
                   ]
 
     timeplot_options = {
-        "fact": facts,
+        "facts": facts,
         "timestamp": [(T("per interval"), "date,date"),
                       (T("cumulative"), "date"),
                       ],
@@ -49,7 +49,7 @@ The attributes of the ``timeplot_options`` setting are as follows:
 +-----------+------+-----------------------------------------------------------------+
 |Option     |Type  |Explanation                                                      |
 +===========+======+=================================================================+
-|fact       |list  |The selectable facts as tuples (label, expression)               |
+|facts      |list  |The selectable facts as tuples (label, expression)               |
 +-----------+------+-----------------------------------------------------------------+
 |timestamp  |list  | | Selectable time stamps as tuples *(label, expr)*              |
 |           |      | |                                                               |
