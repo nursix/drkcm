@@ -1113,6 +1113,44 @@ def facility_review_notification(site_id, tags):
                                  )
 
 # -------------------------------------------------------------------------
+def check_blocked_l2(form, variable):
+    """
+        Checks if the L2 in a facility form is currently blocked
+        for new registrations, and sets a form error if so
+
+        Args:
+            form: the FORM
+            variable: the corresponding L2 variable of the location selector
+    """
+
+    try:
+        district = form.vars[variable]
+    except (AttributeError, KeyError):
+        return
+
+    blacklist = current.deployment_settings.get_custom("registration_blocked")
+
+    if district and blacklist:
+
+        ltable = current.s3db.gis_location
+        query = (ltable.id == district)
+        row = current.db(query).select(ltable.name, limitby=(0, 1)).first()
+        if row and row.name in blacklist:
+            form.errors[variable] = current.T("Due to excess capacities, no new test facilities can be registered in this district currently")
+
+# -------------------------------------------------------------------------
+def facility_create_onvalidation(form):
+    """
+        Onvalidation of new facility:
+            - check if L2 is currently blocked for new registrations
+
+        Args:
+            form: the FORM
+    """
+
+    check_blocked_l2(form, "location_id_L2")
+
+# -------------------------------------------------------------------------
 def facility_create_onaccept(form):
     """
         Onaccept of new facility:
@@ -1298,6 +1336,13 @@ def org_facility_resource(r, tablename):
     # Add tags for both orgs and sites
     add_org_tags()
     add_site_tags()
+
+    # Custom onvalidation to check L2 against blocked-list
+    s3db.add_custom_callback("org_facility",
+                             "onvalidation",
+                             facility_create_onvalidation,
+                             method = "create",
+                             )
 
     # Custom onaccept to add default tags
     s3db.add_custom_callback("org_facility",

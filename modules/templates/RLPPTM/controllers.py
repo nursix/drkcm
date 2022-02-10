@@ -1035,7 +1035,7 @@ class register(CustomController):
         if form.accepts(request.vars,
                         session,
                         formname = "register",
-                        onvalidation = auth_settings.register_onvalidation,
+                        onvalidation = self.validate(),
                         ):
 
             formvars = form.vars
@@ -1342,6 +1342,30 @@ class register(CustomController):
         current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % request.application)
 
         return formfields, required_fields, subheadings
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def validate(cls):
+        """
+            Custom validation of registration form
+            - currently doing nothing except standard onvalidation
+
+            Returns:
+                callback function
+        """
+
+        def register_onvalidation(form):
+
+            onvalidation = current.auth.settings.register_onvalidation
+            if onvalidation:
+                from gluon.tools import callback
+                callback(onvalidation, form, tablename="auth_user")
+
+            # Check if L2 is currently blocked for new registrations
+            from .customise.org import check_blocked_l2
+            check_blocked_l2(form, "location_L2")
+
+        return register_onvalidation
 
     # -------------------------------------------------------------------------
     @staticmethod

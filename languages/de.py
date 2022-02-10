@@ -1885,6 +1885,7 @@
 'Drugs': 'Drogen',
 'Dry Dock': 'Trockendock',
 'Due Follow-ups': 'Fällige Wiedervorlagen',
+'Due to excess capacities, no new test facilities can be registered in this district currently': 'Wegen Überschusskapazitäten können derzeit keine neuen Testeinrichtungen in diesem Landkreis registriert werden',
 'Dug Well': 'Schachtbrunnen',
 'Duplicate?': 'Duplikat?',
 'Dust Storm': 'Staub Sturm',
