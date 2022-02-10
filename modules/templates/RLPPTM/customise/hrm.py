@@ -5,6 +5,7 @@
 """
 
 from gluon import current, IS_IN_SET
+from core import get_form_record_id
 
 # -------------------------------------------------------------------------
 def add_manager_tags():
@@ -82,6 +83,10 @@ def configure_manager_tags(resource):
 
 # -------------------------------------------------------------------------
 def human_resource_onvalidation(form):
+    """
+        Form validation for human resources
+            - make sure there is only one HR record per person
+    """
 
     person_id = form.vars.get("person_id")
     if person_id:
@@ -93,6 +98,27 @@ def human_resource_onvalidation(form):
                                              ).first()
         if duplicate:
             form.errors.person_id = current.T("Person already has a staff record")
+
+# -------------------------------------------------------------------------
+def manager_postprocess(form):
+    """
+        Postprocess for manager HR form:
+            - update the MGRINFO tag of the organisation
+    """
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return
+
+    # Look up the org
+    table = current.s3db.hrm_human_resource
+    query = (table.id == record_id)
+    record = current.db(query).select(table.organisation_id,
+                                      limitby = (0, 1),
+                                      ).first()
+    if record:
+        from .org import update_mgrinfo
+        update_mgrinfo(record.organisation_id)
 
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
@@ -180,6 +206,7 @@ def hrm_human_resource_resource(r, tablename):
         org_contact = None
 
     from core import S3SQLCustomForm
+    postprocess = None
     if r.component_name == "managers":
 
         current.deployment_settings.ui.open_read_first = True
@@ -208,6 +235,7 @@ def hrm_human_resource_resource(r, tablename):
                                 "crc.value",
                                 "scp.value",
                                 ])
+            postprocess = manager_postprocess
             subheadings = {"person_id": T("Staff Member Details"),
                            "reg_form_value": T("Documentation Status"),
                            }
@@ -239,7 +267,9 @@ def hrm_human_resource_resource(r, tablename):
 
     # Use custom-form for HRs
     current.s3db.configure("hrm_human_resource",
-                           crud_form = S3SQLCustomForm(*crud_fields),
+                           crud_form = S3SQLCustomForm(*crud_fields,
+                                                       postprocess = postprocess,
+                                                       ),
                            )
 
     current.s3db.add_custom_callback("hrm_human_resource",

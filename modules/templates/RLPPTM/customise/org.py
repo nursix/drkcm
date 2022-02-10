@@ -6,14 +6,14 @@
 
 from collections import OrderedDict
 
-from gluon import current, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
+from gluon import current, URL, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
 
-from core import FS, ICON, S3Represent, S3CRUD
+from core import FS, ICON, S3Represent, S3CRUD, get_form_record_id
 
 # -------------------------------------------------------------------------
 def add_org_tags():
     """
-        Add organisation tags as filtered components,
+        Adds organisation tags as filtered components,
         for embedding in form, filtering and as report axis
     """
 
@@ -30,22 +30,257 @@ def add_org_tags():
                                                  "filterby": {"tag": "OrgID"},
                                                  "multiple": False,
                                                  },
+                                                {"name": "mgrinfo",
+                                                 "joinby": "organisation_id",
+                                                 "filterby": {"tag": "MGRINFO"},
+                                                 "multiple": False,
+                                                 },
                                                 ),
                         )
 
 # -------------------------------------------------------------------------
-def organisation_create_onaccept(form):
+def mgrinfo_opts():
+    """
+        Options for the MGRINFO-tag, and their labels
 
-    # Get record ID
-    form_vars = form.vars
-    if "id" in form_vars:
-        record_id = form_vars.id
-    elif hasattr(form, "record_id"):
-        record_id = form.record_id
+        Returns:
+            tuple list of options
+    """
+
+    T = current.T
+
+    return (("N/A", T("not specified")),
+            ("REVISE", T("Completion/Adjustment Required")),
+            ("COMPLETE", T("complete")),
+            )
+
+# -------------------------------------------------------------------------
+def configure_org_tags(resource):
+    """
+        Configures organisation tags
+            - labels
+            - selectable options
+            - representation
+    """
+
+    T = current.T
+
+    from ..requests import delivery_tag_opts
+    from ..helpers import workflow_tag_represent
+
+    # Configure delivery-tag
+    delivery_opts = delivery_tag_opts()
+    component = resource.components.get("delivery")
+    ctable = component.table
+    field = ctable.value
+    field.default = "DIRECT"
+    field.label = T("Delivery##supplying")
+    field.requires = IS_IN_SET(delivery_opts, zero=None)
+    field.represent = lambda v, row=None: delivery_opts.get(v, "-")
+
+    # Configure mgrinfo-tag
+    component = resource.components.get("mgrinfo")
+    ctable = component.table
+    field = ctable.value
+    field.label = T("Test Station Manager")
+    field.writable = False
+    field.represent = workflow_tag_represent(dict(mgrinfo_opts()))
+
+# -------------------------------------------------------------------------
+def update_mgrinfo(organisation_id):
+    """
+        Updates the MGRINFO (Manager-Info) tag of a test station
+        organisation.
+
+        Args:
+            organisation_id: the organisation ID
+
+        Returns:
+            the updated status (str)
+    """
+
+    from ..config import TESTSTATIONS
+    from ..helpers import is_org_group
+
+    # Check if the organisation belongs to the TESTSTATIONS group
+    if not is_org_group(organisation_id, TESTSTATIONS):
+        return None
+
+    db = current.db
+    s3db = current.s3db
+
+    # Look up test station managers, and related data/tags
+    htable = s3db.hrm_human_resource
+    ptable = s3db.pr_person
+
+    httable = s3db.hrm_human_resource_tag
+    reg_tag = httable.with_alias("reg_tag")
+    crc_tag = httable.with_alias("crc_tag")
+    scp_tag = httable.with_alias("scp_tag")
+
+    pttable = s3db.pr_person_tag
+    taxid_tag = pttable.with_alias("taxid_tag")
+
+    join = ptable.on(ptable.id == htable.person_id)
+    left = [reg_tag.on((reg_tag.human_resource_id == htable.id) & \
+                       (reg_tag.tag == "REGFORM") & \
+                       (reg_tag.deleted == False)),
+            crc_tag.on((crc_tag.human_resource_id == htable.id) & \
+                       (crc_tag.tag == "CRC") & \
+                       (crc_tag.deleted == False)),
+            scp_tag.on((scp_tag.human_resource_id == htable.id) & \
+                       (scp_tag.tag == "SCP") & \
+                       (scp_tag.deleted == False)),
+            taxid_tag.on((taxid_tag.person_id == ptable.id) & \
+                         (taxid_tag.tag == "TAXID") & \
+                         (taxid_tag.deleted == False)),
+            ]
+
+    query = (htable.organisation_id == organisation_id) & \
+            (htable.org_contact == True) & \
+            (htable.status == 1) & \
+            (htable.deleted == False)
+
+    rows = db(query).select(ptable.pe_id,
+                            ptable.date_of_birth,
+                            reg_tag.value,
+                            crc_tag.value,
+                            scp_tag.value,
+                            taxid_tag.value,
+                            join = join,
+                            left = left,
+                            )
+
+    if not rows:
+        # No managers selected
+        status = "N/A"
     else:
+        # Managers selected => check completeness of data/documentation
+        status = "REVISE"
+        ctable = s3db.pr_contact
+
+        for row in rows:
+
+            # Check that all documentation tags are set as approved
+            doc_tags = True
+            for t in (reg_tag, crc_tag, scp_tag):
+                if row[t.value] != "APPROVED":
+                    doc_tags = False
+                    break
+            if not doc_tags:
+                continue
+
+            # Check presence of Tax ID and DoB
+            if not row[taxid_tag.value]:
+                continue
+            if not row.pr_person.date_of_birth:
+                continue
+
+            # Check that there is at least one contact details
+            # of phone/email type
+            query = (ctable.pe_id == row.pr_person.pe_id) & \
+                    (ctable.contact_method in ("SMS", "PHONE", "EMAIL")) & \
+                    (ctable.value != None) & \
+                    (ctable.deleted == False)
+            contact = db(query).select(ctable.id, limitby=(0, 1)).first()
+            if not contact:
+                continue
+
+            # All that given, the manager-data status of the organisation
+            # can be set as complete
+            status = "COMPLETE"
+            break
+
+    # Update or add MGRINFO-tag with status
+    ottable = s3db.org_organisation_tag
+    query = (ottable.organisation_id == organisation_id) & \
+            (ottable.tag == "MGRINFO") & \
+            (ottable.deleted == False)
+    row = db(query).select(ottable.id, limitby=(0, 1)).first()
+    if row:
+        row.update_record(value=status)
+        s3db.onaccept(ottable, row, method="update")
+    else:
+        tag = {"organisation_id": organisation_id,
+               "tag": "MGRINFO",
+               "value": status,
+               }
+        tag["id"] = ottable.insert(**tag)
+        s3db.onaccept(ottable, tag, method="create")
+
+    return status
+
+# -----------------------------------------------------------------------------
+def add_organisation_default_tags(organisation_id):
+    """
+        Adds default tags to a new organisation
+
+        Args:
+            organisation_id: the organisation record ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Look up current tags
+    otable = s3db.org_organisation
+    ttable = s3db.org_organisation_tag
+    dttable = ttable.with_alias("delivery")
+    ittable = ttable.with_alias("orgid")
+
+    left = [dttable.on((dttable.organisation_id == otable.id) & \
+                       (dttable.tag == "DELIVERY") & \
+                       (dttable.deleted == False)),
+            ittable.on((ittable.organisation_id == otable.id) & \
+                       (ittable.tag == "OrgID") & \
+                       (ittable.deleted == False)),
+            ]
+    query = (otable.id == organisation_id)
+    row = db(query).select(otable.id,
+                           otable.uuid,
+                           dttable.id,
+                           ittable.id,
+                           left = left,
+                           limitby = (0, 1),
+                           ).first()
+    if row:
+        # Add default tags as required
+        org = row.org_organisation
+
+        # Add DELIVERY-tag
+        dtag = row.delivery
+        if not dtag.id:
+            ttable.insert(organisation_id = org.id,
+                          tag = "DELIVERY",
+                          value = "DIRECT",
+                          )
+        # Add OrgID-tag
+        itag = row.orgid
+        if not itag.id:
+            try:
+                uid = int(org.uuid[9:14], 16)
+            except (TypeError, ValueError):
+                import uuid
+                uid = int(uuid.uuid4().urn[9:14], 16)
+            value = "%06d%04d" % (uid, org.id)
+            ttable.insert(organisation_id = org.id,
+                          tag = "OrgID",
+                          value = value,
+                          )
+        # Set MGRINFO-tag
+        update_mgrinfo(org.id)
+
+# -------------------------------------------------------------------------
+def organisation_create_onaccept(form):
+    """
+        Custom onaccept of organisations:
+            - add default tags
+    """
+
+    record_id = get_form_record_id(form)
+    if not record_id:
         return
 
-    from ..helpers import add_organisation_default_tags
     add_organisation_default_tags(record_id)
 
 # -------------------------------------------------------------------------
@@ -54,7 +289,7 @@ def org_organisation_resource(r, tablename):
     T = current.T
     s3db = current.s3db
 
-    # Add binary organisation tags
+    # Add organisation tags
     add_org_tags()
 
     # Reports configuration
@@ -124,16 +359,6 @@ def org_organisation_controller(**attr):
 
         is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
-        # Configure delivery-tag
-        from ..requests import delivery_tag_opts
-        delivery_opts = delivery_tag_opts()
-        component = resource.components.get("delivery")
-        ctable = component.table
-        field = ctable.value
-        field.default = "DIRECT"
-        field.requires = IS_IN_SET(delivery_opts, zero=None)
-        field.represent = lambda v, row=None: delivery_opts.get(v, "-")
-
         # Add invite-method for ORG_GROUP_ADMIN role
         from ..helpers import InviteUserOrg
         s3db.set_method("org_organisation",
@@ -190,6 +415,16 @@ def org_organisation_controller(**attr):
                     else:
                         groups_readonly = False
 
+                    # Show organisation types
+                    types = S3SQLInlineLink("organisation_type",
+                                            field = "organisation_type_id",
+                                            search = False,
+                                            label = T("Type"),
+                                            multiple = settings.get_org_organisation_types_multiple(),
+                                            widget = "multiselect",
+                                            )
+
+                    # Show org groups and projects
                     groups = S3SQLInlineLink("group",
                                              field = "group_id",
                                              label = T("Organization Group"),
@@ -201,22 +436,26 @@ def org_organisation_controller(**attr):
                                                label = T("Project Partner for"),
                                                cols = 1,
                                                )
-                    delivery = (T("Delivery##supplying"), "delivery.value")
-                    types = S3SQLInlineLink("organisation_type",
-                                            field = "organisation_type_id",
-                                            search = False,
-                                            label = T("Type"),
-                                            multiple = settings.get_org_organisation_types_multiple(),
-                                            widget = "multiselect",
-                                            )
+
+                    # Show tags for test station orgs
+                    from ..config import TESTSTATIONS
+                    from ..helpers import is_org_group
+                    if record and is_org_group(record.id, TESTSTATIONS):
+                        configure_org_tags(resource)
+                        delivery = "delivery.value"
+                        mgrinfo = "mgrinfo.value"
+                    else:
+                        delivery = mgrinfo = None
+
                 else:
-                    groups = projects = delivery = types = None
+                    groups = projects = delivery = mgrinfo = types = None
 
                 crud_fields = [groups,
                                "name",
                                "acronym",
                                types,
                                projects,
+                               mgrinfo,
                                delivery,
                                S3SQLInlineComponent(
                                     "contact",
@@ -253,6 +492,13 @@ def org_organisation_controller(**attr):
                             "organisation_type__link.organisation_type_id",
                             label = T("Type"),
                             options = lambda: get_filter_options("org_organisation_type"),
+                            ),
+                        OptionsFilter(
+                            "mgrinfo.value",
+                            label = T("TestSt Manager##abbr"),
+                            options = OrderedDict(mgrinfo_opts()),
+                            sort = False,
+                            hidden = True,
                             ),
                         ])
 
@@ -431,7 +677,7 @@ def add_site_tags():
 # -----------------------------------------------------------------------------
 def configure_site_tags(resource, role="applicant", record_id=None):
     """
-        Configure facility approval workflow tags
+        Configures facility approval workflow tags
 
         Args:
             resource: the org_facility resource
@@ -544,6 +790,328 @@ def configure_site_tags(resource, role="applicant", record_id=None):
 
     return visible_tags
 
+# -----------------------------------------------------------------------------
+def add_facility_default_tags(facility_id, approve=False):
+    """
+        Add default tags to a new facility
+
+        Args:
+            facility_id: the facility record ID
+            approve: whether called from approval-workflow
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ftable = s3db.org_facility
+    ttable = s3db.org_site_tag
+
+    workflow = ("PUBLIC", "MPAV", "HYGIENE", "LAYOUT", "STATUS")
+
+    left = ttable.on((ttable.site_id == ftable.site_id) & \
+                     (ttable.tag.belongs(workflow)) & \
+                     (ttable.deleted == False))
+    query = (ftable.id == facility_id)
+    rows = db(query).select(ftable.site_id,
+                            ttable.id,
+                            ttable.tag,
+                            ttable.value,
+                            left = left,
+                            )
+    if not rows:
+        return
+    else:
+        site_id = rows.first().org_facility.site_id
+
+    existing = {row.org_site_tag.tag: row.org_site_tag.value
+                    for row in rows if row.org_site_tag.id}
+    public = existing.get("PUBLIC") == "Y" or approve
+
+    review = ("MPAV", "HYGIENE", "LAYOUT")
+    for tag in workflow:
+        if tag in existing:
+            continue
+        elif tag == "PUBLIC":
+            default = "Y" if public else "N"
+        elif tag == "STATUS":
+            if any(existing[t] == "REVISE" for t in review):
+                default = "REVISE"
+            elif any(existing[t] == "REVIEW" for t in review):
+                default = "REVIEW"
+            else:
+                default = "APPROVED" if public else "REVIEW"
+        else:
+            default = "APPROVED" if public else "REVISE"
+        ttable.insert(site_id = site_id,
+                      tag = tag,
+                      value = default,
+                      )
+        existing[tag] = default
+
+# -----------------------------------------------------------------------------
+def set_facility_code(facility_id):
+    """
+        Generate and set a unique facility code
+
+        Args:
+            facility_id: the facility ID
+
+        Returns:
+            the facility code
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.org_facility
+    query = (table.id == facility_id)
+
+    facility = db(query).select(table.id,
+                                table.uuid,
+                                table.code,
+                                limitby = (0, 1),
+                                ).first()
+
+    if not facility or facility.code:
+        return None
+
+    try:
+        uid = int(facility.uuid[9:14], 16) % 1000000
+    except (TypeError, ValueError):
+        import uuid
+        uid = int(uuid.uuid4().urn[9:14], 16) % 1000000
+
+    # Generate code
+    import random
+    suffix = "".join(random.choice("ABCFGHKLNPRSTWX12456789") for _ in range(3))
+    code = "%06d-%s" % (uid, suffix)
+
+    facility.update_record(code=code)
+
+    return code
+
+# -----------------------------------------------------------------------------
+def facility_approval_workflow(site_id):
+    """
+        Update facility approval workflow tags
+
+        Args:
+            site_id: the site ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    workflow = ("STATUS", "MPAV", "HYGIENE", "LAYOUT", "PUBLIC")
+    review = ("MPAV", "HYGIENE", "LAYOUT")
+
+    # Get all tags for site
+    ttable = s3db.org_site_tag
+    query = (ttable.site_id == site_id) & \
+            (ttable.tag.belongs(workflow)) & \
+            (ttable.deleted == False)
+    rows = db(query).select(ttable.id,
+                            ttable.tag,
+                            ttable.value,
+                            )
+    tags = {row.tag: row.value for row in rows}
+
+    if any(k not in tags for k in workflow):
+        ftable = s3db.org_facility
+        facility = db(ftable.site_id == site_id).select(ftable.id,
+                                                        limitby = (0, 1),
+                                                        ).first()
+        if facility:
+            add_facility_default_tags(facility)
+            facility_approval_workflow(site_id)
+
+    update = {}
+    notify = False
+
+    status = tags.get("STATUS")
+    if status == "REVISE":
+        if all(tags[k] == "APPROVED" for k in review):
+            update["PUBLIC"] = "Y"
+            update["STATUS"] = "APPROVED"
+            notify = True
+        elif any(tags[k] == "REVIEW" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVIEW"
+        else:
+            update["PUBLIC"] = "N"
+            # Keep status REVISE
+
+    elif status == "READY":
+        update["PUBLIC"] = "N"
+        if all(tags[k] == "APPROVED" for k in review):
+            for k in review:
+                update[k] = "REVIEW"
+        else:
+            for k in review:
+                if tags[k] == "REVISE":
+                    update[k] = "REVIEW"
+        update["STATUS"] = "REVIEW"
+
+    elif status == "REVIEW":
+        if all(tags[k] == "APPROVED" for k in review):
+            update["PUBLIC"] = "Y"
+            update["STATUS"] = "APPROVED"
+            notify = True
+        elif any(tags[k] == "REVIEW" for k in review):
+            update["PUBLIC"] = "N"
+            # Keep status REVIEW
+        elif any(tags[k] == "REVISE" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVISE"
+            notify = True
+
+    elif status == "APPROVED":
+        if any(tags[k] == "REVIEW" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVIEW"
+        elif any(tags[k] == "REVISE" for k in review):
+            update["PUBLIC"] = "N"
+            update["STATUS"] = "REVISE"
+            notify = True
+
+    for row in rows:
+        key = row.tag
+        if key in update:
+            row.update_record(value=update[key])
+
+    T = current.T
+
+    public = update.get("PUBLIC")
+    if public and public != tags["PUBLIC"]:
+        if public == "Y":
+            msg = T("Facility added to public registry")
+        else:
+            msg = T("Facility removed from public registry pending review")
+        current.response.information = msg
+
+    # Send Notifications
+    if notify:
+        tags.update(update)
+        msg = facility_review_notification(site_id, tags)
+        if msg:
+            current.response.warning = \
+                T("Test station could not be notified: %(error)s") % {"error": msg}
+        else:
+            current.response.flash = \
+                T("Test station notified")
+
+# -----------------------------------------------------------------------------
+def facility_review_notification(site_id, tags):
+    """
+        Notify the OrgAdmin of a test station about the status of the review
+
+        Args:
+            site_id: the test facility site ID
+            tags: the current workflow tags
+
+        Returns:
+            error message on error, else None
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Lookup the facility
+    ftable = s3db.org_facility
+    query = (ftable.site_id == site_id) & \
+            (ftable.deleted == False)
+    facility = db(query).select(ftable.id,
+                                ftable.name,
+                                ftable.organisation_id,
+                                limitby = (0, 1),
+                                ).first()
+    if not facility:
+        return "Facility not found"
+
+    organisation_id = facility.organisation_id
+    if not organisation_id:
+        return "Organisation not found"
+
+    # Find the OrgAdmin email addresses
+    from ..helpers import get_role_emails
+    email = get_role_emails("ORG_ADMIN",
+                            organisation_id = organisation_id,
+                            )
+    if not email:
+        return "No Organisation Administrator found"
+
+    # Data for the notification email
+    data = {"name": facility.name,
+            "url": URL(c = "org",
+                       f = "organisation",
+                       args = [organisation_id, "facility", facility.id],
+                       host = True,
+                       ),
+            }
+
+    status = tags.get("STATUS")
+
+    if status == "REVISE":
+        template = "FacilityReview"
+
+        # Add advice
+        dtable = s3db.org_site_details
+        query = (dtable.site_id == site_id) & \
+                (dtable.deleted == False)
+        details = db(query).select(dtable.authorisation_advice,
+                                   limitby = (0, 1),
+                                   ).first()
+        if details and details.authorisation_advice:
+            data["advice"] = details.authorisation_advice
+
+        # Add explanations for relevant requirements
+        review = (("MPAV", "FacilityMPAVRequirements"),
+                  ("HYGIENE", "FacilityHygienePlanRequirements"),
+                  ("LAYOUT", "FacilityLayoutRequirements"),
+                  )
+        ctable = s3db.cms_post
+        ltable = s3db.cms_post_module
+        join = ltable.on((ltable.post_id == ctable.id) & \
+                         (ltable.module == "org") & \
+                         (ltable.resource == "facility") & \
+                         (ltable.deleted == False))
+        explanations = []
+        for tag, requirements in review:
+            if tags.get(tag) == "REVISE":
+                query = (ctable.name == requirements) & \
+                        (ctable.deleted == False)
+                row = db(query).select(ctable.body,
+                                       join = join,
+                                       limitby = (0, 1),
+                                       ).first()
+                if row:
+                    explanations.append(row.body)
+        data["explanations"] = "\n\n".join(explanations) if explanations else "-"
+
+    elif status == "APPROVED":
+        template = "FacilityApproved"
+
+    else:
+        # No notifications for this status
+        return "invalid status"
+
+    # Lookup email address of current user
+    from ..notifications import CMSNotifications
+    auth = current.auth
+    if auth.user:
+        cc = CMSNotifications.lookup_contact(auth.user.pe_id)
+    else:
+        cc = None
+
+    # Send CMS Notification FacilityReview
+    return CMSNotifications.send(email,
+                                 template,
+                                 data,
+                                 module = "org",
+                                 resource = "facility",
+                                 cc = cc,
+                                 )
+
 # -------------------------------------------------------------------------
 def facility_create_onaccept(form):
     """
@@ -555,17 +1123,11 @@ def facility_create_onaccept(form):
             form: the FORM
     """
 
-    # Get record ID
-    form_vars = form.vars
-    if "id" in form_vars:
-        record_id = form_vars.id
-    elif hasattr(form, "record_id"):
-        record_id = form.record_id
-    else:
+    record_id = get_form_record_id(form)
+    if not record_id:
         return
 
     # Generate facility ID and add default tags
-    from ..helpers import add_facility_default_tags, set_facility_code
     set_facility_code(record_id)
     add_facility_default_tags(record_id)
 
@@ -579,13 +1141,8 @@ def facility_postprocess(form):
             form: the FORM
     """
 
-    # Get record ID
-    form_vars = form.vars
-    if "id" in form_vars:
-        record_id = form_vars.id
-    elif hasattr(form, "record_id"):
-        record_id = form.record_id
-    else:
+    record_id = get_form_record_id(form)
+    if not record_id:
         return
 
     # Lookup site_id
@@ -595,7 +1152,6 @@ def facility_postprocess(form):
                                                    ).first()
     if row and row.site_id:
         # Update approval workflow
-        from ..helpers import facility_approval_workflow
         facility_approval_workflow(row.site_id)
 
 # -------------------------------------------------------------------------

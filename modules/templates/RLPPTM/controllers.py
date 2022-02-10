@@ -655,7 +655,7 @@ class approve(CustomController):
                                 s3db_onaccept(ltable, link, method="create")
 
                         # Add default tags
-                        from .helpers import add_organisation_default_tags
+                        from .customise.org import add_organisation_default_tags
                         add_organisation_default_tags(organisation_id)
 
                         # Update user
@@ -735,7 +735,7 @@ class approve(CustomController):
                             s3db_onaccept(sltable, link, method="create")
 
                     # Add default tags for facility
-                    from .helpers import set_facility_code, add_facility_default_tags
+                    from .customise.org import set_facility_code, add_facility_default_tags
                     set_facility_code(facility_id)
                     add_facility_default_tags(facility_id)
 

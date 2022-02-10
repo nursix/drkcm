@@ -5811,6 +5811,7 @@
 'Test Type': 'Test-Typ',
 'Test station could not be notified: %(error)s': 'Teststelle konnte nicht benachrichtigt werden: %(error)s',
 'Test station notified': 'Teststelle benachrichtigt',
+'TestSt Manager##abbr': 'Testst.Verantw.',
 'Testing Device used': 'Verwendetes Testgerät',
 'Testing in daycare centers': 'Testung in Kitas',
 'Tests##disease': 'Tests',
