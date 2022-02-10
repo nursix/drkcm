@@ -100,7 +100,7 @@ def human_resource_onvalidation(form):
             form.errors.person_id = current.T("Person already has a staff record")
 
 # -------------------------------------------------------------------------
-def manager_postprocess(form):
+def human_resource_postprocess(form):
     """
         Postprocess for manager HR form:
             - update the MGRINFO tag of the organisation
@@ -206,7 +206,6 @@ def hrm_human_resource_resource(r, tablename):
         org_contact = None
 
     from core import S3SQLCustomForm
-    postprocess = None
     if r.component_name == "managers":
 
         current.deployment_settings.ui.open_read_first = True
@@ -235,7 +234,6 @@ def hrm_human_resource_resource(r, tablename):
                                 "crc.value",
                                 "scp.value",
                                 ])
-            postprocess = manager_postprocess
             subheadings = {"person_id": T("Staff Member Details"),
                            "reg_form_value": T("Documentation Status"),
                            }
@@ -268,7 +266,7 @@ def hrm_human_resource_resource(r, tablename):
     # Use custom-form for HRs
     current.s3db.configure("hrm_human_resource",
                            crud_form = S3SQLCustomForm(*crud_fields,
-                                                       postprocess = postprocess,
+                                                       postprocess = human_resource_postprocess,
                                                        ),
                            )
 
