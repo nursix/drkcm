@@ -346,10 +346,12 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     from .customise.pr import pr_person_resource, \
-                              pr_person_controller
+                              pr_person_controller, \
+                              pr_contact_resource
 
     settings.customise_pr_person_controller = pr_person_controller
     settings.customise_pr_person_resource = pr_person_resource
+    settings.customise_pr_contact_resource = pr_contact_resource
 
     # -------------------------------------------------------------------------
     from .customise.project import project_project_resource, \

@@ -82,7 +82,7 @@ def configure_org_tags(resource):
     component = resource.components.get("mgrinfo")
     ctable = component.table
     field = ctable.value
-    field.label = T("Test Station Manager")
+    field.label = T("Documentation Test Station Manager")
     field.writable = False
     field.represent = workflow_tag_represent(dict(mgrinfo_opts()))
 
