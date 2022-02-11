@@ -359,6 +359,9 @@ def org_organisation_controller(**attr):
 
         is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
+        # Configure organisation tags
+        configure_org_tags(resource)
+
         # Add invite-method for ORG_GROUP_ADMIN role
         from ..helpers import InviteUserOrg
         s3db.set_method("org_organisation",
@@ -437,25 +440,17 @@ def org_organisation_controller(**attr):
                                                cols = 1,
                                                )
 
-                    # Show tags for test station orgs
-                    from ..config import TESTSTATIONS
-                    from ..helpers import is_org_group
-                    if record and is_org_group(record.id, TESTSTATIONS):
-                        configure_org_tags(resource)
-                        delivery = "delivery.value"
-                        mgrinfo = "mgrinfo.value"
-                    else:
-                        delivery = mgrinfo = None
+                    # Show delivery-tag
+                    delivery = "delivery.value"
 
                 else:
-                    groups = projects = delivery = mgrinfo = types = None
+                    groups = projects = delivery = types = None
 
                 crud_fields = [groups,
                                "name",
                                "acronym",
                                types,
                                projects,
-                               mgrinfo,
                                delivery,
                                S3SQLInlineComponent(
                                     "contact",

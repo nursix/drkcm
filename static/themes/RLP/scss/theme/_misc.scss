@@ -424,7 +424,9 @@ body.rtl {
     .fa {
         margin-right: 0.2rem;
     }
-    margin-left: 0.5rem;
+    .controls & {
+        margin-left: 0.5rem;
+    }
 }
 
 .text-body.cms-item-body {
