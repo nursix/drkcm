@@ -179,7 +179,7 @@ def update_mgrinfo(organisation_id):
             # Check that there is at least one contact details
             # of phone/email type
             query = (ctable.pe_id == row.pr_person.pe_id) & \
-                    (ctable.contact_method in ("SMS", "PHONE", "EMAIL")) & \
+                    (ctable.contact_method in ("SMS", "HOME_PHONE", "WORK_PHONE", "EMAIL")) & \
                     (ctable.value != None) & \
                     (ctable.deleted == False)
             contact = db(query).select(ctable.id, limitby=(0, 1)).first()

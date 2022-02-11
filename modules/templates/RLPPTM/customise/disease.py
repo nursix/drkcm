@@ -487,7 +487,7 @@ def disease_testing_report_resource(r, tablename):
                                     )
 
     # Limit report by setting date filter default start date
-    if r.method in ("report", "timeplot"):
+    if r.method == "report":
         start = current.request.utcnow.date() - relativedelta(weeks=1)
         default = {"ge": start}
     else:
@@ -527,7 +527,7 @@ def disease_testing_report_controller(**attr):
 def disease_testing_demographic_resource(r, tablename):
 
     # Limit report by setting date filter default start date
-    if r.method in ("report", "timeplot"):
+    if r.method == "report":
         start = current.request.utcnow.date() - relativedelta(weeks=1)
         default = {"ge": start}
     else:

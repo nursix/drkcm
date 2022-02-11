@@ -554,6 +554,7 @@ class DiseaseMonitoringModel(DataModel):
                           ),
             "defaults": {"fact": facts[:2],
                          "timestamp": "date,date",
+                         "time": "<-0 months||days",
                          },
             }
 
@@ -663,6 +664,7 @@ class DiseaseMonitoringModel(DataModel):
                           ),
             "defaults": {"fact": list(facts[:2]),
                          "timestamp": "report_id$date,report_id$date",
+                         "time": "<-0 months||days",
                          },
             }
 

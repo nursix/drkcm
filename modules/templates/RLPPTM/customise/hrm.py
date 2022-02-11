@@ -255,6 +255,7 @@ def hrm_human_resource_resource(r, tablename):
         table.organisation_id.writable = False
 
         crud_fields = ("organisation_id",
+                       "person_id",
                        "site_id",
                        "job_title_id",
                        org_contact,
