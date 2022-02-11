@@ -252,7 +252,9 @@ def hrm_human_resource_resource(r, tablename):
             "label_list_button": T("List Test Station Managers"),
             })
     else:
-        table.organisation_id.writable = False
+        field = table.organisation_id
+        field.writable = False
+        field.comment = None
 
         crud_fields = ("organisation_id",
                        "person_id",
