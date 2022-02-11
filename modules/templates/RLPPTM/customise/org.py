@@ -393,6 +393,7 @@ def org_organisation_controller(**attr):
                 resource.add_filter(query)
 
         record = r.record
+        component_name = r.component_name
         if not r.component:
             if r.interactive:
 
@@ -517,7 +518,7 @@ def org_organisation_controller(**attr):
             r.resource.configure(list_fields = list_fields,
                                     )
 
-        elif r.component_name == "facility":
+        elif component_name == "facility":
             if r.component_id and \
                 (is_org_group_admin or \
                 record and auth.s3_has_role("ORG_ADMIN", for_pe=record.pe_id)):
@@ -526,13 +527,14 @@ def org_organisation_controller(**attr):
                 field = ctable.obsolete
                 field.readable = field.writable = True
 
-        elif r.component_name in ("human_resource", "managers"):
+        elif component_name in ("human_resource", "managers"):
 
             phone_label = settings.get_ui_label_mobile_phone()
+            site_id = None if component_name == "managers" else "site_id"
             list_fields = ["organisation_id",
                            "person_id",
                            "job_title_id",
-                           "site_id",
+                           site_id,
                            (T("Email"), "person_id$email.value"),
                            (phone_label, "person_id$phone.value"),
                            "status",

@@ -225,7 +225,7 @@ def hrm_human_resource_resource(r, tablename):
                                                      )
 
         crud_fields = ["person_id",
-                       "site_id",
+                       #"site_id",
                        ]
         if is_org_group_admin:
             add_manager_tags()
