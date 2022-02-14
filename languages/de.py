@@ -5758,7 +5758,6 @@
 'Task deleted': 'Aufgabe gelöscht',
 'Task updated': 'Aufgabe aktualisiert',
 'Tasks': 'Aufgaben',
-'Tax ID': 'Steuer-ID',
 'Team Description': 'Teambeschreibung',
 'Team Details': 'Details zum Team',
 'Team Id': 'Team ID',

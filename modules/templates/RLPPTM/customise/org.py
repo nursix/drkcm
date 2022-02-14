@@ -118,9 +118,6 @@ def update_mgrinfo(organisation_id):
     crc_tag = httable.with_alias("crc_tag")
     scp_tag = httable.with_alias("scp_tag")
 
-    pttable = s3db.pr_person_tag
-    taxid_tag = pttable.with_alias("taxid_tag")
-
     join = ptable.on(ptable.id == htable.person_id)
     left = [reg_tag.on((reg_tag.human_resource_id == htable.id) & \
                        (reg_tag.tag == "REGFORM") & \
@@ -131,9 +128,6 @@ def update_mgrinfo(organisation_id):
             scp_tag.on((scp_tag.human_resource_id == htable.id) & \
                        (scp_tag.tag == "SCP") & \
                        (scp_tag.deleted == False)),
-            taxid_tag.on((taxid_tag.person_id == ptable.id) & \
-                         (taxid_tag.tag == "TAXID") & \
-                         (taxid_tag.deleted == False)),
             ]
 
     query = (htable.organisation_id == organisation_id) & \
@@ -146,7 +140,6 @@ def update_mgrinfo(organisation_id):
                             reg_tag.value,
                             crc_tag.value,
                             scp_tag.value,
-                            taxid_tag.value,
                             join = join,
                             left = left,
                             )
@@ -170,9 +163,7 @@ def update_mgrinfo(organisation_id):
             if not doc_tags:
                 continue
 
-            # Check presence of Tax ID and DoB
-            if not row[taxid_tag.value]:
-                continue
+            # Check DoB
             if not row.pr_person.date_of_birth:
                 continue
 

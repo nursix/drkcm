@@ -2363,7 +2363,7 @@ class TestFacilityInfo(CRUDMethod):
 class PersonRepresentManager(pr_PersonRepresentContact):
     """
         Custom representation of person_id in read-perspective on
-        test station managers tab; include DoB and Tax-ID tag
+        test station managers tab; include DoB
     """
 
     # -------------------------------------------------------------------------
@@ -2391,13 +2391,6 @@ class PersonRepresentManager(pr_PersonRepresentContact):
             dob = None
         dob = table.date_of_birth.represent(dob) if dob else "-"
 
-        try:
-            tax_id = row.tax_id
-        except AttributeError:
-            tax_id = None
-        if not tax_id:
-            tax_id = "-"
-
         pe_id = row.pe_id
         email = self._email.get(pe_id) if self.show_email else None
         phone = self._phone.get(pe_id) if self.show_phone else None
@@ -2405,10 +2398,6 @@ class PersonRepresentManager(pr_PersonRepresentContact):
         details = TABLE(TR(TH("%s:" % T("Date of Birth")),
                            TD(dob),
                            _class = "manager-dob"
-                           ),
-                        TR(TH("%s:" % T("Tax ID")),
-                           TD(tax_id),
-                           _class = "manager-taxid"
                            ),
                         TR(TH(ICON("mail")),
                            TD(A(email, _href="mailto:%s" % email) if email else "-"),
@@ -2437,38 +2426,18 @@ class PersonRepresentManager(pr_PersonRepresentContact):
 
         rows = super(PersonRepresentManager, self).lookup_rows(key, values, fields=fields)
 
-        # Lookup pe_ids and name fields
-        db = current.db
-        s3db = current.s3db
-
-        count = len(values)
-
         # Lookup dates of birth
         table = self.table
+        count = len(values)
         query = (key == values[0]) if count == 1 else key.belongs(values)
-        dob = db(query).select(table.id,
-                               table.date_of_birth,
-                               limitby = (0, count),
-                               ).as_dict()
+        dob = current.db(query).select(table.id,
+                                       table.date_of_birth,
+                                       limitby = (0, count),
+                                       ).as_dict()
         for row in rows:
             date_of_birth = dob.get(row.id)
             if date_of_birth:
                 row.date_of_birth = date_of_birth.get("date_of_birth")
-
-        # Lookup tax IDs
-        ttable = s3db.pr_person_tag
-        tkey = ttable.person_id
-        query = current.auth.s3_accessible_query("read", ttable) & \
-                (ttable.tag == "TAXID") & \
-                ((tkey == values[0]) if count == 1 else tkey.belongs(values)) & \
-                (ttable.deleted == False)
-        taxids = db(query).select(ttable.person_id,
-                                  ttable.value,
-                                  limitby = (0, count),
-                                  ).as_dict(key="person_id")
-        for row in rows:
-            tax_id = taxids.get(row.id)
-            row.tax_id = tax_id.get("value") if tax_id else None
 
         return rows
 

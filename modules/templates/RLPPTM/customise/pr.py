@@ -9,24 +9,6 @@ from gluon import current, IS_NOT_EMPTY
 from core import get_form_record_id
 
 # -----------------------------------------------------------------------------
-def add_person_tags():
-    """
-        Person tags as filtered components
-            - for embedding in form
-    """
-
-    s3db = current.s3db
-
-    s3db.add_components("pr_person",
-                        pr_person_tag = ({"name": "tax_id",
-                                          "joinby": "person_id",
-                                          "filterby": {"tag": "TAXID"},
-                                          "multiple": False,
-                                          },
-                                         ),
-                        )
-
-# -----------------------------------------------------------------------------
 def person_postprocess(form):
     """
         Postprocess person-form
@@ -104,18 +86,6 @@ def pr_person_controller(**attr):
 
             # Custom Form
             crud_fields = name_fields + ["date_of_birth", "gender"]
-
-            # Expose Tax ID in personal profile
-            if controller == "default":
-
-                add_person_tags()
-
-                component = r.resource.components.get("tax_id")
-                field = component.table.value
-                # Not translated as specific for the German context:
-                field.comment = "Nur Teststellenverantwortliche: Ihre bei der Kassenärztl. Vereinigung angegebene Steuer-ID"
-
-                crud_fields.append((T("Tax ID"), "tax_id.value"))
 
             r.resource.configure(crud_form = S3SQLCustomForm(*crud_fields,
                                                              postprocess = person_postprocess,
