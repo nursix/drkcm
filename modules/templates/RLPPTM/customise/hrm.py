@@ -88,16 +88,47 @@ def human_resource_onvalidation(form):
             - make sure there is only one HR record per person
     """
 
-    person_id = form.vars.get("person_id")
+    db = current.db
+    s3db = current.s3db
+
+    form_vars = form.vars
+    record_id = get_form_record_id(form)
+
+    person_id = form_vars.get("person_id")
+    table = s3db.hrm_human_resource
+
     if person_id:
-        table = current.s3db.hrm_human_resource
         query = (table.person_id == person_id) & \
                 (table.deleted == False)
-        duplicate = current.db(query).select(table.id,
-                                             limitby = (0, 1),
-                                             ).first()
+        if record_id:
+            query &= (table.id != record_id)
+        duplicate = db(query).select(table.id, limitby=(0, 1)).first()
         if duplicate:
             form.errors.person_id = current.T("Person already has a staff record")
+            return
+
+    if "org_contact" in form_vars and form_vars["org_contact"]:
+        ptable = s3db.pr_person
+        ctable = s3db.pr_contact
+        if not person_id:
+            query = (table.id == record_id)
+            join = [ptable.on(ptable.id == table.person_id)]
+        else:
+            query = (ptable.id == person_id)
+            join = None
+        query &= (ptable.date_of_birth != None)
+        left = ctable.on((ctable.pe_id == ptable.pe_id) & \
+                         (ctable.contact_method.belongs(("EMAIL", "SMS", "HOME_PHONE", "WORK_PHONE"))) & \
+                         (ctable.deleted == False))
+        rows = db(query).select(ptable.date_of_birth,
+                                ctable.value,
+                                left = left,
+                                join = join,
+                                )
+        if not rows:
+            form.errors.org_contact = current.T("Person details incomplete: date of birth required")
+        elif not any(row.pr_contact.value for row in rows):
+            form.errors.org_contact = current.T("Contact information incomplete: email address and/or phone number required")
 
 # -------------------------------------------------------------------------
 def human_resource_postprocess(form):
