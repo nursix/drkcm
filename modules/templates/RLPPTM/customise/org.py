@@ -8,7 +8,10 @@ from collections import OrderedDict
 
 from gluon import current, URL, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
 
-from core import FS, ICON, S3Represent, S3CRUD, get_form_record_id
+from core import FS, ICON, S3CRUD, S3Represent, \
+                 get_filter_options, get_form_record_id, s3_fieldmethod
+
+from ..helpers import workflow_tag_represent
 
 # -------------------------------------------------------------------------
 def add_org_tags():
@@ -66,7 +69,6 @@ def configure_org_tags(resource):
     T = current.T
 
     from ..requests import delivery_tag_opts
-    from ..helpers import workflow_tag_represent
 
     # Configure delivery-tag
     delivery_opts = delivery_tag_opts()
@@ -396,8 +398,7 @@ def org_organisation_controller(**attr):
                                  S3SQLInlineComponent, \
                                  S3SQLInlineLink, \
                                  OptionsFilter, \
-                                 TextFilter, \
-                                 get_filter_options
+                                 TextFilter
 
                 # Custom form
                 if is_org_group_admin:
@@ -708,8 +709,6 @@ def configure_site_tags(resource, role="applicant", record_id=None):
             elif row.value == "REVIEW":
                 review_tags_visible = True
         status_visible = True
-
-    from ..helpers import workflow_tag_represent
 
     component = components.get("status")
     if component:
@@ -1181,6 +1180,37 @@ def facility_postprocess(form):
         facility_approval_workflow(row.site_id)
 
 # -------------------------------------------------------------------------
+def facility_mgrinfo(row):
+    """
+        Field method to determine the MGRINFO status of the organisation
+
+        Args:
+            row: the facility Row
+
+        Returns:
+            the value of the MGRINFO tag of the organisation
+    """
+
+    if hasattr(row, "org_mgrinfo_organisation_tag"):
+        # Provided as extra-field
+        tag = row.org_mgrinfo_organisation_tag.value
+
+    else:
+        # Must look up
+        db = current.db
+        s3db = current.s3db
+        ttable = s3db.org_organisation_tag
+        query = (ttable.organisation_id == row.org_facility.organisation_id) & \
+                (ttable.tag == "MGRINFO") & \
+                (ttable.deleted == False)
+        row = db(query).select(ttable.value,
+                               limitby = (0, 1),
+                               ).first()
+        tag = row.value if row else None
+
+    return tag
+
+# -------------------------------------------------------------------------
 def configure_facility_form(r, is_org_group_admin=False):
     """
         Configures the facility management form
@@ -1209,6 +1239,7 @@ def configure_facility_form(r, is_org_group_admin=False):
     else:
         # Other view
         fresource = record_id = None
+
 
     from core import S3SQLCustomForm, \
                      S3SQLInlineComponent, \
@@ -1297,17 +1328,38 @@ def configure_facility_form(r, is_org_group_admin=False):
                    }
 
     if visible_tags:
+
+        table = fresource.table
+        table.mgrinfo = s3_fieldmethod("mgrinfo", facility_mgrinfo,
+                                       represent = workflow_tag_represent(dict(mgrinfo_opts())),
+                                       )
+        extra_fields = ["organisation_id$mgrinfo.value"]
+
+        if is_org_group_admin:
+            # Include MGRINFO status
+            from core import S3SQLVirtualField
+            crud_fields.append(S3SQLVirtualField("mgrinfo",
+                                                 label = T("Documentation Test Station Manager"),
+                                                 ))
+            fname = "mgrinfo"
+        else:
+            fname = visible_tags[0][1].replace(".", "_")
+
         # Append workflow tags in separate section
-        crud_fields.extend(visible_tags)
-        fname = visible_tags[0][1].replace(".", "_")
         subheadings[fname] = T("Approval and Publication")
+        crud_fields.extend(visible_tags)
+
         # Add postprocess to update workflow statuses
         postprocess = facility_postprocess
+
+    else:
+        extra_fields = None
 
     s3db.configure("org_facility",
                    crud_form = S3SQLCustomForm(*crud_fields,
                                                postprocess = postprocess,
                                                ),
+                   extra_fields = extra_fields,
                    subheadings = subheadings,
                    )
 
@@ -1353,7 +1405,6 @@ def org_facility_resource(r, tablename):
                       S3LocationSelector,
                       OptionsFilter,
                       TextFilter,
-                      get_filter_options,
                       s3_text_represent,
                       )
 
@@ -1561,7 +1612,7 @@ def org_facility_resource(r, tablename):
     record = r.record
     public_view = r.tablename == "org_facility" and \
                     (not record or
-                        not auth.s3_has_permission("update", r.table, record_id=record.id))
+                     not auth.s3_has_permission("update", r.table, record_id=record.id))
     if public_view:
         crud_form = S3SQLCustomForm(
                 "name",
@@ -1619,8 +1670,8 @@ def org_facility_resource(r, tablename):
             }
 
         s3db.configure(tablename,
-                        report_options = report_options,
-                        )
+                       report_options = report_options,
+                       )
 
     # Custom method to produce KV report
     from ..helpers import TestFacilityInfo

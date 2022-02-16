@@ -1877,10 +1877,12 @@ class S3SQLVirtualField(S3SQLFormElement):
     def __call__(self, field, value, **attributes):
         """
             Widget renderer for field method values, renders a simple
-            read-only DIV with the value
+            read-only DIV with the (represented) value
         """
 
-        widget = DIV(value, **attributes)
+        v = field.represent(value) if field.represent else value
+
+        widget = DIV(v, **attributes)
         widget.add_class("s3-virtual-field")
 
         return widget
