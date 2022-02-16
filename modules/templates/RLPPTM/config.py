@@ -221,6 +221,8 @@ def config(settings):
     settings.custom.test_station_registration = True
     settings.custom.test_station_cleanup = True
 
+    settings.custom.test_station_manager_required = False
+
     settings.custom.daycare_testing_data = False
     settings.custom.daycare_testing_inquiry = False
 

@@ -201,6 +201,64 @@ def update_mgrinfo(organisation_id):
         tag["id"] = ottable.insert(**tag)
         s3db.onaccept(ottable, tag, method="create")
 
+    if current.deployment_settings.get_custom("test_station_manager_required"):
+
+        # Propagate status to related facilities
+        ftable = s3db.org_facility
+        query = (ftable.organisation_id == organisation_id)
+        facilities = db(query).select(ftable.id,
+                                      ftable.site_id,
+                                      ftable.obsolete,
+                                      )
+
+        workflow = ("STATUS", "MPAV", "HYGIENE", "LAYOUT", "PUBLIC")
+        review = ("MPAV", "HYGIENE", "LAYOUT")
+
+        for facility in facilities:
+
+            # Get all workflow-tags for the facility
+            ttable = s3db.org_site_tag
+            query = (ttable.site_id == facility.site_id) & \
+                    (ttable.tag.belongs(workflow)) & \
+                    (ttable.deleted == False)
+            rows = db(query).select(ttable.id,
+                                    ttable.tag,
+                                    ttable.value,
+                                    )
+            tags = {row.tag: row.value for row in rows}
+
+            # Update workflow status for the facility
+            update, notify = {}, False
+            if status == "N/A":
+                update["STATUS"] = "REVISE"
+                update["PUBLIC"] = "N"
+                notify = not facility.obsolete
+            elif status == "REVISE":
+                if not any(tags[t] == "REVISE" for t in review):
+                    update["STATUS"] = "REVIEW"
+                update["PUBLIC"] = "N"
+            elif tags.get("STATUS") == "REVISE":
+                if all(tags[t] != "REVISE" for t in review):
+                    update["STATUS"] = "REVIEW"
+                update["PUBLIC"] = "N"
+
+            tags.update(update)
+
+            for row in rows:
+                if row.tag in update:
+                    row.update_record(value = update[row.tag])
+                    del update[row.tag]
+            if update:
+                for key, value in update.items():
+                    ttable.insert(site_id = facility.site_id,
+                                  tag = key,
+                                  value = value,
+                                  )
+            if notify:
+                if status != "COMPLETE":
+                    tags["MGRINFO"] = "REVISE"
+                facility_review_notification(facility.site_id, tags)
+
     return status
 
 # -----------------------------------------------------------------------------
@@ -889,9 +947,6 @@ def facility_approval_workflow(site_id):
     db = current.db
     s3db = current.s3db
 
-    workflow = ("STATUS", "MPAV", "HYGIENE", "LAYOUT", "PUBLIC")
-    review = ("MPAV", "HYGIENE", "LAYOUT")
-
     # Get facility and MGRINFO status
     ftable = s3db.org_facility
     ottable = s3db.org_organisation_tag
@@ -907,7 +962,14 @@ def facility_approval_workflow(site_id):
     if not facility:
         return
 
-    mgrinfo_complete = (facility.org_organisation_tag.value == "COMPLETE")
+    if current.deployment_settings.get_custom("test_station_manager_required"):
+        mgrinfo = facility.org_organisation_tag.value
+    else:
+        # Treat like complete
+        mgrinfo = "COMPLETE"
+
+    workflow = ("STATUS", "MPAV", "HYGIENE", "LAYOUT", "PUBLIC")
+    review = ("MPAV", "HYGIENE", "LAYOUT")
 
     # Get all tags for site
     ttable = s3db.org_site_tag
@@ -929,7 +991,7 @@ def facility_approval_workflow(site_id):
 
     status = tags.get("STATUS")
     if status == "REVISE":
-        if all(tags[k] == "APPROVED" for k in review) and mgrinfo_complete:
+        if all(tags[k] == "APPROVED" for k in review) and mgrinfo == "COMPLETE":
             update["PUBLIC"] = "Y"
             update["STATUS"] = "APPROVED"
             notify = True
@@ -942,7 +1004,7 @@ def facility_approval_workflow(site_id):
 
     elif status == "READY":
         update["PUBLIC"] = "N"
-        if all(tags[k] == "APPROVED" for k in review) and mgrinfo_complete:
+        if all(tags[k] == "APPROVED" for k in review) and mgrinfo == "COMPLETE":
             for k in review:
                 update[k] = "REVIEW"
         else:
@@ -952,14 +1014,14 @@ def facility_approval_workflow(site_id):
         update["STATUS"] = "REVIEW"
 
     elif status == "REVIEW":
-        if all(tags[k] == "APPROVED" for k in review) and mgrinfo_complete:
+        if all(tags[k] == "APPROVED" for k in review) and mgrinfo == "COMPLETE":
             update["PUBLIC"] = "Y"
             update["STATUS"] = "APPROVED"
             notify = True
-        elif any(tags[k] == "REVIEW" for k in review):
+        elif any(tags[k] == "REVIEW" for k in review) or mgrinfo == "REVISE":
             update["PUBLIC"] = "N"
             # Keep status REVIEW
-        elif any(tags[k] == "REVISE" for k in review) or not mgrinfo_complete:
+        elif any(tags[k] == "REVISE" for k in review) or mgrinfo == "N/A":
             update["PUBLIC"] = "N"
             update["STATUS"] = "REVISE"
             notify = True
@@ -968,7 +1030,7 @@ def facility_approval_workflow(site_id):
         if any(tags[k] == "REVIEW" for k in review):
             update["PUBLIC"] = "N"
             update["STATUS"] = "REVIEW"
-        elif any(tags[k] == "REVISE" for k in review) or not mgrinfo_complete:
+        elif any(tags[k] == "REVISE" for k in review):
             update["PUBLIC"] = "N"
             update["STATUS"] = "REVISE"
             notify = True
@@ -991,7 +1053,7 @@ def facility_approval_workflow(site_id):
     # Send Notifications
     if notify:
         tags.update(update)
-        if not mgrinfo_complete:
+        if mgrinfo != "COMPLETE":
             tags["MGRINFO"] = "REVISE"
         msg = facility_review_notification(site_id, tags)
         if msg:
@@ -1002,7 +1064,7 @@ def facility_approval_workflow(site_id):
                 T("Test station notified")
 
 # -----------------------------------------------------------------------------
-def facility_review_notification(site_id, tags, mgrinfo_complete=False):
+def facility_review_notification(site_id, tags):
     """
         Notify the OrgAdmin of a test station about the status of the review
 
