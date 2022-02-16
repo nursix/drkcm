@@ -935,10 +935,10 @@ def facility_approval_status(tags, mgrinfo):
             notify = True
 
     elif status == "APPROVED":
-        if any(tags[k] == "REVIEW" for k in SITE_REVIEW):
+        if any(tags[k] == "REVIEW" for k in SITE_REVIEW) or mgrinfo == "REVISE":
             update["PUBLIC"] = "N"
             update["STATUS"] = "REVIEW"
-        elif any(tags[k] == "REVISE" for k in SITE_REVIEW):
+        elif any(tags[k] == "REVISE" for k in SITE_REVIEW) or mgrinfo == "N/A":
             update["PUBLIC"] = "N"
             update["STATUS"] = "REVISE"
             notify = True
@@ -1073,6 +1073,7 @@ def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
             if all(tags[t] != "REVISE" for t in SITE_REVIEW):
                 update["STATUS"] = "REVIEW"
             update["PUBLIC"] = "N"
+        tags.update(update)
 
         # Update workflow tags (resp. insert missing tags)
         for row in rows:
@@ -1088,7 +1089,6 @@ def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
 
         # Notify the OrgAdmin about approval status change
         if notify:
-            tags.update(update)
             if mgrinfo != "COMPLETE":
                 tags["MGRINFO"] = "REVISE"
             facility_review_notification(facility.site_id, tags)
