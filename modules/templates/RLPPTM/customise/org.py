@@ -823,9 +823,9 @@ def add_facility_default_tags(facility_id, approve=False):
         elif tag == "PUBLIC":
             default = "Y" if public else "N"
         elif tag == "STATUS":
-            if any(existing[t] == "REVISE" for t in SITE_REVIEW):
+            if any(existing.get(t) == "REVISE" for t in SITE_REVIEW):
                 default = "REVISE"
-            elif any(existing[t] == "REVIEW" for t in SITE_REVIEW):
+            elif any(existing.get(t) == "REVIEW" for t in SITE_REVIEW):
                 default = "REVIEW"
             else:
                 default = "APPROVED" if public else "REVIEW"
