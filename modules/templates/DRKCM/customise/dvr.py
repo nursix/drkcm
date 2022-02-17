@@ -264,12 +264,235 @@ def dvr_note_resource(r, tablename):
                                    )
 
 # -------------------------------------------------------------------------
+def configure_case_activity_sector(r, table, case_root_org):
+    """
+        Configure the case activity sector_id field
+
+        Args:
+            r: the CRUDRequest
+            table: the case activity table
+            case_root_org: the ID of the case root organisation
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    field = table.sector_id
+    field.comment = None
+
+    if case_root_org:
+        # Limit the sector selection
+        ltable = s3db.org_sector_organisation
+        query = (ltable.organisation_id == case_root_org) & \
+                (ltable.deleted == False)
+        rows = db(query).select(ltable.sector_id)
+        sector_ids = set(row.sector_id for row in rows)
+
+        # Default sector
+        if len(sector_ids) == 1:
+            default_sector_id = rows.first().sector_id
+        else:
+            default_sector_id = None
+
+        # Include the sector_id of the current record (if any)
+        record = None
+        component = r.component
+        if not component:
+            if r.tablename == "dvr_case_activity":
+                record = r.record
+        elif component.tablename == "dvr_case_activity" and r.component_id:
+            query = table.id == r.component_id
+            record = db(query).select(table.sector_id,
+                                      limitby = (0, 1),
+                                      ).first()
+        if record and record.sector_id:
+            sector_ids.add(record.sector_id)
+
+        # Set selectable sectors
+        subset = db(s3db.org_sector.id.belongs(sector_ids))
+        field.requires = IS_EMPTY_OR(IS_ONE_OF(subset, "org_sector.id",
+                                               field.represent,
+                                               ))
+
+        # Default selection?
+        if len(sector_ids) == 1 and default_sector_id:
+            # Single option => set as default and hide selector
+            field.default = default_sector_id
+            field.readable = field.writable = False
+
+# -------------------------------------------------------------------------
+def configure_case_activity_subject(r,
+                                    table,
+                                    case_root_org,
+                                    person_id,
+                                    subject_type = "subject",
+                                    autolink = False,
+                                    ):
+    """
+        Configure the subject field(s) for case activities
+            - need_id, or simple free-text subject
+
+        Args:
+            table: the case activity table
+            case_root_org: the ID of the case root organisation
+            person_id: the person ID of the case
+            subject_type: the type of subject field to use
+            autolink: whether response actions shall be automatically
+                      linked to case activities
+    """
+
+    T = current.T
+    db = current.db
+    s3db = current.s3db
+
+    if subject_type == "need_id":
+
+        # Are we looking at a particular case activity?
+        if r.tablename != "dvr_case_activity":
+            activity_id = r.component_id
+        else:
+            activity_id = r.id
+
+        # Expose need_id
+        field = table.need_id
+        field.label = T("Counseling Reason")
+        field.readable = True
+        field.writable = not activity_id or not autolink
+
+        # Limit to org-specific need types
+        ntable = s3db.dvr_need
+        if case_root_org:
+            query = (ntable.organisation_id == case_root_org)
+        else:
+            query = None
+
+        # With autolink, prevent multiple activities per need type
+        if autolink:
+            joinq = (table.need_id == ntable.id) & \
+                    (table.person_id == person_id) & \
+                    (table.deleted == False)
+            if activity_id:
+                joinq &= (table.activity_id != activity_id)
+            left = table.on(joinq)
+            q = (table.id == None)
+            query = query & q if query else q
+        else:
+            left = None
+
+        if query:
+            field.requires = IS_ONE_OF(db(query), "dvr_need.id",
+                                        field.represent,
+                                        left = left,
+                                        )
+    else:
+        # Expose simple free-text subject
+        field = table.subject
+        field.readable = field.writable = True
+        field.requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)]
+
+# -------------------------------------------------------------------------
+def configure_inline_responses(person_id, human_resource_id, hr_represent):
+    """
+        Configure the inline-responses for case activity form
+            - can be either response_action or response_action_theme
+
+        Args:
+            person_id: the person ID of the case
+            human_resource_id: the HR-ID of the consultant in charge
+            hr_represent: representation function for human_resource_id
+
+        Returns:
+            S3SQLInlineComponent
+    """
+
+    T = current.T
+    db = current.db
+    s3db = current.s3db
+    settings = current.deployment_settings
+
+    rtable = s3db.dvr_response_action
+
+    from core import S3SQLInlineComponent, S3SQLVerticalSubFormLayout
+
+    if settings.get_dvr_response_themes_details():
+        # Expose response_action_theme inline
+
+        # Filter action_id in inline response_themes to same beneficiary
+        ltable = s3db.dvr_response_action_theme
+        field = ltable.action_id
+        dbset = db(rtable.person_id == person_id) if person_id else db
+        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_response_action.id",
+                                               field.represent,
+                                               orderby = ~rtable.start_date,
+                                               sort = False,
+                                               ))
+
+        # Inline-component
+        inline_responses = S3SQLInlineComponent(
+                                "response_action_theme",
+                                fields = ["action_id",
+                                          "theme_id",
+                                          "comments",
+                                          ],
+                                label = T("Themes"),
+                                orderby = "action_id",
+                                )
+
+    else:
+        # Expose response_action inline
+
+        # Set the person_id for inline responses (does not not happen
+        # automatically since using case_activity_id as component key)
+        if person_id:
+            field = rtable.person_id
+            field.default = person_id
+
+        # Configure consultant in charge
+        field = rtable.human_resource_id
+        field.default = human_resource_id
+        field.represent = hr_represent
+        field.widget = field.comment = None
+
+        # Require explicit unit in hours-widget above 4 hours
+        from core import S3HoursWidget
+        field = rtable.hours
+        field.widget = S3HoursWidget(precision=2, explicit_above=4)
+
+        # Add custom callback to validate inline responses
+        s3db.add_custom_callback("dvr_response_action",
+                                 "onvalidation",
+                                 response_action_onvalidation,
+                                 )
+
+        # Inline-component
+        response_action_fields = ["response_theme_ids",
+                                  "comments",
+                                  "human_resource_id",
+                                  "start_date",
+                                  "status_id",
+                                  "hours",
+                                  ]
+        if settings.get_dvr_response_due_date():
+            response_action_fields.insert(1, "date_due")
+        if settings.get_dvr_response_types():
+            response_action_fields.insert(0, "response_type_id")
+
+        inline_responses = S3SQLInlineComponent(
+                                "response_action",
+                                fields = response_action_fields,
+                                label = T("Actions"),
+                                layout = S3SQLVerticalSubFormLayout,
+                                explicit_add = T("Add Action"),
+                                )
+
+    return inline_responses
+
+# -------------------------------------------------------------------------
 def dvr_case_activity_resource(r, tablename):
 
     T = current.T
     s3db = current.s3db
     auth = current.auth
-    settings = current.deployment_settings
 
     table = s3db.dvr_case_activity
 
@@ -300,60 +523,14 @@ def dvr_case_activity_resource(r, tablename):
     # Activity subject
     if ui_options_get("activity_use_need"):
         # Use need type
-        subject_field = "need_id"
+        subject_type = "need_id"
         subject_list_field = (T("Counseling Reason"), "need_id")
     else:
         # Use free-text field
-        subject_list_field = subject_field = "subject"
+        subject_list_field = subject_type = "subject"
 
     # Using sectors?
     activity_use_sector = ui_options_get("activity_use_sector")
-
-    if r.method == "report":
-
-        # Custom Report Options
-        facts = ((T("Number of Activities"), "count(id)"),
-                 (T("Number of Clients"), "count(person_id)"),
-                 )
-        axes = ["person_id$gender",
-                "person_id$person_details.nationality",
-                "person_id$person_details.marital_status",
-                (T("Theme"), "response_action.response_theme_ids"),
-                ]
-        if use_priority:
-            axes.insert(-1, "priority")
-
-        default_rows = "response_action.response_theme_ids"
-        default_cols = "person_id$person_details.nationality"
-
-        # Add the sector_id axis when using sectors
-        if activity_use_sector:
-            axes.insert(-1, "sector_id")
-            default_rows = "sector_id"
-
-        # Add the need_id axis when using needs
-        if subject_field == "need_id":
-            axes.insert(-1, "need_id")
-            default_rows = "need_id"
-
-        # Add status_id axis when using status
-        if status_id == "status_id":
-            axes.insert(3, status_id)
-        report_options = {
-            "rows": axes,
-            "cols": axes,
-            "fact": facts,
-            "defaults": {"rows": default_rows,
-                         "cols": default_cols,
-                         "fact": "count(id)",
-                         "totals": True,
-                         },
-            }
-        s3db.configure("dvr_case_activity",
-                       report_options = report_options,
-                       )
-        crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
-        crud_strings["title_report"] = T("Activity Statistic")
 
     if r.interactive or r.representation in ("aadata", "json"):
 
@@ -361,10 +538,6 @@ def dvr_case_activity_resource(r, tablename):
                          S3SQLInlineComponent, \
                          S3SQLInlineLink, \
                          S3SQLVerticalSubFormLayout
-
-        # Represent person_id as link
-        field = table.person_id
-        field.represent = s3db.pr_PersonRepresent(show_link = True)
 
         # Get person_id, case_activity_id and case activity record
         person_id = case_activity_id = case_activity = None
@@ -382,116 +555,31 @@ def dvr_case_activity_resource(r, tablename):
                 person_id = case_activity.person_id
                 case_activity_id = r.id
 
-        db = current.db
-
         # Get the root org of the case
         case_root_org = get_case_root_org(person_id)
+        if not case_root_org:
+            case_root_org = auth.root_org()
+
+        # Represent person_id as link
+        field = table.person_id
+        field.represent = s3db.pr_PersonRepresent(show_link = True)
 
         # Configure sector_id
         field = table.sector_id
-        field.comment = None
         if ui_options_get("activity_use_sector"):
-
-            # Get the root org for sector selection
-            if case_root_org:
-                sector_root_org = case_root_org
-            else:
-                sector_root_org = auth.root_org()
-
-            if sector_root_org:
-                # Limit the sector selection
-                ltable = s3db.org_sector_organisation
-                query = (ltable.organisation_id == sector_root_org) & \
-                        (ltable.deleted == False)
-                rows = db(query).select(ltable.sector_id)
-                sector_ids = set(row.sector_id for row in rows)
-
-                # Default sector
-                if len(sector_ids) == 1:
-                    default_sector_id = rows.first().sector_id
-                else:
-                    default_sector_id = None
-
-                # Include the sector_id of the current record (if any)
-                record = None
-                component = r.component
-                if not component:
-                    if r.tablename == "dvr_case_activity":
-                        record = r.record
-                elif component.tablename == "dvr_case_activity" and r.component_id:
-                    query = table.id == r.component_id
-                    record = db(query).select(table.sector_id,
-                                                limitby = (0, 1),
-                                                ).first()
-                if record and record.sector_id:
-                    sector_ids.add(record.sector_id)
-
-                # Set selectable sectors
-                subset = db(s3db.org_sector.id.belongs(sector_ids))
-                field.requires = IS_EMPTY_OR(IS_ONE_OF(subset, "org_sector.id",
-                                                        field.represent,
-                                                        ))
-
-                # Default selection?
-                if len(sector_ids) == 1 and default_sector_id:
-                    # Single option => set as default and hide selector
-                    field.default = default_sector_id
-                    field.readable = field.writable = False
+            configure_case_activity_sector(r, table, case_root_org)
         else:
             field.readable = field.writable = False
 
         # Configure subject field (alternatives)
-        if subject_field == "need_id":
-
-            # Are we looking at a particular case activity?
-            if r.tablename != "dvr_case_activity":
-                activity_id = r.component_id
-            else:
-                activity_id = r.id
-
-            # Shall we automatically link responses to activities?
-            autolink = ui_options_get("response_activity_autolink")
-
-            # Expose need_id
-            field = table.need_id
-            field.label = T("Counseling Reason")
-            field.readable = True
-            field.writable = not activity_id or not autolink
-
-            # Limit to org-specific need types
-            if case_root_org:
-                needs_root_org = case_root_org
-            else:
-                needs_root_org = auth.root_org()
-            ntable = s3db.dvr_need
-            if needs_root_org:
-                query = (ntable.organisation_id == needs_root_org)
-            else:
-                query = None
-
-            # With autolink, prevent multiple activities per need type
-            if autolink:
-                joinq = (table.need_id == ntable.id) & \
-                        (table.person_id == person_id) & \
-                        (table.deleted == False)
-                if activity_id:
-                    joinq &= (table.activity_id != activity_id)
-                left = table.on(joinq)
-                q = (table.id == None)
-                query = query & q if query else q
-            else:
-                left = None
-
-            if query:
-                field.requires = IS_ONE_OF(db(query), "dvr_need.id",
-                                           field.represent,
-                                           left = left,
-                                           )
-        else:
-            # Expose simple free-text subject
-            field = table.subject
-            field.readable = field.writable = True
-            field.requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)]
+        autolink = ui_options_get("response_activity_autolink")
+        configure_case_activity_subject(r,
+                                        table,
+                                        case_root_org,
+                                        person_id,
+                                        subject_type = subject_type,
+                                        autolink = autolink,
+                                        )
 
         # Show need details (optional)
         field = table.need_details
@@ -557,79 +645,16 @@ def dvr_case_activity_resource(r, tablename):
         field.readable = field.writable = ui_options_get("activity_comments")
 
         # Inline-responses
-        rtable = s3db.dvr_response_action
         configure_response_theme_selector(ui_options,
                                           case_root_org = case_root_org,
                                           case_activity = case_activity,
                                           case_activity_id = case_activity_id,
                                           )
 
-        if settings.get_dvr_response_themes_details():
-            # Embed response action themes
-            inline_responses = S3SQLInlineComponent(
-                                    "response_action_theme",
-                                    fields = ["action_id",
-                                              "theme_id",
-                                              "comments",
-                                              ],
-                                    label = T("Themes"),
-                                    orderby = "action_id",
-                                    )
-
-            # Filter action_id in inline response_themes to same beneficiary
-            ltable = s3db.dvr_response_action_theme
-            field = ltable.action_id
-            dbset = db(rtable.person_id == person_id) if person_id else db
-            field.requires = IS_EMPTY_OR(IS_ONE_OF(
-                                            dbset, "dvr_response_action.id",
-                                            field.represent,
-                                            orderby = ~rtable.start_date,
-                                            sort = False,
-                                            ))
-        else:
-            if person_id:
-                # Set the person_id for inline responses (does not not happen
-                # automatically since using case_activity_id as component key)
-                field = rtable.person_id
-                field.default = person_id
-
-            field = rtable.human_resource_id
-            field.default = human_resource_id
-            field.represent = hr_represent
-            field.widget = field.comment = None
-
-            # Require explicit unit in hours-widget above 4 hours
-            from core import S3HoursWidget
-            field = rtable.hours
-            field.widget = S3HoursWidget(precision = 2,
-                                            explicit_above = 4,
-                                            )
-
-            # Embed response actions
-            response_action_fields = ["response_theme_ids",
-                                      "comments",
-                                      "human_resource_id",
-                                      "start_date",
-                                      "status_id",
-                                      "hours",
-                                      ]
-            if settings.get_dvr_response_due_date():
-                response_action_fields.insert(1, "date_due")
-            if settings.get_dvr_response_types():
-                response_action_fields.insert(0, "response_type_id")
-
-            s3db.add_custom_callback("dvr_response_action",
-                                     "onvalidation",
-                                     response_action_onvalidation,
-                                     )
-
-            inline_responses = S3SQLInlineComponent(
-                                        "response_action",
-                                        label = T("Actions"),
-                                        fields = response_action_fields,
-                                        layout = S3SQLVerticalSubFormLayout,
-                                        explicit_add = T("Add Action"),
-                                        )
+        inline_responses = configure_inline_responses(person_id,
+                                                      human_resource_id,
+                                                      hr_represent,
+                                                      )
 
         # Inline updates
         utable = current.s3db.dvr_case_activity_update
@@ -656,7 +681,7 @@ def dvr_case_activity_resource(r, tablename):
         crud_form = S3SQLCustomForm(
                         "person_id",
                         "sector_id",
-                        subject_field,
+                        subject_type,
                         vulnerability,
                         diagnosis,
                         (T("Initial Situation Details"), ("need_details")),
@@ -664,13 +689,6 @@ def dvr_case_activity_resource(r, tablename):
                         priority_field,
                         "human_resource_id",
                         inline_responses,
-                        #S3SQLInlineComponent("response_action",
-                        #                     label = T("Actions"),
-                        #                     fields = response_action_fields,
-                        #                     layout = S3SQLVerticalSubFormLayout,
-                        #                     explicit_add = T("Add Action"),
-                        #                     ),
-
                         "followup",
                         "followup_date",
                         S3SQLInlineComponent("case_activity_update",
@@ -686,7 +704,6 @@ def dvr_case_activity_resource(r, tablename):
                         status_id,
                         end_date,
                         outcome,
-
                         S3SQLInlineComponent(
                             "document",
                             name = "file",
@@ -702,7 +719,6 @@ def dvr_case_activity_resource(r, tablename):
 
         s3db.configure("dvr_case_activity",
                        crud_form = crud_form,
-                       #filter_widgets = filter_widgets,
                        orderby = "dvr_case_activity.priority" \
                                  if use_priority else "dvr_case_activity.start_date desc",
                        )
@@ -725,6 +741,49 @@ def dvr_case_activity_resource(r, tablename):
         s3db.configure("dvr_case_activity",
                        list_fields = list_fields,
                        )
+
+    # Report options
+    if r.method == "report":
+
+        # Custom Report Options
+        facts = ((T("Number of Activities"), "count(id)"),
+                 (T("Number of Clients"), "count(person_id)"),
+                 )
+        axes = ["person_id$gender",
+                "person_id$person_details.nationality",
+                "person_id$person_details.marital_status",
+                (T("Theme"), "response_action.response_theme_ids"),
+                ]
+        if use_priority:
+            axes.insert(-1, "priority")
+
+        default_rows = "response_action.response_theme_ids"
+        default_cols = "person_id$person_details.nationality"
+
+        if activity_use_sector:
+            axes.insert(-1, "sector_id")
+            default_rows = "sector_id"
+        if subject_type == "need_id":
+            axes.insert(-1, "need_id")
+            default_rows = "need_id"
+        if status_id == "status_id":
+            axes.insert(3, status_id)
+
+        report_options = {
+            "rows": axes,
+            "cols": axes,
+            "fact": facts,
+            "defaults": {"rows": default_rows,
+                         "cols": default_cols,
+                         "fact": "count(id)",
+                         "totals": True,
+                         },
+            }
+        s3db.configure("dvr_case_activity",
+                       report_options = report_options,
+                       )
+        crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
+        crud_strings["title_report"] = T("Activity Statistic")
 
     # Configure components to inherit realm entity
     # from the case activity record
