@@ -13,7 +13,7 @@ from core import FS, ICON, S3CRUD, S3Represent, \
 
 from ..helpers import workflow_tag_represent
 
-SITE_WORKFLOW = ("STATUS", "MPAV", "HYGIENE", "LAYOUT", "PUBLIC")
+SITE_WORKFLOW = ("MPAV", "HYGIENE", "LAYOUT", "STATUS", "PUBLIC")
 SITE_REVIEW = ("MPAV", "HYGIENE", "LAYOUT")
 
 # -------------------------------------------------------------------------
