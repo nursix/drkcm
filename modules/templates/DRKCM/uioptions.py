@@ -52,7 +52,7 @@ UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
                "response_themes_sectors": False,
                "response_themes_needs": False,
                "response_themes_optional": False,
-               "response_types": True,
+               "response_types": False,
                "response_use_organizer": False,
                "response_use_time": False,
                "response_performance_indicators": None, # default

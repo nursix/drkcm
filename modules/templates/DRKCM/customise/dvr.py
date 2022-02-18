@@ -23,21 +23,54 @@ def dvr_home():
             }
 
 # -------------------------------------------------------------------------
+def get_case_root_org(person_id):
+    """
+        Get the root organisation managing a case
+
+        Args:
+            person_id: the person record ID
+
+        Returns:
+            the root organisation record ID
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    if person_id:
+        ctable = s3db.dvr_case
+        otable = s3db.org_organisation
+        left = otable.on(otable.id == ctable.organisation_id)
+        query = (ctable.person_id == person_id) & \
+                (ctable.archived == False) & \
+                (ctable.deleted == False)
+        row = db(query).select(otable.root_organisation,
+                               left = left,
+                               limitby = (0, 1),
+                               orderby = ~ctable.modified_on,
+                               ).first()
+        case_root_org = row.root_organisation if row else None
+    else:
+        case_root_org = None
+
+    return case_root_org
+
+# -------------------------------------------------------------------------
 def dvr_case_onaccept(form):
     """
         Additional custom-onaccept for dvr_case to:
         * Force-update the realm entity of the person record:
-        - the organisation managing the case is the realm-owner,
-          but the person record is written first, so we need to
-          update it after writing the case
-        - the case can be transferred to another organisation/branch,
-          and then the person record needs to be transferred to that
-          same realm as well
+          - the organisation managing the case is the realm-owner,
+            but the person record is written first, so we need to
+            update it after writing the case
+          - the case can be transferred to another organisation/branch,
+            and then the person record needs to be transferred to that
+            same realm as well
         * Update the Population of all Shelters
         * Update the Location of the person record:
-        - if the Case is linked to a Site then use that for the Location of
-          the Person
-        - otherwise use the Private Address
+          - if the Case is linked to a Site then use that for the Location of
+            the Person
+          - otherwise use the Private Address
     """
 
     try:
@@ -1194,39 +1227,6 @@ def dvr_need_resource(r, tablename):
         )
 
 # -------------------------------------------------------------------------
-def get_case_root_org(person_id):
-    """
-        Get the root organisation managing a case
-
-        Args:
-            person_id: the person record ID
-
-        Returns:
-            the root organisation record ID
-    """
-
-    db = current.db
-    s3db = current.s3db
-
-    if person_id:
-        ctable = s3db.dvr_case
-        otable = s3db.org_organisation
-        left = otable.on(otable.id == ctable.organisation_id)
-        query = (ctable.person_id == person_id) & \
-                (ctable.archived == False) & \
-                (ctable.deleted == False)
-        row = db(query).select(otable.root_organisation,
-                               left = left,
-                               limitby = (0, 1),
-                               orderby = ~ctable.modified_on,
-                               ).first()
-        case_root_org = row.root_organisation if row else None
-    else:
-        case_root_org = None
-
-    return case_root_org
-
-# -------------------------------------------------------------------------
 def configure_response_theme_selector(ui_options,
                                       case_root_org = None,
                                       person_id = None,
@@ -1383,6 +1383,219 @@ def response_date_dt_orderby(field, direction, orderby, left_joins):
     orderby.append("%(table)s.start_date%(direction)s,%(table)s.created_on%(direction)s" % sorting)
 
 # -------------------------------------------------------------------------
+def configure_response_action_reports(ui_options,
+                                      response_type = None,
+                                      multiple_orgs = False,
+                                      ):
+
+    T = current.T
+    settings = current.deployment_settings
+
+    ui_options_get = ui_options.get
+
+    # Sector Axis
+    if settings.get_dvr_response_themes_sectors():
+        sector = "dvr_response_action_theme.theme_id$sector_id"
+        default_cols = None
+    else:
+        sector = "case_activity_id$sector_id"
+        default_cols = sector
+
+    # Needs Axis
+    if settings.get_dvr_response_themes_needs():
+        need = (T("Counseling Reason"),
+                "dvr_response_action_theme.theme_id$need_id",
+                )
+    else:
+        need = None
+
+    # Vulnerability Axis
+    if ui_options_get("activity_pss_vulnerability"):
+        vulnerability = (T("Suspected Diagnosis"),
+                         "case_activity_id$vulnerability_type__link.vulnerability_type_id",
+                         )
+        diagnosis = (T("Diagnosis"),
+                     "case_activity_id$diagnosis__link.vulnerability_type_id",
+                     )
+    else:
+        vulnerability = diagnosis = None
+
+    # Custom Report Options
+    facts = ((T("Number of Actions"), "count(id)"),
+             (T("Number of Clients"), "count(person_id)"),
+             (T("Hours (Total)"), "sum(hours)"),
+             (T("Hours (Average)"), "avg(hours)"),
+             )
+    axes = ["person_id$gender",
+            "person_id$person_details.nationality",
+            "person_id$person_details.marital_status",
+            (T("Size of Family"), "person_id$dvr_case.household_size"),
+            vulnerability,
+            diagnosis,
+            response_type,
+            (T("Theme"), "response_theme_ids"),
+            need,
+            sector,
+            "human_resource_id",
+            ]
+    if ui_options_get("case_use_address"):
+        axes.insert(3, (T("Place of Residence"), "person_id$location_id$L3"))
+    if multiple_orgs:
+        # Add case organisation as report axis
+        axes.append("person_id$dvr_case.organisation_id")
+
+    report_options = {
+        "rows": axes,
+        "cols": axes,
+        "fact": facts,
+        "defaults": {"rows": "response_theme_ids",
+                     "cols": default_cols,
+                     "fact": "count(id)",
+                     "totals": True,
+                     },
+        "precision": {"hours": 2, # higher precision is impractical
+                      },
+        }
+
+    current.s3db.configure("dvr_response_action",
+                           report_options = report_options,
+                           )
+
+# -------------------------------------------------------------------------
+def configure_response_action_filters(r,
+                                      use_time = False,
+                                      use_response_type = False,
+                                      use_due_date = False,
+                                      multiple_orgs = False,
+                                      org_ids = None,
+                                      ):
+    """
+        Configures filter widgets for dvr_response_action
+
+        Args:
+            r: the CRUDRequest
+            use_time: use time part of start_date
+            use_response_type: use response types
+            use_due_date: use a separate due-date
+            multiple_orgs: user can see cases of multiple organisations,
+                           so include an organisation-filter
+            org_ids: the IDs of the organisations the user can access
+    """
+
+    T = current.T
+    s3db = current.s3db
+
+    hr_filter_opts = False
+    hr_filter_default = None
+
+    is_report = r.method == "report"
+
+    from core import AgeFilter, \
+                     DateFilter, \
+                     HierarchyFilter, \
+                     OptionsFilter, \
+                     TextFilter, \
+                     get_filter_options
+
+    filter_widgets = [
+        TextFilter(["person_id$pe_label",
+                    "person_id$first_name",
+                    "person_id$middle_name",
+                    "person_id$last_name",
+                    "comments",
+                    ],
+                    label = T("Search"),
+                    ),
+        OptionsFilter("status_id",
+                      options = lambda: \
+                                get_filter_options("dvr_response_status",
+                                                   orderby = "workflow_position",
+                                                   ),
+                      cols = 3,
+                      orientation = "rows",
+                      sort = False,
+                      size = None,
+                      translate = True,
+                      ),
+        DateFilter("start_date",
+                   hidden = not is_report,
+                   hide_time = not use_time,
+                   ),
+        OptionsFilter("response_theme_ids",
+                      header = True,
+                      hidden = True,
+                      options = lambda: \
+                                get_filter_options("dvr_response_theme",
+                                                   org_filter = True,
+                                                   ),
+                      ),
+        OptionsFilter("person_id$person_details.nationality",
+                      label = T("Client Nationality"),
+                      hidden = True,
+                      ),
+        AgeFilter("person_id$date_of_birth",
+                  label = T("Client Age"),
+                  hidden = True,
+                  )
+        ]
+
+    if use_response_type:
+        filter_widgets.insert(3,
+            HierarchyFilter("response_type_id",
+                            hidden = True,
+                            ))
+    if use_due_date:
+        filter_widgets.insert(3,
+            DateFilter("date_due",
+                        hidden = is_report,
+                        ))
+
+    # Filter by case manager in charge
+    mine = r.get_vars.get("mine")
+    if mine not in ("a", "r"):
+        # Populate hr_filter_opts to enable filter widget
+        # - use field options as filter options
+        table = s3db.dvr_response_action
+        field = table.human_resource_id
+        try:
+            hr_filter_opts = field.requires.options()
+        except AttributeError:
+            pass
+        else:
+            hr_filter_opts = dict(hr_filter_opts)
+            hr_filter_opts.pop('', None)
+        if mine == "f":
+            hr_filter_default = field.default
+
+    if hr_filter_opts:
+        filter_widgets.insert(2,
+            OptionsFilter("human_resource_id",
+                          default = hr_filter_default,
+                          header = True,
+                          options = hr_filter_opts,
+                          ))
+
+    if multiple_orgs:
+        # Add case organisation filter
+        if org_ids:
+            # Provide the permitted organisations as filter options
+            org_filter_opts = s3db.org_organisation_represent.bulk(
+                                                org_ids,
+                                                show_link = False,
+                                                )
+            org_filter_opts.pop(None, None)
+        else:
+            # Look up from records
+            org_filter_opts = None
+        filter_widgets.insert(1, OptionsFilter("person_id$dvr_case.organisation_id",
+                                               options = org_filter_opts,
+                                               ))
+
+    s3db.configure("dvr_response_action",
+                   filter_widgets = filter_widgets,
+                   )
+
+# -------------------------------------------------------------------------
 def dvr_response_action_resource(r, tablename):
 
     T = current.T
@@ -1397,8 +1610,6 @@ def dvr_response_action_resource(r, tablename):
     # Can the user see cases from more than one org?
     from ..helpers import case_read_multiple_orgs
     multiple_orgs, org_ids = case_read_multiple_orgs()
-
-    org_context = "person_id$dvr_case.organisation_id"
 
     # Represent for dvr_response_action_theme.id
     response_themes_details = settings.get_dvr_response_themes_details()
@@ -1418,73 +1629,10 @@ def dvr_response_action_resource(r, tablename):
 
     is_report = r.method == "report"
     if is_report:
-
-        # Sector Axis
-        if settings.get_dvr_response_themes_sectors():
-            sector = "dvr_response_action_theme.theme_id$sector_id"
-            default_cols = None
-        else:
-            sector = "case_activity_id$sector_id"
-            default_cols = sector
-
-        # Needs Axis
-        if settings.get_dvr_response_themes_needs():
-            need = (T("Counseling Reason"),
-                    "dvr_response_action_theme.theme_id$need_id",
-                    )
-        else:
-            need = None
-
-        # Vulnerability Axis
-        if ui_options_get("activity_pss_vulnerability"):
-            vulnerability = (T("Suspected Diagnosis"),
-                             "case_activity_id$vulnerability_type__link.vulnerability_type_id",
-                             )
-            diagnosis = (T("Diagnosis"),
-                         "case_activity_id$diagnosis__link.vulnerability_type_id",
-                         )
-        else:
-            vulnerability = diagnosis = None
-
-        # Custom Report Options
-        facts = ((T("Number of Actions"), "count(id)"),
-                 (T("Number of Clients"), "count(person_id)"),
-                 (T("Hours (Total)"), "sum(hours)"),
-                 (T("Hours (Average)"), "avg(hours)"),
-                 )
-        axes = ["person_id$gender",
-                "person_id$person_details.nationality",
-                "person_id$person_details.marital_status",
-                (T("Size of Family"), "person_id$dvr_case.household_size"),
-                vulnerability,
-                diagnosis,
-                response_type,
-                (T("Theme"), "response_theme_ids"),
-                need,
-                sector,
-                "human_resource_id",
-                ]
-        if ui_options_get("case_use_address"):
-            axes.insert(3, (T("Place of Residence"), "person_id$location_id$L3"))
-        if multiple_orgs:
-            # Add case organisation as report axis
-            axes.append(org_context)
-
-        report_options = {
-            "rows": axes,
-            "cols": axes,
-            "fact": facts,
-            "defaults": {"rows": "response_theme_ids",
-                         "cols": default_cols,
-                         "fact": "count(id)",
-                         "totals": True,
-                         },
-            "precision": {"hours": 2, # higher precision is impractical
-                          },
-            }
-        s3db.configure("dvr_response_action",
-                       report_options = report_options,
-                       )
+        configure_response_action_reports(ui_options,
+                                          response_type = response_type,
+                                          multiple_orgs = multiple_orgs,
+                                          )
         crud_strings = current.response.s3.crud_strings["dvr_response_action"]
         crud_strings["title_report"] = T("Action Statistic")
 
@@ -1498,19 +1646,6 @@ def dvr_response_action_resource(r, tablename):
         field.represent = s3db.hrm_HumanResourceRepresent(show_link=False)
         field.widget = None
 
-        hr_filter_opts = False
-        hr_filter_default = None
-        mine = r.get_vars.get("mine")
-        if mine not in ("a", "r"):
-            # Populate hr_filter_opts to enable filter widget
-            # - use field options as filter options
-            try:
-                hr_filter_opts = field.requires.options()
-            except AttributeError:
-                pass
-            if mine == "f":
-                hr_filter_default = human_resource_id
-
         # Require explicit unit in hours-widget above 4 hours
         from core import S3HoursWidget
         field = table.hours
@@ -1523,30 +1658,29 @@ def dvr_response_action_resource(r, tablename):
         date_due = "date_due" if use_due_date else None
 
         # Configure theme selector
+        viewing = r.viewing()[0]
+        is_master = r.tablename == "dvr_response_action" and viewing is None
+
+        person_id = record_id = None
         record = r.record
-        if r.tablename == "dvr_response_action":
-            is_master = True
-            if record:
+        if record:
+            if r.tablename == "dvr_response_action":
                 person_id = record.person_id
                 record_id = record.id
-            else:
-                person_id = record_id = None
-        elif r.tablename == "pr_person" and \
-                r.component and r.component.tablename == "dvr_response_action":
-            is_master = False
-            person_id = record.id if record else None
-            record_id = r.component_id
+            elif r.tablename == "pr_person" and \
+                 r.component and r.component.tablename == "dvr_response_action":
+                person_id = record.id
+                record_id = r.component_id
 
         configure_response_theme_selector(ui_options,
                                           person_id = person_id,
                                           record_id = record_id,
                                           )
 
-        get_vars = r.get_vars
-        if not is_master or "viewing" in get_vars:
+        if not is_master:
             # Component tab (or viewing-tab) of case
 
-            # Hide person_id
+            # Hide person_id (already have the rheader context)
             field = table.person_id
             field.readable = field.writable = False
 
@@ -1622,11 +1756,13 @@ def dvr_response_action_resource(r, tablename):
                            list_fields = list_fields,
                            pdf_fields = pdf_fields,
                            )
-            if "viewing" in get_vars:
+
+            if viewing:
                 s3db.configure("dvr_response_action",
                                create_next = r.url(id="", method=""),
                                update_next = r.url(id="", method=""),
                                )
+
         else:
             # Primary dvr/response_action controller
 
@@ -1684,96 +1820,13 @@ def dvr_response_action_resource(r, tablename):
 
             # Custom Filter Options
             if r.interactive:
-                from core import AgeFilter, \
-                                 DateFilter, \
-                                 HierarchyFilter, \
-                                 OptionsFilter, \
-                                 TextFilter, \
-                                 get_filter_options
-
-                filter_widgets = [
-                    TextFilter(["person_id$pe_label",
-                                "person_id$first_name",
-                                "person_id$middle_name",
-                                "person_id$last_name",
-                                "comments",
-                                ],
-                                label = T("Search"),
-                                ),
-                    OptionsFilter("status_id",
-                                  options = lambda: \
-                                            get_filter_options("dvr_response_status",
-                                                               orderby = "workflow_position",
-                                                               ),
-                                  cols = 3,
-                                  orientation = "rows",
-                                  sort = False,
-                                  size = None,
-                                  translate = True,
-                                  ),
-                    DateFilter("start_date",
-                               hidden = not is_report,
-                               hide_time = not use_time,
-                               ),
-                    OptionsFilter(
-                        "response_theme_ids",
-                        header = True,
-                        hidden = True,
-                        options = lambda: \
-                                  get_filter_options("dvr_response_theme",
-                                                     org_filter = True,
-                                                     ),
-                        ),
-                    OptionsFilter("person_id$person_details.nationality",
-                                  label = T("Client Nationality"),
-                                  hidden = True,
-                                  ),
-                    AgeFilter("person_id$date_of_birth",
-                              label = T("Client Age"),
-                              hidden = True,
-                              )
-                    ]
-
-                if use_response_type:
-                    filter_widgets.insert(3,
-                        HierarchyFilter("response_type_id",
-                                        hidden = True,
-                                        ))
-                if use_due_date:
-                    filter_widgets.insert(3,
-                        DateFilter("date_due",
-                                    hidden = is_report,
-                                    ))
-                if hr_filter_opts:
-                    hr_filter_opts = dict(hr_filter_opts)
-                    hr_filter_opts.pop('', None)
-                    filter_widgets.insert(2,
-                        OptionsFilter("human_resource_id",
-                                      default = hr_filter_default,
-                                      header = True,
-                                      options = dict(hr_filter_opts),
-                                      ))
-
-                if multiple_orgs:
-                    # Add case organisation filter
-                    if org_ids:
-                        # Provide the permitted organisations as filter options
-                        org_filter_opts = s3db.org_organisation_represent.bulk(
-                                                            org_ids,
-                                                            show_link = False,
-                                                            )
-                        org_filter_opts.pop(None, None)
-                    else:
-                        # Look up from records
-                        org_filter_opts = None
-                    filter_widgets.insert(1, OptionsFilter(org_context,
-                                                           options = org_filter_opts,
-                                                           ))
-
-                s3db.configure("dvr_response_action",
-                               filter_widgets = filter_widgets,
-                               )
-
+                configure_response_action_filters(r,
+                                                  use_time = use_time,
+                                                  use_response_type = use_response_type,
+                                                  use_due_date = use_due_date,
+                                                  multiple_orgs = multiple_orgs,
+                                                  org_ids = org_ids,
+                                                  )
 
     # Organizer and PDF exports
     if response_themes_details:
@@ -1790,6 +1843,7 @@ def dvr_response_action_resource(r, tablename):
 
     if r.method == "organize":
         table.end_date.writable = True
+
     s3db.configure("dvr_response_action",
                    organize = {"title": "person_id",
                                "description": description,
