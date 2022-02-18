@@ -190,28 +190,22 @@ def dvr_case_resource(r, tablename):
     ctable = s3db.dvr_case
 
     get_vars = r.get_vars
-    if r.function == "group_membership" and "viewing" in get_vars:
-
-        # New cases created on family tab inherit organisation_id
-        # and human_resource_id from master case:
-        viewing = r.get_vars.get("viewing")
-        if viewing and viewing[:10] == "pr_person.":
-            try:
-                vid = int(viewing[10:])
-            except ValueError:
-                pass
-            else:
-                ctable = s3db.dvr_case
-                query = (ctable.person_id == vid) & \
-                        (ctable.archived == False) & \
-                        (ctable.deleted == False)
-                case = current.db(query).select(ctable.organisation_id,
-                                                ctable.human_resource_id,
-                                                limitby = (0, 1),
-                                                ).first()
-                if case:
-                    ctable.organisation_id.default = case.organisation_id
-                    ctable.human_resource_id.default = case.human_resource_id
+    if r.function == "group_membership":
+        viewing = r.viewing
+        if viewing and viewing[0] == "pr_person":
+            # New cases created on family tab inherit organisation_id
+            # and human_resource_id from master case:
+            ctable = s3db.dvr_case
+            query = (ctable.person_id == viewing[1]) & \
+                    (ctable.archived == False) & \
+                    (ctable.deleted == False)
+            case = current.db(query).select(ctable.organisation_id,
+                                            ctable.human_resource_id,
+                                            limitby = (0, 1),
+                                            ).first()
+            if case:
+                ctable.organisation_id.default = case.organisation_id
+                ctable.human_resource_id.default = case.human_resource_id
 
     # Custom onaccept to update realm-entity of the
     # beneficiary and case activities of this case
@@ -1227,6 +1221,55 @@ def dvr_need_resource(r, tablename):
         )
 
 # -------------------------------------------------------------------------
+def response_action_onvalidation(form):
+    """
+        Onvalidation for response actions:
+            - enforce hours for closed-statuses (org-specific UI option)
+    """
+
+    ui_options = get_ui_options()
+    if ui_options.get("response_effort_required"):
+
+        db = current.db
+        s3db = current.s3db
+
+        form_vars = form.vars
+
+        # Get the new status
+        if "status_id" in form_vars:
+            status_id = form_vars.status_id
+        else:
+            status_id = s3db.dvr_response_action.status_id.default
+
+        try:
+            hours = form_vars.hours
+        except AttributeError:
+            # No hours field in form, so no point validating it
+            return
+
+        if hours is None:
+            # If new status is closed, require hours
+            stable = s3db.dvr_response_status
+            query = (stable.id == status_id)
+            status = db(query).select(stable.is_closed,
+                                      limitby = (0, 1),
+                                      ).first()
+            if status and status.is_closed:
+                form.errors["hours"] = current.T("Please specify the effort spent")
+
+# -------------------------------------------------------------------------
+def response_date_dt_orderby(field, direction, orderby, left_joins):
+    """
+        When sorting response actions by date, use created_on to maintain
+        consistent order of multiple response actions on the same date
+    """
+
+    sorting = {"table": field.tablename,
+               "direction": direction,
+               }
+    orderby.append("%(table)s.start_date%(direction)s,%(table)s.created_on%(direction)s" % sorting)
+
+# -------------------------------------------------------------------------
 def configure_response_theme_selector(ui_options,
                                       case_root_org = None,
                                       person_id = None,
@@ -1334,55 +1377,6 @@ def configure_response_theme_selector(ui_options,
         field.requires = IS_EMPTY_OR(field.requires)
 
 # -------------------------------------------------------------------------
-def response_action_onvalidation(form):
-    """
-        Onvalidation for response actions:
-            - enforce hours for closed-statuses (org-specific UI option)
-    """
-
-    ui_options = get_ui_options()
-    if ui_options.get("response_effort_required"):
-
-        db = current.db
-        s3db = current.s3db
-
-        form_vars = form.vars
-
-        # Get the new status
-        if "status_id" in form_vars:
-            status_id = form_vars.status_id
-        else:
-            status_id = s3db.dvr_response_action.status_id.default
-
-        try:
-            hours = form_vars.hours
-        except AttributeError:
-            # No hours field in form, so no point validating it
-            return
-
-        if hours is None:
-            # If new status is closed, require hours
-            stable = s3db.dvr_response_status
-            query = (stable.id == status_id)
-            status = db(query).select(stable.is_closed,
-                                      limitby = (0, 1),
-                                      ).first()
-            if status and status.is_closed:
-                form.errors["hours"] = current.T("Please specify the effort spent")
-
-# -------------------------------------------------------------------------
-def response_date_dt_orderby(field, direction, orderby, left_joins):
-    """
-        When sorting response actions by date, use created_on to maintain
-        consistent order of multiple response actions on the same date
-    """
-
-    sorting = {"table": field.tablename,
-               "direction": direction,
-               }
-    orderby.append("%(table)s.start_date%(direction)s,%(table)s.created_on%(direction)s" % sorting)
-
-# -------------------------------------------------------------------------
 def configure_response_action_reports(ui_options,
                                       response_type = None,
                                       multiple_orgs = False,
@@ -1393,21 +1387,27 @@ def configure_response_action_reports(ui_options,
 
     ui_options_get = ui_options.get
 
+    use_theme = ui_options_get("response_use_theme")
+
     # Sector Axis
-    if settings.get_dvr_response_themes_sectors():
+    if use_theme and settings.get_dvr_response_themes_sectors():
         sector = "dvr_response_action_theme.theme_id$sector_id"
         default_cols = None
     else:
         sector = "case_activity_id$sector_id"
-        default_cols = sector
+        default_cols = sector if use_theme else None
 
     # Needs Axis
-    if settings.get_dvr_response_themes_needs():
-        need = (T("Counseling Reason"),
-                "dvr_response_action_theme.theme_id$need_id",
-                )
+    if use_theme:
+        themes = (T("Theme"), "response_theme_ids")
+        if settings.get_dvr_response_themes_needs():
+            need = (T("Counseling Reason"),
+                    "dvr_response_action_theme.theme_id$need_id",
+                    )
+        else:
+            need = None
     else:
-        need = None
+        themes = need = None
 
     # Vulnerability Axis
     if ui_options_get("activity_pss_vulnerability"):
@@ -1433,7 +1433,7 @@ def configure_response_action_reports(ui_options,
             vulnerability,
             diagnosis,
             response_type,
-            (T("Theme"), "response_theme_ids"),
+            themes,
             need,
             sector,
             "human_resource_id",
@@ -1448,7 +1448,7 @@ def configure_response_action_reports(ui_options,
         "rows": axes,
         "cols": axes,
         "fact": facts,
-        "defaults": {"rows": "response_theme_ids",
+        "defaults": {"rows": "response_theme_ids" if use_theme else sector,
                      "cols": default_cols,
                      "fact": "count(id)",
                      "totals": True,
@@ -1463,6 +1463,7 @@ def configure_response_action_reports(ui_options,
 
 # -------------------------------------------------------------------------
 def configure_response_action_filters(r,
+                                      use_theme = False,
                                       use_time = False,
                                       use_response_type = False,
                                       use_due_date = False,
@@ -1474,6 +1475,7 @@ def configure_response_action_filters(r,
 
         Args:
             r: the CRUDRequest
+            use_theme: use themes for response actions
             use_time: use time part of start_date
             use_response_type: use response types
             use_due_date: use a separate due-date
@@ -1521,14 +1523,6 @@ def configure_response_action_filters(r,
                    hidden = not is_report,
                    hide_time = not use_time,
                    ),
-        OptionsFilter("response_theme_ids",
-                      header = True,
-                      hidden = True,
-                      options = lambda: \
-                                get_filter_options("dvr_response_theme",
-                                                   org_filter = True,
-                                                   ),
-                      ),
         OptionsFilter("person_id$person_details.nationality",
                       label = T("Client Nationality"),
                       hidden = True,
@@ -1539,6 +1533,16 @@ def configure_response_action_filters(r,
                   )
         ]
 
+    if use_theme:
+        filter_widgets.insert(-2,
+            OptionsFilter("response_theme_ids",
+                          header = True,
+                          hidden = True,
+                          options = lambda: \
+                                    get_filter_options("dvr_response_theme",
+                                                       org_filter = True,
+                                                       ),
+                          ))
     if use_response_type:
         filter_widgets.insert(3,
             HierarchyFilter("response_type_id",
@@ -1596,6 +1600,191 @@ def configure_response_action_filters(r,
                    )
 
 # -------------------------------------------------------------------------
+def configure_response_action_view(ui_options,
+                                   response_type = None,
+                                   use_due_date = False,
+                                   use_theme = False,
+                                   themes_details = False,
+                                   ):
+    """
+        Configure dvr/response_action view
+
+        Args:
+            ui_options: the UI options for the organisation
+            response_type: the response_type field (selector)
+            use_due_date: use a separate due-date
+            use_theme: use response action themes
+            theme_details: enter details per theme
+    """
+
+    T = current.T
+
+    s3db = current.s3db
+    table = s3db.dvr_response_action
+
+    ui_options_get = ui_options.get
+    date_due = "date_due" if use_due_date else None
+
+    if ui_options_get("case_use_pe_label"):
+        pe_label = (T("ID"), "person_id$pe_label")
+    else:
+        pe_label = None
+
+    # Adapt list-fields to perspective
+    list_fields = [pe_label,
+                   response_type,
+                   "human_resource_id",
+                   date_due,
+                   "start_date",
+                   "hours",
+                   "status_id",
+                   ]
+
+    if themes_details:
+        list_fields[2:2] = [(T("Themes"), "dvr_response_action_theme.id")]
+    elif use_theme:
+        list_fields[2:2] = ["response_theme_ids", "comments"]
+
+    if not use_theme or ui_options_get("response_themes_optional"):
+        # Show person_id (read-only)
+        field = table.person_id
+        field.represent =  s3db.pr_PersonRepresent(show_link = True)
+        field.readable = True
+        field.writable = False
+        list_fields.insert(1, (T("Case"), "person_id"))
+
+        # Hide activity_id
+        field = table.case_activity_id
+        field.readable = field.writable = False
+    else:
+        # Hide person_id
+        field = table.person_id
+        field.readable = field.writable = False
+
+        # Show activity_id (read-only)
+        field = table.case_activity_id
+        field.label = T("Case")
+        field.represent = s3db.dvr_CaseActivityRepresent(
+                                    show_as = "beneficiary",
+                                    fmt = "%(last_name)s, %(first_name)s",
+                                    show_link = True,
+                                    )
+        field.readable = True
+        field.writable = False
+        list_fields.insert(1, "case_activity_id")
+
+    s3db.configure("dvr_response_action",
+                   list_fields = list_fields,
+                   )
+
+# -------------------------------------------------------------------------
+def configure_response_action_tab(person_id,
+                                  ui_options,
+                                  response_type = None,
+                                  use_due_date = False,
+                                  use_theme = False,
+                                  themes_details = False,
+                                  ):
+    """
+        Configure response_action tab of case file
+
+        Args:
+            person_id: the person ID of the case
+            ui_options: the UI options for the organisation
+            response_type: the response_type field (selector)
+            use_due_date: use a separate due-date
+            use_theme: use response action themes
+            theme_details: enter details per theme
+    """
+
+    T = current.T
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.dvr_response_action
+
+    ui_options_get = ui_options.get
+    date_due = "date_due" if use_due_date else None
+
+    # Hide person_id (already have the rheader context)
+    field = table.person_id
+    field.readable = field.writable = False
+
+    if themes_details:
+        list_fields = ["start_date",
+                       (T("Themes"), "dvr_response_action_theme.id"),
+                       "human_resource_id",
+                       "hours",
+                       "status_id",
+                       ]
+        pdf_fields = ["start_date",
+                      #"human_resource_id",
+                      (T("Themes"), "dvr_response_action_theme.id"),
+                      ]
+    else:
+        # Show case_activity_id
+        field = table.case_activity_id
+        field.readable = True
+
+        # Adjust representation to perspective
+        if ui_options_get("activity_use_need"):
+            field.label = T("Counseling Reason")
+            show_as = "need"
+        else:
+            field.label = T("Subject")
+            show_as = "subject"
+
+        represent = s3db.dvr_CaseActivityRepresent(show_as=show_as,
+                                                   show_link=True,
+                                                   )
+        field.represent = represent
+
+        # Make activity selectable if not auto-linking, and
+        # filter options to case
+        if not ui_options_get("response_activity_autolink"):
+            db = current.db
+            represent = s3db.dvr_CaseActivityRepresent(show_as=show_as,
+                                                       show_link=True,
+                                                       show_date=True,
+                                                       )
+            field.writable = True
+            field.requires = IS_ONE_OF(db, "dvr_case_activity.id",
+                                       represent,
+                                       filterby = "person_id",
+                                       filter_opts = (person_id,),
+                                       orderby = ~db.dvr_case_activity.start_date,
+                                       sort = False,
+                                       )
+        else:
+            field.writable = False
+
+        # Adapt list-fields to perspective
+        theme_ids = "response_theme_ids" if use_theme else None
+        list_fields = ["case_activity_id",
+                       response_type,
+                       theme_ids,
+                       "comments",
+                       "human_resource_id",
+                       date_due,
+                       "start_date",
+                       "hours",
+                       "status_id",
+                       ]
+        pdf_fields = ["start_date",
+                      #"human_resource_id",
+                      "case_activity_id",
+                      response_type,
+                      theme_ids,
+                      "comments",
+                      ]
+
+    s3db.configure("dvr_response_action",
+                   filter_widgets = None,
+                   list_fields = list_fields,
+                   pdf_fields = pdf_fields,
+                   )
+
+# -------------------------------------------------------------------------
 def dvr_response_action_resource(r, tablename):
 
     T = current.T
@@ -1611,14 +1800,16 @@ def dvr_response_action_resource(r, tablename):
     from ..helpers import case_read_multiple_orgs
     multiple_orgs, org_ids = case_read_multiple_orgs()
 
+    use_theme = ui_options_get("response_use_theme")
+    themes_details = use_theme and settings.get_dvr_response_themes_details()
+
     # Represent for dvr_response_action_theme.id
-    response_themes_details = settings.get_dvr_response_themes_details()
-    if response_themes_details:
+    if themes_details:
         ltable = s3db.dvr_response_action_theme
         ltable.id.represent = s3db.dvr_ResponseActionThemeRepresent(
-                                        paragraph = True,
-                                        details = True,
-                                        )
+                                            paragraph = True,
+                                            details = True,
+                                            )
 
     # Use date+time in responses?
     use_time = settings.get_dvr_response_use_time()
@@ -1655,10 +1846,9 @@ def dvr_response_action_resource(r, tablename):
 
         # Use separate due-date field?
         use_due_date = settings.get_dvr_response_due_date()
-        date_due = "date_due" if use_due_date else None
 
         # Configure theme selector
-        viewing = r.viewing()[0]
+        viewing = r.viewing
         is_master = r.tablename == "dvr_response_action" and viewing is None
 
         person_id = record_id = None
@@ -1672,155 +1862,39 @@ def dvr_response_action_resource(r, tablename):
                 person_id = record.id
                 record_id = r.component_id
 
-        configure_response_theme_selector(ui_options,
-                                          person_id = person_id,
-                                          record_id = record_id,
-                                          )
+        if use_theme:
+            configure_response_theme_selector(ui_options,
+                                              person_id = person_id,
+                                              record_id = record_id,
+                                              )
 
         if not is_master:
-            # Component tab (or viewing-tab) of case
-
-            # Hide person_id (already have the rheader context)
-            field = table.person_id
-            field.readable = field.writable = False
-
-            if response_themes_details:
-                list_fields = ["start_date",
-                               (T("Themes"), "dvr_response_action_theme.id"),
-                               "human_resource_id",
-                               "hours",
-                               "status_id",
-                               ]
-                pdf_fields = ["start_date",
-                              #"human_resource_id",
-                              (T("Themes"), "dvr_response_action_theme.id"),
-                              ]
-            else:
-                # Show case_activity_id
-                field = table.case_activity_id
-                field.readable = True
-
-                # Adjust representation to perspective
-                if ui_options_get("activity_use_need"):
-                    field.label = T("Counseling Reason")
-                    show_as = "need"
-                else:
-                    field.label = T("Subject")
-                    show_as = "subject"
-
-                represent = s3db.dvr_CaseActivityRepresent(show_as=show_as,
-                                                           show_link=True,
-                                                           )
-                field.represent = represent
-
-                # Make activity selectable if not auto-linking, and
-                # filter options to case
-                if not ui_options_get("response_activity_autolink"):
-                    db = current.db
-                    represent = s3db.dvr_CaseActivityRepresent(show_as=show_as,
-                                                               show_link=True,
-                                                               show_date=True,
-                                                               )
-                    field.writable = True
-                    field.requires = IS_ONE_OF(db, "dvr_case_activity.id",
-                                               represent,
-                                               filterby = "person_id",
-                                               filter_opts = (person_id,),
-                                               orderby = ~db.dvr_case_activity.start_date,
-                                               sort = False,
-                                               )
-                else:
-                    field.writable = False
-
-                # Adapt list-fields to perspective
-                list_fields = ["case_activity_id",
-                               response_type,
-                               "response_theme_ids",
-                               "comments",
-                               "human_resource_id",
-                               date_due,
-                               "start_date",
-                               "hours",
-                               "status_id",
-                               ]
-                pdf_fields = ["start_date",
-                              #"human_resource_id",
-                              "case_activity_id",
-                              response_type,
-                              "response_theme_ids",
-                              "comments",
-                              ]
-
-            s3db.configure("dvr_response_action",
-                           filter_widgets = None,
-                           list_fields = list_fields,
-                           pdf_fields = pdf_fields,
-                           )
-
+            # Component (or viewing) tab of dvr/person
+            configure_response_action_tab(person_id,
+                                          ui_options,
+                                          response_type = response_type,
+                                          use_due_date = use_due_date,
+                                          use_theme = use_theme,
+                                          themes_details = themes_details,
+                                          )
             if viewing:
                 s3db.configure("dvr_response_action",
                                create_next = r.url(id="", method=""),
                                update_next = r.url(id="", method=""),
                                )
-
         else:
             # Primary dvr/response_action controller
-
-            if ui_options_get("case_use_pe_label"):
-                pe_label = (T("ID"), "person_id$pe_label")
-            else:
-                pe_label = None
-
-            # Adapt list-fields to perspective
-            list_fields = [pe_label,
-                           response_type,
-                           "human_resource_id",
-                           date_due,
-                           "start_date",
-                           "hours",
-                           "status_id",
-                           ]
-
-            if response_themes_details:
-                list_fields[2:2] = [(T("Themes"), "dvr_response_action_theme.id")]
-            else:
-                list_fields[2:2] = ["response_theme_ids", "comments"]
-
-            if ui_options_get("response_themes_optional"):
-                # Show person_id (read-only)
-                field = table.person_id
-                field.represent =  s3db.pr_PersonRepresent(show_link = True)
-                field.readable = True
-                field.writable = False
-                list_fields.insert(1, (T("Case"), "person_id"))
-
-                # Hide activity_id
-                field = table.case_activity_id
-                field.readable = field.writable = False
-            else:
-                # Hide person_id
-                field = table.person_id
-                field.readable = field.writable = False
-
-                # Show activity_id (read-only)
-                field = table.case_activity_id
-                field.label = T("Case")
-                field.represent = s3db.dvr_CaseActivityRepresent(
-                                            show_as = "beneficiary",
-                                            fmt = "%(last_name)s, %(first_name)s",
-                                            show_link = True,
-                                            )
-                field.readable = True
-                field.writable = False
-                list_fields.insert(1, "case_activity_id")
-
-            s3db.configure("dvr_response_action",
-                           list_fields = list_fields,
-                           )
+            configure_response_action_view(ui_options,
+                                           response_type = response_type,
+                                           use_due_date = use_due_date,
+                                           use_theme = use_theme,
+                                           themes_details = themes_details,
+                                           )
 
             # Custom Filter Options
             if r.interactive:
                 configure_response_action_filters(r,
+                                                  use_theme = use_theme,
                                                   use_time = use_time,
                                                   use_response_type = use_response_type,
                                                   use_due_date = use_due_date,
@@ -1829,14 +1903,19 @@ def dvr_response_action_resource(r, tablename):
                                                   )
 
     # Organizer and PDF exports
-    if response_themes_details:
+    if themes_details:
         description = [(T("Themes"), "response_action_theme.id"),
                        "human_resource_id",
                        "status_id",
                        ]
-    else:
+    elif use_theme:
         description = ["response_theme_ids",
                        "comments",
+                       "human_resource_id",
+                       "status_id",
+                       ]
+    else:
+        description = ["comments",
                        "human_resource_id",
                        "status_id",
                        ]
@@ -1853,7 +1932,7 @@ def dvr_response_action_resource(r, tablename):
                                "end": "end_date",
                                "use_time": use_time,
                                },
-                   pdf_format = "list" if response_themes_details else "table",
+                   pdf_format = "list" if themes_details else "table",
                    orderby = "dvr_response_action.start_date desc, dvr_response_action.created_on desc",
                    )
 

@@ -230,7 +230,7 @@ def config(settings):
     # Response planning uses separate due-date
     settings.dvr.response_due_date = get_ui_option("response_due_date")
     # Use response themes
-    settings.dvr.response_themes = True
+    settings.dvr.response_themes = get_ui_option("response_use_theme")
     # Document response details per theme
     settings.dvr.response_themes_details = get_ui_option("response_themes_details")
     # Response themes are org-specific
