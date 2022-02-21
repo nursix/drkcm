@@ -25,7 +25,7 @@ def dvr_home():
 # -------------------------------------------------------------------------
 def get_case_root_org(person_id):
     """
-        Get the root organisation managing a case
+        Returns the root organisation managing a case
 
         Args:
             person_id: the person record ID
@@ -189,7 +189,6 @@ def dvr_case_resource(r, tablename):
 
     ctable = s3db.dvr_case
 
-    get_vars = r.get_vars
     if r.function == "group_membership":
         viewing = r.viewing
         if viewing and viewing[0] == "pr_person":
@@ -290,10 +289,71 @@ def dvr_note_resource(r, tablename):
                                    field.represent,
                                    )
 
+
+# -------------------------------------------------------------------------
+def configure_case_activity_reports(subject_type = "subject",
+                                    status_id = None,
+                                    use_sector = False,
+                                    use_priority = False,
+                                    use_theme = False,
+                                    ):
+    """
+        Configures reports for case activities
+
+        Args:
+            subject_type: the subject field
+            status_id: the status field
+            use_sector: activities use sectors
+            use_priority: activities have priorities
+            use_theme: response actions have themes
+    """
+
+    T = current.T
+
+    # Custom Report Options
+    facts = ((T("Number of Activities"), "count(id)"),
+             (T("Number of Clients"), "count(person_id)"),
+             )
+    axes = ["person_id$gender",
+            "person_id$person_details.nationality",
+            "person_id$person_details.marital_status",
+            ]
+
+    if use_theme:
+        axes.append((T("Theme"), "response_action.response_theme_ids"))
+        default_rows = "response_action.response_theme_ids"
+    else:
+        default_rows = "person_id$person_details.nationality"
+    if use_priority:
+        axes.insert(-1, "priority")
+
+    if use_sector:
+        axes.insert(-1, "sector_id")
+        default_rows = "sector_id"
+    if subject_type == "need_id":
+        axes.insert(-1, "need_id")
+        default_rows = "need_id"
+    if status_id == "status_id":
+        axes.insert(3, status_id)
+
+    report_options = {
+        "rows": axes,
+        "cols": axes,
+        "fact": facts,
+        "defaults": {"rows": default_rows,
+                     "cols": None,
+                     "fact": "count(id)",
+                     "totals": True,
+                     },
+        }
+    current.s3db.configure("dvr_case_activity",
+                           report_options = report_options,
+                           )
+
 # -------------------------------------------------------------------------
 def configure_case_activity_sector(r, table, case_root_org):
     """
-        Configure the case activity sector_id field
+        Configures the case activity sector_id field
 
         Args:
             r: the CRUDRequest
@@ -356,7 +416,7 @@ def configure_case_activity_subject(r,
                                     autolink = False,
                                     ):
     """
-        Configure the subject field(s) for case activities
+        Configures the subject field(s) for case activities
             - need_id, or simple free-text subject
 
         Args:
@@ -418,15 +478,20 @@ def configure_case_activity_subject(r,
         field.requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)]
 
 # -------------------------------------------------------------------------
-def configure_inline_responses(person_id, human_resource_id, hr_represent, use_theme=False):
+def configure_inline_responses(person_id,
+                               human_resource_id,
+                               hr_represent,
+                               use_theme = False,
+                               ):
     """
-        Configure the inline-responses for case activity form
+        Configures the inline-responses for case activity form
             - can be either response_action or response_action_theme
 
         Args:
             person_id: the person ID of the case
             human_resource_id: the HR-ID of the consultant in charge
             hr_represent: representation function for human_resource_id
+            use_theme: use theme(s) with responses
 
         Returns:
             S3SQLInlineComponent
@@ -775,44 +840,12 @@ def dvr_case_activity_resource(r, tablename):
 
     # Report options
     if r.method == "report":
-
-        # Custom Report Options
-        facts = ((T("Number of Activities"), "count(id)"),
-                 (T("Number of Clients"), "count(person_id)"),
-                 )
-        axes = ["person_id$gender",
-                "person_id$person_details.nationality",
-                "person_id$person_details.marital_status",
-                (T("Theme"), "response_action.response_theme_ids"),
-                ]
-        if use_priority:
-            axes.insert(-1, "priority")
-
-        default_rows = "response_action.response_theme_ids"
-        default_cols = "person_id$person_details.nationality"
-
-        if activity_use_sector:
-            axes.insert(-1, "sector_id")
-            default_rows = "sector_id"
-        if subject_type == "need_id":
-            axes.insert(-1, "need_id")
-            default_rows = "need_id"
-        if status_id == "status_id":
-            axes.insert(3, status_id)
-
-        report_options = {
-            "rows": axes,
-            "cols": axes,
-            "fact": facts,
-            "defaults": {"rows": default_rows,
-                         "cols": default_cols,
-                         "fact": "count(id)",
-                         "totals": True,
-                         },
-            }
-        s3db.configure("dvr_case_activity",
-                       report_options = report_options,
-                       )
+        configure_case_activity_reports(subject_type = "subject_type",
+                                        status_id = status_id,
+                                        use_sector = activity_use_sector,
+                                        use_priority = use_priority,
+                                        use_theme = use_theme,
+                                        )
         crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
         crud_strings["title_report"] = T("Activity Statistic")
 
@@ -1282,7 +1315,7 @@ def configure_response_theme_selector(ui_options,
                                       case_activity_id = None,
                                       ):
     """
-        Configure response theme selector
+        Configures response theme selector
 
         Args:
             ui_options: the UI options for the current org
@@ -1612,7 +1645,7 @@ def configure_response_action_view(ui_options,
                                    themes_details = False,
                                    ):
     """
-        Configure dvr/response_action view
+        Configures dvr/response_action view
 
         Args:
             ui_options: the UI options for the organisation
@@ -1691,7 +1724,7 @@ def configure_response_action_tab(person_id,
                                   themes_details = False,
                                   ):
     """
-        Configure response_action tab of case file
+        Configures response_action tab of case file
 
         Args:
             person_id: the person ID of the case
