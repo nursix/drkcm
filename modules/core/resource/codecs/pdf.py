@@ -1002,7 +1002,7 @@ class S3PDFTable:
                 totalrows: total number of rows matching the filter
         """
 
-        rtl = current.response.s3.rtl
+        rtl = current.response.s3.direction == "rtl"
 
         # The main document
         self.doc = document

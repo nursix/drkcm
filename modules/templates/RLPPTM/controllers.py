@@ -16,8 +16,8 @@ from gluon.storage import Storage
 
 from core import ConsentTracking, IS_PHONE_NUMBER_MULTI, \
                  ICON, S3GroupedOptionsWidget, S3LocationSelector, \
-                 CRUDRequest, S3CRUD, S3CustomController, FS, JSONERRORS, \
-                 S3Represent, S3WithIntro, s3_comments_widget, \
+                 CRUDRequest, S3CRUD, CustomController, FS, JSONERRORS, \
+                 S3Represent, WithAdvice, s3_comments_widget, \
                  s3_get_extension, s3_mark_required, s3_str, \
                  s3_text_represent, s3_truncate
 
@@ -29,7 +29,7 @@ TEMPLATE = "RLPPTM"
 THEME = "RLP"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):
@@ -37,7 +37,6 @@ class index(S3CustomController):
         output = {}
 
         T = current.T
-        s3 = current.response.s3
 
         auth = current.auth
         settings = current.deployment_settings
@@ -132,12 +131,15 @@ class index(S3CustomController):
                   "login_form": login_form,
                   "announcements": announcements,
                   "announcements_title": announcements_title,
-                  "intro": self.get_cms_intro(("default", "index", "HomepageIntro"), cmsxml=True),
+                  "intro": current.s3db.cms_get_content("HomepageIntro",
+                                                        module = "default",
+                                                        resource = "index",
+                                                        cmsxml = True,
+                                                        ),
                   "buttons": buttons,
                   }
 
         # Custom view and homepage styles
-        s3.stylesheets.append("../themes/%s/homepage.css" % THEME)
         self._view(settings.get_theme_layouts(), "index.html")
 
         return output
@@ -191,41 +193,8 @@ class index(S3CustomController):
 
         return posts
 
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_cms_intro(intro, cmsxml=True):
-        """
-            Get intro from CMS
-
-            Args:
-                intro: the intro spec as tuple (module, resource, postname)
-        """
-
-        # Get intro text from CMS
-        db = current.db
-        s3db = current.s3db
-
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == intro[0]) & \
-                         (ltable.resource == intro[1]) & \
-                         (ltable.deleted == False))
-
-        query = (ctable.name == intro[2]) & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                               join = join,
-                               cache = s3db.cache,
-                               limitby = (0, 1),
-                               ).first()
-        if not row:
-            return ""
-
-        return XML(row.body) if cmsxml else row.body
-
 # =============================================================================
-class privacy(S3CustomController):
+class privacy(CustomController):
     """ Custom Page """
 
     def __call__(self):
@@ -283,7 +252,7 @@ class privacy(S3CustomController):
         return output
 
 # =============================================================================
-class legal(S3CustomController):
+class legal(CustomController):
     """ Custom Page """
 
     def __call__(self):
@@ -342,7 +311,7 @@ class legal(S3CustomController):
         return output
 
 # =============================================================================
-class approve(S3CustomController):
+class approve(CustomController):
     """ Custom Approval Page """
 
     def __call__(self):
@@ -686,7 +655,7 @@ class approve(S3CustomController):
                                 s3db_onaccept(ltable, link, method="create")
 
                         # Add default tags
-                        from .helpers import add_organisation_default_tags
+                        from .customise.org import add_organisation_default_tags
                         add_organisation_default_tags(organisation_id)
 
                         # Update user
@@ -766,7 +735,7 @@ class approve(S3CustomController):
                             s3db_onaccept(sltable, link, method="create")
 
                     # Add default tags for facility
-                    from .helpers import set_facility_code, add_facility_default_tags
+                    from .customise.org import set_facility_code, add_facility_default_tags
                     set_facility_code(facility_id)
                     add_facility_default_tags(facility_id)
 
@@ -974,7 +943,7 @@ class approve(S3CustomController):
         return output
 
 # =============================================================================
-class register(S3CustomController):
+class register(CustomController):
     """ Custom Registration Page """
 
     def __call__(self):
@@ -1008,24 +977,12 @@ class register(S3CustomController):
         title = T("Register Test Station")
 
         # Get intro text from CMS
-        db = current.db
         s3db = current.s3db
-
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == "auth") & \
-                         (ltable.resource == "user") & \
-                         (ltable.deleted == False))
-
-        query = (ctable.name == "SelfRegistrationIntro") & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                                join = join,
-                                cache = s3db.cache,
-                                limitby = (0, 1),
-                                ).first()
-        intro = row.body if row else None
+        intro = s3db.cms_get_content("SelfRegistrationIntro",
+                                     module = "auth",
+                                     resource = "user",
+                                     cmsxml = True,
+                                     )
 
         # Form Fields
         formfields, required_fields, subheadings = self.formfields()
@@ -1078,7 +1035,7 @@ class register(S3CustomController):
         if form.accepts(request.vars,
                         session,
                         formname = "register",
-                        onvalidation = auth_settings.register_onvalidation,
+                        onvalidation = self.validate(),
                         ):
 
             formvars = form.vars
@@ -1311,13 +1268,13 @@ class register(S3CustomController):
                                                  multiple = True,
                                                  zero = None,
                                                  ),
-                            widget = S3WithIntro(S3GroupedOptionsWidget(cols=1),
-                                                 # Widget intro from CMS
-                                                 intro = ("org",
-                                                          "facility",
-                                                          "SiteServiceIntro",
-                                                          ),
-                                                 ),
+                            widget = WithAdvice(S3GroupedOptionsWidget(cols=1),
+                                                # Widget intro from CMS
+                                                text = ("org",
+                                                        "facility",
+                                                        "SiteServiceIntro",
+                                                        ),
+                                                ),
                            ),
                       # -- Contact and Appointments --
                       Field("facility_phone",
@@ -1351,13 +1308,13 @@ class register(S3CustomController):
                                                   ),
                                         IS_NOT_EMPTY(),
                                         ],
-                            widget = S3WithIntro(S3GroupedOptionsWidget(cols=1),
-                                                 # Widget intro from CMS
-                                                 intro = ("org",
-                                                          "organisation",
-                                                          "ProjectParticipationIntro",
-                                                          ),
-                                                 ),
+                            widget = WithAdvice(S3GroupedOptionsWidget(cols=1),
+                                                # Widget intro from CMS
+                                                text = ("org",
+                                                        "organisation",
+                                                        "ProjectParticipationIntro",
+                                                        ),
+                                                ),
                             ),
                       # -- Privacy and Consent --
                       Field("consent",
@@ -1385,6 +1342,30 @@ class register(S3CustomController):
         current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % request.application)
 
         return formfields, required_fields, subheadings
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def validate(cls):
+        """
+            Custom validation of registration form
+            - currently doing nothing except standard onvalidation
+
+            Returns:
+                callback function
+        """
+
+        def register_onvalidation(form):
+
+            onvalidation = current.auth.settings.register_onvalidation
+            if onvalidation:
+                from gluon.tools import callback
+                callback(onvalidation, form, tablename="auth_user")
+
+            # Check if L2 is currently blocked for new registrations
+            from .customise.org import check_blocked_l2
+            check_blocked_l2(form, "location_L2")
+
+        return register_onvalidation
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1601,7 +1582,7 @@ Thank you
         return modes
 
 # =============================================================================
-class verify_email(S3CustomController):
+class verify_email(CustomController):
     """ Custom verify_email Page """
 
     def __call__(self):
@@ -1875,7 +1856,7 @@ Please go to %(url)s to approve this station."""
             current.response.error = auth_messages.unable_send_email
 
 # =============================================================================
-class register_invited(S3CustomController):
+class register_invited(CustomController):
     """ Custom Registration Page """
 
     def __call__(self):
@@ -2287,7 +2268,7 @@ class register_invited(S3CustomController):
         messages.welcome_email_subject = "Welcome to the %(system_name)s Portal"
 
 # =============================================================================
-class geocode(S3CustomController):
+class geocode(CustomController):
     """
         Custom Geocoder
         - looks up Lat/Lon from Postcode &/or Address
@@ -2340,7 +2321,7 @@ class geocode(S3CustomController):
         return output
 
 # =============================================================================
-class ocert(S3CustomController):
+class ocert(CustomController):
     """
         Custom controller to certify the eligibility of an organisation
         to perform certain actions in an external application

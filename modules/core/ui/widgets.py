@@ -1000,7 +1000,7 @@ class S3AddPersonWidget(FormWidget):
                 first_name_only = self.first_name_only
                 if first_name_only is None:
                     # Activate by default if using RTL
-                    first_name_only = current.response.s3.rtl
+                    first_name_only = current.response.s3.direction == "rtl"
 
                 if first_name_only:
 
@@ -3224,7 +3224,7 @@ class S3EmbeddedComponentWidget(FormWidget):
 #==============================================================================
 class S3GroupedOptionsWidget(FormWidget):
     """
-        Widget with checkboxes or radio buttons for S3OptionsFilter
+        Widget with checkboxes or radio buttons for OptionsFilter
         - checkboxes can be optionally grouped by letter
     """
 
@@ -9029,9 +9029,12 @@ class ICON(I):
             "facility": "fa-home",
             "file": "fa-file",
             "file-alt": "fa-file-o",
-            "file-excel": "fa-excel-o",
-            "file-text": "fa-file-text",
-            "file-text-alt": "fa-file-text-o",
+            "file-pdf": "fa-file-pdf-o",
+            "file-doc": "fa-file-word-o",
+            "file-xls": "fa-file-excel-o",
+            "file-text": "fa-file-text-o",
+            "file-image": "fa-file-image-o",
+            "file-generic": "fa-file-o",
             "flag": "fa-flag",
             "flag-alt": "fa-flag-o",
             "folder": "fa-folder",

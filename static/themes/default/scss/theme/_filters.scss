@@ -1,0 +1,128 @@
+// ============================================================================
+// Styles for Filter Forms and Widgets
+// ============================================================================
+// VARIABLES
+
+// -- none --
+
+// ============================================================================
+// STYLES
+
+/* Filter Forms KEEP */
+#filter-form {
+    margin: 0;
+}
+
+.checkboxes-widget-s3 input,
+.s3-groupedopts-widget input
+{
+    display: inline-block;
+    vertical-align: middle;
+}
+.s3-checkboxes-widget-filter input {
+    vertical-align: middle;
+}
+
+.range-filter-label {
+    font-size: 85%;
+}
+.range-filter-field {
+    display: inline-block;
+    margin-right: 0.7rem;
+}
+.age-filter-widget {
+    display: inline-block;
+}
+.age-filter-label {
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+.age-filter-unit {
+    display: inline-block;
+}
+
+.filter-form td {
+    border-top: 1px solid #d9d9d9;
+}
+.filter-form tr:first-child > td {
+    border-top: 0;
+}
+.filter-form table.s3-groupedopts-widget td {
+    border-top: 0;
+}
+
+/* Vertical arrangement of multi-button multi-select filter widgets such as LocationFilter */
+.filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
+.form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
+    display: block;
+    min-width: 220px;
+}
+
+.filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type,
+.form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type {
+    clear: none;
+}
+
+.ui-selectmenu-button,
+.ui-multiselect-menu {
+    min-width: 220px;
+}
+
+/* Don't display the default widget, only the multiselect generated widget is displayed */
+select.multiselect-filter-widget {
+    display: none;
+}
+
+.filter-advanced {
+    text-decoration: none;
+    cursor: pointer;
+}
+.filter-advanced-label {
+    padding-right: 4px;
+}
+
+.s3-options-filter-anyall label {
+    display: inline;
+    margin-right: 0.7rem;
+    font-size: 0.7rem;
+}
+
+// ----------------------------------------------------------------------------
+/* Filter Manager */
+.filter-manager-widget {
+    display: inline-block;
+}
+.fm-load,
+.fm-save,
+.fm-delete,
+.fm-create,
+.fm-accept,
+.fm-cancel {
+    display: inline-block;
+    margin: 0 0.3rem;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.fm-load {
+    background: url(../../img/filter/load.png) no-repeat;
+}
+.fm-save {
+    background: url(../../img/filter/save.png) no-repeat;
+}
+.fm-delete {
+    background: url(../../img/filter/delete.png) no-repeat;
+}
+.fm-create {
+    background: url(../../img/filter/create.png) no-repeat;
+}
+.fm-accept {
+    background: url(../../img/crud/apply.png) no-repeat;
+}
+.fm-cancel {
+    background: url(../../img/crud/cancel.png) no-repeat;
+}
+
+// END ========================================================================

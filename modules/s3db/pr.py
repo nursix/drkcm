@@ -912,19 +912,19 @@ class PRPersonModel(DataModel):
 
         # Filter widgets
         filter_widgets = [
-            S3TextFilter(["pe_label",
-                          "first_name",
-                          "middle_name",
-                          "last_name",
-                          "local_name",
-                          "identity.value"
-                         ],
-                         label = T("Name and/or ID"),
-                         comment = T("To search for a person, enter any of the "
-                                     "first, middle or last names and/or an ID "
-                                     "number of a person, separated by spaces. "
-                                     "You may use % as wildcard."),
-                        ),
+            TextFilter(["pe_label",
+                        "first_name",
+                        "middle_name",
+                        "last_name",
+                        "local_name",
+                        "identity.value"
+                        ],
+                       label = T("Name and/or ID"),
+                       comment = T("To search for a person, enter any of the "
+                                   "first, middle or last names and/or an ID "
+                                   "number of a person, separated by spaces. "
+                                   "You may use % as wildcard."),
+                       ),
             ]
 
         # Custom Form
@@ -2857,20 +2857,20 @@ class PRGroupModel(DataModel):
 
         # Filter widgets
         filter_widgets = [
-            S3TextFilter(["group_id$name",
-                          "person_id$first_name",
-                          "person_id$middle_name",
-                          "person_id$last_name",
-                          ],
-                          label = T("Search"),
-                          comment = T("To search for a member, enter any portion of the name of the person or group. You may use % as wildcard. Press 'Search' without input to list all members."),
-                          _class="filter-search",
+            TextFilter(["group_id$name",
+                        "person_id$first_name",
+                        "person_id$middle_name",
+                        "person_id$last_name",
+                        ],
+                       label = T("Search"),
+                       comment = T("To search for a member, enter any portion of the name of the person or group. You may use % as wildcard. Press 'Search' without input to list all members."),
+                       _class="filter-search",
+                       ),
+            OptionsFilter("group_id",
                           ),
-            S3OptionsFilter("group_id",
-                            ),
-            S3LocationFilter("person_id$location_id",
-                             levels = levels,
-                             ),
+            LocationFilter("person_id$location_id",
+                           levels = levels,
+                           ),
             ]
 
         # Table configuration
@@ -6814,6 +6814,10 @@ class PRSavedFilterModel(DataModel):
                           # Query is used for both Saved Filters and Subscriptions
                           # Can use a Context to have this work across multiple resources if a simple selector is insufficient
                           Field("query", "text"),
+                          Field("serverside", "json",
+                                readable = False,
+                                writable = False,
+                                ),
                           s3_comments(),
                           *s3_meta_fields())
 
@@ -7507,6 +7511,7 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                  show_phone = True,
                  access = None,
                  show_link = True,
+                 styleable = False,
                  ):
         """
             Args:
@@ -7522,6 +7527,7 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                             1 = show private only
                             2 = show public only
                 show_link: render as HTML hyperlink
+                styleable: render as styleable HTML
         """
 
         super(pr_PersonRepresentContact, self).__init__(
@@ -7535,13 +7541,30 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
         self.show_phone = show_phone
         self.access = access
 
+        self.styleable = styleable
+
         self._email = {}
         self._phone = {}
 
     # -------------------------------------------------------------------------
     def represent_row(self, row):
         """
-            Represent a row
+            Represent a row with contact information
+
+            Args:
+                row: the Row
+        """
+
+        if self.styleable and \
+           current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
+            return self.represent_row_html(row)
+        else:
+            return self.represent_row_string(row)
+
+    # -------------------------------------------------------------------------
+    def represent_row_string(self, row):
+        """
+            Represent a row with contact information, simple string
 
             Args:
                 row: the Row
@@ -7565,6 +7588,50 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                     reprstr = "%s %s" % (reprstr, s3_phone_represent(phone))
 
         return reprstr
+
+    # -------------------------------------------------------------------------
+    def represent_row_html(self, row):
+        """
+            Represent a row with contact information, styleable HTML
+
+            Args:
+                row: the Row
+        """
+
+        output = DIV(SPAN(s3_fullname(row),
+                          _class = "contact-name",
+                          ),
+                     _class = "contact-repr",
+                     )
+
+        try:
+            pe_id = row.pe_id
+        except AttributeError:
+            pass
+        else:
+            if self.show_email:
+                email = self._email.get(pe_id)
+            if self.show_phone:
+                phone = self._phone.get(pe_id)
+            if email or phone:
+                details = DIV(_class="contact-details")
+                if email:
+                    details.append(DIV(ICON("mail"),
+                                       SPAN(A(email,
+                                              _href="mailto:%s" % email,
+                                              ),
+                                            _class = "contact-email"),
+                                       _class = "contact-info",
+                                       ))
+                if phone:
+                    details.append(DIV(ICON("phone"),
+                                       SPAN(phone,
+                                            _class = "contact-phone"),
+                                       _class = "contact-info",
+                                       ))
+                output.append(details)
+
+        return output
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -8332,7 +8399,7 @@ class pr_AssignMethod(CRUDMethod):
 
                     # Default Filters (before selecting data!)
                     resource.configure(filter_widgets = filter_widgets)
-                    S3FilterForm.apply_filter_defaults(r, resource)
+                    FilterForm.apply_filter_defaults(r, resource)
 
                     # Where to retrieve updated filter options from:
                     filter_ajax_url = URL(f="person",
@@ -8343,16 +8410,16 @@ class pr_AssignMethod(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear = filter_clear,
-                                               formstyle = filter_formstyle,
-                                               submit = filter_submit,
-                                               ajax = True,
-                                               url = filter_submit_url,
-                                               ajaxurl = filter_ajax_url,
-                                               _class = "filter-form",
-                                               _id = "datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear = filter_clear,
+                                             formstyle = filter_formstyle,
+                                             submit = filter_submit,
+                                             ajax = True,
+                                             url = filter_submit_url,
+                                             ajaxurl = filter_ajax_url,
+                                             _class = "filter-form",
+                                             _id = "datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = r.component.alias if r.component else None
                     ff = filter_form.html(fresource,
@@ -9017,9 +9084,12 @@ class pr_Template(CRUDMethod):
 
                 # Merge
                 filename = "%s_%s.docx" % (template.name, person_id)
+                from io import BytesIO
+                stream = BytesIO()
                 with MailMerge(template_path) as document:
                     document.merge(**doc_data)
-                    document.write(filename)
+                    document.write(stream)
+                stream.seek(0)
 
                 # Output
                 from gluon.contenttype import contenttype
@@ -9031,7 +9101,6 @@ class pr_Template(CRUDMethod):
                 response.headers["Content-Type"] = contenttype(".docx")
                 response.headers["Content-disposition"] = disposition
 
-                stream = open(filename, "rb")
                 output = response.stream(stream,
                                          chunk_size = DEFAULT_CHUNK_SIZE,
                                          request = r,
@@ -11114,7 +11183,7 @@ def pr_filter_list_layout(list_id, item_id, resource, rfields, record):
     title = record["pr_filter.title"]
 
     # Filter Query
-    fstring = S3FilterString(resource, raw["pr_filter.query"])
+    fstring = URLQueryJSON(resource, raw["pr_filter.query"])
     query = fstring.represent()
 
     # Actions

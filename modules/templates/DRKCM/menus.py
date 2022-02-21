@@ -13,7 +13,7 @@ except ImportError:
     pass
 import s3menus as default
 
-from .config import get_ui_options
+from .uioptions import get_ui_options
 
 # =============================================================================
 class S3MainMenu(default.S3MainMenu):

@@ -1,0 +1,67 @@
+// ============================================================================
+// Dashboard Styles
+// ============================================================================
+// VARIABLES
+
+// -- none --
+
+// ============================================================================
+// STYLES
+
+.db-config {
+    padding-top: 0.2rem;
+    float: right;
+    [dir=rtl] & {
+        float: left;
+    }
+}
+.db-config-on,
+.db-config-off {
+    cursor: pointer;
+    padding: 0.125rem;
+    font-size: 1rem!important;
+    &:hover {
+        background-color: #7f7f7f;
+    }
+}
+.db-config-on {
+    color: #7f7f7f;
+    &:hover {
+        color: white;
+    }
+}
+.db-config-off {
+    color: green;
+    &:hover {
+        color: lightgreen;
+    }
+}
+.db-configbar {
+    background-color: #7f7f7f;
+    .db-has-dialog & {
+        background-color: #af4f4f;
+    }
+    padding: 0.125rem;
+    display: none;
+    i {
+        color: white;
+        padding: 0.125rem;
+        cursor: pointer;
+        &:hover {
+            background-color: silver;
+        }
+    }
+}
+.db-configbar-right {
+    float: right;
+    [dir=rtl] & {
+        float: left;
+    }
+}
+.db-config-active {
+    padding: 0.125rem;
+    border: 1px solid #7f7f7f;
+}
+
+// END ========================================================================
+

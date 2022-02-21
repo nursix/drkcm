@@ -4,16 +4,16 @@ import dateutil
 import json
 
 from gluon import current, A, BR, DIV, H3, H4, HR, LI, P, SPAN, TAG, TEXTAREA, UL, URL, XML
-from core import ICON,
+from core import ICON, \
                  get_crud_string, s3_str, \
-                 S3CustomController, \
-                 S3FilterForm, S3LocationFilter, S3OptionsFilter, S3TextFilter, \
+                 CustomController, \
+                 FilterForm, LocationFilter, OptionsFilter, TextFilter, \
                  S3Represent
 
 THEME = "SHARE"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """
         Custom Home Page
     """
@@ -552,7 +552,7 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
     return item
 
 # =============================================================================
-class dashboard(S3CustomController):
+class dashboard(CustomController):
     """
         Custom Dashboard
         - recent Events
@@ -633,50 +633,50 @@ class dashboard(S3CustomController):
         # Filter Form
         # - can we have a single form for both Activities & Needs?
         #
-        filter_widgets = [S3TextFilter([#"need_id$req_number.value",
-                                        "item_id$name",
-                                        # These levels are for SHARE/LK
-                                        #"location_id$L1",
-                                        "location_id$L2",
-                                        #"location_id$L3",
-                                        #"location_id$L4",
-                                        "need_id$name",
-                                        "need_id$comments",
-                                        ],
-                                       label = T("Search"),
-                                       comment = T("Search for a Need by Request Number, Item, Location, Summary or Comments"),
-                                       ),
-                          S3LocationFilter("location_id",
-                                           # These levels are for SHARE/LK
-                                           levels = ("L2", "L3", "L4"),
-                                           ),
-                          S3OptionsFilter("item_id"),
-                          S3OptionsFilter("status",
-                                          cols = 3,
-                                          label = T("Status"),
-                                          ),
-                          S3OptionsFilter("need_id$event.event_type_id",
-                                          hidden = True,
-                                          ),
+        filter_widgets = [TextFilter([#"need_id$req_number.value",
+                                      "item_id$name",
+                                      # These levels are for SHARE/LK
+                                      #"location_id$L1",
+                                      "location_id$L2",
+                                      #"location_id$L3",
+                                      #"location_id$L4",
+                                      "need_id$name",
+                                      "need_id$comments",
+                                      ],
+                                     label = T("Search"),
+                                     comment = T("Search for a Need by Request Number, Item, Location, Summary or Comments"),
+                                     ),
+                          LocationFilter("location_id",
+                                         # These levels are for SHARE/LK
+                                         levels = ("L2", "L3", "L4"),
+                                         ),
+                          OptionsFilter("item_id"),
+                          OptionsFilter("status",
+                                        cols = 3,
+                                        label = T("Status"),
+                                        ),
+                          OptionsFilter("need_id$event.event_type_id",
+                                        hidden = True,
+                                        ),
                           # @ToDo: Filter this list dynamically based on Event Type:
-                          S3OptionsFilter("need_id$event__link.event_id"),
-                          S3OptionsFilter("sector_id",
-                                          hidden = True,
-                                          ),
-                          S3OptionsFilter("need_id$organisation__link.organisation_id",
-                                          hidden = True,
-                                          ),
-                          S3OptionsFilter("need_id$verified.value",
-                                          cols = 2,
-                                          label = T("Verified"),
-                                          hidden = True,
-                                          ),
+                          OptionsFilter("need_id$event__link.event_id"),
+                          OptionsFilter("sector_id",
+                                        hidden = True,
+                                        ),
+                          OptionsFilter("need_id$organisation__link.organisation_id",
+                                        hidden = True,
+                                        ),
+                          OptionsFilter("need_id$verified.value",
+                                        cols = 2,
+                                        label = T("Verified"),
+                                        hidden = True,
+                                        ),
                           ]
-        filter_form = S3FilterForm(filter_widgets,
-                                   ajax = True,
-                                   submit = True,
-                                   #url = ajax_url,
-                                   )
+        filter_form = FilterForm(filter_widgets,
+                                 ajax = True,
+                                 submit = True,
+                                 #url = ajax_url,
+                                 )
         output["req_filter_form"] = filter_form.html(resource,
                                                      request.get_vars,
                                                      #target = "%s %s" % list_id, map_id

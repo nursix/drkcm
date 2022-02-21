@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
     Vehicle Management Functionality
-
-    http://eden.sahanafoundation.org/wiki/BluePrint/Vehicle
 """
 
 module = request.controller

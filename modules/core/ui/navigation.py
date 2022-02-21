@@ -32,8 +32,10 @@ __all__ = ("S3NavigationItem",
            "s3_rheader_resource",
            )
 
-from gluon import *
+from gluon import current, A, DIV, H6, SPAN, TABLE, TD, TH, TR, URL
 from gluon.storage import Storage
+
+from s3dal import Field
 
 from ..tools import s3_str
 
@@ -116,8 +118,8 @@ class S3NavigationItem:
                 m: the URL method (will be appended to args)
                 p: the method to check authorization for
                    (will not be appended to args)
-                t: the table concerned by this request
-                   (overrides c_f for auth)
+                t: the table concerned by this request, defaults to c_f in
+                   permission checks (except for index pages, or if set to "")
                 url: a URL to use instead of building one manually
                      - e.g. for external websites or mailto: links
                 tags: list of tags for this item
@@ -883,31 +885,39 @@ class S3NavigationItem:
                 kwargs: override URL query vars
         """
 
-        aURL = current.auth.permission.accessible_url
-
         if not self.link:
             return None
 
-        args = self.args
-        if self.vars:
-            link_vars = Storage(self.vars)
-            link_vars.update(kwargs)
-        else:
-            link_vars = Storage(kwargs)
-        if extension is None:
-            extension = self.extension
         a = self.get("application")
         if a is None:
             a = current.request.application
+
         c = self.get("controller")
         if c is None:
             c = "default"
+
         f = self.get("function")
         if f is None:
             f = "index"
-        f, args = self.__format(f, args, extension)
-        return aURL(c=c, f=f, p=self.p, a=a, t=self.tablename,
-                    args=args, vars=link_vars)
+
+        if extension is None:
+            extension = self.extension
+        f, args = self.__format(f, self.args, extension)
+
+        if self.vars:
+            link_vars = dict(self.vars)
+            link_vars.update(kwargs)
+        else:
+            link_vars = kwargs
+
+        return current.auth.permission.accessible_url(a = a,
+                                                      c = c,
+                                                      f = f,
+                                                      p = self.p,
+                                                      t = self.tablename,
+                                                      args = args,
+                                                      vars = link_vars,
+                                                      )
 
     # -------------------------------------------------------------------------
     @staticmethod

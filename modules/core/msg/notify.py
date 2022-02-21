@@ -151,9 +151,9 @@ class S3Notifications:
 
         # Filters
         if f.query:
-            from ..filters import S3FilterString
+            from ..resource import URLQueryJSON
             resource = s3db.resource(r.resource)
-            fstring = S3FilterString(resource, f.query)
+            fstring = URLQueryJSON(resource, f.query)
             for k, v in fstring.get_vars.items():
                 if v is not None:
                     if k in query:

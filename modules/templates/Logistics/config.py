@@ -89,17 +89,6 @@ def config(settings):
     #    }
 
     # -------------------------------------------------------------------------
-    # Setup
-    settings.setup.wizard_questions += [{"question": "Will you record data for multiple Organisations?",
-                                         "setting": "hrm.multiple_orgs",
-                                         "options": {True: "Yes", False: "No"},
-                                         },
-                                        {"question": "Do you need support for Branch Organisations?",
-                                         "setting": "org.branches",
-                                         "options": {True: "Yes", False: "No"},
-                                         },
-                                        ]
-
     # Comment/uncomment modules here to disable/enable them
     settings.modules = OrderedDict([
         # Core modules which shouldn't be disabled
@@ -128,12 +117,6 @@ def config(settings):
                 restricted = False,
                 module_type = None  # No Menu
             )),
-        ("setup", Storage(
-            name_nice = T("Setup"),
-            #description = "Configuration Wizard",
-            restricted = False,
-            module_type = None  # No Menu
-        )),
         #("sync", Storage(
         #        name_nice = T("Synchronization"),
         #        #description = "Synchronization",

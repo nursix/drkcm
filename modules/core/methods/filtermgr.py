@@ -32,7 +32,6 @@ import json
 
 from gluon import current
 from gluon.storage import Storage
-from gluon.tools import callback
 
 from ..tools import JSONSEPARATORS
 
@@ -73,8 +72,8 @@ class S3Filter(CRUDMethod):
             else:
                 r.error(405, current.ERROR.BAD_METHOD)
 
-        elif representation == "html":
-            output = self._form(r, **attr)
+        #elif representation == "html":
+        #    output = self._form(r, **attr)
 
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
@@ -82,18 +81,18 @@ class S3Filter(CRUDMethod):
         return output
 
     # -------------------------------------------------------------------------
-    def _form(self, r, **attr):
-        """
-            Get the filter form for the target resource as HTML snippet
-                - GET filter.html
-
-            Args:
-                r: the CRUDRequest
-                attr: additional controller parameters
-        """
-
-        r.error(501, current.ERROR.NOT_IMPLEMENTED)
-
+    #def _form(self, r, **attr):
+    #    """
+    #        Get the filter form for the target resource as HTML snippet
+    #            - GET filter.html
+    #
+    #        Args:
+    #            r: the CRUDRequest
+    #            attr: additional controller parameters
+    #    """
+    #
+    #    r.error(501, current.ERROR.NOT_IMPLEMENTED)
+    #
     # -------------------------------------------------------------------------
     def _options(self, r, **attr):
         """
@@ -232,61 +231,53 @@ class S3Filter(CRUDMethod):
                 r.error(404, current.ERROR.BAD_RECORD)
 
         # Build new record
+        resource = self.resource
         filter_data = {
             "pe_id": pe_id,
             "controller": r.controller,
             "function": r.function,
-            "resource": self.resource.tablename,
+            "resource": resource.tablename,
             "deleted": False,
-        }
+            }
 
-        title = data.get("title")
-        if title is not None:
-            filter_data["title"] = title
+        for attribute in ("title", "description", "url"):
+            value = data.get(attribute)
+            if value:
+                filter_data[attribute] = value
 
-        description = data.get("description")
-        if description is not None:
-            filter_data["description"] = description
-
+        # Client-side filter queries
         query = data.get("query")
         if query is not None:
-            filter_data["query"] = json.dumps(query)
+            queries = [item for item in query if item[1] != None]
+            filter_data["query"] = json.dumps(queries)
+        else:
+            queries = []
+            filter_data["query"] = None
 
-        url = data.get("url")
-        if url is not None:
-            filter_data["url"] = url
+        # Server-side filters
+        filters = {}
+        for f in resource.rfilter.filters:
+            filters.update(f.serialize_url(resource))
+        queries.extend(filters.items())
+        filter_data["serverside"] = queries if queries else []
 
         # Store record
-        onaccept = None
         form = Storage(vars=filter_data)
         if record:
-            success = db(table.id == record_id).update(**filter_data)
-            if success:
-                current.audit("update", "pr", "filter", form, record_id, "json")
-                info = {"updated": record_id}
-                onaccept = s3db.get_config(table, "update_onaccept",
-                           s3db.get_config(table, "onaccept"))
+            record.update_record(**filter_data)
+            current.audit("update", "pr", "filter", form, record_id, "json")
+            s3db.onaccept(table, record, method="update")
+            info = {"updated": record_id}
         else:
-            success = table.insert(**filter_data)
-            if success:
-                record_id = success
-                current.audit("create", "pr", "filter", form, record_id, "json")
-                info = {"created": record_id}
-                onaccept = s3db.get_config(table, "update_onaccept",
-                           s3db.get_config(table, "onaccept"))
-
-        if onaccept is not None:
-            form.vars["id"] = record_id
-            callback(onaccept, form)
+            filter_data["id"] = record_id = table.insert(**filter_data)
+            current.audit("create", "pr", "filter", form, record_id, "json")
+            auth.s3_set_record_owner(table, record_id)
+            s3db.onaccept(table, record, method="create")
+            info = {"created": record_id}
 
         # Success/Error response
-        xml = current.xml
-        if success:
-            msg = xml.json_message(**info)
-        else:
-            msg = xml.json_message(False, 400)
         current.response.headers["Content-Type"] = "application/json"
-        return msg
+        return current.xml.json_message(**info)
 
     # -------------------------------------------------------------------------
     def _load(self, r, **attr):
@@ -343,7 +334,7 @@ class S3Filter(CRUDMethod):
                 "title": row.title,
                 "description": row.description,
                 "query": json.loads(row.query) if row.query else [],
-            })
+                })
 
         # JSON response
         current.response.headers["Content-Type"] = "application/json"

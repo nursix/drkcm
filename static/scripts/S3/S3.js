@@ -79,53 +79,6 @@ S3.uid = function() {
     return (((+(new Date())) / 1000 * 0x10000 + Math.random() * 0xffff) >> 0).toString(16);
 };
 
-S3.Utf8 = {
-    // Used by dataTables
-    // http://www.webtoolkit.info
-    encode: function(string) {
-        string = string.replace(/\r\n/g, '\n');
-        var utftext = '';
-        for (var n = 0; n < string.length; n++) {
-            var c = string.charCodeAt(n);
-            if (c < 128) {
-                utftext += String.fromCharCode(c);
-            } else if ((c > 127) && (c < 2048)) {
-                utftext += String.fromCharCode((c >> 6) | 192);
-                utftext += String.fromCharCode((c & 63) | 128);
-            } else {
-                utftext += String.fromCharCode((c >> 12) | 224);
-                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
-                utftext += String.fromCharCode((c & 63) | 128);
-            }
-        }
-        return utftext;
-    },
-    decode: function(utftext) {
-        var string = '',
-            i = 0,
-            c = 0,
-            c1 = 0,
-            c2 = 0;
-        while ( i < utftext.length ) {
-            c = utftext.charCodeAt(i);
-            if (c < 128) {
-                string += String.fromCharCode(c);
-                i++;
-            } else if ((c > 191) && (c < 224)) {
-                c1 = utftext.charCodeAt(i+1);
-                string += String.fromCharCode(((c & 31) << 6) | (c1 & 63));
-                i += 2;
-            } else {
-                c1 = utftext.charCodeAt(i+1);
-                c2 = utftext.charCodeAt(i+2);
-                string += String.fromCharCode(((c & 15) << 12) | ((c1 & 63) << 6) | (c2 & 63));
-                i += 3;
-            }
-        }
-        return string;
-    }
-};
-
 S3.addTooltips = function() {
     // Help Tooltips
     $.cluetip.defaults.cluezIndex = 9999; // Need to be able to show on top of Ext Windows
@@ -135,13 +88,6 @@ S3.addTooltips = function() {
     var tipCloseText = '<img src="' + S3.Ap.concat('/static/img/cross2.png') + '" alt="close" />';
     $('.stickytip').cluetip({
         activation: 'hover',
-        sticky: true,
-        closePosition: 'title',
-        closeText: tipCloseText,
-        splitTitle: '|'
-    });
-    $('.errortip').cluetip({
-        activation: 'click',
         sticky: true,
         closePosition: 'title',
         closeText: tipCloseText,
@@ -364,41 +310,6 @@ S3.confirmClick = function(ElementID, Message) {
             }
         });
     }
-};
-
-// ============================================================================
-// Auto-Totals
-// - allow a field to default to the sum of a set of other fields, whilst still allowing manual entry
-S3.autoTotals = function(sumField, sourceFields, tablename) {
-    if (tablename === undefined) {
-        // Assume that fieldnames include the tablename
-        tablename = '';
-    } else {
-        // Prepend fieldnames with the tablename
-        tablename = tablename + '_';
-    }
-    sumField = $('#' + tablename + sumField);
-    var fieldname,
-        value,
-        total;
-    for (var i = 0; i < sourceFields.length; i++) {
-        fieldname = sourceFields[i];
-        $('#' + tablename + fieldname).change(function() {
-             total = 0;
-             for (var j = 0; j < sourceFields.length; j++) {
-                fieldname = sourceFields[j];
-                value = $('#' + tablename + fieldname).val();
-                if (value) {
-                    total += parseInt(value);
-                }
-             }
-             sumField.val(total)
-                     .trigger('change'); // Cascade onwards
-        });
-    }
-    // @ToDo?: Clear the sourceFields when the sumField is entered manually?
-    // @ToDo?: Flag to show that the sumField has been set manually & so shouldn't be over-ridden by the source_fields
-    //sumField.data('manual', true);
 };
 
 // ============================================================================
@@ -841,10 +752,10 @@ S3.showAlert = function(message, type, callback) {
         type = 'success';
     }
     var alertSpace = $('#alert-space'),
-        alert = $('<div class="alert alert-' + type + '">' + message + '<button type="button" class="close" data-dismiss="alert">×</button></div>');
+        alert = $('<div class="alert alert-' + type + '">' + message + '</div>');
 
-    alertSpace.append(alert).undelegate('.s3').delegate('.alert', 'click.s3', function() {
-        $(this).fadeOut('slow').remove();
+    alertSpace.append(alert).off('.s3').on('click.s3', '.alert', function() {
+        $(this).fadeOut(300).remove();
         if (callback) {
             callback();
         }
@@ -1848,7 +1759,7 @@ S3.slider = function(fieldname, min, max, step, value) {
 };
 
 /**
- * Add a Range Slider to a field - used by S3SliderFilter
+ * Add a Range Slider to a field - used by SliderFilter
  */
 S3.range_slider = function(selector, min_id, max_id, min_value, max_value, step, values) {
     var slider_div = $('#' + selector),
@@ -1995,70 +1906,27 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
         });
     };
 
-    /**
-     * Used by Themes with a Side-menu
-     * - for long pages with small side menus, we want the side-menu to always be visible
-     * BUT
-     * - for short pages with large side-menus, we don't want the side-menu to scroll
-     */
-    var onResize = function() {
-        // Default Theme
-        var side_menu_holder = $('.aside');
-        /* Doesn't work on IFRC
-        if (!side_menu_holder.length) {
-            // IFRC?
-            side_menu_holder = $('#left-col');
-        } */
-        if (side_menu_holder.length) {
-            // Default Theme
-            var header = $('#menu_modules');
-            if (!header.length) {
-                // Bootstrap?
-                header = $('#navbar-inner');
-                if (!header.length) {
-                    // IFRC?
-                    header = $('#header');
-                }
-            }
-            // Default Theme
-            var side_menu = $('#menu_options');
-            /* Doesn't work on IFRC
-            if (!side_menu.length) {
-                // IFRC?
-                side_menu = $('#main-sub-menu');
-            } */
-            //var footer = $('#footer');
-            //if ((header.height() + footer.height() + side_menu.height()) < $(window).height()) {
-            if ((header.height() + side_menu.height() + 10) < $(window).height()) {
-                side_menu_holder.css('position', 'fixed');
-                $('#content').css('min-height', side_menu.height());
-            } else {
-                side_menu_holder.css('position', 'static');
-            }
-        }
-    };
-
     // ========================================================================
     $(document).ready(function() {
         // Web2Py Layer
-        $('.alert-error').hide().slideDown('slow');
+        $('.alert-error').hide().slideDown(300);
         $('.alert-error').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
-        $('.alert-warning').hide().slideDown('slow');
+        $('.alert-warning').hide().slideDown(300);
         $('.alert-warning').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
-        $('.alert-info').hide().slideDown('slow');
+        $('.alert-info').hide().slideDown(300);
         $('.alert-info').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
-        $('.alert-success').hide().slideDown('slow');
+        $('.alert-success').hide().slideDown(300);
         $('.alert-success').click(function() {
-            $(this).fadeOut('slow');
+            $(this).fadeOut('fast');
             return false;
         });
         $("input[type='checkbox'].delete").click(function() {
@@ -2105,7 +1973,8 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
 
             if (S3.FocusOnFirstField != false) {
                 // Focus On First Field
-                $('input:text:visible:first').focus();
+                var s = 'select:visible,input:text:visible';
+                $(s, '.form-container form:not(".auth_login")').first().not('select').focus();
             }
         }
 
@@ -2168,83 +2037,8 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
             });
         });
 
-        // Resizable textareas
-        $('textarea.resizable:not(.textarea-processed)').each(function() {
-            var that = $(this);
-            // Avoid non-processed teasers.
-            if (that.is(('textarea.teaser:not(.teaser-processed)'))) {
-                return false;
-            }
-            var textarea = that.addClass('textarea-processed');
-            var staticOffset = null;
-            // When wrapping the text area, work around an IE margin bug. See:
-            // http://jaspan.com/ie-inherited-margin-bug-form-elements-and-haslayout
-            that.wrap('<div class="resizable-textarea"><span></span></div>')
-            .parent().append($('<div class="grippie"></div>').mousedown(startDrag));
-            var grippie = $('div.grippie', that.parent())[0];
-            grippie.style.marginRight = (grippie.offsetWidth - that[0].offsetWidth) + 'px';
-            function startDrag(e) {
-                staticOffset = textarea.height() - e.pageY;
-                textarea.css('opacity', 0.25);
-                $(document).mousemove(performDrag).mouseup(endDrag);
-                return false;
-            }
-            function performDrag(e) {
-                textarea.height(Math.max(32, staticOffset + e.pageY) + 'px');
-                return false;
-            }
-            function endDrag( /* e */ ) {
-                $(document).unbind('mousemove', performDrag).unbind('mouseup', endDrag);
-                textarea.css('opacity', 1);
-            }
-            return true;
-        });
-
-        // IE6 non anchor hover hack
-        $('#modulenav .hoverable').hover(
-            function() {
-                $(this).addClass('hovered');
-            },
-            function() {
-                $(this).removeClass('hovered');
-            }
-        );
-
-        // Menu popups (works in IE6)
-        $('#modulenav li').hover(
-            function() {
-                    var header_width = $(this).width();
-                    var popup_width = $('ul', this).width();
-                    if (popup_width !== null){
-                      if (popup_width < header_width){
-                        $('ul', this).css({
-                            'width': header_width.toString() + 'px'
-                        });
-                      }
-                    }
-                    $('ul', this).css('display', 'block');
-                },
-            function() {
-                $('ul', this).css('display', 'none');
-            }
-        );
-
         // Event Handlers for the page
         S3.redraw();
-
-        // Popovers (Bootstrap themes only)
-        if (typeof($.fn.popover) != 'undefined') {
-            // Applies to elements created after $(document).ready
-            $('body').popover({
-                selector: '.s3-popover',
-                trigger: 'hover',
-                placement: 'left'
-            });
-        }
-
-        // Handle Page Resizes
-        onResize();
-        $(window).bind('resize', onResize);
 
         // De-duplication Event Handlers
         deduplication();
@@ -2263,18 +2057,6 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
             if (tz) {
                 anyform.append("<input type='hidden' value='" + tz + "' name='_timezone'/>");
             }
-        }
-
-        // Social Media 'share' buttons
-        if ($('#socialmedia_share').length > 0) {
-            // DIV exists (deployment_setting on)
-            var currenturl = document.location.href;
-            // Linked-In
-            $('#socialmedia_share').append("<div class='socialmedia_element'><script src='//platform.linkedin.com/in.js'></script><script type='IN/Share' data-counter='right'></script></div>");
-            // Twitter
-            $('#socialmedia_share').append("<div class='socialmedia_element'><a href='https://twitter.com/share' class='twitter-share-button' data-count='none' data-hashtags='sahana-eden'>Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='//platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','twitter-wjs');</script></div>");
-            // Facebook
-            $('#socialmedia_share').append("<div class='socialmedia_element'><div id='fb-root'></div><script>(function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = '//connect.facebook.net/en_US/all.js#xfbml=1'; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));</script> <div class='fb-like' data-send='false' data-layout='button_count' data-show-faces='true' data-href='" + currenturl + "'></div></div>");
         }
 
         // Form toggle (e.g. S3Profile update-form)

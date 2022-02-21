@@ -35,9 +35,9 @@ settings.base.template = "default"
 #settings.database.port = 3306
 #settings.database.port = 5432
 # Uncomment to select a different name for your database
-#settings.database.database = "sahana"
+#settings.database.database = "eden"
 # Uncomment to select a different username for your database
-#settings.database.username = "sahana"
+#settings.database.username = "eden"
 # Uncomment to set the password
 # NB Web2Py doesn't like passwords with an @ in them
 #settings.database.password = "password"
@@ -47,8 +47,8 @@ settings.base.template = "default"
 #settings.gis.spatialdb = True
 
 # Base settings
-#settings.base.system_name = T("Sahana Eden Humanitarian Management Platform")
-#settings.base.system_name_short = T("Sahana Eden")
+#settings.base.system_name = T("Eden ASP Humanitarian Management Platform")
+#settings.base.system_name_short = T("Eden ASP")
 # Set this to the Public URL of the instance
 #settings.base.public_url = "http://127.0.0.1:8000"
 
@@ -103,7 +103,7 @@ settings.auth.hmac_key = "akeytochange"
 #settings.mail.tls = True
 #settings.mail.login = "username:password"
 # From Address - until this is set, no mails can be sent
-#settings.mail.sender = "'Sahana' <sahana@example.org>"
+#settings.mail.sender = "'Eden ASP' <eden@example.org>"
 # Default email address to which requests to approve new user accounts gets sent
 # This can be overridden for specific domains/organisations via the auth_domain table
 #settings.mail.approver = "useradmin@example.org"
@@ -214,7 +214,7 @@ settings.import_template()
 #
 
 # e.g.
-#settings.base.system_name = T("Sahana TEST")
+#settings.base.system_name = T("Eden TEST")
 #settings.base.prepopulate = ("MY_TEMPLATE_ONLY")
 #settings.base.prepopulate += ("default", "default/users")
 #settings.base.theme = "default"

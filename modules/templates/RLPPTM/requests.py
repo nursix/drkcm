@@ -33,11 +33,11 @@ def req_filter_widgets():
 
     T = current.T
 
-    from core import S3DateFilter, \
-                     S3LocationFilter, \
-                     S3OptionsFilter, \
-                     S3TextFilter, \
-                     s3_get_filter_opts
+    from core import DateFilter, \
+                     LocationFilter, \
+                     OptionsFilter, \
+                     TextFilter, \
+                     get_filter_options
 
     from s3db.req import req_status_opts
 
@@ -46,43 +46,43 @@ def req_filter_widgets():
                                          ))
 
     filter_widgets = [
-        S3TextFilter(["req_ref"],
-                     label = T("Order No."),
-                     ),
-        S3DateFilter("date"),
-        S3OptionsFilter("transit_status",
-                        cols = 3,
-                        options = req_status_opts,
-                        sort = False,
-                        ),
-        S3OptionsFilter("fulfil_status",
-                        cols = 3,
-                        hidden = True,
-                        options = req_status_opts,
-                        sort = False,
-                        ),
-        S3OptionsFilter("req_item.item_id",
-                        hidden = True,
-                        options = lambda: s3_get_filter_opts("supply_item"),
-                        ),
+        TextFilter(["req_ref"],
+                   label = T("Order No."),
+                   ),
+        DateFilter("date"),
+        OptionsFilter("transit_status",
+                      cols = 3,
+                      options = req_status_opts,
+                      sort = False,
+                      ),
+        OptionsFilter("fulfil_status",
+                      cols = 3,
+                      hidden = True,
+                      options = req_status_opts,
+                      sort = False,
+                      ),
+        OptionsFilter("req_item.item_id",
+                      hidden = True,
+                      options = lambda: get_filter_options("supply_item"),
+                      ),
         ]
 
     if current.auth.s3_has_role("SUPPLY_COORDINATOR"):
 
         coordinator_filters = [
-            S3LocationFilter("site_id$location_id",
-                             levels = ["L3", "L4"],
-                             ),
-            S3TextFilter("site_id$location_id$addr_postcode",
-                         label = T("Postcode"),
-                         ),
-            S3OptionsFilter("site_id",
-                            hidden = True
-                            ),
-            S3OptionsFilter("site_id$organisation_id$delivery.value",
-                            label = T("Delivery##supplying"),
-                            options = delivery_tag_opts(),
-                            ),
+            LocationFilter("site_id$location_id",
+                           levels = ["L3", "L4"],
+                           ),
+            TextFilter("site_id$location_id$addr_postcode",
+                       label = T("Postcode"),
+                       ),
+            OptionsFilter("site_id",
+                          hidden = True
+                          ),
+            OptionsFilter("site_id$organisation_id$delivery.value",
+                          label = T("Delivery##supplying"),
+                          options = delivery_tag_opts(),
+                          ),
             ]
         filter_widgets[2:2] = coordinator_filters
 
@@ -99,11 +99,11 @@ def send_filter_widgets():
 
     T = current.T
 
-    from core import S3DateFilter, \
-                     S3LocationFilter, \
-                     S3OptionsFilter, \
-                     S3TextFilter, \
-                     s3_get_filter_opts
+    from core import DateFilter, \
+                     LocationFilter, \
+                     OptionsFilter, \
+                     TextFilter, \
+                     get_filter_options
     from s3db.inv import SHIP_STATUS_CANCEL, \
                          SHIP_STATUS_RETURNING, \
                          inv_shipment_status_labels
@@ -115,44 +115,44 @@ def send_filter_widgets():
     del send_status_opts[SHIP_STATUS_RETURNING]
 
     filter_widgets = [
-        S3TextFilter(["req_ref",
-                      #"send_ref",
-                      ],
-                     label = T("Search"),
-                     ),
-        S3DateFilter("date"),
-        S3OptionsFilter("status",
-                        cols = 3,
-                        options = send_status_opts,
-                        sort = False,
-                        ),
-        S3OptionsFilter("track_item.item_id",
-                        hidden = True,
-                        options = lambda: s3_get_filter_opts("supply_item"),
-                        ),
+        TextFilter(["req_ref",
+                    #"send_ref",
+                    ],
+                   label = T("Search"),
+                   ),
+        DateFilter("date"),
+        OptionsFilter("status",
+                      cols = 3,
+                      options = send_status_opts,
+                      sort = False,
+                      ),
+        OptionsFilter("track_item.item_id",
+                      hidden = True,
+                      options = lambda: get_filter_options("supply_item"),
+                      ),
         ]
 
     if current.auth.s3_has_role("SUPPLY_COORDINATOR"):
 
         coordinator_filters = [
-            S3OptionsFilter("to_site_id$organisation_id$delivery.value",
-                            label = T("Delivery##supplying"),
-                            options = delivery_tag_opts(),
-                            ),
-            S3OptionsFilter("site_id",
-                            label = T("Distribution Center"),
-                            ),
-            S3OptionsFilter("to_site_id",
-                            hidden = True,
-                            ),
-            S3LocationFilter("to_site_id$location_id",
-                             levels = ["L3", "L4"],
-                             hidden = True
-                             ),
-            S3TextFilter("to_site_id$location_id$addr_postcode",
-                         label = T("Postcode"),
-                         hidden = True
-                         ),
+            OptionsFilter("to_site_id$organisation_id$delivery.value",
+                          label = T("Delivery##supplying"),
+                          options = delivery_tag_opts(),
+                          ),
+            OptionsFilter("site_id",
+                          label = T("Distribution Center"),
+                          ),
+            OptionsFilter("to_site_id",
+                          hidden = True,
+                          ),
+            LocationFilter("to_site_id$location_id",
+                           levels = ["L3", "L4"],
+                           hidden = True
+                           ),
+            TextFilter("to_site_id$location_id$addr_postcode",
+                       label = T("Postcode"),
+                       hidden = True
+                       ),
             ]
         filter_widgets[3:3] = coordinator_filters
 
@@ -169,10 +169,10 @@ def recv_filter_widgets():
 
     T = current.T
 
-    from core import S3DateFilter, \
-                     S3OptionsFilter, \
-                     S3TextFilter, \
-                     s3_get_filter_opts
+    from core import DateFilter, \
+                     OptionsFilter, \
+                     TextFilter, \
+                     get_filter_options
     from s3db.inv import SHIP_STATUS_CANCEL, \
                          SHIP_STATUS_RETURNING, \
                          inv_shipment_status_labels
@@ -185,23 +185,23 @@ def recv_filter_widgets():
     del recv_status_opts[SHIP_STATUS_RETURNING]
 
     filter_widgets = [
-        S3TextFilter(["req_ref",
-                      #"send_ref",
-                      ],
-                     label = T("Search"),
-                     ),
-        S3OptionsFilter("status",
-                        cols = 3,
-                        options = recv_status_opts,
-                        sort = False,
-                        ),
-        S3DateFilter("date",
-                     hidden = True,
-                     ),
-        S3OptionsFilter("track_item.item_id",
-                        hidden = True,
-                        options = lambda: s3_get_filter_opts("supply_item"),
-                        ),
+        TextFilter(["req_ref",
+                    #"send_ref",
+                    ],
+                   label = T("Search"),
+                   ),
+        OptionsFilter("status",
+                      cols = 3,
+                      options = recv_status_opts,
+                      sort = False,
+                      ),
+        DateFilter("date",
+                   hidden = True,
+                   ),
+        OptionsFilter("track_item.item_id",
+                      hidden = True,
+                      options = lambda: get_filter_options("supply_item"),
+                      ),
         ]
 
     return filter_widgets

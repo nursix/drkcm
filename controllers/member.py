@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Membership Management
 """
@@ -44,7 +42,7 @@ def membership():
 
     def prep(r):
         if r.interactive:
-            if s3.rtl:
+            if s3.direction == "rtl":
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
                 from core import s3_phone_represent, S3PhoneWidget
@@ -150,7 +148,7 @@ def person():
     # CRUD pre-process
     def prep(r):
         if r.interactive:
-            if s3.rtl:
+            if s3.direction == "rtl":
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
                 from core import s3_phone_represent, S3PhoneWidget

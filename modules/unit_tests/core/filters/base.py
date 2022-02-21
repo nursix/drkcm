@@ -12,15 +12,15 @@ from unit_tests import run_suite
 
 # =============================================================================
 class FilterWidgetTests(unittest.TestCase):
-    """ Tests for S3FilterWidget base class helper methods """
+    """ Tests for FilterWidget base class helper methods """
 
     # -------------------------------------------------------------------------
     def testInit(self):
         """ Test filter widget constructor """
 
-        widget = S3FilterWidget(["name", "organisation_id$name"],
-                                option="test option",
-                                _class="test-class")
+        widget = FilterWidget(["name", "organisation_id$name"],
+                              option="test option",
+                              _class="test-class")
 
         self.assertTrue("option" in widget.opts)
         self.assertTrue(len(widget.opts), 1)
@@ -34,7 +34,7 @@ class FilterWidgetTests(unittest.TestCase):
     def testRender(self):
         """ Test rendering of the hidden data element """
 
-        widget = S3FilterWidget(["name", "organisation_id$name"])
+        widget = FilterWidget(["name", "organisation_id$name"])
 
         # Override widget renderer
         widget.widget = lambda resource, values: ""
@@ -54,11 +54,11 @@ class FilterWidgetTests(unittest.TestCase):
         # Generic class
         self.assertTrue("filter-widget-data" in c)
         # Widget-type-specific class
-        self.assertTrue("%s-data" % widget._class in c)
+        self.assertTrue("%s-data" % widget.css_base in c)
 
         i = attr["_id"]
         self.assertEqual(i, "%s-org_office_name-org_organisation_name-%s-data" %
-                        (resource.alias, widget._class))
+                        (resource.alias, widget.css_base))
 
         v = attr["_value"]
         self.assertEqual(v, "~.name|~.organisation_id$name")
@@ -70,7 +70,7 @@ class FilterWidgetTests(unittest.TestCase):
         fields = "name"
         s3db = current.s3db
 
-        widget = S3FilterWidget()
+        widget = FilterWidget()
 
         resource = s3db.resource("org_organisation")
         label, selector = widget._selector(resource, fields)
@@ -103,16 +103,16 @@ class FilterWidgetTests(unittest.TestCase):
     def testVariable(self):
         """ Test construction of the URL variable for filter widgets """
 
-        variable = S3FilterWidget._variable("organisation.name", "like")
+        variable = FilterWidget._variable("organisation.name", "like")
         self.assertEqual(variable, "organisation.name__like")
 
-        variable = S3FilterWidget._variable("organisation.name", None)
+        variable = FilterWidget._variable("organisation.name", None)
         self.assertEqual(variable, "organisation.name")
 
-        variable = S3FilterWidget._variable("organisation.name", "")
+        variable = FilterWidget._variable("organisation.name", "")
         self.assertEqual(variable, "organisation.name")
 
-        variable = S3FilterWidget._variable("organisation.name", ("ge", "le"))
+        variable = FilterWidget._variable("organisation.name", ("ge", "le"))
         self.assertEqual(variable, ["organisation.name__ge",
                                     "organisation.name__le"])
 
@@ -123,11 +123,11 @@ class FilterWidgetTests(unittest.TestCase):
         get_vars = {"test_1": "1",
                     "test_2": ["1,2", "3"]}
 
-        values = S3FilterWidget._values(get_vars, "test_1")
+        values = FilterWidget._values(get_vars, "test_1")
         self.assertEqual(len(values), 1)
         self.assertTrue("1" in values)
 
-        values = S3FilterWidget._values(get_vars, "test_2")
+        values = FilterWidget._values(get_vars, "test_2")
         self.assertEqual(len(values), 3)
         self.assertTrue("1" in values)
         self.assertTrue("2" in values)

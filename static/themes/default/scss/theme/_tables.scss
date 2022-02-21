@@ -23,64 +23,139 @@ $datatables_bgcolor_head: #ffffff !default;
 // ============================================================================
 // STYLES
 
-/* Datatables */
+// DataTable
 #table-container {
+    display: block;
     margin-bottom: 1.5rem;
-}
-table.dataTable {
-    thead th, th, td {
-        border: 1px solid $datatables_border_color;
-        padding: 0.2em 1.5em 0.2em 0.5em;
+    width: 100%;
+    .empty {
+        margin-top: 30px;
+        margin-left: 10px;
     }
+}
+.dataTable_table {
+    // Scroll the table not the wrapper
+    overflow: auto;
+    clear: both;
+}
+
+table.dataTable {
+    width: 100%;
+    th, td {
+        border: 1px solid $datatables_border_color;
+        padding: 0.2rem 1.5rem 0.2rem 0.5rem;
+        [dir=rtl] & {
+            padding: 0.2rem 0.5rem 0.2rem 1.5rem;
+        }
+    }
+    th {
+        text-align: center;
+    }
+
     thead {
+        th {
+            // override jquery.dataTables.css
+            border-bottom: 1px solid $datatables_border_color;
+            [dir=rtl] & {
+                &.sorting, &.sorting_asc, &.sorting_desc {
+                    background-position-x: left;
+                }
+            }
+        }
         th, td {
             background-color: $datatables_bgcolor_head;
         }
     }
+
     tbody {
-        tr.even {
-            background-color: $datatables_bgcolor_even;
-            td.sorting_1 { // current sorting column
-                background-color: $datatables_bgcolor_even_highlight;
+        tr {
+            &.even {
+                background-color: $datatables_bgcolor_even;
+                td.sorting_1 { // current sorting column
+                    background-color: $datatables_bgcolor_even_highlight;
+                }
             }
-        }
-        tr.odd {
-            background-color: $datatables_bgcolor_odd;
-            td.sorting_1 { // current sorting column
-                background-color: $datatables_bgcolor_odd_highlight;
+            &.odd {
+                background-color: $datatables_bgcolor_odd;
+                td.sorting_1 { // current sorting column
+                    background-color: $datatables_bgcolor_odd_highlight;
+                }
+            }
+            &.dtalert {
+                &.even {
+                    background-color: #ffffa0;
+                    td.sorting_1 { background-color: #fffff0; }
+                }
+                &.odd {
+                    background-color: #ffffc0;
+                    td.sorting_1 { background-color: #ffffb0; }
+                }
+            }
+            &.dtwarning {
+                &.even {
+                    background-color: #ffa6a6;
+                    td.sorting_1 { background-color: #ff8383; }
+                }
+                &.odd {
+                    background-color: #ffd9d9;
+                    td.sorting_1 { background-color: #ffb6b6; }
+                }
+            }
+            &.row_selected {
+                &.odd {
+                    background-color: #40fa8d;
+                    td.sorting_1 { background-color: #20f0ad; }
+                }
+                &.even {
+                    background-color: #60f6ad;
+                    td.sorting_1 { background-color: #40fa8d; }
+                }
+            }
+            &.group {
+                background-color: #ddd;
+                border: 1px solid #aaa;
+                &.level_1 {
+                    background-color: #999;
+                    color: #def;
+                    &.activeRow {
+                        background-color: #1d70cf;
+                    }
+                    a {
+                        color: #def;
+                    }
+                }
+                &.level_2 {
+                    background-color: #ddd;
+                    color: #248;
+                    &.activeRow {
+                        background-color: #528dd1;
+                    }
+                    a {
+                        color: #248;
+                    }
+                }
+                span.ui-icon {
+                    display: inline-block;
+                }
+                .group-indent {
+                    width: 10px;
+                }
+                .group-opened,
+                .group-closed {
+                    padding: 0.2rem;
+                }
+                .group-collapse,
+                .group-expand {
+                    cursor: pointer;
+                    float: right;
+                }
+            }
+            &.dtdisable {
+                text-shadow: #ccc 1px 1px 1px;
+                color: #888;
             }
             td {
-                border-color: $datatables_border_color;
-            }
-        }
-        tr.row_selected {
-            &.odd {
-                background-color: #40fa8d;
-                td.sorting_1 { background-color: #20f0ad; }
-            }
-            &.even {
-                background-color: #60f6ad;
-                td.sorting_1 { background-color: #40fa8d; }
-            }
-        }
-        tr.dtalert {
-            &.odd {
-                background-color: #ffffc0;
-                td.sorting_1 { background-color: #ffffb0; }
-            }
-            &.even {
-                background-color: #ffffa0;
-                td.sorting_1 { background-color: #fffff0; }
-            }
-        }
-        tr.dtwarning {
-            &.odd {
-                background-color: #ffd9d9;
-                td.sorting_1 { background-color: #ffb6b6; }
-            }
-            &.even {
-                background-color: #ffa6a6;
-                td.sorting_1 { background-color: #ff8383; }
+                vertical-align: top;
             }
         }
     }
@@ -94,7 +169,7 @@ table.dataTable {
     }
     // Bulk-select
     .selected-action {
-        margin: 5px 0 5px;
+        margin: 0.35rem 0.2rem;
     }
     .bulk-select-options {
         font-size: 0.7rem;
@@ -106,126 +181,174 @@ table.dataTable {
         }
     }
     input.bulkcheckbox[type=checkbox] {
-        margin-top: 0.2rem;
+        position: relative;
+        left: 50%;
+        margin-top: 0.5rem;
     }
-    .group {
-        span.ui-icon {
-            display: inline-block;
+
+    // DataTable Responsive
+    &.dtr-inline.collapsed tbody {
+        td:first-child::before,
+        th:first-child::before {
+            top: 6px;
+            //line-height: 0.9rem;
+            background-color: $primary-color;
         }
-        .group-indent {
-            width: 10px;
-        }
-        .group-opened,
-        .group-closed {
-            padding: 0.2rem;
-        }
-        .group-collapse,
-        .group-expand {
-            cursor: pointer;
-            float: right;
+        tr.parent td:first-child::before,
+        tr.parent th:first-child::before {
+            background-color: $alert-color;
         }
     }
 
-    &.dtr-inline.collapsed tbody td:first-child::before,
-    &.dtr-inline.collapsed tbody th:first-child::before {
-        top: 6px;
-        background-color: $primary-color;
-    }
-    &.dtr-inline.collapsed tbody tr.parent td:first-child::before,
-    &.dtr-inline.collapsed tbody tr.parent th:first-child::before {
-        top: 6px;
-        background-color: $alert-color;
-    }
+    // Spreadsheet Importer
     table.import-item-details {
         display: none;
     }
 }
+table.fixedHeader th {
+    border: 1px solid $datatables_border_color;
+}
 
+.dataTables_filter {
+    float: left;
+    text-align: left;
+    margin-right: 3rem;
+    label {
+        margin-left: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: normal;
+    }
+    input[type="search"] {
+        margin-left: 0.3rem;
+    }
+    [dir=rtl] & {
+        float: right;
+        text-align: right;
+        margin-right: 0;
+        margin-left: 3rem;
+        label,
+        input[type="search"] {
+            margin-left: 0rem;
+            margin-right: 0.3rem;
+        }
+    }
+}
 .dataTables_length {
-    float: left !important;
+    float: left;
+    margin-bottom:4px;
     label {
         font-size: 0.75rem;
+        font-weight: normal;
         white-space: nowrap;
-        margin-right: 10em;
-        margin-bottom: 0.3em;
+        margin: 0 10rem 0.3rem 0.3rem;
     }
     select {
+        font-size: 0.75rem;
         height: auto;
         padding: 0.2rem 1.1rem 0.2rem 0!important;
-        font-size: 0.75rem;
+    }
+    [dir=rtl] & {
+        float: right;
+        label {
+            margin: 0 0.3rem 0.3rem 10rem;
+        }
+        select {
+            padding: 0.2rem 0 0.2rem 1.1rem!important;
+        }
     }
 }
 .dataTables_processing {
-     padding: 14px 0 28px;
+    padding: 1rem 0 2rem;
+    top: 2.5rem;
+    left: 30%;
+    background-color: #fffbe0;
+    color: #737373;
+    border-color: #737373;
+    [dir=rtl] & {
+        left: unset;
+        right: 30%;
+    }
 }
-.dataTables_filter {
-    text-align: left;
-    font-size: 0.75rem;
-    margin-right: 3rem;
-    input[type="search"] {
-        margin-left: 0.2rem;
+.dataTables_info {
+    float: right;
+    clear: none;
+    margin: 0.5rem 0;
+    [dir=rtl] & {
+        float: left;
+    }
+}
+.dataTables_paginate {
+    float: right;
+    margin: 0.3rem 0 0.3rem 0.7rem;
+    &.paging_full_numbers {
+        width: auto;
+    }
+    a.paginate_button,
+    a.paginate_active {
+        text-decoration: none;
+    }
+    [dir=rtl] & {
+        float: left;
+        margin: 0.3rem 0.7rem 0.3rem 0;
     }
 }
 
+// Export Options
 .dt-export-options {
     float: right;
+    padding-top: 5px;
     .list_formats {
         padding-top: 0;
         margin: 0 0.2rem;
-    }
-    .dt-export {
-        margin: 0 0.1rem;
-        &.fa {
-            font-size: 14px;
-            padding: 0;
-            padding-top: 2px;
-        }
-    }
-}
-
-.system-info {
-    width: 100%;
-    margin-top: 0.8rem;
-    table {
-        margin: auto;
-        border: 2px solid $primary-color;
-        td {
-            font-size: 0.8rem;
-            line-height: 0.8rem;
-            background-color: $datatables_bgcolor_even;
-            &:nth-child(2) {
-                font-size: 0.7rem;
+        .dt-export {
+            float: right;
+            margin: 0 0.1rem;
+            padding: 1px;
+            cursor: pointer;
+            height: 16px;
+            width: 16px;
+            background-repeat: no-repeat;
+            &.fa {
+                font-size: 14px;
+                padding: 0;
+                padding-top: 2px;
+            }
+            &.export_cap {
+                background-image: url(../../img/cap_16.png);
+            }
+            &.export_have {
+                background-image: url(../../img/have_16.png);
+            }
+            &.export_kml {
+                background-image: url(../../img/kml_icon.png);
+            }
+            &.export_map {
+                background-image: url(../../img/map_icon.png);
+            }
+            &.export_pdf {
+                background-image: url(../../img/pdficon_small.gif);
+            }
+            &.export_rss {
+                background-image: url(../../img/RSS_16.png);
+            }
+            &.export_xls {
+                background-image: url(../../img/icon-xls.png);
+            }
+            &.export_xml {
+                background-image: url(../../img/icon-xml.png);
             }
         }
     }
-    .about-subheader td {
-        background-color: $datatables_bgcolor_odd_highlight;
-        font-size: 0.9rem;
-        font-weight: bold;
-        line-height: 0.9rem;
-    }
-}
-
-body.rtl {
-    .dt-export-options,
-    .list_formats div {
+    [dir=rtl] & {
         float: left;
-    }
-    .dataTable .group {
-        .group-collapse,
-        .group-expand {
+        .dt-export {
             float: left;
         }
     }
 }
+
 .empty {
     @include empty_section();
-}
-
-// TODO: move into separate file
-.fc table,
-.fc table tr {
-    background: transparent;
 }
 
 // END ========================================================================

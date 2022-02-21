@@ -44,7 +44,7 @@ from gluon import current
 from gluon.storage import Storage
 
 from .calendar import s3_decode_iso_datetime, s3_utc
-from .utils import S3MarkupStripper, s3_flatlist, s3_represent_value, s3_str
+from .utils import MarkupStripper, s3_flatlist, s3_represent_value, s3_str
 
 tp_datetime = lambda year, *t: datetime.datetime(year, *t, tzinfo=dateutil.tz.tzutc())
 
@@ -229,7 +229,7 @@ class TimeSeries:
 
             representations = []
             append = representations.append()
-            stripper = S3MarkupStripper()
+            stripper = MarkupStripper()
 
             represent = rfield.represent
             if not represent:
@@ -286,7 +286,7 @@ class TimeSeries:
                                               )
 
             elif rfield.virtual:
-                stripper = S3MarkupStripper()
+                stripper = MarkupStripper()
                 def repr_method(val):
                     if val is None:
                         return "-"

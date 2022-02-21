@@ -1277,7 +1277,7 @@ S3.search = {};
                     widget.find('.range-picker')
                           .trigger('resize', [min, max, newopts.ts]);
                 } else {
-                    // @todo: other filter types (e.g. S3LocationFilter)
+                    // @todo: other filter types (e.g. LocationFilter)
                 }
             }
         }
@@ -2094,7 +2094,7 @@ S3.search = {};
         }
     };
 
-    var toggleAdvanced = function(form) {
+    var toggleAdvanced = function(form, state) {
 
         var $form = $(form), hidden;
 
@@ -2105,29 +2105,29 @@ S3.search = {};
             if (widget.hasClass('hide')) {
                 // Show the Widgets
                 widget.removeClass('hide')
-                        .show()
-                        .find(selectors).each( function() {
-                            var selector = $(this);
-                            // Mark them as Active
-                            selector.addClass('active');
-                            // Refresh the contents
-                            if (selector.hasClass('groupedopts-filter-widget') &&
-                                selector.groupedopts('instance')) {
-                                selector.groupedopts('refresh');
-                            } else
-                            if (selector.hasClass('multiselect-filter-widget') &&
-                                selector.multiselect('instance')) {
-                                selector.multiselect('refresh');
-                            }
-                        });
+                      .show()
+                      .find(selectors).each( function() {
+                          var selector = $(this);
+                          // Mark them as Active
+                          selector.addClass('active');
+                          // Refresh the contents
+                          if (selector.hasClass('groupedopts-filter-widget') &&
+                              selector.groupedopts('instance')) {
+                              selector.groupedopts('refresh');
+                          } else
+                          if (selector.hasClass('multiselect-filter-widget') &&
+                              selector.multiselect('instance')) {
+                              selector.multiselect('refresh');
+                          }
+                      });
                 hidden = true;
             } else {
                 // Hide the Widgets
                 widget.addClass('hide')
-                        .hide()
-                        // Mark them as Inactive
-                        .find(selectors)
-                        .removeClass('active');
+                      .hide()
+                      // Mark them as Inactive
+                      .find(selectors)
+                      .removeClass('active');
                 hidden = false;
             }
         });
@@ -2863,49 +2863,38 @@ S3.search = {};
          */
         _newFilter: function() {
 
-            // @todo: ignore if readOnly
+            // Ignore if readOnly
+            if (this.options.readOnly) {
+                return;
+            }
 
-            // Hide selector and buttons
             var el = this.element.hide(),
                 fm = this;
 
+            // Hide selector and buttons
             this._hideCRUDButtons();
+
+            // Input field
+            var hint = this.options.titleHint;
+            this.input = $('<input type="text" id="fm-title-input-' + this.id + '" placeholder="' + hint + '">')
+                            .keyup(function(e) {
+                                switch(e.which) {
+                                    case 13:
+                                        e.preventDefault();
+                                        fm._accept();
+                                        break;
+                                    case 27:
+                                        $(this).val('');
+                                        fm._cancel();
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }).insertAfter(el).focus();
 
             // Show accept/cancel
             this.accept_btn.show();
             this.cancel_btn.show();
-
-            // Input field
-            var hint = this.options.titleHint;
-            var input = $('<input type="text" id="fm-title-input-' + this.id + '">')
-                        .val(hint)
-                        .css({color: 'grey', 'float': 'left'})
-                        .focusin(function() {
-                            if (!$(this).hasClass('changed')) {
-                                $(this).css({color: 'black'}).val('');
-                            }
-                        })
-                        .change(function() {
-                            $(this).addClass('changed');
-                        })
-                        .focusout(function() {
-                            if ($(this).val() === '') {
-                                $(this).removeClass('changed')
-                                       .css({color: 'grey'})
-                                       .val(hint);
-                            }
-                        }).keypress(function(e) {
-                            if(e.which == 13) {
-                                e.preventDefault();
-                                var $this = $(this);
-                                if ($this.val()) {
-                                    $this.addClass('changed');
-                                }
-                                fm._accept();
-                            }
-                        });
-            this.input = input;
-            $(el).after(input);
         },
 
         /**
@@ -2913,16 +2902,17 @@ S3.search = {};
          */
         _accept: function () {
 
-            // @todo: ignore if readOnly
+            // Ignore if readOnly
+            if (this.options.readOnly) {
+                return;
+            }
 
             var el = this.element,
                 fm = this,
                 title = this.input.val();
 
-            if (!$(this.input).hasClass('changed') || !title) {
+            if (!title) {
                 return;
-            } else {
-                $(this.input).removeClass('changed');
             }
 
             // Hide accept/cancel

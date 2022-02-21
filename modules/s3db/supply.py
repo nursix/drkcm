@@ -518,30 +518,30 @@ $.filterOptionsS3({
 
         # ---------------------------------------------------------------------
         filter_widgets = [
-            S3TextFilter(["code",
-                          "name",
-                          "model",
-                          #"item_category_id$name",
-                          "comments",
-                          ],
-                         label = T("Search"),
-                         comment = T("Search for an item by its code, name, model and/or comment."),
-                         #_class = "filter-search",
-                         ),
-            S3OptionsFilter("brand_id",
-                            # @ToDo: Introspect need for header based on # records
-                            #header = True,
-                            #label = T("Brand"),
-                            represent = "%(name)s",
-                            widget = "multiselect",
-                            ),
-            S3OptionsFilter("year",
-                            comment = T("Search for an item by Year of Manufacture."),
-                            # @ToDo: Introspect need for header based on # records
-                            #header = True,
-                            label = T("Year"),
-                            widget = "multiselect",
-                            ),
+            TextFilter(["code",
+                        "name",
+                        "model",
+                        #"item_category_id$name",
+                        "comments",
+                        ],
+                       label = T("Search"),
+                       comment = T("Search for an item by its code, name, model and/or comment."),
+                       #_class = "filter-search",
+                       ),
+            OptionsFilter("brand_id",
+                          # @ToDo: Introspect need for header based on # records
+                          #header = True,
+                          #label = T("Brand"),
+                          represent = "%(name)s",
+                          widget = "multiselect",
+                          ),
+            OptionsFilter("year",
+                          comment = T("Search for an item by Year of Manufacture."),
+                          # @ToDo: Introspect need for header based on # records
+                          #header = True,
+                          label = T("Year"),
+                          widget = "multiselect",
+                          ),
             ]
 
         report_options = Storage(defaults = Storage(rows = "name",
@@ -643,43 +643,43 @@ $.filterOptionsS3({
 
         # Filter Widgets
         filter_widgets = [
-            S3TextFilter([#These lines are causing issues...very slow - perhaps broken
-                          #"comments",
-                          #"item_category_id$code",
-                          #"item_category_id$name",
-                          #"item_id$brand_id$name",
-                          #"item_category_id$parent_item_category_id$code"
-                          #"item_category_id$parent_item_category_id$name"
-                          "item_id$code",
-                          "item_id$name",
-                          "item_id$model",
-                          "item_id$comments"
-                          ],
-                         label = T("Search"),
-                         comment = T("Search for an item by its code, name, model and/or comment."),
-                        ),
-            S3OptionsFilter("catalog_id",
-                            label = T("Catalog"),
-                            comment = T("Search for an item by catalog."),
-                            #represent ="%(name)s",
-                            cols = 3,
-                            hidden = True,
-                           ),
-            S3OptionsFilter("item_category_id",
-                            label = T("Category"),
-                            comment = T("Search for an item by category."),
-                            represent = item_category_represent_nocodes,
-                            cols = 3,
-                            hidden = True,
-                           ),
-            S3OptionsFilter("item_id$brand_id",
-                            label = T("Brand"),
-                            comment = T("Search for an item by brand."),
-                            #represent ="%(name)s",
-                            cols = 3,
-                            hidden = True,
-                           ),
-        ]
+            TextFilter([#These lines are causing issues...very slow - perhaps broken
+                        #"comments",
+                        #"item_category_id$code",
+                        #"item_category_id$name",
+                        #"item_id$brand_id$name",
+                        #"item_category_id$parent_item_category_id$code"
+                        #"item_category_id$parent_item_category_id$name"
+                        "item_id$code",
+                        "item_id$name",
+                        "item_id$model",
+                        "item_id$comments"
+                        ],
+                       label = T("Search"),
+                       comment = T("Search for an item by its code, name, model and/or comment."),
+                       ),
+            OptionsFilter("catalog_id",
+                          label = T("Catalog"),
+                          comment = T("Search for an item by catalog."),
+                          #represent ="%(name)s",
+                          cols = 3,
+                          hidden = True,
+                          ),
+            OptionsFilter("item_category_id",
+                          label = T("Category"),
+                          comment = T("Search for an item by category."),
+                          represent = item_category_represent_nocodes,
+                          cols = 3,
+                          hidden = True,
+                          ),
+            OptionsFilter("item_id$brand_id",
+                          label = T("Brand"),
+                          comment = T("Search for an item by brand."),
+                          #represent ="%(name)s",
+                          cols = 3,
+                          hidden = True,
+                          ),
+            ]
 
         configure(tablename,
                   deduplicate = self.supply_catalog_item_duplicate,
@@ -910,26 +910,26 @@ $.filterOptionsS3({
 
         # Filter Widgets
         filter_widgets = [
-            S3TextFilter(name = "item_entity_search_text",
-                         label = T("Search"),
-                         comment = T("Search for an item by text."),
-                         field = ["item_id$name",
-                                  #"item_id$item_category_id$name",
-                                  #"site_id$name"
-                                  ]
-                         ),
-            S3OptionsFilter("item_id$item_category_id",
-                            label = T("Code Share"),
-                            comment = T("If none are selected, then all are searched."),
-                            #represent = "%(name)s",
-                            cols = 2,
-                            ),
-            #S3OptionsFilter("country",
-            #                label = current.messages.COUNTRY,
-            #                comment = T("If none are selected, then all are searched."),
-            #                #represent = "%(name)s",
-            #                cols = 2,
-            #               ),
+            TextFilter(name = "item_entity_search_text",
+                       label = T("Search"),
+                       comment = T("Search for an item by text."),
+                       field = ["item_id$name",
+                                #"item_id$item_category_id$name",
+                                #"site_id$name"
+                                ]
+                       ),
+            OptionsFilter("item_id$item_category_id",
+                          label = T("Code Share"),
+                          comment = T("If none are selected, then all are searched."),
+                          #represent = "%(name)s",
+                          cols = 2,
+                          ),
+            #OptionsFilter("country",
+            #              label = current.messages.COUNTRY,
+            #              comment = T("If none are selected, then all are searched."),
+            #              #represent = "%(name)s",
+            #              cols = 2,
+            #              ),
         ]
 
         # Configuration
@@ -1467,36 +1467,36 @@ class SupplyDistributionModel(DataModel):
 
         # Normally only used in Report
         filter_widgets = [
-            #S3TextFilter([#"item_id$name",
-            #          if settings.get_project_projects():
-            #              "activity_id$project_id$name",
-            #              "activity_id$project_id$code",
-            #              "location_id",
-            #              "comments"
-            #              ],
-            #             label = T("Search Distributions"),
-            #             ),
-            S3LocationFilter("location_id",
-                             levels = levels,
-                             widget = "multiselect"
-                             ),
-            S3OptionsFilter("activity_id$activity_organisation.organisation_id",
-                            widget = "multiselect"
-                            ),
-            S3OptionsFilter("parameter_id",
-                            label = T("Item"),
-                            widget = "multiselect"
-                            ),
+            #TextFilter([#"item_id$name",
+            #        if settings.get_project_projects():
+            #            "activity_id$project_id$name",
+            #            "activity_id$project_id$code",
+            #            "location_id",
+            #            "comments"
+            #            ],
+            #           label = T("Search Distributions"),
+            #           ),
+            LocationFilter("location_id",
+                           levels = levels,
+                           widget = "multiselect"
+                           ),
+            OptionsFilter("activity_id$activity_organisation.organisation_id",
+                          widget = "multiselect"
+                          ),
+            OptionsFilter("parameter_id",
+                          label = T("Item"),
+                          widget = "multiselect"
+                          ),
             # @ToDo: Range Slider using start_date & end_date
-            #S3DateFilter("date",
-            #             )
+            #DateFilter("date",
+            #           )
             # @ToDo: OptionsFilter working with Lazy VF
-            #S3OptionsFilter("year",
-            #                label = T("Year"),
-            #                options = year_options,
-            #                widget = "multiselect",
-            #                hidden = True,
-            #                ),
+            #OptionsFilter("year",
+            #              label = T("Year"),
+            #              options = year_options,
+            #              widget = "multiselect",
+            #              hidden = True,
+            #              ),
             ]
 
         list_fields = ["activity_id$activity_organisation.organisation_id",
@@ -1514,12 +1514,12 @@ class SupplyDistributionModel(DataModel):
         if settings.get_project_sectors():
             report_fields.append("activity_id$sector_activity.sector_id")
             filter_widgets.insert(0,
-                S3OptionsFilter("activity_id$sector_activity.sector_id",
-                                # Doesn't allow translation
-                                #represent = "%(name)s",
-                                widget = "multiselect",
-                                #hidden = True,
-                                ))
+                OptionsFilter("activity_id$sector_activity.sector_id",
+                              # Doesn't allow translation
+                              #represent = "%(name)s",
+                              widget = "multiselect",
+                              #hidden = True,
+                              ))
 
         if settings.get_project_hazards():
             report_fields.append("activity_id$project_id$hazard.name")
@@ -1528,31 +1528,31 @@ class SupplyDistributionModel(DataModel):
             list_fields.insert(0, "activity_id$project_id")
             report_fields.append("activity_id$project_id")
             filter_widgets.append(
-                S3OptionsFilter("activity_id$project_id",
-                                widget = "multiselect"
-                                ),
-                #S3OptionsFilter("activity_id$project_id$organisation_id",
-                #                label = T("Lead Organization"),
-                #                widget = "multiselect"
-                #                ),
-                #S3OptionsFilter("activity_id$project_id$partner.organisation_id",
-                #                label = T("Partners"),
-                #                widget = "multiselect"),
-                #S3OptionsFilter("activity_id$project_id$donor.organisation_id",
-                #                label = T("Donors"),
-                #                location_level = "L1",
-                #                widget = "multiselect")
+                OptionsFilter("activity_id$project_id",
+                              widget = "multiselect"
+                              ),
+                #OptionsFilter("activity_id$project_id$organisation_id",
+                #              label = T("Lead Organization"),
+                #              widget = "multiselect"
+                #              ),
+                #OptionsFilter("activity_id$project_id$partner.organisation_id",
+                #              label = T("Partners"),
+                #              widget = "multiselect"),
+                #OptionsFilter("activity_id$project_id$donor.organisation_id",
+                #              label = T("Donors"),
+                #              location_level = "L1",
+                #              widget = "multiselect")
                 )
 
         if settings.get_project_themes():
             report_fields.append("activity_id$project_id$theme.name")
             filter_widgets.append(
-                S3OptionsFilter("activity_id$project_id$theme_project.theme_id",
-                                # Doesn't allow translation
-                                #represent = "%(name)s",
-                                widget = "multiselect",
-                                #hidden = True,
-                                ))
+                OptionsFilter("activity_id$project_id$theme_project.theme_id",
+                              # Doesn't allow translation
+                              #represent = "%(name)s",
+                              widget = "multiselect",
+                              #hidden = True,
+                              ))
 
         for level in levels:
             lfield = "location_id$%s" % level

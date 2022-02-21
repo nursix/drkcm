@@ -107,7 +107,7 @@ class S3MainMenuLayout(S3NavigationItem):
                     else:
                         left.append(item)
                 right.reverse()
-                if current.response.s3.rtl:
+                if current.response.s3.direction == "rtl":
                     right, left = left, right
 
                 T = current.T
@@ -296,11 +296,11 @@ class S3OrgMenuLayout(S3NavigationItem):
 
         menu_logo = current.deployment_settings.get_ui_menu_logo()
         if not menu_logo:
-            menu_logo = "/%s/static/img/sahanalarge_14.png" % current.request.application
+            menu_logo = "/%s/static/img/eden_asp_small.png" % current.request.application
 
         logo = IMG(_src = menu_logo,
                    _alt = name,
-                   _width=40,
+                   _width = 38,
                    )
 
         # Note: render using current.menu.org.render()[0] + current.menu.org.render()[1]

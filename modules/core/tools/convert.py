@@ -208,7 +208,7 @@ class S3TypeConverter:
                     value = dt.date()
             if value is None:
                 from .validators import IS_UTC_DATE
-                # Try ISO format first (e.g. S3DateFilter)
+                # Try ISO format first (e.g. DateFilter)
                 value, error = IS_UTC_DATE(format="%Y-%m-%d")(b)
                 if error:
                     # Try L10n format

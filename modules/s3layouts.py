@@ -153,7 +153,7 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
                 else:
                     left.append(child)
             right.reverse()
-            if current.response.s3.rtl:
+            if current.response.s3.direction == "rtl":
                 right, left = left, right
 
             T = current.T
@@ -336,7 +336,7 @@ class S3OrgMenuDefaultLayout(S3NavigationItem):
     @staticmethod
     def layout(item):
 
-        name = "Humanitarian Management System"
+        name = current.T("Humanitarian Management System")
 
         current_user = current.auth.user
         if current_user:
@@ -351,10 +351,10 @@ class S3OrgMenuDefaultLayout(S3NavigationItem):
                 if row:
                     name = row.name
 
-        logo = IMG(_src = "/%s/static/img/eden_asp_large.png" %
+        logo = IMG(_src = "/%s/static/img/eden_asp_small.png" %
                           current.request.application,
                    _alt = name,
-                   _width=38,
+                   _width = 38,
                    )
 
         # Note: render using current.menu.org.render()[0] + current.menu.org.render()[1]

@@ -124,9 +124,9 @@ else:
 
 # List of Languages which use a Right-to-Left script (Arabic, Hebrew, Farsi, Urdu)
 if language in ("ar", "prs", "ps", "ur"):
-    s3.rtl = True
+    s3.direction = "rtl"
 else:
-    s3.rtl = False
+    s3.direction = "ltr"
 
 # -----------------------------------------------------------------------------
 # Auth

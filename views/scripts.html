@@ -17,7 +17,6 @@ fbq('track','PageView');{{pass}}
 <script type="text/javascript">//<![CDATA[
 {{pass}}{{for script in s3.js_global:}}{{=XML(script)}}
 {{pass}}$(document).ready(function(){
- {{if s3.rtl:}}$('body').addClass('rtl'){{else:}}$('body').addClass('ltr'){{pass}}
  {{if fb_pixel_id or ga_id:}}$('body').ihavecookies({
   title:i18n.ihc_title,
   message:i18n.ihc_message,

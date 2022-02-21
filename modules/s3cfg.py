@@ -200,9 +200,6 @@ class S3Config(Storage):
         self.req = Storage()
         self.search = Storage()
         self.security = Storage()
-        self.setup = Storage()
-        # Allow templates to append rather than replace
-        self.setup.wizard_questions = []
         self.supply = Storage()
         self.sync = Storage()
         self.tasks = Storage()
@@ -259,8 +256,8 @@ class S3Config(Storage):
 
                 parameters = {"host": get_param("host", "localhost"),
                               "port": get_param("port", default_port),
-                              "database": get_param("database", "sahana"),
-                              "username": get_param("username", "sahana"),
+                              "database": get_param("database", "eden"),
+                              "username": get_param("username", "eden"),
                               "password": get_param("password", "password"),
                               "pool_size": pool_size,
                               }
@@ -908,6 +905,13 @@ class S3Config(Storage):
         """
         return self.auth.get("consent_check", None)
 
+    def get_auth_mandatory_page(self):
+        """
+            A mandatory page that must be visited after login
+            - a URL, or a function returning a URL
+        """
+        return self.auth.get("mandatory_page", None)
+
     def get_auth_registration_volunteer(self):
         """ Redirect the newly-registered user to their volunteer details page """
         return self.auth.get("registration_volunteer", False)
@@ -1084,6 +1088,14 @@ class S3Config(Storage):
         """For demo sites, which additional options to add to the list """
         return self.base.get("prepopulate_demo", 0)
 
+    def get_base_import_handlers(self):
+        """
+            Template-specific import handlers for prepop
+            - a dict {name: function}
+            - function takes (filepath, **kwargs) as arguments
+        """
+        return self.base.get("import_handlers")
+
     def get_base_public_url(self):
         """
             The Public URL for the site - for use in email links, etc
@@ -1135,7 +1147,7 @@ class S3Config(Storage):
 
         db_params = {
             "type": db_type,
-            "user": csget("server_db_username") or dbget("username", "sahana"),
+            "user": csget("server_db_username") or dbget("username", "eden"),
             "pass": csget("server_db_password") or dbget("password", "password"),
             "host": csget("server_db_ip") or dbget("host", "localhost"),
             "port": csget("server_db_port") or dbget("port", default_port),
@@ -1570,15 +1582,6 @@ class S3Config(Storage):
     def get_gis_layers_label(self):
         " Label for the Map's Layer Tree "
         return self.gis.get("layers_label", "Layers")
-
-    def get_gis_location_filter_bigtable_lookups(self):
-        """
-            Location filter to use scalability-optimized option lookups
-            - can be overridden by filter widget option (bigtable)
-            - defaults to base.bigtable
-        """
-        setting = self.gis.get("location_filter_bigtable_lookups")
-        return setting if setting is not None else self.get_base_bigtable()
 
     def get_gis_location_represent_address_only(self):
         """
@@ -2268,7 +2271,7 @@ class S3Config(Storage):
             Render clear-button for calendar inputs just as an icon
             (S3CalendarWidget, requires Foundation + font-awesome)
         """
-        return self.ui.get("calendar_clear_icon", False)
+        return self.ui.get("calendar_clear_icon", True)
 
     # -------------------------------------------------------------------------
     def get_ui_auto_keyvalue(self):
@@ -2426,13 +2429,6 @@ class S3Config(Storage):
             Class for submit buttons in search views
         """
         return self.ui.get("search_submit_button", "search-button")
-
-    def get_ui_social_buttons(self):
-        """
-            Display social media Buttons in the footer?
-            - requires support in the Theme
-        """
-        return self.ui.get("social_buttons", False)
 
     def get_ui_summary(self):
         """
@@ -2633,7 +2629,7 @@ class S3Config(Storage):
         return self.__lazy("ui", "menu_logo",
                            URL(c = "static",
                                f = "img",
-                               args = ["S3menu_logo.png"],
+                               args = ["eden_asp_small.png"],
                                )
                            )
 
@@ -2838,7 +2834,7 @@ class S3Config(Storage):
 
             NB has scalability problems, so disabled by default =>
                can be overridden per-widget using the "auto_range"
-               option (S3DateFilter)
+               option (DateFilter)
         """
         return self.search.get("dates_auto_range", False)
 
@@ -2866,21 +2862,6 @@ class S3Config(Storage):
     def get_search_filter_manager_load(self):
         """ Text for saved filter load-button """
         return self.search.get("filter_manager_load")
-
-    # =========================================================================
-    # Setup
-    #
-    def get_setup_monitor_template(self):
-        """
-            Which template folder to use to load monitor.py
-        """
-        return self.setup.get("monitor_template", "default")
-
-    def get_setup_wizard_questions(self):
-        """
-            Configuration options to see in the Setup Wizard
-        """
-        return self.setup.get("wizard_questions", [])
 
     # =========================================================================
     # Sync
@@ -3489,6 +3470,13 @@ class S3Config(Storage):
         else:
             return hide
 
+    def get_cms_newsletter_recipient_types(self):
+        """
+            Types of newsletter recipients: tuple|list of table names (PEs)
+        """
+
+        return self.cms.get("newsletter_recipient_types", ("org_organisation",))
+
     # -------------------------------------------------------------------------
     # Shelters
     #
@@ -4002,7 +3990,7 @@ class S3Config(Storage):
         """
             Use themes for response actions
         """
-        return self.dvr.get("response_themes", False)
+        return self.__lazy("dvr", "response_themes", default=False)
 
     def get_dvr_response_themes_org_specific(self):
         """

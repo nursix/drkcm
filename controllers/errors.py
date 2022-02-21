@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     HTTP Error handler -- implements nicer error pages
 

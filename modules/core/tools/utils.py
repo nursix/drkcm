@@ -27,12 +27,15 @@
 
 __all__ = ("RCVARS",
            "JSONSEPARATORS",
-           "S3CustomController",
-           "S3MarkupStripper",
+           "CustomController",
+           "MarkupStripper",
            "StringTemplateParser",
            "Traceback",
+           "FormKey",
            "URL2",
            "get_crud_string",
+           "get_form_record_id",
+           "accessible_pe_query",
            "s3_addrow",
            "s3_dev_toolbar",
            "s3_flatlist",
@@ -102,6 +105,73 @@ def get_crud_string(tablename, key):
         label = crud_strings.get(key)
 
     return label
+
+# =============================================================================
+def get_form_record_id(form):
+    """
+        Get the record ID from a FORM
+
+        Args:
+            form: the FORM
+
+        Returns:
+            the record ID, or None
+    """
+
+    form_vars = form.vars
+    if "id" in form_vars:
+        record_id = form_vars.id
+    elif hasattr(form, "record_id"):
+        record_id = form.record_id
+    else:
+        record_id = None
+
+    return record_id
+
+# =============================================================================
+def accessible_pe_query(table = None,
+                        instance_types = None,
+                        method = "update",
+                        c = None,
+                        f = None,
+                        ):
+    """
+        Construct a query for accessible person entities (pe_ids),
+        for pe_id-based filters and selectors
+
+        Args:
+            table: the table to query (default: pr_pentity)
+            instance_types: the instance types to authorize
+            method: the access method for which permission is required
+            c: override current.request.controller for permission check
+            f: override current.request.function for permission check
+
+        Returns:
+            the Query
+    """
+
+    if instance_types is None:
+        instance_types = ("org_organisation",)
+
+    db = current.db
+    s3db = current.s3db
+
+    if table is None:
+        table = s3db.pr_pentity
+
+    query = None
+    accessible_query = current.auth.s3_accessible_query
+    for instance_type in instance_types:
+
+        itable = s3db.table(instance_type)
+        if not itable:
+            continue
+
+        dbset = db(accessible_query(method, itable, c=c, f=f))._select(itable.pe_id)
+        subquery = table.pe_id.belongs(dbset)
+        query = subquery if query is None else (query | subquery)
+
+    return query
 
 # =============================================================================
 def s3_get_last_record_id(tablename):
@@ -320,7 +390,7 @@ def s3_represent_value(field,
     # Strip away markup from text
     if strip_markup and "<" in text:
         try:
-            stripper = S3MarkupStripper()
+            stripper = MarkupStripper()
             stripper.feed(text)
             text = stripper.stripped()
         except:
@@ -974,7 +1044,7 @@ def URL2(a=None, c=None, r=None):
     return url
 
 # =============================================================================
-class S3CustomController:
+class CustomController:
     """
         Common helpers for custom controllers (template/controllers.py)
 
@@ -1040,11 +1110,11 @@ class StringTemplateParser:
         return parser._keys
 
 # =============================================================================
-class S3MarkupStripper(HTMLParser):
+class MarkupStripper(HTMLParser):
     """ Simple markup stripper """
 
     def __init__(self):
-        super(S3MarkupStripper, self).__init__()
+        super(MarkupStripper, self).__init__()
         #self.reset() # Included in super-init
         self.result = []
 
@@ -1057,12 +1127,99 @@ class S3MarkupStripper(HTMLParser):
 def s3_strip_markup(text):
 
     try:
-        stripper = S3MarkupStripper()
+        stripper = MarkupStripper()
         stripper.feed(text)
         text = stripper.stripped()
     except Exception:
         pass
     return text
+
+# =============================================================================
+class FormKey:
+    """
+        Tool to facilitate XSRF protection for custom forms
+    """
+
+    def __init__(self, formname):
+        """
+            Args:
+                formname: the name of the form (or action) that shall be
+                          protected
+
+            Notes:
+                - ideally, the formname should include both the description of
+                  the action and the record identity, e.g. "my_table/update/4",
+                  so as to avoid cross-form key collisions
+                - up to 10 concurrent instances of the form key are accepted,
+                  before the first key is dropped
+                - by default, a form cannot be submitted / an action cannot be
+                  performed with the same form key twice (see verify() how to
+                  override this behavior)
+        """
+
+        self.formname = formname
+
+    # -------------------------------------------------------------------------
+    def generate(self):
+        """
+            Generates the form key and store it in the current session.
+
+            Returns:
+                the form key as str
+
+            Note:
+                The form key shall be stored in the GET response (e.g. as
+                hidden input in the form), and then sent back by the client
+                with the POST request that shall be protected.
+
+            Example:
+                formkey = FormKey("modify-record/%s" % record_id).generate()
+                form.hidden = {"_formkey": formkey}
+        """
+
+        from uuid import uuid4
+        formkey = uuid4().hex
+
+        keyname = "_formkey[%s]" % self.formname
+
+        session = current.session
+        session[keyname] = session.get(keyname, [])[-9:] + [formkey]
+
+        return formkey
+
+    # -------------------------------------------------------------------------
+    def verify(self, post_vars, variable="_formkey", invalidate=True):
+        """
+            Verify the form key returned from the client.
+
+            Args:
+                post_vars: the POST vars dict
+                variable: the name of the POST variable containing the form key
+                invalidate: remove the form key when successful, so that it
+                            cannot be reused for another submission of the
+                            same form; this may need disabling for Ajax (unless
+                            key renewal is implemented)
+
+            Returns:
+                True|False whether the formkey is valid
+
+            Example:
+                formkey = FormKey("modify-record/%s" % record_id)
+                if not formkey.verify(request.post_vars):
+                    raise HTTP(403)
+        """
+
+        formkey = post_vars.get(variable)
+
+        keyname = "_formkey[%s]" % self.formname
+
+        keys = current.session.get(keyname, [])
+        if not formkey or formkey not in keys:
+            return False
+        else:
+            keys.remove(formkey)
+
+        return True
 
 # =============================================================================
 def system_info():
@@ -1164,11 +1321,11 @@ def system_info():
             psycopg_version = INCORRECT
             pgsql_version = UNKNOWN
         else:
-            con = psycopg2.connect(host = settings.database.get("host", "localhost"),
-                                   port = settings.database.get("port", None) or 5432,
-                                   database = settings.database.get("database", "sahana"),
-                                   user = settings.database.get("username", "sahana"),
-                                   password = settings.database.get("password", "password")
+            con = psycopg2.connect(host = settings.db_params.get("host", "localhost"),
+                                   port = settings.db_params.get("port", None) or 5432,
+                                   database = settings.db_params.get("database", "eden"),
+                                   user = settings.db_params.get("username", "eden"),
+                                   password = settings.db_params.get("password", "password")
                                    )
             cur = con.cursor()
             cur.execute("SELECT version()")

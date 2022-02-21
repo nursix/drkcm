@@ -437,54 +437,54 @@ class CRShelterModel(DataModel):
         cr_shelter_status_filter_opts[None] = T("Unspecified")
 
         if settings.get_org_branches():
-            org_filter = S3HierarchyFilter("organisation_id",
-                                           leafonly = False,
-                                           )
-        else:
-            org_filter = S3OptionsFilter("organisation_id",
-                                         search = True,
-                                         header = "",
-                                         #hidden = True,
+            org_filter = HierarchyFilter("organisation_id",
+                                         leafonly = False,
                                          )
+        else:
+            org_filter = OptionsFilter("organisation_id",
+                                       search = True,
+                                       header = "",
+                                       #hidden = True,
+                                       )
         filter_widgets = [
-                S3TextFilter(text_fields,
-                             label = T("Search"),
-                             #_class = "filter-search",
-                             ),
-                S3OptionsFilter("shelter_type_id",
-                                label = T("Type"),
-                                # Doesn't translate
-                                #represent = "%(name)s",
-                                ),
+                TextFilter(text_fields,
+                           label = T("Search"),
+                           #_class = "filter-search",
+                           ),
+                OptionsFilter("shelter_type_id",
+                              label = T("Type"),
+                              # Doesn't translate
+                              #represent = "%(name)s",
+                              ),
                 org_filter,
-                S3LocationFilter("location_id",
-                                 label = T("Location"),
-                                 levels = levels,
-                                 ),
-                S3OptionsFilter("status",
-                                label = T("Status"),
-                                options = cr_shelter_status_filter_opts,
-                                none = True,
-                                ),
+                LocationFilter("location_id",
+                               label = T("Location"),
+                               levels = levels,
+                               ),
+                OptionsFilter("status",
+                              label = T("Status"),
+                              options = cr_shelter_status_filter_opts,
+                              none = True,
+                              ),
                 ]
 
         if dynamic:
             if day_and_night:
-                filter_widgets.append(S3RangeFilter("available_capacity_night",
-                                                    label = T("Available Capacity (Night)"),
-                                                    ))
+                filter_widgets.append(RangeFilter("available_capacity_night",
+                                                  label = T("Available Capacity (Night)"),
+                                                  ))
             else:
-                filter_widgets.append(S3RangeFilter("available_capacity_day",
-                                                    label = T("Available Capacity"),
-                                                    ))
+                filter_widgets.append(RangeFilter("available_capacity_day",
+                                                  label = T("Available Capacity"),
+                                                  ))
         if day_and_night:
-            filter_widgets.append(S3RangeFilter("capacity_night",
-                                                label = T("Total Capacity (Night)"),
-                                                ))
+            filter_widgets.append(RangeFilter("capacity_night",
+                                              label = T("Total Capacity (Night)"),
+                                              ))
         else:
-            filter_widgets.append(S3RangeFilter("capacity_day",
-                                                label = T("Total Capacity"),
-                                                ))
+            filter_widgets.append(RangeFilter("capacity_day",
+                                              label = T("Total Capacity"),
+                                              ))
 
         # Custom create_next
         if settings.get_cr_shelter_people_registration():
@@ -1334,22 +1334,22 @@ class CRShelterInspectionModel(DataModel):
                        ]
 
         # Filter widgets
-        filter_widgets = [S3OptionsFilter("inspection_id$shelter_unit_id",
-                                          search = 10,
-                                          header = True,
-                                          ),
-                          S3OptionsFilter("flag_id",
-                                          label = T("Defect"),
-                                          options = s3_get_filter_opts("cr_shelter_flag"),
-                                          ),
-                          S3OptionsFilter("resolved",
-                                          label = T("Resolved"),
-                                          options = {False: T("No"),
-                                                     True: T("Yes"),
-                                                     },
-                                          default = False,
-                                          cols = 2,
-                                          ),
+        filter_widgets = [OptionsFilter("inspection_id$shelter_unit_id",
+                                        search = 10,
+                                        header = True,
+                                        ),
+                          OptionsFilter("flag_id",
+                                        label = T("Defect"),
+                                        options = get_filter_options("cr_shelter_flag"),
+                                        ),
+                          OptionsFilter("resolved",
+                                        label = T("Resolved"),
+                                        options = {False: T("No"),
+                                                   True: T("Yes"),
+                                                   },
+                                        default = False,
+                                        cols = 2,
+                                        ),
                           ]
 
         # Table Configuration

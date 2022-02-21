@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Sahana Eden Stats Controller
 """

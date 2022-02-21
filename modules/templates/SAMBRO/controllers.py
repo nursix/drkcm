@@ -14,12 +14,12 @@ from gluon import current
 from gluon.html import *
 from gluon.storage import Storage
 
-from core import FS, S3CustomController, S3FilterForm, S3DateFilter, S3LocationFilter, S3OptionsFilter, s3_str
+from core import FS, CustomController, FilterForm, DateFilter, LocationFilter, OptionsFilter, s3_str
 
 THEME = "SAMBRO"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom home page for the Public """
 
     # -------------------------------------------------------------------------
@@ -127,31 +127,31 @@ class index(S3CustomController):
                                         )
 
         # @ToDo: Options are currently built from the full-set rather than the filtered set
-        filter_widgets = [#S3LocationFilter("location.location_id",
-                          #                 label=T("Location"),
-                          #                 levels=("L0",),
-                          #                 widget="multiselect",
-                          #                 ),
-                          S3OptionsFilter("info.priority",
-                                          #label=T("Priority"),
-                                          ),
-                          S3OptionsFilter("info.event_type_id",
-                                          #label=T("Event Type"),
-                                          ),
-                          S3OptionsFilter("scope",
-                                          #label=T("Scope"),
-                                          ),
-                          S3DateFilter("info.expires",
-                                       label = "",
-                                       #label=T("Expiry Date"),
-                                       hide_time=True,
-                                       ),
+        filter_widgets = [#LocationFilter("location.location_id",
+                          #               label=T("Location"),
+                          #               levels=("L0",),
+                          #               widget="multiselect",
+                          #               ),
+                          OptionsFilter("info.priority",
+                                        #label=T("Priority"),
+                                        ),
+                          OptionsFilter("info.event_type_id",
+                                        #label=T("Event Type"),
+                                        ),
+                          OptionsFilter("scope",
+                                        #label=T("Scope"),
+                                        ),
+                          DateFilter("info.expires",
+                                     label = "",
+                                     #label=T("Expiry Date"),
+                                     hide_time=True,
+                                     ),
                           ]
-        filter_form = S3FilterForm(filter_widgets,
-                                   ajax=True,
-                                   submit=True,
-                                   url=ajax_url,
-                                   )
+        filter_form = FilterForm(filter_widgets,
+                                 ajax=True,
+                                 submit=True,
+                                 url=ajax_url,
+                                 )
         output["alert_filter_form"] = filter_form.html(resource, request.get_vars, list_id)
 
         # Filterable News Feed
@@ -186,19 +186,19 @@ class index(S3CustomController):
         #from core import s3_trunk8
         #s3_trunk8(lines=8)
 
-        #filter_widgets = [#S3LocationFilter("location_id",
-        #                  #                 label="",
-        #                  #                 levels=("L0",),
-        #                  #                 widget="multiselect",
-        #                  #                 ),
+        #filter_widgets = [#LocationFilter("location_id",
+        #                  #               label="",
+        #                  #               levels=("L0",),
+        #                  #               widget="multiselect",
+        #                  #               ),
         #                  # @ToDo: Source (Series? Tag?)
-        #                  #S3OptionsFilter(),
+        #                  #OptionsFilter(),
         #                  ]
-        #filter_form = S3FilterForm(filter_widgets,
-        #                           ajax=True,
-        #                           submit=True,
-        #                           url=ajax_url,
-        #                           )
+        #filter_form = FilterForm(filter_widgets,
+        #                         ajax=True,
+        #                         submit=True,
+        #                         url=ajax_url,
+        #                         )
         #output["news_filter_form"] = filter_form.html(resource, request.get_vars, list_id)
 
         # Title and view
@@ -215,7 +215,7 @@ class index(S3CustomController):
         return output
 
 # =============================================================================
-class subscriptions(S3CustomController):
+class subscriptions(CustomController):
     """ Custom page to manage subscriptions """
 
     # -------------------------------------------------------------------------
@@ -240,43 +240,43 @@ class subscriptions(S3CustomController):
         # @note: subscription manager has no resource context, so
         #        must configure fixed options or lookup resources
         #        for filter widgets which need it.
-        filters = [S3OptionsFilter("event_type_id",
-                                   label = T("Event Type"),
-                                   options = self._options("event_type_id"),
-                                   widget = "multiselect",
-                                   multiple = False,
-                                   resource = "cap_info",
-                                   _name = "event-filter",
-                                   ),
-                   S3OptionsFilter("priority",
-                                   label = T("Priority"),
-                                   options = self._options("priority"),
-                                   widget = "multiselect",
-                                   resource = "cap_info",
-                                   _name = "priority-filter",
-                                   ),
-                   #S3LocationFilter("location_id",
-                   #                 label = T("Location(s)"),
-                   #                 resource = "cap_area_location",
-                   #                 options = self._options("location_id"),
-                   #                 _name = "location-filter",
-                   #                 ),
+        filters = [OptionsFilter("event_type_id",
+                                 label = T("Event Type"),
+                                 options = self._options("event_type_id"),
+                                 widget = "multiselect",
+                                 multiple = False,
+                                 resource = "cap_info",
+                                 _name = "event-filter",
+                                 ),
+                   OptionsFilter("priority",
+                                 label = T("Priority"),
+                                 options = self._options("priority"),
+                                 widget = "multiselect",
+                                 resource = "cap_info",
+                                 _name = "priority-filter",
+                                 ),
+                   #LocationFilter("location_id",
+                   #               label = T("Location(s)"),
+                   #               resource = "cap_area_location",
+                   #               options = self._options("location_id"),
+                   #               _name = "location-filter",
+                   #               ),
                    ]
         cap_languages = current.deployment_settings.get_cap_languages()
         if len(cap_languages) > 1:
-            language_filters = S3OptionsFilter("language",
-                                               label = T("Language"),
-                                               options = cap_languages,
-                                               represent = "%(name)s",
-                                               resource = "cap_info",
-                                               _name = "language-filter",
-                                               )
+            language_filters = OptionsFilter("language",
+                                             label = T("Language"),
+                                             options = cap_languages,
+                                             represent = "%(name)s",
+                                             resource = "cap_info",
+                                             _name = "language-filter",
+                                             )
             filters.append(language_filters)
 
         if current.request.get_vars["option"] == "manage_recipient" and \
            has_role("ADMIN"):
             from core import S3Represent
-            recipient_filters = [S3OptionsFilter("id",
+            recipient_filters = [OptionsFilter("id",
                                        label = T("People"),
                                        represent = S3Represent(lookup="auth_user",
                                             fields = ["first_name", "last_name"],
@@ -287,7 +287,7 @@ class subscriptions(S3CustomController):
                                        _name = "person-filter",
                                        ),
                                  ]
-            group_filters = [S3OptionsFilter("id",
+            group_filters = [OptionsFilter("id",
                                        label = T("Groups"),
                                        represent = S3Represent(lookup="pr_group",
                                                                fields = ["name"],
@@ -436,15 +436,15 @@ class subscriptions(S3CustomController):
                 subscription = self._get_admin_subscription()
                 recipient_subscription = self._get_recipients_and_groups()
                 group_subscription = self._get_recipients_and_groups()
-            filter_form = S3FilterForm(filters, clear=False)
+            filter_form = FilterForm(filters, clear=False)
             fieldset = FIELDSET(filter_form.fields(None,
                                                    subscription["get_vars"]),
                                 _id="subscription-filter-form")
-            recipient_filter_form = S3FilterForm(recipient_filters, clear=False)
+            recipient_filter_form = FilterForm(recipient_filters, clear=False)
             recipient_fieldset = FIELDSET(recipient_filter_form.fields(None,
                                             recipient_subscription["get_vars"]),
                                           _id="recipient-filter-form")
-            group_filter_form = S3FilterForm(group_filters, clear=False)
+            group_filter_form = FilterForm(group_filters, clear=False)
             group_fieldset = FIELDSET(group_filter_form.fields(None,
                                                 group_subscription["get_vars"]),
                                       _id="group-filter-form")
@@ -462,7 +462,7 @@ class subscriptions(S3CustomController):
                 subscription = self._get_subscription()
 
             # Filters
-            filter_form = S3FilterForm(filters, clear=False)
+            filter_form = FilterForm(filters, clear=False)
             fieldset = FIELDSET(filter_form.fields(None,
                                                    subscription["get_vars"]),
                                 _id="subscription-filter-form")
@@ -1539,7 +1539,7 @@ $('#method_selector').change(function(){
         return None
 
 # =============================================================================
-class user_info(S3CustomController):
+class user_info(CustomController):
     """
         User Info API, used by Mobile Client
     """
@@ -1579,7 +1579,7 @@ class user_info(S3CustomController):
             return json.dumps(response)
 
 # =============================================================================
-class alert_hub_cop(S3CustomController):
+class alert_hub_cop(CustomController):
     """ Secondary (home) page for the Alert Hub """
 
     # -------------------------------------------------------------------------
@@ -1687,25 +1687,25 @@ class alert_hub_cop(S3CustomController):
                                         )
 
         # @ToDo: Options are currently built from the full-set rather than the filtered set
-        filter_widgets = [#S3LocationFilter("location.location_id",
-                          #                 label=T("Location"),
-                          #                 levels=("L0",),
-                          #                 widget="multiselect",
-                          #                 ),
-                          S3OptionsFilter("info.event_type_id",
-                                          #label=T("Event Type"),
-                                          ),
-                          S3DateFilter("info.expires",
-                                       label = "",
-                                       #label=T("Expiry Date"),
-                                       hide_time=True,
-                                       ),
+        filter_widgets = [#LocationFilter("location.location_id",
+                          #               label=T("Location"),
+                          #               levels=("L0",),
+                          #               widget="multiselect",
+                          #               ),
+                          OptionsFilter("info.event_type_id",
+                                        #label=T("Event Type"),
+                                        ),
+                          DateFilter("info.expires",
+                                     label = "",
+                                     #label=T("Expiry Date"),
+                                     hide_time=True,
+                                     ),
                           ]
-        filter_form = S3FilterForm(filter_widgets,
-                                   ajax=True,
-                                   submit=True,
-                                   url=ajax_url,
-                                   )
+        filter_form = FilterForm(filter_widgets,
+                                 ajax=True,
+                                 submit=True,
+                                 url=ajax_url,
+                                 )
         output["alert_filter_form"] = filter_form.html(resource, request.get_vars, list_id)
 
         # Title and view

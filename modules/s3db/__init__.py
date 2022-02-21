@@ -32,7 +32,6 @@ from . import project
 from . import req
 from . import s3
 from . import security
-from . import setup
 from . import sit
 from . import stats
 from . import supply

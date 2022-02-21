@@ -296,21 +296,21 @@ class FireStationModel(DataModel):
 
         # Filter widgets
         filter_widgets = [
-            S3TextFilter(text_fields,
-                         label = T("Search"),
-                         #_class="filter-search",
-                         ),
-            #S3OptionsFilter("organisation_id",
-            #                #hidden=True,
-            #                #label=T("Organization"),
-            #                # Doesn't support l10n
-            #                #represent="%(name)s",
-            #                ),
-            S3LocationFilter("location_id",
-                             #hidden=True,
-                             #label=T("Location"),
-                             levels=levels,
-                             ),
+            TextFilter(text_fields,
+                       label = T("Search"),
+                       #_class="filter-search",
+                       ),
+            #OptionsFilter("organisation_id",
+            #              #hidden=True,
+            #              #label=T("Organization"),
+            #              # Doesn't support l10n
+            #              #represent="%(name)s",
+            #              ),
+            LocationFilter("location_id",
+                           #hidden=True,
+                           #label=T("Location"),
+                           levels=levels,
+                           ),
             ]
 
         self.configure(tablename,

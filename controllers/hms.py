@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     HMS Hospital Status Assessment and Request Management System
 """

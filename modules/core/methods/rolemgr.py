@@ -208,6 +208,7 @@ class S3RoleManager(CRUDMethod):
                                crud_button(T("Export Roles"),
                                            _href = r.url(representation="csv"),
                                            ),
+                               _class = "rm-roles-actions",
                                )
 
             # Output
@@ -1435,7 +1436,7 @@ class S3PermissionWidget:
                      )
 
         # Module header icons
-        rtl = current.response.s3.rtl
+        rtl = current.response.s3.direction == "rtl"
         icons = {"expanded": "fa fa-caret-down",
                  "collapsed": "fa fa-caret-left" if rtl else "fa fa-caret-right",
                  }
@@ -2033,7 +2034,7 @@ class S3RolesExport:
     def as_csv(self):
         """
             Export the current roles and permissions as CSV,
-            suitable for prepop (see S3BulkImporter.import_role)
+            suitable for prepop (see BulkImporter.import_roles)
 
             Returns:
                 a StringIO containing the CSV

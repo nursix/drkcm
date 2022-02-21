@@ -293,8 +293,9 @@ class VolunteerActivityModel(DataModel):
                                                     cols = 4,
                                                     translate = True,
                                                     # Filter Activity Type by Sector
-                                                    filterby = "activity_type_id:vol_activity_type_sector.sector_id",
-                                                    match = "sector_id",
+                                                    match = {
+                                                        "activity_type_id:vol_activity_type_sector.sector_id": "sector_id",
+                                                        },
                                                     script = '''
 $.filterOptionsS3({
  'trigger':'sector_id',
@@ -387,22 +388,22 @@ $.filterOptionsS3({
             msg_list_empty = T("Currently no hours recorded for this volunteer"))
 
         filter_widgets = [
-            S3OptionsFilter("person_id$human_resource.organisation_id",
-                            # Doesn't support translations
-                            #represent="%(name)s",
-                            ),
-            S3OptionsFilter("activity_hours_activity_type.activity_type_id",
-                            # Doesn't support translation
-                            #represent = "%(name)s",
-                            ),
-            S3OptionsFilter("job_title_id",
-                            #label = T("Volunteer Role"),
-                            # Doesn't support translation
-                            #represent = "%(name)s",
-                            ),
-            S3DateFilter("date",
-                         hide_time = True,
-                         ),
+            OptionsFilter("person_id$human_resource.organisation_id",
+                          # Doesn't support translations
+                          #represent="%(name)s",
+                          ),
+            OptionsFilter("activity_hours_activity_type.activity_type_id",
+                          # Doesn't support translation
+                          #represent = "%(name)s",
+                          ),
+            OptionsFilter("job_title_id",
+                          #label = T("Volunteer Role"),
+                          # Doesn't support translation
+                          #represent = "%(name)s",
+                          ),
+            DateFilter("date",
+                       hide_time = True,
+                       ),
             ]
 
         report_fields = [#"training",
@@ -989,7 +990,7 @@ def vol_service_record(r, **attr):
 
         inner_table = TABLE(TR(TH(vol_name)),
                             TR(TD(org_name)))
-        if current.response.s3.rtl:
+        if current.response.s3.direction == "rtl":
             # Right-to-Left
             person_details = TABLE(TR(TD(inner_table),
                                       TD(logo),
@@ -1396,7 +1397,7 @@ def vol_volunteer_controller():
                                )
 
         if r.interactive:
-            if s3.rtl:
+            if s3.direction == "rtl":
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
                 f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value
@@ -1643,7 +1644,7 @@ def vol_person_controller():
         if r.representation == "s3json":
             current.xml.show_ids = True
         elif r.interactive and method != "import":
-            if s3.rtl:
+            if s3.direction == "rtl":
                 # Ensure that + appears at the beginning of the number
                 # - using table alias to only apply to filtered component
                 f = s3db.get_aliased(s3db.pr_contact, "pr_phone_contact").value

@@ -58,9 +58,15 @@ class S3MainMenu(default.S3MainMenu):
         order_access = lambda i: supply_coordinator(i) or supply_requester(i)
         supply_access = lambda i: order_access(i) or supply_distributor(i)
 
+        if settings.get_custom("daycare_testing_data"):
+            daycare_testing = MM("Daycare Testing", f="daycare_testing", restrict="ORG_GROUP_ADMIN")
+        else:
+            daycare_testing = None
+
         menu = [MM("Tests##disease", c="disease", link=False)(
                     MM("Test Results", f="case_diagnostics", restrict="TEST_PROVIDER"),
                     MM("Daily Reports", f="testing_report"),
+                    daycare_testing,
                     ),
                 MM("Equipment", c=("req", "inv", "supply"), link=False, check=supply_access)(
                     MM("Orders##delivery", f="req", vars={"type": 1}, check=order_access),
@@ -69,10 +75,11 @@ class S3MainMenu(default.S3MainMenu):
                     MM("Deliveries", c="inv", f="recv", check=supply_requester),
                     MM("Items", c="supply", f="item", restrict="SUPPLY_COORDINATOR"),
                     ),
-                MM("Organizations",
-                   c="org", f="organisation", restrict=("ORG_GROUP_ADMIN", "ORG_ADMIN"),
-                   vars = {"mine": 1} if not has_role("ORG_GROUP_ADMIN") else None,
-                   ),
+                MM("Organizations", c=("org", "hrm", "cms"), link=False, restrict=("ORG_GROUP_ADMIN", "ORG_ADMIN"))(
+                    MM("Organizations", c="org", f="organisation", vars = {"mine": 1} if not has_role("ORG_GROUP_ADMIN") else None),
+                    MM("Staff", c="hrm", f="staff"),
+                    MM("Newsletters", c="cms", f="read_newsletter"),
+                    ),
                 MM("Projects",
                    c = "project", f="project",
                    restrict = "ADMIN",
@@ -252,6 +259,15 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 )
 
     # -------------------------------------------------------------------------
+    @classmethod
+    def cms(cls):
+
+        if not current.auth.s3_has_role("ADMIN"):
+            return cls.org()
+
+        return super().cms()
+
+    # -------------------------------------------------------------------------
     @staticmethod
     def disease():
 
@@ -259,10 +275,18 @@ class S3OptionsMenu(default.S3OptionsMenu):
         daily_report = lambda i: has_role("ORG_ADMIN") and \
                                  has_role("TEST_PROVIDER", include_admin=False)
 
-        if current.deployment_settings.get_disease_testing_report_by_demographic():
+        settings = current.deployment_settings
+        if settings.get_disease_testing_report_by_demographic():
             report_function = "testing_demographic"
         else:
             report_function = "testing_report"
+
+        if settings.get_custom("daycare_testing_data"):
+            daycare_testing = M("Daycare Testing", f="daycare_testing", restrict="ORG_GROUP_ADMIN")(
+                                M("Statistics", m="report"),
+                                )
+        else:
+            daycare_testing = None
 
         return M(c="disease")(
                     M("Test Results", f="case_diagnostics", restrict="TEST_PROVIDER")(
@@ -273,6 +297,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Create", m="create", check=daily_report),
                         M("Statistics", f=report_function, m="report"),
                         ),
+                    daycare_testing,
                     M("Administration", restrict="ADMIN")(
                         M("Diseases", f="disease"),
                         M("Demographics", f="demographic"),
@@ -367,16 +392,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
             M("Create Organization", m="create", restrict="ORG_GROUP_ADMIN"),
             )
 
-        return M(c=("org", "hrm"))(
+        return M(c=("org", "hrm", "cms"))(
                     org_menu,
-                    M("Facilities", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
-                        M("Test Stations to review",
-                          vars = {"$$review": "1"},
-                          ),
-                        M("Unapproved Test Stations",
-                          vars = {"$$pending": "1"},
-                          ),
-                        M("Public Registry", m="summary"),
+                    M("Test Stations", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
+                        M("Test Stations to review", vars = {"$$review": "1"}),
+                        M("Unapproved##actionable", vars = {"$$pending": "1"}),
+                        M("Defunct", vars = {"$$obsolete": "1"}),
+                        M("All Test Stations", vars={"$$all": "1"}),
                         ),
                     M("Statistics", link=False, restrict="ORG_GROUP_ADMIN")(
                         M("Organizations", f="organisation", m="report"),
@@ -385,6 +407,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Staff", c="hrm", f=("staff", "person"),
                       restrict=("ORG_ADMIN", "ORG_GROUP_ADMIN"),
                       ),
+                    M("Newsletters", c="cms", f="read_newsletter")(
+                        M("Inbox", f="read_newsletter",
+                          check = lambda this: this.following()[0].check_permission(),
+                          ),
+                        M("Compose and Send", f="newsletter", p="create"),
+                        ),
                     M("Administration", restrict=("ADMIN"))(
                         M("Facility Types", f="facility_type"),
                         M("Organization Types", f="organisation_type"),

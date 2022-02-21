@@ -37,7 +37,7 @@ __all__ = ("S3SQLCustomForm",
            "S3SQLVerticalSubFormLayout",
            "S3SQLInlineComponent",
            "S3SQLInlineLink",
-           "S3WithIntro",
+           "WithAdvice",
            )
 
 import json
@@ -52,6 +52,7 @@ from gluon.validators import Validator
 
 from s3dal import Field, original_tablename
 
+from ..resource import FS
 from ..tools import s3_mark_required, s3_store_last_record_id, s3_str, \
                     s3_validate, JSONERRORS, JSONSEPARATORS, S3Represent
 
@@ -427,7 +428,7 @@ class S3SQLForm:
             if formfields:
                 for f in formfields:
                     fname = f.name
-                    if fname not in record and f.writable:
+                    if fname not in record:
                         missing_fields[fname] = f.default
             else:
                 for f in table.fields:
@@ -1856,8 +1857,17 @@ class S3SQLVirtualField(S3SQLFormElement):
         if not label:
             label = " ".join(s.capitalize() for s in selector.split("_"))
 
+        # Apply represent if defined
+        method = table[selector]
+        if hasattr(method, "handler") and \
+           hasattr(method.handler, "represent"):
+            represent = method.handler.represent
+        else:
+            represent = None
+
         field = Field(selector,
                       label = label,
+                      represent = represent,
                       widget = self,
                       )
 
@@ -1866,11 +1876,17 @@ class S3SQLVirtualField(S3SQLFormElement):
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
         """
-            Widget renderer for field method values, renders a simple
-            read-only DIV with the value
+            Widget renderer for field method values
+                - renders a simple DIV with the (represented) value
+                - includes the (raw) value as hidden input, so it is
+                  available in POST vars after form submission
         """
 
-        widget = DIV(value, **attributes)
+        v = field.represent(value) if field.represent else value
+
+        inp = INPUT(_type="hidden", _name=field.name, _value=s3_str(value))
+
+        widget = DIV(v, inp, **attributes)
         widget.add_class("s3-virtual-field")
 
         return widget
@@ -3893,12 +3909,12 @@ class S3SQLInlineLink(S3SQLInlineComponent):
 
             requires: validator to determine the selectable options (defaults
                       to field validator)
-            filterby: filter look-up options by this field (can be a field in
-                      the look-up table itself or in another table linked to it),
-                      str (field selector)
-            options: filter for these values, OR:
-            match: lookup the filter value from this field (can be a field in the
-                   master table, or in linked table), str (field selector)
+            filterby: filter look-up options, a dict {selector: values}, each
+                      selector can be a field in the look-up table itself or
+                      in another table linked to it
+            match: filter look-up options, analogous to filterby, but instead
+                   of values, specifies selectors to retrieve the filter values
+                   from the master resource, i.e. {selector: master_selector}
 
             ** Options for hierarchy and cascade widgets:
 
@@ -3950,7 +3966,6 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             if customise:
                 customise(r, tablename)
 
-        self.initialized = True
         if record_id:
             rkey = component.rkey
             rows = link.select([rkey], as_rows=True)
@@ -4280,8 +4295,6 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                 dict {value: representation} of options
         """
 
-        from ..resource import FS
-
         resource = self.resource
         component, link = self.get_link()
 
@@ -4298,57 +4311,82 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                 validator = validator.other
             try:
                 opts = validator.options()
-            except:
+            except AttributeError:
                 pass
 
         # Filter these options?
         widget_opts_get = self.options.get
+
+        filter_query = None
+        subquery = self.subquery
         filterby = widget_opts_get("filterby")
-        filteropts = widget_opts_get("options")
-        filterexpr = widget_opts_get("match")
+        if filterby:
+            # Field shall match one of the specified values
+            for selector, values in filterby.items():
 
-        if filterby and \
-           (filteropts is not None or filterexpr and resource._rows):
+                q = subquery(selector, values)
+                filter_query = filter_query & q if filter_query else q
 
-            # filterby is a field selector for the component
-            # that shall match certain conditions
-            filter_selector = FS(filterby)
-            filter_query = None
+        filterby = widget_opts_get("match")
+        if filterby and resource._rows:
+            # Field shall match one of the values in the field
+            # specified by expr
+            for selector, expr in filterby.items():
 
-            if filteropts is not None:
-                # filterby-field shall match one of the given filteropts
-                if isinstance(filteropts, (list, tuple, set)):
-                    filter_query = (filter_selector.belongs(list(filteropts)))
-                else:
-                    filter_query = (filter_selector == filteropts)
-
-            elif filterexpr:
-                # filterby-field shall match one of the values for the
-                # filterexpr-field of the master record
-                rfield = resource.resolve_selector(filterexpr)
+                # Get the values in the match-field
+                rfield = resource.resolve_selector(expr)
                 colname = rfield.colname
+                rows = resource.select([expr], as_rows=True)
+                values = [row[colname] for row in rows]
 
-                rows = resource.select([filterexpr], as_rows=True)
-                values = set(row[colname] for row in rows)
-                values.discard(None)
+                q = subquery(selector, values)
+                filter_query = filter_query & q if filter_query else q
 
-                if values:
-                    filter_query = (filter_selector.belongs(values)) | \
-                                   (filter_selector == None)
-
+        if filter_query is not None:
             # Select the filtered component rows
             filter_resource = current.s3db.resource(component.tablename,
-                                                    filter = filter_query)
+                                                    filter = filter_query,
+                                                    )
             rows = filter_resource.select(["id"], as_rows=True)
 
-            filtered_opts = []
+            # Reduce the options to the thus selected rows
             values = set(str(row[component.table._id]) for row in rows)
-            for opt in opts:
-                if str(opt[0]) in values:
-                    filtered_opts.append(opt)
+            filtered_opts = [opt for opt in opts if str(opt[0]) in values]
             opts = filtered_opts
 
         return dict(opts)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def subquery(selector, values):
+        """
+            Construct a query for selector to match values; taking
+            into account the special case of None (helper function
+            for get_options).
+
+            Args:
+                selector: the field selector (str)
+                values: the values to match (list|tuple|set or single value)
+
+            Returns:
+                the query
+        """
+
+        field = FS(selector)
+
+        if isinstance(values, (list, tuple, set)):
+            if None in values:
+                filter_values = [v for v in values if v is not None]
+                if filter_values:
+                    query = (field.belongs(filter_values)) | (field == None)
+                else:
+                    query = (field == None)
+            else:
+                query = (field.belongs(list(values)))
+        else:
+            query = (field == values)
+
+        return query
 
     # -------------------------------------------------------------------------
     def get_link(self):
@@ -4373,26 +4411,29 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         return (component, link)
 
 # =============================================================================
-class S3WithIntro(S3SQLFormElement):
+class WithAdvice(S3SQLFormElement):
     """
-        Wrapper for widgets to add an introductory text above them
+        Wrapper for form elements (or field widgets) to add an
+        introductory/advisory text above or below them
     """
 
-    def __init__(self, widget, intro=None, cmsxml=False):
+    def __init__(self, widget, text=None, below=False, cmsxml=False):
         """
             Args:
                 widget: the widget
-                intro: the intro, string|DIV|tuple,
-                       if specified as tuple (module, resource, name),
-                       the intro text will be looked up from CMS
+                text: the text, string|DIV|tuple,
+                      if specified as tuple (module, resource, name),
+                      the text will be looked up from CMS
+                below: render the advice below rather than above the widget
                 cmsxml: do not XML-escape CMS contents, should only
                         be used with safe origin content (=normally never)
         """
 
         self.widget = widget
 
-        self.intro = intro
+        self.text = text
         self.cmsxml = cmsxml
+        self.below = below
 
     # -------------------------------------------------------------------------
     def resolve(self, resource):
@@ -4404,10 +4445,20 @@ class S3WithIntro(S3SQLFormElement):
                           against
         """
 
-        resolved = self.widget.resolve(resource)
+        widget = self.widget
+
+        if isinstance(widget, str):
+            widget = S3SQLField(widget)
+
+        resolved = widget.resolve(resource)
 
         field = resolved[2]
         if field:
+            if isinstance(widget, S3SQLField):
+                if field.widget:
+                    self.widget = field.widget
+                else:
+                    self.widget = self.default_widget
             field.widget = self
         return resolved
 
@@ -4432,52 +4483,70 @@ class S3WithIntro(S3SQLFormElement):
     # -------------------------------------------------------------------------
     def __call__(self, *args, **kwargs):
         """
-            Widget renderer => map to widget, then add intro
+            Widget renderer => map to widget, then add advice
         """
 
         w = self.widget(*args, **kwargs)
 
-        intro = self.intro
-        if isinstance(intro, tuple):
-            if len(intro) == 3 and current.deployment_settings.has_module("cms"):
-                intro = self.get_cms_intro(intro)
+        text = self.text
+        if isinstance(text, tuple):
+            if len(text) == 3 and current.deployment_settings.has_module("cms"):
+                text = current.s3db.cms_get_content(text[2],
+                                                    module = text[0],
+                                                    resource = text[1],
+                                                    cmsxml = self.cmsxml,
+                                                    )
             else:
-                intro = None
-        if intro:
-            return TAG[""](DIV(intro, _class="s3-widget-intro"), w)
+                text = None
+
+        if text:
+            elements = (DIV(text, _class="widget-advice"), w)
+            if self.below:
+                elements = elements[::-1]
+            return TAG[""](*elements)
         else:
             return w
 
     # -------------------------------------------------------------------------
-    def get_cms_intro(self, intro):
+    @staticmethod
+    def default_widget(*args, **kwargs):
         """
-            Get intro from CMS
-
-            Args:
-                intro: the intro spec as tuple (module, resource, postname)
+            Default widget if enclosed field has no widget
         """
 
-        # Get intro text from CMS
-        db = current.db
-        s3db = current.s3db
+        from s3dal import SQLCustomType
+        from gluon.sqlhtml import REGEX_WIDGET_CLASS, OptionsWidget
 
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == intro[0]) & \
-                         (ltable.resource == intro[1]) & \
-                         (ltable.deleted == False))
+        widgets = SQLFORM.widgets
 
-        query = (ctable.name == intro[2]) & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                               join = join,
-                               cache = s3db.cache,
-                               limitby = (0, 1),
-                               ).first()
-        if not row:
-            return None
+        field = args[0]
+        ftype = field.type
 
-        return XML(row.body) if self.cmsxml else row.body
+        if ftype == 'upload':
+            widget = widgets.upload.widget(*args, **kwargs)
+        elif ftype == 'boolean':
+            widget = widgets.boolean.widget(*args, **kwargs)
+        elif OptionsWidget.has_options(field):
+            if not field.requires.multiple:
+                widget = OptionsWidget.widget(*args, **kwargs)
+            else:
+                widget = widgets.multiple.widget(*args, **kwargs)
+        elif str(ftype).startswith('list:'):
+            widget = widgets.list.widget(*args, **kwargs)
+        elif ftype == 'text':
+            widget = widgets.text.widget(*args, **kwargs)
+        elif ftype == 'password':
+            widget = widgets.password.widget(*args, **kwargs)
+        elif ftype == 'blob':
+            raise TypeError('WithAdvice: unsupported field type %s' % ftype)
+        elif isinstance(ftype, SQLCustomType) and callable(ftype.widget):
+            widget = ftype.widget(*args, **kwargs)
+        else:
+            field_type = REGEX_WIDGET_CLASS.match(str(ftype)).group()
+            if not field_type or field_type not in widgets:
+                field_type = "string"
+            widget = widgets[field_type].widget(*args, **kwargs)
+
+        return widget
 
 # END =========================================================================

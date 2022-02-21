@@ -8,9 +8,20 @@ settings.set_theme()
 # Empty dict to store custom CRUD views
 s3.views = {}
 
-if session.s3.pending_consent and request.controller != "default":
-    # Enforce consent response
-    redirect(URL(c="default", f="user", args=["consent"], vars={"_next": URL()}))
+if request.controller != "default":
+    if session.s3.pending_consent:
+        # Enforce consent response
+        redirect(URL(c="default", f="user", args=["consent"], vars={"_next": URL()}))
+    elif session.s3.mandatory_page:
+        # Enforce mandatory page
+        # (that page must reset sessions.s3.mandatory_page when satisfied)
+        mandatory = settings.get_auth_mandatory_page()
+        if mandatory:
+            next_url = mandatory() if callable(mandatory) else mandatory
+        else:
+            next_url = None
+        if next_url:
+            redirect(next_url)
 
 if auth.permission.format in ("html",):
 

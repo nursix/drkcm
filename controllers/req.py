@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Request Management
 """
@@ -1026,7 +1024,7 @@ def req_item():
 # -----------------------------------------------------------------------------
 def req_item_packs():
     """
-        Called by S3OptionsFilter to provide the pack options for an Item
+        Called by OptionsFilter to provide the pack options for an Item
 
         Access via the .json representation to avoid work rendering menus, etc
     """
@@ -1280,9 +1278,9 @@ def commit():
                 for s in m:
                     skills.append(s)
             return skills
-        s3base.s3_set_default_filter("competency.skill_id",
-                                     skill_default_filter,
-                                     tablename = "hrm_human_resource")
+        s3base.set_default_filter("competency.skill_id",
+                                  skill_default_filter,
+                                  tablename = "hrm_human_resource")
 
     def prep(r):
         if r.interactive and r.record:
@@ -1631,14 +1629,13 @@ def commit_req():
                                           limitby=(0, 1)).first()
 
     # User must have permissions over facility which is sending
-    (prefix, resourcename, id) = s3db.get_instance(s3db.org_site, site_id)
+    resourcename, id = s3db.get_instance(s3db.org_site, site_id)
     if not site_id or not auth.s3_has_permission("update",
-                                                 "%s_%s" % (prefix,
-                                                            resourcename),
-                                                 record_id=id):
+                                                 resourcename,
+                                                 record_id = id,
+                                                 ):
         session.error = T("You do not have permission to make this commitment.")
-        redirect(URL(c="req", f="req",
-                     args=[req_id]))
+        redirect(URL(c="req", f="req", args=[req_id]))
 
     # Create a new commit record
     commit_id = s3db.req_commit.insert(date = request.utcnow,
@@ -1715,14 +1712,13 @@ def send_req():
                                           limitby=(0, 1)).first()
 
     # User must have permissions over facility which is sending
-    (prefix, resourcename, id) = s3db.get_instance(db.org_site, site_id)
+    resourcename, id = s3db.get_instance(db.org_site, site_id)
     if not site_id or not auth.s3_has_permission("update",
-                                                 "%s_%s" % (prefix,
-                                                            resourcename),
-                                                 record_id=id):
+                                                 resourcename,
+                                                 record_id = id,
+                                                 ):
         session.error = T("You do not have permission to send this shipment.")
-        redirect(URL(c="req", f="req",
-                     args = [req_id]))
+        redirect(URL(c="req", f="req", args=[req_id]))
 
     ritable = s3db.req_req_item
     iitable = s3db.inv_inv_item
@@ -1993,10 +1989,10 @@ def fema():
 
     # Filter Widgets
     filter_widgets = [
-        s3base.S3OptionsFilter("req_id$site_id",
-                               label = T("Facility"),
-                               #cols = 3,
-                               ),
+        s3base.OptionsFilter("req_id$site_id",
+                             label = T("Facility"),
+                             #cols = 3,
+                             ),
     ]
     s3db.configure("req_req_item", filter_widgets = filter_widgets)
 

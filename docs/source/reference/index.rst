@@ -11,3 +11,4 @@ Reference Guide
    models/index
    methods/index
    ui/index
+   tools/index

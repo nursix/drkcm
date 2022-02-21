@@ -27,7 +27,7 @@
 
 from gluon import current, A, DIV, LI, UL
 
-from ..filters import S3FilterForm
+from ..filters import FilterForm
 from ..tools import get_crud_string
 
 from .base import CRUDMethod
@@ -93,7 +93,7 @@ class S3Summary(CRUDMethod):
         if filter_widgets and not self.hide_filter:
             # Apply filter defaults (before rendering the data!)
             show_filter_form = True
-            S3FilterForm.apply_filter_defaults(r, resource)
+            FilterForm.apply_filter_defaults(r, resource)
 
         # Render sections
         tab_idx = 0
@@ -246,15 +246,15 @@ class S3Summary(CRUDMethod):
                                       current.deployment_settings.get_ui_filter_clear())
             filter_formstyle = get_config("filter_formstyle")
             filter_submit = get_config("filter_submit", True)
-            filter_form = S3FilterForm(filter_widgets,
-                                       clear=filter_clear,
-                                       formstyle=filter_formstyle,
-                                       submit=filter_submit,
-                                       ajax=filter_ajax,
-                                       url=filter_submit_url,
-                                       ajaxurl=filter_ajax_url,
-                                       _class="filter-form",
-                                       _id=form_id)
+            filter_form = FilterForm(filter_widgets,
+                                     clear=filter_clear,
+                                     formstyle=filter_formstyle,
+                                     submit=filter_submit,
+                                     ajax=filter_ajax,
+                                     url=filter_submit_url,
+                                     ajaxurl=filter_ajax_url,
+                                     _class="filter-form",
+                                     _id=form_id)
             fresource = current.s3db.resource(resource.tablename)
 
             alias = resource.alias if r.component else None

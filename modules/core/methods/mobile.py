@@ -570,15 +570,11 @@ class S3MobileSchema:
                 # Look up the UUID for the default
                 uuid = self.get_uuid(lookup, default)
                 if uuid:
-
                     if superkey:
                         # Get the instance record ID
-                        prefix, name, record_id = current.s3db.get_instance(lookup, default)
-                        if record_id:
-                            tablename = "%s_%s" % (prefix, name)
+                        tablename, record_id = current.s3db.get_instance(lookup, default)
                     else:
-                        record_id = default
-                        tablename = lookup
+                        tablename, record_id = lookup, default
 
                     if record_id:
 

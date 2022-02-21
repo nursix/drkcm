@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
     Asset Management Functionality
-
-    http://eden.sahanafoundation.org/wiki/BluePrint/Assets
 """
 
 module = request.controller

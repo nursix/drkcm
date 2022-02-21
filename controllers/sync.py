@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-
-""" Synchronization Controllers """
+"""
+    Synchronization Controllers
+"""
 
 # -----------------------------------------------------------------------------
 def index():

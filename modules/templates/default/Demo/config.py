@@ -67,6 +67,7 @@ def config(settings):
         ("pt", "Portuguese"),
         ("pt-br", "Portuguese (Brazil)"),
         ("ru", "Russian"),
+        ("sv", "Swedish"),
         ("tet", "Tetum"),
         #("si", "Sinhala"), # Sri Lanka
         #("so", "Somali"),
@@ -124,13 +125,6 @@ def config(settings):
             #description = "Needed for Breadcrumbs",
             restricted = False,
             module_type = None  # No Menu
-        )),
-        ("setup", Storage(
-            name_nice = T("Setup"),
-            #description = "WebSetup",
-            restricted = True,
-            access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
-             module_type = None  # No Menu
         )),
         ("sync", Storage(
             name_nice = T("Synchronization"),

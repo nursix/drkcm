@@ -7,12 +7,12 @@
 from gluon import current
 from gluon.html import A, DIV, H3, P, XML
 
-from core import S3CustomController
+from core import CustomController
 
 THEME = "BRCMS"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):

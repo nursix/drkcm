@@ -7,10 +7,10 @@
 import os
 
 from reportlab.lib.pagesizes import A4
-#from reportlab.lib.colors import HexColor
+from reportlab.lib.colors import Color
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 
 from gluon import current
 
@@ -32,7 +32,7 @@ class RLPCardLayout(S3PDFCardLayout):
     doublesided = False
 
     # -------------------------------------------------------------------------
-    def draw_value(self, x, y, value, width=120, height=40, size=7, bold=True, valign=None, halign=None):
+    def draw_value(self, x, y, value, width=120, height=40, size=7, bold=True, valign=None, halign=None, box=False):
         """
             Helper function to draw a centered text above position (x, y);
             allows the text to wrap if it would otherwise exceed the given
@@ -63,7 +63,14 @@ class RLPCardLayout(S3PDFCardLayout):
         style.fontSize = size
         style.leading = size + 2
         style.splitLongWords = False
-        style.alignment = TA_CENTER if halign=="center" else TA_LEFT
+        style.alignment = TA_CENTER if halign=="center" else \
+                          TA_RIGHT if halign == "right" else TA_LEFT
+
+        if box:
+            style.borderWidth = 0.5
+            style.borderPadding = 3
+            style.borderColor = Color(0, 0, 0)
+            style.backColor = Color(0.7, 0.7, 0.7)
 
         para = Paragraph(value, style)
         aW, aH = para.wrap(width, height)
@@ -83,6 +90,7 @@ class RLPCardLayout(S3PDFCardLayout):
             vshift = 0
 
         para.drawOn(self.canv, x - para.width / 2, y - vshift)
+
         return aH
 
 # =============================================================================

@@ -1,5 +1,5 @@
 /**
- * jQuery UI HierarchicalOpts Widget for S3HierarchyWidget/S3HierarchyFilter
+ * jQuery UI HierarchicalOpts Widget for S3HierarchyWidget/HierarchyFilter
  *
  * @copyright 2013-2021 (c) Sahana Software Foundation
  * @license MIT

@@ -139,101 +139,6 @@ def config(settings):
     #settings.auth.profile_controller = "hrm"
 
     # -------------------------------------------------------------------------
-    # Setup
-    settings.setup.wizard_questions += [{"title": "Modules",
-                                         "modules": [# @ToDo: Handle modules which are themselves dependencies for other modules
-                                                     #{"module": "asset",
-                                                     # "label": "Assets",
-                                                     # "description": "Asset Management",
-                                                     # "dependencies": ["supply",
-                                                     #                  ],
-                                                     # },
-                                                     #{"module": "hrm",
-                                                     # "label": "Staff",
-                                                     # "description": "Staff",
-                                                     # },
-                                                     {"module": "project",
-                                                      "label": "Projects",
-                                                      "description": "Projects",
-                                                      },
-                                                     {"module": "cr",
-                                                      "label": "Shelters",
-                                                      "description": "Shelters",
-                                                      },
-                                                     {"module": "hms",
-                                                      "label": "Hospitals",
-                                                      "description": "Hospitals",
-                                                      },
-                                                     {"module": "transport",
-                                                      "label": "Transport",
-                                                      "description": "Airports, Ports, Border Crossings",
-                                                      },
-                                                     {"module": "vehicle",
-                                                      "label": "Vehicles",
-                                                      "description": "Vehicle Management",
-                                                      "dependencies": [{"module": "asset",
-                                                                        "label": "Assets",
-                                                                        },
-                                                                       {"module": "supply",
-                                                                        "label": "Supply",
-                                                                        },
-                                                                       ],
-                                                      },
-                                                     {"module": "vol",
-                                                      "label": "Volunteers",
-                                                      "description": "Volunteer Management",
-                                                      "dependencies": [{"module": "hrm",
-                                                                        "label": "Staff",
-                                                                        },
-                                                                       ],
-                                                      },
-                                                     ],
-                                         },
-                                        {"title": "Organizations",
-                                         "module": "org",
-                                         "questions": [{"question": "Do you need support for Branch Organisations?",
-                                                        "setting": "org.branches",
-                                                        "fn": "get_org_branches",
-                                                        "options": {True: "Yes", False: "No"},
-                                                        },
-                                                       ],
-                                         },
-                                        {"title": "Staff",
-                                         "module": "hrm",
-                                         "questions": [{"question": "Will you record data for multiple Organisations?",
-                                                        "setting": "hrm.multiple_orgs",
-                                                        "fn": "get_hrm_multiple_orgs",
-                                                        "options": {True: "Yes", False: "No"},
-                                                        },
-                                                       {"question": "Do your human resources need to be able to mark their periods of unavailability?",
-                                                        "setting": "hrm.unavailability",
-                                                        "fn": "get_hrm_unavailability",
-                                                        "options": {True: "Yes", None: "No"},
-                                                        },
-                                                       {"question": "Do you want to manage Shifts for your Facilities?",
-                                                        "setting": "org.facility_shifts",
-                                                        "fn": "get_org_facility_shifts",
-                                                        "options": {True: "Yes", False: "No"},
-                                                        },
-                                                       ],
-                                         },
-                                        {"title": "Projects",
-                                         "module": "project",
-                                         "questions": [{"question": "Do you want to categorise Projects by Hazard?",
-                                                        "setting": "project.hazards",
-                                                        "fn": "get_project_hazards",
-                                                        "options": {True: "Yes", False: "No"},
-                                                        },
-                                                       {"question": "Do you want to categorise Projects by Theme?",
-                                                        "setting": "project.themes",
-                                                        "fn": "get_project_themes",
-                                                        "options": {True: "Yes", False: "No"},
-                                                        },
-                                                       ],
-                                         },
-                                        ]
-
-    # -------------------------------------------------------------------------
     # L10n settings
     # Languages used in the deployment (used for Language Toolbar, GIS Locations, etc)
     # http://www.loc.gov/standards/iso639-2/php/code_list.php
@@ -268,6 +173,7 @@ def config(settings):
         ("pt", "Portuguese"),
         #("pt-br", "Portuguese (Brazil)"),
         #("ru", "Russian"),
+        ("sv", "Swedish"),
         #("tet", "Tetum"),
         ##("si", "Sinhala"), # Sri Lanka
         ##("so", "Somali"),
@@ -532,8 +438,6 @@ def config(settings):
     #settings.ui.label_mobile_phone = "Cell Phone"
     # Enable this to change the label for 'Postcode'
     #settings.ui.label_postcode = "ZIP Code"
-    # Enable Social Media share buttons
-    #settings.ui.social_buttons = True
     # Enable this to show pivot table options form by default
     #settings.ui.hide_report_options = False
     # Uncomment to show created_by/modified_by using Names not Emails
@@ -1326,12 +1230,6 @@ def config(settings):
             name_nice = T("Ticket Viewer"),
             #description = "Needed for Breadcrumbs",
             restricted = False,
-            module_type = None  # No Menu
-        )),
-        ("setup", Storage(
-            name_nice = T("Setup"),
-            #description = "WebSetup",
-            access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
             module_type = None  # No Menu
         )),
         ("sync", Storage(

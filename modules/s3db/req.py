@@ -498,92 +498,92 @@ class RequestModel(DataModel):
         levels = current.gis.get_relevant_hierarchy_levels()
 
         filter_widgets = [
-            #S3TextFilter(["committer_id$first_name",
-            #              "committer_id$middle_name",
-            #              "committer_id$last_name",
-            #              "site_id$name",
-            #              "comments",
-            #              "req_id$name",
-            #              "organisation_id$name"
-            #              ],
-            #             label = T("Search"),
-            #             comment = T("Search for a Request by Committer name, Request ID, Site or Organization."),
-            #             ),
-            S3OptionsFilter("fulfil_status",
-                            # Better to default (easier to customise/consistency)
-                            #label = T("Fulfill Status"),
-                            cols = 3,
-                            ),
-            S3LocationFilter("site_id$location_id",
-                             levels = levels,
-                             hidden = True,
-                             ),
-            S3OptionsFilter("site_id",
-                            # Better to default (easier to customise/consistency)
-                            #label = T("Requested For Facility"),
-                            hidden = True,
-                            ),
-            S3OptionsFilter("created_by",
-                            label = T("Logged By"),
-                            hidden = True,
-                            ),
-            S3DateFilter("date",
-                         # Better to default (easier to customise/consistency)
-                         #label = T("Date Requested"),
-                         hide_time = True,
-                         input_labels = {"ge": "From", "le": "To"},
-                         comment = T("Search for requests made between these dates."),
-                         hidden = True,
-                         ),
-            S3DateFilter("date_required",
-                         # Better to default (easier to customise/consistency)
-                         #label = T("Date Needed By"),
-                         hide_time = True,
-                         input_labels = {"ge": "From", "le": "To"},
-                         comment = T("Search for requests required between these dates."),
-                         hidden = True,
-                         ),
+            #TextFilter(["committer_id$first_name",
+            #            "committer_id$middle_name",
+            #            "committer_id$last_name",
+            #            "site_id$name",
+            #            "comments",
+            #            "req_id$name",
+            #            "organisation_id$name"
+            #            ],
+            #           label = T("Search"),
+            #           comment = T("Search for a Request by Committer name, Request ID, Site or Organization."),
+            #           ),
+            OptionsFilter("fulfil_status",
+                          # Better to default (easier to customise/consistency)
+                          #label = T("Fulfill Status"),
+                          cols = 3,
+                          ),
+            LocationFilter("site_id$location_id",
+                           levels = levels,
+                           hidden = True,
+                           ),
+            OptionsFilter("site_id",
+                          # Better to default (easier to customise/consistency)
+                          #label = T("Requested For Facility"),
+                          hidden = True,
+                          ),
+            OptionsFilter("created_by",
+                          label = T("Logged By"),
+                          hidden = True,
+                          ),
+            DateFilter("date",
+                       # Better to default (easier to customise/consistency)
+                       #label = T("Date Requested"),
+                       hide_time = True,
+                       input_labels = {"ge": "From", "le": "To"},
+                       comment = T("Search for requests made between these dates."),
+                       hidden = True,
+                       ),
+            DateFilter("date_required",
+                       # Better to default (easier to customise/consistency)
+                       #label = T("Date Needed By"),
+                       hide_time = True,
+                       input_labels = {"ge": "From", "le": "To"},
+                       comment = T("Search for requests required between these dates."),
+                       hidden = True,
+                       ),
             ]
 
         position = 1
         if transit_status:
             position += 1
             filter_widgets.insert(0,
-                                  S3OptionsFilter("transit_status",
-                                                  # Better to default (easier to customise/consistency)
-                                                  #label = T("Transit Status"),
-                                                  options = req_status_opts,
-                                                  cols = 3,
-                                                  ))
+                                  OptionsFilter("transit_status",
+                                                # Better to default (easier to customise/consistency)
+                                                #label = T("Transit Status"),
+                                                options = req_status_opts,
+                                                cols = 3,
+                                                ))
 
         if not default_type:
             filter_widgets.insert(position,
-                                  S3OptionsFilter("type",
-                                                  label = T("Type"),
-                                                  cols = len(req_types),
-                                                  ))
+                                  OptionsFilter("type",
+                                                label = T("Type"),
+                                                cols = len(req_types),
+                                                ))
         if default_type == 1 or (not default_type and 1 in req_types):
             filter_widgets.insert(position + 2,
-                                  S3OptionsFilter("req_item.item_id$item_category_id",
-                                                  label = T("Item Category"),
-                                                  hidden = True,
-                                                  ))
+                                  OptionsFilter("req_item.item_id$item_category_id",
+                                                label = T("Item Category"),
+                                                hidden = True,
+                                                ))
         if default_type == 3 or (not default_type and 3 in req_types):
             filter_widgets.insert(position + 2,
-                                  S3OptionsFilter("req_skill.skill_id",
-                                                  # Better to default (easier to customise/consistency)
-                                                  #label = T("Skill"),
-                                                  hidden = True,
-                                                  ))
+                                  OptionsFilter("req_skill.skill_id",
+                                                # Better to default (easier to customise/consistency)
+                                                #label = T("Skill"),
+                                                hidden = True,
+                                                ))
         if use_commit:
             filter_widgets.insert(position,
-                                  S3OptionsFilter("commit_status",
-                                                  # Better to default (easier to customise/consistency)
-                                                  #label = T("Commit Status"),
-                                                  options = req_status_opts,
-                                                  cols = 3,
-                                                  hidden = True,
-                                                  ))
+                                  OptionsFilter("commit_status",
+                                                # Better to default (easier to customise/consistency)
+                                                #label = T("Commit Status"),
+                                                options = req_status_opts,
+                                                cols = 3,
+                                                hidden = True,
+                                                ))
 
         report_fields = ["priority",
                          "site_id$organisation_id",
@@ -1898,19 +1898,19 @@ $.filterOptionsS3({
         lappend("comments")
 
         filter_widgets = [
-            S3OptionsFilter("req_id$fulfil_status",
-                            label = T("Status"),
-                            options = req_status_opts,
-                            cols = 3,
-                            ),
-            S3OptionsFilter("req_id$priority",
-                            # Better to default (easier to customise/consistency)
-                            #label = T("Priority"),
-                            options = req_priority_opts,
-                            cols = 3,
-                            ),
-            S3LocationFilter("req_id$site_id$location_id",
-                             ),
+            OptionsFilter("req_id$fulfil_status",
+                          label = T("Status"),
+                          options = req_status_opts,
+                          cols = 3,
+                          ),
+            OptionsFilter("req_id$priority",
+                          # Better to default (easier to customise/consistency)
+                          #label = T("Priority"),
+                          options = req_priority_opts,
+                          cols = 3,
+                          ),
+            LocationFilter("req_id$site_id$location_id",
+                           ),
             ]
 
         self.configure(tablename,
@@ -2252,18 +2252,18 @@ class RequestSkillModel(DataModel):
 
         # Filter Widgets
         filter_widgets = [
-            S3OptionsFilter("req_id$fulfil_status",
-                            label = T("Status"),
-                            options = req_status_opts,
-                            cols = 3,
-                            ),
-            S3OptionsFilter("req_id$priority",
-                            label = T("Priority"),
-                            options = req_priority_opts,
-                            cols = 3,
-                            ),
-            S3LocationFilter("req_id$site_id$location_id",
-                             ),
+            OptionsFilter("req_id$fulfil_status",
+                          label = T("Status"),
+                          options = req_status_opts,
+                          cols = 3,
+                          ),
+            OptionsFilter("req_id$priority",
+                          label = T("Priority"),
+                          options = req_priority_opts,
+                          cols = 3,
+                          ),
+            LocationFilter("req_id$site_id$location_id",
+                           ),
         ]
 
         # Configuration
@@ -4013,43 +4013,43 @@ class CommitModel(DataModel):
                           *s3_meta_fields())
 
         filter_widgets = [
-            S3TextFilter(["committer_id$first_name",
-                          "committer_id$middle_name",
-                          "committer_id$last_name",
-                          "site_id$name",
-                          "comments",
-                          "req_id$name",
-                          "organisation_id$name"
-                          ],
-                         label = T("Search"),
-                         comment = T("Search for a commitment by Committer name, Request ID, Site or Organization."),
-                         ),
-            S3LocationFilter("location_id",
-                             hidden = True,
-                             ),
-            S3DateFilter("date",
-                         # Better to default (easier to customise/consistency)
-                         #label = T("Date"),
-                         hide_time = True,
-                         comment = T("Search for commitments made between these dates."),
-                         hidden = True,
-                         ),
-            S3DateFilter("date_available",
-                         # Better to default (easier to customise/consistency)
-                         #label = T("Date Available"),
-                         hide_time = True,
-                         comment = T("Search for commitments available between these dates."),
-                         hidden = True,
-                         ),
+            TextFilter(["committer_id$first_name",
+                        "committer_id$middle_name",
+                        "committer_id$last_name",
+                        "site_id$name",
+                        "comments",
+                        "req_id$name",
+                        "organisation_id$name"
+                        ],
+                       label = T("Search"),
+                       comment = T("Search for a commitment by Committer name, Request ID, Site or Organization."),
+                       ),
+            LocationFilter("location_id",
+                           hidden = True,
+                           ),
+            DateFilter("date",
+                       # Better to default (easier to customise/consistency)
+                       #label = T("Date"),
+                       hide_time = True,
+                       comment = T("Search for commitments made between these dates."),
+                       hidden = True,
+                       ),
+            DateFilter("date_available",
+                       # Better to default (easier to customise/consistency)
+                       #label = T("Date Available"),
+                       hide_time = True,
+                       comment = T("Search for commitments available between these dates."),
+                       hidden = True,
+                       ),
             ]
 
         if len(req_types) > 1:
-            filter_widgets.insert(1, S3OptionsFilter("type",
-                                                     # Better to default (easier to customise/consistency)
-                                                     #label = T("Type"),
-                                                     cols = len(req_types),
-                                                     hidden = True,
-                                                     ))
+            filter_widgets.insert(1, OptionsFilter("type",
+                                                   # Better to default (easier to customise/consistency)
+                                                   #label = T("Type"),
+                                                   cols = len(req_types),
+                                                   hidden = True,
+                                                   ))
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(

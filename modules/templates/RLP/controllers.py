@@ -14,10 +14,10 @@ from gluon import Field, SQLFORM, URL, XML, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import ConsentTracking, S3CustomController, \
+from core import ConsentTracking, CustomController, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                  S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
-                 S3WeeklyHoursWidget, S3WithIntro, \
+                 S3WeeklyHoursWidget, WithAdvice, \
                  JSONERRORS, S3Represent, s3_comments_widget, s3_date, \
                  s3_mark_required, s3_str
 
@@ -29,7 +29,7 @@ THEME = "RLP"
 DEFAULT_POOL = "Weitere Freiwillige"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):
@@ -118,7 +118,6 @@ class index(S3CustomController):
                   }
 
         # Custom view and homepage styles
-        s3.stylesheets.append("../themes/%s/homepage.css" % THEME)
         self._view(settings.get_theme_layouts(), "index.html")
 
         return output
@@ -173,7 +172,7 @@ class index(S3CustomController):
         return posts
 
 # =============================================================================
-class privacy(S3CustomController):
+class privacy(CustomController):
     """ Custom Page """
 
     def __call__(self):
@@ -231,7 +230,7 @@ class privacy(S3CustomController):
         return output
 
 # =============================================================================
-class legal(S3CustomController):
+class legal(CustomController):
     """ Custom Page """
 
     def __call__(self):
@@ -289,7 +288,7 @@ class legal(S3CustomController):
         return output
 
 # =============================================================================
-class register(S3CustomController):
+class register(CustomController):
     """ Custom Registration Page """
 
     def __call__(self):
@@ -673,13 +672,13 @@ class register(S3CustomController):
                             ),
                       Field("schedule_json", "json",
                             label = T("Availability Schedule"),
-                            widget = S3WithIntro(
+                            widget = WithAdvice(
                                         S3WeeklyHoursWidget(),
                                         # Widget intro from CMS
-                                        intro = ("pr",
-                                                 "person_availability",
-                                                 "HoursMatrixIntro",
-                                                 ),
+                                        text = ("pr",
+                                                "person_availability",
+                                                "HoursMatrixIntro",
+                                                ),
                                         ),
                             ),
                       Field("availability_sites", "list:integer",
@@ -688,13 +687,13 @@ class register(S3CustomController):
                                                              multiple = True,
                                                              sort = False,
                                                              )),
-                            widget = S3WithIntro(
+                            widget = WithAdvice(
                                         S3MultiSelectWidget(),
                                         # Widget intro from CMS
-                                        intro = ("pr",
-                                                 "person_availability_site",
-                                                 "AvailabilitySitesIntro",
-                                                 ),
+                                        text = ("pr",
+                                                "person_availability_site",
+                                                "AvailabilitySitesIntro",
+                                                ),
                                         ),
                             ),
                       Field("availability_comments", "text",
@@ -1143,7 +1142,7 @@ Thank you
 """
 
 # =============================================================================
-class verify_email(S3CustomController):
+class verify_email(CustomController):
     """ Custom verify_email Page """
 
     def __call__(self):
@@ -1324,7 +1323,7 @@ class verify_email(S3CustomController):
             current.response.error = auth_messages.unable_send_email
 
 # =============================================================================
-class geocode(S3CustomController):
+class geocode(CustomController):
     """
         Custom Geocoder
         - looks up Lat/Lon from Postcode &/or Address

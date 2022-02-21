@@ -1,3 +1,4 @@
+from .bi import *
 from .calendar import *
 from .convert import *
 from .hierarchy import *

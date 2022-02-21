@@ -11,5 +11,5 @@ $(document).ready(function() {
         url = url + '&site_id=' + site_id;
         $('#staff_add').attr('href', url);
     }
-    // onChange happens in S3.js S3OptionsFilter
+    // onChange happens in S3.js FilterOptionsS3
 });

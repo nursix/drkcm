@@ -48,7 +48,7 @@ from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
 from ..resource import FS, S3XMLFormat, S3Joins
 from ..tools import IS_NUMBER, JSONERRORS, JSONSEPARATORS, \
-                    S3MarkupStripper, get_crud_string, s3_flatlist, \
+                    MarkupStripper, get_crud_string, s3_flatlist, \
                     s3_has_foreign_key, s3_represent_value, s3_str
 
 from .base import CRUDMethod
@@ -110,9 +110,9 @@ class S3Report(CRUDMethod):
             filter_widgets = get_config("filter_widgets", None)
             if filter_widgets and not self.hide_filter:
                 # Apply filter defaults (before rendering the data!)
-                from ..filters import S3FilterForm
+                from ..filters import FilterForm
                 show_filter_form = True
-                S3FilterForm.apply_filter_defaults(r, resource)
+                FilterForm.apply_filter_defaults(r, resource)
 
         widget_id = "pivottable"
 
@@ -189,13 +189,13 @@ class S3Report(CRUDMethod):
                         break
 
                 filter_formstyle = get_config("filter_formstyle", None)
-                filter_form = S3FilterForm(filter_widgets,
-                                           formstyle = filter_formstyle,
-                                           advanced = advanced,
-                                           submit = False,
-                                           _class = "filter-form",
-                                           _id = "%s-filter-form" % widget_id,
-                                           )
+                filter_form = FilterForm(filter_widgets,
+                                         formstyle = filter_formstyle,
+                                         advanced = advanced,
+                                         submit = False,
+                                         _class = "filter-form",
+                                         _id = "%s-filter-form" % widget_id,
+                                         )
                 fresource = current.s3db.resource(tablename)
                 alias = resource.alias if r.component else None
                 filter_widgets = filter_form.fields(fresource,
@@ -2859,6 +2859,7 @@ class S3PivotTable:
                     return s3_represent_value(rfield.field,
                                               value,
                                               strip_markup = True,
+                                              non_xml_output = True,
                                               )
             elif rfield.virtual:
 
@@ -2868,7 +2869,7 @@ class S3PivotTable:
                     represent = s3_str
 
                 # Wrap with markup stripper
-                stripper = S3MarkupStripper()
+                stripper = MarkupStripper()
                 def repr_method(val):
                     if val is None:
                         return "-"

@@ -120,6 +120,7 @@ class IS_JSONS3(Validator):
     def __init__(self,
                  native_json = False,
                  error_message = "Invalid JSON",
+                 fix_quotes = False,
                  ):
         """
             Args:
@@ -127,10 +128,12 @@ class IS_JSONS3(Validator):
                              a Python object (e.g. when the field
                              is "string" type rather than "json")
                 error_message: alternative error message
+                fix_quotes: fix invalid JSON with single quotes
         """
 
         self.native_json = native_json
         self.error_message = error_message
+        self.fix_quotes = fix_quotes
 
     # -------------------------------------------------------------------------
     def validate(self, value, record_id=None):
@@ -147,7 +150,7 @@ class IS_JSONS3(Validator):
 
         error = lambda e: "%s: %s" % (current.T(self.error_message), e)
 
-        if current.response.s3.bulk:
+        if self.fix_quotes or current.response.s3.bulk:
             # CSV import produces invalid JSON (single quotes),
             # which would still be valid Python though, so try
             # using ast to decode, then re-dumps as valid JSON:

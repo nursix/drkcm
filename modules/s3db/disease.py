@@ -510,11 +510,11 @@ class DiseaseMonitoringModel(DataModel):
         crud_form = S3SQLCustomForm(*crud_fields)
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["site_id$name", "comments"],
-                                       label = T("Search"),
-                                       ),
-                          S3DateFilter("date",
-                                       ),
+        filter_widgets = [TextFilter(["site_id$name", "comments"],
+                                     label = T("Search"),
+                                     ),
+                          DateFilter("date",
+                                     ),
                           ]
 
         # List fields
@@ -548,12 +548,13 @@ class DiseaseMonitoringModel(DataModel):
             }
 
         timeplot_options = {
-            "fact": facts,
+            "facts": facts,
             "timestamp": ((T("per interval"), "date,date"),
                           (T("cumulative"), "date"),
                           ),
             "defaults": {"fact": facts[:2],
                          "timestamp": "date,date",
+                         "time": "<-0 months||days",
                          },
             }
 
@@ -625,13 +626,13 @@ class DiseaseMonitoringModel(DataModel):
                        ]
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["report_id$site_id$name",
-                                        "report_id$comments",
-                                        ],
-                                       label = T("Search"),
-                                       ),
-                          S3DateFilter("report_id$date",
-                                       ),
+        filter_widgets = [TextFilter(["report_id$site_id$name",
+                                      "report_id$comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          DateFilter("report_id$date",
+                                     ),
                           ]
 
         # Report options
@@ -656,6 +657,17 @@ class DiseaseMonitoringModel(DataModel):
                          },
             }
 
+        timeplot_options = {
+            "facts": facts,
+            "timestamp": ((T("per interval"), "report_id$date,report_id$date"),
+                          (T("cumulative"), "report_id$date"),
+                          ),
+            "defaults": {"fact": list(facts[:2]),
+                         "timestamp": "report_id$date,report_id$date",
+                         "time": "<-0 months||days",
+                         },
+            }
+
         configure(tablename,
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,
@@ -663,6 +675,7 @@ class DiseaseMonitoringModel(DataModel):
                   onaccept = self.testing_demographic_onaccept,
                   ondelete = self.testing_demographic_ondelete,
                   report_options = report_options,
+                  timeplot_options = timeplot_options,
                   )
 
         # ---------------------------------------------------------------------
@@ -1150,22 +1163,22 @@ class DiseaseCaseTrackingModel(DataModel):
                           }
 
         # Filters
-        filter_widgets = [S3TextFilter(["case_number",
-                                        "person_id$first_name",
-                                        "person_id$middle_name",
-                                        "person_id$last_name",
-                                        ],
-                                        label = T("Search"),
-                                        comment = T("Enter Case Number or Name"),
+        filter_widgets = [TextFilter(["case_number",
+                                      "person_id$first_name",
+                                      "person_id$middle_name",
+                                      "person_id$last_name",
+                                     ],
+                                     label = T("Search"),
+                                     comment = T("Enter Case Number or Name"),
+                                     ),
+                          OptionsFilter("monitoring_level",
+                                        options = monitoring_levels,
                                         ),
-                          S3OptionsFilter("monitoring_level",
-                                          options = monitoring_levels,
-                                          ),
-                          S3OptionsFilter("diagnosis_status",
-                                          options = diagnosis_status,
-                                          ),
-                          S3LocationFilter("location_id",
-                                           ),
+                          OptionsFilter("diagnosis_status",
+                                        options = diagnosis_status,
+                                        ),
+                          LocationFilter("location_id",
+                                         ),
                           ]
 
         configure(tablename,
@@ -2216,21 +2229,21 @@ class DiseaseStatsModel(DataModel):
                              "source_id",
                              )))
 
-        filter_widgets = [S3OptionsFilter("parameter_id",
-                                          label = T("Type"),
-                                          multiple = False,
-                                          # Not translateable
-                                          #represent = "%(name)s",
-                                          ),
-                          S3OptionsFilter("location_id$level",
-                                          label = T("Level"),
-                                          multiple = False,
-                                          # Not translateable
-                                          #represent = "%(name)s",
-                                          ),
-                          S3LocationFilter("location_id",
-                                           levels = levels,
-                                           ),
+        filter_widgets = [OptionsFilter("parameter_id",
+                                        label = T("Type"),
+                                        multiple = False,
+                                        # Not translateable
+                                        #represent = "%(name)s",
+                                        ),
+                          OptionsFilter("location_id$level",
+                                        label = T("Level"),
+                                        multiple = False,
+                                        # Not translateable
+                                        #represent = "%(name)s",
+                                        ),
+                          LocationFilter("location_id",
+                                         levels = levels,
+                                         ),
                           ]
 
         report_options = Storage(rows = location_fields,

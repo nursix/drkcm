@@ -1,5 +1,39 @@
 /* Static JavaScript code for the Answers tab on Data Collection Responses */
 
+// Auto-Totals
+// - allow a field to default to the sum of a set of other fields, whilst still allowing manual entry
+S3.autoTotals = function(sumField, sourceFields, tablename) {
+    if (tablename === undefined) {
+        // Assume that fieldnames include the tablename
+        tablename = '';
+    } else {
+        // Prepend fieldnames with the tablename
+        tablename = tablename + '_';
+    }
+    sumField = $('#' + tablename + sumField);
+    var fieldname,
+        value,
+        total;
+    for (var i = 0; i < sourceFields.length; i++) {
+        fieldname = sourceFields[i];
+        $('#' + tablename + fieldname).change(function() {
+             total = 0;
+             for (var j = 0; j < sourceFields.length; j++) {
+                fieldname = sourceFields[j];
+                value = $('#' + tablename + fieldname).val();
+                if (value) {
+                    total += parseInt(value);
+                }
+             }
+             sumField.val(total)
+                     .trigger('change'); // Cascade onwards
+        });
+    }
+    // @ToDo?: Clear the sourceFields when the sumField is entered manually?
+    // @ToDo?: Flag to show that the sumField has been set manually & so shouldn't be over-ridden by the source_fields
+    //sumField.data('manual', true);
+};
+
 S3.dc_grids = function(grids, tablename) {
     if (tablename === undefined) {
         // Assume that fieldnames include the tablename

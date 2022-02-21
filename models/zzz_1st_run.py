@@ -262,18 +262,7 @@ if len(pop_list) > 0:
     info("\nPlease be patient whilst the database is populated...")
 
     # Create the bulk Importer object
-    bi = s3base.S3BulkImporter()
-
-    # Register handlers
-    s3.import_feed = bi.import_feed
-    s3.import_font = bi.import_font
-    s3.import_image = bi.import_image
-    s3.import_remote_csv = bi.import_remote_csv
-    s3.import_role = bi.import_role
-    s3.import_script = bi.import_script
-    s3.import_task = bi.import_task
-    s3.import_user = bi.import_user
-    s3.import_xml = bi.import_xml
+    bi = s3base.BulkImporter()
 
     # Relax strict email-matching rule for import updates of person records
     email_required = settings.get_pr_import_update_requires_email()
@@ -296,12 +285,10 @@ if len(pop_list) > 0:
         request.env.request_method = "GET"
 
     grandTotalStart = datetime.datetime.now()
+    error_list = []
     for pop_setting in pop_list:
 
         start = datetime.datetime.now()
-
-        # Clear Tasklist
-        bi.tasks = []
 
         # Import data specific to the prepopulate setting
         if pop_setting == 1:
@@ -309,25 +296,23 @@ if len(pop_list) > 0:
             task = "default"
         else:
             task = pop_setting
+
         info("\nImporting %s..." % task)
 
         path = path_join(request_folder, "modules", "templates", task)
         if task != "default" and not os.path.exists(path):
-            # Legacy template?
-            path = path_join(request_folder, "private", "templates", task)
-            if not os.path.exists(path):
-                info("Unable to install data %s no valid directory found" % task)
-                continue
+            info("Unable to install data %s no valid directory found" % task)
+            continue
 
-        bi.perform_tasks(path)
+        errors = bi.perform_tasks(path)
+        if errors:
+            error_list.extend(errors)
 
         duration("Imports for %s complete" % task, start)
 
-        bi.resultList = []
-
-    if bi.errorList:
+    if error_list:
         info("\nImport Warnings (some data could not be imported):")
-        for error in bi.errorList:
+        for error in error_list:
             try:
                 info(error)
             except:
@@ -342,7 +327,7 @@ if len(pop_list) > 0:
         info("\nWarning: No gis_hierarchy provided, using default.")
         csv = path_join(request_folder, "modules", "templates", "default", "base", "gis_hierarchy.csv")
         xsl = path_join(request_folder, "static", "formats", "s3csv", "gis", "hierarchy.xsl")
-        bi.execute_import_task([1, "gis", "hierarchy", csv, xsl, None])
+        bi.import_csv("gis", "hierarchy", csv, xsl)
 
     info("\nUpdating database...")
 

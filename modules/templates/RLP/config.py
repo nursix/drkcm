@@ -11,7 +11,7 @@ from collections import OrderedDict
 from gluon import current, redirect, URL, A, DIV, TABLE, TAG, TR
 from gluon.storage import Storage
 
-from core import FS, IS_LOCATION, S3DateFilter, S3Represent, s3_fieldmethod, s3_fullname, s3_yes_no_represent
+from core import FS, IS_LOCATION, DateFilter, S3Represent, s3_fieldmethod, s3_fullname, s3_yes_no_represent
 from s3dal import original_tablename
 
 from .helpers import rlp_active_deployments
@@ -1079,7 +1079,7 @@ def config(settings):
                 r: the current CRUDRequest
         """
 
-        from core import S3WeeklyHoursWidget, S3WithIntro, s3_text_represent
+        from core import S3WeeklyHoursWidget, WithAdvice, s3_text_represent
 
         avtable = current.s3db.pr_person_availability
         is_profile = r.controller == "default"
@@ -1093,9 +1093,9 @@ def config(settings):
         field.readable = field.writable = True
         if is_profile:
             # Add intro text for widget
-            field.widget = S3WithIntro(field.widget,
-                                       intro = ("pr", "person_availability", "HoursMatrixIntro"),
-                                       )
+            field.widget = WithAdvice(field.widget,
+                                      text = ("pr", "person_availability", "HoursMatrixIntro"),
+                                      )
         if r.representation == "xls":
             field.represent = lambda v: S3WeeklyHoursWidget.represent(v, html=False)
         else:
@@ -1361,15 +1361,15 @@ def config(settings):
             from gluon import IS_NOT_EMPTY
             from core import (IS_ONE_OF,
                               IS_PERSON_GENDER,
-                              S3AgeFilter,
-                              S3LocationFilter,
+                              AgeFilter,
+                              LocationFilter,
                               S3LocationSelector,
-                              S3OptionsFilter,
-                              S3RangeFilter,
+                              OptionsFilter,
+                              RangeFilter,
                               S3SQLCustomForm,
-                              S3TextFilter,
+                              TextFilter,
                               StringTemplateParser,
-                              s3_get_filter_opts,
+                              get_filter_options,
                               )
 
             # Make last name mandatory
@@ -1567,23 +1567,23 @@ def config(settings):
                     text_search_fields.append("person_details.occupation")
 
                     filter_widgets = [
-                        S3TextFilter(text_search_fields,
-                                     label = T("Search"),
-                                     comment = T("Search by ID or name (Note that records with hidden names can only be found by ID). Can use * or ? as wildcards."),
-                                     ),
-                        S3OptionsFilter("pool_membership.group_id",
-                                        label = T("Pool"),
-                                        options = get_pools,
-                                        ),
-                        S3OptionsFilter("occupation_type_person.occupation_type_id",
-                                        options = lambda: s3_get_filter_opts("pr_occupation_type"),
-                                        ),
-                        S3LocationFilter("current_address.location_id",
-                                         label = T("Place of Residence"),
-                                         levels = ("L2", "L3"),
-                                         bigtable = True,
-                                         translate = False,
-                                         ),
+                        TextFilter(text_search_fields,
+                                   label = T("Search"),
+                                   comment = T("Search by ID or name (Note that records with hidden names can only be found by ID). Can use * or ? as wildcards."),
+                                   ),
+                        OptionsFilter("pool_membership.group_id",
+                                      label = T("Pool"),
+                                      options = get_pools,
+                                      ),
+                        OptionsFilter("occupation_type_person.occupation_type_id",
+                                      options = lambda: get_filter_options("pr_occupation_type"),
+                                      ),
+                        LocationFilter("current_address.location_id",
+                                       label = T("Place of Residence"),
+                                       levels = ("L2", "L3"),
+                                       bigtable = True,
+                                       translate = False,
+                                       ),
                         RLPAvailabilityFilter("delegation.date",
                                               label = T("Available"),
                                               #hide_time = True,
@@ -1608,18 +1608,18 @@ def config(settings):
                                                   options = lambda: rlp_deployment_sites(managed_orgs=True),
                                                   sort = False,
                                                   ),
-                        S3RangeFilter("availability.hours_per_week",
-                                      ),
-                        S3OptionsFilter("competency.skill_id",
-                                        label = T("Skills / Resources"),
-                                        options = lambda: s3_get_filter_opts("hrm_skill"),
-                                        cols = 2,
-                                        ),
-                        S3AgeFilter("date_of_birth",
-                                    label = T("Age"),
-                                    minimum = 12,
-                                    maximum = 90,
+                        RangeFilter("availability.hours_per_week",
                                     ),
+                        OptionsFilter("competency.skill_id",
+                                      label = T("Skills / Resources"),
+                                      options = lambda: get_filter_options("hrm_skill"),
+                                      cols = 2,
+                                      ),
+                        AgeFilter("date_of_birth",
+                                  label = T("Age"),
+                                  minimum = 12,
+                                  maximum = 90,
+                                  ),
                         ]
 
                     # Reports
@@ -1673,7 +1673,7 @@ def config(settings):
 
                     # Custom Form
                     from gluon import IS_IN_SET
-                    from core import S3SQLInlineLink, S3WithIntro
+                    from core import S3SQLInlineLink, WithAdvice
                     from .helpers import rlp_deployment_sites
                     crud_fields = name_fields
                     if volunteer_id:
@@ -1690,7 +1690,7 @@ def config(settings):
                                             "volunteer_record.status",
                                             "availability.hours_per_week",
                                             "availability.schedule_json",
-                                            S3WithIntro(
+                                            WithAdvice(
                                                 S3SQLInlineLink("availability_sites",
                                                         field = "site_id",
                                                         label = T("Possible Deployment Sites"),
@@ -1702,7 +1702,7 @@ def config(settings):
                                                         render_list = True,
                                                         ),
                                                 # Widget intro text from CMS
-                                                intro = ("pr", "person_availability_site", "AvailabilitySitesIntro"),
+                                                text = ("pr", "person_availability_site", "AvailabilitySitesIntro"),
                                                 ),
                                             "availability.comments",
                                             "volunteer_record.comments",
@@ -2365,10 +2365,10 @@ def config(settings):
                     organisations = None
 
                 # Append inline-notifications
-                from core import S3WithIntro
+                from core import WithAdvice
                 from .notifications import InlineNotifications
                 crud_form.append(
-                    S3WithIntro(
+                    WithAdvice(
                         InlineNotifications("notifications",
                                             label = T("Notifications"),
                                             person_id = volunteer_id,
@@ -2376,7 +2376,7 @@ def config(settings):
                                             reply_to = "user", #"org",
                                             sender = "org",
                                             ),
-                        intro = ("hrm", "delegation", "NotificationIntroOrg"),
+                        text = ("hrm", "delegation", "NotificationIntroOrg"),
                         ))
             s3db.configure("hrm_delegation", crud_form=crud_form)
 
@@ -2509,18 +2509,18 @@ def config(settings):
             if r.interactive:
 
                 if not volunteer_id:
-                    from core import S3OptionsFilter, s3_get_filter_opts
+                    from core import OptionsFilter, get_filter_options
                     filter_widgets = [
-                        S3OptionsFilter("person_id$pool_membership.group_id",
-                                        label = T("Pool"),
-                                        options = get_pools(),
-                                        ),
-                        S3DateFilter("date",
-                                     hidden = True,
-                                     ),
-                        S3DateFilter("end_date",
-                                     hidden = True,
-                                     ),
+                        OptionsFilter("person_id$pool_membership.group_id",
+                                      label = T("Pool"),
+                                      options = get_pools(),
+                                      ),
+                        DateFilter("date",
+                                   hidden = True,
+                                   ),
+                        DateFilter("end_date",
+                                   hidden = True,
+                                   ),
                         ]
 
                     # Status-Filter
@@ -2533,19 +2533,19 @@ def config(settings):
                     if len(status_filter_opts) > 1:
                         #default = ["APPR", "IMPL"] if r.method == "report" else None
                         filter_widgets.insert(0,
-                            S3OptionsFilter("status",
-                                            options = OrderedDict(status_filter_opts),
-                                            #default = default,
-                                            sort = False,
-                                            cols = 3,
-                                            ))
+                            OptionsFilter("status",
+                                          options = OrderedDict(status_filter_opts),
+                                          #default = default,
+                                          sort = False,
+                                          cols = 3,
+                                          ))
 
                     # Organisation Filter
                     if coordinator or multiple_orgs:
                         filter_widgets.insert(0,
-                            S3OptionsFilter("organisation_id",
-                                            options = lambda: s3_get_filter_opts("org_organisation"),
-                                            ))
+                            OptionsFilter("organisation_id",
+                                          options = lambda: get_filter_options("org_organisation"),
+                                          ))
 
                     r.resource.configure(filter_widgets = filter_widgets,
                                          )
@@ -2621,7 +2621,7 @@ def config(settings):
 
             if r.controller == "vol" and volunteer_id and isinstance(output, dict):
 
-                from core import S3CustomController
+                from core import CustomController
 
                 method = r.method
                 if not method:
@@ -2633,16 +2633,16 @@ def config(settings):
                                              )
 
                     # Use custom view to keep organizer-link above form
-                    S3CustomController._view("RLP", "delegation.html")
+                    CustomController._view("RLP", "delegation.html")
 
                 elif method == "organize":
                     # Add hint how to use the organizer
                     if not coordinator:
-                        from .helpers import get_cms_intro
-                        intro = get_cms_intro("hrm", "delegation",
-                                              "DelegationOrganizerIntro",
-                                              cmsxml = True,
-                                              )
+                        intro = current.s3db.cms_get_content("DelegationOrganizerIntro",
+                                                             module = "hrm",
+                                                             resource = "delegation",
+                                                             cmsxml = True,
+                                                             )
                         if intro:
                             output["intro"] = intro
                     # Add switch to list view
@@ -2652,7 +2652,7 @@ def config(settings):
                                          _title = T("Manage deployments in a table view"),
                                          )
                     # Use custom view
-                    S3CustomController._view("RLP", "organize.html")
+                    CustomController._view("RLP", "organize.html")
 
             return output
         s3.postp = custom_postp

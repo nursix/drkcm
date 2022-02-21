@@ -305,8 +305,8 @@ body.rtl {
 .register-intro {
     max-width: 60rem;
     padding: 1rem;
-    border: 1px solid #EEE;
-    background-color: #ec9;
+    border: 1px solid #fdaf1b;
+    background-color: #fff4d3;
 }
 .auth_register,
 .result-register {
@@ -404,6 +404,9 @@ body.rtl {
     }
 }
 .approve-workflow {
+    &.workflow-grey {
+        color: #555;
+    }
     &.workflow-red {
         color: #c42626;
     }
@@ -421,7 +424,9 @@ body.rtl {
     .fa {
         margin-right: 0.2rem;
     }
-    margin-left: 0.5rem;
+    .controls & {
+        margin-left: 0.5rem;
+    }
 }
 
 .text-body.cms-item-body {
@@ -510,5 +515,69 @@ body.rtl {
         font-size: 0.9rem;
     }
 }
+.map-popup {
+    min-width: 20rem;
+    h4 {
+        font-size: 1rem;
+    }
+    .map-popup-details {
+        font-size: 0.8rem;
+        td {
+            padding: 0.1rem 0.3rem 0 0;
+            &.map-popup-label {
+                font-weight: bold;
+            }
+        }
+    }
+}
+.olPopupCloseBox {
+    margin-right: 20px;
+}
+
+.place-repr {
+    .place-name {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .place-info {
+        white-space: pre-line;
+        font-size: 0.8rem;
+    }
+}
+
+// Test Station Manager person_id representation
+.manager-repr {
+    border: 1px solid #eee;
+    margin-top: 0.5rem;
+    width: 25rem;
+    background-color: #fff3c6;
+    max-width: 100%;
+    .manager-name {
+        padding: 0.4rem;
+        font-size: 0.9rem;
+        display: block;
+    }
+    .manager-email {
+        th, td {
+            padding-top: 0.4rem;
+        }
+    }
+    .manager-details {
+        width: 100%;
+        border: 0;
+        margin-bottom: 0.3rem;
+        th {
+            width: 33%;
+        }
+        th, td {
+            background-color: #fff3c6;
+            font-size: 0.8rem;
+            line-height: 1;
+            padding: 0.4rem;
+        }
+    }
+}
+
 
 // END ========================================================================

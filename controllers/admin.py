@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-
 """
     Admin Controllers
 """
 
-# S3 framework functions
-# -----------------------------------------------------------------------------
 def index():
     """ Module's Home Page """
 

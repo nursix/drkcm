@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from gluon import *
-from core import S3CustomController
+from core import CustomController
 
 THEME = "SAFIRE"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):

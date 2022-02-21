@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
+"""
+    Application Administration
+"""
 
-#
-# S3 Auth
-#
 if not auth.s3_has_role("ADMIN"):
     auth.permission.fail()
 

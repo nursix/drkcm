@@ -1,0 +1,94 @@
+// Inspired by https://codepen.io/kylewetton/pen/QJbOjw
+// Copyright (c) 2021 by Kyle Wetton
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is furnished
+// to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+// Options
+$base: black;
+$size: 100px;
+$second: #166068;
+$hour: $base;
+$highlight: $base;
+
+.wac {
+    height: $size;
+    width: $size;
+    border-radius: #{$size / 2};
+    display: flex;
+    justify-content: center;
+    position: relative;
+    margin: auto;
+    &__s,
+    &__m,
+    &__h, &__i {
+        position: absolute;
+        left: calc(50% - 1px);
+        width: 2px;
+        background: $base;
+        transform-origin: bottom center;
+        z-index: 2;
+        border-radius: 1px;
+    }
+    &__s {
+        height: #{($size / 2) - 10};
+        margin-top: 10px;
+        background: $second;
+        animation: time 60s infinite steps(60);
+        z-index: 3;
+    }
+    &__m {
+        height: #{($size / 2) - 20};
+        margin-top: 20px;
+        opacity: 0.75;
+        animation: time 3600s infinite steps(60);
+    }
+    &__h {
+        height: #{($size / 2) - 30};
+        margin-top: 30px;
+        animation: time 43200s infinite steps(60);
+    }
+    &__i {
+        height: #{($size / 2) - 2};
+        border-top: 2px solid $base;
+        background: none;
+    }
+    &__i:nth-of-type(5n) {
+        opacity: 1;
+        height: #{($size / 2) - 2};
+        border-top: 4px solid $highlight;
+    }
+    &__a {
+        background: $base;
+        width: 5px;
+        height: 5px;
+        border-radius: 3px;
+        position: absolute;
+        z-index: 4;
+        top: #{$size / 2 - 3};
+    }
+    @for $i from 1 through 60 {
+        section:nth-of-type(#{$i}) {
+            transform: rotateZ(calc(6deg * #{$i}));
+        }
+    }
+    @keyframes time {
+        to {
+            transform: rotateZ(360deg);
+        }
+    }
+}

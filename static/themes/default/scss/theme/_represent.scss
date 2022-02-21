@@ -1,0 +1,172 @@
+// ============================================================================
+// Representation Styles
+// ============================================================================
+// VARIABLES
+
+// -- none --
+
+// ============================================================================
+// STYLES
+
+/* Request (req) Statuses */
+.req_status_none {
+    color: red;
+    font-weight: bold;
+}
+.req_status_partial {
+    color: darkorange;
+    font-weight: bold;
+}
+.req_status_complete {
+    color: green;
+    font-weight: bold;
+}
+
+// ----------------------------------------------------------------------------
+/* Avatars */
+.avatar {
+    background: none repeat scroll 0 0 #fff;
+    border-bottom: 1px solid #d7d7d7;
+    border-left: 1px solid #f2f2f2;
+    border-right: 1px solid #f2f2f2;
+    float: left;
+    height: 55px;
+    padding: 4px;
+    width: 55px;
+    [dir=rtl] & {
+        float: right;
+    }
+}
+
+// ----------------------------------------------------------------------------
+/* Text representation */
+.text-body {
+    white-space: pre-wrap;
+}
+
+/* Truncated Texts */
+.s3-truncate-more,
+.s3-truncate-less {
+    font-style: italic;
+}
+.s3-truncate-more:before,
+.s3-truncate-less:before {
+    font-style: italic;
+    content: "...";
+}
+
+// ----------------------------------------------------------------------------
+/* Priority Representation */
+.prio {
+    padding: 0 0.4rem;
+    border: 1px solid #333;
+    font-size: 0.8rem;
+    font-weight: normal;
+    text-align: center;
+    white-space: pre;
+}
+.prio-red {
+    color: #E0E0E0;
+    background-color: #d10000;
+}
+.prio-amber {
+    background-color: #ffaa00;
+}
+.prio-lightgreen {
+    color: #E0E0E0;
+    background-color: #009f00;
+}
+.prio-green {
+    color: #E0E0E0;
+    background-color: #006100;
+}
+.prio-blue {
+    color: white;
+    background-color: #10427b;
+}
+.prio-lightblue {
+    background-color: #b7ddff;
+}
+.prio-grey {
+    background-color: silver;
+}
+.prio-black {
+    color: #E0E0E0;
+    background-color: #1f1f1f;
+}
+
+// ----------------------------------------------------------------------------
+/* Weekly Hours Representation */
+.wh-schedule {
+    list-style: none;
+    white-space: pre;
+    margin: 0;
+    font-size: 0.7rem;
+    .wh-dayname {
+        width: 1.5rem;
+        display: inline-block;
+    }
+    .wh-dayname::after {
+        content: ":";
+    }
+}
+
+// ----------------------------------------------------------------------------
+/* Comments-represent */
+.showall {
+    display: none;
+    position: absolute;
+    border-style: solid;
+    background-color: #ffc;
+    padding: 5px;
+    margin: 0 20px 0 -50px;
+}
+
+// ----------------------------------------------------------------------------
+/* CMS Newsletter Text Represent */
+.newsletter-text {
+    white-space: pre-line;
+    background: #fcfcfc;
+    padding: 0.7rem;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 4px #ddd;
+    width: 48rem;
+    max-width: 100%;
+    min-height: 8rem;
+    font-size: 0.85rem;
+}
+
+// ----------------------------------------------------------------------------
+/* File-Represent */
+.file-repr {
+    i.fa {
+        font-size: 1.1rem;
+    }
+    .file-size {
+        padding: 0 0.4rem;
+        font-size: 0.7rem;
+    }
+}
+
+// ----------------------------------------------------------------------------
+/* PersonRepresentContact */
+.contact-repr {
+    background-color: #FFF0C1;
+    border: 1px solid #E0E0E0;
+    padding: 0.25rem 0.5rem;
+    .contact-name {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.2rem;
+    }
+    .contact-info {
+        white-space: nowrap;
+        font-size: 0.8rem;
+        .fa {
+            padding-right: 0.4rem;
+        }
+    }
+}
+
+// END ========================================================================
+

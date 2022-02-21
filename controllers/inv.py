@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Inventory Management
 
@@ -416,7 +414,7 @@ def inv_item_quantity():
 # -----------------------------------------------------------------------------
 def inv_item_packs():
     """
-        Called by S3OptionsFilter to provide the pack options for a
+        Called by OptionsFilter to provide the pack options for a
             particular Item
 
         Access via the .json representation to avoid work rendering menus, etc
@@ -1444,12 +1442,10 @@ def adj_close():
     db(atable.id == adj_id).update(status = 1)
 
     # Go to the Inventory of the Site which has adjusted these items
-    (prefix, resourcename, id) = s3db.get_instance(s3db.org_site,
-                                                   site_id)
-    redirect(URL(c = prefix,
-                 f = resourcename,
-                 args = [id, "inv_item"],
-                 ))
+    resourcename, id = s3db.get_instance(s3db.org_site, site_id)
+    prefix, name = resourcename.split("_", 1)
+
+    redirect(URL(c=prefix, f=name, args=[id, "inv_item"]))
 
 # =============================================================================
 def recv_item_json():

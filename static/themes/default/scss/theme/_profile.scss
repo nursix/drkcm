@@ -8,7 +8,6 @@
 // ============================================================================
 // STYLES
 
-/* Profile */
 h4.profile-sub-header {
     background-color: #efefef;
     padding: 0.1rem 0.3rem;
@@ -25,6 +24,13 @@ h4.profile-sub-header {
 }
 .empty_card-holder {
     text-align: center;
+}
+.form-toggle,
+.form-toggle:hover {
+    text-decoration: none;
+    i {
+        margin-left: 3px;
+    }
 }
 
 // END ========================================================================

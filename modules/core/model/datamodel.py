@@ -61,6 +61,8 @@ class DataModel:
         self.classes = {}
         self._module_map = None
 
+        self._customised = {}
+
         # Initialize current.model
         if not hasattr(current, "model"):
             current.model = {"config": {},
@@ -159,8 +161,10 @@ class DataModel:
     def __getattr__(self, name):
         """ Model auto-loader """
 
-        return self.table(name,
-                          AttributeError("undefined table: %s" % name))
+        table = self.table(name, DEFAULT)
+        if table is DEFAULT:
+            raise AttributeError("undefined table: %s" % name)
+        return table
 
     # -------------------------------------------------------------------------
     def __getitem__(self, key):
@@ -232,6 +236,28 @@ class DataModel:
         return mmap
 
     # -------------------------------------------------------------------------
+    @staticmethod
+    def customised(tablename, update=None):
+        """
+            Check (or mark) that customisations for a table model have
+            been run
+
+            Args:
+                tablename: the name of the table
+                update: True to mark that customisations have been run
+
+            Returns:
+                True|False whether customisations have been run
+        """
+
+        tables = current.s3db._customised
+
+        if update is not None:
+            tables[tablename] = bool(update)
+
+        return tables.get(tablename, False)
+
+    # -------------------------------------------------------------------------
     @classmethod
     def table(cls, tablename, default=None, db_only=False):
         """
@@ -239,9 +265,7 @@ class DataModel:
 
             Args:
                 tablename: the table name (or name of the object)
-                default: the default value to return if not found,
-                         - if default is an exception instance, it will
-                           be raised instead of returned
+                default: the default value to return if not found
                 db_only: find only tables, not other objects
         """
 
@@ -254,7 +278,7 @@ class DataModel:
         if not db_only:
             if tablename in s3:
                 return s3[tablename]
-            elif s3db is not None and tablename in s3db.classes:
+            elif tablename in s3db.classes:
                 return s3db.classes[tablename].__dict__[tablename]
 
         db = current.db
@@ -274,50 +298,89 @@ class DataModel:
             except AttributeError:
                 pass
         else:
-            modules = s3db.module_map.get(prefix)
-            if modules:
-
-                for module in modules:
-
-                    names = module.__all__
-                    s3models = module.__dict__
-
-                    if not db_only and tablename in names:
-                        # A name defined at module level (e.g. a class)
-                        s3db.classes[tablename] = module
-                        found = s3models[tablename]
-                    else:
-                        # A name defined in a DataModel
-                        generic = []
-                        loaded = False
-                        for n in names:
-                            model = s3models[n]
-                            if hasattr(model, "_edenmodel"):
-                                if hasattr(model, "names"):
-                                    if tablename in model.names:
-                                        model(prefix)
-                                        loaded = True
-                                        break
-                                else:
-                                    generic.append(n)
-                        if not loaded:
-                            for n in generic:
-                                s3models[n](prefix)
+            modules = s3db.module_map.get(prefix, "")
+            for module in modules:
+                names = module.__all__
+                s3models = module.__dict__
+                if not db_only and tablename in names:
+                    # A name defined at module level (e.g. a class)
+                    s3db.classes[tablename] = module
+                    found = s3models[tablename]
+                else:
+                    # A name defined in a DataModel
+                    for n in names:
+                        model = s3models[n]
+                        if hasattr(model, "_edenmodel") and \
+                           hasattr(model, "names") and \
+                           tablename in model.names:
+                            model(prefix)
+                            break
 
         if found:
             return found
 
         if not db_only and tablename in s3:
-            return s3[tablename]
+            found = s3[tablename]
         elif hasattr(db, tablename):
-            return getattr(db, tablename)
+            found = getattr(db, tablename)
         elif getattr(db, "_lazy_tables") and \
              tablename in getattr(db, "_LAZY_TABLES"):
-            return getattr(db, tablename)
-        elif isinstance(default, Exception):
-            raise default
+            found = getattr(db, tablename)
         else:
-            return default
+            found = default
+
+        return found
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def has(cls, name):
+        """
+            Check whether name is available with s3db.table(); does just
+            a name lookup, without loading any models
+
+            Args:
+                name: the name
+
+            Returns:
+                boolean
+        """
+
+        s3 = current.response.s3
+        if s3 is None:
+            s3 = current.response.s3 = Storage()
+
+        s3db = current.s3db
+
+        if name in s3 or name in s3db.classes:
+            return True
+
+        if hasattr(current.db, name):
+            return True
+
+        found = False
+        prefix = name.split("_", 1)[0]
+        if prefix == DYNAMIC_PREFIX:
+            try:
+                found = DynamicTableModel(name).table
+            except AttributeError:
+                pass
+        else:
+            modules = s3db.module_map.get(prefix, "")
+            for module in modules:
+                names = module.__all__
+                if name in names:
+                    found = True
+                    break
+                s3models = module.__dict__
+                for n in names:
+                    model = s3models[n]
+                    if hasattr(model, "_edenmodel") and \
+                       hasattr(model, "names") and \
+                        name in model.names:
+                        found = True
+                        break
+
+        return found
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1746,14 +1809,15 @@ class DataModel:
                 superid: the super-entity record ID
 
             Returns:
-                a tuple (prefix, name, ID) of the instance record (if it exists)
+                a tuple (tablename, ID) of the instance record (if it exists)
         """
 
         if not hasattr(supertable, "_tablename"):
             # tablename passed instead of Table
             supertable = cls.table(supertable)
         if supertable is None:
-            return (None, None, None)
+            return None, None
+
         db = current.db
         query = (supertable._id == superid)
         entry = db(query).select(supertable.instance_type,
@@ -1761,13 +1825,14 @@ class DataModel:
                                  limitby=(0, 1)).first()
         if entry:
             instance_type = entry.instance_type
-            prefix, name = instance_type.split("_", 1)
             instancetable = current.s3db[entry.instance_type]
-            query = instancetable.uuid == entry.uuid
+            query = (instancetable.uuid == entry.uuid)
             record = db(query).select(instancetable.id,
-                                      limitby=(0, 1)).first()
+                                      limitby = (0, 1),
+                                      ).first()
             if record:
-                return (prefix, name, record.id)
-        return (None, None, None)
+                return instance_type, record.id
+
+        return None, None
 
 # END =========================================================================

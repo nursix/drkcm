@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
-
-""" Disaster Victim Identification, Controllers """
+"""
+    Disaster Victim Identification, Controllers
+"""
 
 module = request.controller
 

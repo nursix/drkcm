@@ -26,7 +26,7 @@
 
 from gluon import current, URL
 
-from ..filters import S3FilterForm
+from ..filters import FilterForm
 from ..tools import get_crud_string
 
 from .base import CRUDMethod
@@ -41,7 +41,7 @@ class S3Map(CRUDMethod):
     def apply_method(self, r, **attr):
         """
             Entry point to apply map method to CRUDRequests
-                - produces a full page with S3FilterWidgets above a Map
+                - produces a full page with FilterWidgets above a Map
 
             Args:
                 r: the CRUDRequest instance
@@ -97,21 +97,21 @@ class S3Map(CRUDMethod):
 
                 request = self.request
                 # Apply filter defaults (before rendering the data!)
-                S3FilterForm.apply_filter_defaults(r, resource)
+                FilterForm.apply_filter_defaults(r, resource)
                 filter_formstyle = get_config("filter_formstyle", None)
                 submit = resource.get_config("map_submit", True)
-                filter_form = S3FilterForm(filter_widgets,
-                                           formstyle=filter_formstyle,
-                                           advanced=advanced,
-                                           submit=submit,
-                                           ajax=True,
-                                           # URL to update the Filter Widget Status
-                                           ajaxurl=r.url(method="filter",
-                                                         vars={},
-                                                         representation="options"),
-                                           _class="filter-form",
-                                           _id="%s-filter-form" % widget_id,
-                                           )
+                filter_form = FilterForm(filter_widgets,
+                                         formstyle=filter_formstyle,
+                                         advanced=advanced,
+                                         submit=submit,
+                                         ajax=True,
+                                         # URL to update the Filter Widget Status
+                                         ajaxurl=r.url(method="filter",
+                                                       vars={},
+                                                       representation="options"),
+                                         _class="filter-form",
+                                         _id="%s-filter-form" % widget_id,
+                                         )
                 get_vars = request.get_vars
                 filter_form = filter_form.html(resource, get_vars=get_vars, target=widget_id)
             else:

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Project Tracking & Management
 """
@@ -971,7 +969,7 @@ def comment_parse(comment, comments, task_id=None):
         @param: task_id - a reference ID: optional task commented on
     """
 
-    author = B(T("Anonymous"))
+    author = T("Anonymous")
     if comment.created_by:
         utable = s3db.auth_user
         ptable = s3db.pr_person
@@ -992,7 +990,7 @@ def comment_parse(comment, comments, task_id=None):
             import hashlib
             hash = hashlib.md5(email).hexdigest()
             url = "http://www.gravatar.com/%s" % hash
-            author = B(A(username, _href=url, _target="top"))
+            author = A(username, _href=url, _target="top")
     if not task_id and comment.task_id:
         table = s3db.project_task
         task = "re: %s" % table[comment.task_id].name

@@ -16,8 +16,8 @@ import uuid
 from gluon import current, Field, IS_EMPTY_OR, IS_IN_SET, SQLFORM, URL, \
                   BUTTON, DIV, FORM, H5, INPUT, TABLE, TD, TR
 
-from core import ConsentTracking, IS_ONE_OF, S3CustomController, CRUDMethod, \
-                 s3_date, s3_mark_required, s3_qrcode_represent, \
+from core import ConsentTracking, IS_ONE_OF, CustomController, CRUDMethod, \
+                 s3_date, s3_mark_required, s3_qrcode_represent, s3_str, \
                  JSONERRORS
 
 from .dcc import DCC
@@ -78,26 +78,6 @@ class TestResultRegistration(CRUDMethod):
 
         settings = current.deployment_settings
 
-        # Page title and intro text
-        title = T("Register Test Result")
-
-        # Get intro text from CMS
-        ctable = s3db.cms_post
-        ltable = s3db.cms_post_module
-        join = ltable.on((ltable.post_id == ctable.id) & \
-                         (ltable.module == "disease") & \
-                         (ltable.resource == "case_diagnostics") & \
-                         (ltable.deleted == False))
-
-        query = (ctable.name == "TestResultRegistrationIntro") & \
-                (ctable.deleted == False)
-        row = db(query).select(ctable.body,
-                                join = join,
-                                cache = s3db.cache,
-                                limitby = (0, 1),
-                                ).first()
-        intro = row.body if row else None
-
         # Instantiate Consent Tracker
         consent = ConsentTracking(processing_types=["CWA_ANONYMOUS", "CWA_PERSONAL"])
 
@@ -138,9 +118,10 @@ class TestResultRegistration(CRUDMethod):
                 (dtable.available == True)
         if default_disease:
             query = (dtable.disease_id == default_disease) & query
-        field.requires = IS_ONE_OF(db(query), "disease_testing_device.id",
-                                   field.represent,
-                                   )
+        field.requires = IS_EMPTY_OR(
+                            IS_ONE_OF(db(query), "disease_testing_device.id",
+                                      field.represent,
+                                      ))
 
         cwa_options = (("NO", T("Do not report")),
                        ("ANONYMOUS", T("Issue anonymous contact tracing code")),
@@ -151,7 +132,6 @@ class TestResultRegistration(CRUDMethod):
                       table.disease_id,
                       table.probe_date,
                       table.demographic_id,
-                      table.device_id,
                       table.result,
 
                       # -- Report to CWA --
@@ -174,6 +154,7 @@ class TestResultRegistration(CRUDMethod):
                             default = False,
                             label = T("Provide Digital %(title)s Certificate") % {"title": "COVID-19 Test"},
                             ),
+                      table.device_id,
                       Field("consent",
                             label = "",
                             widget = consent.widget,
@@ -181,11 +162,11 @@ class TestResultRegistration(CRUDMethod):
                       ]
 
         # Required fields
-        required_fields = []
+        required_fields = ["device_id"]
 
         # Subheadings
         subheadings = ((0, T("Test Result")),
-                       (4 + offset, CWA["system"]),
+                       (3 + offset, CWA["system"]),
                        )
 
         # Generate labels (and mark required fields in the process)
@@ -235,118 +216,20 @@ class TestResultRegistration(CRUDMethod):
                         onvalidation = self.validate,
                         ):
 
-            formvars = form.vars
-
-            # Create disease_case_diagnostics record
-            testresult = {"result": formvars.get("result"),
-                          }
-            if "site_id" in formvars:
-                testresult["site_id"] = formvars["site_id"]
-            if "disease_id" in formvars:
-                testresult["disease_id"] = formvars["disease_id"]
-            if "probe_date" in formvars:
-                testresult["probe_date"] = formvars["probe_date"]
-            if "device_id" in formvars:
-                testresult["device_id"] = formvars["device_id"]
-            if "demographic_id" in formvars:
-                testresult["demographic_id"] = formvars["demographic_id"]
-
-            record_id = table.insert(**testresult)
-            if not record_id:
-                raise RuntimeError("Could not create testresult record")
-
-            testresult["id"] = record_id
-            # Set record owner
-            auth = current.auth
-            auth.s3_set_record_owner(table, record_id)
-            auth.s3_make_session_owner(table, record_id)
-            # Onaccept
-            s3db.onaccept(table, testresult, method="create")
-            response.confirmation = T("Test Result registered")
-
-            report_to_cwa = formvars.get("report_to_cwa")
-            if report_to_cwa == "NO":
-                # Do not report to CWA, just forward to read view
-                self.next = r.url(id=record_id, method="read")
-            else:
-                # Report to CWA and show test certificate
-                dcc_option = False
-                if report_to_cwa == "ANONYMOUS":
-                    processing_type = "CWA_ANONYMOUS"
-                    cwa_report = CWAReport(record_id)
-                elif report_to_cwa == "PERSONAL":
-                    dcc_option = formvars.get("dcc_option")
-                    processing_type = "CWA_PERSONAL"
-                    cwa_report = CWAReport(record_id,
-                                           anonymous = False,
-                                           first_name = formvars.get("first_name"),
-                                           last_name = formvars.get("last_name"),
-                                           dob = formvars.get("date_of_birth"),
-                                           dcc = dcc_option,
-                                           )
-                else:
-                    processing_type = cwa_report = None
-
-                if cwa_report:
-                    # Register consent
-                    if processing_type:
-                        cwa_report.register_consent(processing_type,
-                                                    formvars.get("consent"),
-                                                    )
-                    # Send to CWA
-                    success = cwa_report.send()
-                    if success:
-                        response.information = T("Result reported to %(system)s") % CWA
-                        retry = False
-                    else:
-                        response.error = T("Report to %(system)s failed") % CWA
-                        retry = True
-
-                    # Store DCC data
-                    if dcc_option:
-                        cwa_data = cwa_report.data
-                        try:
-                            hcert = DCC.from_result(cwa_data.get("hash"),
-                                                    record_id,
-                                                    cwa_data.get("fn"),
-                                                    cwa_data.get("ln"),
-                                                    cwa_data.get("dob"),
-                                                    )
-                        except ValueError as e:
-                            hcert = None
-                            response.warning = str(e)
-                        if hcert:
-                            hcert.save()
-                        else:
-                            # Remove DCC flag if hcert could not be generated
-                            cwa_report.dcc = False
-
-                    S3CustomController._view("RLPPTM", "certificate.html")
-
-                    # Title
-                    field = table.disease_id
-                    if cwa_report.disease_id and field.represent:
-                        disease = field.represent(cwa_report.disease_id)
-                        title = "%s %s" % (disease, T("Test Result"))
-                    else:
-                        title = T("Test Result")
-
-                    return {"title": title,
-                            "intro": None, # TODO
-                            "form": cwa_report.formatted(retry=retry),
-                            }
-                else:
-                    response.information = T("Result not reported to %(system)s") % CWA
-                    self.next = r.url(id=record_id, method="read")
-
-
-            return None
+            return self.accept(r, form)
 
         elif form.errors:
             current.response.error = T("There are errors in the form, please check your input")
 
         # Custom View
-        S3CustomController._view("RLPPTM", "testresult.html")
+        CustomController._view("RLPPTM", "testresult.html")
+
+        # Page title and CMS intro text
+        title = T("Register Test Result")
+        intro = s3db.cms_get_content("TestResultRegistrationIntro",
+                                     module = "disease",
+                                     resource = "case_diagnostics",
+                                     )
 
         return {"title": title,
                 "intro": intro,
@@ -386,6 +269,12 @@ class TestResultRegistration(CRUDMethod):
             if not c or not c[1]:
                 form.errors.consent = T("Consent required")
 
+        # Verify that device ID is specified if DCC option is selected
+        dcc = formvars.get("dcc_option")
+        if dcc:
+            if not formvars.get("device_id"):
+                form.errors.device_id = T("Enter a value")
+
         # Verify that the selected testing device matches the selected
         # disease (only if disease is selectable - otherwise, the device
         # list is pre-filtered anyway):
@@ -404,8 +293,124 @@ class TestResultRegistration(CRUDMethod):
                     form.errors.device_id = T("Device not applicable for selected disease")
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def certify(r, **attr):
+    def accept(self, r, form):
+        """
+            Accept the test result form, and report to CWA if selected
+
+            Args:
+                r: the CRUDRequest
+                form: the test result form
+
+            Returns:
+                output dict for view, or None when redirecting
+        """
+
+        T = current.T
+        auth = current.auth
+        s3db = current.s3db
+        response = current.response
+
+        formvars = form.vars
+
+        # Create disease_case_diagnostics record
+        testresult = {"result": formvars.get("result"),
+                      }
+        for fn in ("site_id",
+                   "disease_id",
+                   "probe_date",
+                   "device_id",
+                   "demographic_id",
+                   ):
+            if fn in formvars:
+                testresult[fn] = formvars[fn]
+
+        table = s3db.disease_case_diagnostics
+
+        testresult["id"] = record_id = table.insert(**testresult)
+        if not record_id:
+            raise RuntimeError("Could not create testresult record")
+
+        auth.s3_set_record_owner(table, record_id)
+        auth.s3_make_session_owner(table, record_id)
+        s3db.onaccept(table, testresult, method="create")
+
+        response.confirmation = T("Test Result registered")
+
+        # Report to CWA?
+        report_to_cwa = formvars.get("report_to_cwa")
+        dcc_option = False
+        if report_to_cwa == "ANONYMOUS":
+            processing_type = "CWA_ANONYMOUS"
+            cwa_report = CWAReport(record_id)
+
+        elif report_to_cwa == "PERSONAL":
+            dcc_option = formvars.get("dcc_option")
+            processing_type = "CWA_PERSONAL"
+            cwa_report = CWAReport(record_id,
+                                   anonymous = False,
+                                   first_name = formvars.get("first_name"),
+                                   last_name = formvars.get("last_name"),
+                                   dob = formvars.get("date_of_birth"),
+                                   dcc = dcc_option,
+                                   )
+        else:
+            processing_type = cwa_report = None
+
+        if cwa_report:
+            # Register consent
+            cwa_report.register_consent(processing_type,
+                                        formvars.get("consent"),
+                                        )
+            # Send to CWA
+            if cwa_report.send():
+                response.information = T("Result reported to %(system)s") % CWA
+                retry = False
+            else:
+                response.error = T("Report to %(system)s failed") % CWA
+                retry = True
+
+            # Store DCC data
+            if dcc_option:
+                cwa_data = cwa_report.data
+                try:
+                    hcert = DCC.from_result(cwa_data.get("hash"),
+                                            record_id,
+                                            cwa_data.get("fn"),
+                                            cwa_data.get("ln"),
+                                            cwa_data.get("dob"),
+                                            )
+                except ValueError as e:
+                    hcert = None
+                    response.warning = str(e)
+                if hcert:
+                    hcert.save()
+                else:
+                    # Remove DCC flag if hcert could not be generated
+                    cwa_report.dcc = False
+
+            CustomController._view("RLPPTM", "certificate.html")
+
+            # Title
+            field = table.disease_id
+            if cwa_report.disease_id and field.represent:
+                disease = field.represent(cwa_report.disease_id)
+                title = "%s %s" % (disease, T("Test Result"))
+            else:
+                title = T("Test Result")
+
+            output = {"title": title,
+                      "intro": None,
+                      "form": cwa_report.formatted(retry=retry),
+                      }
+        else:
+            self.next = r.url(id=record_id, method="read")
+            output = None
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def certify(cls, r, **attr):
         """
             Generate a test certificate (PDF) for download
 
@@ -414,72 +419,91 @@ class TestResultRegistration(CRUDMethod):
                 attr: controller attributes
         """
 
-        if not r.record:
+        record = r.record
+        if not record:
             r.error(400, current.ERROR.BAD_REQUEST)
-        if r.http != "POST":
-            r.error(405, current.ERROR.BAD_METHOD)
         if r.representation != "pdf":
             r.error(415, current.ERROR.BAD_FORMAT)
 
-        post_vars = r.post_vars
+        testid = record.uuid
+        site_id = record.site_id
+        probe_date = record.probe_date
+        result = record.result
+        disease_id = record.disease_id
 
-        # Extract and check formkey from post data
-        formkey = post_vars.get("_formkey")
-        keyname = "_formkey[testresult/%s]" % r.id
-        if not formkey or formkey not in current.session.get(keyname, []):
-            r.error(403, current.ERROR.NOT_PERMITTED)
-
-        # Extract cwadata
-        cwadata = post_vars.get("cwadata")
-        if not cwadata:
-            r.error(400, current.ERROR.BAD_REQUEST)
-        try:
-            cwadata = json.loads(cwadata)
-        except JSONERRORS:
-            r.error(400, current.ERROR.BAD_REQUEST)
-
-        # Generate the CWAReport (implicitly validates the hash)
-        anonymous = "fn" not in cwadata
-        try:
-            cwareport = CWAReport(r.id,
-                                  anonymous = anonymous,
-                                  first_name = cwadata.get("fn"),
-                                  last_name = cwadata.get("ln"),
-                                  dob = cwadata.get("dob"),
-                                  dcc = post_vars.get("dcc") == "1",
-                                  salt = cwadata.get("salt"),
-                                  dhash = cwadata.get("hash"),
-                                  )
-        except ValueError:
-            r.error(400, current.ERROR.BAD_RECORD)
-
-        # Generate the data item
-        item = {"link": cwareport.get_link(),
+        item = {"testid": testid,
+                "result_raw": result,
                 }
-        if not anonymous:
-            for k in ("ln", "fn", "dob"):
-                value = cwadata.get(k)
-                if k == "dob":
-                    value = CWAReport.to_local_dtfmt(value)
-                item[k] = value
 
-        # Test Station, date and result
-        table = current.s3db.disease_case_diagnostics
+        if r.http == "POST":
+
+            post_vars = r.post_vars
+
+            # Extract and check formkey from post data
+            formkey = post_vars.get("_formkey")
+            keyname = "_formkey[testresult/%s]" % r.id
+            if not formkey or formkey not in current.session.get(keyname, []):
+                r.error(403, current.ERROR.NOT_PERMITTED)
+
+            # Extract cwadata
+            cwadata = post_vars.get("cwadata")
+            if not cwadata:
+                r.error(400, current.ERROR.BAD_REQUEST)
+            try:
+                cwadata = json.loads(cwadata)
+            except JSONERRORS:
+                r.error(400, current.ERROR.BAD_REQUEST)
+
+            # Generate the CWAReport (implicitly validates the hash)
+            anonymous = "fn" not in cwadata
+            try:
+                cwareport = CWAReport(r.id,
+                                      anonymous = anonymous,
+                                      first_name = cwadata.get("fn"),
+                                      last_name = cwadata.get("ln"),
+                                      dob = cwadata.get("dob"),
+                                      dcc = post_vars.get("dcc") == "1",
+                                      salt = cwadata.get("salt"),
+                                      dhash = cwadata.get("hash"),
+                                      )
+            except ValueError:
+                r.error(400, current.ERROR.BAD_RECORD)
+
+            # Generate the data item
+            item["link"] = cwareport.get_link()
+            if not anonymous:
+                for k in ("ln", "fn", "dob"):
+                    value = cwadata.get(k)
+                    if k == "dob":
+                        value = CWAReport.to_local_dtfmt(value)
+                    item[k] = value
+
+        else:
+            cwareport = None
+
+        s3db = current.s3db
+
+        # Test Station
+        table = s3db.disease_case_diagnostics
         field = table.site_id
         if field.represent:
-            item["site_name"] = field.represent(cwareport.site_id)
+            item["site_name"] = field.represent(site_id)
+        if site_id:
+            item.update(cls.get_site_details(site_id))
+
+        # Probe date and test result
         field = table.probe_date
         if field.represent:
-            item["test_date"] = field.represent(cwareport.probe_date)
+            item["test_date"] = field.represent(probe_date)
         field = table.result
         if field.represent:
-            item["result"] = field.represent(cwareport.result)
+            item["result"] = field.represent(result)
 
         # Title
         T = current.T
         field = table.disease_id
-        if cwareport.disease_id and field.represent:
-            disease = field.represent(cwareport.disease_id)
+        if disease_id and field.represent:
+            disease = field.represent(disease_id)
             title = "%s %s" % (disease, T("Test Result"))
         else:
             title = T("Test Result")
@@ -560,6 +584,66 @@ class TestResultRegistration(CRUDMethod):
         else:
             r.error(503, T("Report to %(system)s failed") % CWA)
         return output
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_site_details(site_id):
+        """
+            Get details of the test station (address, email, phone number)
+
+            Args:
+                site_id: the site ID of the facility
+
+            Returns:
+                a dict {site_email, site_phone, site_address, site_place}
+
+            Note:
+                The dict items are only added when data are available.
+        """
+
+        details = {}
+
+        s3db = current.s3db
+        ftable = s3db.org_facility
+        ltable = s3db.gis_location
+
+        left = ltable.on(ltable.id == ftable.location_id)
+        query = (ftable.site_id == site_id) & \
+                (ftable.deleted == False)
+        row = current.db(query).select(ftable.phone1,
+                                       ftable.email,
+                                       ltable.id,
+                                       ltable.addr_street,
+                                       ltable.addr_postcode,
+                                       ltable.L4,
+                                       ltable.L3,
+                                       left = left,
+                                       limitby = (0, 1),
+                                       ).first()
+        if row:
+            facility = row.org_facility
+            if facility.email:
+                details["site_email"] = facility.email
+            if facility.phone1:
+                details["site_phone"] = facility.phone1
+
+            location = row.gis_location
+            if location.id:
+                if location.addr_street:
+                    details["site_address"] = location.addr_street
+                place = []
+                if location.addr_postcode:
+                    place.append(location.addr_postcode)
+                if location.L4:
+                    place.append(location.L4)
+                elif location.L3:
+                    place.append(location.L3)
+                else:
+                    place = None
+                if place:
+                    details["site_place"] = " ".join(place)
+
+        return details
 
 # =============================================================================
 class CWAReport:
@@ -982,91 +1066,147 @@ class CWACardLayout(RLPCardLayout):
                card's frame, drawing must not overshoot self.width/self.height
         """
 
-        T = current.T
-
         c = self.canv
         #w = self.width
         h = self.height
 
         item = self.item
 
-        draw_value = self.draw_value
+        draw_string = self.draw_string
+        draw_box_with_label = self.draw_box_with_label
+        draw_line_with_label = self.draw_line_with_label
 
         if not self.backside:
+
+            from reportlab.lib.units import cm
+
+            LEFT = 2.5 * cm
+            RIGHT = 11.0 * cm
+
+            # Tested Person Details
+            draw_box_with_label(LEFT, h-3.1*cm, 5*cm, 1.2*cm, label="Name, Vorname")
+            draw_box_with_label(LEFT + 5.0 * cm, h-3.1*cm, 3*cm, 1.2*cm, label="geb. am:")
+            draw_box_with_label(LEFT, h-4.3*cm, 8*cm, 1.2*cm, label="Straße, Hausnummer:")
+            draw_box_with_label(LEFT, h-5.8*cm, 8*cm, 1.5*cm, label="Postleitzahl, Wohnort:")
+
+            if "fn" in item:
+                names = [item.get(key) for key in ("ln", "fn") if item.get(key)]
+                if names:
+                    draw_string(2.7*cm, h-2.8*cm, ", ".join(names),
+                                width=4.6*cm, height=0.8*cm, size=8, bold=False)
+
+                dob = item.get("dob")
+                if dob:
+                    draw_string(7.7*cm, h-2.8*cm, dob,
+                                width=2.6*cm, height=0.8*cm, size=8, bold=False)
 
             # CWA QR-Code
             link = item.get("link")
             if link:
                 self.draw_qrcode(link,
-                                 120,
-                                 h - 170,
-                                 size = 160,
+                                 15.0*cm,
+                                 h - 1.5*cm,
+                                 size = 5.5*cm,
                                  halign = "center",
-                                 valign = "middle",
+                                 valign = "top",
                                  level = "M",
                                  )
-                draw_value(120,
-                           h - 255,
-                           T("Code for %(app)s") % CWA,
-                           width = 160,
-                           height = 20,
-                           size = 7,
-                           bold = False,
-                           halign = "center",
-                           )
+                desc = "Code zum Abrufen des Testergebnisses mit %(app)s" % CWA
+                draw_string(11.5*cm, h-7.2*cm, "%s<super rise=1>*</super>" % desc,
+                            width=7*cm, height=0.5*cm, size=6, bold=False, halign="center")
 
-            # Alignments for header items
-            HL = 360
-            HY = (h - 55, h - 75)
-
-            # Title
-            title = item.get("title")
-            if title:
-                draw_value(HL, HY[0], title, width=280, height=20, size=16)
-
-            # Horizontal alignments for data items
-            DL, DR = 270, 400
-
-            # Vertical alignment for data items
-            dy = lambda rnr: h - 115 - rnr * 20
-            # Person first name, last name, date of birth
-            if "fn" in item:
-                last_name = item.get("ln")
-                if last_name:
-                    draw_value(DL, dy(0), "%s:" % T("Last Name"), width=100, height=20, size=9, bold=False)
-                    draw_value(DR, dy(0), last_name, width=180, height=20, size=12)
-
-                first_name = item.get("fn")
-                if first_name:
-                    draw_value(DL, dy(1), "%s:" % T("First Name"), width=100, height=20, size=9, bold=False)
-                    draw_value(DR, dy(1), first_name, width=180, height=20, size=12)
-
-                dob = item.get("dob")
-                if dob:
-                    draw_value(DL, dy(2), "%s:" % T("Date of Birth"), width=100, height=20, size=9, bold=False)
-                    draw_value(DR, dy(2), dob, width=180, height=20, size=12)
-                offset = 3
+            # Test ID
+            draw_string(LEFT, h-8.6*cm, "Test ID:",
+                        width=7.75*cm, height=0.5*cm, size=12, bold=True)
+            testid = item.get("testid")
+            if testid:
+                try:
+                    testid = uuid.UUID(testid)
+                except ValueError:
+                    testid = None
+            if testid:
+                draw_box_with_label(LEFT, h-10.0*cm, 7.75*cm, 1.0*cm, label="LSJV Reg.Nr.")
+                draw_string(LEFT + 0.8*cm, h-9.8*cm, str(testid).upper(),
+                            width=7.5*cm, height=0.5*cm, size=8, bold=False)
             else:
-                draw_value(DL, dy(0), "%s:" % T("Person Tested"), width=100, height=20, size=9, bold=False)
-                draw_value(DR, dy(0), T("anonymous"), width=180, height=20, size=12)
-                offset = 1
+                draw_box_with_label(LEFT, h-10.0*cm, 7.75*cm, 1.0*cm, label="Fortlaufende Nummer")
 
-            dy = lambda rnr: h - 115 - (rnr + offset) * 20
-            # Test Station
-            site_name = item.get("site_name")
-            if site_name:
-                draw_value(DL, dy(1), "%s:" % T("Test Station"), width=100, height=20, size=9, bold=False)
-                draw_value(DR, dy(1), site_name, width=180, height=20, size=12)
-            # Test Date
+            # Test Station Details
+            draw_string(RIGHT, h-8.6*cm, "Teststelle:",
+                        width=7.75*cm, height=0.5*cm, size=12, bold=True)
+            draw_box_with_label(RIGHT, h-10.0*cm, 7.75*cm, 1.0*cm, label="Straße, Hausnummer")
+            draw_box_with_label(RIGHT, h-11.0*cm, 7.75*cm, 1.0*cm, label="Postleitzahl, Ort")
+            draw_box_with_label(RIGHT, h-12.0*cm, 7.75*cm, 1.0*cm, label="Telefonnummer:")
+            draw_box_with_label(RIGHT, h-13.0*cm, 7.75*cm, 1.0*cm, label="E-Mail Adresse")
+
+            site_place = item.get("site_place")
+            if site_place:
+                draw_string(11.2*cm, h-10.8*cm, site_place,
+                            width=7.2*cm, height=0.5*cm, size=8, bold=False)
+                site_address = item.get("site_address")
+                if site_address:
+                    draw_string(11.2*cm, h-9.8*cm, site_address,
+                                width=7.2*cm, height=0.5*cm, size=8, bold=False)
+            site_phone = item.get("site_phone")
+            if site_phone:
+                draw_string(11.2*cm, h-11.8*cm, site_phone,
+                            width=7.2*cm, height=0.5*cm, size=8, bold=False)
+            site_email = item.get("site_email")
+            if site_email:
+                draw_string(11.2*cm, h-12.8*cm, site_email,
+                            width=7.2*cm, height=0.5*cm, size=8, bold=False)
+
+            # Test Date and Result
+            draw_string(LEFT, h-14.7*cm, "<u>Bescheinigung über das Ergebnis des PoC-Antigen-Tests:</u>",
+                        width=10*cm, height=0.5*cm, size=10, bold=True)
+            draw_string(LEFT, h-15.9*cm, "Datum des PoC-Antigen-Tests:",
+                        width=10*cm, height=0.5*cm, size=9, bold=True)
+            draw_string(2.5*cm, h-16.9*cm, "Testergebnis:",
+                        width=2.5*cm, height=0.5*cm, size=9, bold=True)
+
             test_date = item.get("test_date")
             if test_date:
-                draw_value(DL, dy(2), "%s:" % T("Test Date/Time"), width=100, height=20, size=9, bold=False)
-                draw_value(DR, dy(2), test_date, width=180, height=20, size=12)
+                draw_string(7.5*cm, h-15.9*cm, test_date,
+                            width=7.75*cm, height=0.5*cm, size=8, bold=False)
+            else:
+                draw_line_with_label(7.5*cm, h-15.9*cm)
+
             # Test Result
-            result = item.get("result")
-            if result:
-                draw_value(DL, dy(3), "%s:" % T("Test Result"), width=100, height=20, size=9, bold=False)
-                draw_value(DR, dy(3), result, width=180, height=20, size=12)
+            result = item.get("result_raw")
+            if result == "NEG":
+                result_text = "Coronavirus SARS-CoV-2 NICHT nachgewiesen (negativ)"
+            elif result == "POS":
+                result_text = "Coronavirus SARS-CoV-2 nachgewiesen (positiv)"
+            else:
+                result_text = None
+            if result_text:
+                draw_string(7.5*cm, h-16.9*cm, result_text,
+                            width=8*cm, height=0.5*cm, size=9, bold=False)
+            else:
+                draw_line_with_label(7.5*cm, h-16.9*cm)
+
+            # Test Device
+            draw_string(LEFT, h-19.3*cm, "<u>Angaben zum verwendeten PoC-Antigen-Test:</u>",
+                        width=10*cm, height=0.5*cm, size=9, bold=True)
+            draw_string(LEFT, h-19.9*cm, "Hersteller:",
+                        width=10*cm, height=0.5*cm, size=9, bold=True)
+            draw_string(LEFT, h-20.5*cm, "PZN:",
+                        width=10*cm, height=0.5*cm, size=9, bold=True)
+
+            # Signature
+            draw_line_with_label(LEFT, h-21.7*cm, 7.5*cm, label="Ort, Datum, Uhrzeit")
+            draw_line_with_label(LEFT, h-23.3*cm, 7.5*cm, label="Unterschrift der/des Verantwortlichen der Teststelle")
+            draw_box_with_label(RIGHT + 0.5*cm, h-23.3*cm, 7*cm, 4*cm, label="Stempel der Teststelle")
+
+            # Legal Information
+            draw_string(LEFT, h-27*cm, "Wer dieses Dokument fälscht, einen nicht erfolgten Test bescheinigt, einen positiven Test fälschlicherweise als negativ bescheinigt oder wer ein falsches Dokument verwendet, um Zugang zu einer Einrichtung oder einem Angebot zu erhalten, begeht eine Ordnungswidrigkeit, die mit einer Geldbuße geahndet wird.",
+                        width=16*cm, height=2*cm, size=8, bold=False, box=True)
+
+            # Hint for QR-Code
+            if link:
+                hint = "Dieser QR-Code dient ausschließlich dem Abruf des Testergebnisses mit der Corona Warn App und kann nicht als Testnachweis mit anderen Apps (z.B. CovPass App) gelesen werden."
+                draw_string(LEFT, h-28.3*cm, "<super rise=1>*</super>%s" % hint,
+                            width=16*cm, height=2*cm, size=7, bold=False)
 
             # Add a cutting line with multiple cards per page
             if self.multiple:
@@ -1075,5 +1215,93 @@ class CWACardLayout(RLPCardLayout):
         else:
             # No backside
             pass
+
+    # -------------------------------------------------------------------------
+    def draw_box_with_label(self, x, y, width=120, height=20, label=None):
+        """
+            Draw a box with a label inside (paper form element)
+
+            Args:
+                x: the horizontal position (from left)
+                y: the vertical position (from bottom)
+                width: the width of the box
+                height: the height of the box
+                label: the label
+        """
+
+        label_size = 7
+
+        c = self.canv
+
+        c.saveState()
+
+        c.setLineWidth(0.5)
+        c.rect(x, y, width, height)
+
+        if label:
+            c.setFont("Helvetica", label_size)
+            c.setFillGray(0.3)
+            c.drawString(x + 4, y + height - label_size - 1, s3_str(label))
+
+        c.restoreState()
+
+    # -------------------------------------------------------------------------
+    def draw_line_with_label(self, x, y, width=120, label=None):
+        """
+            Draw a placeholder line with label underneath (paper form element)
+
+            Args:
+                x: the horizontal position (from left)
+                y: the vertical position (from bottom)
+                width: the horizontal length of the line
+                label: the label
+        """
+
+        label_size = 7
+
+        c = self.canv
+
+        c.saveState()
+
+        c.setLineWidth(0.5)
+        c.line(x, y, x + width, y)
+
+        if label:
+            c.setFont("Helvetica", label_size)
+            c.setFillGray(0.3)
+            c.drawString(x, y - label_size - 1, s3_str(label))
+
+        c.restoreState()
+
+    # -------------------------------------------------------------------------
+    def draw_string(self, x, y, value, width=120, height=40, size=7, bold=False, halign=None, box=False):
+        """
+            Draw a string (label, value)
+
+            Args:
+                x: the horizontal position (from left)
+                y: the vertical position (from bottom)
+                value: the string to render
+                width: the width of the text box
+                height: the height of the text box
+                size: the font size
+                bold: use boldface font
+                halign: horizonal alignment, "left" (or None, the default)|"right"|"center"
+                box: render the box (with border and grey background)
+
+            Returns:
+                the actual height of the box
+        """
+
+        return self.draw_value(x + width/2.0,
+                               y,
+                               value,
+                               width = width,
+                               height = height,
+                               size = size,
+                               bold = bold,
+                               halign = halign,
+                               box = box,
+                               )
 
 # END =========================================================================

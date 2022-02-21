@@ -8,7 +8,7 @@
 //$button-bg-hover
 
 // Active tab
-$rheader_tabs_bgcolor_active: #ffffff !default;
+$rheader_tabs_bgcolor_active: $body-bg !default;
 $rheader_tabs_bgcolor_active_hover: #f1edec !default;
 $rheader_tabs_fgcolor_active: #666666 !default;
 $rheader_tabs_fgcolor_active_hover: #666666 !default;
@@ -22,139 +22,181 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
 // ============================================================================
 // STYLES
 
-/* Rheader */
 #rheader {
-    width: 100%;
-
-    // Profile pictures in rheaders
-    a.th {
-        img {
-            height: 60px;
-        }
-        margin-right: 10px;
-    }
-    .rheader-avatar {
-        clear: none;
-        display: inline-block;
-        float: none;
-        padding: 0;
-        vertical-align: top;
-    }
-    img.rheader-avatar {
-        margin-right: 0.8rem;
-    }
-    .rheader-content {
-        display: inline-block;
-    }
+    margin-bottom: 0.75em;
     .rheader-title {
         color: #333;
         font-weight: bold;
         font-size: 1.1rem;
         line-height: 1.0;
     }
+    .rheader-content {
+        display: inline-block;
+        max-width: 90%;
+        padding: 0.5rem;
+    }
     table {
         display: inline;
         margin-bottom: 10px;
         border: none;
+        background: none;
         tr {
             background: none;
         }
-    }
-}
-
-/* Rheader Tabs */
-div.tabs {
-    // Tabs section
-    display: block;
-    clear: none;
-
-    height: 1.9rem;
-    width: 100%;
-
-    margin: 0.5rem 0;
-    padding: 0;
-
-    line-height: 1.3rem;
-    text-align: left;
-
-    border-bottom: 1px solid $rheader_tabs_bgcolor_inactive;
-
-    span {
-        // General tabs
-        float: left;
-        display: inline;
-        position: relative;
-
-        margin: 0.2rem 0.2rem 0 0;
-        padding: 0.1rem 0.3rem 0.1rem;
-
-        border-radius: 3px 3px 0 0;
-
-        a {
-            color: $rheader_tabs_fgcolor_inactive !important;
-            text-decoration: none !important;
-            background: transparent !important;
-            &:hover {
-                background: transparent !important;
+        th, td {
+            text-align: left;
+            padding: 0.1rem 0.5rem 0.05rem 0;
+            [dir=rtl] & {
+                text-align: right;
+                padding: 0.1rem 0 0.05rem 0.5rem;
             }
+            white-space: pre-line;
         }
-
-        // Active tab
-        &.tab_here {
-            font-size: 1rem;
+        th {
+            color: #7F7F7F;
+            line-height: 1.1rem;
+            font-weight: normal;
+            font-size: 0.85rem;
+        }
+        td {
+            padding-right: 1.25rem;
+            line-height: 1.1rem;
             font-weight: bold;
-
-            margin: 0.2rem 0.35rem 0 0;
-            padding: 0.1rem 0.4rem 0.12rem;
-
-            background: $rheader_tabs_bgcolor_active;
-            border: {
-                color: $rheader_tabs_bgcolor_inactive;
-                style: solid;
-                width: rem_calc(2) 2px rem_calc(1) 3px;
-                bottom: {
-                    style: solid;
-                    color: $rheader_tabs_bgcolor_active;
-                }
-            }
-
-            &:hover {
-                background-color: $rheader_tabs_bgcolor_active_hover;
-            }
             a {
-                color: $rheader_tabs_fgcolor_active !important;
-                &:hover {
-                    color: $rheader_tabs_fgcolor_active_hover !important;
-                }
+                font-weight: normal;
+            }
+            [dir=rtl] & {
+                padding-right: 0;
+                padding-left: 1.25rem;
             }
         }
+    }
 
-        // Inactive tabs
-        &.tab_last,
-        &.tab_other {
-            font-size: 0.9rem;
+    // QR Codes in rheaders
+    .rheader-qrcode {
+        display: inline-block;
+        border: 1px solid #eee;
+        margin-right: 0.5rem;
+        vertical-align: top;
+    }
 
-            margin: 0.35rem 0.2rem 0 0;
-            padding: 0.1rem 0.3rem 0;
+    // Profile pictures in rheaders
+    .rheader-avatar {
+        clear: none;
+        display: inline-block;
+        float: none;
+        padding: 0;
+        vertical-align: top;
+        margin-right: 0.8rem;
+        [dir=rtl] & {
+            margin-right: 0;
+            margin-left: 0.8rem;
+        }
+    }
 
-            background-color: $rheader_tabs_bgcolor_inactive;
+    /* Rheader Tabs */
+    div.tabs {
+        // Tabs section
+        display: block;
+        clear: none;
+
+        height: 33px;
+        width: 100%;
+
+        margin: 5px 0!important;
+        padding: 4px 4px 0 0;
+
+        text-align: left;
+
+        border-bottom: 1px solid $rheader_tabs_bgcolor_inactive;
+
+        span {
+            // General tabs
+            float: left;
+            position: relative;
+
+            font-size: 14px;
+            font-weight: normal;
+
+            margin: 3px 0.2rem 0 0;
+            padding: 2px 0.4rem 3px;
+
             border: {
                 color: $rheader_tabs_bgcolor_inactive;
-                width: rem_calc(1) 1px rem_calc(1) 2px;
+                width: 1px;
                 style: solid;
+                radius: 3px 3px 0 0;
             }
-
+            background-color: $rheader_tabs_bgcolor_inactive;
             &:hover {
                 background-color: $rheader_tabs_bgcolor_inactive_hover;
                 border-color: $rheader_tabs_bgcolor_inactive_hover;
             }
+
             a {
-                color: $rheader_tabs_fgcolor_inactive !important;
+                line-height: 18px;
+                color: $rheader_tabs_fgcolor_inactive;
+                text-decoration: none;
+                background: transparent;
                 &:hover {
-                    color: $rheader_tabs_fgcolor_inactive_hover !important;
+                    color: $rheader_tabs_fgcolor_inactive_hover;
+                    background: transparent;
+                }
+            }
+
+            // Active tab
+            &.tab_here {
+                font-size: 16px;
+                font-weight: bold;
+
+                margin-top: 0;
+                margin-right: 0.4rem;
+                &:not(:first-child) {
+                    margin-left: 0.2rem;
+                }
+                padding: 3px 0.4rem 5px;
+
+                background: $rheader_tabs_bgcolor_active;
+                border: {
+                    color: $rheader_tabs_bgcolor_inactive;
+                    style: solid;
+                    width: 2px 2px 1px 3px; //rem_calc(2) rem_calc(2) rem_calc(3) rem_calc(3);
+                    bottom: {
+                        style: solid;
+                        color: $rheader_tabs_bgcolor_active;
+                    }
+                }
+
+                &:hover {
+                    background-color: $rheader_tabs_bgcolor_active_hover;
+                }
+                a {
+                    color: $rheader_tabs_fgcolor_active !important;
+                    &:hover {
+                        color: $rheader_tabs_fgcolor_active_hover !important;
+                    }
+                }
+
+            }
+        }
+
+        [dir=rtl] & {
+            padding-left: 4px;
+            padding-right: 0;
+            text-align: right;
+            span {
+                float: right;
+                margin-right: 0;
+                margin-left: 0.2rem;
+                &.tab_here {
+                    margin-left: 0.4rem;
+                    &:not(:first-child) {
+                        margin-right: 0.2rem;
+                    }
                 }
             }
         }
+
     }
 }
 

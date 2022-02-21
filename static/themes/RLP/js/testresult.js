@@ -12,13 +12,15 @@
 
         var ns = '.register-result',
             reportToCWA = $('#test_result_report_to_cwa'),
+            dccOption = $('#test_result_dcc_option'),
             pdata = $('#test_result_first_name, #test_result_last_name, #test_result_date_of_birth');
 
-        // Toggle consent options depending on CWA options
+        // Toggle consent options depending on selected CWA option
         var toggleConsentOption = function() {
-            var cwaOption = reportToCWA.val();
 
-            var consentRequired;
+            var cwaOption = reportToCWA.val(),
+                consentRequired;
+
             switch(cwaOption) {
                 case "ANONYMOUS":
                     consentRequired = "CWA_ANONYMOUS";
@@ -63,10 +65,23 @@
         };
         toggleConsentOption();
 
+        // Toggle device ID selector depending on selected DCC option
+        var toggleDeviceID = function() {
+
+            var deviceID = $('#test_result_device_id');
+
+            if (dccOption.prop('checked')) {
+                deviceID.closest('.form-row').show();
+            } else {
+                deviceID.val('').closest('.form-row').hide();
+            }
+        };
+        toggleDeviceID();
+
+        // Toggle DCC option depending on selected CWA Option
         var toggleDCCOption = function() {
 
             var cwaOption = reportToCWA.val(),
-                dccOption = $('#test_result_dcc_option'),
                 dccRow = dccOption.closest('.form-row');
             switch(cwaOption) {
                 case "ANONYMOUS":
@@ -81,12 +96,17 @@
                     dccRow.hide();
                     break;
             }
+            toggleDeviceID();
         };
         toggleDCCOption();
 
         reportToCWA.off(ns).on('change' + ns, function() {
             toggleConsentOption();
             toggleDCCOption();
+        });
+
+        dccOption.off(ns).on('change' + ns, function() {
+            toggleDeviceID();
         });
 
         // Toggle personal certificate option depending on result

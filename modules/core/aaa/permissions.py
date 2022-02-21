@@ -453,13 +453,13 @@ class S3Permission:
 
         record_id = None
 
-        DEFAULT = (None, None, None)
+        default = (None, None, None)
 
         # Load the table, if necessary
         if table and not hasattr(table, "_tablename"):
             table = current.s3db.table(table)
         if not table:
-            return DEFAULT
+            return default
 
         # Check which ownership fields the table defines
         ownership_fields = ("realm_entity",
@@ -468,7 +468,7 @@ class S3Permission:
         fields = [f for f in ownership_fields if f in table.fields]
         if not fields:
             # Ownership is not defined for this table
-            return DEFAULT
+            return default
 
         if isinstance(record, Row):
             # Check if all necessary fields are present
@@ -492,7 +492,7 @@ class S3Permission:
                                               ).first()
         if not record:
             # Record does not exist
-            return DEFAULT
+            return default
 
         if "realm_entity" in record:
             realm_entity = record["realm_entity"]
@@ -1324,13 +1324,16 @@ class S3Permission:
                 c: the controller
                 f: the function
                 p: the permission (defaults to READ)
-                t: the tablename (defaults to <c>_<f>)
+                t: the tablename, defaults to <c>_<f> (except for index pages)
                 a: the application name
                 args: the URL arguments
                 vars: the URL variables
                 anchor: the anchor (#) of the URL
                 extension: the request format extension
                 env: the environment
+
+            Note:
+                Specify t="" to override default table permission check
         """
 
         if args is None:
@@ -1344,15 +1347,15 @@ class S3Permission:
             if not settings.has_module(c):
                 return False
 
-        if t is None:
+        if t is None and f != "index":
             t = "%s_%s" % (c, f)
-            table = current.s3db.table(t)
-            if not table:
+            if not current.s3db.has(t):
                 t = None
+
         if not p:
             p = "read"
 
-        permitted = self.has_permission(p, c=c, f=f, t=t)
+        permitted = self.has_permission(p, c=c, f=f, t=t if t else None)
         if permitted:
             return URL(a = a,
                        c = c,
@@ -1546,8 +1549,10 @@ class S3Permission:
         acl = acls.get(ANY, {})
 
         # Default page ACL
-        if "c" in acl:
-            default_page_acl = acl["f"] if "f" in acl else acl["c"]
+        if "f" in acl:
+            default_page_acl = acl["f"]
+        elif "c" in acl:
+            default_page_acl = acl["c"]
         elif page_restricted:
             default_page_acl = NONE
         else:

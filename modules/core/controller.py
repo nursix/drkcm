@@ -1067,24 +1067,27 @@ class CRUDRequest:
         """
 
         if tablename is None:
+            # Customise the current target resource(s)
             customise = self.customise_resource
 
             customise(self.resource.tablename)
-            component = self.component
-            if component:
-                customise(component.tablename)
-            link = self.link
-            if link:
-                customise(link.tablename)
-        else:
-            # Always load the model first (otherwise it would
-            # override the custom settings when loaded later)
-            db = current.db
-            if tablename not in db:
-                current.s3db.table(tablename)
+            if self.component:
+                customise(self.component.tablename)
+            if self.link:
+                customise(self.link.tablename)
+
+            return
+
+        s3db = current.s3db
+
+        # Note: must load the model first, otherwise it would override
+        #       the custom settings when loaded later
+        if not s3db.customised(tablename) and s3db.table(tablename, db_only=True):
+
             customise = current.deployment_settings.customise_resource(tablename)
             if customise:
                 customise(self, tablename)
+            s3db.customised(tablename, True)
 
 # =============================================================================
 def crud_request(*args, **kwargs):

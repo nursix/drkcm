@@ -174,18 +174,18 @@ class OrgOrganisationModel(DataModel):
                                                          multiple = multiple_organisation_types,
                                                          #leafonly = True,
                                                          )
-            type_filter = S3HierarchyFilter("organisation_organisation_type.organisation_type_id",
-                                            label = T("Type"),
-                                            #multiple = multiple_organisation_types,
-                                            )
+            type_filter = HierarchyFilter("organisation_organisation_type.organisation_type_id",
+                                          label = T("Type"),
+                                          #multiple = multiple_organisation_types,
+                                          )
             type_widget = "hierarchy"
         else:
             hierarchy = None
             organisation_type_widget = None
-            type_filter = S3OptionsFilter("organisation_organisation_type.organisation_type_id",
-                                          label = T("Type"),
-                                          #multiple = multiple_organisation_types,
-                                          )
+            type_filter = OptionsFilter("organisation_organisation_type.organisation_type_id",
+                                        label = T("Type"),
+                                        #multiple = multiple_organisation_types,
+                                        )
             type_widget = "multiselect"
 
         # CRUD strings
@@ -434,10 +434,10 @@ class OrgOrganisationModel(DataModel):
                            label = T("Logo"),
                            length = current.MAX_FILENAME_LENGTH,
                            represent = self.doc_image_represent,
-                           requires = [IS_EMPTY_OR(IS_IMAGE(maxsize = (400, 400),
-                                                            error_message = T("Upload an image file (png or jpeg), max. 400x400 pixels!"))),
-                                       IS_EMPTY_OR(IS_UPLOAD_FILENAME()),
-                                       ],
+                           requires = IS_EMPTY_OR(IS_IMAGE(
+                                            maxsize = (400, 400),
+                                            error_message = T("Upload an image file (png or jpeg), max. 400x400 pixels!"),
+                                            )),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Logo"),
                                                            T("Logo of the organization. This should be a png or jpeg file and it should be no larger than 400x400"))),
@@ -576,11 +576,11 @@ class OrgOrganisationModel(DataModel):
         if use_sector:
             list_fields.insert(4, (T("Sectors"), "sector_organisation.sector_id"))
 
-        filter_widgets = [S3TextFilter(text_fields,
-                                       label = T("Search"),
-                                       comment = text_comment,
-                                       #_class = "filter-search",
-                                       ),
+        filter_widgets = [TextFilter(text_fields,
+                                     label = T("Search"),
+                                     comment = text_comment,
+                                     #_class = "filter-search",
+                                     ),
                           ]
         append = filter_widgets.append
 
@@ -591,20 +591,18 @@ class OrgOrganisationModel(DataModel):
 
         # Add Sector Filter where Sectors are being used, but not in controllers where this is irrelevant
         if use_sector and function not in ("supplier", "training_center"):
-            append(S3OptionsFilter("sector_organisation.sector_id",
-                                   options = lambda: \
-                                       s3_get_filter_opts("org_sector",
-                                                          location_filter = True,
-                                                          none = True,
-                                                          translate = True),
-                                   )
-                   )
+            append(OptionsFilter("sector_organisation.sector_id",
+                                 options = lambda: \
+                                        get_filter_options("org_sector",
+                                                           location_filter = True,
+                                                           none = True,
+                                                           translate = True),
+                                 ))
 
         if use_country:
-            append(S3OptionsFilter("country",
-                                   #label = T("Home Country"),
-                                   ),
-                   )
+            append(OptionsFilter("country",
+                                 #label = T("Home Country"),
+                                 ))
 
         report_fields = ["organisation_organisation_type.organisation_type_id",
                          ]
@@ -2120,15 +2118,16 @@ class OrgOrganisationResourceModel(DataModel):
             msg_list_empty = T("No Resources in Inventory"))
 
         # Filter Widgets
-        filter_widgets = [S3TextFilter(["organisation_id$name",
-                                        "location_id",
-                                        "parameter_id$name",
-                                        "comments",
-                                        ],
-                                       label = T("Search")),
-                          S3OptionsFilter("parameter_id",
-                                          label = T("Type"),
-                                          ),
+        filter_widgets = [TextFilter(["organisation_id$name",
+                                      "location_id",
+                                      "parameter_id$name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("parameter_id",
+                                        label = T("Type"),
+                                        ),
                           ]
 
         # Report options
@@ -4434,96 +4433,96 @@ class OrgFacilityModel(DataModel):
             text_fields.append(lfield)
 
         if hierarchical_facility_types:
-            type_filter = S3HierarchyFilter("site_facility_type.facility_type_id",
-                                            #label = T("Type"),
-                                            )
-        else:
-            type_filter = S3OptionsFilter("site_facility_type.facility_type_id",
-                                          # @ToDo: Introspect need for header based on # records
-                                          #header = True,
+            type_filter = HierarchyFilter("site_facility_type.facility_type_id",
                                           #label = T("Type"),
-                                          # Doesn't support translation
-                                          #represent = "%(name)s",
                                           )
+        else:
+            type_filter = OptionsFilter("site_facility_type.facility_type_id",
+                                        # @ToDo: Introspect need for header based on # records
+                                        #header = True,
+                                        #label = T("Type"),
+                                        # Doesn't support translation
+                                        #represent = "%(name)s",
+                                        )
 
 
         filter_widgets = [
-            S3TextFilter(text_fields,
-                         label = T("Search"),
-                         #_class = "filter-search",
-                         ),
+            TextFilter(text_fields,
+                       label = T("Search"),
+                       #_class = "filter-search",
+                       ),
             type_filter,
-            S3OptionsFilter("organisation_id",
-                            # @ToDo: Introspect need for header based on # records
-                            #header = True,
-                            #label = T("Organization"),
-                            # Doesn't support l10n
-                            #represent = "%(name)s",
-                            ),
-            S3LocationFilter("location_id",
-                             # @ToDo: Display by default in Summary Views but not others?
-                             #hidden = True,
-                             #label = T("Location"),
-                             levels = levels,
-                             ),
+            OptionsFilter("organisation_id",
+                          # @ToDo: Introspect need for header based on # records
+                          #header = True,
+                          #label = T("Organization"),
+                          # Doesn't support l10n
+                          #represent = "%(name)s",
+                          ),
+            LocationFilter("location_id",
+                           # @ToDo: Display by default in Summary Views but not others?
+                           #hidden = True,
+                           #label = T("Location"),
+                           levels = levels,
+                           ),
             ]
 
         groups = settings.get_org_groups()
         if groups:
             report_fields.append("site_org_group.group_id")
             filter_widgets.insert(1,
-               S3OptionsFilter("site_org_group.group_id",
-                               # @ToDo: Introspect need for header based on # records
-                               #header = True,
-                               represent = "%(name)s",
-                               ))
+               OptionsFilter("site_org_group.group_id",
+                             # @ToDo: Introspect need for header based on # records
+                             #header = True,
+                             represent = "%(name)s",
+                             ))
 
         if settings.get_org_regions():
             report_fields.append("organisation_id$region_id")
             if settings.get_org_regions_hierarchical():
-                filter_widget =  S3HierarchyFilter("organisation_id$region_id",
-                                                   #hidden = True,
-                                                   label = T("Region"),
-                                                   )
+                filter_widget =  HierarchyFilter("organisation_id$region_id",
+                                                 #hidden = True,
+                                                 label = T("Region"),
+                                                 )
             else:
-                filter_widget = S3OptionsFilter("organisation_id$region_id",
-                                                #hidden = True,
-                                                label = T("Region"),
-                                                )
+                filter_widget = OptionsFilter("organisation_id$region_id",
+                                              #hidden = True,
+                                              label = T("Region"),
+                                              )
             filter_widgets.insert(1, filter_widget)
 
         if settings.has_module("inv"):
             report_fields.append((T("Inventory"), "inv"))
             filter_widgets.append(
-                S3OptionsFilter("inv",
-                                label = T("Inventory"),
-                                options = {True: T("Yes"),
-                                           False: T("No"),
-                                           },
-                                cols = 2,
-                                ))
+                OptionsFilter("inv",
+                              label = T("Inventory"),
+                              options = {True: T("Yes"),
+                                         False: T("No"),
+                                         },
+                              cols = 2,
+                              ))
 
         if settings.has_module("asset"):
             report_fields.append((T("Assets"), "assets"))
             filter_widgets.append(
-                S3OptionsFilter("assets",
-                                label = T("Assets"),
-                                options = {True: T("Yes"),
-                                           False: T("No"),
-                                           },
-                                cols = 2,
-                                ))
+                OptionsFilter("assets",
+                              label = T("Assets"),
+                              options = {True: T("Yes"),
+                                         False: T("No"),
+                                         },
+                              cols = 2,
+                              ))
 
         if settings.has_module("req"):
             from .req import req_priority_opts
             # @ToDo: Report should show Total Open/Closed Requests
             report_fields.append((T("Highest Priority Open Requests"), "reqs"))
             filter_widgets.append(
-                S3OptionsFilter("reqs",
-                                label = T("Highest Priority Open Requests"),
-                                options = req_priority_opts,
-                                cols = 3,
-                                ))
+                OptionsFilter("reqs",
+                              label = T("Highest Priority Open Requests"),
+                              options = req_priority_opts,
+                              cols = 3,
+                              ))
 
         report_options = Storage(
             rows = report_fields,
@@ -5150,21 +5149,21 @@ class OrgOfficeModel(DataModel):
         if settings.get_org_branches():
             ORGANISATION = T("Organization/Branch")
             comment = T("Search for office by organization or branch.")
-            org_filter = S3HierarchyFilter("organisation_id",
-                                           label = ORGANISATION,
-                                           comment = comment,
-                                           #hidden = True,
-                                           )
+            org_filter = HierarchyFilter("organisation_id",
+                                         label = ORGANISATION,
+                                         comment = comment,
+                                         #hidden = True,
+                                         )
         else:
             ORGANISATION = T("Organization")
             comment = T("Search for office by organization.")
-            org_filter = S3OptionsFilter("organisation_id",
-                                         label = ORGANISATION,
-                                         comment = comment,
-                                         # Doesn't support l10n
-                                         #represent = "%(name)s",
-                                         #hidden = True,
-                                         )
+            org_filter = OptionsFilter("organisation_id",
+                                       label = ORGANISATION,
+                                       comment = comment,
+                                       # Doesn't support l10n
+                                       #represent = "%(name)s",
+                                       #hidden = True,
+                                       )
 
         text_fields = ["name",
                        "code",
@@ -5192,20 +5191,20 @@ class OrgOfficeModel(DataModel):
                         ]
 
         filter_widgets = [
-                S3TextFilter(text_fields,
-                             label = T("Search"),
-                             #_class = "filter-search",
-                             ),
-                #S3OptionsFilter("office_type_id",
-                #                label = T("Type"),
-                #                #hidden = True,
-                #                ),
+                TextFilter(text_fields,
+                           label = T("Search"),
+                           #_class = "filter-search",
+                           ),
+                #OptionsFilter("office_type_id",
+                #              label = T("Type"),
+                #              #hidden = True,
+                #              ),
                 org_filter,
-                S3LocationFilter("location_id",
-                                 label = T("Location"),
-                                 levels = levels,
-                                 #hidden = True,
-                                 ),
+                LocationFilter("location_id",
+                               label = T("Location"),
+                               levels = levels,
+                               #hidden = True,
+                               ),
                 ]
 
         report_options = Storage(
@@ -8669,16 +8668,16 @@ class org_AssignMethod(CRUDMethod):
                     filter_clear = get_config("filter_clear", True)
                     filter_formstyle = get_config("filter_formstyle", None)
                     filter_submit = get_config("filter_submit", True)
-                    filter_form = S3FilterForm(filter_widgets,
-                                               clear=filter_clear,
-                                               formstyle=filter_formstyle,
-                                               submit=filter_submit,
-                                               ajax=True,
-                                               url=filter_submit_url,
-                                               ajaxurl=filter_ajax_url,
-                                               _class="filter-form",
-                                               _id="datatable-filter-form",
-                                               )
+                    filter_form = FilterForm(filter_widgets,
+                                             clear=filter_clear,
+                                             formstyle=filter_formstyle,
+                                             submit=filter_submit,
+                                             ajax=True,
+                                             url=filter_submit_url,
+                                             ajaxurl=filter_ajax_url,
+                                             _class="filter-form",
+                                             _id="datatable-filter-form",
+                                             )
                     fresource = current.s3db.resource(resource.tablename)
                     alias = resource.alias if r.component else None
                     ff = filter_form.html(fresource,

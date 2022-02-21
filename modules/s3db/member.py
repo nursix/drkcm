@@ -283,46 +283,46 @@ class MemberModel(DataModel):
             text_fields.append(lfield)
 
         if settings.get_org_branches():
-            org_filter = S3HierarchyFilter("organisation_id",
-                                           # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
-                                           hidden = True,
-                                           leafonly = False,
-                                           )
-            report_fields.insert(1, (settings.get_hrm_root_organisation_label(), "organisation_id$root_organisation"))
-        else:
-            org_filter = S3OptionsFilter("organisation_id",
-                                         search = True,
-                                         header = "",
+            org_filter = HierarchyFilter("organisation_id",
                                          # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
                                          hidden = True,
+                                         leafonly = False,
                                          )
+            report_fields.insert(1, (settings.get_hrm_root_organisation_label(), "organisation_id$root_organisation"))
+        else:
+            org_filter = OptionsFilter("organisation_id",
+                                       search = True,
+                                       header = "",
+                                       # Can be unhidden in customise_xx_resource if there is a need to use a default_filter
+                                       hidden = True,
+                                       )
 
-        filter_widgets = [S3TextFilter(text_fields,
-                                       label = T("Search"),
-                                       ),
+        filter_widgets = [TextFilter(text_fields,
+                                     label = T("Search"),
+                                     ),
                           org_filter,
                           ]
         if types:
-            filter_widgets.append(S3OptionsFilter("membership_type_id",
-                                                  cols = 3,
-                                                  hidden = True,
-                                                  ))
+            filter_widgets.append(OptionsFilter("membership_type_id",
+                                                cols = 3,
+                                                hidden = True,
+                                                ))
         filter_widgets += [
-            S3OptionsFilter("paid",
-                            cols = 3,
-                            label = T("Paid"),
-                            options = {T("paid"):    T("paid"),
-                                       T("overdue"): T("overdue"),
-                                       T("expired"): T("expired"),
-                                       #T("exempted"): T("exempted"),
-                                       },
-                            hidden = True,
-                            ),
-            S3LocationFilter("location_id",
-                             label = T("Location"),
-                             levels = levels,
-                             hidden = True,
-                             ),
+            OptionsFilter("paid",
+                          cols = 3,
+                          label = T("Paid"),
+                          options = {T("paid"):    T("paid"),
+                                     T("overdue"): T("overdue"),
+                                     T("expired"): T("expired"),
+                                     #T("exempted"): T("exempted"),
+                                     },
+                          hidden = True,
+                          ),
+            LocationFilter("location_id",
+                           label = T("Location"),
+                           levels = levels,
+                           hidden = True,
+                           ),
             ]
 
         report_options = Storage(rows = report_fields,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 'District': "རྫོང་ཁག",
 'Dzongkha': "རྫོང་ཁ",

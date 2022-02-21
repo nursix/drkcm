@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 {
 'About': 'کے بارے میں',
 'Access denied': 'رسائی نہیں ہوئی',

@@ -9,7 +9,7 @@ from io import StringIO
 from gluon import *
 from gluon.storage import Storage
 
-from core import json, s3_str, ICON, S3CustomController, S3DateTime, CRUDMethod
+from core import json, s3_str, ICON, CustomController, S3DateTime, CRUDMethod
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -17,7 +17,7 @@ SEPARATORS = (",", ":")
 THEME = "UCCE"
 
 # =============================================================================
-class index(S3CustomController):
+class index(CustomController):
     """ Custom Home Page """
 
     def __call__(self):
@@ -710,7 +710,7 @@ class dc_TargetActivate(CRUDMethod):
                                _target="_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -986,7 +986,7 @@ class dc_TargetEdit(CRUDMethod):
                                _target = "_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -1116,7 +1116,7 @@ class dc_TargetDelete(CRUDMethod):
                                _target="_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -1664,7 +1664,7 @@ class dc_TargetReport(CRUDMethod):
         if report_filters is None:
             ff = ""
         else:
-            from core import S3FilterForm, S3OptionsFilter, S3SliderFilter
+            from core import FilterForm, OptionsFilter, SliderFilter
 
             questions_lookup = {}
             for q in data["questions"]:
@@ -1674,28 +1674,28 @@ class dc_TargetReport(CRUDMethod):
             for question_id in report_filters:
                 question = report_filters[question_id]
                 if question["field_type"] == 2:
-                    filter_widgets.append(S3SliderFilter(questions_lookup[int(question_id)],
-                                                         label = question["label"],
-                                                         ))
+                    filter_widgets.append(SliderFilter(questions_lookup[int(question_id)],
+                                                       label = question["label"],
+                                                       ))
                 elif question["field_type"] == 6:
-                    filter_widgets.append(S3OptionsFilter(questions_lookup[int(question_id)],
-                                                          label = question["label"],
-                                                          ))
+                    filter_widgets.append(OptionsFilter(questions_lookup[int(question_id)],
+                                                        label = question["label"],
+                                                        ))
 
             request = current.request
             filter_submit_url = URL(args = request.args,
                                     extension = "div",
                                     )
-            filter_form = S3FilterForm(filter_widgets,
-                                       #clear = False,
-                                       #formstyle = filter_formstyle,
-                                       submit = True,
-                                       ajax = True,
-                                       url = filter_submit_url,
-                                       #ajaxurl = filter_ajax_url,
-                                       #_class = "filter-form",
-                                       #_id = "datatable-filter-form",
-                                       )
+            filter_form = FilterForm(filter_widgets,
+                                     #clear = False,
+                                     #formstyle = filter_formstyle,
+                                     submit = True,
+                                     ajax = True,
+                                     url = filter_submit_url,
+                                     #ajaxurl = filter_ajax_url,
+                                     #_class = "filter-form",
+                                     #_id = "datatable-filter-form",
+                                     )
             fresource = current.s3db.resource(data["dtablename"])
             ff = filter_form.html(fresource,
                                   request.get_vars,
@@ -1734,7 +1734,7 @@ class dc_TargetReport(CRUDMethod):
             s3.scripts_modules.append("/%s/static/themes/UCCE/js/s3.ui.heatmap.min.js" % appname)
             scripts_append("/%s/static/themes/UCCE/js/report.min.js" % appname)
 
-        S3CustomController._view(THEME, "report_custom.html")
+        CustomController._view(THEME, "report_custom.html")
         return output
 
     # -------------------------------------------------------------------------
@@ -2273,7 +2273,7 @@ class dc_TargetReportFilters(CRUDMethod):
 
                 title = T("Questions to use as Report Filters")
                 response.title = title
-                S3CustomController._view(THEME, "form.html")
+                CustomController._view(THEME, "form.html")
                 return {"form": form,
                         "title": title,
                         }
@@ -2665,7 +2665,7 @@ class dc_TemplateEditor(CRUDMethod):
                     response.title = title = T("Editor")
                 s3.jquery_ready.append(script)
 
-                S3CustomController._view(THEME, "template_editor.html")
+                CustomController._view(THEME, "template_editor.html")
                 output = {"header": header,
                           "layout": layout,
                           "title": title,
@@ -3248,7 +3248,7 @@ class dc_ProjectDelete(CRUDMethod):
                                _target="_top",
                                )
 
-                S3CustomController._view(THEME, "confirm_popup.html")
+                CustomController._view(THEME, "confirm_popup.html")
                 output = {"items": items,
                           "cancel_btn": cancel_btn,
                           "action_btn": action_btn,
@@ -3313,7 +3313,7 @@ class dc_ProjectDelete(CRUDMethod):
 # =============================================================================
 def text_filter_formstyle(form, fields, *args, **kwargs):
     """
-        Custom formstyle for S3TextFilter
+        Custom formstyle for TextFilter
     """
 
     def render_row(row_id, label, widget, comment, hidden=False):

@@ -18,17 +18,27 @@ $form_error_bgcolor: #c60f13 !default;
 // ============================================================================
 // STYLES
 
-/* General forms */
 form {
     font-size: 0.8rem;
     .form-row {
-        padding: 0 0.3rem;
-        margin-top: 0.75rem !important;
+        &.row {
+            padding: 0 0.3rem;
+            margin-top: 0.7rem;
+        }
         .button {
-            margin-right: 0.5rem;
-            i.fa {
-                margin-right: 0.3rem;
+            [dir=ltr] & {
+                margin-right: 0.5rem;
+                i.fa {
+                    margin-right: 0.3rem;
+                }
             }
+            [dir=rtl] & {
+                margin-left: 0.5rem;
+                i.fa {
+                    margin-left: 0.3rem;
+                }
+            }
+            margin-bottom: 0.3rem;
         }
         & > .columns {
             &:first-child {
@@ -39,7 +49,12 @@ form {
             }
         }
         & > a {
-            margin-left: 0.625rem;
+            [dir=ltr] & {
+                margin-left: 0.625rem;
+            }
+            [dir=rtl] & {
+                margin-right: 0.625rem;
+            }
         }
         select {
             min-width: 4rem;
@@ -64,19 +79,36 @@ form {
     .jstree-anchor {
         font-size: 0.9rem;
     }
-    label.inline {
-        padding: 0;
+    label {
+        cursor: pointer;
+        margin-bottom: 0.175rem;
+        margin-left: 0.125rem;
+        &.inline {
+            padding: 0;
+            line-height: normal;
+            margin: 0 0 0.5rem;
+        }
     }
     .gis_loc_select_btn {
         font-size: 0.8em;
         i {
             font-size: 1.0em;
-            margin-right: 4px;
+            [dir=ltr] & {
+                margin-right: 4px;
+            }
+            [dir=rtl] & {
+                margin-left: 4px;
+            }
         }
     }
     .error {
         display: block;
-        padding: 0.2rem 0 0 0.2rem;
+        [dir=ltr] {
+            padding: 0.2rem 0 0 0.2rem;
+        }
+        [dir=rtl] {
+            padding: 0.2rem 0.2rem 0 0;
+        }
         margin-top: 0;
         margin-bottom: 0.2rem;
         font-size: 0.75rem;
@@ -91,10 +123,6 @@ form {
     .invalidinput {
         border: 1px solid #c60f13;
     }
-    .date-clear-btn {
-        font-size: 0.75rem;
-        margin-left: 0.15rem !important;
-    }
     .action-lnk {
         font-weight: normal;
         font-size: 0.75rem;
@@ -106,18 +134,20 @@ form {
         margin-bottom: 0.125rem;
         border: 1px solid #dddddd;
         border-collapse: separate;
-
         td {
             border: none;
-            padding-bottom: 0.05rem;
-            padding-top: 0.15rem;
+            padding: 0.15rem 5px 0.05rem;
+            text-align: left;
+            [dir=rtl] & {
+                text-align: right;
+            }
             vertical-align: top;
         }
         &.subform-vertical {
             .add-row, .edit-row {
                 td {
                     border-top: 1px solid #dddddd;
-                    padding: 0 0.4rem 0.4rem 0.4rem;
+                    padding: 0 0.4rem 0.4rem;
                     &.subform-action {
                         vertical-align: bottom;
                     }
@@ -126,6 +156,7 @@ form {
         }
         .label-row {
             td {
+                color: #b3b3b3;
                 border-bottom: 1px solid #dddddd;
                 &:empty {
                     padding: 0;
@@ -145,6 +176,19 @@ form {
             .s3-upload-widget {
                 font-size: 0.8rem;
                 max-width: 14rem;
+                &.datetimepicker {
+                    width: rem-calc(120) !important;
+                    &.hide-time {
+                        width: rem-calc(80) !important;
+                    }
+                }
+            }
+            input.string,
+            textarea  {
+                width: auto;
+            }
+            input.integer {
+                max-width: 10rem;
             }
             textarea {
                 font-size: 0.8rem;
@@ -174,128 +218,118 @@ form {
             }
         }
     }
+    .inline-throbber {
+        background-image: url(../../img/indicator.gif);
+        background-repeat: no-repeat;
+        background-position: center;
+        height: 16px;
+        width: 16px;
+    }
+
+    .inline-add,
+    .inline-dsc,
+    .inline-cnc,
+    .inline-edt,
+    .inline-rdy,
+    .inline-rmv {
+        cursor: pointer;
+        background-repeat: no-repeat;
+        background-position: center;
+        height: 23px;
+        width: 23px;
+    }
+    .inline-add {
+        background-image: url(../../img/crud/add.png);
+    }
+    .inline-dsc {
+        background-image: url(../../img/crud/cancel.png);
+    }
+    .inline-cnc {
+        background-image: url(../../img/crud/cancel.png);
+    }
+    .inline-edt {
+        background-image: url(../../img/crud/edit.png);
+    }
+    .inline-rdy {
+        background-image: url(../../img/crud/apply.png);
+    }
+    .inline-rmv {
+        background-image: url(../../img/crud/remove.png);
+    }
+
+    .s3_inline_add_resource_link a {
+        [dir=ltr] & {
+            margin-left: 2px;
+            padding-left: 2px;
+        }
+        [dir=rtl] & {
+            margin-left: 2px;
+            padding-left: 2px;
+        }
+    }
+
     .inline-open-add {
         display: inline-block;
         margin-bottom: 1.25rem;
-        margin-left: 0;
+        [dir=ltr] {
+            margin-left: 0;
+        }
+        [dir=rtl] {
+            margin-right: 0;
+        }
     }
     .subheading {
         background-color: #FFEDCB;
         font-size: 0.9rem;
         font-weight: bold;
         border-top: solid 1px #FFD7A3;
-        border-left: solid 1px #FFD7A3;
+        [dir=ltr] & {
+            border-left: solid 1px #FFD7A3;
+            padding: 0.5rem 0.25rem 0.25rem 0.75rem;
+        }
+        [dir=rtl] & {
+            border-right: solid 1px #FFD7A3;
+            padding: 0.5rem 0.75rem 0.25rem 0.25rem;
+        }
         margin: 1.5rem 0 0.75rem;
         &:first-of-type {
             margin-top: 0;
         }
-        padding: 0.5rem 0.25rem 0.25rem 0.75rem;
         max-width: 80%;
     }
-
     // Login-form on homepage
     &.auth_login #submit_record__row {
         white-space: pre;
     }
 }
 
-/* S3SQLInlineLink read-only list representation */
-ul.s3-inline-link {
-    font-size: inherit;
-}
-
-/* General Widgets */
-input[type="text"],
-input[type="password"],
-input[type="date"],
-input[type="datetime"],
-input[type="datetime-local"],
-input[type="month"],
-input[type="week"],
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="tel"],
-input[type="time"],
-input[type="url"],
-textarea,
-select {
-  height: 1.75rem;
-  padding: 0.25rem!important; // override widget.css
-  display: inline-block;
-  font-weight: normal;
-  &:focus {
-    background-color: #fffbe0;
-  }
-}
-input[type="text"],
-input[type="password"],
-input[type="date"],
-input[type="datetime"],
-input[type="datetime-local"],
-input[type="month"],
-input[type="week"],
-input[type="email"],
-input[type="number"],
-input[type="search"],
-input[type="tel"],
-input[type="time"],
-input[type="url"],
-input[type="file"],
-select {
-    width: auto !important;
-    max-width: 100%;
-}
-textarea {
-    resize: both;
-    max-width: 100%;
-    vertical-align: top;
-    font-size: 0.8rem;
-}
-input.datetimepicker {
-    max-width: 8rem;
-}
-select {
-    padding: 0 1rem 0 0.25rem!important;
-}
-
-/* Form and Item containers */
-.form-info {
-    min-height: 1.2rem;
-}
-#last_update,
-#markDuplicate {
-    float: right;
-    clear: right;
-    text-align: right;
-}
-#markDuplicate {
-    margin-bottom: 0;
-    margin-top: -0.5rem;
-}
-body.rtl {
-    #last_update,
-    #markDuplicate {
-        float: left;
-        clear: left;
-        text-align: left;
-    }
-}
-
+/* -------------------------------------------------------------------------------- */
 .form-container,
 .item-container {
+    width: auto;
+    overflow: inherit;
     form {
+        border: 1px solid #E0E0E0;
+        td.w2p_fl {
+            font-weight: bold;
+        }
+        tr td {
+            padding: 3px 0 0 3px;
+        }
         background: $form_container_bgcolor;
-        padding: 5px 10px;
+        padding: 0.35rem 0.7rem;
         tr td {
             padding: rem-calc(3);
         }
         .embeddedComponent td {
-            padding-right: rem-calc(9);
+            [dir=ltr] & {
+                padding-right: rem-calc(9);
+            }
+            [dir=rtl] & {
+                padding-left: rem-calc(9);
+            }
         }
     }
-    width: auto;
-    overflow: inherit;
     .controls {
         display: inline-block;
         min-height: 1.7rem;
@@ -307,17 +341,50 @@ body.rtl {
     .no-options-available {
         color: #aaa;
         font-style: italic;
-        padding-left: 0.7rem;
+        [dir=ltr] & {
+            padding-left: 0.7rem;
+        }
+        [dir=rtl] & {
+            padding-right: 0.7rem;
+        }
     }
 }
+
 .form-container {
     margin-top: 0.125rem;
     margin-bottom: 0.875rem;
+    p {
+        margin: 0.5em 0 0 0;
+    }
     form {
-        select,
-        input.string:not(.date),
-        textarea {
+        p {
             margin: 0;
+            &.note {
+                font-style: italic;
+                margin-left: 18em;
+                font-size: 80%;
+                color: #666;
+            }
+        }
+        input.date {
+            width: auto;
+        }
+        input[type="checkbox"],
+        input[type="radio"] {
+            margin: 2px 5px;
+        }
+        fieldset {
+            margin: 0 0 10px 0;
+            padding: 10px;
+            border: #ddd 1px solid;
+            background-color: #fff;
+        }
+        legend {
+            font-weight: bold;
+            color: #666;
+        }
+        textarea {
+            width: 28rem;
         }
         .ui-multiselect {
             max-width: 100%;
@@ -325,6 +392,7 @@ body.rtl {
             font-size: 0.8rem;
             line-height: 1.5;
             margin-right: 0.3rem;
+            margin-bottom: 0;
         }
         &:not(.filter-form):not(.auth_login):not(.auth_register):not(.rm-form) {
             input[type="text"]:not(.integer):not(.double):not(.datetimepicker):not(.date):not(.hours):not(.dms-input) {
@@ -334,37 +402,40 @@ body.rtl {
     }
 }
 
-.item-container .controls {
-    background: $item_container_controls_bgcolor;
-    padding: 0.3rem;
-    min-height: 1.7rem;
-}
-
-/* Filter Forms & Report Options */
-.filter-form,
-.report-options {
-    // MultiSelect/GroupedOpts widgets
-    table tr,
-    .ui-multiselect {
-        max-width: 60%;
-    }
-    table.s3-groupedopts-widget {
-        display: inline-block;
-    }
-    label.inline {
-        line-height: normal;
-        padding-top: 0.2rem;
+.item-container {
+    margin: 0 0 0.5rem;
+    .controls {
+        background: $item_container_controls_bgcolor;
+        padding: 0.3rem;
     }
 }
 
-/* Login/Registration box */
-#login_form,
-#register_form,
-#login_box {
-    clear: none !important;
+/* -------------------------------------------------------------------------------- */
+#last_update,
+#markDuplicate {
+    float: right;
+    clear: right;
+    text-align: right;
+    [dir=rtl] & {
+        float: left;
+        clear: left;
+        text-align: left;
+    }
+}
+.authorinfo, // Record merger
+#last_update {
+    font-style: italic;
+    font-size: 80%;
+    color: #666;
+}
+#markDuplicate {
+    padding-bottom: 8px;
+    margin-bottom: 0;
+    margin-top: -0.5rem;
 }
 
-/* Help Popup */
+// ----------------------------------------------------------------------------
+/* Help Popup Icon */
 .inline-tooltip {
     display: inline-block;
     vertical-align: top;
@@ -384,10 +455,11 @@ body.rtl {
     position: static;
     &.inline-tooltip {
         margin-left: 1rem;
+        vertical-align: middle;
     }
-    padding: 0;
+    padding: 0 0.3rem;
     text-transform: uppercase;
-    height: 20px;
+    width: auto;
     background: none;
     &:before {
         content: "\f29c";
@@ -399,7 +471,6 @@ body.rtl {
         -moz-osx-font-smoothing: grayscale;
     }
     &:hover {
-        background: none;
         cursor: help;
     }
 }
