@@ -4,45 +4,226 @@
     License: MIT
 """
 
-from gluon import current
+from gluon import current, IS_IN_SET
+from core import get_form_record_id
+
+# -------------------------------------------------------------------------
+def add_manager_tags():
+    """
+        Test Station Manager approval tags as filtered components
+            - for embedding in form
+    """
+
+    s3db = current.s3db
+
+    s3db.add_components("hrm_human_resource",
+                        hrm_human_resource_tag = (
+                            # Registration Form
+                            {"name": "reg_form",
+                             "joinby": "human_resource_id",
+                             "filterby": {"tag": "REGFORM"},
+                             "multiple": False,
+                             },
+                            # Criminal Record Certificate
+                            {"name": "crc",
+                             "joinby": "human_resource_id",
+                             "filterby": {"tag": "CRC"},
+                             "multiple": False,
+                             },
+                            # Statement on Criminal Proceedings
+                            {"name": "scp",
+                             "joinby": "human_resource_id",
+                             "filterby": {"tag": "SCP"},
+                             "multiple": False,
+                             },
+                            ),
+                        )
+
+# -----------------------------------------------------------------------------
+def configure_manager_tags(resource):
+    """
+        Configure test station manager approval tags
+            - labels
+            - selectable options
+            - representation
+
+        Args:
+            resource: the hrm_human_resource resource
+                      (with filtered components configured)
+    """
+
+    T = current.T
+    components = resource.components
+
+    # Document status options
+    doc_opts = (("N/A", T("not provided")),
+                ("APPROVED", T("provided / appropriate")),
+                ("REJECT", T("not up to requirements")),
+                )
+
+    labels = {"reg_form": T("Signed form for registration"),
+              "crc": T("Criminal Record Certificate"),
+              "scp": T("Statement on Pending Criminal Proceedings"),
+              }
+
+    from ..helpers import workflow_tag_represent
+
+    for alias in ("reg_form", "crc", "scp"):
+
+        component = components.get(alias)
+        if not component:
+            continue
+        table = component.table
+
+        field = table.value
+        field.label = labels.get(alias)
+        field.default = "N/A"
+        field.requires = IS_IN_SET(doc_opts, sort=False, zero=None)
+        field.represent = workflow_tag_represent(dict(doc_opts), none="N/A")
 
 # -------------------------------------------------------------------------
 def human_resource_onvalidation(form):
+    """
+        Form validation for human resources
+            - make sure there is only one HR record per person
+    """
 
-    person_id = form.vars.get("person_id")
+    db = current.db
+    s3db = current.s3db
+
+    form_vars = form.vars
+    record_id = get_form_record_id(form)
+
+    person_id = form_vars.get("person_id")
+    table = s3db.hrm_human_resource
+
     if person_id:
-        table = current.s3db.hrm_human_resource
         query = (table.person_id == person_id) & \
                 (table.deleted == False)
-        duplicate = current.db(query).select(table.id,
-                                             limitby = (0, 1),
-                                             ).first()
+        if record_id:
+            query &= (table.id != record_id)
+        duplicate = db(query).select(table.id, limitby=(0, 1)).first()
         if duplicate:
             form.errors.person_id = current.T("Person already has a staff record")
+            return
+
+    if "org_contact" in form_vars and form_vars["org_contact"]:
+        ptable = s3db.pr_person
+        ctable = s3db.pr_contact
+        if not person_id:
+            query = (table.id == record_id)
+            join = [ptable.on(ptable.id == table.person_id)]
+        else:
+            query = (ptable.id == person_id)
+            join = None
+        query &= (ptable.date_of_birth != None)
+        left = ctable.on((ctable.pe_id == ptable.pe_id) & \
+                         (ctable.contact_method.belongs(("EMAIL", "SMS", "HOME_PHONE", "WORK_PHONE"))) & \
+                         (ctable.deleted == False))
+        rows = db(query).select(ptable.date_of_birth,
+                                ctable.value,
+                                left = left,
+                                join = join,
+                                )
+        if not rows:
+            form.errors.org_contact = current.T("Person details incomplete: date of birth required")
+        elif not any(row.pr_contact.value for row in rows):
+            form.errors.org_contact = current.T("Contact information incomplete: email address and/or phone number required")
+
+# -------------------------------------------------------------------------
+def human_resource_postprocess(form):
+    """
+        Postprocess for manager HR form:
+            - update the MGRINFO tag of the organisation
+    """
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return
+
+    # Look up the org
+    table = current.s3db.hrm_human_resource
+    query = (table.id == record_id)
+    record = current.db(query).select(table.organisation_id,
+                                      limitby = (0, 1),
+                                      ).first()
+    if record:
+        from .org import update_mgrinfo
+        update_mgrinfo(record.organisation_id)
 
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):
 
-    if r.tablename == "hrm_human_resource":
-        resource = r.resource
-    elif r.component_name == "human_resource":
-        resource = r.component
-    else:
-        resource = None
+    T = current.T
 
-    if resource:
-        table = resource.table
+    s3 = current.response.s3
+    s3db = current.s3db
+
+    from ..config import TESTSTATIONS
+
+    # Determine user role
+    has_role = current.auth.s3_has_role
+
+    is_teststation_admin = has_role("ORG_ADMIN")
+    managed_orgs = None
+
+    if is_teststation_admin:
+        from ..helpers import get_managed_orgs
+        managed_orgs = get_managed_orgs(TESTSTATIONS)
+        if not managed_orgs:
+            is_teststation_admin = False
+
+    is_org_group_admin = False if is_teststation_admin else has_role("ORG_GROUP_ADMIN")
+
+    resource = organisation_id = None
+    if is_teststation_admin or is_org_group_admin:
+        # Determine organisation_id
+        record = r.record
+        master = r.tablename
+        if master == "hrm_human_resource":
+            resource = r.resource
+            organisation_id = record.organisation_id if record else None
+
+        elif master == "org_organisation":
+            resource = r.component
+            organisation_id = record.id
+
+        elif master == "pr_person":
+            resource = r.component
+            table = resource.table
+            if r.component_id:
+                query = (table.id == r.component_id)
+            else:
+                query = (table.person_id == record.id)
+            row = current.db(query).select(table.organisation_id,
+                                           limitby = (0, 1),
+                                           ).first()
+            organisation_id = row.organisation_id if row else None
+
+    table = resource.table if resource else s3db.hrm_human_resource
+
+    if organisation_id:
+        # Check if organisation is a (managed) test station
+        if is_teststation_admin and organisation_id in managed_orgs:
+            show_org_contact = org_contact_writable = True
+        else:
+            from ..helpers import is_org_group
+            show_org_contact = is_org_group(organisation_id, TESTSTATIONS)
+            org_contact_writable = False
+    else:
+        show_org_contact = org_contact_writable = False
+
+    if show_org_contact:
+        # Expose org_contact field
+        org_contact = "org_contact"
 
         field = table.org_contact
+
+        field.readable = True
+        field.writable = org_contact_writable
         field.label = current.T("Test Station Manager")
 
-        has_role = current.auth.s3_has_role
-        if has_role("ORG_GROUP_ADMIN"):
-            field.readable = True
-            field.writable = False
-            org_contact = "org_contact"
-        elif has_role("ORG_ADMIN"):
-            field.readable = field.writable = True
+        if is_teststation_admin:
             from core import WithAdvice
             org_contact = WithAdvice("org_contact",
                                      text = ("hrm",
@@ -52,19 +233,75 @@ def hrm_human_resource_resource(r, tablename):
                                      below = True,
                                      cmsxml = True,
                                      )
-        else:
-            org_contact = None
+    else:
+        org_contact = None
 
-        from core import S3SQLCustomForm
-        crud_form = S3SQLCustomForm("organisation_id",
-                                    "site_id",
-                                    "job_title_id",
-                                    org_contact,
-                                    "start_date",
-                                    "end_date",
-                                    "status",
-                                    )
-        resource.configure(crud_form = crud_form,
+    from core import S3SQLCustomForm
+    if r.component_name == "managers":
+
+        current.deployment_settings.ui.open_read_first = True
+
+        field = table.site_id
+        field.writable = False
+
+        if r.component_id:
+            from ..helpers import PersonRepresentManager
+            field = table.person_id
+            field.readable = True
+            field.writable = False
+            field.represent = PersonRepresentManager(show_email = True,
+                                                     show_phone = True,
+                                                     show_link = False,
+                                                     styleable = True,
+                                                     )
+
+        crud_fields = ["person_id",
+                       #"site_id",
+                       ]
+        if is_org_group_admin:
+            add_manager_tags()
+            configure_manager_tags(resource)
+            crud_fields.extend(["reg_form.value",
+                                "crc.value",
+                                "scp.value",
+                                ])
+            subheadings = {"person_id": T("Staff Member Details"),
+                           "reg_form_value": T("Documentation Status"),
+                           }
+        else:
+            subheadings = None
+
+        current.s3db.configure("hrm_human_resource",
+                               insertable = False,
+                               deletable = False,
+                               subheadings = subheadings,
+                               update_next = r.url(method="read"),
+                               )
+
+        # Adjust CRUD strings for perspective
+        s3.crud_strings["hrm_human_resource"].update({
+            "label_list_button": T("List Test Station Managers"),
+            })
+    else:
+        field = table.organisation_id
+        field.writable = False
+        field.comment = None
+
+        crud_fields = ("organisation_id",
+                       "person_id",
+                       "site_id",
+                       "job_title_id",
+                       org_contact,
+                       "start_date",
+                       "end_date",
+                       "status",
+                       )
+
+    # Use custom-form for HRs
+    current.s3db.configure("hrm_human_resource",
+                           crud_form = S3SQLCustomForm(*crud_fields,
+                                                       postprocess = human_resource_postprocess,
+                                                       ),
                            )
 
     current.s3db.add_custom_callback("hrm_human_resource",

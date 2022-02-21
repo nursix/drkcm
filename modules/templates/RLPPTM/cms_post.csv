@@ -79,6 +79,11 @@ FacilityLayoutRequirements,org,facility,"RAUMKONZEPT
 Aktuell liegt kein (ausreichendes) Raumkonzept für Ihre Teststelle vor. Bitte beachten Sie, dass eine räumliche Abgrenzung zu Ihren üblichen Betriebsräumen gegeben sein muss.
 
 Bitte legen Sie ein entsprechendes Raumkonzept vor. ",
+TestStationManagerRequirements,org,facility,"TESTSTELLEN-VERANTWORTLICHER
+
+Die Angaben zum Teststellenverantwortlichen sind unvollständig.
+
+Zum Teststellenverantwortlichen sind Name, Vorname, Geburtsdatum sowie Kontaktinformationen (Email, Telefon) zu hinterlegen. Außerdem muss der Verantwortliche ein polizeiliches Führungszeugnis sowie eine Erklärung zu anhängigen Ermittlungs- oder Strafverfahren bei der Aufsichtsbehörde (LSJV) vorlegen.",
 TestResultRegistrationIntroDisabled,disease,case_diagnostics,Placeholder post for test result registration page intro,Rename into TestResultRegistrationIntro (remove Disabled-suffix) to activate
 HomepageIntroDisabled,default,index,,
 Subject FacilityObsolete,org,facility,Deaktivierung ihrer Teststellen-Registrierung,

@@ -2222,8 +2222,8 @@ class S3CRUD(CRUDMethod):
 
                 # Convert numeric types (does not always happen in the widget)
                 widget = field.widget
-                if widget and hasattr(widget, "s3_parse"):
-                    parser = widget.s3_parse
+                if widget and hasattr(widget, "parse_input"):
+                    parser = widget.parse_input
                 else:
                     parser = None
                 ftype = field.type

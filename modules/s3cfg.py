@@ -3990,7 +3990,7 @@ class S3Config(Storage):
         """
             Use themes for response actions
         """
-        return self.dvr.get("response_themes", False)
+        return self.__lazy("dvr", "response_themes", default=False)
 
     def get_dvr_response_themes_org_specific(self):
         """

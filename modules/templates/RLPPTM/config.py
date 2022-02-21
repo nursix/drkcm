@@ -21,9 +21,9 @@ def config(settings):
 
     T = current.T
 
-    purpose = {"event": "COVID-19"}
-    settings.base.system_name = T("%(event)s Testing") % purpose
-    settings.base.system_name_short = T("%(event)s Testing") % purpose
+    purpose = {"disease": "COVID-19"}
+    settings.base.system_name = T("%(disease)s Test Stations") % purpose
+    settings.base.system_name_short = T("%(disease)s Test Stations") % purpose
 
     # PrePopulate data
     settings.base.prepopulate += ("RLPPTM",)
@@ -221,6 +221,8 @@ def config(settings):
     settings.custom.test_station_registration = True
     settings.custom.test_station_cleanup = True
 
+    settings.custom.test_station_manager_required = False
+
     settings.custom.daycare_testing_data = False
     settings.custom.daycare_testing_inquiry = False
 
@@ -346,10 +348,12 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     from .customise.pr import pr_person_resource, \
-                              pr_person_controller
+                              pr_person_controller, \
+                              pr_contact_resource
 
     settings.customise_pr_person_controller = pr_person_controller
     settings.customise_pr_person_resource = pr_person_resource
+    settings.customise_pr_contact_resource = pr_contact_resource
 
     # -------------------------------------------------------------------------
     from .customise.project import project_project_resource, \

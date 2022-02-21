@@ -114,6 +114,9 @@ def rlpptm_fin_rheader(r, tabs=None):
 def rlpptm_org_rheader(r, tabs=None):
     """ ORG custom resource headers """
 
+    db = current.db
+    s3db = current.s3db
+
     if r.representation != "html":
         # Resource headers only used in interactive views
         return None
@@ -132,62 +135,58 @@ def rlpptm_org_rheader(r, tabs=None):
 
         if tablename == "org_organisation":
 
-            auth = current.auth
-            is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
+            # Determine is_org_group_admin
+            is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
 
-            db = current.db
-            s3db = current.s3db
+            # Determine org_group
+            gtable = s3db.org_group
+            mtable = s3db.org_group_membership
+            query = (mtable.organisation_id == record.id) & \
+                    (mtable.group_id == gtable.id)
+            row = db(query).select(gtable.name,
+                                   limitby = (0, 1)
+                                   ).first()
+            group = row.name if row else None
 
             if not tabs:
-
-                invite_tab = None
-                sites_tab = None
-                doc_tab = None
-
-                gtable = s3db.org_group
-                mtable = s3db.org_group_membership
-                query = (mtable.organisation_id == record.id) & \
-                        (mtable.group_id == gtable.id)
-                group = db(query).select(gtable.name,
-                                         limitby = (0, 1)
-                                         ).first()
-                if group:
-                    from .config import TESTSTATIONS, SCHOOLS, GOVERNMENT
-                    if group.name == TESTSTATIONS:
-                        sites_tab = (T("Test Stations"), "facility")
-                        doc_tab = (T("Documents"), "document")
-                    elif group.name == SCHOOLS:
-                        sites_tab = (T("Administrative Offices"), "office")
-                        if is_org_group_admin:
-                            invite_tab = (T("Invite"), "invite")
-                    elif group.name == GOVERNMENT:
-                        sites_tab = (T("Warehouses"), "warehouse")
-
-                tabs = [(T("Organisation"), None),
-                        invite_tab,
-                        sites_tab,
-                        (T("Staff"), "human_resource"),
-                        doc_tab,
-                        ]
+                tabs = default_org_tabs(record,
+                                        group = group,
+                                        is_org_group_admin = is_org_group_admin,
+                                        )
 
             # Look up the OrgID
             def org_id(row):
-                ttable = s3db.org_organisation_tag
+                ttable = current.s3db.org_organisation_tag
                 query = (ttable.organisation_id == row.id) & \
                         (ttable.tag == "OrgID") & \
                         (ttable.deleted == False)
-                tag = db(query).select(ttable.value, limitby=(0, 1)).first()
+                tag = current.db(query).select(ttable.value,
+                                               limitby = (0, 1),
+                                               ).first()
                 return tag.value if tag else "-"
 
-            # Check for active user accounts:
             rheader_fields = [[(T("Organization ID"), org_id)]]
-            if is_org_group_admin:
 
+            if is_org_group_admin:
+                # Check for active user accounts
                 from .helpers import get_org_accounts
                 active = get_org_accounts(record.id)[0]
-
                 active_accounts = lambda row: len(active)
                 rheader_fields.append([(T("Active Accounts"), active_accounts)])
+
+                from .config import TESTSTATIONS
+                if group == TESTSTATIONS:
+                    # Show manager documentation status
+                    rows = resource.select(["mgrinfo.value"],
+                                           represent = True,
+                                           ).rows
+                    if rows:
+                        status = rows[0]["org_mgrinfo_organisation_tag.value"]
+                    else:
+                        status = "-"
+                    rheader_fields[0].append((T("Documentation Test Station Manager"),
+                                              lambda row: status,
+                                              ))
 
             rheader_title = "name"
 
@@ -195,6 +194,39 @@ def rlpptm_org_rheader(r, tabs=None):
         rheader = rheader(r, table = resource.table, record = record)
 
     return rheader
+
+# -----------------------------------------------------------------------------
+def default_org_tabs(record, group=None, is_org_group_admin=False):
+
+    T = current.T
+
+    invite_tab = None
+    sites_tab = None
+    doc_tab = None
+    managers_tab = None
+
+    if group:
+
+        from .config import TESTSTATIONS, SCHOOLS, GOVERNMENT
+        if group == TESTSTATIONS:
+            sites_tab = (T("Test Stations"), "facility")
+            doc_tab = (T("Documents"), "document")
+            if is_org_group_admin:
+                managers_tab = (T("Test Station Managers"), "managers")
+        elif group == SCHOOLS:
+            sites_tab = (T("Administrative Offices"), "office")
+            if is_org_group_admin:
+                invite_tab = (T("Invite"), "invite")
+        elif group == GOVERNMENT:
+            sites_tab = (T("Warehouses"), "warehouse")
+
+    return [(T("Organisation"), None),
+            invite_tab,
+            sites_tab,
+            (T("Staff"), "human_resource"),
+            managers_tab,
+            doc_tab,
+            ]
 
 # =============================================================================
 def rlpptm_project_rheader(r, tabs=None):

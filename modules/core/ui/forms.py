@@ -1868,6 +1868,7 @@ class S3SQLVirtualField(S3SQLFormElement):
         field = Field(selector,
                       label = label,
                       represent = represent,
+                      widget = self,
                       )
 
         return None, selector, field
@@ -1875,11 +1876,17 @@ class S3SQLVirtualField(S3SQLFormElement):
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
         """
-            Widget renderer for field method values, renders a simple
-            read-only DIV with the value
+            Widget renderer for field method values
+                - renders a simple DIV with the (represented) value
+                - includes the (raw) value as hidden input, so it is
+                  available in POST vars after form submission
         """
 
-        widget = DIV(value, **attributes)
+        v = field.represent(value) if field.represent else value
+
+        inp = INPUT(_type="hidden", _name=field.name, _value=s3_str(value))
+
+        widget = DIV(v, inp, **attributes)
         widget.add_class("s3-virtual-field")
 
         return widget

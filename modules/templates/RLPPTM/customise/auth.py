@@ -157,6 +157,7 @@ def rlpptm_realm_entity(table, row):
             realm_entity = program.realm_entity
 
     elif tablename in ("pr_person_details",
+                       "pr_person_tag",
                        ):
 
         # Inherit from person via person_id

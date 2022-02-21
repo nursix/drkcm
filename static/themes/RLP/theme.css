@@ -4796,92 +4796,96 @@ body.rtl .event-type-header {
   margin: 0;
 }
 
-/* line 406, ../scss/theme/_misc.scss */
-.approve-workflow {
-  margin-left: 0.5rem;
-}
 /* line 407, ../scss/theme/_misc.scss */
+.approve-workflow.workflow-grey {
+  color: #555;
+}
+/* line 410, ../scss/theme/_misc.scss */
 .approve-workflow.workflow-red {
   color: #c42626;
 }
-/* line 410, ../scss/theme/_misc.scss */
+/* line 413, ../scss/theme/_misc.scss */
 .approve-workflow.workflow-amber {
   color: #ec8d27;
 }
-/* line 413, ../scss/theme/_misc.scss */
+/* line 416, ../scss/theme/_misc.scss */
 .approve-workflow.workflow-green {
   color: green;
 }
-/* line 416, ../scss/theme/_misc.scss */
+/* line 419, ../scss/theme/_misc.scss */
 .approve-workflow.workflow-advice {
   border: 1px solid #c42626;
   background-color: #ffdede;
   padding: 0.3rem 0.7rem;
 }
-/* line 421, ../scss/theme/_misc.scss */
+/* line 424, ../scss/theme/_misc.scss */
 .approve-workflow .fa {
   margin-right: 0.2rem;
 }
-
 /* line 427, ../scss/theme/_misc.scss */
+.controls .approve-workflow {
+  margin-left: 0.5rem;
+}
+
+/* line 432, ../scss/theme/_misc.scss */
 .text-body.cms-item-body {
   background-color: #FFF8E6;
   padding: 0.7rem;
   max-width: 48rem;
 }
 
-/* line 433, ../scss/theme/_misc.scss */
+/* line 438, ../scss/theme/_misc.scss */
 .form-row .cwa-details,
 .form-row .cwa-qrcode {
   display: inline-block;
   vertical-align: top;
 }
 
-/* line 439, ../scss/theme/_misc.scss */
+/* line 444, ../scss/theme/_misc.scss */
 .form-row .cwa-details table {
   border: none;
   margin-right: 2.5rem;
 }
-/* line 442, ../scss/theme/_misc.scss */
+/* line 447, ../scss/theme/_misc.scss */
 .form-row .cwa-details table tr td {
   padding: 0.5rem;
 }
-/* line 444, ../scss/theme/_misc.scss */
+/* line 449, ../scss/theme/_misc.scss */
 .form-row .cwa-details table tr td.cwa-data {
   font-weight: bold;
 }
 
-/* line 450, ../scss/theme/_misc.scss */
+/* line 455, ../scss/theme/_misc.scss */
 .form-row .cwa-qrcode {
   margin: 1px solid black;
   padding-bottom: 0.2rem;
 }
-/* line 453, ../scss/theme/_misc.scss */
+/* line 458, ../scss/theme/_misc.scss */
 .form-row .cwa-qrcode .cwa-qrcode-title {
   width: 100%;
   text-align: center;
 }
 
-/* line 458, ../scss/theme/_misc.scss */
+/* line 463, ../scss/theme/_misc.scss */
 .charge-warn {
   color: #D92C20;
   font-weight: bold;
 }
-/* line 461, ../scss/theme/_misc.scss */
+/* line 466, ../scss/theme/_misc.scss */
 .charge-warn i.fa {
   margin-left: 0.2rem;
 }
 
-/* line 465, ../scss/theme/_misc.scss */
+/* line 470, ../scss/theme/_misc.scss */
 .free-hint {
   color: #C0C0C0;
 }
 
-/* line 468, ../scss/theme/_misc.scss */
+/* line 473, ../scss/theme/_misc.scss */
 #site-intro {
   margin-top: 2rem;
 }
-/* line 470, ../scss/theme/_misc.scss */
+/* line 475, ../scss/theme/_misc.scss */
 #site-intro .callout-box {
   margin: 1rem 0;
   font-size: 0.9rem;
@@ -4890,20 +4894,20 @@ body.rtl .event-type-header {
   padding: 0.8rem;
 }
 
-/* line 479, ../scss/theme/_misc.scss */
+/* line 484, ../scss/theme/_misc.scss */
 #site-actions .button i.fa {
   font-size: 1.2rem;
   margin: 0 0.5rem;
 }
 
-/* line 485, ../scss/theme/_misc.scss */
+/* line 490, ../scss/theme/_misc.scss */
 .overview-totals,
 .overview-intro,
 .overview-charts,
 .overview-table {
   text-align: center;
 }
-/* line 490, ../scss/theme/_misc.scss */
+/* line 495, ../scss/theme/_misc.scss */
 .overview-totals h2,
 .overview-intro h2,
 .overview-charts h2,
@@ -4912,7 +4916,7 @@ body.rtl .event-type-header {
   background-color: transparent !important;
 }
 
-/* line 496, ../scss/theme/_misc.scss */
+/* line 501, ../scss/theme/_misc.scss */
 .overview-totals p {
   font-size: 2.7rem;
   line-height: 3.5rem;
@@ -4920,55 +4924,91 @@ body.rtl .event-type-header {
   color: #406080;
 }
 
-/* line 502, ../scss/theme/_misc.scss */
+/* line 507, ../scss/theme/_misc.scss */
 .olFramedCloudPopupContent ul {
   list-style-type: disc;
   list-style-position: outside;
 }
-/* line 505, ../scss/theme/_misc.scss */
+/* line 510, ../scss/theme/_misc.scss */
 .olFramedCloudPopupContent ul .mpinfo {
   font-size: 0.8rem;
 }
-/* line 508, ../scss/theme/_misc.scss */
+/* line 513, ../scss/theme/_misc.scss */
 .olFramedCloudPopupContent ul .mptitle {
   font-weight: bold;
   font-size: 0.9rem;
 }
 
-/* line 513, ../scss/theme/_misc.scss */
+/* line 518, ../scss/theme/_misc.scss */
 .map-popup {
   min-width: 20rem;
 }
-/* line 515, ../scss/theme/_misc.scss */
+/* line 520, ../scss/theme/_misc.scss */
 .map-popup h4 {
   font-size: 1rem;
 }
-/* line 518, ../scss/theme/_misc.scss */
+/* line 523, ../scss/theme/_misc.scss */
 .map-popup .map-popup-details {
   font-size: 0.8rem;
 }
-/* line 520, ../scss/theme/_misc.scss */
+/* line 525, ../scss/theme/_misc.scss */
 .map-popup .map-popup-details td {
   padding: 0.1rem 0.3rem 0 0;
 }
-/* line 522, ../scss/theme/_misc.scss */
+/* line 527, ../scss/theme/_misc.scss */
 .map-popup .map-popup-details td.map-popup-label {
   font-weight: bold;
 }
 
-/* line 528, ../scss/theme/_misc.scss */
+/* line 533, ../scss/theme/_misc.scss */
 .olPopupCloseBox {
   margin-right: 20px;
 }
 
-/* line 533, ../scss/theme/_misc.scss */
+/* line 538, ../scss/theme/_misc.scss */
 .place-repr .place-name {
   display: block;
   font-weight: bold;
   margin-bottom: 0.2rem;
 }
-/* line 538, ../scss/theme/_misc.scss */
+/* line 543, ../scss/theme/_misc.scss */
 .place-repr .place-info {
   white-space: pre-line;
   font-size: 0.8rem;
+}
+
+/* line 550, ../scss/theme/_misc.scss */
+.manager-repr {
+  border: 1px solid #eee;
+  margin-top: 0.5rem;
+  width: 25rem;
+  background-color: #fff3c6;
+  max-width: 100%;
+}
+/* line 556, ../scss/theme/_misc.scss */
+.manager-repr .manager-name {
+  padding: 0.4rem;
+  font-size: 0.9rem;
+  display: block;
+}
+/* line 562, ../scss/theme/_misc.scss */
+.manager-repr .manager-email th, .manager-repr .manager-email td {
+  padding-top: 0.4rem;
+}
+/* line 566, ../scss/theme/_misc.scss */
+.manager-repr .manager-details {
+  width: 100%;
+  border: 0;
+  margin-bottom: 0.3rem;
+}
+/* line 570, ../scss/theme/_misc.scss */
+.manager-repr .manager-details th {
+  width: 33%;
+}
+/* line 573, ../scss/theme/_misc.scss */
+.manager-repr .manager-details th, .manager-repr .manager-details td {
+  background-color: #fff3c6;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0.4rem;
 }
