@@ -418,7 +418,7 @@ def configure_case_activity_subject(r,
         field.requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)]
 
 # -------------------------------------------------------------------------
-def configure_inline_responses(person_id, human_resource_id, hr_represent):
+def configure_inline_responses(person_id, human_resource_id, hr_represent, use_theme=False):
     """
         Configure the inline-responses for case activity form
             - can be either response_action or response_action_theme
@@ -441,7 +441,7 @@ def configure_inline_responses(person_id, human_resource_id, hr_represent):
 
     from core import S3SQLInlineComponent, S3SQLVerticalSubFormLayout
 
-    if settings.get_dvr_response_themes_details():
+    if use_theme and settings.get_dvr_response_themes_details():
         # Expose response_action_theme inline
 
         # Filter action_id in inline response_themes to same beneficiary
@@ -492,7 +492,8 @@ def configure_inline_responses(person_id, human_resource_id, hr_represent):
                                  )
 
         # Inline-component
-        response_action_fields = ["response_theme_ids",
+        response_theme_ids = "response_theme_ids" if use_theme else None
+        response_action_fields = [response_theme_ids,
                                   "comments",
                                   "human_resource_id",
                                   "start_date",
@@ -672,15 +673,18 @@ def dvr_case_activity_resource(r, tablename):
         field.readable = field.writable = ui_options_get("activity_comments")
 
         # Inline-responses
-        configure_response_theme_selector(ui_options,
-                                          case_root_org = case_root_org,
-                                          case_activity = case_activity,
-                                          case_activity_id = case_activity_id,
-                                          )
+        use_theme = ui_options_get("response_use_theme")
+        if use_theme:
+            configure_response_theme_selector(ui_options,
+                                              case_root_org = case_root_org,
+                                              case_activity = case_activity,
+                                              case_activity_id = case_activity_id,
+                                              )
 
         inline_responses = configure_inline_responses(person_id,
                                                       human_resource_id,
                                                       hr_represent,
+                                                      use_theme = use_theme,
                                                       )
 
         # Inline updates
@@ -1349,6 +1353,7 @@ def configure_response_theme_selector(ui_options,
 
     dbset = db(query) if query else db
 
+    themes_optional = ui_options.get("response_themes_optional")
     field = table.response_theme_ids
     if themes_needs:
         # Include the need in the themes-selector
@@ -1364,7 +1369,7 @@ def configure_response_theme_selector(ui_options,
                                represent,
                                multiple = True,
                                )
-    if ui_options.get("response_themes_optional"):
+    if themes_optional:
         # Allow responses without theme
         field.requires = IS_EMPTY_OR(field.requires)
 
@@ -1373,7 +1378,7 @@ def configure_response_theme_selector(ui_options,
     field.requires = IS_ONE_OF(dbset, "dvr_response_theme.id",
                                represent,
                                )
-    if ui_options.get("response_themes_optional"):
+    if themes_optional:
         field.requires = IS_EMPTY_OR(field.requires)
 
 # -------------------------------------------------------------------------
