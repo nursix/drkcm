@@ -123,19 +123,21 @@ def doc_document_controller(**attr):
             field = table.doc_id
 
             # Representation of doc entity
-            ui_opts = get_ui_options()
-            if ui_opts.get("activity_use_need"):
+            ui_opts_get = get_ui_options().get
+            if ui_opts_get("activity_use_need"):
                 use_need = True
                 activity_label = T("Counseling Reason")
             else:
                 use_need = False
                 activity_label = None
             field.represent = s3db.dvr_DocEntityRepresent(
-                                        show_link = True,
-                                        use_need = use_need,
-                                        case_group_label = T("Family"),
-                                        activity_label = activity_label,
-                                        )
+                                    show_link = True,
+                                    use_sector = ui_opts_get("activity_use_sector"),
+                                    use_need = use_need,
+                                    use_subject = ui_opts_get("activity_use_subject"),
+                                    case_group_label = T("Family"),
+                                    activity_label = activity_label,
+                                    )
 
             # Also update requires with this represent
             # => retain viewing-filters from standard prep
