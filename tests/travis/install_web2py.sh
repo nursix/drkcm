@@ -14,8 +14,8 @@ echo "================================="
 # Handle for the checkout-directory (different paths for different repos)
 BRANCH_HOME=`pwd`
 
-# Use web2py-2.21.2-stable
-WEB2PY_COMMIT=3190585
+# Use web2py-2.22.3-stable
+WEB2PY_COMMIT=9863a9386
 
 # Clone web2py under build home (usually /home/travis/build)
 cd ../..
