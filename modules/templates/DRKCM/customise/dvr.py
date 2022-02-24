@@ -1834,23 +1834,38 @@ def configure_response_action_tab(person_id,
                                                    )
         field.represent = represent
 
-        # Make activity selectable if not auto-linking, and
-        # filter options to case
         if not ui_options_get("response_activity_autolink"):
-            db = current.db
+            # Make activity selectable
+            field.writable = True
+
+            # Selectable options to include date
             represent = s3db.dvr_CaseActivityRepresent(show_as = show_as,
                                                        show_link = True,
                                                        show_subject = use_subject,
                                                        show_date = True,
                                                        )
-            field.writable = True
-            field.requires = IS_ONE_OF(db, "dvr_case_activity.id",
+
+            # Limit to activities of the same case
+            atable = s3db.dvr_case_activity
+            db = current.db
+            dbset = db(atable.person_id == person_id)
+            field.requires = IS_ONE_OF(dbset, "dvr_case_activity.id",
                                        represent,
-                                       filterby = "person_id",
-                                       filter_opts = (person_id,),
                                        orderby = ~db.dvr_case_activity.start_date,
                                        sort = False,
                                        )
+
+            # Allow in-popup creation of new activities for the case
+            from s3layouts import S3PopupLink
+            field.comment = S3PopupLink(label = T("Create Counseling Reason"),
+                                        c = "dvr",
+                                        f = "case_activity",
+                                        vars = {"~.person_id": person_id,
+                                                "prefix": "dvr/person/%s" % person_id,
+                                                "parent": "response_action",
+                                                },
+                                        )
+
         else:
             field.writable = False
 
@@ -1923,7 +1938,7 @@ def dvr_response_action_resource(r, tablename):
         crud_strings = current.response.s3.crud_strings["dvr_response_action"]
         crud_strings["title_report"] = T("Action Statistic")
 
-    if r.interactive or r.representation in ("aadata", "xls", "pdf"):
+    if r.interactive or r.representation in ("aadata", "xls", "pdf", "s3json"):
 
         human_resource_id = current.auth.s3_logged_in_human_resource()
 
