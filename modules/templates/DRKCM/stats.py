@@ -49,8 +49,12 @@ class PerformanceIndicators:
 
         # Total number of consultations, average effort per consultation
         ttable = s3db.dvr_response_type
-        join = ttable.on((ttable.id == table.response_type_id) & \
-                         (ttable.is_consultation == True))
+        if current.deployment_settings.get_dvr_response_types():
+            join = ttable.on((ttable.id == table.response_type_id) & \
+                             (ttable.is_consultation == True))
+        else:
+            # Count all responses
+            join = None
         num_responses = table._id.count()
         avg_hours = table.hours.avg()
         row = db(master_query).select(num_responses,

@@ -716,6 +716,19 @@ def case_activity():
         if settings.get_dvr_manage_response_actions():
             s3db.dvr_set_response_action_defaults()
 
+        # Set default person_id when creating from popup
+        if r.method == "create" and \
+           r.representation == "popup" and "person_id" not in r.post_vars:
+            person_id = r.get_vars.get("~.person_id")
+            if person_id:
+                field = resource.table.person_id
+                try:
+                    field.default = int(person_id)
+                except (TypeError, ValueError):
+                    pass
+                else:
+                    field.writable = False
+
         if not r.record:
 
             # Filter out case activities of archived cases
