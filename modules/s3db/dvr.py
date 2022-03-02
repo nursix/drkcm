@@ -72,6 +72,8 @@ from gluon.storage import Storage
 from ..core import *
 from s3layouts import S3PopupLink
 
+DEFAULT = lambda: None
+
 # =============================================================================
 class DVRCaseModel(DataModel):
     """
@@ -2603,6 +2605,7 @@ class DVRCaseActivityModel(DataModel):
                            label = T("Subject / Occasion"),
                            readable = False,
                            writable = False,
+                           represent = s3_text_represent,
                            ),
                      Field("need_details", "text",
                            label = T("Need Details"),
@@ -5954,14 +5957,23 @@ class dvr_ResponseThemeRepresent(S3Represent):
 class dvr_CaseActivityRepresent(S3Represent):
     """ Representation of case activity IDs """
 
-    def __init__(self, show_as=None, fmt=None, show_link=False, show_date=False, linkto=None):
+    def __init__(self,
+                 show_as = None,
+                 fmt = None,
+                 show_link = False,
+                 show_date = False,
+                 show_subject = False,
+                 linkto = DEFAULT,
+                 ):
         """
             Args:
                 show_as: alternative representations:
                          "beneficiary"|"need"|"subject"
+                fmt: string format template for person record
                 show_link: show representation as clickable link
                 show_date: include date when showing as need or subject
-                fmt: string format template for person record
+                show_subject: include subject when showing as need
+                linkto: URL template for links
         """
 
         super(dvr_CaseActivityRepresent, self).__init__(
@@ -5981,6 +5993,7 @@ class dvr_CaseActivityRepresent(S3Represent):
             self.fmt = "%(first_name)s %(last_name)s"
 
         self.show_date = show_date
+        self.show_subject = show_subject
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -6005,35 +6018,30 @@ class dvr_CaseActivityRepresent(S3Represent):
         left = [ptable.on(ptable.id == table.person_id)]
 
         show_as = self.show_as
+        fields = [table.id, ptable.id]
         if show_as == "beneficiary":
-            rows = current.db(query).select(table.id,
-                                            ptable.id,
-                                            ptable.pe_label,
-                                            ptable.first_name,
-                                            ptable.middle_name,
-                                            ptable.last_name,
-                                            left = left,
-                                            limitby = (0, count),
-                                            )
+            fields.extend([ptable.pe_label,
+                           ptable.first_name,
+                           ptable.middle_name,
+                           ptable.last_name,
+                           ])
 
         elif show_as == "need":
             ntable = current.s3db.dvr_need
             left.append(ntable.on(ntable.id == table.need_id))
-            rows = current.db(query).select(table.id,
-                                            table.start_date,
-                                            ptable.id,
-                                            ntable.name,
-                                            left = left,
-                                            limitby = (0, count),
-                                            )
-        else:
-            rows = current.db(query).select(table.id,
-                                            table.subject,
-                                            ptable.id,
-                                            left = left,
-                                            limitby = (0, count),
-                                            )
+            fields.extend([table.start_date,
+                           ntable.name,
+                           ])
+            if self.show_subject:
+                fields.append(table.subject)
 
+        else:
+            fields.append(table.subject)
+
+        rows = current.db(query).select(*fields,
+                                        left = left,
+                                        limitby = (0, count),
+                                        )
         self.queries += 1
 
         return rows
@@ -6062,8 +6070,11 @@ class dvr_CaseActivityRepresent(S3Represent):
             need = row.dvr_need.name
             if self.translate:
                 need = current.T(need) if need else self.none
-
-            repr_str = need
+            if self.show_subject:
+                subject = row.dvr_case_activity.subject
+                repr_str = ("%s: %s" % (need, subject)) if subject else need
+            else:
+                repr_str = need
 
         else:
             repr_str = row.dvr_case_activity.subject
@@ -6072,7 +6083,7 @@ class dvr_CaseActivityRepresent(S3Represent):
             date = row.dvr_case_activity.start_date
             if date:
                 date = current.calendar.format_date(date, local=True)
-                repr_str = "%s (%s)" % (repr_str, date)
+                repr_str = "[%s] %s" % (date, repr_str)
 
         return repr_str
 
@@ -6086,6 +6097,10 @@ class dvr_CaseActivityRepresent(S3Represent):
                 v: the representation of the key
                 row: the row with this key
         """
+
+        if self.linkto is not DEFAULT:
+            k = s3_str(k)
+            return A(v, _href=self.linkto.replace("[id]", k).replace("%5Bid%5D", k))
 
         try:
             beneficiary = row.pr_person
@@ -6110,6 +6125,7 @@ class dvr_DocEntityRepresent(S3Represent):
                  activity_label=None,
                  use_sector=True,
                  use_need=False,
+                 use_subject=True,
                  show_link=False,
                  ):
         """
@@ -6118,9 +6134,10 @@ class dvr_DocEntityRepresent(S3Represent):
                 case_group_label: label for case groups (default: "Case Group")
                 activity_label: label for case activities
                                 (default: "Activity")
-                use_need: use need if available instead of subject
-                use_sector: use sector if available instead of
-                            activity label
+                use_sector: use sector if available instead of activity label
+                use_need: represent activities as need type
+                use_subject: include subject when representing activities
+                             as need type
                 show_link: show representation as clickable link
         """
 
@@ -6145,8 +6162,9 @@ class dvr_DocEntityRepresent(S3Represent):
         else:
             self.activity_label = T("Activity")
 
-        self.use_need = use_need
         self.use_sector = use_sector
+        self.use_need = use_need
+        self.use_subject = use_subject or not use_need
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -6285,6 +6303,9 @@ class dvr_DocEntityRepresent(S3Represent):
                     need_id = activity.need_id
                     if need_id:
                         represent = table.need_id.represent
+                    if self.use_subject and title:
+                        title = "%s: %s" % (represent(need_id), title)
+                    else:
                         title = represent(need_id)
 
                 label = self.activity_label

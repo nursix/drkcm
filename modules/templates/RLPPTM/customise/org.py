@@ -1566,7 +1566,11 @@ def org_facility_resource(r, tablename):
     # Custom label for obsolete-Flag
     field = table.obsolete
     field.label = T("Defunct")
-    field.represent = lambda v, row=None: ICON("remove") if v else ""
+    if r.interactive or r.representation == "aadata":
+        field.represent = lambda v, row=None: ICON("remove") if v else ""
+    else:
+        from core import s3_yes_no_represent
+        field.represent = s3_yes_no_represent
     field.comment = DIV(_class="tooltip",
                         _title="%s|%s" % (T("Defunct"),
                                           T("Please mark this field when the facility is no longer in operation"),
