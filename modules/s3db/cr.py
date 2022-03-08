@@ -57,7 +57,6 @@ class CRShelterModel(DataModel):
              "cr_shelter_id",
              "cr_shelter_status",
              "cr_shelter_person",
-             "cr_shelter_allocation",
              "cr_shelter_unit",
              "cr_shelter_unit_id",
              )
@@ -2110,7 +2109,7 @@ def cr_update_housing_unit_population(shelter_id):
 
     check_out_is_final = settings.get_cr_check_out_is_final()
     if check_out_is_final:
-        rtable &= (rtable.registration_status != 3)
+        rjoin &= (rtable.registration_status != 3)
 
     query = (htable.shelter_id == shelter_id) & \
             (htable.status == 1) & \

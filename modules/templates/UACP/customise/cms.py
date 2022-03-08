@@ -1,5 +1,5 @@
 """
-    CMS module customisations for RLPPTM
+    CMS module customisations for UACP
 
     License: MIT
 """
@@ -109,7 +109,7 @@ def cms_newsletter_controller(**attr):
             query = accessible_pe_query(instance_types = types,
                                         method = "read",
                                         c = "org",
-                                        f = "facility",
+                                        f = "organisation",
                                         )
 
             # Filter out existing recipients
@@ -142,7 +142,7 @@ def cms_post_resource(r, tablename):
 
     field = table.body
     field.represent = lambda v, row=None: \
-                        s3_text_represent(v, lines=20, _class = "cms-item-body")
+                      s3_text_represent(v, lines=20, _class = "cms-item-body")
 
     record = r.record
     if r.tablename == "cms_series" and \
@@ -182,8 +182,8 @@ def cms_post_resource(r, tablename):
                                                         "invert": True,
                                                         },
                                             ),
-                       "comments",
-                       ]
+                        "comments",
+                        ]
         list_fields = ["post_module.module",
                        "post_module.resource",
                        "name",
