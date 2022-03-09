@@ -1064,7 +1064,8 @@ def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
         if mgrinfo == "N/A":
             update["STATUS"] = "REVISE"
             update["PUBLIC"] = "N"
-            notify = not facility.obsolete
+            # Notify if public-status changes for active facility
+            notify = tags.get("PUBLIC") != "N" and not facility.obsolete
         elif mgrinfo == "REVISE":
             if not any(tags[t] == "REVISE" for t in SITE_REVIEW):
                 update["STATUS"] = "REVIEW"
