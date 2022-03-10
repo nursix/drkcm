@@ -1,5 +1,5 @@
 """
-    Custom Controllers for BRCMS/RLP
+    Custom Controllers for UACP
 
     License: MIT
 """
@@ -26,7 +26,7 @@ from core import ConsentTracking, \
 
 from templates.RLPPTM.notifications import formatmap
 
-TEMPLATE = "BRCMS/RLP"
+TEMPLATE = "UACP"
 THEME = "RLP"
 
 # =============================================================================
@@ -205,7 +205,8 @@ class overview(CustomController):
                   }
 
         # Read latest usage statistics from file
-        source = os.path.join(request.folder, "static", "data", "RLP", "rlpcm_usage.json")
+        data = None
+        source = os.path.join(request.folder, "static", "data", "UACP", "uacp_usage.json")
         try:
             with open(source, "r") as s:
                 data = json.load(s)
@@ -2003,7 +2004,7 @@ class approve_org(CustomController):
                       }
 
             # Custom View
-            self._view("RLPPTM", "approve.html")
+            self._view("UACP", "approve.html")
 
         else:
             # List View

@@ -659,19 +659,19 @@ class OverviewData:
         os_path_join = os.path.join
         json_dump = json.dump
 
-        base = os_path_join(current.request.folder, "static", "data", "RLP")
+        base = os_path_join(current.request.folder, "static", "data", "UACP")
 
-        path = os_path_join(base, "rlpcm_needs.json")
+        path = os_path_join(base, "uacp_needs.json")
         data = cls.needs_by_category()
         with open(path, "w") as outfile:
             json_dump(data, outfile, separators=SEPARATORS)
 
-        path = os_path_join(base, "rlpcm_offers.json")
+        path = os_path_join(base, "uacp_offers.json")
         data = cls.offers_by_category()
         with open(path, "w") as outfile:
             json_dump(data, outfile, separators=SEPARATORS)
 
-        path = os_path_join(base, "rlpcm_usage.json")
+        path = os_path_join(base, "uacp_usage.json")
         data = cls.usage_statistics()
         with open(path, "w") as outfile:
             json_dump(data, outfile, separators=SEPARATORS)
