@@ -1722,7 +1722,7 @@ class CRShelterRegistrationModel(DataModel):
                            readable = day_and_night,
                            writable = day_and_night,
                            ),
-                     reg_status(),
+                     reg_status(default=1),
                      s3_datetime("check_in_date",
                                  label = T("Check-in date"),
                                  default = "now",
