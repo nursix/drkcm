@@ -610,7 +610,7 @@ def pr_person_controller(**attr):
                                 "dvr_case.organisation_id",
                                 # Will always default & be hidden
                                 "dvr_case.site_id",
-                                (T("BFV Arrival"), "dvr_case.date"),
+                                (T("EA Arrival"), "dvr_case.date"),
                                 "dvr_case.origin_site_id",
                                 "dvr_case.destination_site_id",
                                 S3SQLInlineComponent(
@@ -683,6 +683,14 @@ def pr_person_controller(**attr):
                                 # Archived-flag ---------------------------
                                 (T("Invalid"), "dvr_case.archived"),
                                 )
+
+                        subheadings = {"dvr_case_status_id": T("Case Status"),
+                                       "pe_label": T("Person Details"),
+                                       "dvr_case_date": T("Registration"),
+                                       "shelter_registration_shelter_unit_id": T("Lodging"),
+                                       "person_details_occupation": T("Other Details"),
+                                       "dvr_case_archived": T("File Status")
+                                       }
                     else:
                         # Reduced form
                         crud_form = S3SQLCustomForm(
@@ -711,9 +719,11 @@ def pr_person_controller(**attr):
                                         ),
                                 "dvr_case.comments",
                                 )
+                        subheadings = None
 
                     configure(crud_form = crud_form,
-                                )
+                              subheadings = subheadings,
+                              )
 
                     # Reconfigure filter widgets
                     filter_widgets = resource.get_config("filter_widgets")
