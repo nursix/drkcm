@@ -2472,6 +2472,7 @@
 'General information on demographics': 'Allgemein - Informationen zur Demographie',
 'General': 'Allgemein',
 'Generate Document from Template': 'Dokument aus Vorlage erzeugen',
+'Generate ID': 'Ausweis ausstellen',
 'Geocode': 'Geocodierung',
 'Geocoder Selection': 'Geocoder Auswahl',
 'Geometry Name': 'Name der Geometrie',

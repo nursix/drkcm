@@ -1957,21 +1957,26 @@ form.auth_login #submit_record__row {
   margin-top: -0.5rem;
 }
 
+/* line 437, ../../default/scss/theme/_forms.scss */
+.crud-actions {
+  margin-bottom: 0.25rem;
+}
+
 /* Help Popup Icon */
-/* line 439, ../../default/scss/theme/_forms.scss */
+/* line 443, ../../default/scss/theme/_forms.scss */
 .inline-tooltip {
   display: inline-block;
   vertical-align: top;
   padding-left: 0.75rem;
 }
-/* line 443, ../../default/scss/theme/_forms.scss */
+/* line 447, ../../default/scss/theme/_forms.scss */
 .inline-tooltip .s3_add_resource_link {
   display: inline-block;
   margin: -3px 0 -3px 0.7rem;
   padding-right: 0.3rem;
 }
 
-/* line 449, ../../default/scss/theme/_forms.scss */
+/* line 453, ../../default/scss/theme/_forms.scss */
 .tooltip,
 .tooltipbody,
 .stickytip,
@@ -1984,7 +1989,7 @@ form.auth_login #submit_record__row {
   width: auto;
   background: none;
 }
-/* line 456, ../../default/scss/theme/_forms.scss */
+/* line 460, ../../default/scss/theme/_forms.scss */
 .tooltip.inline-tooltip,
 .tooltipbody.inline-tooltip,
 .stickytip.inline-tooltip,
@@ -1993,7 +1998,7 @@ form.auth_login #submit_record__row {
   margin-left: 1rem;
   vertical-align: middle;
 }
-/* line 464, ../../default/scss/theme/_forms.scss */
+/* line 468, ../../default/scss/theme/_forms.scss */
 .tooltip:before,
 .tooltipbody:before,
 .stickytip:before,
@@ -2007,7 +2012,7 @@ form.auth_login #submit_record__row {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* line 473, ../../default/scss/theme/_forms.scss */
+/* line 477, ../../default/scss/theme/_forms.scss */
 .tooltip:hover,
 .tooltipbody:hover,
 .stickytip:hover,
@@ -2673,7 +2678,7 @@ table.fixedHeader th {
 
 /* line 25, ../../default/scss/theme/_rheader.scss */
 #rheader {
-  margin-bottom: 0.75em;
+  margin-bottom: 0.25rem;
   /* Rheader Tabs */
 }
 /* line 27, ../../default/scss/theme/_rheader.scss */
