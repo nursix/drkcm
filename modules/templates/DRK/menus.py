@@ -58,13 +58,13 @@ class S3MainMenu(default.S3MainMenu):
                    args = [shelter_id, "check-in"],
                    check = shelter_id is not None,
                    ),
-                MM("Confiscation", c="security", f="seized_item"),
+                #MM("Confiscation", c="security", f="seized_item"),
             ]
 
         elif not_admin and has_role("QUARTIER"):
             return [
                 MM("Residents", c=("dvr", "cr"), f=("person", "shelter_registration")),
-                MM("Confiscation", c="security", f="seized_item"),
+                #MM("Confiscation", c="security", f="seized_item"),
             ]
 
         else:
@@ -107,7 +107,7 @@ class S3MainMenu(default.S3MainMenu):
                     #homepage("req"),
                     homepage("inv"),
                     SEP(link=False),
-                    MM("Confiscation", c="security", f="seized_item"),
+                    #MM("Confiscation", c="security", f="seized_item"),
                     SEP(link=False),
                     MM("Surplus Meals", c="default", f="index",
                        args = "surplus_meals",
@@ -307,12 +307,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
                           restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
                           ),
                         ),
-                    M("Allowances", f="allowance")(
-                        M("Overview"),
-                        M("Payment Registration", m="register", p="update"),
-                        M("Status Update", m="manage", p="update"),
-                        M("Import", m="import", p="create"),
-                        ),
+                    #M("Allowances", f="allowance")(
+                    #    M("Overview"),
+                    #    M("Payment Registration", m="register", p="update"),
+                    #    M("Status Update", m="manage", p="update"),
+                    #    M("Import", m="import", p="create"),
+                    #    ),
                     M("Event Registration", c="dvr", f="case_event", m="register", p="create")(
                         ),
                     M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create")(

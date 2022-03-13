@@ -189,13 +189,13 @@ def configure_person_tags():
     """
 
     current.s3db.add_components("pr_person",
-                                pr_person_tag = ({"name": "eo_number",
-                                                  "joinby": "person_id",
-                                                  "filterby": {
-                                                    "tag": "EONUMBER",
-                                                    },
-                                                  "multiple": False,
-                                                  },
+                                pr_person_tag = (#{"name": "eo_number",
+                                                 # "joinby": "person_id",
+                                                 # "filterby": {
+                                                 #   "tag": "EONUMBER",
+                                                 #   },
+                                                 # "multiple": False,
+                                                 # },
                                                  {"name": "bamf",
                                                   "joinby": "person_id",
                                                   "filterby": {
@@ -262,16 +262,16 @@ def configure_case_form(resource, privileged=False, cancel=False):
                 (T("EA Arrival"), "dvr_case.date"),
                 "dvr_case.origin_site_id",
                 "dvr_case.destination_site_id",
-                S3SQLInlineComponent(
-                        "eo_number",
-                        fields = [("", "value")],
-                        filterby = {"field": "tag",
-                                    "options": "EONUMBER",
-                                    },
-                        label = T("EasyOpt Number"),
-                        multiple = False,
-                        name = "eo_number",
-                        ),
+                #S3SQLInlineComponent(
+                #        "eo_number",
+                #        fields = [("", "value")],
+                #        filterby = {"field": "tag",
+                #                    "options": "EONUMBER",
+                #                    },
+                #        label = T("EasyOpt Number"),
+                #        multiple = False,
+                #        name = "eo_number",
+                #        ),
                 S3SQLInlineComponent(
                         "bamf",
                         fields = [("", "value")],
@@ -396,10 +396,10 @@ def configure_case_filters(resource, privileged=False, show_family_transferable=
                 fw.opts.size = None
             # Text filter includes EasyOpt Number and Case Comments
             if extend_text_filter and isinstance(fw, TextFilter):
-                fw.field.extend(("eo_number.value",
+                fw.field.extend((#"eo_number.value",
                                  "dvr_case.comments",
                                  ))
-                fw.opts.comment = T("You can search by name, ID, EasyOpt number and comments")
+                fw.opts.comment = T("You can search by name, ID or comments")
                 extend_text_filter = False
 
         # Add filter for date of birth
@@ -491,7 +491,7 @@ def configure_case_list_fields(resource,
 
     if privileged:
         # Additional list fields for privileged roles
-        list_fields.insert(1, (T("EasyOpt No."), "eo_number.value"))
+        #list_fields.insert(1, (T("EasyOpt No."), "eo_number.value"))
         list_fields[-1:-1] = ("dvr_case.date",
                               "dvr_case.status_id",
                               )

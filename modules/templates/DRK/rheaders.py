@@ -52,11 +52,11 @@ def drk_dvr_rheader(r, tabs=None):
                             (T("Family Members"), "group_membership/"),
                             (T("Activities"), "case_activity"),
                             (T("Appointments"), "case_appointment"),
-                            (T("Allowance"), "allowance"),
+                            #(T("Allowance"), "allowance"),
                             (T("Presence"), "shelter_registration_history"),
                             (T("Photos"), "image"),
                             (T("Notes"), "case_note"),
-                            (T("Confiscation"), "seized_item"),
+                            #(T("Confiscation"), "seized_item"),
                             ]
                     if current.auth.s3_has_roles(("ADMIN_HEAD",
                                                   "ADMINISTRATION",

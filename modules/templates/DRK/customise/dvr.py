@@ -260,16 +260,15 @@ def dvr_case_activity_controller(**attr):
 
         if not r.component:
 
-            filter_widgets = resource.get_config("filter_widgets")
-            if filter_widgets:
-
-                configure_person_tags()
-
-                from core import TextFilter
-                for fw in filter_widgets:
-                    if isinstance(fw, TextFilter):
-                        fw.field.append("person_id$eo_number.value")
-                        break
+            # Add EasyOpt Number to text filter fields
+            #filter_widgets = resource.get_config("filter_widgets")
+            #if filter_widgets:
+            #    configure_person_tags()
+            #    from core import TextFilter
+            #    for fw in filter_widgets:
+            #        if isinstance(fw, TextFilter):
+            #            fw.field.append("person_id$eo_number.value")
+            #            break
 
             if r.interactive:
                 # Represent person_id as link (including ID)
@@ -356,7 +355,7 @@ def dvr_case_appointment_controller(**attr):
                     TextFilter(["person_id$pe_label",
                                 "person_id$first_name",
                                 "person_id$last_name",
-                                "person_id$eo_number.value",
+                                #"person_id$eo_number.value",
                                 ],
                                 label = T("Search"),
                                 ),
