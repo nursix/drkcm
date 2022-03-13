@@ -300,6 +300,7 @@ class OptionsFilter(FilterWidget):
                 lookup = opts.get("lookup")
                 if lookup:
                     selector = lookup
+
         if resource:
             rfield = S3ResourceField(resource, selector)
             field = rfield.field
@@ -436,7 +437,7 @@ class OptionsFilter(FilterWidget):
                                                 left = left,
                                                 )
         else:
-            virtual = bool(field)
+            virtual = not bool(field)
 
         if rows is None:
             # Fall back to regular forward-lookup, i.e. select all
@@ -516,7 +517,7 @@ class OptionsFilter(FilterWidget):
         if not represent:
             represent = field.represent if field else None
 
-        ftype = str(field.type)
+        ftype = str(field.type) if field else "virtual"
 
         if callable(represent):
             if hasattr(represent, "bulk"):

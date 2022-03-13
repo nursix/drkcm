@@ -57,7 +57,6 @@ class CRShelterModel(DataModel):
              "cr_shelter_id",
              "cr_shelter_status",
              "cr_shelter_person",
-             "cr_shelter_allocation",
              "cr_shelter_unit",
              "cr_shelter_unit_id",
              )
@@ -1723,7 +1722,7 @@ class CRShelterRegistrationModel(DataModel):
                            readable = day_and_night,
                            writable = day_and_night,
                            ),
-                     reg_status(),
+                     reg_status(default=1),
                      s3_datetime("check_in_date",
                                  label = T("Check-in date"),
                                  default = "now",
@@ -2110,7 +2109,7 @@ def cr_update_housing_unit_population(shelter_id):
 
     check_out_is_final = settings.get_cr_check_out_is_final()
     if check_out_is_final:
-        rtable &= (rtable.registration_status != 3)
+        rjoin &= (rtable.registration_status != 3)
 
     query = (htable.shelter_id == shelter_id) & \
             (htable.status == 1) & \

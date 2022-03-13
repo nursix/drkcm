@@ -127,7 +127,6 @@ def cms_newsletter_controller(**attr):
 
     return attr
 
-
 # -------------------------------------------------------------------------
 def cms_post_resource(r, tablename):
 

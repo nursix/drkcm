@@ -1375,9 +1375,9 @@ class CMSNewsletterModel(DataModel):
                                         "invert": True,
                                         },
                             ),
-                        "comment_name",
-                        "comment_email",
-                        #"comment_phone",
+                        "contact_name",
+                        "contact_email",
+                        #"contact_phone",
                         "comments",
                         )
 
