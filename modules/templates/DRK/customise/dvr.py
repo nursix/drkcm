@@ -39,7 +39,7 @@ def generate_pe_label(person_id):
                                               limitby = (0, 1),
                                               ).first()
     if person and not person.pe_label:
-        pe_label = "%06d" % (688275 + person.id)
+        pe_label = "MA%05d" % person.id
         person.update_record(pe_label = pe_label,
                              modified_on = table.modified_on,
                              modified_by = table.modified_by,
