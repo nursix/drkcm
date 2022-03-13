@@ -41,7 +41,7 @@ from gluon.storage import Storage
 
 from .resource import CRUDResource
 from .tools import get_crud_string, s3_get_extension, s3_keep_messages, \
-                   s3_store_last_record_id, s3_str
+                   set_last_record_id, s3_str
 
 HTTP_METHODS = ("GET", "PUT", "POST", "DELETE")
 
@@ -232,7 +232,7 @@ class CRUDRequest:
             if len(resource) == 1:
                 self.record = resource.records().first()
                 self.id = self.record[table._id.name]
-                s3_store_last_record_id(self.tablename, self.id)
+                set_last_record_id(self.tablename, self.id)
             else:
                 raise KeyError(current.ERROR.BAD_RECORD)
 

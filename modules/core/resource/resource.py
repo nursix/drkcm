@@ -41,8 +41,8 @@ from gluon.storage import Storage
 from gluon.tools import callback
 
 from s3dal import Row, Rows, Table, original_tablename
-from ..tools import IS_ONE_OF, s3_format_datetime, s3_get_last_record_id, \
-                    s3_has_foreign_key, s3_remove_last_record_id, s3_str
+from ..tools import IS_ONE_OF, get_last_record_id, remove_last_record_id, \
+                    s3_format_datetime, s3_has_foreign_key, s3_str
 from ..ui import DataTable, S3DataList
 from ..model import s3_all_meta_field_names
 
@@ -797,8 +797,8 @@ class CRUDResource:
                     db(table._id == row[pkey]).update(**fields)
 
                     # Clear session
-                    if s3_get_last_record_id(tablename) == row[pkey]:
-                        s3_remove_last_record_id(tablename)
+                    if get_last_record_id(tablename) == row[pkey]:
+                        remove_last_record_id(tablename)
 
                     # On-delete hook
                     if ondelete:
@@ -825,8 +825,8 @@ class CRUDResource:
                     raise
                 else:
                     # Clear session
-                    if s3_get_last_record_id(tablename) == row[pkey]:
-                        s3_remove_last_record_id(tablename)
+                    if get_last_record_id(tablename) == row[pkey]:
+                        remove_last_record_id(tablename)
 
                     # Delete super-entity
                     delete_super(table, row)

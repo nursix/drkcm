@@ -929,7 +929,7 @@ class DRKCreateSiteActivityReport(CRUDMethod):
                         hideerror = False,
                         ):
 
-            from core import S3PermissionError, s3_store_last_record_id
+            from core import S3PermissionError, set_last_record_id
             from ..helpers import DRKSiteActivityReport
 
             formvars = form.vars
@@ -944,7 +944,7 @@ class DRKCreateSiteActivityReport(CRUDMethod):
                 r.unauthorised()
 
             r.resource.lastid = str(record_id)
-            s3_store_last_record_id("dvr_site_activity", record_id)
+            set_last_record_id("dvr_site_activity", record_id)
 
             current.response.confirmation = T("Report created")
             self.next = r.url(id=record_id, method="read")

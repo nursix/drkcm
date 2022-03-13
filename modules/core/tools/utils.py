@@ -25,8 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("RCVARS",
-           "JSONSEPARATORS",
+__all__ = ("JSONSEPARATORS",
            "CustomController",
            "MarkupStripper",
            "StringTemplateParser",
@@ -36,24 +35,24 @@ __all__ = ("RCVARS",
            "get_crud_string",
            "get_form_record_id",
            "accessible_pe_query",
+           "set_last_record_id",
+           "get_last_record_id",
+           "remove_last_record_id",
            "s3_addrow",
            "s3_dev_toolbar",
            "s3_flatlist",
            "s3_get_extension",
            "s3_get_extension_from_url",
            "s3_get_foreign_key",
-           "s3_get_last_record_id",
            "s3_has_foreign_key",
            "s3_keep_messages",
            "s3_mark_required",
            "s3_orderby_fields",
            "s3_redirect_default",
-           "s3_remove_last_record_id",
            "s3_represent_value",
            "s3_required_label",
            "s3_set_extension",
            "s3_set_match_strings",
-           "s3_store_last_record_id",
            "s3_strip_markup",
            "s3_validate",
            "system_info",
@@ -72,7 +71,6 @@ from urllib import parse as urlparse
 from gluon import current, redirect, HTTP, URL, \
                   A, BEAUTIFY, CODE, DIV, PRE, SPAN, TABLE, TAG, TR, TD, \
                   IS_EMPTY_OR, IS_NOT_IN_DB
-from gluon.storage import Storage
 from gluon.tools import addrow
 
 from s3dal import Expression, Field, Row, S3DAL
@@ -82,7 +80,8 @@ from .convert import s3_str
 # Compact JSON encoding
 JSONSEPARATORS = (",", ":")
 
-RCVARS = "rcvars"
+# Session variable to store last record IDs
+LAST_ID = "_last_record_id"
 
 # =============================================================================
 def get_crud_string(tablename, key):
@@ -174,64 +173,64 @@ def accessible_pe_query(table = None,
     return query
 
 # =============================================================================
-def s3_get_last_record_id(tablename):
+def set_last_record_id(tablename, record_id):
     """
-        Reads the last record ID for a resource from a session
+        Stores the ID of the last processed record of a table in the session
 
         Args:
             tablename: the tablename
+            record_id: the record ID
     """
 
-    session = current.session
-
-    if RCVARS in session and tablename in session[RCVARS]:
-        return session[RCVARS][tablename]
-    else:
-        return None
-
-# =============================================================================
-def s3_store_last_record_id(tablename, record_id):
-    """
-        Stores a record ID for a resource in a session
-
-        Args:
-            tablename: the tablename
-            record_id: the record ID to store
-    """
-
-    session = current.session
-
-    # Web2py type "Reference" can't be pickled in session (no crash,
-    # but renders the server unresponsive) => always convert into int
     try:
         record_id = int(record_id)
     except ValueError:
-        return False
+        return
 
-    if RCVARS not in session:
-        session[RCVARS] = Storage({tablename: record_id})
+    session_s3 = current.session.s3
+
+    last_id = session_s3.get(LAST_ID)
+    if last_id is None:
+        session_s3[LAST_ID] = {tablename: record_id}
     else:
-        session[RCVARS][tablename] = record_id
-    return True
+        last_id[tablename] = record_id
 
-# =============================================================================
-def s3_remove_last_record_id(tablename=None):
+# -----------------------------------------------------------------------------
+def get_last_record_id(tablename):
     """
-        Clears one or all last record IDs stored in a session
+        Reads the ID of the last processed record of a table from the session
 
         Args:
-            tablename: the tablename, None to remove all last record IDs
+            tablename: the tablename
     """
 
-    session = current.session
+    session_s3 = current.session.s3
 
-    if tablename:
-        if RCVARS in session and tablename in session[RCVARS]:
-            del session[RCVARS][tablename]
-    else:
-        if RCVARS in session:
-            del session[RCVARS]
-    return True
+    last_id = session_s3.get(LAST_ID)
+    if last_id is not None:
+        last_id = last_id.get(tablename)
+    return last_id
+
+# -----------------------------------------------------------------------------
+def remove_last_record_id(tablename=None):
+    """
+        Removes the ID of the last processed record of a table from the session
+
+        Args:
+            tablename: the tablename
+
+        Note:
+            - if no tablename is specified, all last record IDs will be removed
+    """
+
+    session_s3 = current.session.s3
+
+    last_id = session_s3.get(LAST_ID)
+    if last_id is not None:
+        if tablename:
+            last_id.pop(tablename, None)
+        else:
+            del session_s3[LAST_ID]
 
 # =============================================================================
 def s3_validate(table, field, value, record=None):

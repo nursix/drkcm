@@ -4424,7 +4424,7 @@ class CommitPersonModel(DataModel):
         if form:
             req_skill_id = form.vars.get("req_skill_id", None)
         if not req_skill_id:
-            commit_skill_id = s3_get_last_record_id("req_commit_skill")
+            commit_skill_id = get_last_record_id("req_commit_skill")
             r_commit_skill = table[commit_skill_id]
             req_skill_id = r_commit_skill.req_skill_id
 
@@ -4439,7 +4439,7 @@ class CommitPersonModel(DataModel):
         rstable[req_skill_id] = {"quantity_commit": quantity_commit}
 
         # Update status_commit of the req record
-        s3_store_last_record_id("req_req_skill", r_req_skill.id)
+        set_last_record_id("req_req_skill", r_req_skill.id)
         #req_skill_onaccept(None)
 
 # =============================================================================

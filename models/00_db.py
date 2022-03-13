@@ -142,8 +142,8 @@ sync = current.sync = s3base.S3Sync()
 # -----------------------------------------------------------------------------
 def s3_clear_session():
 
-    # CRUD last opened records (rcvars)
-    s3base.s3_remove_last_record_id()
+    # CRUD last opened records
+    s3base.remove_last_record_id()
 
     # Session-owned records
     if "owned_records" in session:

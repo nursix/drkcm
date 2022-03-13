@@ -2050,7 +2050,7 @@ def rat():
         s3_action_buttons(r, deletable=False)
         # Redirect to update view to open tabs
         if r.representation == "html" and r.method == "create":
-            r.next = r.url(method="", id=s3base.s3_get_last_record_id("assess_rat"))
+            r.next = r.url(method="", id=s3base.get_last_record_id("assess_rat"))
         return output
     response.s3.postp = postp
 

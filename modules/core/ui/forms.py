@@ -53,7 +53,7 @@ from gluon.validators import Validator
 from s3dal import Field, original_tablename
 
 from ..resource import FS
-from ..tools import s3_mark_required, s3_store_last_record_id, s3_str, \
+from ..tools import s3_mark_required, set_last_record_id, s3_str, \
                     s3_validate, JSONERRORS, JSONSEPARATORS, S3Represent
 
 from .widgets import S3Selector, S3UploadWidget
@@ -751,7 +751,7 @@ class S3SQLDefaultForm(S3SQLForm):
                                                       force_update=True)
                 # Store session vars
                 self.resource.lastid = str(form_vars.id)
-                s3_store_last_record_id(tablename, form_vars.id)
+                set_last_record_id(tablename, form_vars.id)
 
             # Execute onaccept
             try:
@@ -1581,7 +1581,7 @@ class S3SQLCustomForm(S3SQLForm):
 
             # Store session vars
             component.lastid = str(accept_id)
-            s3_store_last_record_id(tablename, accept_id)
+            set_last_record_id(tablename, accept_id)
 
             # Execute onaccept
             try:

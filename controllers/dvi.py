@@ -11,7 +11,7 @@ if not settings.has_module(module):
 def s3_menu_postp():
     # @todo: rewrite this for new framework
     menu_selected = []
-    body_id = s3base.s3_get_last_record_id("dvi_body")
+    body_id = s3base.get_last_record_id("dvi_body")
     if body_id:
         body = s3db.dvi_body
         query = (body.id == body_id)
@@ -28,7 +28,7 @@ def s3_menu_postp():
                 ["%s: %s" % (T("Body"), label),
                  False, URL(f="body", args=[record.id])]
             )
-    person_id = s3base.s3_get_last_record_id("pr_person")
+    person_id = s3base.get_last_record_id("pr_person")
     if person_id:
         person = s3db.pr_person
         query = (person.id == person_id)
