@@ -1253,9 +1253,6 @@ def template():
             )
 
         if r.representation == "html":
-            # Add global JSON object for old browsers (before ECMA-5) - obsolete?
-            #s3.scripts.append("/%s/static/scripts/json2.min.js" % appname)
-
             # Inject CAP form logic and i18n used by it
             if s3.debug:
                 s3.scripts.append("/%s/static/scripts/S3/s3.cap.js" % appname)

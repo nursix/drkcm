@@ -421,8 +421,6 @@ def do_js(minimize,
          "sahana.js.jstree.cfg", "s3.jstree.min.js", None),
         ("Chat",
          "sahana.js.chat.cfg", "s3.chat.min.js", "--strict_mode_input=false"),
-        ("Guided Tour",
-         "sahana.js.guidedTour.cfg", "s3.guidedtour.min.js", None),
         ("Timeline",
          "sahana.js.timeline.cfg", "s3.timeline.min.js", None),
         )

@@ -2387,73 +2387,68 @@ table.dataTable table.import-item-details {
   display: none;
 }
 
-/* line 208, ../scss/theme/_tables.scss */
-table.fixedHeader th {
-  border: 1px solid #cccccc;
-}
-
-/* line 212, ../scss/theme/_tables.scss */
+/* line 209, ../scss/theme/_tables.scss */
 .dataTables_filter {
   float: left;
   text-align: left;
   margin-right: 3rem;
 }
-/* line 216, ../scss/theme/_tables.scss */
+/* line 213, ../scss/theme/_tables.scss */
 .dataTables_filter label {
   margin-left: 0.3rem;
   font-size: 0.75rem;
   font-weight: normal;
 }
-/* line 221, ../scss/theme/_tables.scss */
+/* line 218, ../scss/theme/_tables.scss */
 .dataTables_filter input[type="search"] {
   margin-left: 0.3rem;
 }
-/* line 224, ../scss/theme/_tables.scss */
+/* line 221, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_filter {
   float: right;
   text-align: right;
   margin-right: 0;
   margin-left: 3rem;
 }
-/* line 229, ../scss/theme/_tables.scss */
+/* line 226, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_filter label,
 [dir=rtl] .dataTables_filter input[type="search"] {
   margin-left: 0rem;
   margin-right: 0.3rem;
 }
 
-/* line 236, ../scss/theme/_tables.scss */
+/* line 233, ../scss/theme/_tables.scss */
 .dataTables_length {
   float: left;
   margin-bottom: 4px;
 }
-/* line 239, ../scss/theme/_tables.scss */
+/* line 236, ../scss/theme/_tables.scss */
 .dataTables_length label {
   font-size: 0.75rem;
   font-weight: normal;
   white-space: nowrap;
   margin: 0 10rem 0.3rem 0.3rem;
 }
-/* line 245, ../scss/theme/_tables.scss */
+/* line 242, ../scss/theme/_tables.scss */
 .dataTables_length select {
   font-size: 0.75rem;
   height: auto;
   padding: 0.2rem 1.1rem 0.2rem 0 !important;
 }
-/* line 250, ../scss/theme/_tables.scss */
+/* line 247, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_length {
   float: right;
 }
-/* line 252, ../scss/theme/_tables.scss */
+/* line 249, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_length label {
   margin: 0 0.3rem 0.3rem 10rem;
 }
-/* line 255, ../scss/theme/_tables.scss */
+/* line 252, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_length select {
   padding: 0.2rem 0 0.2rem 1.1rem !important;
 }
 
-/* line 260, ../scss/theme/_tables.scss */
+/* line 257, ../scss/theme/_tables.scss */
 .dataTables_processing {
   padding: 1rem 0 2rem;
   top: 2.5rem;
@@ -2462,54 +2457,54 @@ table.fixedHeader th {
   color: #737373;
   border-color: #737373;
 }
-/* line 267, ../scss/theme/_tables.scss */
+/* line 264, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_processing {
   left: unset;
   right: 30%;
 }
 
-/* line 272, ../scss/theme/_tables.scss */
+/* line 269, ../scss/theme/_tables.scss */
 .dataTables_info {
   float: right;
   clear: none;
   margin: 0.5rem 0;
 }
-/* line 276, ../scss/theme/_tables.scss */
+/* line 273, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_info {
   float: left;
 }
 
-/* line 280, ../scss/theme/_tables.scss */
+/* line 277, ../scss/theme/_tables.scss */
 .dataTables_paginate {
   float: right;
   margin: 0.3rem 0 0.3rem 0.7rem;
 }
-/* line 283, ../scss/theme/_tables.scss */
+/* line 280, ../scss/theme/_tables.scss */
 .dataTables_paginate.paging_full_numbers {
   width: auto;
 }
-/* line 286, ../scss/theme/_tables.scss */
+/* line 283, ../scss/theme/_tables.scss */
 .dataTables_paginate a.paginate_button,
 .dataTables_paginate a.paginate_active {
   text-decoration: none;
 }
-/* line 290, ../scss/theme/_tables.scss */
+/* line 287, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_paginate {
   float: left;
   margin: 0.3rem 0.7rem 0.3rem 0;
 }
 
-/* line 297, ../scss/theme/_tables.scss */
+/* line 294, ../scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 300, ../scss/theme/_tables.scss */
+/* line 297, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 303, ../scss/theme/_tables.scss */
+/* line 300, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   float: right;
   margin: 0 0.1rem;
@@ -2519,54 +2514,54 @@ table.fixedHeader th {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 311, ../scss/theme/_tables.scss */
+/* line 308, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 316, ../scss/theme/_tables.scss */
+/* line 313, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 319, ../scss/theme/_tables.scss */
+/* line 316, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 322, ../scss/theme/_tables.scss */
+/* line 319, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 325, ../scss/theme/_tables.scss */
+/* line 322, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 328, ../scss/theme/_tables.scss */
+/* line 325, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 331, ../scss/theme/_tables.scss */
+/* line 328, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 334, ../scss/theme/_tables.scss */
+/* line 331, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 337, ../scss/theme/_tables.scss */
+/* line 334, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 342, ../scss/theme/_tables.scss */
+/* line 339, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 344, ../scss/theme/_tables.scss */
+/* line 341, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options .dt-export {
   float: left;
 }
 
-/* line 350, ../scss/theme/_tables.scss */
+/* line 347, ../scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;
