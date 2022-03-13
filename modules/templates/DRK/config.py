@@ -109,6 +109,11 @@ def config(settings):
     settings.security.version_info_requires_login = True
 
     # -------------------------------------------------------------------------
+    # Defaults for custom settings
+    #
+    settings.custom.autogenerate_case_ids = True
+
+    # -------------------------------------------------------------------------
     # General UI settings
     #
     settings.ui.calendar_clear_icon = True

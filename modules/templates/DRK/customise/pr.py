@@ -727,6 +727,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
             # No comment for pe_label
             field = table.pe_label
+            field.writable = not settings.get_custom("autogenerate_case_ids")
             field.comment = None
 
             # Last name is required
