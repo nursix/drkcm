@@ -1,2 +1,3 @@
-Name,Comments
-General,
+Name,Tasks,Comments
+General,false,
+ToDo,true,

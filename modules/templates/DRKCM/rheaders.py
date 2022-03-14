@@ -100,6 +100,8 @@ def drk_dvr_rheader(r, tabs=None):
                 # Optional Case Documentation
                 if ui_opts_get("case_use_response_tab"):
                     tabs.append((T("Actions"), "response_action"))
+                if ui_opts_get("case_use_tasks"):
+                    tabs.append((T("ToDo"), "todo"))
                 if ui_opts_get("case_use_appointments"):
                     tabs.append((T("Appointments"), "case_appointment"))
                 if ui_opts_get("case_use_service_contacts"):
