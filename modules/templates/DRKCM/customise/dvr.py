@@ -567,7 +567,7 @@ def configure_case_activity_subject(r,
                     (table.person_id == person_id) & \
                     (table.deleted == False)
             if activity_id:
-                joinq &= (table.activity_id != activity_id)
+                joinq &= (table.id != activity_id)
             left = table.on(joinq)
             q = (table.id == None)
             query = query & q if query else q
@@ -576,9 +576,9 @@ def configure_case_activity_subject(r,
 
         if query:
             field.requires = IS_ONE_OF(db(query), "dvr_need.id",
-                                        field.represent,
-                                        left = left,
-                                        )
+                                       field.represent,
+                                       left = left,
+                                       )
 
     if use_subject:
         # Expose simple free-text subject
