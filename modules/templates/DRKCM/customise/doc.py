@@ -100,6 +100,9 @@ def doc_document_controller(**attr):
                         action = s3db.pr_Contacts,
                         )
 
+        from .pr import configure_person_components
+        configure_person_components()
+
     # Custom prep
     standard_prep = s3.prep
     def custom_prep(r):

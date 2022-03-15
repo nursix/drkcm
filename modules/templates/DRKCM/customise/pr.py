@@ -188,11 +188,36 @@ def configure_person_tags():
                                                   "joinby": "person_id",
                                                   "filterby": {
                                                     "tag": "BAMF",
-                                                  },
+                                                    },
                                                   "multiple": False,
                                                   },
                                                  )
                                 )
+
+# -------------------------------------------------------------------------
+def configure_person_components(use_todos=None):
+    """
+        Configure custom components for pr_person
+    """
+
+    s3db = current.s3db
+
+    if use_todos is None:
+        use_todos = get_ui_options().get("case_use_tasks")
+
+    if use_todos:
+        # Add ToDo-list component
+        ttable = s3db.dvr_note_type
+        query = (ttable.is_task == True) & \
+                (ttable.deleted == False)
+        types = current.db(query).select(ttable.id, cache=s3db.cache)
+        s3db.add_components("pr_person",
+                            dvr_note = {"name": "todo",
+                                        "joinby": "person_id",
+                                        "filterby": {"note_type_id": [t.id for t in types],
+                                                     }
+                                        },
+                            )
 
 # -------------------------------------------------------------------------
 def pr_person_controller(**attr):
@@ -207,18 +232,8 @@ def pr_person_controller(**attr):
     ui_options_get = ui_options.get
     response_tab_need_filter = ui_options_get("response_tab_need_filter")
 
-    if current.request.controller == "dvr" and ui_options_get("case_use_tasks"):
-        ttable = s3db.dvr_note_type
-        query = (ttable.is_task == True) & \
-                (ttable.deleted == False)
-        types = current.db(query).select(ttable.id, cache=s3db.cache)
-        s3db.add_components("pr_person",
-                            dvr_note = {"name": "todo",
-                                        "joinby": "person_id",
-                                        "filterby": {"note_type_id": [t.id for t in types],
-                                                        }
-                                        },
-                            )
+    if current.request.controller == "dvr":
+        configure_person_components(use_todos = ui_options_get("case_use_tasks"))
 
     settings.base.bigtable = True
 
@@ -778,8 +793,6 @@ def pr_person_controller(**attr):
     s3.postp = custom_postp
 
     if current.request.controller == "dvr":
-        attr = dict(attr)
-
         # Custom rheader
         from ..rheaders import drk_dvr_rheader
         attr["rheader"] = drk_dvr_rheader

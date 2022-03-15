@@ -1022,11 +1022,13 @@ class PRPersonModel(DataModel):
 
         set_method("pr_person",
                    method = "lookup",
-                   action = self.pr_person_lookup)
+                   action = self.pr_person_lookup,
+                   )
 
         set_method("pr_person",
                    method = "check_duplicates",
-                   action = self.pr_person_check_duplicates)
+                   action = self.pr_person_check_duplicates,
+                   )
 
         # Enable in templates as-required
         #set_method("pr_person",
