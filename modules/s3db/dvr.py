@@ -30,14 +30,11 @@ __all__ = ("DVRCaseModel",
            "DVRCaseActivityModel",
            "DVRCaseAllowanceModel",
            "DVRCaseAppointmentModel",
-           "DVRHouseholdModel",
-           "DVRHouseholdMembersModel",
            "DVRCaseEconomyInformationModel",
            "DVRLegalStatusModel",
            "DVRCaseEffortModel",
            "DVRCaseEventModel",
            "DVRCaseEvaluationModel",
-           "DVRActivityFundingModel",
            "DVRNeedsModel",
            "DVRNotesModel",
            "DVRReferralModel",
@@ -45,7 +42,6 @@ __all__ = ("DVRCaseModel",
            "DVRServiceContactModel",
            "DVRSiteActivityModel",
            "DVRVulnerabilityModel",
-           "dvr_ActivityRepresent",
            "dvr_CaseActivityRepresent",
            "dvr_DocEntityRepresent",
            "dvr_ResponseActionThemeRepresent",
@@ -1222,7 +1218,7 @@ class DVRNeedsModel(DataModel):
 # =============================================================================
 class DVRNotesModel(DataModel):
     """
-        Model for Notes
+        Simple notes for case files
     """
 
     names = ("dvr_note_type",
@@ -1251,6 +1247,10 @@ class DVRNotesModel(DataModel):
                                                      "dvr_note_type.name",
                                                      ),
                                        ],
+                           ),
+                     Field("is_task", "boolean",
+                           label = T("Is Task"),
+                           default = False,
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -1289,6 +1289,13 @@ class DVRNotesModel(DataModel):
         # ---------------------------------------------------------------------
         # Notes
         #
+        note_status = (("CUR", T("Current")),
+                       ("OBS", T("Obsolete")),
+                       )
+        status_represent = S3PriorityRepresent(note_status,
+                                               {"CUR": "lightblue",
+                                                "OBS": "grey",
+                                                }).represent
         tablename = "dvr_note"
         define_table(tablename,
                      # Uncomment if needed for the Case perspective
@@ -1298,13 +1305,22 @@ class DVRNotesModel(DataModel):
                      self.pr_person_id(empty = False,
                                        ondelete = "CASCADE",
                                        ),
-                     note_type_id(empty = False),
+                     note_type_id(empty=False),
                      s3_date(default = "now",
                              ),
                      s3_comments("note",
                                  label = T("Note"),
+                                 represent = s3_text_represent,
                                  comment = None,
                                  ),
+                     Field("status",
+                           label = T("Status"),
+                           default = "CUR",
+                           requires = IS_IN_SET(note_status, sort=False, zero=None),
+                           represent = status_represent,
+                           readable = False,
+                           writable = False,
+                           ),
                      *s3_meta_fields())
 
         # CRUD Strings
@@ -2379,12 +2395,7 @@ class DVRResponseModel(DataModel):
 class DVRCaseActivityModel(DataModel):
     """ Model for Case Activities """
 
-    names = ("dvr_activity",
-             "dvr_activity_id",
-             "dvr_activity_age_group",
-             "dvr_activity_focus",
-             "dvr_activity_group_type",
-             "dvr_case_activity",
+    names = ("dvr_case_activity",
              "dvr_case_activity_id",
              "dvr_case_activity_need",
              "dvr_case_activity_status",
@@ -2457,313 +2468,6 @@ class DVRCaseActivityModel(DataModel):
                                                                   )),
                                            sortby = "name",
                                            )
-
-        # ---------------------------------------------------------------------
-        # Activity Group Type
-        #
-        tablename = "dvr_activity_group_type"
-        define_table(tablename,
-                     Field("name", length=128, notnull=True, unique=True,
-                           label = T("Type"),
-                           requires = [IS_NOT_EMPTY(),
-                                       IS_LENGTH(128, minsize=1),
-                                       IS_NOT_ONE_OF(db,
-                                                     "%s.name" % tablename,
-                                                     ),
-                                       ],
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # Table configuration
-        configure(tablename,
-                  deduplicate = S3Duplicate(),
-                  )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Group Type"),
-            title_display = T("Group Type Details"),
-            title_list = T("Group Types"),
-            title_update = T("Edit Group Type"),
-            label_list_button = T("List Group Types"),
-            label_delete_button = T("Delete Group Type"),
-            msg_record_created = T("Group Type added"),
-            msg_record_modified = T("Group Type updated"),
-            msg_record_deleted = T("Group Type deleted"),
-            msg_list_empty = T("No Group Types currently defined"),
-            )
-
-        # Reusable Field
-        represent = S3Represent(lookup=tablename)
-        group_type_id = S3ReusableField("group_type_id", "reference %s" % tablename,
-                                        label = T("Group Type"),
-                                        ondelete = "CASCADE",
-                                        represent = represent,
-                                        requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              sort = True,
-                                                              )),
-                                        sortby = "name",
-                                        )
-
-        # ---------------------------------------------------------------------
-        # Activity Age Group
-        #
-        tablename = "dvr_activity_age_group"
-        define_table(tablename,
-                     Field("name", length=128, notnull=True, unique=True,
-                           label = T("Age Group"),
-                           requires = [IS_NOT_EMPTY(),
-                                       IS_LENGTH(128, minsize=1),
-                                       IS_NOT_ONE_OF(db,
-                                                     "%s.name" % tablename,
-                                                     ),
-                                       ],
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # Table configuration
-        configure(tablename,
-                  deduplicate = S3Duplicate(),
-                  )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Age Group"),
-            title_display = T("Age Group Details"),
-            title_list = T("Age Groups"),
-            title_update = T("Edit Age Group"),
-            label_list_button = T("List Age Groups"),
-            label_delete_button = T("Delete Age Group"),
-            msg_record_created = T("Age Group added"),
-            msg_record_modified = T("Age Group updated"),
-            msg_record_deleted = T("Age Group deleted"),
-            msg_list_empty = T("No Age Groups currently defined"),
-            )
-
-        # Reusable Field
-        represent = S3Represent(lookup=tablename)
-        age_group_id = S3ReusableField("age_group_id", "reference %s" % tablename,
-                                       label = T("Age Group"),
-                                       ondelete = "CASCADE",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              sort = True,
-                                                              )),
-                                       sortby = "name",
-                                       )
-
-        # ---------------------------------------------------------------------
-        # Activity Focus
-        #
-        tablename = "dvr_activity_focus"
-        define_table(tablename,
-                     Field("name", notnull=True,
-                           label = T("Name"),
-                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # Table configuration
-        configure(tablename,
-                  deduplicate = S3Duplicate(),
-                  )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Activity Focus"),
-            title_display = T("Activity Focus Details"),
-            title_list = T("Activity Focuses"),
-            title_update = T("Edit Activity Focus"),
-            label_list_button = T("List Activity Focuses"),
-            label_delete_button = T("Delete Activity Focus"),
-            msg_record_created = T("Activity Focus added"),
-            msg_record_modified = T("Activity Focus updated"),
-            msg_record_deleted = T("Activity Focus deleted"),
-            msg_list_empty = T("No Activity Focuses currently defined"),
-            )
-
-        # Reusable Field
-        represent = S3Represent(lookup=tablename)
-        focus_id = S3ReusableField("focus_id", "reference %s" % tablename,
-                                   label = T("Activity Focus"),
-                                   ondelete = "CASCADE",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db, "%s.id" % tablename,
-                                                          represent,
-                                                          sort = True,
-                                                          )),
-                                   sortby = "name",
-                                   )
-
-        # ---------------------------------------------------------------------
-        # Activity (not case-specific)
-        #
-        site_represent = self.org_SiteRepresent(show_link=False)
-        permitted_facilities = current.auth.permitted_facilities(redirect_on_error=False)
-
-        # Simplified periodicity options
-        # @todo: make boolean and use free text interval description?
-        period_opts = {"R": T("regular"),
-                       "O": T("occasional"),
-                       }
-
-        # Modality options
-        modality_opts = {"E": T("Event"),
-                         "O": T("Outreach"),
-                         }
-
-        # Target gender type options
-        # (Tuple list to enforce this order in drop-down)
-        gender_opts = [("M", T("Male")),
-                       ("F", T("Female")),
-                       ("A", T("Mixed")),
-                       ]
-        if not settings.get_pr_hide_third_gender():
-            gender_opts.insert(-1, ("X", T("Other")))
-
-        tablename = "dvr_activity"
-        define_table(tablename,
-                     self.super_link("doc_id", "doc_entity"),
-                     service_id(label = T("Service Type"),
-                                ondelete = "RESTRICT",
-                                readable = service_type,
-                                writable = service_type,
-                                ),
-                     # Expose in template as needed:
-                     organisation_id(readable = False,
-                                     writable = False,
-                                     ),
-                     project_id(ondelete = "SET NULL",
-                                readable = False,
-                                writable = False,
-                                ),
-                     Field("name",
-                           label = T("Title"),
-                           ),
-                     s3_date("start_date",
-                             label = T("Start Date"),
-                             ),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             ),
-                     Field("period", length=4,
-                           represent = represent_option(period_opts),
-                           requires = IS_EMPTY_OR(IS_IN_SET(period_opts)),
-                           ),
-                     Field("modality", length=4,
-                           label = T("Modality"),
-                           default = "E",
-                           represent = represent_option(dict(modality_opts)),
-                           requires = IS_IN_SET(modality_opts, zero=None),
-                           readable = False,
-                           writable = False,
-                           ),
-                     self.super_link("site_id", "org_site",
-                            filterby = "site_id",
-                            filter_opts = permitted_facilities,
-                            label = T("Place"),
-                            readable = True,
-                            writable = True,
-                            represent = site_represent,
-                            updateable = True,
-                            ),
-                     self.org_room_id(),
-                     self.gis_location_id(
-                            label = T("Target Area"),
-                            widget = S3LocationSelector(points = False,
-                                                        polygons = True,
-                                                        #show_address = False,
-                                                        ),
-                            readable = False,
-                            writable = False,
-                            ),
-                     # @todo: have alternative lookup field (hrm)
-                     Field("facilitator",
-                           label = T("Facilitator"),
-                           ),
-                     Field("gender", length=4,
-                           label = T("Gender"),
-                           represent = represent_option(dict(gender_opts)),
-                           requires = IS_EMPTY_OR(IS_IN_SET(gender_opts,
-                                                            sort = False,
-                                                            )),
-                           readable = False,
-                           writable = False,
-                           ),
-                     age_group_id(ondelete="SET NULL"),
-                     group_type_id(ondelete="SET NULL"),
-                     focus_id(ondelete = "SET NULL",
-                              readable = False,
-                              writable = False,
-                              ),
-                     # Certificates for Participants:
-                     # - expose in template if required:
-                     Field("certificate", "boolean",
-                           default = False,
-                           label = T("Certificate issued"),
-                           represent = s3_yes_no_represent,
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("certificate_details", "text",
-                           label = T("Certificate Details"),
-                           represent = s3_text_represent,
-                           readable = False,
-                           writable = False,
-                           widget = s3_comments_widget,
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # Table Options
-        configure(tablename,
-                  super_entity = "doc_entity",
-                  )
-
-        # Components
-        self.add_components(tablename,
-                            dvr_case_activity = "activity_id",
-                            supply_distribution = {"link": "supply_distribution_case_activity",
-                                                   "joinby": "activity_id",
-                                                   "key": "distribution_id",
-                                                   },
-                            )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Activity"),
-            title_display = T("Activity Details"),
-            title_list = T("Activities"),
-            title_update = T("Edit Activity"),
-            label_list_button = T("List Activities"),
-            label_delete_button = T("Delete Activity"),
-            msg_record_created = T("Activity added"),
-            msg_record_modified = T("Activity updated"),
-            msg_record_deleted = T("Activity deleted"),
-            msg_list_empty = T("No Activities currently registered"),
-            )
-
-        # Reusable Field
-        represent = dvr_ActivityRepresent(show_link=False)
-        activity_id = S3ReusableField("activity_id", "reference %s" % tablename,
-                                      label = T("Activity"),
-                                      ondelete = "CASCADE",
-                                      represent = represent,
-                                      requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              sort = True,
-                                                              )),
-                                      sortby = "service_id",
-                                      )
 
         # ---------------------------------------------------------------------
         # Termination Types (=how a case activity ended)
@@ -2986,10 +2690,6 @@ class DVRCaseActivityModel(DataModel):
                                 writable = False,
                                 ),
 
-                     # Actions performed (activate in template as needed)
-                     activity_id(readable=False,
-                                 writable=False,
-                                 ),
                      Field("activity_details", "text",
                            label = T("Support provided"),
                            represent = s3_text_represent,
@@ -3337,8 +3037,7 @@ class DVRCaseActivityModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {"dvr_activity_id": activity_id,
-                "dvr_case_activity_id": case_activity_id,
+        return {"dvr_case_activity_id": case_activity_id,
                 }
 
     # -------------------------------------------------------------------------
@@ -3348,8 +3047,7 @@ class DVRCaseActivityModel(DataModel):
 
         dummy = S3ReusableField.dummy
 
-        return {"dvr_activity_id": dummy("activity_id"),
-                "dvr_case_activity_id": dummy("case_activity_id"),
+        return {"dvr_case_activity_id": dummy("case_activity_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -4038,270 +3736,6 @@ class DVRCaseAppointmentModel(DataModel):
                 # Update last_seen_on
                 if person_id:
                     dvr_update_last_seen(person_id)
-
-# =============================================================================
-class DVRHouseholdModel(DataModel):
-    """
-        Model to document the household situation of a case
-        - used by STL (DRK use pr_group_membership, SCPHIMS use DVRHouseholdMemberModel)
-    """
-
-    names = ("dvr_household",
-             "dvr_beneficiary_type",
-             "dvr_beneficiary_data",
-             )
-
-    def model(self):
-
-        T = current.T
-        db = current.db
-
-        crud_strings = current.response.s3.crud_strings
-
-        configure = self.configure
-        define_table = self.define_table
-
-        # ---------------------------------------------------------------------
-        tablename = "dvr_household"
-        define_table(tablename,
-                     # Main Beneficiary (component link):
-                     # @todo: populate from case and hide in case perspective
-                     self.pr_person_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
-                     Field("hoh_name",
-                           label = T("Head of Household Name"),
-                           ),
-                     self.pr_gender("hoh_gender",
-                                    label = T("Head of Household Gender"),
-                                    ),
-                     s3_date("hoh_date_of_birth",
-                             label = T("Head of Household Date of Birth"),
-                             future = 0,
-                             past = 1320,
-                             ),
-                     Field("hoh_relationship",
-                           label = T("Head of Household Relationship"),
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # Components
-        self.add_components(tablename,
-                            dvr_beneficiary_data = "household_id",
-                            )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Add Household Details"),
-            title_display = T("Household Details"),
-            title_list = T("Household Details"),
-            title_update = T("Edit Household Details"),
-            label_list_button = T("List Household Details"),
-            label_delete_button = T("Delete Household Details"),
-            msg_record_created = T("Household Details added"),
-            msg_record_modified = T("Household Details updated"),
-            msg_record_deleted = T("Household Details deleted"),
-            msg_list_empty = T("No Household Details currently registered"),
-            )
-
-        # Reusable field
-        household_id = S3ReusableField("household_id", "reference %s" % tablename,
-                                       ondelete = "CASCADE",
-                                       requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              )),
-                                       )
-
-        # ---------------------------------------------------------------------
-        # Beneficiary Types (e.g. Age Groups)
-        #
-        tablename = "dvr_beneficiary_type"
-        define_table(tablename,
-                     Field("name",
-                           label = T("Type"),
-                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # CRUD Strings
-        ADD_BENEFICIARY_TYPE = T("Create Beneficiary Type")
-        crud_strings[tablename] = Storage(
-            label_create = ADD_BENEFICIARY_TYPE,
-            title_display = T("Beneficiary Type"),
-            title_list = T("Beneficiary Types"),
-            title_update = T("Edit Beneficiary Type"),
-            label_list_button = T("List Beneficiary Types"),
-            label_delete_button = T("Delete Beneficiary Type"),
-            msg_record_created = T("Beneficiary Type added"),
-            msg_record_modified = T("Beneficiary Type updated"),
-            msg_record_deleted = T("Beneficiary Type deleted"),
-            msg_list_empty = T("No Beneficiary Types currently registered")
-            )
-
-        # Reusable field
-        represent = S3Represent(lookup=tablename, translate=True)
-        beneficiary_type_id = S3ReusableField("beneficiary_type_id", "reference %s" % tablename,
-                                              label = T("Beneficiary Type"),
-                                              ondelete = "RESTRICT",
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db, "dvr_beneficiary_type.id",
-                                                                      represent)),
-                                              )
-
-        # ---------------------------------------------------------------------
-        # Beneficiary data
-        #
-        show_third_gender = not current.deployment_settings.get_pr_hide_third_gender()
-        int_represent = lambda v: str(v) if v is not None else "-"
-
-        tablename = "dvr_beneficiary_data"
-        define_table(tablename,
-                     household_id(),
-                     beneficiary_type_id(),
-                     Field("total", "integer",
-                           label = T("Number of Beneficiaries"),
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           represent = int_represent,
-                           # Expose in templates when not using per-gender fields
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("female", "integer",
-                           label = T("Number Female"),
-                           represent = int_represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           ),
-                     Field("male", "integer",
-                           label = T("Number Male"),
-                           represent = int_represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           ),
-                     Field("other", "integer",
-                           label = T("Number Other Gender"),
-                           represent = int_represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           readable = show_third_gender,
-                           writable = show_third_gender,
-                           ),
-                     Field("in_school", "integer",
-                           label = T("Number in School"),
-                           represent = int_represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           ),
-                     Field("out_of_school", "integer",
-                           label = T("Number out of School"),
-                           represent = int_represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           ),
-                     Field("employed", "integer",
-                           label = T("Number Employed"),
-                           represent = int_represent,
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Add Beneficiary Data"),
-            title_display = T("Beneficiary Data"),
-            title_list = T("Beneficiary Data"),
-            title_update = T("Edit Beneficiary Data"),
-            label_list_button = T("List Beneficiary Data"),
-            label_delete_button = T("Delete Beneficiary Data"),
-            msg_record_created = T("Beneficiary Data added"),
-            msg_record_modified = T("Beneficiary Data updated"),
-            msg_record_deleted = T("Beneficiary Data deleted"),
-            msg_list_empty = T("No Beneficiary Data currently registered"),
-            )
-
-        # List fields
-        list_fields = ["beneficiary_type_id",
-                       "female",
-                       "male",
-                       "in_school",
-                       "employed",
-                       "comments",
-                       ]
-        if show_third_gender:
-            list_fields.insert(3, "other")
-
-        # Table configuration
-        configure(tablename,
-                  list_fields = list_fields,
-                  )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return {"dvr_beneficiary_type_id": beneficiary_type_id,
-                }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-        """ Safe defaults for names in case the module is disabled """
-
-        return {"dvr_beneficiary_type_id": S3ReusableField.dummy("beneficiary_type_id"),
-                }
-
-
-# =============================================================================
-class DVRHouseholdMembersModel(DataModel):
-    """
-        Model to document the household situation of a case
-        - used by SCPHIMS (DRK use pr_group_membership, STL use DVRHouseholdModel)
-    """
-
-    names = ("dvr_household_member",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        # ---------------------------------------------------------------------
-        tablename = "dvr_household_member"
-        self.define_table(tablename,
-                          self.pr_person_id(empty = False,
-                                            label = T("Head of Household"),
-                                            ondelete = "CASCADE",
-                                            ),
-                          Field("age", "integer",
-                                label = T("Age"),
-                                requires = IS_INT_IN_RANGE(0, 150),
-                                ),
-                          self.pr_gender("gender",
-                                         #label = T("Gender"),
-                                         ),
-                          Field("disabled", "boolean",
-                                label = T("Disabled"),
-                                represent = s3_yes_no_represent,
-                                ),
-                          s3_comments(),
-                          *s3_meta_fields())
-
-        # CRUD Strings
-        current.response.s3.crud_strings[tablename] = Storage(
-            label_create = T("Add Household Member"),
-            title_display = T("Household Member"),
-            title_list = T("Household Members"),
-            title_update = T("Edit Household Member"),
-            label_list_button = T("List Household Members"),
-            label_delete_button = T("Delete Household Member"),
-            msg_record_created = T("Household Member added"),
-            msg_record_modified = T("Household Member updated"),
-            msg_record_deleted = T("Household Member deleted"),
-            msg_list_empty = T("No Household Members currently registered"),
-            )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
 
 # =============================================================================
 class DVRCaseEconomyInformationModel(DataModel):
@@ -5697,67 +5131,6 @@ class DVRVulnerabilityModel(DataModel):
         return None
 
 # =============================================================================
-class DVRActivityFundingModel(DataModel):
-    """ Model to manage funding needs for cases """
-
-    names = ("dvr_activity_funding",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        s3 = current.response.s3
-
-        define_table = self.define_table
-        crud_strings = s3.crud_strings
-
-        # ---------------------------------------------------------------------
-        # Case activity funding
-        #
-        tablename = "dvr_activity_funding"
-        define_table(tablename,
-                     self.dvr_case_activity_id(),
-                     Field("funding_required", "boolean",
-                           default = False,
-                           label = T("Funding Required"),
-                           represent = s3_yes_no_represent,
-                           ),
-                     Field("reason", "text",
-                           label = T("Reason"),
-                           represent = s3_text_represent,
-                           widget = s3_comments_widget,
-                           ),
-                     Field("proposal", "text",
-                           label = T("Proposed Assistance"),
-                           ),
-                     Field("approved", "boolean",
-                           label = T("Approved"),
-                           represent = s3_yes_no_represent,
-                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Funding Proposal"),
-            title_display = T("Funding Proposal"),
-            title_list = T("Funding Proposals"),
-            title_update = T("Edit Funding Proposal"),
-            label_list_button = T("List Funding Proposals"),
-            label_delete_button = T("Delete Funding Proposal"),
-            msg_record_created = T("Funding Proposal created"),
-            msg_record_modified = T("Funding Proposal updated"),
-            msg_record_deleted = T("Funding Proposal deleted"),
-            msg_list_empty = T("No Funding Proposals currently registered"),
-        )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-# =============================================================================
 class DVRServiceContactModel(DataModel):
     """ Model to track external service contacts of beneficiaries """
 
@@ -6316,113 +5689,6 @@ def dvr_due_followups(human_resource_id=None):
     resource.add_filter(query)
 
     return resource.count()
-
-# =============================================================================
-class dvr_ActivityRepresent(S3Represent):
-    """ Representation of activity IDs """
-
-    def __init__(self, show_link=False):
-        """
-            Args:
-                show_link: show representation as clickable link
-        """
-
-        super(dvr_ActivityRepresent, self).__init__(lookup = "dvr_activity",
-                                                    show_link = show_link,
-                                                    )
-
-    # -------------------------------------------------------------------------
-    def lookup_rows(self, key, values, fields=None):
-        """
-            Custom rows lookup
-
-            Args:
-                key: the key Field
-                values: the values
-                fields: unused (retained for API compatibility)
-        """
-
-        table = current.s3db.dvr_activity
-
-        count = len(values)
-        if count == 1:
-            query = (key == values[0])
-        else:
-            query = key.belongs(values)
-        rows = current.db(query).select(table.id,
-                                        table.name,
-                                        table.start_date,
-                                        table.end_date,
-                                        table.service_id,
-                                        table.facilitator,
-                                        limitby = (0, count),
-                                        )
-        self.queries += 1
-
-        services = set()
-        for row in rows:
-            service_id = row.service_id
-            if service_id:
-                services.add(service_id)
-
-        if services:
-            represent = table.service_id.represent
-            represent.bulk(list(services))
-
-        return rows
-
-    # -------------------------------------------------------------------------
-    def represent_row(self, row):
-        """
-            Represent a row
-
-            Args:
-                row: the Row
-        """
-
-        if row.name:
-            title = row.name
-        else:
-            table = current.s3db.dvr_activity
-            title = table.service_id.represent(row.service_id)
-
-        template = "%(title)s"
-        data = {"title": title,
-                "start": "-",
-                "end": "-",
-                }
-
-        start_date = row.start_date
-        end_date = row.end_date
-        if start_date or end_date:
-            date_represent = S3DateTime.date_represent
-            if start_date:
-                data["start"] = date_represent(start_date)
-            if end_date:
-                data["end"] = date_represent(end_date)
-            template = "%(title)s (%(start)s - %(end)s)"
-
-        facilitator = row.facilitator
-        if facilitator:
-            template = "%s (%%(facilitator)s)" % template
-            data["facilitator"] = facilitator
-
-        return template % data
-
-    # -------------------------------------------------------------------------
-    def link(self, k, v, row=None):
-        """
-            Represent a (key, value) as hypertext link
-
-            Args:
-                k: the key (dvr_activity.id)
-                v: the representation of the key
-                row: the row with this key (unused here)
-        """
-
-        url = URL(c="dvr", f="activity", args=[k], extension="")
-
-        return A(v, _href = url)
 
 # =============================================================================
 class dvr_ResponseActionRepresent(S3Represent):
@@ -9867,7 +9133,6 @@ def dvr_rheader(r, tabs=None):
                 # Defaults used by? (Not used by DRK, STL or SCPHIMS)
                 tabs = [(T("Basic Details"), None),
                         (T("Activities"), "case_activity"),
-                        (T("Beneficiaries"), "beneficiary_data"),
                         (T("Economy"), "economy"),
                         (T("Identity"), "identity"),
                         ]
@@ -9901,23 +9166,6 @@ def dvr_rheader(r, tabs=None):
 
             rheader_fields = [["reference"],
                               ["status_id"],
-                              ]
-
-        elif tablename == "dvr_activity":
-
-            label = current.deployment_settings.get_dvr_label()
-            if label == "Beneficiary":
-                CASES = T("Beneficiaries")
-            else:
-                CASES = T("Cases")
-
-            if not tabs:
-                tabs = [(T("Basic Details"), None),
-                        (CASES, "case_activity"),
-                        ]
-
-            rheader_fields = [["name"],
-                              ["service_id"],
                               ]
 
         rheader = S3ResourceHeader(rheader_fields, tabs)(r,

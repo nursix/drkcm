@@ -7,3 +7,4 @@ Sought,false,false,
 Police,true,true,"With the police, still entitled to benefits, cannot be transferred"
 Hospital,true,true,"In Hospital, still entitled to benefits, cannot be transferred"
 AFA/UMF,false,false,"AFA=Without Parents pending Youth Service,UMF=Visiting pending Decision"
+COVID:ungeimpft,false,false,"COVID-19 Impfstatus unvollständig"

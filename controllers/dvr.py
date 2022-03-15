@@ -642,32 +642,6 @@ def group_membership():
                            )
 
 # =============================================================================
-# Activities
-#
-def activity():
-    """ Activities: RESTful CRUD Controller """
-
-    return crud_controller(rheader=s3db.dvr_rheader)
-
-# -----------------------------------------------------------------------------
-def activity_age_group():
-    """ Activity Age Groups: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def activity_group_type():
-    """ Activity Group Types: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def activity_focus():
-    """ Activity Focuses: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# =============================================================================
 # Cases
 #
 def case():
@@ -842,12 +816,6 @@ def due_followups():
     s3.prep = prep
 
     return crud_controller("dvr", "case_activity")
-
-# -----------------------------------------------------------------------------
-def activity_funding():
-    """ Activity Funding Proposals: RESTful CRUD Controller """
-
-    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def provider_type():
@@ -1230,20 +1198,6 @@ def note():
 
 def note_type():
     """ Note Types: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# =============================================================================
-# Household
-#
-def beneficiary_type():
-    """ Beneficiary Types: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def beneficiary_data():
-    """ Beneficiary Data: RESTful CRUD Controller """
 
     return crud_controller()
 

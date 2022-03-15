@@ -1,4 +1,4 @@
-Organisation,Sex,First Name,Last Name,DOB,Nationality,Family,Head of Family,Case,Registration Date,Status,Label
+Organisation,Sex,First Name,Last Name,DOB,Nationality,Family,Head of Family,Case,Registration Date,CaseStatus,Label
 LEA Ellwangen,Male,Ahmed,Hamed,1971-03-11,SY,,,,,OPEN,657432
 Ankunftszentrum Heidelberg,Male,Alibrahim,Malik,1970-04-12,SY,Malik,true,,,OPEN,657433
 Ankunftszentrum Heidelberg,Female,Fatima,Malik,1974-12-01,SY,Malik,,,,OPEN,657434

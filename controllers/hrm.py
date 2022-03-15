@@ -219,10 +219,11 @@ def profile():
         - includes components relevant to HRM
     """
 
-    request.args = [str(auth.s3_logged_in_person())]
+    if not request.args:
+        request.args = [str(auth.s3_logged_in_person())]
 
     # Custom Method for Contacts
-    s3db.set_method("pr_profile",
+    s3db.set_method("pr_person",
                     method = "contacts",
                     action = s3db.pr_Contacts)
 
@@ -276,7 +277,7 @@ def profile():
                 dob.widget = S3CalendarWidget(past_months = 972,
                                               future_months = -144,
                                               )
-                return True
+            return True
         else:
             # Disable non-interactive & import
             return False

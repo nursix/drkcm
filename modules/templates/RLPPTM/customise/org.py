@@ -1064,7 +1064,8 @@ def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
         if mgrinfo == "N/A":
             update["STATUS"] = "REVISE"
             update["PUBLIC"] = "N"
-            notify = not facility.obsolete
+            # Notify if public-status changes for active facility
+            notify = tags.get("PUBLIC") != "N" and not facility.obsolete
         elif mgrinfo == "REVISE":
             if not any(tags[t] == "REVISE" for t in SITE_REVIEW):
                 update["STATUS"] = "REVIEW"
@@ -1566,7 +1567,11 @@ def org_facility_resource(r, tablename):
     # Custom label for obsolete-Flag
     field = table.obsolete
     field.label = T("Defunct")
-    field.represent = lambda v, row=None: ICON("remove") if v else ""
+    if r.interactive or r.representation == "aadata":
+        field.represent = lambda v, row=None: ICON("remove") if v else ""
+    else:
+        from core import s3_yes_no_represent
+        field.represent = s3_yes_no_represent
     field.comment = DIV(_class="tooltip",
                         _title="%s|%s" % (T("Defunct"),
                                           T("Please mark this field when the facility is no longer in operation"),

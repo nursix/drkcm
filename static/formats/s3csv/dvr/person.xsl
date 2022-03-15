@@ -17,7 +17,7 @@
          Case...........................optional.....dvr_case.reference
          Case Type......................optional.....dvr_case.case_type_id$name @ToDo
          Registration Date..............optional.....dvr_case.date
-         Status.........................optional.....dvr_case.status_id$code
+         CaseStatus.....................optional.....dvr_case.status_id$code
          Appointment:XX.................optional.....Appointment,Status (Type = XX in column name, Status = cell in row. Multiple allowed. Options: done, Date)
 
          Family.........................optional.....pr_group.name
@@ -127,7 +127,7 @@
              use="col[@field='Shelter Unit']"/>
 
     <xsl:key name="status" match="row"
-             use="col[@field='Status']"/>
+             use="col[@field='CaseStatus']"/>
 
     <!-- ****************************************************************** -->
     <xsl:template match="/">
@@ -144,7 +144,7 @@
 
             <!-- Case Statuses -->
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('status',
-                                                                   col[@field='Status'])[1])]">
+                                                                   col[@field='CaseStatus'])[1])]">
                 <xsl:call-template name="Status"/>
             </xsl:for-each>
 
@@ -250,10 +250,10 @@
                     <data field="date"><xsl:value-of select="col[@field='Registration Date']/text()"/></data>
                 </xsl:if>
 
-                <xsl:if test="col[@field='Status']/text()!=''">
+                <xsl:if test="col[@field='CaseStatus']/text()!=''">
                     <reference field="status_id" resource="dvr_case_status">
                         <xsl:attribute name="tuid">
-                            <xsl:value-of select="concat('Status:',col[@field='Status'])"/>
+                            <xsl:value-of select="concat('Status:',col[@field='CaseStatus'])"/>
                         </xsl:attribute>
                     </reference>
                 </xsl:if>
@@ -1120,7 +1120,7 @@
 
     <!-- ****************************************************************** -->
     <xsl:template name="Status">
-        <xsl:variable name="Status" select="col[@field='Status']/text()"/>
+        <xsl:variable name="Status" select="col[@field='CaseStatus']/text()"/>
 
         <xsl:if test="$Status!=''">
             <resource name="dvr_case_status">

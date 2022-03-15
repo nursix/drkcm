@@ -216,79 +216,87 @@ def dvr_case_resource(r, tablename):
     s3db.configure("dvr_case", update_realm = True)
 
 # -------------------------------------------------------------------------
+def note_date_dt_orderby(field, direction, orderby, left_joins):
+    """
+        When sorting notes by date, use created_on to maintain
+        consistent order of multiple notes on the same date
+    """
+
+    sorting = {"table": field.tablename,
+               "direction": direction,
+               }
+    orderby.append("%(table)s.date%(direction)s,%(table)s.created_on%(direction)s" % sorting)
+
+# -------------------------------------------------------------------------
 def dvr_note_resource(r, tablename):
 
-    T = current.T
-    auth = current.auth
+    db = current.db
+    s3db = current.s3db
 
-    if not auth.s3_has_role("ADMIN"):
+    ttable = current.s3db.dvr_note_type
+    if r.component_name == "todo":
+        table = r.component.table
 
-        # Restrict access by note type
-        GENERAL = "General"
-        MEDICAL = "Medical"
-        SECURITY = "Security"
+        r.component.add_filter(FS("note_type_id$is_task") == True)
+        dbset = db(ttable.is_task == True)
 
-        permitted_note_types = [GENERAL]
+        T = current.T
 
-        user = auth.user
-        if user:
-            # Roles permitted to access "Security" type notes
-            SECURITY_ROLES = ("ADMIN_HEAD",
-                              "SECURITY_HEAD",
-                              "POLICE",
-                              "MEDICAL",
-                              )
-
-            # Roles permitted to access "Health" type notes
-            MEDICAL_ROLES = ("ADMIN_HEAD",
-                             "MEDICAL",
-                             )
-
-            # Get role IDs
-            db = current.db
-            s3db = current.s3db
-            gtable = s3db.auth_group
-            roles = db(gtable.deleted != True).select(gtable.uuid,
-                                                      gtable.id,
-                                                      ).as_dict(key = "uuid")
-
-            realms = user.realms
-
-            security_roles = (roles[uuid]["id"]
-                              for uuid in SECURITY_ROLES if uuid in roles)
-            if any(role in realms for role in security_roles):
-                permitted_note_types.append(SECURITY)
-
-            medical_roles = (roles[uuid]["id"]
-                             for uuid in MEDICAL_ROLES if uuid in roles)
-            if any(role in realms for role in medical_roles):
-                permitted_note_types.append(MEDICAL)
-
-        # Filter notes to permitted note types
-        query = FS("note_type_id$name").belongs(permitted_note_types)
-        if r.tablename == "dvr_note":
-            r.resource.add_filter(query)
-        else:
-            r.resource.add_component_filter("case_note", query)
-
-        # Filter note type selector to permitted note types
-        ttable = s3db.dvr_note_type
-        query = ttable.name.belongs(permitted_note_types)
-        rows = db(query).select(ttable.id)
-        note_type_ids = [row.id for row in rows]
-
-        table = s3db.dvr_note
+        # Alternative label for task type
         field = table.note_type_id
-        field.label = T("Category")
+        field.label = T("Task Type")
 
-        if len(note_type_ids) == 1:
-            field.default = note_type_ids[0]
-            field.writable = False
+        # Alternative label for note text
+        field = table.note
+        field.label = T("Details")
+        field.widget = None
 
-        field.requires = IS_ONE_OF(db(query), "dvr_note_type.id",
-                                   field.represent,
-                                   )
+        # Expose Status
+        field = table.status
+        field.readable = field.writable = True
 
+        # Alternative CRUD strings
+        current.response.s3.crud_strings["dvr_note"] = Storage(
+            label_create = T("Create Task List"),
+            title_display = T("Task List"),
+            title_list = T("Task Lists"),
+            title_update = T("Edit Task List"),
+            label_list_button = T("All Task Lists"),
+            label_delete_button = T("Delete Task List"),
+            msg_record_created = T("Task List added"),
+            msg_record_modified = T("Task List updated"),
+            msg_record_deleted = T("Task List deleted"),
+            msg_list_empty = T("No Task Lists found"),
+            )
+
+    elif r.component_name == "case_note":
+        # Notes-tab
+        table = r.component.table
+        r.component.add_filter(FS("note_type_id$is_task") == False)
+        dbset = db(ttable.is_task == False)
+    elif r.tablename == "dvr_note":
+        # Primary controller
+        table = r.resource.table
+        dbset = db(ttable.is_task == False)
+    else:
+        return
+
+    # Consistent ordering of notes (newest on top)
+    field = table.date
+    field.represent.dt_orderby = note_date_dt_orderby
+    s3db.configure("dvr_note",
+                   orderby = "%(tn)s.date desc,%(tn)s.created_on desc" % \
+                             {"tn": table._tablename},
+                   )
+
+    # Filter note-type selector
+    field = table.note_type_id
+    field.requires = IS_ONE_OF(dbset, "dvr_note_type.id", field.represent)
+    options = dbset.select(ttable.id, limitby=(0, 2))
+    if len(options) == 1:
+        # Single option => default+hide
+        field.default = options.first().id
+        field.readable = field.writable = False
 
 # -------------------------------------------------------------------------
 def configure_case_activity_reports(status_id = None,
@@ -559,7 +567,7 @@ def configure_case_activity_subject(r,
                     (table.person_id == person_id) & \
                     (table.deleted == False)
             if activity_id:
-                joinq &= (table.activity_id != activity_id)
+                joinq &= (table.id != activity_id)
             left = table.on(joinq)
             q = (table.id == None)
             query = query & q if query else q
@@ -568,9 +576,9 @@ def configure_case_activity_subject(r,
 
         if query:
             field.requires = IS_ONE_OF(db(query), "dvr_need.id",
-                                        field.represent,
-                                        left = left,
-                                        )
+                                       field.represent,
+                                       left = left,
+                                       )
 
     if use_subject:
         # Expose simple free-text subject

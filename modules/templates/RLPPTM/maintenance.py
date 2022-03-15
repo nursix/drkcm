@@ -54,6 +54,11 @@ class Daily():
            now.weekday() == 6:
             errors = self.cleanup_public_registry()
 
+        # If test station manager info is required, update the
+        # workflow-status for sites with incomplete manager info
+        if settings.get_custom(key="test_station_manager_required"):
+            self.check_teststation_manager()
+
         return errors if errors else None
 
     # -------------------------------------------------------------------------
@@ -273,5 +278,47 @@ class Daily():
                 errors.append(msg)
 
         return "\n".join(errors) if errors else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def check_teststation_manager():
+        """
+            Update workflow status of test stations with incomplete
+            manager information
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        from .config import TESTSTATIONS
+
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        otable = s3db.org_organisation
+        ottable = s3db.org_organisation_tag
+
+        # All organisations in the TESTSTATIONS group with MGRINFO!=COMPLETE
+        join =  [gtable.on((mtable.organisation_id == otable.id) & \
+                           (mtable.deleted == False) & \
+                           (gtable.id == mtable.group_id) & \
+                           (gtable.name == TESTSTATIONS)),
+                 ]
+        left = ottable.on((ottable.organisation_id == otable.id) & \
+                          (ottable.tag == "MGRINFO") & \
+                          (ottable.deleted == False))
+
+        query = (ottable.value != "COMPLETE") & \
+                (otable.deleted == False)
+        rows = db(query).select(otable.id,
+                                ottable.value,
+                                join = join,
+                                left = left,
+                                )
+
+        from .customise.org import facility_approval_update_mgrinfo
+        for row in rows:
+            facility_approval_update_mgrinfo(row.org_organisation.id,
+                                             row.org_organisation_tag.value,
+                                             )
 
 # END =========================================================================
