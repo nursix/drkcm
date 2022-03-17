@@ -160,9 +160,8 @@ def org_organisation_controller(**attr):
     s3.prep = prep
 
     # Custom rheader
-    from ..rheaders import rlpcm_org_rheader
-    attr = dict(attr)
-    attr["rheader"] = rlpcm_org_rheader
+    from ..rheaders import org_rheader
+    attr["rheader"] = org_rheader
 
     return attr
 

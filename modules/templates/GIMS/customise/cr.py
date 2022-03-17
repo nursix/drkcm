@@ -218,9 +218,8 @@ def cr_shelter_controller(**attr):
     s3.prep = prep
 
     # Custom rheader
-    from ..rheaders import rlpcm_cr_rheader
-    attr = dict(attr)
-    attr["rheader"] = rlpcm_cr_rheader
+    from ..rheaders import cr_rheader
+    attr["rheader"] = cr_rheader
 
     return attr
 

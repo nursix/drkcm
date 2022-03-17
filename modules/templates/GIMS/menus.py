@@ -41,12 +41,9 @@ class S3MainMenu(default.S3MainMenu):
         """ Modules Menu """
 
         auth = current.auth
-
-        has_role = auth.s3_has_role
         logged_in = auth.s3_logged_in()
 
         settings = current.deployment_settings
-
         org_registration = lambda i: settings.get_custom("org_registration")
 
         has_roles = auth.s3_has_roles

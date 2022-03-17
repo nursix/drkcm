@@ -171,50 +171,6 @@ def config(settings):
     settings.auth.realm_entity = realm_entity
 
     # -------------------------------------------------------------------------
-    # BR Settings
-    #
-    settings.br.case_global_default_org = False
-    settings.br.case_manager = False
-    settings.br.household_size = False # True
-    settings.br.case_address = True
-    settings.br.case_language_details = False
-
-    settings.br.case_activity_status = True
-    settings.br.case_activity_manager = False
-    settings.br.case_activity_subject = True
-    settings.br.case_activity_need_details = True
-    settings.br.manage_assistance = False
-
-    settings.br.needs_org_specific = False
-
-    settings.br.case_contacts_tab = True
-    settings.br.case_id_tab = False
-    settings.br.case_family_tab = False
-    settings.br.case_activities = True
-    settings.br.manage_assistance = False
-    settings.br.assistance_tab = False
-
-    settings.br.service_contacts = False
-    settings.br.case_notes_tab = False
-    settings.br.case_photos_tab = False
-    settings.br.case_documents_tab = False
-
-    from .customise.br import br_home, \
-                              br_assistance_offer_resource, \
-                              br_assistance_offer_controller, \
-                              br_case_activity_resource, \
-                              br_case_activity_controller, \
-                              br_direct_offer_resource
-
-    settings.customise_br_home = br_home
-
-    settings.customise_br_assistance_offer_resource = br_assistance_offer_resource
-    settings.customise_br_assistance_offer_controller = br_assistance_offer_controller
-    settings.customise_br_case_activity_resource = br_case_activity_resource
-    settings.customise_br_case_activity_controller = br_case_activity_controller
-    settings.customise_br_direct_offer_resource = br_direct_offer_resource
-
-    # -------------------------------------------------------------------------
     # CMS Module Settings
     #
     settings.cms.hide_index = True
@@ -246,14 +202,6 @@ def config(settings):
     # Document settings
     #
     settings.doc.mailmerge_fields = {}
-
-    # -------------------------------------------------------------------------
-    # Event Module Settings
-    #
-    #settings.event.label = "Disaster"
-    settings.event.incident = False
-    settings.event.types_hierarchical = False
-    settings.event.impact_tab = False
 
     # -------------------------------------------------------------------------
     # Human Resource Module Settings
@@ -331,22 +279,7 @@ def config(settings):
     #
     settings.custom.org_registration = True
     settings.custom.regional = ("Rheinland-Pfalz",
-                                "Nordrhein-Westfalen",
-                                "Hessen",
-                                "Baden-Württemberg",
-                                "Saarland",
                                 )
-
-    # -------------------------------------------------------------------------
-    def overview_stats_update():
-        """
-            Scheduler task to update the data files for the overview page
-        """
-
-        from .helpers import OverviewData
-        OverviewData.update_data()
-
-    settings.tasks.overview_stats_update = overview_stats_update
 
     # -------------------------------------------------------------------------
     # Comment/uncomment modules here to disable/enable them
@@ -403,12 +336,12 @@ def config(settings):
            restricted = True,
            module_type = 2,
         )),
-        ("vol", Storage(
-           name_nice = T("Volunteers"),
-           #description = "Human Resources Management",
-           restricted = True,
-           module_type = 2,
-        )),
+        #("vol", Storage(
+        #   name_nice = T("Volunteers"),
+        #   #description = "Human Resources Management",
+        #   restricted = True,
+        #   module_type = 2,
+        #)),
         ("cms", Storage(
          name_nice = T("Content Management"),
         #description = "Content Management System",
@@ -421,29 +354,11 @@ def config(settings):
            restricted = True,
            module_type = 10,
         )),
-        ("project", Storage(
-           name_nice = T("Projects"),
-           #description = "Tracking of Projects, Activities and Tasks",
-           restricted = True,
-           module_type = 2
-        )),
         ("cr", Storage(
             name_nice = T("Shelters"),
             #description = "Tracks the location, capacity and breakdown of victims in Shelters",
             restricted = True,
             module_type = 10
-        )),
-        ("br", Storage(
-            name_nice = T("Beneficiary Registry"),
-            #description = "Beneficiary Registry and Case Management",
-            restricted = True,
-            module_type = 10,
-        )),
-        ("event", Storage(
-            name_nice = T("Events"),
-            #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
-            restricted = True,
-            module_type = 10,
         )),
         ("stats", Storage(
            name_nice = T("Statistics"),
