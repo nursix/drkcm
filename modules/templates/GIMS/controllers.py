@@ -128,12 +128,12 @@ class index(CustomController):
                   "login_form": login_form,
                   "announcements": announcements,
                   "announcements_title": announcements_title,
-                  "intro": current.s3db.cms_get_content("HomepageIntro",
-                                                        module = "default",
-                                                        resource = "index",
-                                                        cmsxml = True,
-                                                        ),
-                  "buttons": buttons,
+                  "intro": "", #current.s3db.cms_get_content("HomepageIntro",
+                               #                         module = "default",
+                               #                         resource = "index",
+                               #                         cmsxml = True,
+                               #                         ),
+                  "buttons": "", #buttons,
                   }
 
         # Custom view and homepage styles

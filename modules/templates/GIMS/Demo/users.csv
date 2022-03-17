@@ -1,4 +1,4 @@
 First Name,Last Name,Email,Password,Role,Organisation,Language
-Example,Case Manager,case_manager@example.com,eden,"CASE_MANAGER,ORG_ADMIN",Example Case Management Organisation,de
-Example,Provider,relief_provider@example.com,eden,"RELIEF_PROVIDER,ORG_ADMIN",Example Provider Organisation,de
-MFFKI,Admin,mffki_admin@example.com,eden,"EVENT_MANAGER,ORG_ADMIN,ORG_GROUP_ADMIN/0","Ministerium für Familie, Frauen, Kultur und Integration",de
+MFFKI,Admin,mffki_admin@example.com,eden,"ORG_GROUP_ADMIN/0,ORG_ADMIN,SHELTER_MANAGER,NEWSLETTER_AUTHOR","Ministerium für Familie, Frauen, Kultur und Integration",de
+District,Admin,district_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",Example District,de
+Commune,Admin,commune_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",Example Commune,de

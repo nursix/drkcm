@@ -44,59 +44,26 @@ class S3MainMenu(default.S3MainMenu):
 
         has_role = auth.s3_has_role
         logged_in = auth.s3_logged_in()
-        #labels = current.s3db.br_terminology()
 
         settings = current.deployment_settings
 
         org_registration = lambda i: settings.get_custom("org_registration")
 
-        if has_role("EVENT_MANAGER"):
-            # Organisation managing events
-            menu = [MM("Current Needs", c="br", f="activities"),
-                    MM("Relief Offers", c="br", f="offers", link=False)(
-                        MM("Current Relief Offers"),
-                        MM("Pending Approvals", vars={"pending": "1"}),
-                        MM("Blocked Entries", vars={"blocked": 1}),
-                        ),
-                    MM("Affected Persons", c="br", f="person"),
-                    ]
-        elif has_role("RELIEF_PROVIDER") or has_role("CASE_MANAGER"):
-            # Organisation offering relief services / supplies
-            menu = [MM("Current Needs", c="br", f="activities"),
-                    MM("Our Relief Offers", c="br", f="assistance_offer", restrict="RELIEF_PROVIDER"),
-                    MM("Affected Persons", c="br", f="person"),
-                    MM("Find Relief Offers", c="br", f="offers"),
-                    ]
-        else:
-            # Private Citizen
-            menu = [#MM("Report Need", c="br", f="case_activity"),
-                    #MM("Find Relief Offers", c="br", f="offers"),
-                    MM("Offer Assistance / Supplies", c="br", link=False)(
-                        MM("Current Needs", f="activities"),
-                        MM("My Relief Offers", f="assistance_offer"),
-                        ),
-                    ]
-
         has_roles = auth.s3_has_roles
-        is_org_user = has_roles(("RELIEF_PROVIDER", "ORG_ADMIN", "ORG_GROUP_ADMIN"))
+        is_org_user = has_roles(("ORG_ADMIN", "ORG_GROUP_ADMIN"))
 
-        return [menu,
-                MM("Register", c="default", f="index", link=False,
+        return [MM("Register", c="default", f="index", link=False,
                    check = not logged_in)(
-                    MM("Private Citizen", args=["register"]),
                     MM("Organization", args=["register_org"],
                        check = org_registration,
                        ),
                     ),
-                #MM("Organizations", c="org", f="organisation", check = not is_org_user),
                 MM("Organizations", c="org", f="organisation", check = is_org_user)(
                     MM("My Organizations", vars={"mine": "1"}),
                     MM("All Organizations"),
                     ),
+                MM("Shelters", c="cr", f="shelter", check=is_org_user),
                 MM("More", link=False, check=logged_in)(
-                    MM("Emergency Shelters", c="cr", f="shelter", check = is_org_user),
-                    MM("Overview & Statistics", c="default", f="index", args=["overview"]),
-                    MM("Events", c="event", f="event", restrict="EVENT_MANAGER"),
                     MM("Pending Approvals", c="default", f="index", args=["approve_org"],
                        restrict = "ORG_GROUP_ADMIN",
                        ),
@@ -209,90 +176,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def br():
-        """ Beneficiary Registry """
-
-        s3db = current.s3db
-
-        labels = s3db.br_terminology()
-        crud_strings = s3db.br_crud_strings("pr_person")
-
-        f = current.request.function
-
-        auth = current.auth
-        is_event_manager = auth.s3_has_role("EVENT_MANAGER")
-        is_relief_provider = auth.s3_has_role("RELIEF_PROVIDER", include_admin=False)
-        is_case_manager = auth.s3_has_role("CASE_MANAGER", include_admin=False)
-        org_role = is_event_manager or is_relief_provider or is_case_manager
-
-        if org_role:
-            # Org Users: separate menus per function
-            if is_event_manager and f in ("offers", "assistance_type"):
-                # Relief Offers
-                menu = [M("Current Relief Offers", f="offers")(
-                            M("Statistics", m="report"),
-                            M("Map", m="map"),
-                            ),
-                        M("Approval", f="offers", link=False, restrict="EVENT_MANAGER")(
-                            M("Pending Approvals", vars={"pending": "1"}),
-                            M("Blocked Entries", vars={"blocked": 1}),
-                            M("All Offers", vars={"all": 1}),
-                            ),
-                        M("Administration", link=False, restrict="ADMIN")(
-                            M("Assistance Types", f="assistance_type"),
-                            )
-                        ]
-            elif f in ("person", "case_activity", "offers"):
-                # Cases, needs and relief offers
-                menu = [M(labels.CURRENT, f="person", vars={"closed": "0"},
-                          restrict=("EVENT_MANAGER", "RELIEF_PROVIDER", "CASE_MANAGER"))(
-                            M(crud_strings.label_create, m="create"),
-                            ),
-                        M("Our Needs", f="case_activity", check=lambda i: is_relief_provider or is_case_manager)(
-                            M("Statistic", m="report"),
-                            ),
-                        M("Current Relief Offers", f="offers", check=lambda i: not is_event_manager)(
-                            M("Statistics", m="report"),
-                            M("Map", m="map"),
-                            ),
-                        M("Archive", link=False)(
-                            M(labels.CLOSED, f="person", vars={"closed": "1"}),
-                            M("Invalid Cases", f="person", vars={"invalid": "1"}, restrict=["ADMIN"]),
-                            ),
-                        ]
-            elif f in ("assistance_offer", "assistance_type"):
-                # Our Offers
-                menu = [M("Our Relief Offers", f="assistance_offer", restrict="RELIEF_PROVIDER")(
-                            M("Create", m="create"),
-                            ),
-                        ]
-            else:
-                # Needs
-                menu = [M("Current Needs", f="activities")(
-                            M("Statistic", m="report"),
-                            M("Map", m="map"),
-                            ),
-                        M("Administration", link=False, restrict="ADMIN")(
-                            M("Need Types", f="need"),
-                            )
-                        ]
-        else:
-            # Private Citizen:
-            # - see current needs
-            # - manage own offers
-            menu = [M("Current Needs", f="activities")(
-                        M("Statistic", m="report"),
-                        #M("Map", m="map"),
-                        ),
-                    M("My Relief Offers", f="assistance_offer")(
-                        M("New Offer", m="create"),
-                        ),
-                    ]
-
-        return M(c="br")(menu)
-
-    # -------------------------------------------------------------------------
     @classmethod
     def cms(cls):
 
@@ -330,20 +213,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def event():
-        """ EVENT / Event Management """
-
-        return M(c="event")(
-                    M("Events", f="event")(
-                        M("Create", m="create", restrict=("EVENT_MANAGER",)),
-                        ),
-                    M("Administration", restrict=("ADMIN",))(
-                        M("Event Types", f="event_type"),
-                        )
-                    )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def org():
         """ ORG / Organization Registry """
 
@@ -355,7 +224,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         has_roles = auth.s3_has_roles
         is_org_user = not has_roles((ADMIN, ORG_GROUP_ADMIN)) and \
-                      has_roles(("RELIEF_PROVIDER", "ORG_ADMIN"))
+                      has_roles(("ORG_ADMIN",))
 
         return M(c="org")(
                     M("Organizations", c="org", f="organisation")(
