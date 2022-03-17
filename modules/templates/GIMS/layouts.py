@@ -1,5 +1,5 @@
 """
-    Menu Layouts for UACP
+    Menu Layouts for GIMS
 
     License: MIT
 """

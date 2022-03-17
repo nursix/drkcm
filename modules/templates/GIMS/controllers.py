@@ -1,5 +1,5 @@
 """
-    Custom Controllers for UACP
+    Custom Controllers for GIMS
 
     License: MIT
 """
@@ -26,7 +26,7 @@ from core import ConsentTracking, \
 
 from templates.RLPPTM.notifications import formatmap
 
-TEMPLATE = "UACP"
+TEMPLATE = "GIMS"
 THEME = "RLP"
 
 # =============================================================================
@@ -206,7 +206,7 @@ class overview(CustomController):
 
         # Read latest usage statistics from file
         data = None
-        source = os.path.join(request.folder, "static", "data", "UACP", "uacp_usage.json")
+        source = os.path.join(request.folder, "static", "data", "GIMS", "gims_usage.json")
         try:
             with open(source, "r") as s:
                 data = json.load(s)
@@ -2004,7 +2004,7 @@ class approve_org(CustomController):
                       }
 
             # Custom View
-            self._view("UACP", "approve.html")
+            self._view("GIMS", "approve.html")
 
         else:
             # List View

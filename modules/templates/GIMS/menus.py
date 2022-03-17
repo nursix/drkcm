@@ -1,5 +1,5 @@
 """
-    Custom Menus for UACP
+    Custom Menus for GIMS
 
     License: MIT
 """

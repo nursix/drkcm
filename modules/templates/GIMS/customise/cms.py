@@ -1,5 +1,5 @@
 """
-    CMS module customisations for UACP
+    CMS module customisations for GIMS
 
     License: MIT
 """

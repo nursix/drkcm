@@ -1,5 +1,5 @@
 """
-    BR module customisations for UACP
+    BR module customisations for GIMS
 
     License: MIT
 """

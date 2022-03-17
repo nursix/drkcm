@@ -1,5 +1,5 @@
 """
-    AUTH module customisations for UACP
+    AUTH module customisations for GIMS
 
     License: MIT
 """

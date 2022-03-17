@@ -1,5 +1,5 @@
 """
-    CR module customisations for UACP
+    CR module customisations for GIMS
 
     License: MIT
 """

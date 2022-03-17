@@ -1,5 +1,5 @@
 """
-    UACP: UA Refugee Support Portal
+    GIMS Refugee Information Management System
 
     License: MIT
 """
@@ -18,18 +18,17 @@ def config(settings):
 
     T = current.T
 
-    names = {"event": "Ukraine"}
-    settings.base.system_name = T("%(event)s Portal") % names
-    settings.base.system_name_short =  T("%(event)s Portal") % names
-    settings.custom.homepage_title = T("%(event)s Portal") % names
+    settings.base.system_name = "Geflüchteten-Informations-Management"
+    settings.base.system_name_short =  "GIMS"
+    settings.custom.homepage_title = "Geflüchteten-Informations-Management"
 
     # PrePopulate data
-    settings.base.prepopulate.append("UACP")
-    settings.base.prepopulate_demo.append("UACP/Demo")
+    settings.base.prepopulate.append("GIMS")
+    settings.base.prepopulate_demo.append("GIMS/Demo")
 
     # Theme (folder to use for views/layout.html)
     settings.base.theme = "RLP"
-    settings.base.theme_layouts = "UACP"
+    settings.base.theme_layouts = "GIMS"
 
     # Authentication settings
     settings.auth.password_min_length = 8

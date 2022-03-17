@@ -1,5 +1,5 @@
 """
-    Helper functions and classes for UACP
+    Helper functions and classes for GIMS
 
     License: MIT
 """
@@ -659,19 +659,19 @@ class OverviewData:
         os_path_join = os.path.join
         json_dump = json.dump
 
-        base = os_path_join(current.request.folder, "static", "data", "UACP")
+        base = os_path_join(current.request.folder, "static", "data", "GIMS")
 
-        path = os_path_join(base, "uacp_needs.json")
+        path = os_path_join(base, "gims_needs.json")
         data = cls.needs_by_category()
         with open(path, "w") as outfile:
             json_dump(data, outfile, separators=SEPARATORS)
 
-        path = os_path_join(base, "uacp_offers.json")
+        path = os_path_join(base, "gims_offers.json")
         data = cls.offers_by_category()
         with open(path, "w") as outfile:
             json_dump(data, outfile, separators=SEPARATORS)
 
-        path = os_path_join(base, "uacp_usage.json")
+        path = os_path_join(base, "gims_usage.json")
         data = cls.usage_statistics()
         with open(path, "w") as outfile:
             json_dump(data, outfile, separators=SEPARATORS)

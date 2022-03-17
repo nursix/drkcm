@@ -1,5 +1,5 @@
 """
-    PR module customisations for UACP
+    PR module customisations for GIMS
 
     License: MIT
 """

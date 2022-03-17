@@ -1,5 +1,5 @@
 """
-    ORG module customisations for UACP
+    ORG module customisations for GIMS
 
     License: MIT
 """
