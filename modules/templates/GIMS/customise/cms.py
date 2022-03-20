@@ -22,7 +22,7 @@ def lookup_newsletter_recipients(resource):
             a list of pe_ids of the recipients
     """
 
-    if resource.tablename == "org_facility":
+    if resource.tablename == "cr_shelter":
         rows = resource.select(["organisation_id$pe_id"], as_rows=True)
         return [row.org_organisation.pe_id for row in rows]
 

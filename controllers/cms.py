@@ -1114,6 +1114,7 @@ def newsletter():
             if lookup:
                 # Add distribution list to CRUD form
                 types = settings.get_cms_newsletter_recipient_types()
+                print(types)
                 from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
                 crud_form = S3SQLCustomForm(
                                 "organisation_id",

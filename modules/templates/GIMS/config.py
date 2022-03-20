@@ -161,10 +161,9 @@ def config(settings):
     settings.auth.registration_welcome_email = False
 
     settings.auth.realm_entity_types = ("org_organisation",)
-    settings.auth.privileged_roles = {"EVENT_MANAGER": "EVENT_MANAGER",
-                                      "CITIZEN": "ADMIN",
-                                      "RELIEF_PROVIDER": "RELIEF_PROVIDER",
-                                      "MAP_ADMIN": "ADMIN",
+    settings.auth.privileged_roles = {"MAP_ADMIN": "ADMIN",
+                                      "SHELTER_MANAGER": "SHELTER_MANAGER",
+                                      "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
                                       }
 
     from .customise.auth import realm_entity

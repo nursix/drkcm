@@ -46,7 +46,7 @@ class S3MainMenu(default.S3MainMenu):
         has_roles = auth.s3_has_roles
         is_org_user = has_roles(("ORG_ADMIN", "ORG_GROUP_ADMIN"))
 
-        return [MM("Organizations", c="org", f="organisation", check = is_org_user)(
+        return [MM("Organizations", c="org", f="organisation")(
                     MM("My Organizations", vars={"mine": "1"}),
                     MM("All Organizations"),
                     ),
