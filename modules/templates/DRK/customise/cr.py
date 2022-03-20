@@ -271,9 +271,9 @@ def cr_shelter_controller(**attr):
             field.readable = field.writable = True
             list_fields = ["name",
                            "transitory",
-                           "capacity_day",
-                           "population_day",
-                           "available_capacity_day",
+                           "capacity",
+                           "population",
+                           "available_capacity",
                            ]
             r.component.configure(list_fields=list_fields)
 
@@ -539,7 +539,7 @@ def profile_header(r):
     # Get the number of free places in the BEA
     # => Non-BEA registrations do not occupy BEA capacity,
     #    so need to re-add the total here:
-    free = record.available_capacity_day + other_total
+    free = record.available_capacity + other_total
     FREE = TR(TD(T("Free places")),
               TD(free),
               _class="dbstats-total",

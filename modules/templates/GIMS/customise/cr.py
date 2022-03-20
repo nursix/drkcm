@@ -10,20 +10,6 @@ from gluon import current, IS_EMPTY_OR, DIV
 from ..helpers import restrict_data_formats
 
 # -------------------------------------------------------------------------
-def shelter_available_capacity(row):
-
-    if hasattr(row, "cr_shelter"):
-        row = row.cr_shelter
-
-    try:
-        total_capacity = row.capacity_day
-        total_population = row.population
-    except AttributeError:
-        return "?"
-
-    return max(0, total_capacity - total_population)
-
-# -------------------------------------------------------------------------
 def cr_shelter_resource(r, tablename):
 
     T = current.T
@@ -40,6 +26,7 @@ def cr_shelter_resource(r, tablename):
                      OptionsFilter, \
                      S3PriorityRepresent, \
                      S3SQLCustomForm, \
+                     S3SQLInlineComponent, \
                      S3SQLInlineLink, \
                      TextFilter, \
                      s3_fieldmethod, \
@@ -102,10 +89,6 @@ def cr_shelter_resource(r, tablename):
                                            2: "green",
                                            }).represent
 
-    # Custom virtual field to show available capacity
-    table.available_capacity = s3_fieldmethod("available_capacity",
-                                              shelter_available_capacity,
-                                              )
     ltable = s3db.cr_shelter_service_shelter
     field = ltable.service_id
     field.label = T("Services")
@@ -129,8 +112,16 @@ def cr_shelter_resource(r, tablename):
                    "phone",
                    "email",
                    # TODO show these only for manager?
-                   "capacity_day",
+                   "capacity",
+                   S3SQLInlineComponent("population",
+                                        fields = ["type_id",
+                                                  "population_adults",
+                                                  "population_children",
+                                                  ],
+                                        ),
                    "population",
+                   "population_adults",
+                   "population_children",
                    "status",
                    ]
 
@@ -182,7 +173,7 @@ def cr_shelter_resource(r, tablename):
                                    "location_id$L2",
                                    "location_id$L1",
                                    "population",
-                                   "capacity_day",
+                                   "capacity",
                                    ],
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,

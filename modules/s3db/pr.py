@@ -181,16 +181,12 @@ class PRPersonEntityModel(DataModel):
         # Person Super-Entity
         #
         settings = current.deployment_settings
-        if settings.get_ui_label_camp():
-            SHELTER = T("Camp")
-        else:
-            SHELTER = T("Shelter")
         org_group_label = settings.get_org_groups()
         if org_group_label:
             org_group_label = T(org_group_label)
         else:
             org_group_label = T("Organization group")
-        pe_types = Storage(cr_shelter = SHELTER,
+        pe_types = Storage(cr_shelter = T("Shelter"),
                            deploy_alert = T("Deployment Alert"),
                            dvi_body = T("Body"),
                            dvi_morgue = T("Morgue"),

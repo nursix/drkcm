@@ -205,6 +205,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Administration", link=False, restrict=(ADMIN,))(
                         M("Shelter Types", f="shelter_type"),
                         M("Shelter Services", f="shelter_service"),
+                        M("Population Types", f="population_type"),
                         ),
                 )
 

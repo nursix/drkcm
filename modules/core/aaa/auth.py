@@ -194,13 +194,9 @@ Thank you"""
 
         # Site types (for OrgAuth)
         T = current.T
-        if current.deployment_settings.get_ui_label_camp():
-            shelter = T("Camp")
-        else:
-            shelter = T("Shelter")
         self.org_site_types = Storage(transport_airport = T("Airport"),
                                       msg_basestation = T("Cell Tower"),
-                                      cr_shelter = shelter,
+                                      cr_shelter = T("Shelter"),
                                       org_facility = T("Facility"), # @ToDo: Use deployment setting for label
                                       org_office = T("Office"),
                                       transport_heliport = T("Heliport"),

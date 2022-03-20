@@ -5323,7 +5323,7 @@ def req_match(rheader = None):
         elif tablename == "inv_warehouse":
             rheader = s3db.inv_rheader
         elif tablename == "cr_shelter":
-            rheader = s3db.cr_shelter_rheader
+            rheader = s3db.cr_rheader
         elif tablename == "hms_hospital":
             rheader = s3db.hms_hospital_rheader
 

@@ -153,7 +153,7 @@ def restrict_data_formats(r):
     settings = current.deployment_settings
 
     allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
-    if r.method in ("report", "timeplot", "filter"):
+    if r.method in ("report", "timeplot", "filter", "validate"):
         allowed += ("json",)
     if r.method == "options":
         allowed += ("s3json",)
