@@ -72,6 +72,8 @@ def org_rheader(r, tabs=None):
                 tabs = [(T("Organisation"), None),
                         (T("Offices"), "office"),
                         ]
+                if is_org_group_admin:
+                    tabs.append((T("Invite"), "invite"))
                 if auth.s3_has_permission("update", "org_organisation", record_id=record.id):
                     tabs.append((T("Staff"), "human_resource"))
 

@@ -43,27 +43,15 @@ class S3MainMenu(default.S3MainMenu):
         auth = current.auth
         logged_in = auth.s3_logged_in()
 
-        settings = current.deployment_settings
-        org_registration = lambda i: settings.get_custom("org_registration")
-
         has_roles = auth.s3_has_roles
         is_org_user = has_roles(("ORG_ADMIN", "ORG_GROUP_ADMIN"))
 
-        return [MM("Register", c="default", f="index", link=False,
-                   check = not logged_in)(
-                    MM("Organization", args=["register_org"],
-                       check = org_registration,
-                       ),
-                    ),
-                MM("Organizations", c="org", f="organisation", check = is_org_user)(
+        return [MM("Organizations", c="org", f="organisation", check = is_org_user)(
                     MM("My Organizations", vars={"mine": "1"}),
                     MM("All Organizations"),
                     ),
                 MM("Shelters", c="cr", f="shelter", check=is_org_user),
                 MM("More", link=False, check=logged_in)(
-                    MM("Pending Approvals", c="default", f="index", args=["approve_org"],
-                       restrict = "ORG_GROUP_ADMIN",
-                       ),
                     MM("Newsletters", c="cms", f="read_newsletter"),
                     ),
                 ]

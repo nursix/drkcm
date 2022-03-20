@@ -2231,7 +2231,7 @@ class Shelter:
                     a, c = row[cnt_a], row[cnt_c]
                 else:
                     a = c = 0
-                update = {"population": a + c,
+                update = {"population": (a if a else 0) + (c if c else 0),
                           "population_adults": a,
                           "population_children": c,
                           }

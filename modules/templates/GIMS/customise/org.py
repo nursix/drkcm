@@ -25,13 +25,20 @@ def org_organisation_controller(**attr):
         result = standard_prep(r) if callable(standard_prep) else True
 
         auth = current.auth
-        #s3db = current.s3db
+        s3db = current.s3db
 
         resource = r.resource
 
         is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
-        mine = False
 
+        # Add invite-method for ORG_GROUP_ADMIN role
+        from templates.RLPPTM.helpers import InviteUserOrg
+        s3db.set_method("org_organisation",
+                        method = "invite",
+                        action = InviteUserOrg,
+                        )
+
+        mine = False
         if not is_org_group_admin:
 
             if r.get_vars.get("mine") == "1":
