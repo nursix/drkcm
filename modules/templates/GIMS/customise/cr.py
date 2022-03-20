@@ -46,6 +46,10 @@ def cr_shelter_resource(r, tablename):
                                    represent = ShelterDetails.contact_represent,
                                    )
 
+    # No add-link for organisation
+    field = table.organisation_id
+    field.comment = None
+
     # Custom label + tooltip for population
     field = table.population
     population_label = T("Current Population##shelter")
@@ -96,10 +100,10 @@ def cr_shelter_resource(r, tablename):
                                            )
 
     # CRUD Form
-    crud_fields = ["organisation_id",
+    crud_fields = [# ----- Shelter -----
+                   "organisation_id",
                    "name",
                    "shelter_type_id",
-                   "location_id",
                    S3SQLInlineLink(
                         "shelter_service",
                         field = "service_id",
@@ -107,13 +111,18 @@ def cr_shelter_resource(r, tablename):
                         cols = 3,
                         render_list = True,
                         ),
+                   "status",
+                   # ----- Address -----
+                   "location_id",
+                   # ----- Contact -----
                    "website",
                    "contact_name",
                    "phone",
                    "email",
-                   # TODO show these only for manager?
+                   # ----- Capacity and Population -----
                    "capacity",
                    S3SQLInlineComponent("population",
+                                        label = T("Current Population##shelter"),
                                         fields = ["type_id",
                                                   "population_adults",
                                                   "population_children",
@@ -122,8 +131,16 @@ def cr_shelter_resource(r, tablename):
                    "population",
                    "population_adults",
                    "population_children",
-                   "status",
+                   # ----- Other Details -----
+                   "comments"
                    ]
+
+    subheadings = {"organisation_id": T("Facility"),
+                   "location_id": T("Address"),
+                   "website": T("Contact Information"),
+                   "capacity": T("Capacity / Occupancy"),
+                   "comments": T("Administrative"),
+                   }
 
     # Filter widgets
     filter_widgets = [TextFilter(["name",
@@ -160,12 +177,13 @@ def cr_shelter_resource(r, tablename):
                    (T("Available Capacity"), "available_capacity"),
                    (T("Place"), "place"),
                    (T("Contact"), "contact"),
-                   "website",
-                   "shelter_service__link.service_id",
+                   #"website",
+                   #"shelter_service__link.service_id",
                    ]
 
     s3db.configure("cr_shelter",
                    crud_form = S3SQLCustomForm(*crud_fields),
+                   subheadings = subheadings,
                    extra_fields = ["contact_name",
                                    "phone",
                                    "email",
