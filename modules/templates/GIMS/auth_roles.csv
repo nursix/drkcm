@@ -64,3 +64,6 @@ ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_organisation,CREATE|READ|UPDATE
 SHELTER_MANAGER,Shelter Manager,,,cr,,,READ,,
 SHELTER_MANAGER,Shelter Manager,,,cr,shelter,,CREATE|READ|UPDATE|DELETE,,
 SHELTER_MANAGER,Shelter Manager,,,,,cr_shelter,CREATE|READ|UPDATE|DELETE,,
+SHELTER_READER,Shelter Reader,,,cr,,,READ,,
+SHELTER_READER,Shelter Reader,,,cr,shelter,,READ,,
+SHELTER_READER,Shelter Reader,,,cr,,cr_shelter,READ,,

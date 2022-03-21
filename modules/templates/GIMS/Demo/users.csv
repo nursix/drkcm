@@ -1,5 +1,5 @@
 First Name,Last Name,Email,Password,Role,Organisation,Language
-MFFKI,Admin,mffki_admin@example.com,eden,"ORG_GROUP_ADMIN/0,ORG_ADMIN,SHELTER_MANAGER,NEWSLETTER_AUTHOR","Ministerium für Familie, Frauen, Kultur und Integration",de
+MFFKI,Admin,mffki_admin@example.com,eden,"ORG_GROUP_ADMIN/0,ORG_ADMIN,SHELTER_MANAGER,NEWSLETTER_AUTHOR,SHELTER_READER/0","Ministerium für Familie, Frauen, Kultur und Integration",de
 ADD,Admin,add@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",Aufsichts- und Dienstleistungsdirektion,de
 Birkenfeld,Admin,birkenfeld_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",VG Birkenfeld,de
 Mendig,Admin,mendig_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",VG Mendig,de
