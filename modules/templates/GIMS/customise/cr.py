@@ -197,6 +197,34 @@ def cr_shelter_resource(r, tablename):
                   list_fields = list_fields,
                   )
 
+    if r.method == "report":
+        axes = ["location_id$L3",
+                "location_id$L2",
+                "location_id$L1",
+                "shelter_type_id",
+                (T("Organization Group"), "organisation_id$group_membership.group_id"),
+                "organisation_id$organisation_type__link.organisation_type_id",
+                ]
+
+        report_options = {
+            "rows": axes,
+            "cols": axes,
+            "fact": [(T("Available Capacity"), "sum(available_capacity)"),
+                     (T("Total Capacity"), "sum(capacity)"),
+                     (T("Current Population##shelter"), "sum(population)"),
+                     (T("Number of Facilities"), "count(id)"),
+                     ],
+            "defaults": {"rows": "location_id$L2",
+                         "cols": None,
+                         "fact": "sum(available_capacity)",
+                         "totals": True,
+                         },
+            }
+
+        s3db.configure("cr_shelter",
+                       report_options = report_options,
+                       )
+
 # -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
 

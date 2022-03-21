@@ -187,6 +187,10 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Create", m="create"),
                         M("Map", m="map"),
                         ),
+                    M("Statistics", link=False)(
+                        M("Capacity", f="shelter", m="report"),
+                        #M("Current Population##shelter", f="shelter_population", m="report"),
+                        ),
                     M("Administration", link=False, restrict=(ADMIN,))(
                         M("Shelter Types", f="shelter_type"),
                         M("Shelter Services", f="shelter_service"),

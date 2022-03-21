@@ -854,7 +854,7 @@
 'Capacity evaluated adding all defined housing unit capacities': 'Die Kapazität der Unterkunft wurde ermittelt aus der Summe der Kapazität der einzelnen Unterkunftseinheiten',
 'Capacity of the housing unit for people who need to stay both day and night': 'Kapazität der Unterkunftseinheit für Personen die tags und nachts dort untergebracht sind',
 'Capacity of the shelter as a number of people': 'Kapazität der Unterkunft als Anzahl von Personen',
-'Capacity': 'Maximale Kapazität',
+'Capacity': 'Kapazität',
 'Cape Verde': 'Kap Verde',
 'Capture Information on Disaster Victim groups (Tourists, Passengers, Families, etc.)': 'Erfassung von Informationen über Opfergruppen einer Katastrophe (Touristen, Fahrgäste, Familien, etc.)',
 'Capture Information on each disaster victim': 'Erfassung von Informationen über jedes Opfer einer Katastrophe.',

@@ -43,6 +43,15 @@ def shelter_service():
     return crud_controller()
 
 # -----------------------------------------------------------------------------
+def shelter_population():
+
+    def prep(r):
+        return r.http == "GET"
+    s3.prep = prep
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
 def population_type():
     """
         Shelter population subgroups: CRUD controller
