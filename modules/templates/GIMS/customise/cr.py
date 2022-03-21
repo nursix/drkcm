@@ -82,6 +82,7 @@ def cr_shelter_resource(r, tablename):
                                       show_postcode = True,
                                       show_map = True,
                                       )
+    current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 
     # Color-coded status representation
     field = table.status
