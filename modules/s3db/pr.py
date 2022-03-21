@@ -185,7 +185,7 @@ class PRPersonEntityModel(DataModel):
         if org_group_label:
             org_group_label = T(org_group_label)
         else:
-            org_group_label = T("Organization group")
+            org_group_label = T("Organization Group")
         pe_types = Storage(cr_shelter = T("Shelter"),
                            deploy_alert = T("Deployment Alert"),
                            dvi_body = T("Body"),
