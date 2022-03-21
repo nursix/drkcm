@@ -6942,7 +6942,7 @@ def org_rheader(r, tabs=None):
     elif tablename == "org_group":
         tabs = [(T("Basic Details"), None),
                 (T("Member Organizations"), "organisation"),
-                (T("Groups"), "pr_group"),
+                (T("Teams"), "pr_group"),
                 (T("Documents"), "document"),
                 ]
         if current.auth.s3_has_permission("create", "org_group_membership"):

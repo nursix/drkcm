@@ -41,19 +41,16 @@ class S3MainMenu(default.S3MainMenu):
         """ Modules Menu """
 
         auth = current.auth
-        logged_in = auth.s3_logged_in()
 
-        has_roles = auth.s3_has_roles
-        is_org_user = has_roles(("ORG_ADMIN", "ORG_GROUP_ADMIN"))
+        is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
-        return [MM("Organizations", c="org", f="organisation")(
+        return [MM("Organizations", c="org", f="organisation", check=is_org_group_admin),
+                MM("Organizations", c="org", f="organisation", check=not is_org_group_admin)(
                     MM("My Organizations", vars={"mine": "1"}),
                     MM("All Organizations"),
                     ),
-                MM("Shelters", c="cr", f="shelter", check=is_org_user),
-                MM("More", link=False, check=logged_in)(
-                    MM("Newsletters", c="cms", f="read_newsletter"),
-                    ),
+                MM("Shelters", c="cr", f="shelter", restrict=("SHELTER_MANAGER", "SHELTER_READER")),
+                MM("Newsletters", c="cms", f="read_newsletter"),
                 ]
 
     # -------------------------------------------------------------------------
@@ -205,22 +202,29 @@ class S3OptionsMenu(default.S3OptionsMenu):
         auth = current.auth
 
         sysroles = auth.get_system_roles()
+
         ADMIN = sysroles.ADMIN
+        ORG_ADMIN = sysroles.ORG_ADMIN
         ORG_GROUP_ADMIN = sysroles.ORG_GROUP_ADMIN
 
-        has_roles = auth.s3_has_roles
-        is_org_user = not has_roles((ADMIN, ORG_GROUP_ADMIN)) and \
-                      has_roles(("ORG_ADMIN",))
+        is_org_group_admin = auth.s3_has_role(ORG_GROUP_ADMIN)
 
         return M(c="org")(
-                    M("Organizations", c="org", f="organisation")(
-                        M("Create", m="create", restrict=(ADMIN, ORG_GROUP_ADMIN)),
-                        M("My Organizations", vars={"mine": "1"}, check=is_org_user),
-                        M("All Organizations", check=is_org_user),
+                    M("Organizations", f="organisation")(
+                        M("My Organizations", vars={"mine": 1},
+                          restrict=ORG_ADMIN,
+                          check=not is_org_group_admin,
+                          ),
+                        M("All Organizations",
+                          restrict=ORG_ADMIN,
+                          check=not is_org_group_admin,
+                          ),
+                        M("Create Organization", m="create", restrict=ORG_GROUP_ADMIN),
                         ),
                     M("Administration", restrict=ADMIN)(
+                        M("Organization Groups", f="group"),
                         M("Organization Types", f="organisation_type"),
-                        M("Sectors", f="sector"),
+                        #M("Sectors", f="sector"),
                         )
                     )
 

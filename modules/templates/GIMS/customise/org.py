@@ -28,6 +28,7 @@ def org_organisation_controller(**attr):
         s3db = current.s3db
 
         resource = r.resource
+        record = r.record
 
         is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
@@ -63,6 +64,16 @@ def org_organisation_controller(**attr):
 
                 # Custom form
                 if is_org_group_admin:
+                    user = auth.user
+                    if record and user:
+                        # Only OrgGroupAdmins managing this organisation can change
+                        # its org group membership (=organisation must be within realm):
+                        realm = user.realms.get(auth.get_system_roles().ORG_GROUP_ADMIN)
+                        groups_readonly = realm is not None and record.pe_id not in realm
+                    else:
+                        groups_readonly = False
+
+                    # Show organisation types
                     types = S3SQLInlineLink("organisation_type",
                                             field = "organisation_type_id",
                                             search = False,
@@ -70,11 +81,19 @@ def org_organisation_controller(**attr):
                                             multiple = settings.get_org_organisation_types_multiple(),
                                             widget = "multiselect",
                                             )
+                    # Show org groups and projects
+                    groups = S3SQLInlineLink("group",
+                                             field = "group_id",
+                                             label = T("Organization Group"),
+                                             multiple = False,
+                                             readonly = groups_readonly,
+                                             )
                 else:
-                    types = None
+                    types = groups = None
 
                 crud_fields = ["name",
                                "acronym",
+                               groups,
                                types,
                                S3SQLInlineComponent(
                                     "contact",
@@ -111,6 +130,11 @@ def org_organisation_controller(**attr):
                 if is_org_group_admin:
                     filter_widgets.extend([
                         OptionsFilter(
+                            "group__link.group_id",
+                            label = T("Group"),
+                            options = lambda: get_filter_options("org_group"),
+                            ),
+                        OptionsFilter(
                             "organisation_type__link.organisation_type_id",
                             label = T("Type"),
                             options = lambda: get_filter_options("org_organisation_type"),
@@ -123,7 +147,8 @@ def org_organisation_controller(**attr):
 
             # Custom list fields
             if is_org_group_admin:
-                list_fields = ["name",
+                list_fields = [(T("Organization Group"), "group__link.group_id"),
+                               "name",
                                "organisation_type__link.organisation_type_id",
                                (T("Description"), "comments"),
                                "office.location_id$L3",
