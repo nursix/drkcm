@@ -161,9 +161,7 @@ def site_check_in(site_id, person_id):
     registration.update_record(check_in_date = current.request.utcnow,
                                registration_status = 2,
                                )
-    onaccept = s3db.get_config("cr_shelter_registration", "onaccept")
-    if onaccept:
-        onaccept(registration)
+    s3db.onaccept("cr_shelter_registration", registration, method="update")
 
 # -------------------------------------------------------------------------
 def site_check_out(site_id, person_id):
@@ -197,9 +195,7 @@ def site_check_out(site_id, person_id):
     registration.update_record(check_out_date = current.request.utcnow,
                                registration_status = 3,
                                )
-    onaccept = s3db.get_config("cr_shelter_registration", "onaccept")
-    if onaccept:
-        onaccept(registration)
+    s3db.onaccept("cr_shelter_registration", registration, method="update")
 
 # -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
