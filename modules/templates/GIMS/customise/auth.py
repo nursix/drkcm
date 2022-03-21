@@ -58,6 +58,19 @@ def realm_entity(table, row):
         if person:
             realm_entity = person.realm_entity
 
+    elif tablename == "cr_shelter_population":
+
+        # Inherit from shelter
+        table = s3db.table(tablename)
+        stable = s3db.cr_shelter
+        query = (table._id == row.id) & \
+                (stable.id == table.shelter_id)
+        shelter = db(query).select(stable.realm_entity,
+                                   limitby = (0, 1),
+                                   ).first()
+        if shelter:
+            realm_entity = shelter.realm_entity
+
     return realm_entity
 
 # END =========================================================================

@@ -260,4 +260,67 @@ def cr_shelter_controller(**attr):
 
     return attr
 
+# -------------------------------------------------------------------------
+def cr_shelter_population_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    current.deployment_settings.base.bigtable = True
+
+    from core import LocationFilter, \
+                     OptionsFilter, \
+                     get_filter_options
+
+    filter_widgets = [OptionsFilter("shelter_id$organisation_id$group_membership.group_id",
+                                    label = T("Organization Group"),
+                                    options = get_filter_options("org_group"),
+                                    ),
+                      OptionsFilter("type_id",
+                                    options = get_filter_options("cr_population_type"),
+                                    hidden = True,
+                                    ),
+                      LocationFilter("shelter_id$location_id",
+                                     levels = ("L2", "L3"),
+                                     translate = False,
+                                     hidden = True,
+                                     ),
+                      ]
+    s3db.configure("cr_shelter_population",
+                   filter_widgets = filter_widgets,
+                   insertable = False,
+                   editable = False,
+                   deletable = False,
+                   )
+
+    if r.method == "report":
+
+        axes = ["type_id",
+                "shelter_id$location_id$L3",
+                "shelter_id$location_id$L2",
+                "shelter_id$location_id$L1",
+                "shelter_id$shelter_type_id",
+                (T("Organization Group"), "shelter_id$organisation_id$group_membership.group_id"),
+                "shelter_id$organisation_id$organisation_type__link.organisation_type_id",
+                "shelter_id$organisation_id",
+                ]
+
+        report_options = {
+            "rows": axes,
+            "cols": axes,
+            "fact": [(T("Current Population##shelter"), "sum(population)"),
+                     (T("Population (Adults)"), "sum(population_adults)"),
+                     (T("Population (Children)"), "sum(population_children)"),
+                     ],
+            "defaults": {"rows": "shelter_id$location_id$L2",
+                         "cols": "type_id",
+                         "fact": "sum(population)",
+                         "totals": True,
+                         },
+            }
+
+        s3db.configure("cr_shelter_population",
+                       report_options = report_options,
+                       )
+
 # END =========================================================================

@@ -12,7 +12,7 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import ConsentTracking, CustomController, s3_mark_required, s3_str
+from core import ConsentTracking, CustomController, ICON, s3_mark_required, s3_str
 
 from templates.RLPPTM.notifications import formatmap
 
@@ -101,12 +101,24 @@ class index(CustomController):
             auth.messages.submit_button = T("Login")
             login_form = auth.login(inline=True)
 
+        buttons = UL(LI(A(ICON("book"), T("Guides & Videos"),
+                          _href = URL(c="default", f="help"),
+                          _class="info button",
+                          ),
+                        ),
+                     _class="button-group stack-for-small", # add even-2 for 2 buttons
+                     )
+
         output = {"login_div": login_div,
                   "login_form": login_form,
                   "announcements": announcements,
                   "announcements_title": announcements_title,
-                  "intro": "",
-                  "buttons": "",
+                  "intro": current.s3db.cms_get_content("HomepageIntro",
+                                                        module = "default",
+                                                        resource = "index",
+                                                        cmsxml = True,
+                                                        ),
+                  "buttons": buttons,
                   }
 
         # Custom view and homepage styles

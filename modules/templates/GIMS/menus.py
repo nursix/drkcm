@@ -189,7 +189,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         ),
                     M("Statistics", link=False)(
                         M("Capacity", f="shelter", m="report"),
-                        #M("Current Population##shelter", f="shelter_population", m="report"),
+                        M("Current Population##shelter", f="shelter_population", m="report"),
                         ),
                     M("Administration", link=False, restrict=(ADMIN,))(
                         M("Shelter Types", f="shelter_type"),
