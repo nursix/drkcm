@@ -118,7 +118,9 @@ def cr_rheader(r, tabs=None):
 
             if not tabs:
                 tabs = [(T("Basic Details"), None),
-                        (T("Status Reports"), "status"),
+                        (T("Status History"), "status"),
+                        (T("Photos"), "image"),
+                        #(T("Documents"), "document"),
                         ]
 
             rheader_fields = [["organisation_id"],

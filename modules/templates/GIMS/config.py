@@ -208,6 +208,10 @@ def config(settings):
     #
     settings.doc.mailmerge_fields = {}
 
+    from .customise.doc import doc_image_resource
+
+    settings.customise_doc_image_resource = doc_image_resource
+
     # -------------------------------------------------------------------------
     # Human Resource Module Settings
     #

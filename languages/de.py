@@ -5655,6 +5655,7 @@
 'Statistics': 'Statistiken',
 'Status Code': 'Statuscode',
 'Status Comment': 'Kommentar zum Status',
+'Status History': 'Statushistorie',
 'Status Report': 'Statusbericht',
 'Status Reports': 'Statusberichte',
 'Status Update': 'Statusaktualisierung',
