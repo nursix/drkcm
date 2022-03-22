@@ -175,6 +175,7 @@ def cr_shelter_resource(r, tablename):
                    "name",
                    "shelter_type_id",
                    "status",
+                   (T("Capacity"), "capacity"),
                    (T("Available Capacity"), "available_capacity"),
                    (T("Place"), "place"),
                    (T("Contact"), "contact"),
