@@ -491,7 +491,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("delete", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor)
@@ -505,7 +505,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("delete", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     def testPolicy4(self):
@@ -546,7 +546,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("delete", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor)
@@ -560,7 +560,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("delete", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     def testPolicy5(self):
@@ -624,7 +624,7 @@ class HasPermissionTests(unittest.TestCase):
 
         url = accessible_url(c=c, f=f)
         assertNotEqual(url, False)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor)
@@ -634,7 +634,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("delete", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     def testPolicy6(self):
@@ -672,7 +672,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("update", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted) # Page ACL blocks Table ACL
-        auth.s3_withdraw_role(auth.user.id, self.reader, for_pe=[])
+        auth.s3_remove_role(auth.user.id, self.reader, for_pe=[])
 
         # Test with TESTEDITOR with universal realm
         auth.s3_assign_role(auth.user.id, self.editor, for_pe=0)
@@ -688,7 +688,7 @@ class HasPermissionTests(unittest.TestCase):
         permitted = has_permission("delete", c=c, f=f, table=tablename,
                                    record_id=self.record2)
         assertFalse(permitted)
-        auth.s3_withdraw_role(auth.user.id, self.editor, for_pe=[])
+        auth.s3_remove_role(auth.user.id, self.editor, for_pe=[])
 
         # Test with TESTEDITOR with limited realm
         auth.s3_assign_role(auth.user.id, self.editor, for_pe=self.org[0])
@@ -715,7 +715,7 @@ class HasPermissionTests(unittest.TestCase):
         assertTrue(permitted)
 
         # Withdraw role for one realm
-        auth.s3_withdraw_role(auth.user.id, self.editor, for_pe=self.org[0])
+        auth.s3_remove_role(auth.user.id, self.editor, for_pe=self.org[0])
         permitted = has_permission("update", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
@@ -724,7 +724,7 @@ class HasPermissionTests(unittest.TestCase):
         assertTrue(permitted)
 
         # Withdraw role for all realms
-        auth.s3_withdraw_role(auth.user.id, self.editor, for_pe=[])
+        auth.s3_remove_role(auth.user.id, self.editor, for_pe=[])
         permitted = has_permission("update", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
@@ -795,7 +795,7 @@ class HasPermissionTests(unittest.TestCase):
         assertFalse(permitted) # Should no longer have access
 
         # Switch realm
-        auth.s3_withdraw_role(auth.user.id, self.editor, for_pe=self.org[0])
+        auth.s3_remove_role(auth.user.id, self.editor, for_pe=self.org[0])
         auth.s3_assign_role(auth.user.id, self.editor, for_pe=self.org[1])
 
         # Reload realms
@@ -820,7 +820,7 @@ class HasPermissionTests(unittest.TestCase):
         assertTrue(permitted)
 
         # Withdraw TESTEDITOR role
-        auth.s3_withdraw_role(auth.user.id, self.editor, for_pe=[])
+        auth.s3_remove_role(auth.user.id, self.editor, for_pe=[])
         permitted = has_permission("update", c=c, f=f, table=tablename,
                                    record_id=self.record1)
         assertFalse(permitted)
@@ -1031,7 +1031,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, NONE)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor)
@@ -1041,7 +1041,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, ALL)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     def testPolicy4(self):
@@ -1085,7 +1085,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, OWNED)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, OWNED)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor)
@@ -1095,7 +1095,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, ALL)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     def testPolicy5(self):
@@ -1139,7 +1139,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, OWNED)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor)
@@ -1149,7 +1149,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, ALL)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     def testPolicy6(self):
@@ -1204,7 +1204,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, expected)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.reader)
+        auth.s3_remove_role(auth.user.id, self.reader)
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor, for_pe=self.org[0])
@@ -1221,7 +1221,7 @@ class AccessibleQueryTests(unittest.TestCase):
         assertEqual(query, expected)
         query = accessible_query("delete", table, c=c, f=f)
         assertEqual(query, NONE)
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
         # Logout
         auth.s3_impersonate(None)
@@ -1347,7 +1347,7 @@ class AccessibleQueryTests(unittest.TestCase):
 
         # Remove affiliation and role
         s3db.pr_remove_affiliation(self.org[0], self.org[1], role="TestOrgUnit")
-        auth.s3_withdraw_role(auth.user.id, self.reader, for_pe=self.org[0])
+        auth.s3_remove_role(auth.user.id, self.reader, for_pe=self.org[0])
 
         # Test with TESTEDITOR
         auth.s3_assign_role(auth.user.id, self.editor, for_pe=self.org[0])
@@ -1394,7 +1394,7 @@ class AccessibleQueryTests(unittest.TestCase):
 
         # Remove affiliation and role
         s3db.pr_remove_affiliation(self.org[0], self.org[1], role="TestOrgUnit")
-        auth.s3_withdraw_role(auth.user.id, self.editor)
+        auth.s3_remove_role(auth.user.id, self.editor)
 
     # -------------------------------------------------------------------------
     @classmethod

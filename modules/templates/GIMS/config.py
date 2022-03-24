@@ -11,7 +11,12 @@ from gluon.storage import Storage
 
 from templates.RLPPTM.rlpgeonames import rlp_GeoNames
 
+# Default/lead organisation
 MFFKI = "Ministerium für Familie, Frauen, Kultur und Integration"
+
+# Org Groups
+DISTRICTS = "Kreisverwaltung"
+COMMUNES = "Kommunale Verwaltung"
 
 # =============================================================================
 def config(settings):
@@ -163,6 +168,7 @@ def config(settings):
     settings.auth.realm_entity_types = ("org_group", "org_organisation")
     settings.auth.privileged_roles = {"MAP_ADMIN": "ADMIN",
                                       "SHELTER_MANAGER": "SHELTER_MANAGER",
+                                      "SHELTER_READER": "SHELTER_READER",
                                       "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
                                       }
 

@@ -8,7 +8,7 @@ from gluon import current
 
 from s3dal import original_tablename
 
-# -------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 def realm_entity(table, row):
     """
         Assign a Realm Entity to records
@@ -74,4 +74,3 @@ def realm_entity(table, row):
     return realm_entity
 
 # END =========================================================================
-
