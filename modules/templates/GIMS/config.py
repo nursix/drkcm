@@ -254,8 +254,10 @@ def config(settings):
     settings.org.offices_tab = False
     settings.org.country = False
 
-    from .customise.org import org_organisation_controller
+    from .customise.org import org_organisation_resource, \
+                               org_organisation_controller
 
+    settings.customise_org_organisation_resource = org_organisation_resource
     settings.customise_org_organisation_controller = org_organisation_controller
 
     # -------------------------------------------------------------------------

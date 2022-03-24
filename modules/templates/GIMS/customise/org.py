@@ -9,6 +9,30 @@ from gluon import current
 from ..helpers import restrict_data_formats
 
 # -------------------------------------------------------------------------
+def add_org_tags():
+    """
+        Adds organisation tags as filtered components,
+        for embedding in form, filtering and as report axis
+    """
+
+    s3db = current.s3db
+
+    s3db.add_components("org_organisation",
+                        org_organisation_tag = ({"name": "district_id",
+                                                 "joinby": "organisation_id",
+                                                 "filterby": {"tag": "DistrictID"},
+                                                 "multiple": False,
+                                                 },
+                                                ),
+                        )
+
+# -------------------------------------------------------------------------
+def org_organisation_resource(r, tablename):
+
+    # Add organisation tags
+    add_org_tags()
+
+# -------------------------------------------------------------------------
 def org_organisation_controller(**attr):
 
     T = current.T
@@ -53,104 +77,120 @@ def org_organisation_controller(**attr):
             restrict_data_formats(r)
 
         if not r.component:
-            if r.interactive:
+            from core import S3SQLCustomForm, \
+                             S3SQLInlineComponent, \
+                             S3SQLInlineLink, \
+                             OptionsFilter, \
+                             TextFilter, \
+                             get_filter_options
 
-                from core import S3SQLCustomForm, \
-                                 S3SQLInlineComponent, \
-                                 S3SQLInlineLink, \
-                                 OptionsFilter, \
-                                 TextFilter, \
-                                 get_filter_options
-
-                # Custom form
-                if is_org_group_admin:
-                    user = auth.user
-                    if record and user:
-                        # Only OrgGroupAdmins managing this organisation can change
-                        # its org group membership (=organisation must be within realm):
-                        realm = user.realms.get(auth.get_system_roles().ORG_GROUP_ADMIN)
-                        groups_readonly = realm is not None and record.pe_id not in realm
-                    else:
-                        groups_readonly = False
-
-                    # Show organisation types
-                    types = S3SQLInlineLink("organisation_type",
-                                            field = "organisation_type_id",
-                                            search = False,
-                                            label = T("Type"),
-                                            multiple = settings.get_org_organisation_types_multiple(),
-                                            widget = "multiselect",
-                                            )
-                    # Show org groups and projects
-                    groups = S3SQLInlineLink("group",
-                                             field = "group_id",
-                                             label = T("Organization Group"),
-                                             multiple = False,
-                                             readonly = groups_readonly,
-                                             )
+            # Custom form
+            if is_org_group_admin:
+                user = auth.user
+                if record and user:
+                    # Only OrgGroupAdmins managing this organisation can change
+                    # its org group membership (=organisation must be within realm):
+                    realm = user.realms.get(auth.get_system_roles().ORG_GROUP_ADMIN)
+                    groups_readonly = realm is not None and record.pe_id not in realm
                 else:
-                    types = groups = None
+                    groups_readonly = False
 
-                crud_fields = ["name",
-                               "acronym",
-                               groups,
-                               types,
-                               S3SQLInlineComponent(
-                                    "contact",
-                                    fields = [("", "value")],
-                                    filterby = {"field": "contact_method",
-                                                "options": "EMAIL",
-                                                },
-                                    label = T("Email"),
-                                    multiple = False,
-                                    name = "email",
+                # Show organisation types
+                types = S3SQLInlineLink("organisation_type",
+                                        field = "organisation_type_id",
+                                        search = False,
+                                        label = T("Type"),
+                                        multiple = settings.get_org_organisation_types_multiple(),
+                                        widget = "multiselect",
+                                        )
+                # Show org groups and projects
+                groups = S3SQLInlineLink("group",
+                                         field = "group_id",
+                                         label = T("Organization Group"),
+                                         multiple = False,
+                                         readonly = groups_readonly,
+                                         )
+
+            else:
+                types = groups = None
+
+            if auth.s3_has_role("ADMIN"):
+                # Show district ID
+                component = resource.components["district_id"]
+                ctable = component.table
+                field = ctable.value
+                field.label = T("District ID")
+                field.writable = auth.s3_has_role("ADMIN")
+                district_id = "district_id.value"
+            else:
+                district_id = None
+
+            crud_fields = [# ---- Organisation ----
+                           "name",
+                           "acronym",
+                           types,
+                           groups,
+                           district_id,
+                           "logo",
+                           # ---- Contact Information ----
+                           S3SQLInlineComponent(
+                                "contact",
+                                fields = [("", "value")],
+                                filterby = {"field": "contact_method",
+                                            "options": "EMAIL",
+                                            },
+                                label = T("Email"),
+                                multiple = False,
+                                name = "email",
+                                ),
+                           "phone",
+                           "website",
+                           # ---- Comments ----
+                           "comments",
+                           ]
+            subheadings = {"name": T("Organization"),
+                           "emailcontact": T("Contact Information"),
+                           "comments": T("Comments"),
+                           }
+            # Filters
+            text_fields = ["name",
+                           "acronym",
+                           "website",
+                           "phone",
+                           ]
+            if is_org_group_admin:
+                text_fields.extend(["email.value",
+                                    "district_id.value",
+                                    ])
+            if not mine:
+                text_fields.extend(["office.location_id$L3",
+                                    "office.location_id$L1",
+                                    ])
+            filter_widgets = [TextFilter(
+                                    text_fields,
+                                    label = T("Search"),
                                     ),
-                               "phone",
-                               "website",
-                               "logo",
-                               "comments",
-                               ]
-
-                # Filters
-                text_fields = ["name",
-                               "acronym",
-                               "website",
-                               "phone",
-                               ]
-                if is_org_group_admin:
-                    text_fields.append("email.value")
-                if not mine:
-                    text_fields.extend(["office.location_id$L3",
-                                        "office.location_id$L1",
-                                        ])
-                filter_widgets = [TextFilter(text_fields,
-                                             label = T("Search"),
-                                             ),
-                                  ]
-                if is_org_group_admin:
-                    filter_widgets.extend([
-                        OptionsFilter(
-                            "group__link.group_id",
-                            label = T("Group"),
-                            options = lambda: get_filter_options("org_group"),
-                            ),
-                        OptionsFilter(
-                            "organisation_type__link.organisation_type_id",
-                            label = T("Type"),
-                            options = lambda: get_filter_options("org_organisation_type"),
-                            ),
-                        ])
-
-                resource.configure(crud_form = S3SQLCustomForm(*crud_fields),
-                                   filter_widgets = filter_widgets,
-                                   )
+                              OptionsFilter(
+                                    "organisation_type__link.organisation_type_id",
+                                    label = T("Type"),
+                                    options = lambda: get_filter_options("org_organisation_type"),
+                                    ),
+                              ]
+            if is_org_group_admin:
+                filter_widgets.extend([
+                    OptionsFilter(
+                        "group__link.group_id",
+                        label = T("Group"),
+                        options = lambda: get_filter_options("org_group"),
+                        ),
+                    ])
 
             # Custom list fields
             if is_org_group_admin:
-                list_fields = [(T("Organization Group"), "group__link.group_id"),
-                               "name",
+                list_fields = ["name",
                                "organisation_type__link.organisation_type_id",
-                               (T("Description"), "comments"),
+                               (T("Organization Group"), "group__link.group_id"),
+                               district_id,
                                "office.location_id$L3",
                                "office.location_id$L1",
                                "website",
@@ -160,26 +200,23 @@ def org_organisation_controller(**attr):
             elif not mine:
                 list_fields = ["name",
                                "organisation_type__link.organisation_type_id",
-                               (T("Description"), "comments"),
-                               #"office.location_id$L3",
-                               #"office.location_id$L1",
+                               "office.location_id$L3",
+                               "office.location_id$L1",
                                "website",
                                "phone",
                                ]
-                if auth.user:
-                    list_fields[3:3] = ("office.location_id$L3",
-                                        "office.location_id$L1",
-                                        )
-
             else:
                 list_fields = ["name",
-                               (T("Description"), "comments"),
                                "website",
                                "phone",
                                (T("Email"), "email.value"),
                                ]
 
-            r.resource.configure(list_fields = list_fields)
+            resource.configure(crud_form = S3SQLCustomForm(*crud_fields),
+                               filter_widgets = filter_widgets,
+                               list_fields = list_fields,
+                               subheadings = subheadings,
+                               )
 
         elif r.component_name == "office":
 
