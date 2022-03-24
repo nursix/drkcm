@@ -1,4 +1,4 @@
 Code,Name,Comments
-ASYL,Asylantragsteller,
-AE,Bestehende Aufenthaltserlaubnis,
-OTHER,Sonstige,
+UA_VISUM,Geflüchtete aus der Ukraine (ohne Aufenthaltstitel),
+UA_ASYL,Geflüchtete aus der Ukraine (mit Aufenthaltstitel),
+OTHER,Andere,
