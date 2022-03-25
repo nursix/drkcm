@@ -1682,7 +1682,7 @@ class S3Permission:
             rows = current.db(query).select(table.tablename,
                                             groupby = table.tablename,
                                             )
-            s3.restricted_tables = [row.tablename for row in rows]
+            s3.restricted_tables = {row.tablename for row in rows}
 
         return str(t) in s3.restricted_tables
 
@@ -1786,12 +1786,15 @@ class S3Permission:
                                     realms = realms,
                                     c = c,
                                     f = f,
-                                    t = table)
-        acls = [entity for entity in acls if acls[entity][0] & racl == racl]
+                                    t = table,
+                                    )
 
-        # If we have a UACL and it is not limited to any realm, then no
-        if "ANY" in acls or acls and "realm_entity" not in table.fields:
-            return False
+        for entity, rule in acls.items():
+            if rule[0] & racl != racl:
+                continue
+            # If we have a UACL and it is not limited to any realm, then no
+            if entity == "ANY" or "realm_entity" not in table.fields:
+                return False
 
         # In all other cases: yes
         return True
