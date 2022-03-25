@@ -233,7 +233,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Shelters
     # -------------------------------------------------------------------------
-    settings.cr.people_registration = False
+    settings.cr.shelter_registration = False
 
     # -------------------------------------------------------------------------
     def customise_cr_shelter_resource(r, tablename):

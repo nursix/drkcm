@@ -377,7 +377,7 @@ class RoleAssignmentTests(unittest.TestCase):
             assertFalse(role_id in roles)
             roles = auth.s3_get_roles(user_id, for_pe=1)
             assertFalse(role_id in roles)
-            auth.s3_withdraw_role(user_id, role_id, for_pe=None)
+            auth.s3_remove_role(user_id, role_id, for_pe=None)
 
             auth.s3_assign_role(user_id, role_id, for_pe=0)
             roles = auth.s3_get_roles(user_id)
@@ -388,7 +388,7 @@ class RoleAssignmentTests(unittest.TestCase):
             assertTrue(role_id in roles)
             roles = auth.s3_get_roles(user_id, for_pe=1)
             assertFalse(role_id in roles)
-            auth.s3_withdraw_role(user_id, role_id, for_pe=0)
+            auth.s3_remove_role(user_id, role_id, for_pe=0)
 
             auth.s3_assign_role(user_id, role_id, for_pe=1)
             roles = auth.s3_get_roles(user_id)
@@ -399,7 +399,7 @@ class RoleAssignmentTests(unittest.TestCase):
             assertFalse(role_id in roles)
             roles = auth.s3_get_roles(user_id, for_pe=1)
             assertTrue(role_id in roles)
-            auth.s3_withdraw_role(user_id, role_id, for_pe=1)
+            auth.s3_remove_role(user_id, role_id, for_pe=1)
 
         finally:
             auth.s3_delete_role(UUID)
@@ -813,13 +813,13 @@ class RecordOwnershipTests(unittest.TestCase):
         # ...unless they have the role for this org
         auth.s3_assign_role(user_id, role, for_pe=org)
         assertTrue(is_owner(table, record_id))
-        auth.s3_withdraw_role(user_id, role, for_pe=[])
+        auth.s3_remove_role(user_id, role, for_pe=[])
         assertFalse(is_owner(table, record_id))
 
         # ....or have the role without limitation (any org)
         auth.s3_assign_role(user_id, role, for_pe=0)
         assertTrue(is_owner(table, record_id))
-        auth.s3_withdraw_role(user_id, role, for_pe=[])
+        auth.s3_remove_role(user_id, role, for_pe=[])
         assertFalse(is_owner(table, record_id))
 
         # Unauthenticated does not own this record

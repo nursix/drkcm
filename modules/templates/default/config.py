@@ -641,7 +641,7 @@ def config(settings):
     # Uncomment to use a dynamic population estimation by calculations based on registrations
     #settings.cr.shelter_population_dynamic = True
     # Uncomment to disable people registration in shelters
-    #settings.cr.people_registration = False
+    #settings.cr.shelter_registration = False
     # Uncomment to use Tags for Shelters
     #settings.cr.tags = True
     # Uncomment to generate tasks from shelter inspections (requires project module)

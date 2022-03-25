@@ -1637,6 +1637,7 @@ def org_facility_resource(r, tablename):
 
     # Custom list fields
     list_fields = ["name",
+                   #"code",
                    #"organisation_id",
                    "organisation_id$organisation_type__link.organisation_type_id",
                    (T("Telephone"), "phone1"),
@@ -1653,6 +1654,8 @@ def org_facility_resource(r, tablename):
 
     if show_pnd or show_rvw:
         list_fields.insert(1, "organisation_id")
+    if is_org_group_admin:
+        list_fields.insert(1, "code")
     if show_all or in_org_controller:
         list_fields.append("obsolete")
 

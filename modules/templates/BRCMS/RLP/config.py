@@ -147,7 +147,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # CR Settings
     #
-    settings.cr.people_registration = False
+    settings.cr.shelter_registration = False
 
     # -------------------------------------------------------------------------
     # HRM Settings
@@ -1427,20 +1427,6 @@ def config(settings):
     settings.customise_br_direct_offer_resource = customise_br_direct_offer_resource
 
     # -------------------------------------------------------------------------
-    def shelter_available_capacity(row):
-
-        if hasattr(row, "cr_shelter"):
-            row = row.cr_shelter
-
-        try:
-            total_capacity = row.capacity_day
-            total_population = row.population
-        except AttributeError:
-            return "?"
-
-        return max(0, total_capacity - total_population)
-
-    # -------------------------------------------------------------------------
     def customise_cr_shelter_resource(r, tablename):
 
         s3db = current.s3db
@@ -1518,10 +1504,6 @@ def config(settings):
                                                2: "green",
                                                }).represent
 
-        # Custom virtual field to show available capacity
-        table.available_capacity = s3_fieldmethod("available_capacity",
-                                                  shelter_available_capacity,
-                                                  )
         ltable = s3db.cr_shelter_service_shelter
         field = ltable.service_id
         field.label = T("Services")
@@ -1545,7 +1527,7 @@ def config(settings):
                        "phone",
                        "email",
                        # TODO show these only for manager?
-                       "capacity_day",
+                       "capacity",
                        "population",
                        "status",
                        ]
@@ -1597,8 +1579,6 @@ def config(settings):
                                        "location_id$L3",
                                        "location_id$L2",
                                        "location_id$L1",
-                                       "population",
-                                       "capacity_day",
                                        ],
                        filter_widgets = filter_widgets,
                        list_fields = list_fields,

@@ -568,21 +568,14 @@ class S3OptionsMenu(object):
 
         ADMIN = current.session.s3.system_roles.ADMIN
 
-        if current.deployment_settings.get_ui_label_camp():
-            shelter = "Camps"
-            types = "Camp Settings"
-        else:
-            shelter = "Shelters"
-            types = "Shelter Settings"
-
         return M(c="cr")(
-                    M(shelter, f="shelter")(
+                    M("Shelter", f="shelter")(
                         M("Create", m="create"),
                         M("Map", m="map"),
                         M("Report", m="report"),
                         M("Import", m="import", p="create"),
                     ),
-                    M(types, restrict=[ADMIN])(
+                    M("Shelter Settings", restrict=[ADMIN])(
                         M("Types", f="shelter_type"),
                         M("Services", f="shelter_service"),
                     )

@@ -187,7 +187,7 @@ def cr_shelter_controller(**attr):
 
                 custom_filters = []
                 for fw in filter_widgets:
-                    if fw.field == "capacity_day":
+                    if fw.field == "capacity":
                         continue
                     elif fw.field == "location_id":
                         fw.opts["levels"] = GIS_LEVELS

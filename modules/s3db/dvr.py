@@ -1218,7 +1218,7 @@ class DVRNeedsModel(DataModel):
 # =============================================================================
 class DVRNotesModel(DataModel):
     """
-        Model for Notes
+        Simple notes for case files
     """
 
     names = ("dvr_note_type",
@@ -1247,6 +1247,10 @@ class DVRNotesModel(DataModel):
                                                      "dvr_note_type.name",
                                                      ),
                                        ],
+                           ),
+                     Field("is_task", "boolean",
+                           label = T("Is Task"),
+                           default = False,
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -1285,6 +1289,13 @@ class DVRNotesModel(DataModel):
         # ---------------------------------------------------------------------
         # Notes
         #
+        note_status = (("CUR", T("Current")),
+                       ("OBS", T("Obsolete")),
+                       )
+        status_represent = S3PriorityRepresent(note_status,
+                                               {"CUR": "lightblue",
+                                                "OBS": "grey",
+                                                }).represent
         tablename = "dvr_note"
         define_table(tablename,
                      # Uncomment if needed for the Case perspective
@@ -1294,13 +1305,22 @@ class DVRNotesModel(DataModel):
                      self.pr_person_id(empty = False,
                                        ondelete = "CASCADE",
                                        ),
-                     note_type_id(empty = False),
+                     note_type_id(empty=False),
                      s3_date(default = "now",
                              ),
                      s3_comments("note",
                                  label = T("Note"),
+                                 represent = s3_text_represent,
                                  comment = None,
                                  ),
+                     Field("status",
+                           label = T("Status"),
+                           default = "CUR",
+                           requires = IS_IN_SET(note_status, sort=False, zero=None),
+                           represent = status_represent,
+                           readable = False,
+                           writable = False,
+                           ),
                      *s3_meta_fields())
 
         # CRUD Strings

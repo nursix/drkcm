@@ -930,7 +930,7 @@ class S3RoleManager(CRUDMethod):
                         add_role(user_id, group_id, for_pe=pe_id)
                 if removed:
                     remove_role = current.deployment_settings.get_auth_remove_role() or \
-                                  auth.s3_withdraw_role
+                                  auth.s3_remove_role
                     for group_id, pe_id in removed:
                         remove_role(user_id, group_id, for_pe=pe_id)
 
@@ -1079,7 +1079,7 @@ class S3RoleManager(CRUDMethod):
                     for user_id, pe_id in added:
                         add_role(user_id, group_id, for_pe=pe_id)
                 if removed:
-                    remove_role = auth.s3_withdraw_role
+                    remove_role = auth.s3_remove_role
                     for user_id, pe_id in removed:
                         remove_role(user_id, group_id, for_pe=pe_id)
 
