@@ -4,4 +4,3 @@ ADD,Admin,add@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER,SHELTER_READER/0",Aufs
 Birkenfeld,Admin,birkenfeld_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",VG Birkenfeld,de
 Mendig,Admin,mendig_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER",VG Mendig,de
 Ahrweiler,Admin,ahrweiler_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER,SHELTER_READER/org_group.name=Kommunale Verwaltung (1310)",KV Ahrweiler,de
-MK,Admin,mk_admin@example.com,eden,"ORG_ADMIN,SHELTER_MANAGER,SHELTER_READER/org_group.name=Kommunale Verwaltung (1370)",KV Mayen-Koblenz,de

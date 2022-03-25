@@ -17,6 +17,7 @@ MFFKI = "Ministerium für Familie, Frauen, Kultur und Integration"
 # Org Groups
 DISTRICTS = "Kreisverwaltung"
 COMMUNES = "Kommunale Verwaltung"
+AFAS = "AfA"
 
 # =============================================================================
 def config(settings):

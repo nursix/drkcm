@@ -378,11 +378,57 @@ class register_invited(CustomController):
                 user_id: the user ID
         """
 
+        db = current.db
+        s3db = current.s3db
         auth = current.auth
+
         assign_role = auth.s3_assign_role
 
-        assign_role(user_id, "ORG_ADMIN")
-        assign_role(user_id, "SHELTER_MANAGER")
+        utable = auth.settings.table_user
+        user = db(utable.id == user_id).select(utable.organisation_id,
+                                               limitby = (0, 1),
+                                               ).first()
+        if not user:
+            return
+
+        # Look up the organisation
+        otable = s3db.org_organisation
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+
+        left = [gtable.on((mtable.organisation_id == otable.id) & \
+                            (mtable.deleted == False) & \
+                            (gtable.id == mtable.group_id)),
+                ]
+        query = (otable.id == user.organisation_id) & \
+                (otable.deleted == False)
+        row = db(query).select(otable.id,
+                                otable.pe_id,
+                                gtable.name,
+                                left = left,
+                                limitby = (0, 1),
+                                ).first()
+        if not row:
+            return
+
+        pe_id = row.org_organisation.pe_id
+        group_name = row.org_group.name
+
+        from .config import DISTRICTS, AFAS
+        from .customise.auth import assign_district_group_reader
+        if group_name == DISTRICTS:
+            # District user
+            # => assign SHELTER_READER for district and corresponding communes
+            assign_role(user_id, "SHELTER_READER", for_pe=pe_id)
+            assign_district_group_reader(user_id)
+
+        elif group_name == AFAS:
+            # AfA-user
+            # => assign global SHELTER_READER
+            assign_role(user_id, "SHELTER_READER", for_pe=0)
+
+        assign_role(user_id, "ORG_ADMIN", for_pe=pe_id)
+        assign_role(user_id, "SHELTER_MANAGER", for_pe=pe_id)
 
     # -------------------------------------------------------------------------
     @classmethod
