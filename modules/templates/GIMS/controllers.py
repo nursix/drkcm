@@ -415,12 +415,12 @@ class register_invited(CustomController):
         group_name = row.org_group.name
 
         from .config import DISTRICTS, AFAS
-        from .customise.auth import assign_district_group_reader
+        from .customise.auth import update_commune_group_shelter_reader
         if group_name == DISTRICTS:
             # District user
             # => assign SHELTER_READER for district and corresponding communes
             assign_role(user_id, "SHELTER_READER", for_pe=pe_id)
-            assign_district_group_reader(user_id)
+            update_commune_group_shelter_reader(user_id)
 
         elif group_name == AFAS:
             # AfA-user

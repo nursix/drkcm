@@ -74,10 +74,11 @@ def realm_entity(table, row):
     return realm_entity
 
 # =============================================================================
-def assign_district_group_reader(user_id):
+def update_commune_group_shelter_reader(user_id):
     """
-        Automatically assign the SHELTER_READER role for district groups
-        depending on which districts the user has the role for
+        Automatically assign/remove the SHELTER_READER role for
+        commune groups depending on which districts the user has
+        the role for
 
         Args:
             user_id: the user ID
@@ -185,5 +186,22 @@ def assign_district_group_reader(user_id):
     if assign:
         for pe_id in assign:
             auth.s3_assign_role(user_id, role_id, for_pe=pe_id, system=True)
+
+# -----------------------------------------------------------------------------
+def assign_role(user_id, role_id, for_pe=None):
+    """
+        Extend standard role assignment with auto-assignment of SHELTER_READER
+    """
+
+    current.auth.s3_assign_role(user_id, role_id, for_pe=for_pe)
+    update_commune_group_shelter_reader(user_id)
+
+def remove_role(user_id, role_id, for_pe=None):
+    """
+        Extend standard role assignment with auto-assignment of SHELTER_READER
+    """
+
+    current.auth.s3_remove_role(user_id, role_id, for_pe=for_pe)
+    update_commune_group_shelter_reader(user_id)
 
 # END =========================================================================

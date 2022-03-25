@@ -173,8 +173,14 @@ def config(settings):
                                       "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
                                       }
 
-    from .customise.auth import realm_entity
+    from .customise.auth import realm_entity, \
+                                assign_role, \
+                                remove_role
+
     settings.auth.realm_entity = realm_entity
+
+    settings.auth.add_role = assign_role
+    settings.auth.remove_role = remove_role
 
     # -------------------------------------------------------------------------
     # CMS Module Settings
