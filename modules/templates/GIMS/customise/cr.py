@@ -5,7 +5,7 @@
 """
 
 from collections import OrderedDict
-from gluon import current, IS_EMPTY_OR, DIV
+from gluon import current, IS_EMPTY_OR
 
 from ..helpers import restrict_data_formats
 
@@ -50,14 +50,9 @@ def cr_shelter_resource(r, tablename):
     field = table.organisation_id
     field.comment = None
 
-    # Custom label + tooltip for population
-    field = table.population
-    population_label = T("Current Population##shelter")
-    field.label = population_label
-    field.comment = DIV(_class="tooltip",
-                        _title="%s|%s" % (population_label,
-                                          T("Current shelter population as a number of people"),
-                                          ))
+    # Custom label for population_children
+    field = table.population_children
+    field.label = T("Current Population (Minors)")
 
     # Enable contact name and website fields
     field = table.contact_name
@@ -126,7 +121,7 @@ def cr_shelter_resource(r, tablename):
                                         label = T("Current Population##shelter"),
                                         fields = ["type_id",
                                                   "population_adults",
-                                                  "population_children",
+                                                  (T("Population (Minors)"), "population_children"),
                                                   ],
                                         ),
                    "population",
@@ -263,12 +258,28 @@ def cr_shelter_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def cr_shelter_status_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    current.deployment_settings.base.bigtable = True
+
+    table = s3db.cr_shelter_status
+    field = table.population_children
+    field.label = T("Population (Minors)")
+
+# -------------------------------------------------------------------------
 def cr_shelter_population_resource(r, tablename):
 
     T = current.T
     s3db = current.s3db
 
     current.deployment_settings.base.bigtable = True
+
+    table = s3db.cr_shelter_population
+    field = table.population_children
+    field.label = T("Population (Minors)")
 
     from core import LocationFilter, \
                      OptionsFilter, \

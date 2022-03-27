@@ -133,15 +133,20 @@ class CRShelterModel(DataModel):
         manage_units = settings.get_cr_shelter_units()
         manage_registrations = settings.get_cr_shelter_registration()
 
+        population_by_type = settings.get_cr_shelter_population_by_type()
+        population_by_age_group = settings.get_cr_shelter_population_by_age_group()
+
+        if population_by_age_group:
+            population_total = T("Current Population (Total)")
+        else:
+            population_total = T("Current Population##shelter")
+
         population = S3ReusableField("population", "integer",
                                      default = 0,
-                                     label = T("Current Population"),
+                                     label = population_total,
                                      represent = IS_INT_AMOUNT.represent,
                                      requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                                      )
-
-        population_by_type = settings.get_cr_shelter_population_by_type()
-        population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
         population_writable = not manage_units and \
                               not manage_registrations and \
@@ -200,6 +205,11 @@ class CRShelterModel(DataModel):
                            ),
                      population(writable = population_writable and \
                                            not population_by_age_group,
+                                comment = DIV(_class="tooltip",
+                                              _title="%s|%s" % (population_total,
+                                                                T("Current shelter population as number of people"),
+                                                                ),
+                                              ),
                                 ),
                      population("population_adults",
                                 label = T("Current Population (Adults)"),
