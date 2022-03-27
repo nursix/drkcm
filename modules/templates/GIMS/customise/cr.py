@@ -323,7 +323,7 @@ def cr_shelter_population_resource(r, tablename):
             "cols": axes,
             "fact": [(T("Current Population##shelter"), "sum(population)"),
                      (T("Population (Adults)"), "sum(population_adults)"),
-                     (T("Population (Children)"), "sum(population_children)"),
+                     (T("Population (Minors)"), "sum(population_children)"),
                      ],
             "defaults": {"rows": "shelter_id$location_id$L2",
                          "cols": "type_id",
