@@ -526,6 +526,7 @@ body.rtl {
             padding: 0.1rem 0.3rem 0 0;
             &.map-popup-label {
                 font-weight: bold;
+                white-space: pre;
             }
         }
     }

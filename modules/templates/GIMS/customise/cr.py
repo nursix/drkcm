@@ -5,9 +5,100 @@
 """
 
 from collections import OrderedDict
-from gluon import current, IS_EMPTY_OR
+
+from gluon import current, URL, \
+                  A, DIV, H4, IS_EMPTY_OR, TABLE, TD, TR
 
 from ..helpers import restrict_data_formats
+
+# =============================================================================
+def shelter_map_popup(record):
+    """
+        Custom map popup for shelters
+
+        Args:
+            record: the shelter record (Row)
+
+        Returns:
+            the shelter popup contents as DIV
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    T = current.T
+
+    table = s3db.cr_shelter
+
+    # Custom Map Popup
+    title = A(H4(record.name, _class="map-popup-title"),
+              _href = URL(c="cr", f="shelter", args=[record.id]),
+              _title = T("Open"),
+              )
+
+    details = TABLE(_class="map-popup-details")
+    append = details.append
+
+    def formrow(label, value, represent=None):
+        return TR(TD("%s:" % label, _class="map-popup-label"),
+                  TD(represent(value) if represent else value),
+                  )
+
+    # Organisation
+    organisation_id = record.organisation_id
+    if organisation_id:
+        append(formrow(table.organisation_id.label,
+                       A(table.organisation_id.represent(organisation_id),
+                         _href = URL("org", "organisation", args=[organisation_id]),
+                         ),
+                       ))
+
+    # Address
+    gtable = s3db.gis_location
+    query = (gtable.id == record.location_id)
+    location = db(query).select(gtable.addr_street,
+                                gtable.addr_postcode,
+                                gtable.L4,
+                                gtable.L3,
+                                limitby = (0, 1),
+                                ).first()
+
+    if location.addr_street:
+        append(formrow(gtable.addr_street.label, location.addr_street))
+    place = location.L4 or location.L3 or "?"
+    if location.addr_postcode:
+        place = "%s %s" % (location.addr_postcode, place)
+    append(formrow(T("Place"), place))
+
+    # Phone number
+    phone = record.phone
+    if phone:
+        append(formrow(T("Phone"), phone))
+
+    # Email address (as hyperlink)
+    email = record.email
+    if email:
+        append(formrow(table.email.label, A(email, _href="mailto:%s" % email)))
+
+    # Capacity / available capacity
+    capacity = record.capacity
+    append(formrow(table.capacity.label, capacity))
+    available_capacity = record.available_capacity
+    append(formrow(table.available_capacity.label, available_capacity))
+
+    # Status
+    append(formrow(table.status.label,
+                   table.status.represent(record.status),
+                   ))
+
+    # Comments
+    if record.comments:
+        append(formrow(table.comments.label,
+                       record.comments,
+                       represent = table.comments.represent,
+                       ))
+
+    return DIV(title, details, _class="map-popup")
 
 # -------------------------------------------------------------------------
 def cr_shelter_resource(r, tablename):
@@ -244,10 +335,15 @@ def cr_shelter_controller(**attr):
 
         # Hide last update except for own records
         record = r.record
-        if not r.record or \
-            not auth.s3_has_permission("update", r.table, record_id=record.id):
+        if not record or \
+           not auth.s3_has_permission("update", r.table, record_id=record.id):
             s3.hide_last_update = True
 
+        if record and r.representation == "plain":
+            # Bypass REST method, return map popup directly
+            result = {"bypass": True,
+                      "output": shelter_map_popup(r.record),
+                      }
         return result
     s3.prep = prep
 

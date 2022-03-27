@@ -4964,26 +4964,27 @@ body.rtl .event-type-header {
 /* line 527, ../scss/theme/_misc.scss */
 .map-popup .map-popup-details td.map-popup-label {
   font-weight: bold;
+  white-space: pre;
 }
 
-/* line 533, ../scss/theme/_misc.scss */
+/* line 534, ../scss/theme/_misc.scss */
 .olPopupCloseBox {
   margin-right: 20px;
 }
 
-/* line 538, ../scss/theme/_misc.scss */
+/* line 539, ../scss/theme/_misc.scss */
 .place-repr .place-name {
   display: block;
   font-weight: bold;
   margin-bottom: 0.2rem;
 }
-/* line 543, ../scss/theme/_misc.scss */
+/* line 544, ../scss/theme/_misc.scss */
 .place-repr .place-info {
   white-space: pre-line;
   font-size: 0.8rem;
 }
 
-/* line 550, ../scss/theme/_misc.scss */
+/* line 551, ../scss/theme/_misc.scss */
 .manager-repr {
   border: 1px solid #eee;
   margin-top: 0.5rem;
@@ -4991,27 +4992,27 @@ body.rtl .event-type-header {
   background-color: #fff3c6;
   max-width: 100%;
 }
-/* line 556, ../scss/theme/_misc.scss */
+/* line 557, ../scss/theme/_misc.scss */
 .manager-repr .manager-name {
   padding: 0.4rem;
   font-size: 0.9rem;
   display: block;
 }
-/* line 562, ../scss/theme/_misc.scss */
+/* line 563, ../scss/theme/_misc.scss */
 .manager-repr .manager-email th, .manager-repr .manager-email td {
   padding-top: 0.4rem;
 }
-/* line 566, ../scss/theme/_misc.scss */
+/* line 567, ../scss/theme/_misc.scss */
 .manager-repr .manager-details {
   width: 100%;
   border: 0;
   margin-bottom: 0.3rem;
 }
-/* line 570, ../scss/theme/_misc.scss */
+/* line 571, ../scss/theme/_misc.scss */
 .manager-repr .manager-details th {
   width: 33%;
 }
-/* line 573, ../scss/theme/_misc.scss */
+/* line 574, ../scss/theme/_misc.scss */
 .manager-repr .manager-details th, .manager-repr .manager-details td {
   background-color: #fff3c6;
   font-size: 0.8rem;
