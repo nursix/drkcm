@@ -321,7 +321,7 @@ def cr_shelter_population_resource(r, tablename):
         report_options = {
             "rows": axes,
             "cols": axes,
-            "fact": [(T("Current Population##shelter"), "sum(population)"),
+            "fact": [(T("Current Population (Total)"), "sum(population)"),
                      (T("Population (Adults)"), "sum(population_adults)"),
                      (T("Population (Minors)"), "sum(population_children)"),
                      ],
