@@ -125,8 +125,6 @@ def config(settings):
     }
     settings.fin.currency_default = "EUR"
 
-    settings.cms.hide_index = False
-
     # Do not require international phone number format
     settings.msg.require_international_phone_numbers = False
 
@@ -185,7 +183,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # CMS Module Settings
     #
-    settings.cms.hide_index = True
+    settings.cms.hide_index = {"default": False, "_default": True}
     settings.cms.newsletter_recipient_types = ("org_organisation",)
 
     from .customise.cms import cms_newsletter_resource, \
