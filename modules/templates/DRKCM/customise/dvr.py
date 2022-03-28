@@ -287,6 +287,8 @@ def dvr_note_resource(r, tablename):
     s3db.configure("dvr_note",
                    orderby = "%(tn)s.date desc,%(tn)s.created_on desc" % \
                              {"tn": table._tablename},
+                   pdf_format = "list",
+                   pdf_fields = ["date", "status", "note"],
                    )
 
     # Filter note-type selector

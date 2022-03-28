@@ -161,9 +161,7 @@ def site_check_in(site_id, person_id):
     registration.update_record(check_in_date = current.request.utcnow,
                                registration_status = 2,
                                )
-    onaccept = s3db.get_config("cr_shelter_registration", "onaccept")
-    if onaccept:
-        onaccept(registration)
+    s3db.onaccept("cr_shelter_registration", registration, method="update")
 
 # -------------------------------------------------------------------------
 def site_check_out(site_id, person_id):
@@ -197,9 +195,7 @@ def site_check_out(site_id, person_id):
     registration.update_record(check_out_date = current.request.utcnow,
                                registration_status = 3,
                                )
-    onaccept = s3db.get_config("cr_shelter_registration", "onaccept")
-    if onaccept:
-        onaccept(registration)
+    s3db.onaccept("cr_shelter_registration", registration, method="update")
 
 # -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
@@ -271,9 +267,9 @@ def cr_shelter_controller(**attr):
             field.readable = field.writable = True
             list_fields = ["name",
                            "transitory",
-                           "capacity_day",
-                           "population_day",
-                           "available_capacity_day",
+                           "capacity",
+                           "population",
+                           "available_capacity",
                            ]
             r.component.configure(list_fields=list_fields)
 
@@ -539,7 +535,7 @@ def profile_header(r):
     # Get the number of free places in the BEA
     # => Non-BEA registrations do not occupy BEA capacity,
     #    so need to re-add the total here:
-    free = record.available_capacity_day + other_total
+    free = record.available_capacity + other_total
     FREE = TR(TD(T("Free places")),
               TD(free),
               _class="dbstats-total",

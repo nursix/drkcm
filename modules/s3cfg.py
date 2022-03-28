@@ -2337,10 +2337,6 @@ class S3Config(Storage):
         """
         return current.T(self.ui.get("label_attachments", "Attachments"))
 
-    def get_ui_label_camp(self):
-        """ 'Camp' instead of 'Shelter'? """
-        return self.ui.get("camp", False)
-
     def get_ui_label_cluster(self):
         """ UN-style deployment? """
         return self.ui.get("cluster", False)
@@ -3480,50 +3476,52 @@ class S3Config(Storage):
     # -------------------------------------------------------------------------
     # Shelters
     #
-    def get_cr_day_and_night(self):
+    def get_cr_shelter_units(self):
         """
-            Whether Shelter Capacities/Registrations are different for Day and Night
+            Manage housing units in shelters
         """
-        return self.cr.get("day_and_night", False)
+        return self.cr.get("shelter_units", False)
 
-    def get_cr_shelter_people_registration(self):
+    def get_cr_shelter_population_by_type(self):
+        """
+            Track shelter populations per subgroup
+                - currently not supported with housing units management
+        """
+        if self.get_cr_shelter_units():
+            return False
+        return self.cr.get("shelter_population_by_type", False)
+
+    def get_cr_shelter_population_by_age_group(self):
+        """
+            Track shelter populations per adults/children
+                - currently not supported with housing units management
+        """
+        if self.get_cr_shelter_units():
+            return False
+        return self.cr.get("shelter_population_by_age_group", False)
+
+    def get_cr_shelter_registration(self):
         """
             Enable functionality to track individuals in shelters
         """
-        return self.cr.get("people_registration", True)
+        return self.cr.get("shelter_registration", True)
 
-    def get_cr_shelter_population_dynamic(self):
+    def get_cr_shelter_allocation(self):
         """
-            Whether Shelter Population should be done manually (False)
-            or automatically based on the registrations (True)
-            and displaying all fields used by the automatic evaluation of current
-            shelter population:
-            "available_capacity_day",
-            "available_capacity_night",
-            "population_day",
-            "population_night".
+            Enable functionality to allocate shelter capacity
         """
-        if not self.get_cr_shelter_people_registration():
-            # Only relevant when using people registration
-            return False
-        return self.cr.get("shelter_population_dynamic", False)
-
-    def get_cr_shelter_housing_unit_management(self):
-        """
-            Enable the use of tab "Housing Unit" and enable the housing unit
-            selection during client registration.
-        """
-        return self.cr.get("shelter_housing_unit_management", False)
+        return self.cr.get("shelter_allocation", False)
 
     def get_cr_check_out_is_final(self):
         """
-            Whether checking out of a Shelter frees up the place or is just leaving the site temporarily
+            Whether checking out of a shelter frees up the place
+            or is just leaving the site temporarily
         """
         return self.cr.get("check_out_is_final", True)
 
     def get_cr_tags(self):
         """
-            Whether Shelters should show a Tags tab
+            Whether shelters should show a tags tab
         """
         return self.cr.get("tags", False)
 

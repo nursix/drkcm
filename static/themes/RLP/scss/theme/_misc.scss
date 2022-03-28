@@ -526,6 +526,7 @@ body.rtl {
             padding: 0.1rem 0.3rem 0 0;
             &.map-popup-label {
                 font-weight: bold;
+                white-space: pre;
             }
         }
     }
@@ -579,5 +580,23 @@ body.rtl {
     }
 }
 
+// Shelter availability
+.shelter-available, .shelter-low, .shelter-full {
+    color: #E0E0E0;
+    background-color: #006100;
+    width: 100%;
+    display: inline-block;
+    padding: 0 0.2rem;
+    text-align: center;
+    border: 1px solid black;
+}
+.shelter-low {
+    color: black;
+    background-color: #ffaa00;
+}
+.shelter-full {
+    color: #E0E0E0;
+    background-color: #d10000;
+}
 
 // END ========================================================================

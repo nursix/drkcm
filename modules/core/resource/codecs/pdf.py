@@ -794,7 +794,8 @@ class S3PDFList:
 
             item = [ruler]
             for rfield in rfields:
-                item.extend(formatted(rfield, row[rfield.colname]))
+                if rfield.ftype != "id":
+                    item.extend(formatted(rfield, row[rfield.colname]))
             if index == 0:
                 flowables.extend(item)
             else:

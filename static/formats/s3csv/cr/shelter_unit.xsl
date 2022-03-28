@@ -11,8 +11,7 @@
          Unit...........................required.....Shelter Unit Name
          Transitory.....................optional.....is for transitory accomodation
                                                      true|false
-         Capacity Day...................optional.....capacity_day (integer)
-         Capacity Night.................optional.....capacity_night (integer)
+         Capacity.......................optional.....capacity
          Country........................optional.....Country
          L1.............................optional.....L1
          L2.............................optional.....L2
@@ -186,19 +185,11 @@
                     <xsl:value-of select="$ShelterUnitName"/>
                 </data>
 
-                <!-- Capacity Day -->
-                <xsl:variable name="CapacityDay" select="col[@field='Capacity Day']/text()"/>
-                <xsl:if test="$CapacityDay!=''">
-                    <data field="capacity_day">
-                        <xsl:value-of select="$CapacityDay"/>
-                    </data>
-                </xsl:if>
-
-                <!-- Capacity Night -->
-                <xsl:variable name="CapacityNight" select="col[@field='Capacity Night']/text()"/>
-                <xsl:if test="$CapacityNight!=''">
-                    <data field="capacity_night">
-                        <xsl:value-of select="$CapacityNight"/>
+                <!-- Capacity -->
+                <xsl:variable name="Capacity" select="col[@field='Capacity']/text()"/>
+                <xsl:if test="$Capacity!=''">
+                    <data field="capacity">
+                        <xsl:value-of select="$Capacity"/>
                     </data>
                 </xsl:if>
 

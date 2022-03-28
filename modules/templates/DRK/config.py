@@ -137,9 +137,8 @@ def config(settings):
     # -------------------------------------------------------------------------
     # CR Settings
     #
-    #settings.cr.day_and_night = False
     settings.cr.shelter_population_dynamic = True
-    settings.cr.shelter_housing_unit_management = True
+    settings.cr.shelter_units = True
     settings.cr.check_out_is_final = False
 
     # Generate tasks for shelter inspections

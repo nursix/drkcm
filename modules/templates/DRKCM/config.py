@@ -165,7 +165,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Shelter Registry Settings
     #
-    settings.cr.people_registration = False
+    settings.cr.shelter_registration = False
 
     from .customise.cr import cr_shelter_resource, \
                               cr_shelter_controller

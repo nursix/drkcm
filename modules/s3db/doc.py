@@ -591,12 +591,15 @@ def doc_image_represent(filename):
     if not filename:
         return current.messages["NONE"]
 
-    return DIV(A(IMG(_src=URL(c="default", f="download",
-                              args=filename),
-                     _height=40),
-                     _class="zoom",
-                     _href=URL(c="default", f="download",
-                               args=filename)))
+    return DIV(A(IMG(_src = URL(c="default", f="download", args=filename),
+                     _height = 80,
+                     _width = 120,
+                     _class = "img-preview",
+                     ),
+                 _class = "zoom",
+                 _href = URL(c="default", f="download", args=filename),
+                 ),
+               )
 
     # @todo: implement/activate the JavaScript for this:
     #anchor = "zoom-media-image-%s" % uuid4()

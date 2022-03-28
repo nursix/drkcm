@@ -28,9 +28,7 @@
          Postcode.......................optional.....Postcode
          Lat............................optional.....Latitude
          Lon............................optional.....Longitude
-         Capacity.......................cr_shelter.capacity_day (Only one used if not separated)
-         Capacity Day...................cr_shelter.capacity_day
-         Capacity Night.................cr_shelter.capacity_night
+         Capacity.......................cr_shelter.capacity
          Population.....................cr_shelter.population
          Status.........................cr_shelter.status (@ToDo: Populate cr_shelter_status for historical data)
          Obsolete.......................cr_shelter.obsolete
@@ -224,15 +222,9 @@
 
         <resource name="cr_shelter">
             <data field="name"><xsl:value-of select="$ShelterName"/></data>
-            <xsl:choose>
-                <xsl:when test="$Capacity!=''">
-                    <data field="capacity_day"><xsl:value-of select="$Capacity"/></data>
-                </xsl:when>
-                <xsl:otherwise>
-                    <data field="capacity_day"><xsl:value-of select="col[@field='Capacity Day']"/></data>
-                    <data field="capacity_night"><xsl:value-of select="col[@field='Capacity Night']"/></data>
-                </xsl:otherwise>
-            </xsl:choose>
+            <xsl:if test="$Capacity!=''">
+                <data field="capacity"><xsl:value-of select="$Capacity"/></data>
+            </xsl:if>
             <xsl:if test="col[@field='Population']!=''">
                 <data field="population"><xsl:value-of select="col[@field='Population']"/></data>
             </xsl:if>

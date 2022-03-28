@@ -1,0 +1,11 @@
+Organisation,Acronym,KV:DistrictID,Groups,Type,Website,Email,Phone,Country,Address,Postcode,L3
+VG Adenau,VG_13100001,131,Kommunale Verwaltung (131),Verbandsgemeinde / kreisfreie Stadt,https://adenau.de,vgadenau@example.com,,DE,Kirchstraße 15,53518,Adenau
+VG Birkenfeld,VG_13400002,134,Kommunale Verwaltung (134),Verbandsgemeinde / kreisfreie Stadt,https://vgv-birkenfeld.de,vgbirkenfeld@exmaple.com,,DE,Schneewiesenstr.21,55765,Birkenfeld
+VG Mendig,VG_13700004,137,Kommunale Verwaltung (137),Verbandsgemeinde / kreisfreie Stadt,https://mendig.de,vgmendig@example.com,,DE,Marktplatz 3,56743,Mendig
+SV Bad Neuenahr-Ahrweiler,SV_13100700,131,Kommunale Verwaltung (131),Verbandsgemeinde / kreisfreie Stadt,https://bad-neuenahr-ahrweiler.de,sv-bad-neuenahr-ahrweiler@example.com,,DE,Hauptstraße 116,53474,Bad Neuenahr-Ahrweiler
+SV Idar-Oberstein,SV_13404500,134,Kommunale Verwaltung (134),Verbandsgemeinde / kreisfreie Stadt,https://idar-oberstein.de,sv-idar-oberstein@example.com,,DE,Georg-Maus-Straße 1,55743,Idar-Oberstein
+GV Haßloch,GV_33202500,332,Kommunale Verwaltung (332),Verbandsgemeinde / kreisfreie Stadt,https://hassloch.de,gvhassloch@example.com,,DE,Rathausplatz 1,67454,Haßloch
+KV Ahrweiler,KV_13100000,131,Kreisverwaltung,Kreisverwaltung,https://kreis-ahrweiler.de,kvahrweiler@example.com,,DE,Wilhelmstraße 24 - 30,53474,Bad Neuenahr-Ahrweiler
+KV Mayen-Koblenz,KV_13700000,137,Kreisverwaltung,Kreisverwaltung,https://mayen-koblenz.de,kvmyk@example.com,,DE,Bahnhofstraße 9,56068,Koblenz
+KV Kaiserslautern,KV_33500000,335,Kreisverwaltung,Kreisverwaltung,https://kaiserslautern-kreis.de,kvkaiserslautern@example.com,,DE,Lauterstraße 8,67657,Kaiserslautern
+Aufsichts- und Dienstleistungsdirektion,ADD,,Landesverwaltung,Regierung / Behörde,,add@example.com,,DE,,,

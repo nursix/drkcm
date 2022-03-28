@@ -43,6 +43,23 @@ def shelter_service():
     return crud_controller()
 
 # -----------------------------------------------------------------------------
+def shelter_population():
+
+    def prep(r):
+        return r.http == "GET"
+    s3.prep = prep
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def population_type():
+    """
+        Shelter population subgroups: CRUD controller
+    """
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
 def shelter_unit():
     """
         REST controller to
@@ -115,8 +132,7 @@ def shelter():
 
         method = r.method
         if method == "create":
-            table.population_day.readable = False
-            table.population_night.readable = False
+            table.population.readable = False
 
         elif method == "import":
             table.organisation_id.default = None
@@ -185,7 +201,7 @@ def shelter():
                         db.assess_rat.staff_id.default = staff_id.id
 
                 elif r.component.name == "shelter_registration":
-                    if settings.get_cr_shelter_housing_unit_management():
+                    if settings.get_cr_shelter_units():
                         # Filter housing units to units of this shelter
                         field = s3db.cr_shelter_registration.shelter_unit_id
                         dbset = db(s3db.cr_shelter_unit.shelter_id == r.id)
@@ -227,7 +243,7 @@ def shelter():
         return True
     s3.prep = prep
 
-    return crud_controller(rheader=s3db.cr_shelter_rheader)
+    return crud_controller(rheader=s3db.cr_rheader)
 
 # -----------------------------------------------------------------------------
 def shelter_flag():
