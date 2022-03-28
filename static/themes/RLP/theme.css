@@ -5019,3 +5019,26 @@ body.rtl .event-type-header {
   line-height: 1;
   padding: 0.4rem;
 }
+
+/* line 584, ../scss/theme/_misc.scss */
+.shelter-available, .shelter-low, .shelter-full {
+  color: #E0E0E0;
+  background-color: #006100;
+  width: 100%;
+  display: inline-block;
+  padding: 0 0.2rem;
+  text-align: center;
+  border: 1px solid black;
+}
+
+/* line 593, ../scss/theme/_misc.scss */
+.shelter-low {
+  color: black;
+  background-color: #ffaa00;
+}
+
+/* line 597, ../scss/theme/_misc.scss */
+.shelter-full {
+  color: #E0E0E0;
+  background-color: #d10000;
+}

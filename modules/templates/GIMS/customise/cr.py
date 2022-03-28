@@ -7,7 +7,7 @@
 from collections import OrderedDict
 
 from gluon import current, URL, \
-                  A, DIV, H4, IS_EMPTY_OR, TABLE, TD, TR
+                  A, DIV, H4, IS_EMPTY_OR, SPAN, TABLE, TD, TR
 
 from ..helpers import restrict_data_formats
 
@@ -101,6 +101,22 @@ def shelter_map_popup(record):
     return DIV(title, details, _class="map-popup")
 
 # -------------------------------------------------------------------------
+def available_capacity_represent(value, row=None):
+    """ Color-coded representation of available shelter capacities """
+
+    if value is None:
+        return "-"
+
+    if value == 0:
+        css = "shelter-full"
+    elif value < 4:
+        css = "shelter-low"
+    else:
+        css = "shelter-available"
+
+    return SPAN(value, _class=css)
+
+# -------------------------------------------------------------------------
 def cr_shelter_resource(r, tablename):
 
     T = current.T
@@ -179,6 +195,9 @@ def cr_shelter_resource(r, tablename):
                                           {1: "red",
                                            2: "green",
                                            }).represent
+
+    field = table.available_capacity
+    field.represent = available_capacity_represent
 
     ltable = s3db.cr_shelter_service_shelter
     field = ltable.service_id
