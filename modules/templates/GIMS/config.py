@@ -208,12 +208,15 @@ def config(settings):
     from .customise.cr import cr_shelter_resource, \
                               cr_shelter_controller, \
                               cr_shelter_population_resource, \
+                              cr_shelter_population_controller, \
                               cr_shelter_status_resource
 
     settings.customise_cr_shelter_resource = cr_shelter_resource
     settings.customise_cr_shelter_controller = cr_shelter_controller
 
     settings.customise_cr_shelter_population_resource = cr_shelter_population_resource
+    settings.customise_cr_shelter_population_controller = cr_shelter_population_controller
+
     settings.customise_cr_shelter_status_resource = cr_shelter_status_resource
 
     # -------------------------------------------------------------------------

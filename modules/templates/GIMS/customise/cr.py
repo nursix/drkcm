@@ -9,6 +9,8 @@ from collections import OrderedDict
 from gluon import current, URL, \
                   A, DIV, H4, IS_EMPTY_OR, SPAN, TABLE, TD, TR
 
+from core import FS
+
 from ..helpers import restrict_data_formats
 
 # =============================================================================
@@ -129,15 +131,16 @@ def cr_shelter_resource(r, tablename):
                                        ))
 
     from core import LocationFilter, \
-                     S3LocationSelector, \
                      OptionsFilter, \
+                     RangeFilter, \
+                     S3LocationSelector, \
                      S3PriorityRepresent, \
                      S3SQLCustomForm, \
                      S3SQLInlineComponent, \
                      S3SQLInlineLink, \
                      TextFilter, \
-                     s3_fieldmethod, \
-                     get_filter_options
+                     get_filter_options, \
+                     s3_fieldmethod
 
     from ..helpers import ShelterDetails, ServiceListRepresent
 
@@ -249,6 +252,7 @@ def cr_shelter_resource(r, tablename):
                    }
 
     # Filter widgets
+    is_report = r.method == "report"
     filter_widgets = [TextFilter(["name",
                                   ],
                                  label = T("Search"),
@@ -259,8 +263,12 @@ def cr_shelter_resource(r, tablename):
                                     cols = 2,
                                     sort = False,
                                     ),
+                      RangeFilter("available_capacity",
+                                  hidden = is_report,
+                                  ),
                       OptionsFilter("shelter_service__link.service_id",
                                     options = lambda: get_filter_options("cr_shelter_service"),
+                                    hidden = True,
                                     ),
                       LocationFilter("location_id",
                                      levels = ["L2", "L3"],
@@ -281,6 +289,7 @@ def cr_shelter_resource(r, tablename):
                    "shelter_type_id",
                    "status",
                    (T("Capacity"), "capacity"),
+                   (T("Current Population##shelter"), "population"),
                    (T("Available Capacity"), "available_capacity"),
                    (T("Place"), "place"),
                    (T("Contact"), "contact"),
@@ -304,7 +313,7 @@ def cr_shelter_resource(r, tablename):
                   list_fields = list_fields,
                   )
 
-    if r.method == "report":
+    if is_report:
         axes = ["location_id$L3",
                 "location_id$L2",
                 "location_id$L1",
@@ -390,8 +399,6 @@ def cr_shelter_population_resource(r, tablename):
     T = current.T
     s3db = current.s3db
 
-    current.deployment_settings.base.bigtable = True
-
     table = s3db.cr_shelter_population
     field = table.population_children
     field.label = T("Population (Minors)")
@@ -450,5 +457,29 @@ def cr_shelter_population_resource(r, tablename):
         s3db.configure("cr_shelter_population",
                        report_options = report_options,
                        )
+
+# -------------------------------------------------------------------------
+def cr_shelter_population_controller(**attr):
+
+    s3 = current.response.s3
+
+    current.deployment_settings.base.bigtable = True
+
+    # Custom prep
+    standard_prep = s3.prep
+    def prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        # Restrict data formats
+        restrict_data_formats(r)
+
+        # Exclude closed shelters
+        r.resource.add_filter(FS("shelter_id$status") == 2)
+
+        return result
+    s3.prep = prep
+
+    return attr
 
 # END =========================================================================
