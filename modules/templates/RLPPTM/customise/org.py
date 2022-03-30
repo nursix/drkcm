@@ -203,9 +203,8 @@ def update_mgrinfo(organisation_id):
         tag["id"] = ottable.insert(**tag)
         s3db.onaccept(ottable, tag, method="create")
 
-    # Update test station approval workflow if MGRINFO is mandatory
-    if current.deployment_settings.get_custom("test_station_manager_required"):
-        facility_approval_update_mgrinfo(organisation_id, status)
+    # Update test station approval workflow for MGRINFO
+    facility_approval_update_mgrinfo(organisation_id, status)
 
     return status
 
@@ -966,6 +965,7 @@ def facility_approval_workflow(site_id):
                       (ottable.deleted == False))
     query = (ftable.site_id == site_id)
     facility = db(query).select(ftable.id,
+                                ftable.organisation_id,
                                 ottable.value,
                                 left = left,
                                 limitby = (0, 1),
@@ -973,7 +973,14 @@ def facility_approval_workflow(site_id):
     if not facility:
         return
 
-    if current.deployment_settings.get_custom("test_station_manager_required"):
+    required = current.deployment_settings.get_custom("test_station_manager_required")
+    if isinstance(required, tuple):
+        from ..helpers import is_org_type_tag
+        required = is_org_type_tag(facility.org_facility.organisation_id,
+                                   required[0],
+                                   required[1],
+                                   )
+    if required:
         mgrinfo = facility.org_organisation_tag.value
     else:
         # Treat like complete
@@ -1026,7 +1033,7 @@ def facility_approval_workflow(site_id):
                 T("Test station notified")
 
 # -----------------------------------------------------------------------------
-def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
+def facility_approval_update_mgrinfo(organisation_id, mgrinfo, notify_unlist=False):
     """
         Update the workflow status of test stations depending on the
         status of the test station manager info of the organisation
@@ -1034,10 +1041,19 @@ def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
         Args:
             organisation_id: the organisation ID
             status: the MGRINFO status
+            notify_unlist: notify if the test station is removed from the
+                           public registry, irrespective reason
     """
 
     db = current.db
     s3db = current.s3db
+
+    required = current.deployment_settings.get_custom("test_station_manager_required")
+    if isinstance(required, tuple):
+        from ..helpers import is_org_type_tag
+        required = is_org_type_tag(organisation_id, required[0], required[1])
+    if not required:
+        return
 
     # Propagate status to related facilities
     ftable = s3db.org_facility
@@ -1070,6 +1086,9 @@ def facility_approval_update_mgrinfo(organisation_id, mgrinfo):
             if not any(tags[t] == "REVISE" for t in SITE_REVIEW):
                 update["STATUS"] = "REVIEW"
             update["PUBLIC"] = "N"
+            # Notify if public-status changes for active facility
+            notify = notify_unlist and \
+                     tags.get("PUBLIC") != "N" and not facility.obsolete
         elif tags.get("STATUS") == "REVISE":
             if all(tags[t] != "REVISE" for t in SITE_REVIEW):
                 update["STATUS"] = "REVIEW"
@@ -1506,7 +1525,7 @@ def org_facility_resource(r, tablename):
                              )
 
     if not is_org_group_admin and \
-        not settings.get_custom(key="test_station_registration"):
+       not settings.get_custom(key="test_station_registration"):
         # If test station registration is disabled, no new test
         # facilities can be added either
         s3db.configure(tablename, insertable = False)
