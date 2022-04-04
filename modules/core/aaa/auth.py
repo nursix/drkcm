@@ -3992,12 +3992,12 @@ Please go to %(url)s to approve this user."""
 
         system_roles = self.get_system_roles()
         ANONYMOUS = system_roles.ANONYMOUS
-        if ANONYMOUS:
-            session.s3.roles = [ANONYMOUS]
-        else:
-            session.s3.roles = []
+        AUTHENTICATED = system_roles.AUTHENTICATED
+
+        session_roles = {ANONYMOUS} if ANONYMOUS else set()
 
         if self.user:
+
             db = current.db
             s3db = current.s3db
 
@@ -4006,12 +4006,11 @@ Please go to %(url)s to approve this user."""
             # Set pe_id for current user
             ltable = s3db.table("pr_person_user")
             if ltable is not None:
-                query = (ltable.user_id == user_id)
-                row = db(query).select(ltable.pe_id,
-                                       limitby=(0, 1),
-                                       cache=s3db.cache).first()
-                if row:
-                    self.user["pe_id"] = row.pe_id
+                row = db(ltable.user_id == user_id).select(ltable.pe_id,
+                                                           limitby = (0, 1),
+                                                           cache = s3db.cache,
+                                                           ).first()
+                self.user["pe_id"] = row.pe_id if row else None
             else:
                 self.user["pe_id"] = None
 
@@ -4020,54 +4019,54 @@ Please go to %(url)s to approve this user."""
             query = (mtable.deleted == False) & \
                     (mtable.user_id == user_id) & \
                     (mtable.group_id != None)
-            rows = db(query).select(mtable.group_id, mtable.pe_id,
-                                    cacheable=True)
+            rows = db(query).select(mtable.group_id,
+                                    mtable.pe_id,
+                                    cacheable = True,
+                                    )
 
             # Add all group_ids to session.s3.roles
-            session.s3.roles.extend(row.group_id for row in rows)
+            session_roles |= {row.group_id for row in rows}
+            if AUTHENTICATED:
+                session_roles.add(AUTHENTICATED)
 
             # Realms:
             # Permissions of a group apply only for records owned by any of
             # the entities which belong to the realm of the group membership
 
+            # These realms apply for every authenticated user:
+
             if not permission.entity_realm:
-                # Group memberships have no realms (policy 5 and below)
-                self.user["realms"] = Storage([(row.group_id, None) for row in rows])
+                # All roles apply site-wide (i.e. no realms, policy 5 and below)
+                realms = {row.group_id: None for row in rows}
             else:
-                # Group memberships are limited to realms (policy 6 and above)
-                realms = {}
-
-                # These roles can't be realm-restricted:
-                unrestrictable = (system_roles.ADMIN,
-                                  system_roles.ANONYMOUS,
-                                  system_roles.AUTHENTICATED,
-                                  )
-
+                # Roles are limited to realms (policy 6 and above)
                 default_realm = s3db.pr_default_realms(self.user["pe_id"])
 
                 # Store the realms:
+                realms = {}
                 for row in rows:
+
                     group_id = row.group_id
-                    if group_id in realms and realms[group_id] is None:
+                    if group_id == system_roles.ADMIN:
+                        # Admin is not realm-restrictable
+                        realm = realms[group_id] = None
+                    elif group_id in realms:
+                        realm = realms[group_id]
+                    else:
+                        realm = realms[group_id] = []
+                    if realm is None:
                         continue
-                    if group_id in unrestrictable:
-                        realms[group_id] = None
-                        continue
-                    if group_id not in realms:
-                        realms[group_id] = []
-                    realm = realms[group_id]
+
                     pe_id = row.pe_id
                     if pe_id is None:
                         if default_realm:
-                            realm.extend([e for e in default_realm
-                                            if e not in realm])
+                            realm.extend([e for e in default_realm if e not in realm])
                         if not realm:
                             del realms[group_id]
                     elif pe_id == 0:
-                        # Site-wide
                         realms[group_id] = None
                     elif pe_id not in realm:
-                        realms[group_id].append(pe_id)
+                        realm.append(pe_id)
 
                 if permission.entity_hierarchy:
                     # Realms include subsidiaries of the realm entities
@@ -4096,11 +4095,13 @@ Please go to %(url)s to approve this user."""
                                     if subsidiary not in realm:
                                         append(subsidiary)
 
-                self.user["realms"] = realms
+            # These realms apply for every authenticated user:
+            for role in (ANONYMOUS, AUTHENTICATED):
+                if role:
+                    realms[role] = None
+            self.user["realms"] = Storage(realms)
 
-            if ANONYMOUS:
-                # Anonymous role has no realm
-                self.user["realms"][ANONYMOUS] = None
+        session.s3.roles = list(session_roles)
 
     # -------------------------------------------------------------------------
     def s3_create_role(self, role, description=None, *acls, **args):
