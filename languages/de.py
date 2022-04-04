@@ -5437,6 +5437,7 @@
 'Shelter Status added': 'Unterkunftsstatus hinzugefügt',
 'Shelter Status deleted': 'Unterkunftsstatus gelöscht',
 'Shelter Status updated': 'Unterkunftsstatus aktualisiert',
+'Shelter Status': 'Unterkunftsstatus',
 'Shelter Statuses': 'Unterkunftsstatus',
 'Shelter Type Details': 'Details zum Unterkunftstyp',
 'Shelter Type added': 'Unterkunftstyp hinzugefügt',

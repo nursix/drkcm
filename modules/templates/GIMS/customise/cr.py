@@ -421,6 +421,18 @@ def cr_shelter_population_resource(r, tablename):
                                      hidden = True,
                                      ),
                       ]
+    if current.auth.s3_has_role("ADMIN"):
+        shelter_status_opts = OrderedDict(((2, T("Open##status")),
+                                           (1, T("Closed")),
+                                           ))
+        filter_widgets.insert(1, OptionsFilter("shelter_id$status",
+                                               label = T("Shelter Status"),
+                                               options = shelter_status_opts,
+                                               sort = False,
+                                               default = 2,
+                                               cols = 2,
+                                               ))
+
     s3db.configure("cr_shelter_population",
                    filter_widgets = filter_widgets,
                    insertable = False,
@@ -475,7 +487,8 @@ def cr_shelter_population_controller(**attr):
         restrict_data_formats(r)
 
         # Exclude closed shelters
-        r.resource.add_filter(FS("shelter_id$status") == 2)
+        if not current.auth.s3_has_role("ADMIN"):
+            r.resource.add_filter(FS("shelter_id$status") == 2)
 
         return result
     s3.prep = prep
