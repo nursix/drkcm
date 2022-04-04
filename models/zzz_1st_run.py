@@ -268,15 +268,6 @@ if len(pop_list) > 0:
     email_required = settings.get_pr_import_update_requires_email()
     settings.pr.import_update_requires_email = False
 
-    # Additional settings for user table imports:
-    s3db.configure("auth_user",
-                   onaccept = lambda form: auth.s3_approve_user(form.vars),
-                   )
-    # Now done in 00_tables.py
-    #s3db.add_components("auth_user",
-    #                    auth_membership="user_id",
-    #                    )
-
     # Flag that Assets are being imported, not synced
     s3.asset_import = True
 
