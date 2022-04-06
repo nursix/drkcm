@@ -158,6 +158,9 @@ def cr_shelter_resource(r, tablename):
 
     # No add-link for organisation
     field = table.organisation_id
+    field.requires = s3db.org_organisation_requires(required = True,
+                                                    updateable = True,
+                                                    )
     field.comment = None
 
     # Custom label for population_children

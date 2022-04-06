@@ -195,12 +195,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
         if current.request.function in rc_functions:
             # Reception center perspective
             menu = M(c="cr")(
-                        M("Reception Centers", f="reception_center")(
+                        M("Facilities", f="reception_center")(
                             M("Create", m="create"),
                             M("Map", m="map"),
                             ),
                         M("Administration", link=False, restrict=(ADMIN,))(
-                            M("Reception Center Types", f="reception_center_type"),
+                            M("Facility Types", f="reception_center_type"),
                             ),
                         )
 

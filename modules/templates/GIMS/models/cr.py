@@ -37,7 +37,7 @@ from gluon import current, Field, DIV, \
 from gluon.storage import Storage
 
 from core import DataModel, S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
-                 S3Represent, S3ReusableField, \
+                 S3Represent, S3ReusableField, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
                  get_form_record_id, s3_comments, s3_date, s3_meta_fields, \
                  OptionsFilter, TextFilter, get_filter_options
@@ -127,8 +127,9 @@ class CRReceptionCenterModel(DataModel):
                            ),
                      self.org_organisation_id(
                         comment = None,
-                        empty = False, # TODO not working
-                        requires = self.org_organisation_requires(updateable=True),
+                        requires = self.org_organisation_requires(required = True,
+                                                                  updateable = True,
+                                                                  ),
                         ),
                      self.gis_location_id(
                         widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
@@ -151,7 +152,7 @@ class CRReceptionCenterModel(DataModel):
                                 comment = T("The maximum (total) capacity as number of people"),
                                 ),
                      population("available_capacity",
-                                label = T("Available Capacity"),
+                                label = T("Free Capacity"),
                                 readable = False,
                                 writable = False,
                                 ),
@@ -232,11 +233,39 @@ class CRReceptionCenterModel(DataModel):
                                         ),
                           ]
 
+        crud_form = S3SQLCustomForm(# ---- Facility ----
+                                    "organisation_id",
+                                    "name",
+                                    "type_id",
+                                    "status",
+                                    # ---- Address ----
+                                    "location_id",
+                                    # ---- Capacity & Population ----
+                                    "capacity",
+                                    "population_registered",
+                                    "population_unregistered",
+                                    "allocatable_capacity",
+                                    # ---- Contact Information ----
+                                    "contact_name",
+                                    "phone",
+                                    "email",
+                                    # ---- Comments ----
+                                    "comments",
+                                    )
+
+        subheadings = {"organisation_id": T("Facility"),
+                       "location_id": T("Address"),
+                       "capacity": T("Capacity / Occupancy"),
+                       "contact_name": T("Contact Information"),
+                       "comments": T("Comments"),
+                       }
+
         # Table configuration
-        # TODO CRUD-form
         # TODO report options
         # TODO import XSLT
         configure(tablename,
+                  crud_form = crud_form,
+                  subheadings = subheadings,
                   deduplicate = S3Duplicate(primary = ("name",),
                                             secondary = ("organisation_id",),
                                             ),
@@ -284,7 +313,7 @@ class CRReceptionCenterModel(DataModel):
                                 comment = T("The maximum (total) capacity as number of people"),
                                 ),
                      population("available_capacity",
-                                label = T("Available Capacity"),
+                                label = T("Free Capacity"),
                                 ),
                      population(label = T("Current Population (Total)"),
                                 ),
@@ -311,6 +340,7 @@ class CRReceptionCenterModel(DataModel):
                   insertable = False,
                   editable = False,
                   deletable = False,
+                  orderby = "%s.date desc" % tablename,
                   )
 
         # CRUD Strings
