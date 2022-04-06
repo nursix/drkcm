@@ -495,4 +495,33 @@ def cr_shelter_population_controller(**attr):
 
     return attr
 
+# -------------------------------------------------------------------------
+def cr_reception_center_resource(r, tablename):
+
+    pass
+
+# -------------------------------------------------------------------------
+def cr_reception_center_controller(**attr):
+
+    from ..rheaders import cr_rheader
+    attr["rheader"] = cr_rheader
+
+    return attr
+
+# -------------------------------------------------------------------------
+def cr_reception_center_type_resource(r, tablename):
+
+    pass
+
+# -------------------------------------------------------------------------
+def cr_reception_center_type_controller(**attr):
+
+    import os
+    xslt_path = os.path.join("..", "..", "..", "modules", "templates", "GIMS", "formats")
+
+    attr.update(csv_stylesheet = (xslt_path, "cr", "reception_center_type.xsl"),
+                )
+
+    return attr
+
 # END =========================================================================
