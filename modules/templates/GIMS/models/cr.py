@@ -469,7 +469,8 @@ class CRReceptionCenterModel(DataModel):
                                   orderby = ~stable.date,
                                   limitby = (0, 1),
                                   ).first()
-        status.update_record(date_until = today-datetime.timedelta(days=1))
+        if status:
+            status.update_record(date_until = today-datetime.timedelta(days=1))
 
     # -------------------------------------------------------------------------
     @staticmethod
