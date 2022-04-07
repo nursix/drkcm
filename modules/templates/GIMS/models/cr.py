@@ -260,9 +260,35 @@ class CRReceptionCenterModel(DataModel):
                        "comments": T("Comments"),
                        }
 
+        # Report options
+        axes = ["location_id$L3",
+                "location_id$L2",
+                "location_id$L1",
+                "organisation_id",
+                "type_id",
+                "status",
+                ]
+
+        report_options = {
+            "rows": axes,
+            "cols": axes,
+            "fact": [(T("Number of Facilities"), "count(id)"),
+                     (T("Current Population (Total)"), "sum(population)"),
+                     (T("Current Population (Registered)"), "sum(population_registered)"),
+                     (T("Current Population (Unregistered)"), "sum(population_unregistered)"),
+                     (T("Occupancy % (Average)"), "avg(occupancy)"),
+                     (T("Allocatable Capacity"), "sum(allocatable_capacity)"),
+                     (T("Free Capacity"), "sum(available_capacity)"),
+                     (T("Total Capacity"), "sum(capacity)"),
+                     ],
+            "defaults": {"rows": "location_id$L2",
+                         "cols": "type_id",
+                         "fact": "sum(population)",
+                         "totals": True,
+                         },
+            }
+
         # Table configuration
-        # TODO report options
-        # TODO import XSLT
         configure(tablename,
                   crud_form = crud_form,
                   subheadings = subheadings,
@@ -271,6 +297,7 @@ class CRReceptionCenterModel(DataModel):
                                             ),
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,
+                  report_options = report_options,
                   onaccept = self.reception_center_onaccept,
                   )
 
@@ -333,14 +360,49 @@ class CRReceptionCenterModel(DataModel):
                            ),
                      *s3_meta_fields())
 
+        # Filter Widgets
+        filter_widgets = [TextFilter(["facility_id$name",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("facility_id$type_id",
+                                        options = get_filter_options("cr_reception_center_type"),
+                                        ),
+                          OptionsFilter("facility_id$status",
+                                        options = OrderedDict(status_opts),
+                                        cols = 3,
+                                        sort = False,
+                                        ),
+                          ]
+
+        # Timeplot options
+        facts = [(T("Current Population (Total)"), "sum(population)"),
+                 (T("Current Population (Registered)"), "sum(population_registered)"),
+                 (T("Current Population (Unregistered)"), "sum(population_unregistered)"),
+                 (T("Occupancy % (Average)"), "avg(occupancy)"),
+                 (T("Allocatable Capacity"), "sum(allocatable_capacity)"),
+                 (T("Free Capacity"), "sum(available_capacity)"),
+                 (T("Total Capacity"), "sum(capacity)"),
+                 ]
+        timeplot_options = {
+            "facts": facts,
+            "timestamp": ((T("per interval"), "date,date_until"),
+                          (T("cumulative"), "date"),
+                          ),
+            "defaults": {"fact": facts[0],
+                         "timestamp": "date,date_until",
+                         "time": "<-0 months||days",
+                         },
+            }
+
         # Table configuration
-        # TODO timeplot options
-        # TODO list fields
         configure(tablename,
+                  filter_widgets = filter_widgets,
                   insertable = False,
                   editable = False,
                   deletable = False,
                   orderby = "%s.date desc" % tablename,
+                  timeplot_options = timeplot_options,
                   )
 
         # CRUD Strings
