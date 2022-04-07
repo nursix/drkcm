@@ -37,6 +37,8 @@ __all__ = ("CMSContentModel",
            "cms_NewsletterDetails",
            "cms_UpdateNewsletter",
            "cms_newsletter_notify",
+           "cms_accessible_newsletters",
+           "cms_unread_newsletters",
            "cms_index",
            "cms_announcements",
            "cms_documentation",
@@ -1265,6 +1267,7 @@ class CMSNewsletterModel(DataModel):
     names = ("cms_newsletter",
              "cms_newsletter_recipient",
              "cms_newsletter_distribution",
+             "cms_newsletter_receipt",
              )
 
     def model(self):
@@ -1515,6 +1518,17 @@ class CMSNewsletterModel(DataModel):
         define_table(tablename,
                      Field("newsletter_id", "reference cms_newsletter"),
                      self.pr_filter_id(),
+                     *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
+        # Newsletter read confirmation
+        # - link table cms_newsletter <> auth_user
+        #
+        tablename = "cms_newsletter_receipt"
+        define_table(tablename,
+                     Field("newsletter_id", "reference cms_newsletter"),
+                     Field("user_id", "reference auth_user"),
+                     s3_datetime(default="now"),
                      *s3_meta_fields())
 
         # ---------------------------------------------------------------------
@@ -2191,6 +2205,143 @@ def cms_newsletter_actions(newsletter):
         actions = [update_btn, remove_btn, send_btn]
 
     return actions
+
+# =============================================================================
+def cms_accessible_newsletters():
+    """
+        Constructs a subquery for newsletters accessible by the current user
+
+        Returns:
+            - a subquery (SQL string) for use with belongs(), or
+            - an empty set if there is no current user
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    if not auth.user:
+        return set()
+
+    settings = current.deployment_settings
+
+    from core import accessible_pe_query
+
+    rtable = s3db.cms_newsletter_recipient
+    types = settings.get_cms_newsletter_recipient_types()
+    query = accessible_pe_query(table = rtable,
+                                instance_types = types,
+                                c = "cms",
+                                f = "newsletter_recipient",
+                                )
+    if auth.user:
+        query |= (rtable.pe_id == auth.user.pe_id)
+
+    return db(query)._select(rtable.newsletter_id,
+                             groupby = rtable.newsletter_id,
+                             )
+
+# =============================================================================
+def cms_unread_newsletters(fields=None):
+    """
+        Finds all newsletters accessible, but not yet confirmed as read
+        by the current user
+
+        Args:
+            fields: the names of fields to extract from cms_newsletter
+
+        Returns:
+            - the newsletters as Rows, or
+            - the number of unread newsletters if no fields specified
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    ntable = s3db.cms_newsletter
+    rtable = s3db.cms_newsletter_receipt
+
+    if auth.user:
+        user_id = auth.user.id
+        left = rtable.on((rtable.newsletter_id == ntable.id) & \
+                         (rtable.user_id == user_id) & \
+                         (rtable.deleted == False))
+        query = (ntable.id.belongs(cms_accessible_newsletters())) & \
+                auth.s3_accessible_query("read", ntable) & \
+                (ntable.deleted == False) & \
+                (rtable.id == None)
+    else:
+        query = ntable.id.belongs(set())
+        left = None
+
+    if isinstance(fields, (tuple, list)):
+        # Return newsletter Rows
+        select = [ntable[fn] for fn in fields]
+        return db(query).select(*select, left=left)
+    else:
+        # Just count them
+        num = ntable.id.count()
+        row = db(query).select(num, left=left).first()
+        return row[num]
+
+# =============================================================================
+def cms_mark_newsletter(newsletter_id=None, read=True):
+    """
+        Mark one or more newsletters as read/unread by the current user
+
+        Args:
+            newsletter_id: the newsletter record ID (or a list of IDs)
+            read: True|False to mark as read or unread
+
+        Returns:
+            the number of newsletters marked as read/unread
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    if not newsletter_id or not auth.user:
+        return 0
+
+    # Get all newsletters matching newsletter_id
+    ntable = s3db.cms_newsletter
+    if isinstance(newsletter_id, (tuple, list, set)):
+        query = (ntable.id.belongs(newsletter_id))
+    else:
+        query = (ntable.id == newsletter_id)
+    query &= (ntable.deleted == False)
+    rows = db(query).select(ntable.id)
+
+    newsletter_ids = {row.id for row in rows}
+    if not newsletter_ids:
+        return 0
+
+    # Get all existing receipts for those newsletters
+    user_id = auth.user.id
+    rtable = s3db.cms_newsletter_receipt
+    query = (rtable.newsletter_id.belongs(newsletter_ids)) & \
+            (rtable.user_id == user_id) & \
+            (rtable.deleted == False)
+    receipts = db(query).select(rtable.id,
+                                rtable.newsletter_id,
+                                )
+    if read:
+        # Add missing receipts
+        newsletter_ids -= {row.newsletter_id for row in receipts}
+        for nid in newsletter_ids:
+            receipt = {"user_id": user_id, "newsletter_id": nid}
+            receipt_id = receipt["id"] = rtable.insert(**receipt)
+            auth.s3_set_record_owner(rtable, receipt_id)
+            s3db.onaccept(rtable, receipt, method="create")
+        return len(newsletter_ids)
+    else:
+        # Remove existing receipts
+        resource = s3db.resource("cms_newsletter_receipt",
+                                 id = [row.id for row in receipts],
+                                 )
+        return resource.delete()
 
 # =============================================================================
 def cms_rheader(r, tabs=None):
