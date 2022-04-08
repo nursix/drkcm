@@ -1198,6 +1198,10 @@ def read_newsletter():
         component = r.component
         if not component:
             if r.record:
+                # If a newsletter is opened interactively, mark it as read
+                if r.method in ("read", "update", None) and r.interactive:
+                    s3db.cms_mark_newsletter(r.id)
+
                 table = resource.table
 
                 field = table.message
@@ -1246,6 +1250,7 @@ def read_newsletter():
                            "subject",
                            #"message",
                            "date_sent",
+                           (T("Status"), "read_status"),
                            ]
 
             resource.configure(crud_form = crud_form,

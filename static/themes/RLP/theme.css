@@ -5122,3 +5122,15 @@ body.rtl .event-type-header {
   width: 100%;
   background-color: rgba(200, 0, 0, 0.6);
 }
+
+/* line 667, ../scss/theme/_misc.scss */
+.num-pending {
+  margin: 0 0.4rem;
+  font-weight: normal;
+  font-size: 0.7rem;
+  border: 1px solid #960;
+  padding: 0 0.2rem;
+  background-color: #ffaa00;
+  border-radius: 10px;
+  color: #712e05;
+}
