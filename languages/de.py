@@ -5989,6 +5989,7 @@
 'Theme updated': 'Thema aktualisiert',
 'Theme': 'Thema',
 'Themes': 'Themen',
+'There are <b>%(number)s</b> new newsletters.': 'Es gibt <b>%(number)s</b> neue(s) Rundschreiben.',
 'There are already user accounts registered for this organization': 'Für diese Organisation sind bereits Benutzerkonten registriert',
 'There are errors in the form, please check your input': 'Formular enthält Fehler - bitte die Eingaben überprüfen',
 'There are errors': 'Es sind Fehler aufgetreten',

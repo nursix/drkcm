@@ -53,16 +53,35 @@ class index(CustomController):
         if sr.AUTHENTICATED in roles:
             # Logged-in user
             # => display announcements
-
             from core import S3DateTime
             dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
+            announcements = UL(_class="announcements")
+
+            # Check for unread newsletters
+            if sr.ORG_ADMIN in roles:
+                unread = current.s3db.cms_unread_newsletters()
+            else:
+                unread = False
+            if unread:
+                info = {"number": unread}
+                link = A(XML(T("There are <b>%(number)s</b> new newsletters.") % info),
+                         _href = URL(c="cms", f="read_newsletter"),
+                         )
+
+                nlinfo = LI(DIV(DIV(I(_class="fa fa-exclamation-circle announcement-icon"),
+                                    link,
+                                    _class = "announcement-header",
+                                    ),
+                                _class="announcement-text",
+                                ),
+                            _class = "announcement-box announcement-important",
+                            )
+                announcements.append(nlinfo)
 
             filter_roles = roles if sr.ADMIN not in roles else None
             posts = self.get_announcements(roles=filter_roles)
-
-            # Render announcements list
-            announcements = UL(_class="announcements")
             if posts:
+                # Render announcements list
                 announcements_title = T("Announcements")
                 priority_classes = {2: "announcement-important",
                                     3: "announcement-critical",
