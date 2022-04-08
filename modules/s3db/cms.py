@@ -2301,6 +2301,7 @@ def cms_unread_newsletters(count=True, cached=True):
                          (rtable.user_id == user_id) & \
                          (rtable.deleted == False))
         query = (ntable.id.belongs(cms_accessible_newsletters())) & \
+                (ntable.status == "SENT") & \
                 auth.s3_accessible_query("read", ntable) & \
                 (ntable.deleted == False) & \
                 (rtable.id == None)
