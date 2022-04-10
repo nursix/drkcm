@@ -370,17 +370,17 @@ class register_invited(CustomController):
         mtable = s3db.org_group_membership
 
         left = [gtable.on((mtable.organisation_id == otable.id) & \
-                            (mtable.deleted == False) & \
-                            (gtable.id == mtable.group_id)),
+                          (mtable.deleted == False) & \
+                          (gtable.id == mtable.group_id)),
                 ]
         query = (otable.id == user.organisation_id) & \
                 (otable.deleted == False)
         row = db(query).select(otable.id,
-                                otable.pe_id,
-                                gtable.name,
-                                left = left,
-                                limitby = (0, 1),
-                                ).first()
+                               otable.pe_id,
+                               gtable.name,
+                               left = left,
+                               limitby = (0, 1),
+                               ).first()
         if not row:
             return
 
@@ -397,9 +397,11 @@ class register_invited(CustomController):
 
         elif group_name == AFAS:
             # AfA-user
-            # => assign global SHELTER_READER
-            assign_role(user_id, "SHELTER_READER", for_pe=0)
+            # => assign AFA_MANAGER
+            assign_role(user_id, "AFA_MANAGER", for_pe=pe_id)
 
+        # All invited users:
+        # => assign ORG_ADMIN and SHELTER_MANAGER
         assign_role(user_id, "ORG_ADMIN", for_pe=pe_id)
         assign_role(user_id, "SHELTER_MANAGER", for_pe=pe_id)
 
