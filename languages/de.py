@@ -3501,6 +3501,7 @@
 'Map': 'Karte',
 'Marine Security': 'Hafensicherheit',
 'Marital Status': 'Familienstand',
+'Mark all as read': 'Alle als gelesen markieren',
 'Mark as duplicate': 'Als Duplikat markieren',
 'Marker Details': 'Details zum Marker/Symbol',
 'Marker added': 'Marker/Symbol hinzugefügt',
