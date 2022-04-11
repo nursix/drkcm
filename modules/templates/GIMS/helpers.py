@@ -285,6 +285,7 @@ class ServiceListRepresent(S3Represent):
 
         if current.auth.permission.format == "xls":
             return ", ".join(labels_)
+            #return "\n".join(("- %s" % l) for l in labels_)
 
         html = UL(_class="service-list")
         for label in labels_:

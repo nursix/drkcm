@@ -299,6 +299,8 @@ def cr_shelter_resource(r, tablename):
                    #"website",
                    #"shelter_service__link.service_id",
                    ]
+    if r.representation == "xls":
+        list_fields.append("shelter_service__link.service_id")
 
     s3db.configure("cr_shelter",
                    crud_form = S3SQLCustomForm(*crud_fields),
