@@ -1748,7 +1748,7 @@ def org_facility_resource(r, tablename):
                                          },
                               cols = 2,
                               hidden = not default_obsolete,
-                              )
+                              ),
                 ])
 
     s3db.configure(tablename, filter_widgets=filter_widgets)
