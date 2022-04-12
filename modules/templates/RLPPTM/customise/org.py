@@ -1724,6 +1724,10 @@ def org_facility_resource(r, tablename):
 
         if show_all or r.method == "report":
             binary_tag_opts = OrderedDict([("Y", T("Yes")), ("N", T("No"))])
+            if not show_all:
+                default_public, default_obsolete = "Y", "False"
+            else:
+                default_public = default_obsolete = None
             filter_widgets.extend([
                 OptionsFilter("organisation_id$project_organisation.project_id",
                               options = lambda: get_filter_options("project_project"),
@@ -1731,20 +1735,21 @@ def org_facility_resource(r, tablename):
                               ),
                 OptionsFilter("public.value",
                               label = T("Approved##actionable"),
+                              default = default_public,
                               options = binary_tag_opts,
                               cols = 2,
-                              hidden = True,
+                              hidden = not default_public,
                               ),
+                OptionsFilter("obsolete",
+                              label = T("Status"),
+                              default = default_obsolete,
+                              options = {True: T("Defunct"),
+                                         False: T("Active"),
+                                         },
+                              cols = 2,
+                              hidden = not default_obsolete,
+                              )
                 ])
-        if show_all:
-            filter_widgets.append(OptionsFilter("obsolete",
-                                                label = T("Status"),
-                                                options = {True: T("Defunct"),
-                                                           False: T("Active"),
-                                                           },
-                                                cols = 2,
-                                                hidden = True,
-                                                ))
 
     s3db.configure(tablename, filter_widgets=filter_widgets)
 
