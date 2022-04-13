@@ -939,8 +939,7 @@ class register(CustomController):
         session = current.session
         settings = current.deployment_settings
 
-        registration = settings.get_custom(key="test_station_registration")
-        if not registration:
+        if not settings.get_custom(key="test_station_registration"):
             bypass = settings.get_custom(key="registration_pass")
             if not bypass or bypass != request.get_vars.get("p"):
                 session.error = T("Function not available")
