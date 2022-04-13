@@ -939,9 +939,12 @@ class register(CustomController):
         session = current.session
         settings = current.deployment_settings
 
-        if not settings.get_custom(key="test_station_registration"):
-            session.error = T("Function not available")
-            redirect(URL(c="default", f="index"))
+        registration = settings.get_custom(key="test_station_registration")
+        if not registration:
+            bypass = settings.get_custom(key="registration_pass")
+            if not bypass or bypass != request.get_vars.get("p"):
+                session.error = T("Function not available")
+                redirect(URL(c="default", f="index"))
 
         utable = auth_settings.table_user
 
