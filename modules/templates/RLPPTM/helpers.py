@@ -351,6 +351,37 @@ def is_org_group(organisation_id, group, cacheable=True):
     return bool(row)
 
 # -----------------------------------------------------------------------------
+def is_org_type_tag(organisation_id, tag, value=None):
+    """
+        Check if a type of an organisation has a certain tag
+
+        Args:
+            organisation_id: the organisation ID
+            tag: the tag name
+            value: the tag value (optional)
+
+        Returns:
+            boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ltable = s3db.org_organisation_organisation_type
+    ttable = s3db.org_organisation_type_tag
+
+    joinq = (ttable.organisation_type_id == ltable.organisation_type_id) & \
+            (ttable.tag == tag)
+    if value is not None:
+        joinq &= (ttable.value == value)
+
+    join = ttable.on(joinq & (ttable.deleted == False))
+    query = (ltable.organisation_id == organisation_id) & \
+            (ltable.deleted == False)
+    row = db(query).select(ttable.id, join=join, limitby=(0, 1)).first()
+    return bool(row)
+
+# -----------------------------------------------------------------------------
 def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)

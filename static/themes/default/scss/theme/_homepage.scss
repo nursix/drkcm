@@ -33,6 +33,10 @@
     }
 }
 
+#site-actions {
+    margin-top: 1.25rem;
+}
+
 // ----------------------------------------------------------------------------
 /* Announcements */
 @keyframes blinker {
@@ -55,6 +59,9 @@
     }
     li {
         padding: 10px 0 0;
+    }
+    .fright {
+        float: right;
     }
     .announcement-box {
         display: block;
@@ -126,6 +133,9 @@
         ul, ol {
             padding-left: 0;
             padding-right: 20px;
+        }
+        .fright {
+            float: left;
         }
         .announcement-box {
             .announcement-header {

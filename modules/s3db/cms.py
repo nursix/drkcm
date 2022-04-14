@@ -37,6 +37,9 @@ __all__ = ("CMSContentModel",
            "cms_NewsletterDetails",
            "cms_UpdateNewsletter",
            "cms_newsletter_notify",
+           "cms_accessible_newsletters",
+           "cms_unread_newsletters",
+           "cms_mark_newsletter",
            "cms_index",
            "cms_announcements",
            "cms_documentation",
@@ -1265,6 +1268,7 @@ class CMSNewsletterModel(DataModel):
     names = ("cms_newsletter",
              "cms_newsletter_recipient",
              "cms_newsletter_distribution",
+             "cms_newsletter_receipt",
              )
 
     def model(self):
@@ -1346,6 +1350,7 @@ class CMSNewsletterModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
+                     Field.Method("read_status", self.newsletter_read_status),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1518,6 +1523,17 @@ class CMSNewsletterModel(DataModel):
                      *s3_meta_fields())
 
         # ---------------------------------------------------------------------
+        # Newsletter read confirmation
+        # - link table cms_newsletter <> auth_user
+        #
+        tablename = "cms_newsletter_receipt"
+        define_table(tablename,
+                     Field("newsletter_id", "reference cms_newsletter"),
+                     Field("user_id", "reference auth_user"),
+                     s3_datetime(default="now"),
+                     *s3_meta_fields())
+
+        # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
         return None
@@ -1621,6 +1637,23 @@ class CMSNewsletterModel(DataModel):
         """
 
         cls.update_total_recipients(row.newsletter_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def newsletter_read_status(row):
+        """
+            Field method to indicate the (un)read-status of a newsletter
+        """
+
+        status = ""
+        try:
+            record_id = row.cms_newsletter.id
+        except AttributeError:
+            pass
+        else:
+            if record_id in cms_unread_newsletters(count=False):
+                status = SPAN(current.T("new"), _class="prio prio-amber")
+        return status
 
 # =============================================================================
 class cms_NewsletterDetails:
@@ -2191,6 +2224,161 @@ def cms_newsletter_actions(newsletter):
         actions = [update_btn, remove_btn, send_btn]
 
     return actions
+
+# =============================================================================
+def cms_accessible_newsletters():
+    """
+        Constructs a subquery for newsletters accessible by the current user
+
+        Returns:
+            - a subquery (SQL string) for use with belongs(), or
+            - an empty set if there is no current user
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    if not auth.user:
+        return set()
+
+    settings = current.deployment_settings
+
+    from core import accessible_pe_query
+
+    rtable = s3db.cms_newsletter_recipient
+    types = settings.get_cms_newsletter_recipient_types()
+    query = accessible_pe_query(table = rtable,
+                                instance_types = types,
+                                c = "cms",
+                                f = "newsletter_recipient",
+                                )
+    if auth.user:
+        query |= (rtable.pe_id == auth.user.pe_id)
+
+    return db(query)._select(rtable.newsletter_id,
+                             groupby = rtable.newsletter_id,
+                             )
+
+# =============================================================================
+def cms_unread_newsletters(count=True, cached=True):
+    """
+        Finds all newsletters accessible, but not yet confirmed as read
+        by the current user
+
+        Args:
+            count: return the number of unread newsletters instead
+                   of their record IDs
+            cached: use cached lookup results, if available
+
+        Returns:
+            - the number of unread newsletters, or their record IDs
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    ntable = s3db.cms_newsletter
+    rtable = s3db.cms_newsletter_receipt
+
+    expire, number, record_ids = None, None, None
+
+    session = current.session
+    if cached and "unread_newsletters" in session.s3:
+        try:
+            expire, number, record_ids = session.s3.unread_newsletters
+        except (ValueError, TypeError):
+            pass
+
+    now = datetime.datetime.utcnow()
+    if expire and expire > now:
+        return number if count else record_ids
+
+    if auth.user:
+        user_id = auth.user.id
+        left = rtable.on((rtable.newsletter_id == ntable.id) & \
+                         (rtable.user_id == user_id) & \
+                         (rtable.deleted == False))
+        query = (ntable.id.belongs(cms_accessible_newsletters())) & \
+                (ntable.status == "SENT") & \
+                auth.s3_accessible_query("read", ntable) & \
+                (ntable.deleted == False) & \
+                (rtable.id == None)
+    else:
+        query = ntable.id.belongs(set())
+        left = None
+
+    rows = db(query).select(ntable.id, left=left)
+
+    expire = now + datetime.timedelta(minutes=10)
+    number = len(rows)
+    record_ids = [row.id for row in rows]
+
+    session.s3.unread_newsletters = (expire, number, record_ids)
+
+    return number if count else record_ids
+
+# =============================================================================
+def cms_mark_newsletter(newsletter_id=None, read=True):
+    """
+        Mark one or more newsletters as read/unread by the current user
+
+        Args:
+            newsletter_id: the newsletter record ID (or a list of IDs)
+            read: True|False to mark as read or unread
+
+        Returns:
+            the number of newsletters marked as read/unread
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    if not newsletter_id or not auth.user:
+        return 0
+
+    # Get all newsletters matching newsletter_id
+    ntable = s3db.cms_newsletter
+    if isinstance(newsletter_id, (tuple, list, set)):
+        query = (ntable.id.belongs(newsletter_id))
+    else:
+        query = (ntable.id == newsletter_id)
+    query &= (ntable.deleted == False)
+    rows = db(query).select(ntable.id)
+
+    newsletter_ids = {row.id for row in rows}
+    if not newsletter_ids:
+        return 0
+
+    # Get all existing receipts for those newsletters
+    user_id = auth.user.id
+    rtable = s3db.cms_newsletter_receipt
+    query = (rtable.newsletter_id.belongs(newsletter_ids)) & \
+            (rtable.user_id == user_id) & \
+            (rtable.deleted == False)
+    receipts = db(query).select(rtable.id,
+                                rtable.newsletter_id,
+                                )
+    if read:
+        # Add missing receipts
+        newsletter_ids -= {row.newsletter_id for row in receipts}
+        for nid in newsletter_ids:
+            receipt = {"user_id": user_id, "newsletter_id": nid}
+            receipt_id = receipt["id"] = rtable.insert(**receipt)
+            auth.s3_set_record_owner(rtable, receipt_id)
+            s3db.onaccept(rtable, receipt, method="create")
+        updated = len(newsletter_ids)
+    else:
+        # Remove existing receipts
+        resource = s3db.resource("cms_newsletter_receipt",
+                                 id = [row.id for row in receipts],
+                                 )
+        updated = resource.delete()
+
+    cms_unread_newsletters(cached=False)
+    return updated
 
 # =============================================================================
 def cms_rheader(r, tabs=None):

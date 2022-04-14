@@ -454,8 +454,6 @@ class BulkImporter:
                 error message(s) on error, otherwise None
         """
 
-        s3 = current.response.s3
-
         xslt_path = os.path.join(current.request.folder,
                                  "static",
                                  "formats",
@@ -464,9 +462,12 @@ class BulkImporter:
                                  "user.xsl"
                                  )
 
-        current.s3db.add_components("auth_user",
-                                    auth_masterkey = "user_id",
-                                    )
+        s3db = current.s3db
+        auth = current.auth
+        s3db.add_components("auth_user", auth_masterkey="user_id")
+        s3db.configure("auth_user", onaccept=lambda f: auth.s3_approve_user(f.vars))
+
+        s3 = current.response.s3
         s3.import_prep = current.auth.s3_import_prep
         error = cls.import_csv("auth",
                                "user",

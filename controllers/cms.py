@@ -1163,6 +1163,8 @@ def read_newsletter():
 
     s3.hide_last_update = True
 
+    formkeys_mark = "_formkey[newsletter/mark]"
+
     def prep(r):
 
         s3.crud_strings["cms_newsletter"]["title_list"] = T("Newsletter Inbox")
@@ -1198,6 +1200,10 @@ def read_newsletter():
         component = r.component
         if not component:
             if r.record:
+                # If a newsletter is opened interactively, mark it as read
+                if r.method in ("read", "update", None) and r.interactive:
+                    s3db.cms_mark_newsletter(r.id)
+
                 table = resource.table
 
                 field = table.message
@@ -1212,6 +1218,19 @@ def read_newsletter():
                                                represent = details.contact_represent,
                                                )
                 contact = S3SQLVirtualField("contact", label=T("Contact"))
+
+            elif r.method == "mark":
+                # Mark all unread newsletters as read
+                key = r.post_vars.get("_formkey")
+                keys = session.get(formkeys_mark)
+                if keys and key in keys:
+                    keys.remove(key)
+                    unread = s3db.cms_unread_newsletters(count=False, cached=False)
+                    s3db.cms_mark_newsletter(unread)
+                    redirect(r.url(method=""))
+                else:
+                    r.error(400, "invalid request", next=r.url(method=""))
+
             else:
                 contact = None
 
@@ -1246,6 +1265,7 @@ def read_newsletter():
                            "subject",
                            #"message",
                            "date_sent",
+                           (T("Status"), "read_status"),
                            ]
 
             resource.configure(crud_form = crud_form,
@@ -1264,6 +1284,35 @@ def read_newsletter():
                                 )
         return True
     s3.prep = prep
+
+    def postp(r, output):
+
+        if not r.record and not r.method and isinstance(output, dict):
+
+            if "buttons" in output:
+                buttons = output["buttons"]
+            else:
+                buttons = output["buttons"] = {}
+            add = buttons.get("add_btn")
+
+            if s3db.cms_unread_newsletters():
+                # Add button to mark all unread newsletters as read
+                import uuid
+                key = str(uuid.uuid4())
+                keys = session.get(formkeys_mark)
+                session[formkeys_mark] = [key] if not keys else [key] + keys[:9]
+
+                mark = FORM(BUTTON(T("Mark all as read"),
+                                   _type="submit",
+                                   _class="action-btn",
+                                   ),
+                            _action = r.url(method="mark"),
+                            hidden = {"_formkey": key},
+                            )
+                buttons["add_btn"] = TAG[""](mark, add) if add else mark
+
+        return output
+    s3.postp = postp
 
     return crud_controller("cms", "newsletter", rheader=s3db.cms_rheader)
 

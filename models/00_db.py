@@ -151,10 +151,13 @@ def s3_clear_session():
 
     if "s3" in session:
         s3 = session.s3
-        opts = ["hrm", "report_options", "deduplicate"]
-        for o in opts:
-            if o in s3:
-                del s3[o]
+        for keyword in ("hrm",
+                        "report_options",
+                        "deduplicate",
+                        "unread_newsletters",
+                        ):
+            if keyword in s3:
+                del s3[keyword]
 
 # -----------------------------------------------------------------------------
 def s3_auth_on_login(form):

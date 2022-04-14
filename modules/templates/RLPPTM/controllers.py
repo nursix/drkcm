@@ -37,10 +37,10 @@ class index(CustomController):
         output = {}
 
         T = current.T
-
+        s3db = current.s3db
         auth = current.auth
-        settings = current.deployment_settings
 
+        settings = current.deployment_settings
 
         # Defaults
         login_form = None
@@ -51,65 +51,49 @@ class index(CustomController):
         roles = current.session.s3.roles
         sr = auth.get_system_roles()
         if sr.AUTHENTICATED in roles:
-            # Logged-in user
-            # => display announcements
-
-            from core import S3DateTime
-            dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
-
-            filter_roles = roles if sr.ADMIN not in roles else None
-            posts = self.get_announcements(roles=filter_roles)
-
-            # Render announcements list
+            # Logged-in user => display announcements
             announcements = UL(_class="announcements")
+            render_box = self.announcements_item
+
+            # Check for unread newsletters
+            unread = s3db.cms_unread_newsletters() \
+                     if sr.ORG_ADMIN in roles else False
+            if unread:
+                info = {"number": unread}
+                link = A(XML(T("There are <b>%(number)s</b> new newsletters.") % info),
+                         _href = URL(c="cms", f="read_newsletter"),
+                         _title = T("Open inbox"),
+                         )
+                nlinfo = render_box(header=link, priority="important")
+                announcements.append(nlinfo)
+
+            # CMS Announcements
+            filter_roles = roles if sr.ADMIN not in roles else None
+            posts = s3db.cms_announcements(roles=filter_roles)
             if posts:
                 announcements_title = T("Announcements")
-                priority_classes = {2: "announcement-important",
-                                    3: "announcement-critical",
-                                    }
-                priority_icons = {2: "fa-exclamation-circle",
-                                  3: "fa-exclamation-triangle",
-                                  }
+
+                from core import S3DateTime
+                dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
+
+                priorities = {2: "important", 3: "critical"}
                 for post in posts:
-                    # The header
                     header = H4(post.name)
-
-                    # Priority
                     priority = post.priority
-                    # Add icon to header?
-                    icon_class = priority_icons.get(post.priority)
-                    if icon_class:
-                        header = TAG[""](I(_class="fa %s announcement-icon" % icon_class),
-                                         header,
-                                         )
-                    # Priority class for the box
-                    prio = priority_classes.get(priority, "")
-
-                    row = LI(DIV(DIV(DIV(dtrepr(post.date),
-                                        _class = "announcement-date",
-                                        ),
-                                    _class="fright",
-                                    ),
-                                 DIV(DIV(header,
-                                         _class = "announcement-header",
-                                         ),
-                                     DIV(XML(post.body),
-                                         _class = "announcement-body",
-                                         ),
-                                     _class="announcement-text",
-                                    ),
-                                 _class = "announcement-box %s" % prio,
-                                 ),
-                             )
-                    announcements.append(row)
+                    box = render_box(date = dtrepr(post.date),
+                                     header = header,
+                                     body = XML(post.body),
+                                     priority = priorities.get(priority, ""),
+                                     )
+                    announcements.append(box)
         else:
             # Anonymous user
             # => provide a login box
-            login_div = DIV(H3(T("Login")),
-                            )
+            login_div = DIV(H3(T("Login")))
             auth.messages.submit_button = T("Login")
             login_form = auth.login(inline=True)
 
+        # Homepage action buttons
         buttons = UL(LI(A(ICON("organisation"), T("Test Stations"),
                           _href = URL(c = "org",
                                       f = "facility",
@@ -146,52 +130,40 @@ class index(CustomController):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_announcements(roles=None):
+    def announcements_item(header=None, body=None, date=None, priority=""):
         """
-            Get current announcements
+            Layout for announcement items
 
             Args:
-                roles: filter announcement by these roles
-
-            Returns:
-                any announcements (Rows)
+                header: the header text
+                body: the body text
+                date: the date of the entry
+                priority: priority "important"|"critical"|""
         """
 
-        db = current.db
-        s3db = current.s3db
+        box = DIV(_class="announcement-box announcement-%s" % priority)
 
-        # Look up all announcements
-        ptable = s3db.cms_post
-        stable = s3db.cms_series
-        join = stable.on((stable.id == ptable.series_id) & \
-                         (stable.name == "Announcements") & \
-                         (stable.deleted == False))
-        query = (ptable.date <= current.request.utcnow) & \
-                (ptable.expired == False) & \
-                (ptable.deleted == False)
+        if date:
+            box.append(DIV(DIV(date, _class="announcement-date"),
+                           _class = "fright",
+                           ))
 
-        if roles:
-            # Filter posts by roles
-            ltable = s3db.cms_post_role
-            q = (ltable.group_id.belongs(roles)) & \
-                (ltable.deleted == False)
-            rows = db(q).select(ltable.post_id,
-                                cache = s3db.cache,
-                                groupby = ltable.post_id,
-                                )
-            post_ids = {row.post_id for row in rows}
-            query = (ptable.id.belongs(post_ids)) & query
-
-        posts = db(query).select(ptable.name,
-                                 ptable.body,
-                                 ptable.date,
-                                 ptable.priority,
-                                 join = join,
-                                 orderby = (~ptable.priority, ~ptable.date),
-                                 limitby = (0, 5),
+        text = DIV(_class="announcement-text")
+        if header:
+            icons = {"important": "fa-exclamation-circle",
+                     "critical": "fa-exclamation-triangle",
+                     }
+            icon = icons.get(priority)
+            if icon:
+                header = TAG[""](I(_class="fa %s announcement-icon" % icon),
+                                 header,
                                  )
+            text.append(DIV(header, _class="announcement-header"))
+        if body:
+            text.append(DIV(body, _class="announcement-body"))
+        box.append(text)
 
-        return posts
+        return LI(box)
 
 # =============================================================================
 class privacy(CustomController):
@@ -968,8 +940,10 @@ class register(CustomController):
         settings = current.deployment_settings
 
         if not settings.get_custom(key="test_station_registration"):
-            session.error = T("Function not available")
-            redirect(URL(c="default", f="index"))
+            bypass = settings.get_custom(key="registration_pass")
+            if not bypass or bypass != request.get_vars.get("p"):
+                session.error = T("Function not available")
+                redirect(URL(c="default", f="index"))
 
         utable = auth_settings.table_user
 

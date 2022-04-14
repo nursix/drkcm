@@ -12,13 +12,22 @@ from core import s3_format_datetime
 
 from templates.RLPPTM.helpers import InviteUserOrg
 
-# OrgGroup
-group = "Kommunale Verwaltung"
+# -----------------------------------------------------------------------------
+# Control variables
+#
+
+# OrgGroup (%-wildcards to use like-queries)
+group = "Kommunale Verwaltung%"
 
 # Batch limit (set to False to disable)
 BATCH_LIMIT = 250
 
+# Trial flag (set to True to dry-run, without actually sending any invitations)
+trial = True
+
+# -----------------------------------------------------------------------------
 # Override auth (disables all permission checks)
+#
 auth.override = True
 
 # Failed-flag
@@ -56,10 +65,15 @@ if not failed:
         with open(LOGFILE, "w", encoding="utf-8") as logfile:
             log = logfile
 
+            if "%" in group:
+                group_query = (gtable.name.like(group))
+            else:
+                group_query = (gtable.name == group)
+
             join = [mtable.on((mtable.organisation_id == otable.id) & \
                               (mtable.deleted == False)),
                     gtable.on((gtable.id == mtable.group_id) & \
-                              (gtable.name == group) & \
+                              group_query & \
                               (gtable.deleted == False)),
                     ]
             query = (otable.deleted == False)
@@ -126,14 +140,18 @@ if not failed:
                     skipped += 1
                     continue
 
-                error = invite_org(organisation, email, account=None)
-                if not error:
+                if trial:
                     sent += 1
-                    infoln("invited.")
-                    db.commit()
+                    infoln("to be invited.")
                 else:
-                    failures += 1
-                    infoln("invitation failed (%s)." % error)
+                    error = invite_org(organisation, email, account=None)
+                    if not error:
+                        sent += 1
+                        infoln("invited.")
+                        db.commit()
+                    else:
+                        failures += 1
+                        infoln("invitation failed (%s)." % error)
 
                 if BATCH_LIMIT and sent >= BATCH_LIMIT:
                     infoln("Batch limit (%s) reached" % BATCH_LIMIT)
@@ -141,8 +159,11 @@ if not failed:
                     break
 
             infoln("")
-            infoln("%s invitations sent" % sent)
-            infoln("%s invitations failed" % failures)
+            if trial:
+                infoln("%s invitations to send" % sent)
+            else:
+                infoln("%s invitations sent" % sent)
+                infoln("%s invitations failed" % failures)
             infoln("%s organisations skipped" % skipped)
             log = None
 

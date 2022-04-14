@@ -36,6 +36,14 @@ def config(settings):
     settings.base.theme = "RLP"
     settings.base.theme_layouts = "GIMS"
 
+    # Custom models/controllers
+    settings.base.models = "templates.GIMS.models"
+    settings.base.rest_controllers = {
+        ("cr", "reception_center_type"): ("cr", "reception_center_type"),
+        ("cr", "reception_center"): ("cr", "reception_center"),
+        ("cr", "reception_center_status"): ("cr", "reception_center_status"),
+        }
+
     # Authentication settings
     settings.auth.password_min_length = 8
     settings.auth.consent_tracking = True
@@ -125,8 +133,6 @@ def config(settings):
     }
     settings.fin.currency_default = "EUR"
 
-    settings.cms.hide_index = False
-
     # Do not require international phone number format
     settings.msg.require_international_phone_numbers = False
 
@@ -185,7 +191,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     # CMS Module Settings
     #
-    settings.cms.hide_index = True
+    settings.cms.hide_index = {"default": False, "_default": True}
     settings.cms.newsletter_recipient_types = ("org_organisation",)
 
     from .customise.cms import cms_newsletter_resource, \
@@ -209,12 +215,26 @@ def config(settings):
 
     from .customise.cr import cr_shelter_resource, \
                               cr_shelter_controller, \
-                              cr_shelter_population_resource
+                              cr_shelter_population_resource, \
+                              cr_shelter_population_controller, \
+                              cr_shelter_status_resource, \
+                              cr_reception_center_resource, \
+                              cr_reception_center_controller, \
+                              cr_reception_center_type_resource, \
+                              cr_reception_center_type_controller
 
     settings.customise_cr_shelter_resource = cr_shelter_resource
     settings.customise_cr_shelter_controller = cr_shelter_controller
 
     settings.customise_cr_shelter_population_resource = cr_shelter_population_resource
+    settings.customise_cr_shelter_population_controller = cr_shelter_population_controller
+
+    settings.customise_cr_shelter_status_resource = cr_shelter_status_resource
+
+    settings.customise_cr_reception_center_resource = cr_reception_center_resource
+    settings.customise_cr_reception_center_controller = cr_reception_center_controller
+    settings.customise_cr_reception_center_type_resource = cr_reception_center_type_resource
+    settings.customise_cr_reception_center_type_controller = cr_reception_center_type_controller
 
     # -------------------------------------------------------------------------
     # Document settings

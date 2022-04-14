@@ -1467,7 +1467,7 @@ def config(settings):
         field.label = population_label
         field.comment = DIV(_class="tooltip",
                             _title="%s|%s" % (population_label,
-                                              T("Current shelter population as a number of people"),
+                                              T("Current shelter population as number of people"),
                                               ))
 
         # Enable contact name and website fields

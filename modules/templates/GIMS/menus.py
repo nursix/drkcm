@@ -49,7 +49,12 @@ class S3MainMenu(default.S3MainMenu):
                     MM("My Organizations", vars={"mine": "1"}),
                     MM("All Organizations"),
                     ),
-                MM("Shelters", c="cr", f="shelter", restrict=("SHELTER_MANAGER", "SHELTER_READER")),
+                MM("Shelters", c="cr", f="shelter",
+                   restrict=("SHELTER_MANAGER", "SHELTER_READER"),
+                   ),
+                MM("Reception Centers", c="cr", f="reception_center",
+                   restrict=("AFA_MANAGER", "AFA_READER"),
+                   ),
                 MM("Newsletters", c="cms", f="read_newsletter"),
                 ]
 
@@ -182,21 +187,46 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         ADMIN = current.auth.get_system_roles().ADMIN
 
-        return M(c="cr")(
-                    M("Shelters", f="shelter")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                        ),
-                    M("Statistics", link=False)(
-                        M("Capacity", f="shelter", m="report"),
-                        M("Current Population##shelter", f="shelter_population", m="report"),
-                        ),
-                    M("Administration", link=False, restrict=(ADMIN,))(
-                        M("Shelter Types", f="shelter_type"),
-                        M("Shelter Services", f="shelter_service"),
-                        M("Population Types", f="population_type"),
-                        ),
-                )
+        rc_functions = ("reception_center",
+                        "reception_center_status",
+                        "reception_center_type",
+                        )
+
+        if current.request.function in rc_functions:
+            # Reception center perspective
+            menu = M(c="cr")(
+                        M("Facilities", f="reception_center")(
+                            M("Create", m="create"),
+                            M("Map", m="map"),
+                            ),
+                        M("Statistics", link=False)(
+                            M("Capacity / Occupancy", f="reception_center", m="report"),
+                            #M("Status History", f="reception_center_status", m="timeplot"),
+                            ),
+                        M("Administration", link=False, restrict=(ADMIN,))(
+                            M("Facility Types", f="reception_center_type"),
+                            ),
+                        )
+
+        else:
+            # Shelter management perspective
+            menu = M(c="cr")(
+                        M("Shelters", f="shelter")(
+                            M("Create", m="create"),
+                            M("Map", m="map"),
+                            ),
+                        M("Statistics", link=False)(
+                            M("Capacity", f="shelter", m="report"),
+                            M("Current Population##shelter", f="shelter_population", m="report"),
+                            ),
+                        M("Administration", link=False, restrict=(ADMIN,))(
+                            M("Shelter Types", f="shelter_type"),
+                            M("Shelter Services", f="shelter_service"),
+                            M("Population Types", f="population_type"),
+                            ),
+                        )
+
+        return menu
 
     # -------------------------------------------------------------------------
     @staticmethod

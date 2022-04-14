@@ -319,6 +319,7 @@ class Daily():
         for row in rows:
             facility_approval_update_mgrinfo(row.org_organisation.id,
                                              row.org_organisation_tag.value,
+                                             notify_unlist = True,
                                              )
 
 # END =========================================================================
