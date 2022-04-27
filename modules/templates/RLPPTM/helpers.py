@@ -1489,8 +1489,8 @@ class InvoicePDF(CRUDMethod):
         # Filename to include invoice number if available
         invoice_no = r.record.invoice_no
 
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "read",
@@ -1815,8 +1815,8 @@ class ClaimPDF(CRUDMethod):
         # Filename to include invoice number if available
         invoice_no = self.invoice_number(r.record)
 
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "read",

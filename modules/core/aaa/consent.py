@@ -1,7 +1,7 @@
 """
     Consent Tracking
 
-    Copyright: (c) 2018-2021 Sahana Software Foundation
+    Copyright: (c) 2018-2022 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation

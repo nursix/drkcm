@@ -1,7 +1,7 @@
 """
     Request Model
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1074,8 +1074,8 @@ class RequestModel(DataModel):
         else:
             filename = None
 
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "list",

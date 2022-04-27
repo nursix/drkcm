@@ -2133,9 +2133,9 @@
         },
 
         /**
-         * Download the pivot table as XLS spreadsheet
+         * Download the pivot table as XLSX spreadsheet
          */
-        _downloadXLS: function() {
+        _downloadXLSX: function() {
 
             // Make sure we actually have data in the pivot table
             var pivotdata = this.element.find('input[type="hidden"][name="pivotdata"]');
@@ -2152,7 +2152,7 @@
             var ajaxURL = this._updateAjaxURL(options, filters, true);
 
             // Construct download URL
-            var downloadURL = this._setExtension(ajaxURL, 'xls');
+            var downloadURL = this._setExtension(ajaxURL, 'xlsx');
 
             // Use searchDownloadS3 if present, or fallback to window.open
             if ($.searchDownloadS3 !== undefined) {
@@ -2198,7 +2198,7 @@
 
             // Exports
             $('.pt-export-xls', el).on('click' + ns, function() {
-                pt._downloadXLS();
+                pt._downloadXLSX();
             });
 
             // Totals-option doesn't need Ajax-refresh

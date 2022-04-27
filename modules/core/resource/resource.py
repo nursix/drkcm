@@ -1,7 +1,7 @@
 """
     CRUD Resource
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1187,8 +1187,8 @@ class CRUDResource:
         self._rows = None
         self._rowindex = None
         self._length = None
-        self._ids = None
-        self._uids = None
+        self._ids = []
+        self._uids = []
         self.files = Storage()
 
         for component in self.components.loaded.values():

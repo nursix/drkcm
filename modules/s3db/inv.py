@@ -2271,8 +2271,8 @@ $.filterOptionsS3({
             list_fields.extend(("currency",
                                 "pack_value",
                                 ))
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "list",
@@ -2427,8 +2427,8 @@ $.filterOptionsS3({
                        "pack_value",
                        "bin"
                        ]
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "list",
@@ -2466,8 +2466,8 @@ $.filterOptionsS3({
         site_id = record.site_id
         site = field.represent(site_id, False)
 
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "list",

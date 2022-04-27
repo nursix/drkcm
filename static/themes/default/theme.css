@@ -2560,19 +2560,23 @@ table.dataTable table.import-item-details {
   background-image: url(../../img/icon-xls.png);
 }
 /* line 334, ../scss/theme/_tables.scss */
+.dt-export-options .list_formats .dt-export.export_xlsx {
+  background-image: url(../../img/icon-xls.png);
+}
+/* line 337, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 339, ../scss/theme/_tables.scss */
+/* line 342, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 341, ../scss/theme/_tables.scss */
+/* line 344, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options .dt-export {
   float: left;
 }
 
-/* line 347, ../scss/theme/_tables.scss */
+/* line 350, ../scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;
@@ -2941,67 +2945,78 @@ table.dataTable table.import-item-details {
   color: #FFFFFF;
   background-color: #2ba6cb;
 }
+/* line 98, ../scss/theme/_menus.scss */
+.side-nav .num-pending {
+  margin: 0 0.4rem;
+  font-weight: normal;
+  font-size: 0.7rem;
+  border: 1px solid #960;
+  padding: 0 0.2rem;
+  background-color: #ffaa00;
+  border-radius: 10px;
+  color: #712e05;
+}
 
 /* Page Header */
-/* line 103, ../scss/theme/_menus.scss */
+/* line 113, ../scss/theme/_menus.scss */
 .main-title .org-logo {
   vertical-align: top;
   display: inline-block;
   padding: 0.4rem 0.8rem 0.3rem 0;
 }
-/* line 108, ../scss/theme/_menus.scss */
+/* line 118, ../scss/theme/_menus.scss */
 .main-title .system-title {
   display: inline-block;
 }
-/* line 110, ../scss/theme/_menus.scss */
+/* line 120, ../scss/theme/_menus.scss */
 .main-title .system-title .system-name {
   color: #333333;
 }
-/* line 113, ../scss/theme/_menus.scss */
+/* line 123, ../scss/theme/_menus.scss */
 .main-title .system-title .org-name {
   color: #999999;
   line-height: 1rem;
 }
-/* line 117, ../scss/theme/_menus.scss */
+/* line 127, ../scss/theme/_menus.scss */
 .main-title .system-title h5:first-child, .main-title .system-title h6:first-child {
   margin: 0.3rem 0 0.125rem;
 }
-/* line 121, ../scss/theme/_menus.scss */
+/* line 131, ../scss/theme/_menus.scss */
 .main-title .personal-menu-area {
   text-align: right;
 }
-/* line 124, ../scss/theme/_menus.scss */
+/* line 134, ../scss/theme/_menus.scss */
 .main-title .personal-menu {
   float: right;
   clear: right;
   padding-top: 0;
   margin-bottom: 0.125rem;
 }
-/* line 129, ../scss/theme/_menus.scss */
+/* line 139, ../scss/theme/_menus.scss */
 .main-title .personal-menu li a {
   padding: 0 0.375rem;
 }
-/* line 133, ../scss/theme/_menus.scss */
+/* line 143, ../scss/theme/_menus.scss */
 .main-title .language-selector {
   float: right;
   display: block;
   margin-top: 0.625rem;
   margin-bottom: 0.125rem;
 }
-/* line 140, ../scss/theme/_menus.scss */
+/* line 150, ../scss/theme/_menus.scss */
 [dir=rtl] .main-title .org-logo {
   padding: 0.4rem 0 0.3rem 0.8rem;
 }
-/* line 143, ../scss/theme/_menus.scss */
+/* line 153, ../scss/theme/_menus.scss */
 [dir=rtl] .main-title .personal-menu-area {
   text-align: left;
 }
-/* line 146, ../scss/theme/_menus.scss */
+/* line 156, ../scss/theme/_menus.scss */
 [dir=rtl] .main-title .personal-menu {
   float: left;
   clear: left;
 }
-/* line 150, ../scss/theme/_menus.scss */
+/* line 160, ../scss/theme/_menus.scss */
 [dir=rtl] .main-title .language-selector {
   float: left;
 }
@@ -4190,35 +4205,44 @@ h4.profile-sub-header {
   padding: 0.35rem 0;
 }
 
+/* line 36, ../scss/theme/_homepage.scss */
+#site-actions {
+  margin-top: 1.25rem;
+}
+
 /* Announcements */
 @keyframes blinker {
   50% {
     opacity: 0;
   }
 }
-/* line 43, ../scss/theme/_homepage.scss */
+/* line 47, ../scss/theme/_homepage.scss */
 .announcements-title {
   font-variant: all-small-caps;
   font-weight: bold;
 }
 
-/* line 47, ../scss/theme/_homepage.scss */
+/* line 51, ../scss/theme/_homepage.scss */
 .announcements {
   margin: 0;
   padding: 0 0 0 1rem;
   border-left: 1px solid #166068;
   list-style: none outside none;
 }
-/* line 52, ../scss/theme/_homepage.scss */
+/* line 56, ../scss/theme/_homepage.scss */
 .announcements ul, .announcements ol {
   padding-left: 20px;
   list-style: none outside none;
 }
-/* line 56, ../scss/theme/_homepage.scss */
+/* line 60, ../scss/theme/_homepage.scss */
 .announcements li {
   padding: 10px 0 0;
 }
-/* line 59, ../scss/theme/_homepage.scss */
+/* line 63, ../scss/theme/_homepage.scss */
+.announcements .fright {
+  float: right;
+}
+/* line 66, ../scss/theme/_homepage.scss */
 .announcements .announcement-box {
   display: block;
   background: #fff7d9;
@@ -4227,88 +4251,92 @@ h4.profile-sub-header {
   padding: 0.7rem;
   margin-bottom: 1.5rem;
 }
-/* line 67, ../scss/theme/_homepage.scss */
+/* line 74, ../scss/theme/_homepage.scss */
 .announcements .announcement-box.announcement-important .announcement-icon {
   color: #0088ca;
 }
-/* line 71, ../scss/theme/_homepage.scss */
+/* line 78, ../scss/theme/_homepage.scss */
 .announcements .announcement-box.announcement-critical {
   border: 1px solid #ca0000;
   background-color: #ffebea;
 }
-/* line 74, ../scss/theme/_homepage.scss */
+/* line 81, ../scss/theme/_homepage.scss */
 .announcements .announcement-box.announcement-critical .announcement-icon {
   color: #ca0000;
   animation: blinker 0.7s step-start 4;
 }
-/* line 80, ../scss/theme/_homepage.scss */
+/* line 87, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-header .announcement-icon {
   display: inline-block;
   font-size: 1.3rem;
   padding: 0 0.7rem 0 0;
 }
-/* line 85, ../scss/theme/_homepage.scss */
+/* line 92, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-header h4 {
   display: inline-block;
 }
-/* line 89, ../scss/theme/_homepage.scss */
+/* line 96, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text {
   font-size: 0.9rem;
   line-height: 1.3;
 }
-/* line 92, ../scss/theme/_homepage.scss */
+/* line 99, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text h4 {
   font-size: 1.2rem;
 }
-/* line 95, ../scss/theme/_homepage.scss */
+/* line 102, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text ul {
   list-style: disc outside none;
 }
-/* line 98, ../scss/theme/_homepage.scss */
+/* line 105, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text ol {
   list-style: decimal outside none;
 }
-/* line 101, ../scss/theme/_homepage.scss */
+/* line 108, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text li {
   padding: 0;
 }
-/* line 104, ../scss/theme/_homepage.scss */
+/* line 111, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text div {
   white-space: pre-line;
 }
-/* line 107, ../scss/theme/_homepage.scss */
+/* line 114, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text .announcement-header {
   margin: 0 0 0.8rem 0;
 }
-/* line 110, ../scss/theme/_homepage.scss */
+/* line 117, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text announcement-body {
   white-space: pre-line;
 }
-/* line 112, ../scss/theme/_homepage.scss */
+/* line 119, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-text announcement-body p {
   margin-left: 1rem;
 }
-/* line 117, ../scss/theme/_homepage.scss */
+/* line 124, ../scss/theme/_homepage.scss */
 .announcements .announcement-box .announcement-date {
   font-size: 0.7rem;
   margin-top: 0.4rem;
 }
-/* line 122, ../scss/theme/_homepage.scss */
+/* line 129, ../scss/theme/_homepage.scss */
 [dir=rtl] .announcements {
   padding: 0 1rem 0 0;
   border-left: 0;
   border-right: 1px solid #166068;
 }
-/* line 126, ../scss/theme/_homepage.scss */
+/* line 133, ../scss/theme/_homepage.scss */
 [dir=rtl] .announcements ul, [dir=rtl] .announcements ol {
   padding-left: 0;
   padding-right: 20px;
 }
-/* line 132, ../scss/theme/_homepage.scss */
+/* line 137, ../scss/theme/_homepage.scss */
+[dir=rtl] .announcements .fright {
+  float: left;
+}
+/* line 142, ../scss/theme/_homepage.scss */
 [dir=rtl] .announcements .announcement-box .announcement-header .announcement-icon {
   padding: 0 0 0 0.7rem;
 }
-/* line 136, ../scss/theme/_homepage.scss */
+/* line 146, ../scss/theme/_homepage.scss */
 [dir=rtl] .announcements .announcement-box .announcement-header announcement-body p {
   margin-left: 0;
   margin-right: 1rem;

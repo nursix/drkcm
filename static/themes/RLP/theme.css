@@ -2560,19 +2560,23 @@ table.dataTable table.import-item-details {
   background-image: url(../../img/icon-xls.png);
 }
 /* line 334, ../../default/scss/theme/_tables.scss */
+.dt-export-options .list_formats .dt-export.export_xlsx {
+  background-image: url(../../img/icon-xls.png);
+}
+/* line 337, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 339, ../../default/scss/theme/_tables.scss */
+/* line 342, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 341, ../../default/scss/theme/_tables.scss */
+/* line 344, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options .dt-export {
   float: left;
 }
 
-/* line 347, ../../default/scss/theme/_tables.scss */
+/* line 350, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

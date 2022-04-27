@@ -1,7 +1,7 @@
 """
     Grouped Items Report
 
-    Copyright: 2015-2021 (c) Sahana Software Foundation
+    Copyright: 2015-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -645,20 +645,19 @@ class S3GroupedItemsTable:
 
         pdf_footer = self.pdf_footer
 
-        from ..resource import S3Exporter
-        exporter = S3Exporter().pdf
-        return exporter(self.resource,
-                        request = r,
-                        pdf_title = title,
-                        pdf_header = pdf_header,
-                        pdf_header_padding = 12,
-                        pdf_footer = pdf_footer,
-                        pdf_callback = lambda r: self.html(),
-                        pdf_table_autogrow = "B",
-                        pdf_orientation = "Landscape",
-                        pdf_html_styles = styles,
-                        pdf_filename = filename,
-                        )
+        from ..resource import DataExporter
+        return DataExporter.pdf(self.resource,
+                                request = r,
+                                pdf_title = title,
+                                pdf_header = pdf_header,
+                                pdf_header_padding = 12,
+                                pdf_footer = pdf_footer,
+                                pdf_callback = lambda r: self.html(),
+                                pdf_table_autogrow = "B",
+                                pdf_orientation = "Landscape",
+                                pdf_html_styles = styles,
+                                pdf_filename = filename,
+                                )
 
     # -------------------------------------------------------------------------
     def xls(self, r, filename=None):
@@ -712,13 +711,12 @@ class S3GroupedItemsTable:
                    }
 
         # Export as XLS
-        from ..resource import S3Exporter
-        exporter = S3Exporter().xls
-        return exporter(xlsdata,
-                        title = self.title,
-                        use_colour = True,
-                        evenodd = False,
-                        )
+        from ..resource import DataExporter
+        return DataExporter.xls(xlsdata,
+                                title = self.title,
+                                use_colour = True,
+                                evenodd = False,
+                                )
 
     # -------------------------------------------------------------------------
     def xls_group_data(self, rows, group, level=0):

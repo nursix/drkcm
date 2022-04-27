@@ -1,4 +1,4 @@
-# Warning: S3XLS unresolved dependency: xlwt required for XLS export
+# Warning: XLSWriter unresolved dependency: xlwt required for XLS export
 xlwt>=0.7.2
 # Warning: GIS unresolved dependency: shapely required for GIS support
 Shapely>=1.2.14 #shapely
@@ -14,9 +14,9 @@ reportlab>=3.6
 pyserial>=2.6
 # Warning: S3Msg unresolved dependency: tweepy required for non-Tropo Twitter support
 tweepy>=1.9
-# Warning: S3XLS unresolved dependency: xlrd required for XLS export and import
+# Warning: XLSWriter unresolved dependency: xlrd required for XLS export and import
 xlrd>=0.7.1
-# Warning: S3XLS unresolved dependency: openpyxl required for XLSX import
+# Warning: XLSWriter unresolved dependency: openpyxl required for XLSX import
 openpyxl>=3.0.7
 # Warning: S3MSG unresolved dependency: sgmllib3k required for Feed import on Python 3.x
 sgmllib3k>=1.0.0

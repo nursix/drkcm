@@ -13,7 +13,7 @@ from reportlab.lib.enums import TA_CENTER
 
 from gluon import current
 
-from core.resource.codecs.card import S3PDFCardLayout
+from core.resource.codecs.card import PDFCardLayout
 from core import s3_format_fullname, s3_str
 
 # Fonts we use in this layout
@@ -21,7 +21,7 @@ NORMAL = "Helvetica"
 BOLD = "Helvetica-Bold"
 
 # =============================================================================
-class IDCardLayout(S3PDFCardLayout):
+class IDCardLayout(PDFCardLayout):
     """
         Layout for printable beneficiary ID cards
     """

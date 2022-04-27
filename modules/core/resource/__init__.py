@@ -1,4 +1,3 @@
-from .codec import *
 #from .components import *
 from .delete import *
 from .exporter import *

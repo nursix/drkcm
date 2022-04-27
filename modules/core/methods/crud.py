@@ -1,7 +1,7 @@
 """
     Interactive CRUD
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -36,7 +36,7 @@ from gluon.languages import lazyT
 from gluon.storage import Storage
 from gluon.tools import callback
 
-from ..resource import S3Exporter
+from ..resource import DataExporter
 from ..tools import JSONSEPARATORS, S3DateTime, get_crud_string, \
                     s3_decode_iso_datetime, s3_represent_value, \
                     s3_set_extension, s3_str, s3_validate
@@ -779,43 +779,38 @@ class S3CRUD(CRUDMethod):
             response.view = self._view(r, "plain.html")
 
         elif representation == "csv":
-            exporter = S3Exporter().csv
-            output = exporter(resource)
+            output = DataExporter.csv(resource)
 
         #elif representation == "map":
-        #    exporter = S3Map()
-        #    output = exporter(r, **attr)
+        #    output = S3Map()(r, **attr)
 
         elif representation == "pdf":
-            exporter = S3Exporter().pdf
-            output = exporter(resource, request=r, **attr)
+            output = DataExporter.pdf(resource, request=r, **attr)
 
         elif representation == "shp":
-            list_fields = resource.list_fields()
-            exporter = S3Exporter().shp
-            output = exporter(resource, list_fields=list_fields, **attr)
+            output = DataExporter.shp(resource,
+                                      list_fields = resource.list_fields(),
+                                      **attr)
 
         elif representation == "svg":
-            list_fields = resource.list_fields()
-            exporter = S3Exporter().svg
-            output = exporter(resource, list_fields=list_fields, **attr)
+            output = DataExporter.svg(resource,
+                                      list_fields = resource.list_fields(),
+                                      **attr)
 
         elif representation == "xls":
-            list_fields = resource.list_fields()
-            exporter = S3Exporter().xls
-            output = exporter(resource, list_fields=list_fields)
+            output = DataExporter.xls(resource)
+
+        elif representation == "xlsx":
+            output = DataExporter.xlsx(resource)
 
         elif representation == "json":
-            exporter = S3Exporter().json
-
             # Render extra "_tooltip" field for each row?
             get_vars = request.get_vars
             if "tooltip" in get_vars:
                 tooltip = get_vars["tooltip"]
             else:
                 tooltip = None
-
-            output = exporter(resource, tooltip=tooltip)
+            output = DataExporter.json(resource, tooltip=tooltip)
 
         elif representation == "card":
 
@@ -824,7 +819,7 @@ class S3CRUD(CRUDMethod):
                 r.error(415, current.ERROR.BAD_FORMAT)
 
             pagesize = resource.get_config("pdf_card_pagesize")
-            output = S3Exporter().pdfcard(resource,
+            output = DataExporter.pdfcard(resource,
                                           pagesize = pagesize,
                                           )
 
@@ -1344,9 +1339,7 @@ class S3CRUD(CRUDMethod):
             output = {"item": items}
 
         elif representation == "csv":
-
-            exporter = S3Exporter().csv
-            output = exporter(resource)
+            output = DataExporter.csv(resource)
 
         elif representation == "json":
 
@@ -1355,21 +1348,20 @@ class S3CRUD(CRUDMethod):
             # Start/limit (no default limit)
             start, limit = self._limits(get_vars, default_limit=None)
 
-            # Render extra "_tooltip" field for each row?
-            tooltip = get_vars.get("tooltip", None)
-
             # Represent?
             represent = get_vars.get("represent", False)
             if represent and represent != "0":
                 represent = True
 
-            exporter = S3Exporter().json
-            output = exporter(resource,
-                              start = start,
-                              limit = limit,
-                              represent = represent,
-                              tooltip = tooltip,
-                              )
+            # Render extra "_tooltip" field for each row?
+            tooltip = get_vars.get("tooltip", None)
+
+            output = DataExporter.json(resource,
+                                       start = start,
+                                       limit = limit,
+                                       represent = represent,
+                                       tooltip = tooltip,
+                                       )
 
         elif representation == "pdf":
 
@@ -1377,33 +1369,34 @@ class S3CRUD(CRUDMethod):
             report_filename = get_config("report_filename", None)
             report_formname = get_config("report_formname", None)
 
-            exporter = S3Exporter().pdf
-            output = exporter(resource,
-                              request = r,
-                              report_hide_comments = report_hide_comments,
-                              report_filename = report_filename,
-                              report_formname = report_formname,
-                              **attr)
+            output = DataExporter.pdf(resource,
+                                      request = r,
+                                      report_hide_comments = report_hide_comments,
+                                      report_filename = report_filename,
+                                      report_formname = report_formname,
+                                      **attr)
 
         elif representation == "shp":
-            exporter = S3Exporter().shp
-            output = exporter(resource,
-                              list_fields = list_fields,
-                              **attr)
+            output = DataExporter.shp(resource,
+                                      list_fields = list_fields,
+                                      **attr)
 
         elif representation == "svg":
-            exporter = S3Exporter().svg
-            output = exporter(resource,
-                              list_fields = list_fields,
-                              **attr)
+            output = DataExporter.svg(resource,
+                                      list_fields = list_fields,
+                                      **attr)
 
         elif representation == "xls":
             report_groupby = get_config("report_groupby", None)
-            exporter = S3Exporter().xls
-            output = exporter(resource,
-                              list_fields = list_fields,
-                              report_groupby = report_groupby,
-                              **attr)
+            output = DataExporter.xls(resource,
+                                      list_fields = list_fields,
+                                      report_groupby = report_groupby,
+                                      **attr)
+
+        elif representation == "xlsx":
+            output = DataExporter.xlsx(resource,
+                                       list_fields = list_fields,
+                                       **attr)
 
         elif representation == "msg":
             if r.http == "POST":
@@ -1418,7 +1411,7 @@ class S3CRUD(CRUDMethod):
                 r.error(415, current.ERROR.BAD_FORMAT)
 
             pagesize = get_config("pdf_card_pagesize")
-            output = S3Exporter().pdfcard(resource,
+            output = DataExporter.pdfcard(resource,
                                           pagesize = pagesize,
                                           )
 

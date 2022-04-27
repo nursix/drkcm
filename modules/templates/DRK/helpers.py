@@ -361,8 +361,8 @@ class DRKSiteActivityReport:
 
         # Export as XLS
         title = current.T("Resident List")
-        from core import S3Exporter
-        exporter = S3Exporter().xls
+        from core import DataExporter
+        exporter = DataExporter.xls
         report = exporter(data["report"],
                           title = title,
                           as_stream = True,

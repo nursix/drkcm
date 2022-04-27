@@ -1,7 +1,7 @@
 """
     Assessments Model
 
-    Copyright: 2012-2021 (c) Sahana Software Foundation
+    Copyright: 2012-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -990,8 +990,8 @@ class AssessBuildingModel(DataModel):
                     )
 
         WORK_ORDER = current.T("Work Order")
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r,
                         method = "read",
                         pdf_title = WORK_ORDER,

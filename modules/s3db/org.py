@@ -1,7 +1,7 @@
 ﻿"""
     Organisation Model
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -8900,12 +8900,12 @@ class org_CapacityReport(CRUDMethod):
         try:
             import xlwt
         except ImportError:
-            from core.resource.codecs.xls import S3XLS
+            from core.resource.codecs.xls import XLSWriter
             if current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
-                current.session.error = S3XLS.ERROR.XLWT_ERROR
+                current.session.error = XLSWriter.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))
             else:
-                error = S3XLS.ERROR.XLWT_ERROR
+                error = XLSWriter.ERROR.XLWT_ERROR
                 current.log.error(error)
                 return error
 
@@ -8915,7 +8915,7 @@ class org_CapacityReport(CRUDMethod):
         # @ToDo: Configurability if used outside IFRC
         title = "BOCA"
 
-        #COL_WIDTH_MULTIPLIER = S3XLS.COL_WIDTH_MULTIPLIER
+        #COL_WIDTH_MULTIPLIER = XLSWriter.COL_WIDTH_MULTIPLIER
 
         # Create the workbook
         book = xlwt.Workbook(encoding="utf-8")
@@ -8933,7 +8933,7 @@ class org_CapacityReport(CRUDMethod):
         styleHeader = xlwt.XFStyle()
         styleHeader.font.bold = True
         styleHeader.pattern.pattern = styleHeader.pattern.SOLID_PATTERN
-        styleHeader.pattern.pattern_fore_colour = 0x2C # pale_blue S3XLS.HEADER_COLOUR
+        styleHeader.pattern.pattern_fore_colour = 0x2C # pale_blue XLSWriter.HEADER_COLOUR
         # Merged cells (rowspan, then colspan)
         sheet1.write_merge(0, 1, 0, 0, "TOPICS", styleHeader)
         sheet1.write_merge(0, 0, 1, 6, "Consolidated Ratings", styleHeader)

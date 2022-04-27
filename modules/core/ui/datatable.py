@@ -1,7 +1,7 @@
 """
     Data Table Builder
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -728,7 +728,7 @@ class DataTable:
             icons.append("%s:" % T("Export as"))
 
             # Default available formats
-            default_formats = ("xls", "pdf")
+            default_formats = ("xlsx", "pdf")
 
             # Available formats
             formats = dict(s3.formats)

@@ -1,7 +1,7 @@
 """
-    S3 Exceptions and Error Handlers
+    Format Parser/Writer Base
 
-    Copyright: 2012-2022 (c) Sahana Software Foundation
+    Copyright: 2011-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,10 +25,45 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
+__all__ = ("FormatWriter",)
+
+from gluon import current
+
 # =============================================================================
-class S3PermissionError(Exception):
-    """ Custom exception class for low-level permission checks """
+class FormatWriter:
 
-    pass
+    @staticmethod
+    def encode(resource, **attr):
+        """
+            Method to encode a resource in the target format,
+            to be implemented by the subclass (mandatory)
 
-# END =========================================================================
+            Args:
+                resource: the CRUDResource
+
+            Returns:
+                a handle to the output
+        """
+
+        raise NotImplementedError
+
+# =============================================================================
+class FormatParser:
+
+    @staticmethod
+    def decode(resource, source, **attr):
+        """
+            Method to decode a source into an ElementTree,
+            to be implemented by the subclass
+
+            Args:
+                resource: the CRUDResource
+                source: the source
+
+            Returns:
+                an ElementTree
+        """
+
+        return current.xml.tree()
+
+# End =========================================================================
