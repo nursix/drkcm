@@ -155,23 +155,32 @@ class S3CRUD(CRUDMethod):
         sqlform = self.resource.get_config("crud_form")
         self.sqlform = sqlform if sqlform else S3SQLDefaultForm()
 
-        _attr = Storage(attr)
-        _attr["list_id"] = widget_id
+        attr = Storage(attr)
+        attr["list_id"] = widget_id
 
-        if method == "datatable":
-            output = self._datatable(r, **_attr)
-            if isinstance(output, dict):
-                output = DIV(output["items"], _id="table-container")
-            return output
-        elif method == "datalist":
-            output = self._datalist(r, **_attr)
-            if isinstance(output, dict) and "items" in output:
-                output = DIV(output["items"], _id="list-container")
-            return output
+        if method in ("datatable", "datalist"):
+
+            authorised = self._permitted()
+            if not authorised:
+                r.unauthorised()
+
+            if method == "datatable":
+                output = self._datatable(r, **attr)
+                if isinstance(output, dict):
+                    output = DIV(output["items"], _id="table-container")
+
+            else:
+                output = self._datalist(r, **attr)
+                if isinstance(output, dict) and "items" in output:
+                    output = DIV(output["items"], _id="list-container")
+
         elif method == "create":
-            return self._widget_create(r, **_attr)
+            output = self._widget_create(r, **attr)
+
         else:
-            return None
+            output = None
+
+        return output
 
     # -------------------------------------------------------------------------
     def create(self, r, **attr):
@@ -1157,6 +1166,11 @@ class S3CRUD(CRUDMethod):
                 attr: dictionary of parameters for the method handler
         """
 
+        # Check permission to read in this table
+        authorised = self._permitted()
+        if not authorised:
+            r.unauthorised()
+
         resource = self.resource
 
         tablename = resource.tablename
@@ -1435,11 +1449,6 @@ class S3CRUD(CRUDMethod):
                 attr: parameters for the method handler
         """
 
-        # Check permission to read in this table
-        authorised = self._permitted()
-        if not authorised:
-            r.unauthorised()
-
         resource = self.resource
         get_config = resource.get_config
 
@@ -1612,11 +1621,6 @@ class S3CRUD(CRUDMethod):
                 r: the CRUDRequest
                 attr: parameters for the method handler
         """
-
-        # Check permission to read in this table
-        authorised = self._permitted()
-        if not authorised:
-            r.unauthorised()
 
         resource = self.resource
         get_config = resource.get_config
