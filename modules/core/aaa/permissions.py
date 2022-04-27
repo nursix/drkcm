@@ -912,8 +912,6 @@ class S3Permission:
         # Auth override, system roles and login
         auth = self.auth
         if auth.override:
-            #_debug("==> auth.override")
-            #_debug("*** GRANTED ***")
             return True
 
         # Multiple methods?
@@ -928,21 +926,12 @@ class S3Permission:
         if record == 0:
             record = None
 
-        #_debug("\nhas_permission('%s', c=%s, f=%s, t=%s, record=%s)",
-        #       "|".join(method),
-        #       c or current.request.controller,
-        #       f or current.request.function,
-        #       t,
-        #       record,
-        #       )
-
         sr = auth.get_system_roles()
         logged_in = auth.s3_logged_in()
         self.check_settings()
 
         # Required ACL
         racl = self.required_acl(method)
-        #_debug("==> required ACL: %04X", racl)
 
         # Get realms and delegations
         if not logged_in:
@@ -952,8 +941,6 @@ class S3Permission:
 
         # Administrators have all permissions
         if sr.ADMIN in realms:
-            #_debug("==> user is ADMIN")
-            #_debug("*** GRANTED ***")
             return True
 
         # Fall back to current request
@@ -961,21 +948,14 @@ class S3Permission:
         f = f or self.function
 
         if not self.use_cacls:
-            #_debug("==> simple authorization")
             # Fall back to simple authorization
             if logged_in:
-                #_debug("*** GRANTED ***")
                 return True
             else:
                 if self.page_restricted(c=c, f=f):
                     permitted = racl == self.READ
                 else:
-                    #_debug("==> unrestricted page")
                     permitted = True
-                #if permitted:
-                #    _debug("*** GRANTED ***")
-                #else:
-                #    _debug("*** DENIED ***")
                 return permitted
 
         # Do we need to check the owner role (i.e. table+record given)?
@@ -993,13 +973,6 @@ class S3Permission:
             permission_cache = self.permission_cache = {}
         key = "%s/%s/%s/%s/%s" % (method, c, f, t, record)
         if key in permission_cache:
-            #permitted = permission_cache[key]
-            #if permitted is None:
-            #    pass
-            #elif permitted:
-            #    _debug("*** GRANTED (cached) ***")
-            #else:
-            #    _debug("*** DENIED (cached) ***")
             return permission_cache[key]
 
         # Get the applicable ACLs
@@ -1013,10 +986,8 @@ class S3Permission:
 
         permitted = None
         if acls is None:
-            #_debug("==> no ACLs defined for this case")
             permitted = True
         elif not acls:
-            #_debug("==> no applicable ACLs")
             permitted = False
         else:
             if entity:
@@ -1025,21 +996,14 @@ class S3Permission:
                 elif "ANY" in acls:
                     uacl, oacl = acls["ANY"]
                 else:
-                    #_debug("==> Owner entity outside realm")
                     permitted = False
             else:
                 uacl, oacl = self.most_permissive(acls.values())
-
-            #_debug("==> uacl: %04X, oacl: %04X", uacl, oacl)
 
             if permitted is None:
                 if uacl & racl == racl:
                     permitted = True
                 elif oacl & racl == racl:
-                    #if is_owner and record:
-                    #    _debug("==> User owns the record")
-                    #elif record:
-                    #    _debug("==> User does not own the record")
                     permitted = is_owner
                 else:
                     permitted = False
@@ -1067,23 +1031,13 @@ class S3Permission:
                 if access_unapproved:
                     if not access_approved:
                         permitted = self.unapproved(table, record)
-                        #if not permitted:
-                        #    _debug("==> Record already approved")
                 else:
                     permitted = self.approved(table, record) or \
                                 self.is_owner(table, record, owners, strict=True) or \
                                 self.has_permission("review", t=table, record=record)
-                    #if not permitted:
-                    #    _debug("==> Record not approved")
-                    #    _debug("==> is owner: %s", is_owner)
             else:
                 # Approval not possible for this table => no change
                 pass
-
-        #if permitted:
-        #    _debug("*** GRANTED ***")
-        #else:
-        #    _debug("*** DENIED ***")
 
         # Remember the result for subsequent checks
         permission_cache[key] = permitted
@@ -1115,8 +1069,6 @@ class S3Permission:
         if not isinstance(method, (list, tuple)):
             method = [method]
 
-        #_debug("\naccessible_query(%s, '%s')", table, ",".join(method))
-
         # Defaults
         ALL_RECORDS = (table._id > 0)
         NO_RECORDS = (table._id == 0) if deny else None
@@ -1145,8 +1097,6 @@ class S3Permission:
         # Auth override, system roles and login
         auth = self.auth
         if auth.override:
-            #_debug("==> auth.override")
-            #_debug("*** ALL RECORDS ***")
             return ALL_RECORDS
 
         sr = auth.get_system_roles()
@@ -1173,8 +1123,6 @@ class S3Permission:
 
         # Administrators have all permissions
         if sr.ADMIN in realms:
-            #_debug("==> user is ADMIN")
-            #_debug("*** ALL RECORDS ***")
             return ALL_RECORDS
 
         # Multiple methods?
@@ -1199,22 +1147,17 @@ class S3Permission:
 
         # Required ACL
         racl = self.required_acl(method)
-        #_debug("==> required permissions: %04X", racl)
 
         # Use ACLs?
         if not self.use_cacls:
-            #_debug("==> simple authorization")
             # Fall back to simple authorization
             if logged_in:
-                #_debug("*** ALL RECORDS ***")
                 return ALL_RECORDS
             else:
                 permitted = racl == self.READ
                 if permitted:
-                    #_debug("*** ALL RECORDS ***")
                     return ALL_RECORDS
                 else:
-                    #_debug("*** ACCESS DENIED ***")
                     return NO_RECORDS
 
         # Fall back to current request
@@ -1230,13 +1173,9 @@ class S3Permission:
                                     )
 
         if acls is None:
-            #_debug("==> no ACLs defined for this case")
-            #_debug("*** ALL RECORDS ***")
             query = query_cache[key] = ALL_RECORDS
             return query
         elif not acls:
-            #_debug("==> no applicable ACLs")
-            #_debug("*** ACCESS DENIED ***")
             query = query_cache[key] = NO_RECORDS
             return query
 
@@ -1254,18 +1193,15 @@ class S3Permission:
         check_owner_acls = True
 
         if "ANY" in uacls:
-            #_debug("==> permitted for any records")
             query = ALL_RECORDS
             check_owner_acls = False
 
         elif uacls:
             query = self.realm_query(table, uacls)
             if query is None:
-                #_debug("==> permitted for any records")
                 query = ALL_RECORDS
                 check_owner_acls = False
             else:
-                #_debug("==> permitted for records owned by entities %s", str(uacls))
                 no_realm = uacls
 
         if check_owner_acls:
@@ -1279,13 +1215,11 @@ class S3Permission:
                                            )
 
             if owner_query is not None:
-                #_debug("==> permitted for owned records (limit to realms=%s)", use_realm)
                 if query is not None:
                     query |= owner_query
                 else:
                     query = owner_query
             elif use_realm:
-                #_debug("==> permitted for any records owned by entities %s", str(uacls+oacls))
                 query = self.realm_query(table, uacls+oacls)
 
             if query is not None and requires_approval:
@@ -1298,8 +1232,6 @@ class S3Permission:
         if query is None:
             query = NO_RECORDS
 
-        #_debug("*** Accessible Query ***")
-        #_debug(str(query))
         query_cache[key] = query
         return query
 
@@ -1650,7 +1582,6 @@ class S3Permission:
                 c: controller name
                 f: function name
         """
-
 
         page = "%s/%s" % (c, f)
         if page in self.unrestricted_pages:

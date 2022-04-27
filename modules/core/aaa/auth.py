@@ -4732,10 +4732,13 @@ Please go to %(url)s to approve this user."""
 
         policy = current.deployment_settings.get_security_policy()
 
+        permission = self.permission
+        required = permission.METHODS.get(method) or 0
+
         # Simple policy
         if policy == 1:
             # Anonymous users can Read.
-            if method == "read":
+            if required == permission.READ:
                 authorised = True
             else:
                 # Authentication required for Create/Update/Delete.
@@ -4743,33 +4746,33 @@ Please go to %(url)s to approve this user."""
 
         # Editor policy
         elif policy == 2:
-            # Anonymous users can Read.
-            if method == "read":
+            if required == permission.READ:
+                # Anonymous users can read
                 authorised = True
-            elif method == "create":
-                # Authentication required for Create.
-                authorised = self.s3_logged_in()
-            elif record_id == 0 and method == "update":
-                # Authenticated users can update at least some records
+            elif required == permission.CREATE or \
+                 record_id == 0 and required == permission.UPDATE:
+                # Authenticated users can create records, and update
+                # certain default records (e.g. their profile)
                 authorised = self.s3_logged_in()
             else:
-                # Editor role required for Update/Delete.
+                # Otherwise, must be EDITOR or record owner
                 authorised = self.s3_has_role(sr.EDITOR)
                 if not authorised and self.user and "owned_by_user" in table:
-                    # Creator of Record is allowed to Edit
                     query = (table.id == record_id)
                     record = current.db(query).select(table.owned_by_user,
-                                                      limitby=(0, 1)).first()
+                                                      limitby = (0, 1),
+                                                      ).first()
                     if record and self.user.id == record.owned_by_user:
                         authorised = True
 
-        # Use S3Permission ACLs
+        # Use S3Permission
         elif policy in (3, 4, 5, 6, 7, 8):
-            authorised = self.permission.has_permission(method,
-                                                        c = c,
-                                                        f = f,
-                                                        t = table,
-                                                        record = record_id)
+            authorised = permission.has_permission(method,
+                                                   c = c,
+                                                   f = f,
+                                                   t = table,
+                                                   record = record_id,
+                                                   )
 
         # Web2py default policy
         else:
