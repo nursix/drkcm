@@ -73,7 +73,6 @@ try:
     biDiImported = True
 except ImportError:
     biDiImported = False
-    current.log.warning("PDF Codec", "BiDirectional Support not available: Install Python-BiDi")
 
 from ..tools import s3_strip_markup, s3_str
 
