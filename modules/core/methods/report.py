@@ -46,7 +46,8 @@ from gluon.sqlhtml import OptionsWidget
 from gluon.storage import Storage
 from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
-from ..resource import FS, S3XMLFormat, S3Joins
+from ..formats import S3XMLFormat
+from ..resource import FS, S3Joins
 from ..tools import IS_NUMBER, JSONERRORS, JSONSEPARATORS, \
                     MarkupStripper, get_crud_string, s3_flatlist, \
                     s3_has_foreign_key, s3_represent_value, s3_str
@@ -2418,7 +2419,7 @@ class S3PivotTable:
                 the XLSX contents as bytes
         """
 
-        from ..resource.codecs import XLSXPivotTableWriter
+        from ..formats import XLSXPivotTableWriter
         return XLSXPivotTableWriter(self).encode(title)
 
     # -------------------------------------------------------------------------

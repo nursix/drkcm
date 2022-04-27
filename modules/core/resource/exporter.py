@@ -214,42 +214,42 @@ class DataExporter:
     @staticmethod
     def pdf(*args, **kwargs):
 
-        from .codecs import PDFWriter
+        from ..formats import PDFWriter
         return PDFWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def pdfcard(*args, **kwargs):
 
-        from .codecs import PDFCardWriter
+        from ..formats import PDFCardWriter
         return PDFCardWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def shp(*args, **kwargs):
 
-        from .codecs import SHPWriter
+        from ..formats import SHPWriter
         return SHPWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def svg(*args, **kwargs):
 
-        from .codecs import SVGWriter
+        from ..formats import SVGWriter
         return SVGWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def xls(*args, **kwargs):
 
-        from .codecs import XLSWriter
+        from ..formats import XLSWriter
         return XLSWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def xlsx(*args, **kwargs):
 
-        from .codecs import XLSXWriter
+        from ..formats import XLSXWriter
         return XLSXWriter.encode(*args, **kwargs)
 
 # End =========================================================================

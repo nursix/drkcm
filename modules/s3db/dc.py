@@ -1836,7 +1836,7 @@ class dc_TargetReport(CRUDMethod):
                    (original is project_SummaryReport)
         """
 
-        from core.resource.codecs.pdf import EdenDocTemplate, PDFWriter
+        from core import EdenDocTemplate, PDFWriter
 
         T = current.T
         table = r.table
@@ -1888,7 +1888,7 @@ class dc_TargetXLS(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
 
-        from core.resource.codecs.xls import XLSWriter
+        from core import XLSWriter
 
         try:
             import xlwt

@@ -7,4 +7,3 @@ from .resource import *
 #from .rfilter import *
 #from .select import *
 from .rtb import *
-from .xml import *

@@ -46,8 +46,8 @@ except ImportError:
 
 from gluon import current, HTTP
 
-from ...resource import CRUDResource
-from ...tools import s3_str
+from ..resource import CRUDResource
+from ..tools import s3_str
 
 from .base import FormatWriter
 

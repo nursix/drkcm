@@ -8900,7 +8900,7 @@ class org_CapacityReport(CRUDMethod):
         try:
             import xlwt
         except ImportError:
-            from core.resource.codecs.xls import XLSWriter
+            from core import XLSWriter
             if current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
                 current.session.error = XLSWriter.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))

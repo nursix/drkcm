@@ -34,6 +34,7 @@ from .aaa import *
 from .controller import *
 from .errors import *
 from .filters import *
+from .formats import *
 from .gis import *
 from .methods import *
 from .model import *

@@ -34,7 +34,7 @@ from gluon.contenttype import contenttype
 from gluon.storage import Storage
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from ...tools import get_crud_string, s3_str, s3_strip_markup
+from ..tools import get_crud_string, s3_str, s3_strip_markup
 
 from .base import FormatParser, FormatWriter
 

@@ -36,7 +36,7 @@ from io import BytesIO
 from gluon import HTTP, current
 from gluon.contenttype import contenttype
 
-from ...tools import get_crud_string, s3_get_foreign_key, s3_str, s3_strip_markup, s3_has_foreign_key
+from ..tools import get_crud_string, s3_get_foreign_key, s3_str, s3_strip_markup, s3_has_foreign_key
 
 from .base import FormatWriter
 
@@ -396,7 +396,7 @@ class XLSXWriter(FormatWriter):
         represent = field.represent
 
         # Get the hierarchy
-        from ...tools import S3Hierarchy
+        from ..tools import S3Hierarchy
         h = S3Hierarchy(ktablename)
         if not h.config:
             return []
@@ -664,7 +664,7 @@ class XLSXPivotTableWriter:
                   )
 
             # Current date/time (in local timezone)
-            from ...tools import S3DateTime
+            from ..tools import S3DateTime
             dt = S3DateTime.to_local(current.request.utcnow)
             write(sheet, 1, 0, dt, style = "subheader", numfmt = "datetime")
 

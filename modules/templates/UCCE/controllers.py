@@ -2075,7 +2075,7 @@ class dc_TargetReport(CRUDMethod):
 
         raise NotImplementedError
 
-        from core.resource.codecs.pdf import EdenDocTemplate, PDFWriter
+        from core import EdenDocTemplate, PDFWriter
 
         # etc, etc
 
@@ -2700,7 +2700,7 @@ class dc_TemplateExportL10n(CRUDMethod):
 
                 # No need to check for 'read' permission within single-record methods, as that has already been checked
 
-                from core.resource.codecs.xls import XLSWriter
+                from core import XLSWriter
 
                 try:
                     import xlwt

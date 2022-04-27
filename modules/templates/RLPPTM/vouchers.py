@@ -14,8 +14,7 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 
 from gluon import current
 
-from core.resource.codecs.card import PDFCardLayout
-from core import s3_str
+from core import PDFCardLayout, s3_str
 
 # Fonts we use in this layout
 NORMAL = "Helvetica"
