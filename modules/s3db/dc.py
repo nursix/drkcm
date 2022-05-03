@@ -1565,7 +1565,7 @@ class dc_TargetReport(CRUDMethod):
             #elif representation == "pdf":
             #    output = self.pdf(r, title, **attr)
             #    return output
-            #elif representation == "xls":
+            #elif representation in ("xlsx", "xls"):
             #    output = self.xls(r, title, **attr)
             #    return output
         r.error(405, current.ERROR.BAD_METHOD)

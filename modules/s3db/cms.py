@@ -3413,7 +3413,7 @@ class cms_Calendar(CRUDMethod):
             #elif r.representation == "pdf":
             #    output = self.pdf(r, **attr)
             #    return output
-            #elif r.representation == "xls":
+            #elif r.representation in ("xlsx", "xls"):
             #    output = self.xls(r, **attr)
             #    return output
             else:

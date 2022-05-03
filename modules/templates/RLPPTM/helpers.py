@@ -391,14 +391,14 @@ def restrict_data_formats(r):
     """
 
     settings = current.deployment_settings
-    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
+    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xlsx")
     if r.record:
         allowed += ("card",)
     if r.method in ("report", "timeplot", "filter", "lookup", "info"):
         allowed += ("json",)
     elif r.method == "options":
         allowed += ("s3json",)
-    settings.ui.export_formats = ("pdf", "xls")
+    settings.ui.export_formats = ("pdf", "xlsx")
     if r.representation not in allowed:
         r.error(403, current.ERROR.NOT_PERMITTED)
 

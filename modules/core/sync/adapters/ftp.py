@@ -292,6 +292,9 @@ class S3SyncAdapter(S3SyncBaseAdapter):
             elif representation == "xls":
                 exporter = DataExporter.xls
 
+            elif representation == "xlsx":
+                exporter = DataExporter.xlsx
+
             elif representation == "json":
                 exporter = DataExporter.json
 

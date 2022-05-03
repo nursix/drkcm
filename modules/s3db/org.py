@@ -7003,7 +7003,7 @@ def org_organisation_controller():
                            list_fields=list_fields + ["pe_id"]
                            )
 
-        elif r.representation == "xls" and r.component_name == "branch":
+        elif r.representation in ("xlsx", "xls") and r.component_name == "branch":
             # Improve XLS export of Branches
             table = s3db.org_organisation_branch
             table.organisation_id.represent = \
@@ -7582,7 +7582,7 @@ def org_office_controller():
                 # Load these models now as they'll be needed when we encode
                 s3db.table("gis_marker")
 
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             list_fields = r.resource.get_config("list_fields")
             list_fields += ["location_id$lat",
                             "location_id$lon",
@@ -8803,7 +8803,7 @@ class org_CapacityReport(CRUDMethod):
 
                 return output
 
-            elif r.representation == "xls":
+            elif r.representation in ("xlsx", "xls"):
                 data = self._extract(r)
                 if data is None:
                     current.session.error = current.response.s3.crud_strings["org_capacity_assessment"].msg_list_empty

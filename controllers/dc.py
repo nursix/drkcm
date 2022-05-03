@@ -117,7 +117,7 @@ def target():
                                                             args = [record_id, "update"],
                                                             ),
                                )
-        elif r.id and not r.component and r.representation == "xls":
+        elif r.id and not r.component and r.representation in ("xlsx", "xls"):
             # Custom XLS Exporter to include all Responses.
             r.custom_action = s3db.dc_TargetXLS
 

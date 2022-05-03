@@ -59,7 +59,7 @@ def membership():
             s3db.pr_person.date_of_birth.widget = \
                                         S3CalendarWidget(past_months=1440)
 
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             # Split person_id into first/middle/last to make it match Import sheets
             list_fields = s3db.get_config("member_membership",
                                           "list_fields")

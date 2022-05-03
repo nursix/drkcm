@@ -788,7 +788,7 @@ def newsfeed():
                            listadd = False,
                            )
 
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             table.body.represent = None
             table.created_by.represent = s3db.auth_UserRepresent(show_email = False,
                                                                  show_link = False)

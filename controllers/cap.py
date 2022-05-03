@@ -1029,7 +1029,7 @@ def info():
     """
 
     def prep(r):
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             table = r.table
             # TODO Explain this (using raw values?)
             table.alert_id.represent = None
@@ -1132,7 +1132,7 @@ def template():
         table = r.table
         tablename = "cap_alert"
 
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
 
             table.scope.represent = None
             table.incidents.represent = None

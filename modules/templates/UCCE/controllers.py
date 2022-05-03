@@ -2695,7 +2695,7 @@ class dc_TemplateExportL10n(CRUDMethod):
         """
 
         if r.name == "template":
-            if r.representation == "xls":
+            if r.representation in ("xlsx", "xls"):
                 # XLS export
 
                 # No need to check for 'read' permission within single-record methods, as that has already been checked

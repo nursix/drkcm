@@ -80,7 +80,7 @@ def staff():
             if settings.get_hrm_staff_departments():
                 list_fields.insert(4, "department_id")
             resource.configure(list_fields = list_fields)
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             s3db.hrm_xls_list_fields(r, vol=False)
         else:
             # Adapt list_fields
@@ -387,7 +387,7 @@ def job_title():
     """ Job Titles Controller """
 
     def prep(r):
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             # Export format should match Import format
             current.messages["NONE"] = ""
             table = s3db.hrm_job_title

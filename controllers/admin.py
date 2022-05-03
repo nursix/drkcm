@@ -284,7 +284,7 @@ def user():
                            sortby = [[2, "asc"], [1, "asc"]],
                            )
 
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             lappend((T("Status"), "registration_key"))
 
         if r.method == "delete" and r.http == "GET":

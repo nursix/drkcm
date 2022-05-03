@@ -509,7 +509,7 @@ def configure_case_list_fields(resource,
         if absence_field:
             list_fields.append(absence_field)
 
-    if fmt == "xls":
+    if fmt in ("xlsx", "xls"):
         # Additional fields for XLS export
 
         # Add appointment dates

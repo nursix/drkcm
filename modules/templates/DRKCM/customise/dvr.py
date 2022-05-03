@@ -1243,7 +1243,7 @@ def dvr_case_appointment_controller(**attr):
                            "comments",
                            ]
 
-            if r.representation == "xls":
+            if r.representation in ("xlsx", "xls"):
                 # Include Person UUID
                 list_fields.append(("UUID", "person_id$uuid"))
 
@@ -1948,7 +1948,7 @@ def dvr_response_action_resource(r, tablename):
         crud_strings = current.response.s3.crud_strings["dvr_response_action"]
         crud_strings["title_report"] = T("Action Statistic")
 
-    if r.interactive or r.representation in ("aadata", "xls", "pdf", "s3json"):
+    if r.interactive or r.representation in ("aadata", "xlsx", "xls", "pdf", "s3json"):
 
         human_resource_id = current.auth.s3_logged_in_human_resource()
 

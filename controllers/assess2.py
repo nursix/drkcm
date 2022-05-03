@@ -1781,7 +1781,7 @@ def rat_tables():
         if r.name == "rat":
             if r.representation == "html":
                 return dict()
-            elif r.representation == "xls":
+            elif r.representation in ("xlsx", "xls"):
                 return None
             else:
                 # Other formats?

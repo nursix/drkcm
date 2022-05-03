@@ -1336,7 +1336,7 @@ def vol_volunteer_controller():
             s3db.pr_availability_filter(r)
 
         # Configure list_fields
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             s3db.hrm_xls_list_fields(r, staff=False)
         else:
             list_fields = ["person_id",
