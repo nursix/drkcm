@@ -26,6 +26,7 @@
 """
 
 __all__ = ("XLSXWriter",
+           "XLSXPivotTableWriter",
            )
 
 import datetime
@@ -240,7 +241,6 @@ class XLSXWriter(FormatWriter):
         date_format = settings.get_L10n_date_format()
         date_format_str = str(date_format)
 
-        dt_format_translate = cls.dt_format_translate
         dtformats = {"date": dt_format_translate(date_format),
                      "time": dt_format_translate(settings.get_L10n_time_format()),
                      "datetime": dt_format_translate(settings.get_L10n_datetime_format()),
@@ -507,53 +507,6 @@ class XLSXWriter(FormatWriter):
             style.fill = PatternFill(start_color="C6C6C6", fill_type="solid")
             style.border = border
         wb.add_named_style(style)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def dt_format_translate(pyfmt):
-        """
-            Translates a Python datetime format string into an
-            Excel datetime format string
-
-            Args:
-                pyfmt: the Python format string
-
-            Returns:
-                the Excel datetime format string
-        """
-
-        translate = {"%a": "ddd",
-                     "%A": "dddd",
-                     "%b": "mmm",
-                     "%B": "mmmm",
-                     "%c": "",
-                     "%d": "dd",
-                     "%f": "",
-                     "%H": "hh",
-                     "%I": "hh",
-                     "%j": "",
-                     "%m": "mm",
-                     "%M": "mm",
-                     "%p": "AM/PM",
-                     "%S": "ss",
-                     "%U": "",
-                     "%w": "",
-                     "%W": "",
-                     "%x": "",
-                     "%X": "",
-                     "%y": "yy",
-                     "%Y": "yyyy",
-                     "%z": "",
-                     "%Z": "",
-                     }
-
-        PERCENT = "__percent__"
-        xlfmt = str(pyfmt).replace("%%", PERCENT)
-
-        for tag, translation in translate.items():
-            xlfmt = xlfmt.replace(tag, translation)
-
-        return xlfmt.replace(PERCENT, "%")
 
 # =============================================================================
 class XLSXPivotTableWriter:
@@ -950,10 +903,9 @@ class XLSXPivotTableWriter:
             # Date/Time formats from L10N deployment settings
             settings = current.deployment_settings
 
-            translate = XLSXWriter.dt_format_translate
-            date_format = translate(settings.get_L10n_date_format())
-            datetime_format = translate(settings.get_L10n_datetime_format())
-            time_format = translate(settings.get_L10n_time_format())
+            date_format = dt_format_translate(settings.get_L10n_date_format())
+            datetime_format = dt_format_translate(settings.get_L10n_datetime_format())
+            time_format = dt_format_translate(settings.get_L10n_time_format())
 
             formats = {
                 "date": date_format,
@@ -1151,5 +1103,51 @@ class XLSXPivotTableWriter:
         items = [s3_str(lookup[key]) for key in keys if key in lookup]
 
         return items
+
+# =============================================================================
+def dt_format_translate(pyfmt):
+    """
+        Translates a Python datetime format string into an
+        Excel datetime format string
+
+        Args:
+            pyfmt: the Python format string
+
+        Returns:
+            the Excel datetime format string
+    """
+
+    translate = {"%a": "ddd",
+                 "%A": "dddd",
+                 "%b": "mmm",
+                 "%B": "mmmm",
+                 "%c": "",
+                 "%d": "dd",
+                 "%f": "",
+                 "%H": "hh",
+                 "%I": "hh",
+                 "%j": "",
+                 "%m": "mm",
+                 "%M": "mm",
+                 "%p": "AM/PM",
+                 "%S": "ss",
+                 "%U": "",
+                 "%w": "",
+                 "%W": "",
+                 "%x": "",
+                 "%X": "",
+                 "%y": "yy",
+                 "%Y": "yyyy",
+                 "%z": "",
+                 "%Z": "",
+                 }
+
+    PERCENT = "__percent__"
+    xlfmt = str(pyfmt).replace("%%", PERCENT)
+
+    for tag, translation in translate.items():
+        xlfmt = xlfmt.replace(tag, translation)
+
+    return xlfmt.replace(PERCENT, "%")
 
 # END =========================================================================
