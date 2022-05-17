@@ -198,7 +198,20 @@ class Map:
 
         for layer in self.layers:
 
-            resource = MapResource(layer.uri, layer.name, active=layer.option("active"))
+            folder = layer.option("folder")
+            if folder:
+                folder = folder.lower().replace(" ", "_")
+            if layer.option("base_layer"):
+                folder = "/base"
+            elif folder and folder[0] != "/":
+                folder = "/%s" % folder
+            elif not folder:
+                folder = "/overlays"
+
+            resource = MapResource(layer.uri, layer.name,
+                                   active = layer.option("active"),
+                                   folder = folder,
+                                   )
             resource.modified_on = layer.attr.get("modified_on", context.modified_on)
 
             offerings = layer.offerings
@@ -250,7 +263,7 @@ class Layer:
     # -------------------------------------------------------------------------
     def option(self, key):
 
-        self.opts.get(key)
+        return self.opts.get(key)
 
     # -------------------------------------------------------------------------
     @property
