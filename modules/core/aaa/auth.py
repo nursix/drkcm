@@ -4720,8 +4720,6 @@ Please go to %(url)s to approve this user."""
         if self.override:
             return True
 
-        sr = self.get_system_roles()
-
         if not hasattr(table, "_tablename"):
             tablename = table
             table = current.s3db.table(tablename, db_only=True)
@@ -4732,22 +4730,27 @@ Please go to %(url)s to approve this user."""
 
         policy = current.deployment_settings.get_security_policy()
 
+        if isinstance(method, (list, tuple)) and policy not in (3, 4, 5, 6, 7):
+            return all(self.s3_has_permission(m, table, record_id=record_id, c=c, f=f) for m in method)
+
+        sr = self.get_system_roles()
         permission = self.permission
-        required = permission.METHODS.get(method) or 0
 
         # Simple policy
         if policy == 1:
-            # Anonymous users can Read.
+            required = permission.METHODS.get(method) or 0
             if required == permission.READ:
+                # All users can read, including anonymous users
                 authorised = True
             else:
-                # Authentication required for Create/Update/Delete.
+                # Authentication required for all other methods
                 authorised = self.s3_logged_in()
 
         # Editor policy
         elif policy == 2:
+            required = permission.METHODS.get(method) or 0
             if required == permission.READ:
-                # Anonymous users can read
+                # All users can read, including anonymous users
                 authorised = True
             elif required == permission.CREATE or \
                  record_id == 0 and required == permission.UPDATE:
@@ -4766,7 +4769,7 @@ Please go to %(url)s to approve this user."""
                         authorised = True
 
         # Use S3Permission
-        elif policy in (3, 4, 5, 6, 7, 8):
+        elif policy in (3, 4, 5, 6, 7):
             authorised = permission.has_permission(method,
                                                    c = c,
                                                    f = f,
