@@ -3482,6 +3482,16 @@ class S3Config(Storage):
         """
         return self.cr.get("shelter_units", False)
 
+    def get_cr_shelter_blocked_capacity(self):
+        """
+            Manage blocked capacity in shelters/housing units
+
+            Notes:
+                - switching off after initially using it requires an update
+                  of available capacities of all shelters/units
+        """
+        return self.cr.get("shelter_blocked_capacity", False)
+
     def get_cr_shelter_population_by_type(self):
         """
             Track shelter populations per subgroup
