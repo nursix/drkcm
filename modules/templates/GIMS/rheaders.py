@@ -123,7 +123,7 @@ def cr_rheader(r, tabs=None):
                         #(T("Documents"), "document"),
                         ]
 
-            rheader_fields = [["organisation_id"],
+            rheader_fields = [["organisation_id", "available_capacity"],
                               ["location_id"],
                               ["status"],
                               ]
