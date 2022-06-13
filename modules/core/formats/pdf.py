@@ -793,7 +793,8 @@ class PDFList:
 
             item = [ruler]
             for rfield in rfields:
-                if rfield.ftype != "id":
+                represent = rfield.field.represent if rfield.field else None
+                if rfield.ftype != "id" or represent or rfield.join:
                     item.extend(formatted(rfield, row[rfield.colname]))
             if index == 0:
                 flowables.extend(item)
