@@ -6,7 +6,7 @@
 
         s3base.CRUDResource()
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -34,6 +34,7 @@ from .aaa import *
 from .controller import *
 from .errors import *
 from .filters import *
+from .formats import *
 from .gis import *
 from .methods import *
 from .model import *

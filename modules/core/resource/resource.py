@@ -1,7 +1,7 @@
 """
     CRUD Resource
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -213,8 +213,8 @@ class CRUDResource:
         self._rowindex = None
         self.rfields = None
         self.dfields = None
-        self._ids = []
-        self._uids = []
+        self._ids = None
+        self._uids = None
         self._length = None
 
         # Request attributes --------------------------------------------------
@@ -1519,7 +1519,7 @@ class CRUDResource:
         output = None
         args = Storage(args)
 
-        from .xml import S3XMLFormat
+        from ..formats import S3XMLFormat
         xmlformat = S3XMLFormat(stylesheet) if stylesheet else None
 
         if mcomponents is DEFAULT:

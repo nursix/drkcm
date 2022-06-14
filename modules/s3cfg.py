@@ -1,7 +1,7 @@
 """
     Deployment Settings
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -2305,7 +2305,7 @@ class S3Config(Storage):
               * a tuple (extension, css-class[, onhover-title])
         """
         return self.ui.get("export_formats",
-                           ("cap", "have", "kml", "map", "pdf", "rss", "xls", "xml"))
+                           ("cap", "have", "kml", "map", "pdf", "rss", "xls", "xlsx", "xml"))
 
     def get_ui_hide_report_filter_options(self):
         """
@@ -3481,6 +3481,16 @@ class S3Config(Storage):
             Manage housing units in shelters
         """
         return self.cr.get("shelter_units", False)
+
+    def get_cr_shelter_blocked_capacity(self):
+        """
+            Manage blocked capacity in shelters/housing units
+
+            Notes:
+                - switching off after initially using it requires an update
+                  of available capacities of all shelters/units
+        """
+        return self.cr.get("shelter_blocked_capacity", False)
 
     def get_cr_shelter_population_by_type(self):
         """

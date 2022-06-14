@@ -1415,6 +1415,21 @@ def disable_layer(r, **attr):
     redirect(URL(args=[r.id, "layer_entity"]))
 
 # -----------------------------------------------------------------------------
+def context():
+    """
+        Access the user's default map context in GeoJSON notation
+            - experimental, not suitable for production use in this form
+    """
+
+    from core.gis.maps import Map
+    mapview = Map()
+
+    # Response headers
+    current.response.headers["Content-Type"] = "application/json"
+
+    return mapview.context().json()
+
+# -----------------------------------------------------------------------------
 def hierarchy():
     """ RESTful CRUD controller """
 

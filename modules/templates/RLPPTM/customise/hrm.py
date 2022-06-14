@@ -339,7 +339,7 @@ def hrm_human_resource_controller(**attr):
                                            ),
                        )
         phone_label = current.deployment_settings.get_ui_label_mobile_phone()
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             s3db.add_components("pr_pentity",
                                 pr_address = ({"name": "home_address",
                                                "joinby": "pe_id",

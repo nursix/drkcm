@@ -509,11 +509,11 @@ class TestResultRegistration(CRUDMethod):
             title = T("Test Result")
         item["title"] = pdf_title = title
 
-        from core import S3Exporter
+        from core import DataExporter
         from gluon.contenttype import contenttype
 
         # Export PDF
-        output = S3Exporter().pdfcard([item],
+        output = DataExporter.pdfcard([item],
                                       layout = CWACardLayout,
                                       title = pdf_title,
                                       )

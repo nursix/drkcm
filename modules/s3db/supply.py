@@ -1,7 +1,7 @@
 """
     Supply Model
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -258,7 +258,7 @@ class SupplyModel(DataModel):
         item_category_represent_nocodes = \
             supply_ItemCategoryRepresent(translate=translate, use_code=False)
 
-        if format == "xls":
+        if format in ("xlsx", "xls"):
             parent_represent = item_category_represent_nocodes
         else:
             parent_represent = item_category_represent
@@ -1896,7 +1896,7 @@ class supply_ItemRepresent(S3Represent):
         self.show_um = show_um
         if truncate is None:
             # Default: Truncate unless exporting in XLS format
-            truncate = current.auth.permission.format != "xls"
+            truncate = current.auth.permission.format not in ("xlsx", "xls")
         self.truncate = truncate
 
         # Need a custom lookup to join with Brand
@@ -2585,7 +2585,7 @@ def supply_item_entity_contacts(row):
 
     if office:
 
-        if current.request.extension in ("xls", "pdf"):
+        if current.request.extension in ("xlsx", "xls", "pdf"):
             if office.comments:
                 return office.comments
             else:
@@ -2732,7 +2732,7 @@ def supply_item_controller():
                                     tooltip = ADD_ITEM_CATEGORY,
                                     )
 
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             # Use full Category names in XLS output
             s3db.supply_item.item_category_id.represent = \
                 supply_ItemCategoryRepresent(use_code=False)

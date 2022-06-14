@@ -1,7 +1,7 @@
 """
     Shelter Registry
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -132,7 +132,7 @@ class CRShelterModel(DataModel):
 
         manage_units = settings.get_cr_shelter_units()
         manage_registrations = settings.get_cr_shelter_registration()
-
+        use_blocked_capacity = settings.get_cr_shelter_blocked_capacity()
         population_by_type = settings.get_cr_shelter_population_by_type()
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
@@ -232,6 +232,16 @@ class CRShelterModel(DataModel):
                                               ),
                                 writable = not manage_units,
                                 ),
+                     population("blocked_capacity",
+                                label = T("Non-assignable places"),
+                                comment = DIV(_class="tooltip",
+                                              _title="%s|%s" % (T("Non-assignable places"),
+                                                                T("Number of places that are not currently assignable, e.g. due to technical issues, maintenance or closed groups"),
+                                                                ),
+                                              ),
+                                readable = use_blocked_capacity,
+                                writable = use_blocked_capacity and not manage_units,
+                                ),
                      population("available_capacity",
                                 label = T("Available Capacity"),
                                 writable = False,
@@ -247,19 +257,6 @@ class CRShelterModel(DataModel):
                            default = False,
                            label = T("Obsolete"),
                            represent = lambda opt: messages.OBSOLETE if opt else NONE,
-                           readable = False,
-                           writable = False,
-                           ),
-                     # TODO deprecated fields: remove
-                     Field("capacity_day", "integer",
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("available_capacity_day", "integer",
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("population_day", "integer",
                            readable = False,
                            writable = False,
                            ),
@@ -712,6 +709,7 @@ class CRShelterUnitModel(DataModel):
                                      requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                                      )
         manage_registrations = settings.get_cr_shelter_registration()
+        use_blocked_capacity = settings.get_cr_shelter_blocked_capacity()
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
         # -------------------------------------------------------------------------
@@ -773,25 +771,22 @@ class CRShelterUnitModel(DataModel):
                      population("capacity",
                                 label = T("Capacity"),
                                 ),
+                     population("blocked_capacity",
+                                label = T("Non-assignable places"),
+                                comment = DIV(_class="tooltip",
+                                              _title="%s|%s" % (T("Non-assignable places"),
+                                                                T("Number of places that are not currently assignable, e.g. due to technical issues, maintenance or closed groups"),
+                                                                ),
+                                              ),
+                                readable = use_blocked_capacity,
+                                writable = use_blocked_capacity,
+                                ),
                      population("available_capacity",
                                 label = T("Available Capacity"),
                                 writable = False,
                                 ),
                      Field.Method("cstatus", self.shelter_unit_status),
                      s3_comments(),
-                     # TODO deprecated fields: remove
-                     Field("capacity_day", "integer",
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("available_capacity_day", "integer",
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("population_day", "integer",
-                           readable = False,
-                           writable = False,
-                           ),
                      *s3_meta_fields())
 
         # Components
@@ -981,6 +976,7 @@ class CRShelterStatusModel(DataModel):
                                      writable = False,
                                      )
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
+        use_blocked_capacity = settings.get_cr_shelter_blocked_capacity()
 
         # -------------------------------------------------------------------------
         # Shelter status updates
@@ -1013,6 +1009,10 @@ class CRShelterStatusModel(DataModel):
                                 ),
                      population("capacity",
                                 label = T("Capacity"),
+                                ),
+                     population("blocked_capacity",
+                                label = T("Non-assignable places"),
+                                readable = use_blocked_capacity,
                                 ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -2109,6 +2109,7 @@ class Shelter:
 
         track_fields = ("status",
                         "capacity",
+                        "blocked_capacity",
                         "population",
                         "population_adults",
                         "population_children",
@@ -2163,13 +2164,20 @@ class Shelter:
                     (utable.status == 1) & \
                     (utable.deleted != True)
             total_capacity = utable.capacity.sum()
-            row = db(query).select(total_capacity).first()
-
-            capacity = row[total_capacity] if row else 0
+            total_blocked_capacity = utable.blocked_capacity.sum()
+            row = db(query).select(total_capacity,
+                                   total_blocked_capacity,
+                                   ).first()
+            if row:
+                capacity = row[total_capacity]
+                blocked_capacity = row[total_blocked_capacity]
+            else:
+                capacity = blocked_capacity = 0
 
             stable = s3db.cr_shelter
-            db(stable.id == shelter_id).update(capacity = capacity)
-
+            db(stable.id == shelter_id).update(capacity = capacity,
+                                               blocked_capacity = blocked_capacity,
+                                               )
             self.update_available_capacity()
             self.update_status()
         else:
@@ -2287,6 +2295,7 @@ class Shelter:
         shelter = db(query).select(table.id,
                                    table.capacity,
                                    table.population,
+                                   table.blocked_capacity,
                                    table.available_capacity,
                                    limitby = (0, 1),
                                    ).first()
@@ -2296,12 +2305,19 @@ class Shelter:
 
         update = {}
 
+        # Compute available capacity
         capacity = shelter.capacity
-        if not capacity:
+        if capacity is None:
             capacity = update["capacity"] = 0
 
+        if current.deployment_settings.get_cr_shelter_blocked_capacity():
+            blocked_capacity = shelter.blocked_capacity
+            if blocked_capacity is None:
+                blocked_capacity = update["blocked_capacity"] = 0
+            capacity -= blocked_capacity
+
         population = shelter.population
-        if not population:
+        if population is None:
             population = update["population"] = 0
 
         available_capacity = max(capacity - population, 0)
@@ -2363,6 +2379,7 @@ class HousingUnit:
                                 table.population,
                                 table.population_adults,
                                 table.population_children,
+                                table.blocked_capacity,
                                 table.available_capacity,
                                 limitby = (0, 1),
                                 ).first()
@@ -2389,17 +2406,22 @@ class HousingUnit:
                 if population is None:
                     population = 0
 
+        update = {}
+
         # Compute available capacity
         capacity = unit.capacity
-        if capacity and capacity > 0:
-            available_capacity = max(capacity - population, 0)
-        else:
-            capacity = available_capacity = 0
+        if capacity is None:
+            capacity = update["capacity"] = 0
+
+        if current.deployment_settings.get_cr_shelter_blocked_capacity():
+            blocked_capacity = unit.blocked_capacity
+            if blocked_capacity is None:
+                blocked_capacity = update["blocked_capacity"] = 0
+            capacity -= blocked_capacity
+
+        available_capacity = max(capacity - population, 0)
 
         # Update unit if required
-        update = {}
-        if capacity != unit.capacity:
-            update["capacity"] = capacity
         if population != unit.population:
             update["population"] = population
         if available_capacity != unit.available_capacity:

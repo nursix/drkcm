@@ -1,7 +1,7 @@
 """
     Validators
 
-    Copyright: (c) 2010-2021 Sahana Software Foundation
+    Copyright: (c) 2010-2022 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1019,7 +1019,7 @@ class IS_ONE_OF_EMPTY(Validator):
 
             filter_opts = self.filter_opts
 
-            if filter_opts:
+            if filter_opts is not None:
                 if None in filter_opts:
                     # Needs special handling (doesn't show up in 'belongs')
                     _query = (table[filterby] == None)

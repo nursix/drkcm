@@ -1,7 +1,7 @@
 """
-    Shapefile codec
+    Shapefile Parser / Writer
 
-    Copyright: 2013-2021 (c) Sahana Software Foundation
+    Copyright: 2013-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3SHP",)
+__all__ = ("SHPWriter",)
 
 import os
 
@@ -34,14 +34,14 @@ from gluon.contenttype import contenttype
 from gluon.storage import Storage
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from ...tools import get_crud_string, s3_str, s3_strip_markup
+from ..tools import get_crud_string, s3_str, s3_strip_markup
 
-from ..codec import S3Codec
+from .base import FormatParser, FormatWriter
 
 # =============================================================================
-class S3SHP(S3Codec):
+class SHPWriter(FormatWriter):
     """
-        Simple Shapefile format codec
+        Simple Shapefile writer
     """
 
     # -------------------------------------------------------------------------
@@ -225,6 +225,12 @@ class S3SHP(S3Codec):
         stream = open(os.path.join(TEMP, filename), "rb")
         return response.stream(stream, chunk_size=DEFAULT_CHUNK_SIZE,
                                request=request)
+
+# =============================================================================
+class SHPParser(FormatParser):
+    """
+        Simple Shapefile parser
+    """
 
     # -------------------------------------------------------------------------
     def decode(self, resource, source, **attr):

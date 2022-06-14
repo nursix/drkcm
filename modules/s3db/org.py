@@ -1,7 +1,7 @@
 ﻿"""
     Organisation Model
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -7003,7 +7003,7 @@ def org_organisation_controller():
                            list_fields=list_fields + ["pe_id"]
                            )
 
-        elif r.representation == "xls" and r.component_name == "branch":
+        elif r.representation in ("xlsx", "xls") and r.component_name == "branch":
             # Improve XLS export of Branches
             table = s3db.org_organisation_branch
             table.organisation_id.represent = \
@@ -7582,7 +7582,7 @@ def org_office_controller():
                 # Load these models now as they'll be needed when we encode
                 s3db.table("gis_marker")
 
-        elif r.representation == "xls":
+        elif r.representation in ("xlsx", "xls"):
             list_fields = r.resource.get_config("list_fields")
             list_fields += ["location_id$lat",
                             "location_id$lon",
@@ -8803,7 +8803,7 @@ class org_CapacityReport(CRUDMethod):
 
                 return output
 
-            elif r.representation == "xls":
+            elif r.representation in ("xlsx", "xls"):
                 data = self._extract(r)
                 if data is None:
                     current.session.error = current.response.s3.crud_strings["org_capacity_assessment"].msg_list_empty
@@ -8900,12 +8900,12 @@ class org_CapacityReport(CRUDMethod):
         try:
             import xlwt
         except ImportError:
-            from core.resource.codecs.xls import S3XLS
+            from core import XLSWriter
             if current.auth.permission.format in CRUDRequest.INTERACTIVE_FORMATS:
-                current.session.error = S3XLS.ERROR.XLWT_ERROR
+                current.session.error = XLSWriter.ERROR.XLWT_ERROR
                 redirect(URL(extension=""))
             else:
-                error = S3XLS.ERROR.XLWT_ERROR
+                error = XLSWriter.ERROR.XLWT_ERROR
                 current.log.error(error)
                 return error
 
@@ -8915,7 +8915,7 @@ class org_CapacityReport(CRUDMethod):
         # @ToDo: Configurability if used outside IFRC
         title = "BOCA"
 
-        #COL_WIDTH_MULTIPLIER = S3XLS.COL_WIDTH_MULTIPLIER
+        #COL_WIDTH_MULTIPLIER = XLSWriter.COL_WIDTH_MULTIPLIER
 
         # Create the workbook
         book = xlwt.Workbook(encoding="utf-8")
@@ -8933,7 +8933,7 @@ class org_CapacityReport(CRUDMethod):
         styleHeader = xlwt.XFStyle()
         styleHeader.font.bold = True
         styleHeader.pattern.pattern = styleHeader.pattern.SOLID_PATTERN
-        styleHeader.pattern.pattern_fore_colour = 0x2C # pale_blue S3XLS.HEADER_COLOUR
+        styleHeader.pattern.pattern_fore_colour = 0x2C # pale_blue XLSWriter.HEADER_COLOUR
         # Merged cells (rowspan, then colspan)
         sheet1.write_merge(0, 1, 0, 0, "TOPICS", styleHeader)
         sheet1.write_merge(0, 0, 1, 6, "Consolidated Ratings", styleHeader)

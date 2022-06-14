@@ -452,7 +452,7 @@ def config(settings):
     # Uncomment for dataTables to use a different paging style:
     #settings.ui.datatables_pagingType = "bootstrap"
     # Uncomment to restrict the export formats available
-    #settings.ui.export_formats = ("kml", "pdf", "rss", "xls", "xml")
+    #settings.ui.export_formats = ("kml", "pdf", "rss", "xlsx", "xml")
     # Uncomment to change the label/class of FilterForm clear buttons
     #settings.ui.filter_clear = "Clear"
     # Uncomment to include an Interim Save button on CRUD forms

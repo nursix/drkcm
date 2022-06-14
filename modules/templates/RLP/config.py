@@ -18,7 +18,7 @@ from .helpers import rlp_active_deployments
 #from ..RLPPTM.rlpgeonames import rlp_GeoNames
 
 MWG = "Ministerium für Wissenschaft und Gesundheit"
-ALLOWED_FORMATS = ("html", "iframe", "popup", "aadata", "json", "xls", "pdf")
+ALLOWED_FORMATS = ("html", "iframe", "popup", "aadata", "json", "xlsx", "pdf")
 
 # =============================================================================
 def config(settings):
@@ -1096,7 +1096,7 @@ def config(settings):
             field.widget = WithAdvice(field.widget,
                                       text = ("pr", "person_availability", "HoursMatrixIntro"),
                                       )
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             field.represent = lambda v: S3WeeklyHoursWidget.represent(v, html=False)
         else:
             field.represent = S3WeeklyHoursWidget.represent
@@ -1160,7 +1160,7 @@ def config(settings):
             list_fields.insert(2, (T("Name"), "person_details.alias"))
 
         # Additional fields for XLS/PDF
-        if r.representation in ("xls", "pdf"):
+        if r.representation in ("xlsx", "xls", "pdf"):
             # Email address
             list_fields.insert(-2, (T("Email"), "email.value"))
             if coordinator:
@@ -1446,7 +1446,7 @@ def config(settings):
                 if not coordinator:
 
                     # Restrict data formats
-                    settings.ui.export_formats = ("pdf", "xls")
+                    settings.ui.export_formats = ("pdf", "xlsx")
                     if r.representation not in ALLOWED_FORMATS:
                         r.error(403, current.ERROR.NOT_PERMITTED)
 
@@ -2447,7 +2447,7 @@ def config(settings):
         def custom_prep(r):
 
             if not coordinator:
-                settings.ui.export_formats = ("pdf", "xls")
+                settings.ui.export_formats = ("pdf", "xlsx")
                 if r.representation not in ALLOWED_FORMATS:
                     r.error(403, current.ERROR.NOT_PERMITTED)
 

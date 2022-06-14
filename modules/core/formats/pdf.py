@@ -1,7 +1,7 @@
 """
-    S3 Adobe PDF codec
+    Adobe PDF Writer
 
-    Copyright: 2011-2021 (c) Sahana Software Foundation
+    Copyright: 2011-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3RL_PDF",)
+__all__ = ("PDFWriter",)
 
 import os
 import unicodedata
@@ -73,11 +73,10 @@ try:
     biDiImported = True
 except ImportError:
     biDiImported = False
-    current.log.warning("PDF Codec", "BiDirectional Support not available: Install Python-BiDi")
 
-from ...tools import s3_strip_markup, s3_str
+from ..tools import s3_strip_markup, s3_str
 
-from ..codec import S3Codec
+from .base import FormatWriter
 
 PDF_WIDTH = 0
 PDF_HEIGHT = 1
@@ -149,7 +148,7 @@ def biDiText(text):
     return text
 
 # =============================================================================
-class S3RL_PDF(S3Codec):
+class PDFWriter(FormatWriter):
     """
         Simple Report Labs PDF format codec
     """
@@ -214,7 +213,7 @@ class S3RL_PDF(S3Codec):
                 pdf_orientation: Portrait (default) or Landscape
                 use_colour: True to add colour to the cells. default False
 
-                pdf_html_styles: styles for S3html2pdf (dict)
+                pdf_html_styles: styles for HTML2PDF (dict)
         """
 
         if not reportLabImported:
@@ -330,7 +329,7 @@ class S3RL_PDF(S3Codec):
         doc.build(header_flowable,
                   body_flowable,
                   footer_flowable,
-                  canvasmaker = S3NumberedCanvas,
+                  canvasmaker = NumberedCanvas,
                   )
 
         # Return the generated PDF
@@ -387,10 +386,10 @@ class S3RL_PDF(S3Codec):
             # Static HTML
             html = rules
 
-        parser = S3html2pdf(pageWidth=printable_width,
-                            exclude_class_list=["tabs"],
-                            styles = styles,
-                            )
+        parser = HTML2PDF(pageWidth=printable_width,
+                          exclude_class_list=["tabs"],
+                          styles = styles,
+                          )
         result = parser.parse(html)
         return result
 
@@ -431,26 +430,26 @@ class S3RL_PDF(S3Codec):
 
         if resource.get_config("pdf_format") == "list":
             # Export as data list
-            output = S3PDFList(doc,
-                               result.rfields,
-                               result.rows,
-                               totalrows = totalrows,
-                               ).build()
+            output = PDFList(doc,
+                             result.rfields,
+                             result.rows,
+                             totalrows = totalrows,
+                             ).build()
         else:
             # Export as data table
-            output = S3PDFTable(doc,
-                                result.rfields,
-                                result.rows,
-                                groupby = self.pdf_groupby,
-                                autogrow = self.table_autogrow,
-                                totalrows = totalrows,
-                                ).build()
+            output = PDFTable(doc,
+                              result.rfields,
+                              result.rows,
+                              groupby = self.pdf_groupby,
+                              autogrow = self.table_autogrow,
+                              totalrows = totalrows,
+                              ).build()
         return output
 
 # =============================================================================
 class EdenDocTemplate(BaseDocTemplate):
     """
-        The standard document template for eden reports
+        The standard document template for Eden PDF reports
         It allows for the following page templates:
         1) First Page
         2) Even Page
@@ -732,7 +731,7 @@ class EdenDocTemplate(BaseDocTemplate):
         return (table, style)
 
 # =============================================================================
-class S3PDFList:
+class PDFList:
     """ Export resource data as list-style report """
 
     def __init__(self,
@@ -794,7 +793,8 @@ class S3PDFList:
 
             item = [ruler]
             for rfield in rfields:
-                if rfield.ftype != "id":
+                represent = rfield.field.represent if rfield.field else None
+                if rfield.ftype != "id" or represent or rfield.join:
                     item.extend(formatted(rfield, row[rfield.colname]))
             if index == 0:
                 flowables.extend(item)
@@ -869,7 +869,7 @@ class S3PDFList:
         elif isinstance(value, IMG):
             field = rfield.field
             if field:
-                formatted = S3html2pdf.parse_img(value, field.uploadfolder)
+                formatted = HTML2PDF.parse_img(value, field.uploadfolder)
                 if formatted:
                     formatted = formatted[:1]
             else:
@@ -966,12 +966,12 @@ class S3PDFList:
         return styles
 
 # =============================================================================
-class S3PDFTable:
+class PDFTable:
     """
         Class to build a table that can then be placed in a pdf document
 
         The table will be formatted so that is fits on the page. This class
-        doesn't need to be called directly. Rather see S3RL_PDF.get_resource_flowable
+        doesn't need to be called directly. Rather see PDFWriter.get_resource_flowable
     """
 
     MIN_COL_WIDTH = 200
@@ -1079,7 +1079,7 @@ class S3PDFTable:
 
             field = rfield.field
             if field:
-                pdf_value = S3html2pdf.parse_img(value, field.uploadfolder)
+                pdf_value = HTML2PDF.parse_img(value, field.uploadfolder)
                 if pdf_value:
                     pdf_value = pdf_value[0]
             else:
@@ -1672,7 +1672,7 @@ class S3PDFTable:
         return style
 
 # =============================================================================
-class S3html2pdf():
+class HTML2PDF:
     """
         Class that takes HTML in the form of web2py helper objects
         and converts it to PDF
@@ -1752,7 +1752,7 @@ class S3html2pdf():
         elif isinstance(html, (P, H1, H2, H3, H4, H5, H6)):
             return self.parse_p(html)
         elif isinstance(html, IMG):
-            return S3html2pdf.parse_img(html)
+            return HTML2PDF.parse_img(html)
         elif isinstance(html, DIV):
             return self.parse_div(html)
         elif isinstance(html, (str, lazyT)):
@@ -2199,7 +2199,7 @@ class S3html2pdf():
         return color
 
 # =============================================================================
-class S3NumberedCanvas(canvas.Canvas):
+class NumberedCanvas(canvas.Canvas):
     """
         Canvas type with page numbers
         - based on http://code.activestate.com/recipes/576832

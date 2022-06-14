@@ -1,7 +1,7 @@
 """
     Human Resources Management
 
-    Copyright: 2011-2021 (c) Sahana Software Foundation
+    Copyright: 2011-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -7993,10 +7993,10 @@ def hrm_group_controller():
                            create_next = create_next,
                            )
 
-        if r.interactive or r.representation in ("aadata", "xls", "pdf"):
+        if r.interactive or r.representation in ("aadata", "xlsx", "xls", "pdf"):
             if r.component_name == "group_membership":
                 hrm_configure_pr_group_membership()
-                if r.representation == "xls":
+                if r.representation in ("xlsx", "xls"):
                     # Modify Title of Report to show Team Name
                     s3.crud_strings.pr_group_membership.title_list = r.record.name
                     # Make it match Import sheets
@@ -8514,7 +8514,7 @@ def hrm_human_resource_controller(extra_filter = None):
                                      },
                              ))
 
-        elif r.representation == "xls" and not r.component:
+        elif r.representation in ("xlsx", "xls") and not r.component:
             hrm_xls_list_fields(r)
 
         return True
@@ -9115,7 +9115,7 @@ def hrm_training_event_controller():
 
         elif r.component_name == "participant" and \
            (r.interactive or \
-            r.representation in ("aadata", "pdf", "xls")):
+            r.representation in ("aadata", "pdf", "xlsx", "xls")):
 
             # Use appropriate CRUD strings
             T = current.T

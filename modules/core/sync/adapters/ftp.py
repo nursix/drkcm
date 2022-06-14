@@ -1,7 +1,7 @@
 """
     Synchronization: Peer Repository Adapter for FTP
 
-    Copyright: 2015-2021 (c) Sahana Software Foundation
+    Copyright: 2015-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,7 +32,7 @@ from io import StringIO
 from gluon import *
 
 from ...controller import CRUDRequest
-from ...resource import S3URLQuery, FS, S3Exporter
+from ...resource import S3URLQuery, FS, DataExporter
 
 from ..base import S3SyncBaseAdapter
 
@@ -281,19 +281,22 @@ class S3SyncAdapter(S3SyncBaseAdapter):
 
         else:
             if representation == "csv":
-                exporter = S3Exporter().csv
+                exporter = DataExporter.csv
 
             # @ToDo use CRUD
             #elif representation == "html":
 
             elif representation == "pdf":
-                exporter = S3Exporter().pdf
+                exporter = DataExporter.pdf
 
             elif representation == "xls":
-                exporter = S3Exporter().xls
+                exporter = DataExporter.xls
+
+            elif representation == "xlsx":
+                exporter = DataExporter.xlsx
 
             elif representation == "json":
-                exporter = S3Exporter().json
+                exporter = DataExporter.json
 
             return exporter(resource)
 

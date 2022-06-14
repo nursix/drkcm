@@ -1,7 +1,7 @@
 """
     Pivot Table Reports
 
-    Copyright: 2011-2021 (c) Sahana Software Foundation
+    Copyright: 2011-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -46,7 +46,8 @@ from gluon.sqlhtml import OptionsWidget
 from gluon.storage import Storage
 from gluon.validators import IS_IN_SET, IS_EMPTY_OR
 
-from ..resource import FS, S3XMLFormat, S3Joins
+from ..formats import S3XMLFormat
+from ..resource import FS, S3Joins
 from ..tools import IS_NUMBER, JSONERRORS, JSONSEPARATORS, \
                     MarkupStripper, get_crud_string, s3_flatlist, \
                     s3_has_foreign_key, s3_represent_value, s3_str
@@ -239,7 +240,7 @@ class S3Report(CRUDMethod):
 
             output = json.dumps(pivotdata, separators=JSONSEPARATORS)
 
-        elif r.representation == "xls":
+        elif r.representation == "xlsx":
 
             if pivottable:
 
@@ -249,20 +250,18 @@ class S3Report(CRUDMethod):
                     title = current.T("Report")
 
                 # TODO: include current date?
-                filename = "%s_%s.xls" % (r.env.server_name,
-                                          s3_str(title).replace(" ", "_"),
-                                          )
+                filename = "%s_%s.xlsx" % (r.env.server_name,
+                                           s3_str(title).replace(" ", "_"),
+                                           )
                 disposition = "attachment; filename=\"%s\"" % filename
 
                 # Response headers
                 response = current.response
-                response.headers["Content-Type"] = contenttype(".xls")
+                response.headers["Content-Type"] = contenttype(".xlsx")
                 response.headers["Content-disposition"] = disposition
 
-                # Convert pivot table to XLS
-                stream = pivottable.xls(title)
-                #stream.seek(0) # already done in encoder
-                output = stream.read()
+                # Convert pivot table to XLSX
+                output = pivottable.xlsx(title)
 
             else:
                 r.error(400, "No report parameters specified")
@@ -2409,21 +2408,19 @@ class S3PivotTable:
         return output
 
     # -------------------------------------------------------------------------
-    def xls(self, title):
+    def xlsx(self, title):
         """
-            Convert this pivot table into an XLS file
+            Convert this pivot table into an XLSX file
 
             Args:
                 title: the title of the report
 
             Returns:
-                the XLS file as stream
+                the XLSX contents as bytes
         """
 
-        from ..resource import S3Codec
-        exporter = S3Codec.get_codec("xls")
-
-        return exporter.encode_pt(self, title)
+        from ..formats import XLSXPivotTableWriter
+        return XLSXPivotTableWriter(self).encode(title)
 
     # -------------------------------------------------------------------------
     def _represents(self, layers):

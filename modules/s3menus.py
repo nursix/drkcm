@@ -586,6 +586,28 @@ class S3OptionsMenu(object):
     def cms():
         """ CMS / Content Management System """
 
+        # Newsletter menu
+        author = current.auth.s3_has_permission("create",
+                                                "cms_newsletter",
+                                                c = "cms",
+                                                f = "newsletter",
+                                                )
+
+        T = current.T
+        inbox_label = T("Inbox") if author else T("Newsletters")
+
+        unread = current.s3db.cms_unread_newsletters()
+        if unread:
+            from gluon import TAG, SPAN
+            inbox_label = TAG[""](inbox_label, SPAN(unread, _class="num-pending"))
+        if author:
+            cms_menu = M("Newsletters", c="cms", f="read_newsletter")(
+                            M(inbox_label, f="read_newsletter", translate=False),
+                            M("Compose and Send", f="newsletter", p="create"),
+                        )
+        else:
+            cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
+
         return M(c="cms")(
                     M("Series", f="series")(
                         M("Create", m="create"),
@@ -595,12 +617,13 @@ class S3OptionsMenu(object):
                         M("Create", m="create"),
                         M("View as Pages", f="page"),
                         ),
-                    M("Newsletters", c="cms", f="read_newsletter")(
-                        M("Inbox", f="read_newsletter",
-                          check = lambda this: this.following()[0].check_permission(),
-                          ),
-                        M("Compose and Send", f="newsletter", p="create"),
-                        ),
+                    cms_menu,
+                    #M("Newsletters", c="cms", f="read_newsletter")(
+                        #M("Inbox", f="read_newsletter",
+                          #check = lambda this: this.following()[0].check_permission(),
+                          #),
+                        #M("Compose and Send", f="newsletter", p="create"),
+                        #),
                     )
 
     # -------------------------------------------------------------------------

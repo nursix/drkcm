@@ -1,7 +1,7 @@
 """
     Resource Export Tools
 
-    Copyright: 2009-2021 (c) Sahana Software Foundation
+    Copyright: 2009-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,20 +25,19 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Exporter",)
+__all__ = ("DataExporter",)
 
 from gluon import current
 
-from .codec import S3Codec
-
 # =============================================================================
-class S3Exporter:
+class DataExporter:
     """
         Exporter toolkit
     """
 
     # -------------------------------------------------------------------------
-    def csv(self, resource):
+    @staticmethod
+    def csv(resource):
         """
             Export resource as CSV
 
@@ -55,7 +54,7 @@ class S3Exporter:
         response = current.response
 
         if response:
-            servername = request and "%s_" % request.env.server_name or ""
+            servername = ("%s_" % request.env.server_name) if request else ""
             filename = "%s%s.csv" % (servername, resource.tablename)
             from gluon.contenttype import contenttype
             response.headers["Content-Type"] = contenttype(".csv")
@@ -65,7 +64,8 @@ class S3Exporter:
         return str(rows)
 
     # -------------------------------------------------------------------------
-    def json(self, resource,
+    @staticmethod
+    def json(resource,
              start=None,
              limit=None,
              fields=None,
@@ -211,33 +211,45 @@ class S3Exporter:
         return jsons(rows)
 
     # -------------------------------------------------------------------------
-    def pdf(self, *args, **kwargs):
+    @staticmethod
+    def pdf(*args, **kwargs):
 
-        codec = S3Codec.get_codec("pdf").encode
-        return codec(*args, **kwargs)
-
-    # -------------------------------------------------------------------------
-    def pdfcard(self, *args, **kwargs):
-
-        codec = S3Codec.get_codec("card")
-        return codec.encode(*args, **kwargs)
+        from ..formats import PDFWriter
+        return PDFWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
-    def shp(self, *args, **kwargs):
+    @staticmethod
+    def pdfcard(*args, **kwargs):
 
-        codec = S3Codec.get_codec("shp").encode
-        return codec(*args, **kwargs)
-
-    # -------------------------------------------------------------------------
-    def svg(self, *args, **kwargs):
-
-        codec = S3Codec.get_codec("svg").encode
-        return codec(*args, **kwargs)
+        from ..formats import PDFCardWriter
+        return PDFCardWriter().encode(*args, **kwargs)
 
     # -------------------------------------------------------------------------
-    def xls(self, *args, **kwargs):
+    @staticmethod
+    def shp(*args, **kwargs):
 
-        codec = S3Codec.get_codec("xls").encode
-        return codec(*args, **kwargs)
+        from ..formats import SHPWriter
+        return SHPWriter().encode(*args, **kwargs)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def svg(*args, **kwargs):
+
+        from ..formats import SVGWriter
+        return SVGWriter().encode(*args, **kwargs)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def xls(*args, **kwargs):
+
+        from ..formats import XLSWriter
+        return XLSWriter().encode(*args, **kwargs)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def xlsx(*args, **kwargs):
+
+        from ..formats import XLSXWriter
+        return XLSXWriter.encode(*args, **kwargs)
 
 # End =========================================================================

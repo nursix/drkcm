@@ -305,7 +305,7 @@ def job_title():
         f = table.organisation_id
         f.readable = f.writable = False
 
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             # Export format should match Import format
             current.messages["NONE"] = ""
             #f.represent = \

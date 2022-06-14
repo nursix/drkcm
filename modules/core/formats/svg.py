@@ -1,7 +1,7 @@
 """
-    SVG codec
+    SVG Writer
 
-    Copyright: 2013-2021 (c) Sahana Software Foundation
+    Copyright: 2013-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3SVG",)
+__all__ = ("SVGWriter",)
 
 import os
 
@@ -34,12 +34,12 @@ from gluon.contenttype import contenttype
 from gluon.storage import Storage
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from ...tools import get_crud_string
+from ..tools import get_crud_string
 
-from ..codec import S3Codec
+from .base import FormatWriter
 
 # =============================================================================
-class S3SVG(S3Codec):
+class SVGWriter(FormatWriter):
     """
         Simple SVG format codec
     """
@@ -67,7 +67,6 @@ class S3SVG(S3Codec):
                                orderby=orderby,
                                represent=True,
                                show_links=False)
-
         rfields = data["rfields"]
         types = []
         colnames = []
@@ -131,7 +130,12 @@ class S3SVG(S3Codec):
             current.log.error("No Geometry!")
 
         # Convert to SVG
-        title = attr.get("title", resource._ids[0])
+        title = attr.get("title")
+        if not title:
+            if resource._ids:
+                title = resource._ids[0]
+            else:
+                title = _title.lower().replace(" ", "_") if _title else resource.tablename
         filename = "%s.svg" % title
         filepath = self.write_file(filename, wkt, **attr)
 
@@ -141,9 +145,16 @@ class S3SVG(S3Codec):
         response.headers["Content-Type"] = contenttype(".svg")
         response.headers["Content-disposition"] = disposition
 
-        stream = open(filepath)
-        return response.stream(stream, chunk_size=DEFAULT_CHUNK_SIZE,
-                               request=current.request)
+        if not filepath:
+            from io import BytesIO
+            stream = BytesIO()
+        else:
+            stream = open(filepath)
+
+        return response.stream(stream,
+                               chunk_size = DEFAULT_CHUNK_SIZE,
+                               request = current.request
+                               )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -174,7 +185,7 @@ class S3SVG(S3Codec):
         geom_type = shape.geom_type
         if geom_type not in ("MultiPolygon", "Polygon"):
             current.log.error("Unsupported Geometry", geom_type)
-            return
+            return None
 
         # Scale Points & invert Y axis
         from shapely import affinity
@@ -238,25 +249,5 @@ class S3SVG(S3Codec):
             f.write(et.tostring(doc))
 
         return filepath
-
-    # -------------------------------------------------------------------------
-    def decode(self, resource, source, **attr):
-        """
-            Import data from a Scalable Vector Graphic
-
-            Args:
-                resource: the CRUDResource
-                source: the source
-
-            Returns:
-                an S3XML ElementTree
-
-            TODO Handle encodings within SVG other than UTF-8
-        """
-
-        # @ToDo: Complete this!
-        raise NotImplementedError
-
-        #return root
 
 # End =========================================================================

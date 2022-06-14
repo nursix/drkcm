@@ -1,7 +1,7 @@
 """
     Hierarchy Toolkit
 
-    Copyright: 2013-2021 (c) Sahana Software Foundation
+    Copyright: 2013-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -412,12 +412,11 @@ class S3HierarchyCRUD(CRUDMethod):
             output.extend(rows)
 
         # Encode in XLS format
-        from ..resource import S3Codec
-        codec = S3Codec.get_codec("xls")
-        result = codec.encode(output,
-                              title = resource.name,
-                              list_fields = hcolumns+columns,
-                              )
+        from ..resource import DataExporter
+        result = DataExporter.xls(output,
+                                  title = resource.name,
+                                  list_fields = hcolumns+columns,
+                                  )
 
         # Reponse headers and file name are set in codec
         return result

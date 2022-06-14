@@ -2075,7 +2075,7 @@ class dc_TargetReport(CRUDMethod):
 
         raise NotImplementedError
 
-        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core import EdenDocTemplate, PDFWriter
 
         # etc, etc
 
@@ -2695,17 +2695,17 @@ class dc_TemplateExportL10n(CRUDMethod):
         """
 
         if r.name == "template":
-            if r.representation == "xls":
+            if r.representation in ("xlsx", "xls"):
                 # XLS export
 
                 # No need to check for 'read' permission within single-record methods, as that has already been checked
 
-                from core.resource.codecs.xls import S3XLS
+                from core import XLSWriter
 
                 try:
                     import xlwt
                 except ImportError:
-                    r.error(503, S3XLS.ERROR.XLWT_ERROR)
+                    r.error(503, XLSWriter.ERROR.XLWT_ERROR)
 
                 template_id = r.id
                 record = r.record
@@ -2825,7 +2825,7 @@ class dc_TemplateExportL10n(CRUDMethod):
                 # Create the workbook
                 book = xlwt.Workbook(encoding="utf-8")
 
-                COL_WIDTH_MULTIPLIER = S3XLS.COL_WIDTH_MULTIPLIER
+                COL_WIDTH_MULTIPLIER = XLSWriter.COL_WIDTH_MULTIPLIER
 
                 # Add sheet
                 sheet = book.add_sheet("Instructions")

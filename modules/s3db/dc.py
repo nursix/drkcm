@@ -3,7 +3,7 @@
     - a front-end UI to manage Assessments which uses the
       Dynamic Tables back-end
 
-    Copyright: 2014-2021 (c) Sahana Software Foundation
+    Copyright: 2014-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1565,7 +1565,7 @@ class dc_TargetReport(CRUDMethod):
             #elif representation == "pdf":
             #    output = self.pdf(r, title, **attr)
             #    return output
-            #elif representation == "xls":
+            #elif representation in ("xlsx", "xls"):
             #    output = self.xls(r, title, **attr)
             #    return output
         r.error(405, current.ERROR.BAD_METHOD)
@@ -1836,7 +1836,7 @@ class dc_TargetReport(CRUDMethod):
                    (original is project_SummaryReport)
         """
 
-        from core.resource.codecs.pdf import EdenDocTemplate, S3RL_PDF
+        from core import EdenDocTemplate, PDFWriter
 
         T = current.T
         table = r.table
@@ -1862,7 +1862,7 @@ class dc_TargetReport(CRUDMethod):
 
         doc = EdenDocTemplate(title=report_title)
         printable_width = doc.printable_width
-        get_html_flowable = S3RL_PDF().get_html_flowable
+        get_html_flowable = PDFWriter().get_html_flowable
         header_flowable = get_html_flowable(header, printable_width)
         body_flowable = get_html_flowable(body, printable_width)#, styles)
         footer_flowable = get_html_flowable(footer, printable_width)
@@ -1888,22 +1888,22 @@ class dc_TargetXLS(CRUDMethod):
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
 
-        from core.resource.codecs.xls import S3XLS
+        from core import XLSWriter
 
         try:
             import xlwt
         except ImportError:
-            r.error(503, S3XLS.ERROR.XLWT_ERROR)
+            r.error(503, XLSWriter.ERROR.XLWT_ERROR)
         try:
             from xlrd.xldate import xldate_from_datetime_tuple
         except ImportError:
-            r.error(503, S3XLS.ERROR.XLRD_ERROR)
+            r.error(503, XLSWriter.ERROR.XLRD_ERROR)
 
         # Get styles
-        COL_WIDTH_MULTIPLIER = S3XLS.COL_WIDTH_MULTIPLIER
-        styles = S3XLS._styles(use_colour = True,
-                               evenodd = False,
-                               )
+        COL_WIDTH_MULTIPLIER = XLSWriter.COL_WIDTH_MULTIPLIER
+        styles = XLSWriter._styles(use_colour = True,
+                                   evenodd = False,
+                                   )
         large_header_style = styles["large_header"]
         large_header_style.alignment.horz = large_header_style.alignment.HORZ_LEFT
         NO_PATTERN = large_header_style.pattern.NO_PATTERN
@@ -1934,7 +1934,7 @@ class dc_TargetXLS(CRUDMethod):
         likert_options = settings.get_dc_likert_options()
 
         # Export Date
-        datetime_format = S3XLS.dt_format_translate(settings.get_L10n_datetime_format())
+        datetime_format = XLSWriter.dt_format_translate(settings.get_L10n_datetime_format())
         export_datetime = r.now
         date_tuple = (export_datetime.year,
                       export_datetime.month,

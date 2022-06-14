@@ -1,7 +1,7 @@
 """
     Authentication and Authorization
 
-    Copyright: (c) 2010-2021 Sahana Software Foundation
+    Copyright: (c) 2010-2022 Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -3992,12 +3992,12 @@ Please go to %(url)s to approve this user."""
 
         system_roles = self.get_system_roles()
         ANONYMOUS = system_roles.ANONYMOUS
-        if ANONYMOUS:
-            session.s3.roles = [ANONYMOUS]
-        else:
-            session.s3.roles = []
+        AUTHENTICATED = system_roles.AUTHENTICATED
+
+        session_roles = {ANONYMOUS} if ANONYMOUS else set()
 
         if self.user:
+
             db = current.db
             s3db = current.s3db
 
@@ -4006,12 +4006,11 @@ Please go to %(url)s to approve this user."""
             # Set pe_id for current user
             ltable = s3db.table("pr_person_user")
             if ltable is not None:
-                query = (ltable.user_id == user_id)
-                row = db(query).select(ltable.pe_id,
-                                       limitby=(0, 1),
-                                       cache=s3db.cache).first()
-                if row:
-                    self.user["pe_id"] = row.pe_id
+                row = db(ltable.user_id == user_id).select(ltable.pe_id,
+                                                           limitby = (0, 1),
+                                                           cache = s3db.cache,
+                                                           ).first()
+                self.user["pe_id"] = row.pe_id if row else None
             else:
                 self.user["pe_id"] = None
 
@@ -4020,54 +4019,54 @@ Please go to %(url)s to approve this user."""
             query = (mtable.deleted == False) & \
                     (mtable.user_id == user_id) & \
                     (mtable.group_id != None)
-            rows = db(query).select(mtable.group_id, mtable.pe_id,
-                                    cacheable=True)
+            rows = db(query).select(mtable.group_id,
+                                    mtable.pe_id,
+                                    cacheable = True,
+                                    )
 
             # Add all group_ids to session.s3.roles
-            session.s3.roles.extend(row.group_id for row in rows)
+            session_roles |= {row.group_id for row in rows}
+            if AUTHENTICATED:
+                session_roles.add(AUTHENTICATED)
 
             # Realms:
             # Permissions of a group apply only for records owned by any of
             # the entities which belong to the realm of the group membership
 
+            # These realms apply for every authenticated user:
+
             if not permission.entity_realm:
-                # Group memberships have no realms (policy 5 and below)
-                self.user["realms"] = Storage([(row.group_id, None) for row in rows])
+                # All roles apply site-wide (i.e. no realms, policy 5 and below)
+                realms = {row.group_id: None for row in rows}
             else:
-                # Group memberships are limited to realms (policy 6 and above)
-                realms = {}
-
-                # These roles can't be realm-restricted:
-                unrestrictable = (system_roles.ADMIN,
-                                  system_roles.ANONYMOUS,
-                                  system_roles.AUTHENTICATED,
-                                  )
-
+                # Roles are limited to realms (policy 6 and above)
                 default_realm = s3db.pr_default_realms(self.user["pe_id"])
 
                 # Store the realms:
+                realms = {}
                 for row in rows:
+
                     group_id = row.group_id
-                    if group_id in realms and realms[group_id] is None:
+                    if group_id == system_roles.ADMIN:
+                        # Admin is not realm-restrictable
+                        realm = realms[group_id] = None
+                    elif group_id in realms:
+                        realm = realms[group_id]
+                    else:
+                        realm = realms[group_id] = []
+                    if realm is None:
                         continue
-                    if group_id in unrestrictable:
-                        realms[group_id] = None
-                        continue
-                    if group_id not in realms:
-                        realms[group_id] = []
-                    realm = realms[group_id]
+
                     pe_id = row.pe_id
                     if pe_id is None:
                         if default_realm:
-                            realm.extend([e for e in default_realm
-                                            if e not in realm])
+                            realm.extend([e for e in default_realm if e not in realm])
                         if not realm:
                             del realms[group_id]
                     elif pe_id == 0:
-                        # Site-wide
                         realms[group_id] = None
                     elif pe_id not in realm:
-                        realms[group_id].append(pe_id)
+                        realm.append(pe_id)
 
                 if permission.entity_hierarchy:
                     # Realms include subsidiaries of the realm entities
@@ -4096,11 +4095,13 @@ Please go to %(url)s to approve this user."""
                                     if subsidiary not in realm:
                                         append(subsidiary)
 
-                self.user["realms"] = realms
+            # These realms apply for every authenticated user:
+            for role in (ANONYMOUS, AUTHENTICATED):
+                if role:
+                    realms[role] = None
+            self.user["realms"] = Storage(realms)
 
-            if ANONYMOUS:
-                # Anonymous role has no realm
-                self.user["realms"][ANONYMOUS] = None
+        session.s3.roles = list(session_roles)
 
     # -------------------------------------------------------------------------
     def s3_create_role(self, role, description=None, *acls, **args):
@@ -4719,8 +4720,6 @@ Please go to %(url)s to approve this user."""
         if self.override:
             return True
 
-        sr = self.get_system_roles()
-
         if not hasattr(table, "_tablename"):
             tablename = table
             table = current.s3db.table(tablename, db_only=True)
@@ -4731,44 +4730,52 @@ Please go to %(url)s to approve this user."""
 
         policy = current.deployment_settings.get_security_policy()
 
+        if isinstance(method, (list, tuple)) and policy not in (3, 4, 5, 6, 7):
+            return all(self.s3_has_permission(m, table, record_id=record_id, c=c, f=f) for m in method)
+
+        sr = self.get_system_roles()
+        permission = self.permission
+
         # Simple policy
         if policy == 1:
-            # Anonymous users can Read.
-            if method == "read":
+            required = permission.METHODS.get(method) or 0
+            if required == permission.READ:
+                # All users can read, including anonymous users
                 authorised = True
             else:
-                # Authentication required for Create/Update/Delete.
+                # Authentication required for all other methods
                 authorised = self.s3_logged_in()
 
         # Editor policy
         elif policy == 2:
-            # Anonymous users can Read.
-            if method == "read":
+            required = permission.METHODS.get(method) or 0
+            if required == permission.READ:
+                # All users can read, including anonymous users
                 authorised = True
-            elif method == "create":
-                # Authentication required for Create.
-                authorised = self.s3_logged_in()
-            elif record_id == 0 and method == "update":
-                # Authenticated users can update at least some records
+            elif required == permission.CREATE or \
+                 record_id == 0 and required == permission.UPDATE:
+                # Authenticated users can create records, and update
+                # certain default records (e.g. their profile)
                 authorised = self.s3_logged_in()
             else:
-                # Editor role required for Update/Delete.
+                # Otherwise, must be EDITOR or record owner
                 authorised = self.s3_has_role(sr.EDITOR)
                 if not authorised and self.user and "owned_by_user" in table:
-                    # Creator of Record is allowed to Edit
                     query = (table.id == record_id)
                     record = current.db(query).select(table.owned_by_user,
-                                                      limitby=(0, 1)).first()
+                                                      limitby = (0, 1),
+                                                      ).first()
                     if record and self.user.id == record.owned_by_user:
                         authorised = True
 
-        # Use S3Permission ACLs
-        elif policy in (3, 4, 5, 6, 7, 8):
-            authorised = self.permission.has_permission(method,
-                                                        c = c,
-                                                        f = f,
-                                                        t = table,
-                                                        record = record_id)
+        # Use S3Permission
+        elif policy in (3, 4, 5, 6, 7):
+            authorised = permission.has_permission(method,
+                                                   c = c,
+                                                   f = f,
+                                                   t = table,
+                                                   record = record_id,
+                                                   )
 
         # Web2py default policy
         else:

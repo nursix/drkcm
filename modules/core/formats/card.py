@@ -1,7 +1,7 @@
 """
     Card-type PDF generation (e.g. ID cards)
 
-    Copyright: 2018-2021 (c) Sahana Software Foundation
+    Copyright: 2018-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3PDFCard",
+__all__ = ("PDFCardWriter",
            )
 
 from io import BytesIO
@@ -46,14 +46,14 @@ except ImportError:
 
 from gluon import current, HTTP
 
-from ...resource import CRUDResource
-from ...tools import s3_str
+from ..resource import CRUDResource
+from ..tools import s3_str
 
-from ..codec import S3Codec
+from .base import FormatWriter
 
 CREDITCARD = (153, 243) # Default format for cards (in points)
 # =============================================================================
-class S3PDFCard(S3Codec):
+class PDFCardWriter(FormatWriter):
     """
         Codec to produce printable data cards (e.g. ID cards)
     """
@@ -69,7 +69,7 @@ class S3PDFCard(S3Codec):
                 attr: additional encoding parameters (see below)
 
             Keyword Args:
-                layout: the layout (a S3PDFCardLayout subclass, overrides
+                layout: the layout (a PDFCardLayout subclass, overrides
                         the resource's pdf_card_layout setting
                 orderby: orderby-expression for data extraction, overrides
                          the resource's orderby setting
@@ -108,7 +108,7 @@ class S3PDFCard(S3Codec):
         if layout is None and is_resource:
             layout = resource.get_config("pdf_card_layout")
         if layout is None:
-            layout = S3PDFCardLayout
+            layout = PDFCardLayout
 
         # Card (and hence page) orientation
         orientation = layout.orientation
@@ -164,12 +164,12 @@ class S3PDFCard(S3Codec):
                 title = crud_strings["title_list"]
 
         # Instantiate the doc template
-        doc = S3PDFCardTemplate(pagesize,
-                                cardsize,
-                                margins = attr.get("margins"),
-                                spacing = attr.get("spacing"),
-                                title = title,
-                                )
+        doc = PDFCardTemplate(pagesize,
+                              cardsize,
+                              margins = attr.get("margins"),
+                              spacing = attr.get("spacing"),
+                              title = title,
+                              )
 
         # Produce the flowables
         flowables = self.get_flowables(layout,
@@ -223,7 +223,7 @@ class S3PDFCard(S3Codec):
             Get the Flowable-instances for the data items
 
             Args:
-                layout: the S3PDFCardLayout subclass implementing the
+                layout: the PDFCardLayout subclass implementing the
                         card layout
                 resource: the resource
                 items: the data items
@@ -280,7 +280,7 @@ class S3PDFCard(S3Codec):
         return flowables
 
 # =============================================================================
-class S3PDFCardTemplate(BaseDocTemplate):
+class PDFCardTemplate(BaseDocTemplate):
     """
         Document Template for data cards
     """
@@ -475,7 +475,7 @@ class S3PDFCardTemplate(BaseDocTemplate):
                 ]
 
 # =============================================================================
-class S3PDFCardLayout(Flowable):
+class PDFCardLayout(Flowable):
     """
         Flowable base class for data cards, to be subclassed per use-case;
         subclasses should implement the draw()-method to render a data item.

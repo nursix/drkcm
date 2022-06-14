@@ -1,7 +1,7 @@
 """
     Survey Tool
 
-    Copyright: 2011-2021 (c) Sahana Software Foundation
+    Copyright: 2011-2022 (c) Sahana Software Foundation
 
     ADAT - Assessment Data Analysis Tool
 
@@ -1617,8 +1617,8 @@ class SurveySeriesModel(DataModel):
                             question_ids.append(str(question.question_id))
                 items = buildCompletedList(series_id, question_ids)
                 if r.representation == "xls":
-                    from core.resource.codecs.xls import S3XLS
-                    exporter = S3XLS()
+                    from core import XLSWriter
+                    exporter = XLSWriter()
                     return exporter.encode(items,
                                            title=crud_strings.title_selected,
                                            use_colour=False
@@ -1626,7 +1626,7 @@ class SurveySeriesModel(DataModel):
                 if r.representation == "html":
                     table = buildTableFromCompletedList(items)
                     s3.actions = []
-                    #exporter = S3Exporter()
+                    #exporter = DataExporter
                     #table = exporter.html(items)
                 output["items"] = table
                 output["sortby"] = [[0, "asc"]]
@@ -2804,7 +2804,7 @@ def survey_answer_list_represent(value):
     answer_list = answer_text.splitlines()
     result = TABLE()
     questions = {}
-    xml_decode = S3Codec.xml_decode
+    xml_decode = current.xml.xml_decode
     for line in answer_list:
         line = xml_decode(line)
         (question, answer) = line.split(",", 1)

@@ -1,7 +1,7 @@
 """
     Volunteers Management (extends modules/eden/hrm.py)
 
-    Copyright: 2012-2021 (c) Sahana Software Foundation
+    Copyright: 2012-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -1293,8 +1293,8 @@ def vol_service_record(r, **attr):
 
         return output
 
-    from core import S3Exporter
-    exporter = S3Exporter().pdf
+    from core import DataExporter
+    exporter = DataExporter.pdf
     pdf_title = "%s - %s" % (s3_str(vol_name),
                              s3_str(T("Volunteer Service Record")),
                              )
@@ -1336,7 +1336,7 @@ def vol_volunteer_controller():
             s3db.pr_availability_filter(r)
 
         # Configure list_fields
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             s3db.hrm_xls_list_fields(r, staff=False)
         else:
             list_fields = ["person_id",

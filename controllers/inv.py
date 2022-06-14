@@ -112,7 +112,7 @@ def warehouse():
             not r.vars.get("show_obsolete", False):
             r.resource.add_filter(db.inv_warehouse.obsolete != True)
 
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             list_fields = r.resource.get_config("list_fields")
             list_fields += ["location_id$lat",
                             "location_id$lon",

@@ -92,7 +92,7 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    settings.security.policy = 1 # Simple Policy
+    #settings.security.policy = 1 # Simple Policy
 
     # Events
     # Uncomment this to use link Projects to Events

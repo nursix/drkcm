@@ -2743,6 +2743,8 @@ class ResourceFilteredComponentTests(unittest.TestCase):
         auth = current.auth
         s3db = current.s3db
 
+        auth.override = True
+
         org_organisation = s3db.org_organisation
         org_test_office = s3db.org_office.with_alias("org_test_office")
 
@@ -2766,7 +2768,6 @@ class ResourceFilteredComponentTests(unittest.TestCase):
                     str(org_test_office.name.lower().like("xyz%")))
 
         # Add the query to the resource
-        auth.override = True
         resource.add_filter(query.test[0])
         rfilter = resource.rfilter
 

@@ -163,7 +163,7 @@ def job_title():
     """ Job Titles Controller """
 
     def prep(r):
-        if r.representation == "xls":
+        if r.representation in ("xlsx", "xls"):
             # Export format should match Import format
             current.messages["NONE"] = ""
             table = s3db.hrm_job_title

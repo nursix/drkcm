@@ -392,6 +392,22 @@ class S3OptionsMenu(default.S3OptionsMenu):
             M("Create Organization", m="create", restrict="ORG_GROUP_ADMIN"),
             )
 
+        # Newsletter menu
+        author = auth.s3_has_permission("create", "cms_newsletter", c="cms", f="newsletter")
+        T = current.T
+
+        inbox_label = T("Inbox") if author else T("Newsletters")
+        unread = current.s3db.cms_unread_newsletters()
+        if unread:
+            inbox_label = TAG[""](inbox_label, SPAN(unread, _class="num-pending"))
+        if author:
+            cms_menu = M("Newsletters", c="cms", f="read_newsletter")(
+                            M(inbox_label, f="read_newsletter", translate=False),
+                            M("Compose and Send", f="newsletter", p="create"),
+                        )
+        else:
+            cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
+
         return M(c=("org", "hrm", "cms"))(
                     org_menu,
                     M("Test Stations", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
@@ -407,12 +423,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Staff", c="hrm", f=("staff", "person"),
                       restrict=("ORG_ADMIN", "ORG_GROUP_ADMIN"),
                       ),
-                    M("Newsletters", c="cms", f="read_newsletter")(
-                        M("Inbox", f="read_newsletter",
-                          check = lambda this: this.following()[0].check_permission(),
-                          ),
-                        M("Compose and Send", f="newsletter", p="create"),
-                        ),
+                    cms_menu,
+                    #M("Newsletters", c="cms", f="read_newsletter")(
+                        #M("Inbox", f="read_newsletter",
+                          #check = lambda this: this.following()[0].check_permission(),
+                          #),
+                        #M("Compose and Send", f="newsletter", p="create"),
+                        #),
                     M("Administration", restrict=("ADMIN"))(
                         M("Facility Types", f="facility_type"),
                         M("Organization Types", f="organisation_type"),

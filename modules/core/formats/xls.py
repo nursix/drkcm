@@ -1,7 +1,7 @@
 """
-    S3 Microsoft Excel codec
+    Microsoft Excel Writer (Legacy XLS Format)
 
-    Copyright: 2011-2021 (c) Sahana Software Foundation
+    Copyright: 2011-2022 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3XLS",
+__all__ = ("XLSWriter",
            )
 
 from io import BytesIO
@@ -34,15 +34,16 @@ from gluon import HTTP, current
 from gluon.contenttype import contenttype
 from gluon.storage import Storage
 
-from ...tools import get_crud_string, s3_get_foreign_key, s3_str, \
-                     s3_strip_markup
+from ..tools import get_crud_string, s3_get_foreign_key, s3_str, s3_strip_markup
 
-from ..codec import S3Codec
+from .base import FormatWriter
 
 # =============================================================================
-class S3XLS(S3Codec):
+class XLSWriter(FormatWriter):
     """
         Simple Microsoft Excel format codec
+
+        DEPRECATED
     """
 
     # The xlwt library supports a maximum of 182 characters in a single cell
@@ -560,7 +561,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
         represent = field.represent
 
         # Get the hierarchy
-        from ...tools import S3Hierarchy
+        from ..tools import S3Hierarchy
         h = S3Hierarchy(ktablename)
         if not h.config:
             return []
@@ -607,7 +608,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
 
         output = BytesIO()
 
-        book = S3PivotTableXLS(pt).encode(title)
+        book = XLSPivotTableWriter(pt).encode(title)
         book.save(output)
 
         output.seek(0)
@@ -743,11 +744,11 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
                 }
 
 # =============================================================================
-class S3PivotTableXLS:
+class XLSPivotTableWriter:
     """
         XLS encoder for S3PivotTables
 
-        @todo: merge+DRY with S3XLS?
+        @todo: merge+DRY with XLSWriter?
         @todo: support multiple layers (=write multiple sheets)
         @todo: handle huge pivot tables (=exceeding XLS rows/cols limits)
     """
@@ -782,7 +783,7 @@ class S3PivotTableXLS:
         try:
             import xlwt
         except ImportError:
-            error = S3XLS.ERROR.XLWT_ERROR
+            error = XLSWriter.ERROR.XLWT_ERROR
             current.log.error(error)
             raise HTTP(503, body=error)
 
@@ -858,7 +859,7 @@ class S3PivotTableXLS:
                   )
 
             # Current date/time (in local timezone)
-            from ...tools import S3DateTime
+            from ..tools import S3DateTime
             dt = S3DateTime.to_local(current.request.utcnow)
             write(sheet, 1, 0, dt, style = "subheader", numfmt = "datetime")
 
@@ -1173,7 +1174,7 @@ class S3PivotTableXLS:
             # Date/Time formats from L10N deployment settings
             settings = current.deployment_settings
 
-            translate = S3XLS.dt_format_translate
+            translate = XLSWriter.dt_format_translate
             date_format = translate(settings.get_L10n_date_format())
             datetime_format = translate(settings.get_L10n_datetime_format())
             time_format = translate(settings.get_L10n_time_format())

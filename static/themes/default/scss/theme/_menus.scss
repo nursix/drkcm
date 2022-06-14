@@ -95,6 +95,16 @@ $side_bar_divider_color: $side_bar_border_color !default;
             }
         }
     }
+    .num-pending {
+        margin: 0 0.4rem;
+        font-weight: normal;
+        font-size: 0.7rem;
+        border: 1px solid #960;
+        padding: 0 0.2rem;
+        background-color: #ffaa00;
+        border-radius: 10px;
+        color: #712e05;
+    }
 }
 
 // ----------------------------------------------------------------------------

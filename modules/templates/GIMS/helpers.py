@@ -152,12 +152,12 @@ def restrict_data_formats(r):
 
     settings = current.deployment_settings
 
-    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
+    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xlsx")
     if r.method in ("report", "timeplot", "filter", "validate"):
         allowed += ("json",)
     if r.method == "options":
         allowed += ("s3json",)
-    settings.ui.export_formats = ("pdf", "xls")
+    settings.ui.export_formats = ("pdf", "xlsx")
     if r.representation not in allowed:
         r.error(403, current.ERROR.NOT_PERMITTED)
 
@@ -283,8 +283,9 @@ class ServiceListRepresent(S3Represent):
         else:
             labels_ = sorted(s3_str(labels[v]) if v in labels else self.default for v in values)
 
-        if current.auth.permission.format == "xls":
+        if current.auth.permission.format in ("xlsx", "xls"):
             return ", ".join(labels_)
+            #return "\n".join(("- %s" % l) for l in labels_)
 
         html = UL(_class="service-list")
         for label in labels_:

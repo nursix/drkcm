@@ -8,8 +8,7 @@ from io import BytesIO
 
 from gluon import current, HTTP
 
-from core import CRUDMethod, s3_decode_iso_datetime, s3_str
-from core.resource.codecs.xls import S3XLS
+from core import CRUDMethod, XLSWriter, s3_decode_iso_datetime, s3_str
 
 # =============================================================================
 class PerformanceIndicators:
@@ -139,12 +138,12 @@ class PerformanceIndicators:
                 rowindex: the row index
                 colindex: the column index
                 label: the label/value to write
-                style: style name (S3XLS styles)
+                style: style name (XLSWriter styles)
         """
 
         styles = self.styles
         if not styles:
-            self.styles = styles = S3XLS._styles()
+            self.styles = styles = XLSWriter._styles()
 
         style = styles.get(style)
         if not style:

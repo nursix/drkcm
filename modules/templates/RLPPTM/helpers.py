@@ -351,6 +351,37 @@ def is_org_group(organisation_id, group, cacheable=True):
     return bool(row)
 
 # -----------------------------------------------------------------------------
+def is_org_type_tag(organisation_id, tag, value=None):
+    """
+        Check if a type of an organisation has a certain tag
+
+        Args:
+            organisation_id: the organisation ID
+            tag: the tag name
+            value: the tag value (optional)
+
+        Returns:
+            boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ltable = s3db.org_organisation_organisation_type
+    ttable = s3db.org_organisation_type_tag
+
+    joinq = (ttable.organisation_type_id == ltable.organisation_type_id) & \
+            (ttable.tag == tag)
+    if value is not None:
+        joinq &= (ttable.value == value)
+
+    join = ttable.on(joinq & (ttable.deleted == False))
+    query = (ltable.organisation_id == organisation_id) & \
+            (ltable.deleted == False)
+    row = db(query).select(ttable.id, join=join, limitby=(0, 1)).first()
+    return bool(row)
+
+# -----------------------------------------------------------------------------
 def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)
@@ -360,14 +391,14 @@ def restrict_data_formats(r):
     """
 
     settings = current.deployment_settings
-    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xls")
+    allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xlsx")
     if r.record:
         allowed += ("card",)
     if r.method in ("report", "timeplot", "filter", "lookup", "info"):
         allowed += ("json",)
     elif r.method == "options":
         allowed += ("s3json",)
-    settings.ui.export_formats = ("pdf", "xls")
+    settings.ui.export_formats = ("pdf", "xlsx")
     if r.representation not in allowed:
         r.error(403, current.ERROR.NOT_PERMITTED)
 
@@ -1458,8 +1489,8 @@ class InvoicePDF(CRUDMethod):
         # Filename to include invoice number if available
         invoice_no = r.record.invoice_no
 
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "read",
@@ -1784,8 +1815,8 @@ class ClaimPDF(CRUDMethod):
         # Filename to include invoice number if available
         invoice_no = self.invoice_number(r.record)
 
-        from core import S3Exporter
-        exporter = S3Exporter().pdf
+        from core import DataExporter
+        exporter = DataExporter.pdf
         return exporter(r.resource,
                         request = r,
                         method = "read",

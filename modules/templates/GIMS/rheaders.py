@@ -123,11 +123,29 @@ def cr_rheader(r, tabs=None):
                         #(T("Documents"), "document"),
                         ]
 
-            rheader_fields = [["organisation_id"],
+            rheader_fields = [["organisation_id", "available_capacity"],
                               ["location_id"],
                               ["status"],
                               ]
             rheader_title = "name"
+
+        elif tablename == "cr_reception_center":
+
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        (T("Status History"), "status"),
+                        #(T("Photos"), "image"),
+                        #(T("Documents"), "document"),
+                        ]
+
+            rheader_fields = [["organisation_id", "capacity"],
+                              ["location_id", "population"],
+                              ["status", "allocatable_capacity"],
+                              ]
+            rheader_title = "name"
+
+        else:
+            return rheader
 
         rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
         rheader = rheader(r, table = resource.table, record = record)

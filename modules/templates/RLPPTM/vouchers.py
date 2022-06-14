@@ -14,15 +14,14 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 
 from gluon import current
 
-from core.resource.codecs.card import S3PDFCardLayout
-from core import s3_str
+from core import PDFCardLayout, s3_str
 
 # Fonts we use in this layout
 NORMAL = "Helvetica"
 BOLD = "Helvetica-Bold"
 
 # =============================================================================
-class RLPCardLayout(S3PDFCardLayout):
+class RLPCardLayout(PDFCardLayout):
     """
         Parent class for PDF cards to implement common attributes and methods
     """

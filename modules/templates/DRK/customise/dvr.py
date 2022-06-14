@@ -414,7 +414,7 @@ def dvr_case_appointment_controller(**attr):
                            "comments",
                            ]
 
-            if r.representation == "xls":
+            if r.representation in ("xlsx", "xls"):
                 # Include Person UUID
                 list_fields.append(("UUID", "person_id$uuid"))
 
@@ -503,7 +503,7 @@ def dvr_allowance_controller(**attr):
                            "paid_on",
                            "comments",
                            ]
-            if r.representation == "xls":
+            if r.representation in ("xlsx", "xls"):
                 list_fields.append(("UUID", "person_id$uuid"))
 
             resource.configure(list_fields = list_fields,
