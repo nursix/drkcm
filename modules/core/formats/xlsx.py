@@ -236,8 +236,9 @@ class XLSXWriter(FormatWriter):
                 column_widths: mutable array of column widths
         """
 
-        # Date/Time formats from L10N deployment settings
         settings = current.deployment_settings
+
+        # Date/Time formats from L10N settings
         date_format = settings.get_L10n_date_format()
         date_format_str = str(date_format)
 
@@ -268,16 +269,16 @@ class XLSXWriter(FormatWriter):
 
                 if ftype == "integer":
                     try:
-                        value = int(value)
-                    except (ValueError, TypeError):
+                        value = to_int(value)
+                    except ValueError:
                         pass
                     else:
                         num_format = "0"
 
                 elif ftype == "double":
                     try:
-                        value = float(value)
-                    except (ValueError, TypeError):
+                        value = to_float(value)
+                    except ValueError:
                         pass
                     else:
                         num_format = "0.00"
@@ -1149,5 +1150,57 @@ def dt_format_translate(pyfmt):
         xlfmt = xlfmt.replace(tag, translation)
 
     return xlfmt.replace(PERCENT, "%")
+
+# =============================================================================
+def to_int(string):
+    """
+        Convert a string representation of an integer back into an int
+            - takes thousands-separator into account
+            - strips any leading/trailing blanks
+
+        Args:
+            string: the string representation
+
+        Returns:
+            integer value
+
+        Raises:
+            ValueError if the string cannot be converted
+    """
+
+    sep = current.deployment_settings.get_L10n_thousands_separator()
+
+    try:
+        value = int(string.strip().replace(sep, ""))
+    except (ValueError, TypeError, AttributeError):
+        raise ValueError("not an integer number")
+    return value
+
+# =============================================================================
+def to_float(string):
+    """
+        Convert a string representation of a float back into an float
+            - takes thousands-/decimal-separators into account
+            - strips any leading/trailing blanks
+
+        Args:
+            string: the string representation
+
+        Returns:
+            floating point value
+
+        Raises:
+            ValueError if the string cannot be converted
+    """
+
+    settings = current.deployment_settings
+    tsep = settings.get_L10n_thousands_separator()
+    dsep = settings.get_L10n_decimal_separator()
+
+    try:
+        value = float(string.strip().replace(tsep, "").replace(dsep, "."))
+    except (ValueError, TypeError, AttributeError):
+        raise ValueError("not a floating point number")
+    return value
 
 # END =========================================================================
