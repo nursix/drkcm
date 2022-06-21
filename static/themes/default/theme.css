@@ -2385,7 +2385,7 @@ table.dataTable input.bulkcheckbox[type=checkbox] {
 /* line 191, ../scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody th:first-child::before {
-  top: 6px;
+  top: 0.6rem;
   background-color: #166068;
 }
 /* line 197, ../scss/theme/_tables.scss */
@@ -2491,31 +2491,58 @@ table.dataTable table.import-item-details {
   margin: 0.3rem 0 0.3rem 0.7rem;
 }
 /* line 280, ../scss/theme/_tables.scss */
-.dataTables_paginate.paging_full_numbers {
-  width: auto;
-}
-/* line 283, ../scss/theme/_tables.scss */
-.dataTables_paginate a.paginate_button,
-.dataTables_paginate a.paginate_active {
-  text-decoration: none;
-}
-/* line 287, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_paginate {
   float: left;
   margin: 0.3rem 0.7rem 0.3rem 0;
 }
+/* line 285, ../scss/theme/_tables.scss */
+.dataTables_paginate.paging_full_numbers {
+  width: auto;
+}
+/* line 288, ../scss/theme/_tables.scss */
+.dataTables_paginate .paginate_button,
+.dataTables_paginate .paginate_active {
+  padding: 0.1rem 0.5rem !important;
+  font-size: 0.8rem;
+}
+/* line 292, ../scss/theme/_tables.scss */
+.dataTables_paginate .paginate_button a,
+.dataTables_paginate .paginate_active a {
+  text-decoration: none;
+  color: #333 !important;
+}
+/* line 296, ../scss/theme/_tables.scss */
+.dataTables_paginate .paginate_button:hover a,
+.dataTables_paginate .paginate_active:hover a {
+  color: #eee !important;
+}
+/* line 299, ../scss/theme/_tables.scss */
+.dataTables_paginate .paginate_button:active a,
+.dataTables_paginate .paginate_active:active a {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+/* line 302, ../scss/theme/_tables.scss */
+.dataTables_paginate .paginate_button.disabled a,
+.dataTables_paginate .paginate_active.disabled a {
+  color: #666 !important;
+}
+/* line 305, ../scss/theme/_tables.scss */
+.dataTables_paginate .paginate_button.current a,
+.dataTables_paginate .paginate_active.current a {
+  color: #333 !important;
+}
 
-/* line 294, ../scss/theme/_tables.scss */
+/* line 312, ../scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 297, ../scss/theme/_tables.scss */
+/* line 315, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 300, ../scss/theme/_tables.scss */
+/* line 318, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   float: right;
   margin: 0 0.1rem;
@@ -2525,58 +2552,58 @@ table.dataTable table.import-item-details {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 308, ../scss/theme/_tables.scss */
+/* line 326, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 313, ../scss/theme/_tables.scss */
+/* line 331, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 316, ../scss/theme/_tables.scss */
+/* line 334, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 319, ../scss/theme/_tables.scss */
+/* line 337, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 322, ../scss/theme/_tables.scss */
+/* line 340, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 325, ../scss/theme/_tables.scss */
+/* line 343, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 328, ../scss/theme/_tables.scss */
+/* line 346, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 331, ../scss/theme/_tables.scss */
+/* line 349, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 334, ../scss/theme/_tables.scss */
+/* line 352, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 337, ../scss/theme/_tables.scss */
+/* line 355, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 342, ../scss/theme/_tables.scss */
+/* line 360, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 344, ../scss/theme/_tables.scss */
+/* line 362, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options .dt-export {
   float: left;
 }
 
-/* line 350, ../scss/theme/_tables.scss */
+/* line 368, ../scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;
