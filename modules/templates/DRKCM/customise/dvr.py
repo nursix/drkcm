@@ -740,7 +740,7 @@ def dvr_case_activity_resource(r, tablename):
     # Using sectors?
     activity_use_sector = ui_options_get("activity_use_sector")
 
-    if r.interactive or r.representation in ("aadata", "json"):
+    if r.interactive or r.representation in ("aadata", "json", "xlsx", "pdf"):
 
         # Fields and CRUD-Form
         from core import S3SQLCustomForm, \
