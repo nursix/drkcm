@@ -1,5 +1,6 @@
 @charset "UTF-8";
 /* $header-color: inherit; */
+/* $dropdownmenu-border: 1px solid $medium-gray; */
 /**
  * Foundation for Sites
  * Version 6.7.4
@@ -4188,7 +4189,7 @@ table.hover.striped tr:nth-of-type(even):hover {
   z-index: 1;
   display: none;
   min-width: 200px;
-  border: 1px solid #cacaca;
+  border: 1px solid #871D33;
   background: #fefefe;
 }
 /* line 253, ../../foundation/scss/components/_dropdown-menu.scss */
