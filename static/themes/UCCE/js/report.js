@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(function(){
 
     var do_report_actions = function(){
         $('.multichoice-graph').each(function(/* index */) {

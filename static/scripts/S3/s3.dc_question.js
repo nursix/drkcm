@@ -128,17 +128,17 @@ S3.dc_question_types = function(value, init) {
     }
 }
 
-$(document).ready(function() {
+$(function() {
     var qtype = $('#dc_question_field_type');
     // Set initial state
     S3.dc_question_types(qtype.val(), true);
 
-    qtype.change(function() {
+    qtype.on('change', function() {
         // Update state
         S3.dc_question_types($(this).val(), false);
     });
 
-    $('form').submit(function() {
+    $('form').on('submit', function() {
         // Do the normal form-submission tasks
         // @ToDo: Look to have this happen automatically
         // http://forum.jquery.com/topic/multiple-event-handlers-on-form-submit
@@ -172,7 +172,7 @@ $(document).ready(function() {
         if (value == '9') {
             // Grid Pseudo-Field
             // @ToDo: Convert the comma-separated values into JSON
-        
+
         } else {
             // Potential Grid Child
             // Convert the comma-separated values into JSON

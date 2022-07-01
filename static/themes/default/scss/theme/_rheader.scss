@@ -103,7 +103,7 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
         display: block;
         clear: none;
 
-        height: 31px;
+        height: 32px;
         width: 100%;
 
         margin: 5px 0!important;
@@ -163,7 +163,7 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
                 border: {
                     color: $rheader_tabs_bgcolor_inactive;
                     style: solid;
-                    width: 2px 2px 1px 3px; //rem_calc(2) rem_calc(2) rem_calc(3) rem_calc(3);
+                    width: 2px 2px 2px 3px; //rem_calc(2) rem_calc(2) rem_calc(2) rem_calc(3);
                     bottom: {
                         style: solid;
                         color: $rheader_tabs_bgcolor_active;

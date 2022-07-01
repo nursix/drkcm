@@ -164,6 +164,16 @@ button.toggle-text {
 }
 
 // ----------------------------------------------------------------------------
+// prContacts editable-buttons
+//
+.pr-contacts-editable button {
+    @include tiny_button_style();
+    background-color: $action_btn_bgcolor_default;
+    color: $action_btn_fgcolor_default !important;
+    margin: 2px;
+}
+
+// ----------------------------------------------------------------------------
 // Debug buttons in footer
 //
 #footer {

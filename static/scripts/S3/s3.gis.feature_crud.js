@@ -70,11 +70,11 @@
         return dfd.promise();
     };
 
-    $(document).ready(function() {
+    $(function() {
         var feature_type = $('#gis_location_gis_feature_type').val();
         s3_gis_feature_crud(feature_type);
         // When the Type changes:
-        $('#gis_location_gis_feature_type').change(function() {
+        $('#gis_location_gis_feature_type').on('change', function() {
             // What is the new type?
             feature_type = $(this).val();
             s3_gis_feature_crud(feature_type);
@@ -93,7 +93,7 @@
             }
         }
         // When the Level changes:
-        $('#gis_location_level').change(function() {
+        $('#gis_location_level').on('change', function() {
             // What is the new type?
             var level = $(this).val();
             if (level) {

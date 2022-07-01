@@ -471,7 +471,7 @@
                 function() {
                     // Validation succeeded => submit the form
                     self.submitInProgress = false;
-                    form.off(ns).submit();
+                    form.off(ns).trigger('submit');
                 },
                 function() {
                     // Validation failed
@@ -1065,7 +1065,7 @@
                    .show();
 
             // Trigger the dropdown change event
-            $('select:not(".lx-select")', editRow).change();
+            $('select:not(".lx-select")', editRow).trigger('change');
 
             // Disable the add-row while editing
             this._disableAddRow();
@@ -1149,7 +1149,7 @@
 
                     // Set the input to the default value
                     defaultValue = defaultField.val();
-                    currentField.val(defaultValue).change();
+                    currentField.val(defaultValue).trigger('change');
 
                     // Refresh widgets
                     if (currentField.attr('type') == 'checkbox') {
@@ -1813,7 +1813,7 @@
     });
 })(jQuery);
 
-$(document).ready(function() {
+$(function() {
     // Activate on all inline-components in the current page
     $('.inline-component').inlinecomponent(S3.inlineComponentsOpts || {});
 });

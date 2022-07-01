@@ -3926,7 +3926,7 @@ S3.gis.yx = [
                     // Resize when images are loaded
                     //popup.registerImageListeners();
                     // Check for links to load in iframe
-                    $('#' + id + ' a.btn.iframe').click(function() {
+                    $('#' + id + ' a.btn.iframe').on('click', function() {
 
                         var url = $(this).attr('href');
                         if (url.indexOf('http://') === 0) {
@@ -5097,7 +5097,7 @@ S3.gis.yx = [
         legendPanel.render(el);
 
         // Show/Hide Legend when clicking on Tab
-        $('#' + map_id + ' .map_legend_tab').click(function() {
+        $('#' + map_id + ' .map_legend_tab').on('click', function() {
             if ($(this).hasClass('right')) {
                 hideLegend(map);
             } else {
@@ -5470,7 +5470,7 @@ S3.gis.yx = [
 
         // Click Handlers
         var s3 = S3.gis.maps[map_id].s3;
-        $('#' + map_id + ' .map_polygon_finish').click(function() {
+        $('#' + map_id + ' .map_polygon_finish').on('click', function() {
             // Complete the Polygon (which in-turn will call pointPlaced)
             control.finishSketch();
 
@@ -5489,7 +5489,7 @@ S3.gis.yx = [
             }
         });
 
-        $('#' + map_id + ' .map_polygon_clear').click(function() {
+        $('#' + map_id + ' .map_polygon_clear').on('click', function() {
             if (s3.lastDraftFeature) {
                 s3.lastDraftFeature.destroy();
             } else if (s3.draftLayer.features.length > 1) {
@@ -5875,7 +5875,7 @@ S3.gis.yx = [
             $('#' + map_id + ' .map_save_panel').removeClass('off');
         }
         // Click Handler
-        $('#' + map_id + ' .map_save_button').click(function() {
+        $('#' + map_id + ' .map_save_button').on('click', function() {
             saveClickHandler(map);
         });
     };
@@ -5933,8 +5933,8 @@ S3.gis.yx = [
             $('#' + map_id + ' .map_save_panel label').labelOver('over');
         }
         // Click Handler
-        save_button.unbind('click')
-                   .click(function() {
+        save_button.off('click')
+                   .on('click', function() {
             saveConfig(map);
             //save_button.hide();
             // Update Map name
@@ -5956,25 +5956,25 @@ S3.gis.yx = [
             $('#' + map_id + ' .map_save_panel .checkbox').prop('checked', false)
                                                           .prop('disabled', false);
             // Restore original click handler
-            save_button.unbind('click')
-                       .click(function() {
+            save_button.off('click')
+                       .on('click', function() {
                 saveClickHandler(map);
             });
         });
         // Cancel Handler
         var savePanel = $('#' + map_id + ' .map_save_panel');
-        $('html').unbind('click.cancelSave')
-                 .bind('click.cancelSave', function() {
+        $('html').off('click.cancelSave')
+                 .on('click.cancelSave', function() {
             savePanel.addClass('off');
             // Restore original click handler
-            save_button.unbind('click')
-                       .click(function() {
+            save_button.off('click')
+                       .on('click', function() {
                 savePanel.removeClass('off')
-                         .unbind('click');
+                         .off('click');
                 nameConfig(map);
             });
         });
-        savePanel.click(function(event) {
+        savePanel.on('click', function(event) {
             // Don't activate if clicking inside
             event.stopPropagation();
         });
@@ -6418,7 +6418,7 @@ S3.gis.yx = [
                             });
                             propertiesWindow.show();
                             // Set the form to use AJAX submission
-                            $('#plain form').submit(function() {
+                            $('#plain form').on('submit', function() {
                                 var id = $('#plain input[name="id"]').val();
                                 var update_url = S3.Ap.concat('/gis/layer_' + layer_type + '/' + id + '.plain/update');
                                 var fields = $('#plain input');

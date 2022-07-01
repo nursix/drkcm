@@ -16,7 +16,7 @@ S3.autoTotals = function(sumField, sourceFields, tablename) {
         total;
     for (var i = 0; i < sourceFields.length; i++) {
         fieldname = sourceFields[i];
-        $('#' + tablename + fieldname).change(function() {
+        $('#' + tablename + fieldname).on('change', function() {
              total = 0;
              for (var j = 0; j < sourceFields.length; j++) {
                 fieldname = sourceFields[j];

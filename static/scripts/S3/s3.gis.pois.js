@@ -62,7 +62,7 @@
     };
 
     /* @ToDo: Support for PoIs to be added using a Popup to select which type
-    var urlForPopup = function(feature, resource) { 
+    var urlForPopup = function(feature, resource) {
         var gis = S3.gis;
         var proj4326 = gis.proj4326;
         // Read lat & lon
@@ -79,7 +79,7 @@
     /**
      * document-ready script
      */
-    $(document).ready(function() {
+    $(function() {
         // @ToDo: Configurable map_id
         var map_id = 'default_map';
         $.when(jsLoaded(map_id)).then(

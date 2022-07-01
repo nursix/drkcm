@@ -3,15 +3,15 @@
  * This script is in Static to allow caching
  */
 
-$(document).ready(function(){
+$(function(){
     var notification_options = $('#notification-options');
-    notification_options.click(function() {
+    notification_options.on('click', function() {
         notification_options.siblings().toggle();
         notification_options.children().toggle();
     });
     notification_options.siblings().toggle();
     notification_options.children().toggle();
-    $('#subscription-form').submit(function() {
+    $('#subscription-form').on('submit', function() {
         $('input[name="subscription-filters"]').val(JSON.stringify(S3.search.getCurrentFilters($(this))));
     });
 });

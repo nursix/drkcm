@@ -1946,7 +1946,7 @@
     // DOCUMENT-READY
 
     // Actions when document ready
-    $(document).ready(function() {
+    $(function() {
 
         if (S3.dataTables) {
             // Initialize all data tables

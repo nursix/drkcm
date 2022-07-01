@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(function(){
     var label_state = function(el) {
         var question_id = el.attr('name').split('-')[1],
             label_row = $('#label-row-' + question_id);

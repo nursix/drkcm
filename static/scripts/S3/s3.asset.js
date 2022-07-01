@@ -57,7 +57,7 @@
         $('#asset_asset_purchase_currency').attr('disabled', true);
     }
 
-    $(document).ready(function() {
+    $(function() {
         var checkbox = $('#asset_asset_kit');
 
         // Read current state
@@ -68,7 +68,7 @@
         }
 
         // Listen for changes
-        checkbox.change(function() {
+        checkbox.on('change', function() {
             if (checkbox.attr('checked')) {
                 show_components();
             } else {

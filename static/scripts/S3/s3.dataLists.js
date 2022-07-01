@@ -783,7 +783,7 @@
     /**
      * DataLists document-ready script - attach to all .dl
      */
-    $(document).ready(function() {
+    $(function() {
 
         // Initialize infinite scroll
         $('.dl').each(function() {

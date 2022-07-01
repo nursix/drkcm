@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(function(){
     // Click-events for buttons
     $('#buttons').find('.button')
                  .off('click.ucce')

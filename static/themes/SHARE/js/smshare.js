@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(function() {
     // Social Media 'share' buttons
     if ($('#socialmedia_share').length > 0) {
         // DIV exists (deployment_setting on)

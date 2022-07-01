@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(function() {
     var scenarios = $('#scenarios');
     scenarios.change(function() {
         // Confirmation Box

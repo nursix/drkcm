@@ -43,7 +43,7 @@ S3.pluginDefaults = {
 	}
 };
 
-$(document).ready(function() {
+$(function() {
 	$('table.dataTable').each(function(index) {
 		var table = $(this);
 		var options = $.extend(

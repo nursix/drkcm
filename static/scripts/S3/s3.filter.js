@@ -194,7 +194,7 @@ S3.search = {};
         }
         form.style.display = 'none';
         document.body.appendChild(form);
-        form.submit();
+        form.trigger('submit');
     };
 
     /**
@@ -277,7 +277,7 @@ S3.search = {};
             } else {
                 var id = $this.attr('id');
                 $("input[name='" + id + "']:checked").each(function() {
-                    $(this).click();
+                    $(this).trigger('click');
                 });
             }
             if ($this.hasClass('location-filter')) {
@@ -2158,7 +2158,7 @@ S3.search = {};
     /**
      * document-ready script
      */
-    $(document).ready(function() {
+    $(function() {
 
         // Activate MultiSelect Widgets
         /*
@@ -2183,19 +2183,19 @@ S3.search = {};
         $('.groupedopts-filter-widget:visible,.multiselect-filter-widget:visible').addClass('active');
 
         // Clear all filters
-        $('.filter-clear').click(function() {
+        $('.filter-clear').on('click', function() {
             var form = $(this).closest('.filter-form');
             clearFilters(form);
         });
 
         // Show Filter Manager
-        $('.show-filter-manager').click(function() {
+        $('.show-filter-manager').on('click', function() {
             $('.filter-manager-row').removeClass('hide').show();
             $('.show-filter-manager').hide();
         });
 
         // Manual form submission
-        $('.filter-submit').click(function() {
+        $('.filter-submit').on('click', function() {
             filterSubmit($(this).closest('.filter-form'));
         });
 
@@ -2308,7 +2308,7 @@ S3.search = {};
         });
 
         // Don't submit if pressing Enter
-        $('.text-filter').keypress(function(e) {
+        $('.text-filter').on('keypress', function(e) {
             if (e.which == 13) {
                 e.preventDefault();
                 return false;
@@ -2512,7 +2512,7 @@ S3.search = {};
             // Input field
             var hint = this.options.titleHint;
             this.input = $('<input type="text" id="fm-title-input-' + this.id + '" placeholder="' + hint + '">')
-                            .keyup(function(e) {
+                            .on('keyup', function(e) {
                                 switch(e.which) {
                                     case 13:
                                         e.preventDefault();
@@ -2525,7 +2525,7 @@ S3.search = {};
                                     default:
                                         break;
                                 }
-                            }).insertAfter(el).focus();
+                            }).insertAfter(el).trigger('focus');
 
             // Show accept/cancel
             this.accept_btn.show();
@@ -2578,7 +2578,7 @@ S3.search = {};
                         fm.options.filters[new_id] = filter.query;
                         // Append filter to SELECT + select it
                         var new_opt = $('<option value="' + new_id + '">' + filter.title + '</option>');
-                        $(el).append(new_opt).val(new_id).change().prop('disabled', false);
+                        $(el).append(new_opt).val(new_id).trigger('change').prop('disabled', false);
                     }
                     // Close save-dialog
                     fm._cancel();
@@ -2809,32 +2809,32 @@ S3.search = {};
             var fm = this;
 
             // @todo: don't bind create if readOnly
-            this.create_btn.click(function() {
+            this.create_btn.on('click', function() {
                 fm._newFilter();
             });
-            this.accept_btn.click(function() {
+            this.accept_btn.on('click', function() {
                 fm._accept();
             });
-            this.cancel_btn.click(function() {
+            this.cancel_btn.on('click', function() {
                 fm._cancel();
             });
-            this.element.change(function() {
+            this.element.on('change', function() {
                 fm._showCRUDButtons();
                 if (!fm.options.explicitLoad) {
                     fm._load();
                 }
             });
             if (this.options.explicitLoad) {
-                this.load_btn.click(function() {
+                this.load_btn.on('click', function() {
                     fm._load();
                 });
             }
             // @todo: don't bind save if readOnly
-            this.save_btn.click(function() {
+            this.save_btn.on('click', function() {
                 fm._save();
             });
             // @todo: don't bind delete if readOnly
-            this.delete_btn.click(function() {
+            this.delete_btn.on('click', function() {
                 fm._delete();
             });
         },
@@ -2845,24 +2845,24 @@ S3.search = {};
         _unbindEvents: function() {
 
             if (this.create_btn) {
-                this.create_btn.unbind('click');
+                this.create_btn.off('click');
             }
             if (this.accept_btn) {
-                this.accept_btn.unbind('click');
+                this.accept_btn.off('click');
             }
             if (this.cancel_btn) {
-                this.cancel_btn.unbind('click');
+                this.cancel_btn.off('click');
             }
             if (this.load_btn && this.options.explicitLoad) {
-                this.load_btn.unbind('click');
+                this.load_btn.off('click');
             }
             if (this.save_btn) {
-                this.save_btn.unbind('click');
+                this.save_btn.off('click');
             }
             if (this.delete_btn) {
-                this.delete_btn.unbind('click');
+                this.delete_btn.off('click');
             }
-            this.element.unbind('change');
+            this.element.off('change');
         }
     });
 })(jQuery);

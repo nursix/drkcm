@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(function(){
     /**
      * ajaxMethod: use $.searchS3 if available, fall back to $.ajaxS3
      */

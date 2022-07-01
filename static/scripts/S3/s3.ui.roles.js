@@ -435,7 +435,7 @@
                 itemSelector = $('.rm-item-select', addRow);
 
             if (itemSelector.length) {
-                itemSelector.val('').change();
+                itemSelector.val('').trigger('change');
             }
             this._checkNewAssignment();
         },

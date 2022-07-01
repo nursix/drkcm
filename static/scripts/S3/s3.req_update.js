@@ -2,7 +2,7 @@
    - inserted into page in controller
 */
 
-$(document).ready(function() {
+$(function() {
     // Read current value
     var site_id = $('#req_req_site_id').val();
     if (site_id) {

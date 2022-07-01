@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(function(){
 
     // Zoom the map to the relevant alert when clicking on an Alert in the dataList
     $('#cap_alert_datalist .dl-item').click(function() {

@@ -24,7 +24,7 @@ S3.supply.fncRepresentItem = function(record, PrepResult) {
     }
 }
 
-$(document).ready(function() {
+$(function() {
     // Displays the number of items available in an inventory
     var InvItemPackIDChange = function() {
         // Cancel previous request
@@ -215,7 +215,7 @@ $(document).ready(function() {
 	 * @ToDo: Find a better way to show/hide location widget
 	 */
     /*
-	$('[name="site_or_location"]').change(function() {
+	$('[name="site_or_location"]').on('change', function() {
 		if ($('#asset_log_site_or_location').length == 1) {
 			$('[id^="asset_log_site_id__row"]').hide();
 			// $('[id^="asset_log_location_id__row"]').hide();
@@ -243,7 +243,7 @@ $(document).ready(function() {
 			$('td.subheading').show();
 		}
 	});
-	$('[name="site_or_location"]').change();
+	$('[name="site_or_location"]').trigger('change');
 	*/
 	/* Populate Organisation based on Site  */
 	/*
@@ -321,7 +321,7 @@ $(document).ready(function() {
                     $('#asset_log_site_id').show()
                                            .val(data[0].site_id)
                                            .prop('disabled', true)
-                                           .change();
+                                           .trigger('change');
                 } else {
                     $('#dummy_asset_log_organisation_id').show()
                      .val('')
@@ -330,7 +330,7 @@ $(document).ready(function() {
                     $('#asset_log_site_id').show()
                                            .val('')
                                            .prop('disabled', false)
-                                           .change();
+                                           .trigger('change');
                 }
 
             });
@@ -338,7 +338,7 @@ $(document).ready(function() {
 			$('#asset_log_site_id').show()
 								   .val('')
 								   .prop('disabled', false)
-								   .change();
+								   .trigger('change');
 			$('#asset_log_organisation_id').val('');
 			$('#dummy_asset_log_organisation_id').val('')
 												 .prop('disabled', false);

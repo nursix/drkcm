@@ -4,7 +4,7 @@
      * Bind button event handlers for clone
      */
     var bindCloneActions = function() {
-        $('.cap-clone-update').unbind('.cap').bind('click.cap', function() {
+        $('.cap-clone-update').off('.cap').on('click.cap', function() {
             clone($(this).attr('data'));
         });
     };
@@ -93,7 +93,7 @@
             restriction_row.hide();
         }
         // On change in scope
-        $('#cap_alert_scope').change(function() {
+        $('#cap_alert_scope').on('change', function() {
             var scope = $(this).val();
             switch(scope) {
                 case 'Public':
@@ -124,7 +124,7 @@
             }
         });
 
-        $('#cap_info_priority').change(function() {
+        $('#cap_info_priority').on('change', function() {
         	if (!$(this).val()) {
         	    $(this).css('border', '1px solid gray');
         	}
@@ -148,7 +148,7 @@
 	        }
         });
 
-        /*$form.find('[name=urgency],[name=severity],[name=certainty]').change(function() {
+        /*$form.find('[name=urgency],[name=severity],[name=certainty]').on('change', function() {
             var p = S3.cap_priorities,
                 len = p.length;
             for (var i=0; i< len; i++) {
@@ -189,11 +189,11 @@
                 settings = {};
             } else if (tablename == 'cap_alert') {
                 values = (data['$_cap_alert'] && data['$_cap_alert'][0]) || {};
-                settings = $.parseJSON(values.template_settings) || {};
+                settings = JSON.parse(values.template_settings) || {};
                 $('.cap_alert_form').addClass('template_loaded');
             } else if (tablename == 'cap_info') {
                 values = (data['$_cap_info'] && data['$_cap_info'][0]) || {};
-                //settings = $.parseJSON(values.template_settings) || {};
+                //settings = JSON.parse(values.template_settings) || {};
                 // Note there is not template_settings in cap_info; kept this just to make API compatible and remove jQuery warning
                 settings = {}
             }
@@ -281,7 +281,7 @@
             });
         }
 
-        $form.find('[name=template_id]').change(function () {
+        $form.find('[name=template_id]').on('change', function () {
             apply_alert_template($(this).val(), true);
         });
 
@@ -301,7 +301,7 @@
         /* Templates-specific stuff */
         function get_settings() {
             try {
-                var settings = $.parseJSON($form.find('[name=template_settings]').val());
+                var settings = JSON.parse($form.find('[name=template_settings]').val());
                 return settings || {};
             } catch (e) {
                 s3_debug('Error occured parsing: ', $form.find('[name=template_settings]').val());
@@ -322,7 +322,7 @@
                                 (i18n.cap_locked || 'Locked') + '</label>'),
                 $checkbox = $('<input type="checkbox" name="' + name +'">');
 
-            $checkbox.change(function () {
+            $checkbox.on('change', function () {
                 var settings = get_settings();
                 settings.locked = settings.locked || {};
                 settings.locked[field] = $(this).is(':checked');
@@ -356,7 +356,7 @@
         });
     }
 
-    $(document).ready(function() {
+    $(function() {
         $('form').each(function() {
             if (get_table($(this)) !== '') {
                 init_cap_form($(this));

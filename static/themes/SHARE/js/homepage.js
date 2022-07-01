@@ -1,4 +1,4 @@
-$(document).ready(function(){
+$(function(){
 
     // Zoom the map to the relevant request when clicking on a request summary in the dataList
     $('#req_datalist .dl-item').click(function() {

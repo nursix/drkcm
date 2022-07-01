@@ -189,7 +189,7 @@ S3.addModals = function() {
             closeText: '',
             open: function( /* event, ui */ ) {
                 // Clicking outside of the popup closes it
-                $('.ui-widget-overlay').bind('click', function() {
+                $('.ui-widget-overlay').on('click', function() {
                     dialog.dialog('close');
                 });
             },
@@ -324,7 +324,7 @@ S3.showHidden = function(controlField, affectedFields, tablename) {
         tablename = tablename + '_';
     }
     controlField = $('#' + tablename + controlField);
-    controlField.change(function() {
+    controlField.on('change', function() {
         var fieldname,
             selector,
             i;
@@ -388,15 +388,15 @@ S3.maxLength = {
             input.after('<div class="maxLength_status"></div>');
             // Apply current settings
             apply(id, maxLength);
-            input.unbind('keyup.maxLength')
-                 .bind('keyup.maxLength', function() {
+            input.off('keyup.maxLength')
+                 .on('keyup.maxLength', function() {
                 // Apply new settings
                 apply(id, maxLength);
             });
         } else {
             // Remove the limits & cleanup
             $('#' + id).removeClass('maxLength')
-                       .unbind('keyup.maxLength')
+                       .off('keyup.maxLength')
                        .next('div.maxLength_status').remove();
         }
     },
@@ -429,7 +429,7 @@ S3.maxLength = {
  * @param {Event} event - the event triggering the activation
  * @param {string} trigger - event parameter indicating the trigger
  *
- * Use element.trigger('change', 'implicit') instead of element.change()
+ * Use element.trigger('change', 'implicit') instead of element.trigger('change')
  * to prevent activation if the event must be triggered for other reasons
  * than user input
  */
@@ -450,7 +450,7 @@ var S3ClearNavigateAwayConfirm = function() {
 };
 
 var S3EnableNavigateAwayConfirm = function() {
-    $(document).ready(function() {
+    $(function() {
         if ($('[class=error]').length > 0) {
             // If there are errors, ensure the unsaved form is still protected
             S3SetNavigateAwayConfirm();
@@ -875,7 +875,7 @@ var s3_viewMap = function(location_id, iframe_height, popup, controller, func) {
             var iframe = $("<iframe id='iframe-map' data-feature='" + location_id + "' style='border-style:none' width='100%' height='" + iframe_height + "' src='" + url + "' >"),
                 closelink = $("<a class='button tiny' id='close-iframe-map'>" + i18n.close_map + "</a>");
 
-            closelink.bind('click', closeMap);
+            closelink.on('click', closeMap);
             // Display Map
             $map.slideDown('medium');
             $map.append(iframe);
@@ -903,7 +903,7 @@ var s3_viewMapMulti = function(module, resource, instance, jresource) {
     var closelink = $('<a href=\"#\">' + i18n.close_map + '</a>');
 
     // @ToDo: Also make the represent link act as a close
-    closelink.bind('click', function(evt) {
+    closelink.on('click', function(evt) {
         $('#map').html(oldhtml);
         evt.preventDefault();
     });
@@ -921,7 +921,7 @@ S3.openPopup = function(url, center) {
         }
         S3.popupWin = window.open(url, 'popupWin', params);
     } else {
-        S3.popupWin.focus();
+        S3.popupWin.trigger('focus');
     }
 };
 
@@ -1151,7 +1151,7 @@ S3.openPopup = function(url, center) {
                     // Options list not populated yet?
                     currentValue = widget.prop('value');
                 }
-                if (!$.isArray(currentValue)) {
+                if (!Array.isArray(currentValue)) {
                     currentValue = [currentValue];
                 }
                 for (var i = 0, len = currentValue.length, val; i < len; i++) {
@@ -1183,7 +1183,7 @@ S3.openPopup = function(url, center) {
         var disable = options === '';
         widget.html(options)
               .val(newValue)
-              .change()
+              .trigger('change')
               .prop('disabled', disable);
 
         // Refresh groupedopts or multiselect
@@ -1230,7 +1230,7 @@ S3.openPopup = function(url, center) {
 
             // Replace the widget with the HTML returned
             widget.html(data)
-                  .change()
+                  .trigger('change')
                   .prop('disabled', false);
 
             // Restore selected values if the options are still available
@@ -1243,7 +1243,7 @@ S3.openPopup = function(url, center) {
                             new_value.push(val);
                         }
                     }
-                    widget.val(new_value).change();
+                    widget.val(new_value).trigger('change');
                 }
                 // Refresh groupedopts/multiselect
                 if (is_groupedopts) {
@@ -1311,7 +1311,7 @@ S3.openPopup = function(url, center) {
                       .multiselect('disable');
             }
             // Trigger change-event on target for filter cascades
-            target.change();
+            target.trigger('change');
             updateAddResourceLink(lookupResource, lookupKey);
             return;
         }
@@ -1632,8 +1632,8 @@ S3.openPopup = function(url, center) {
         // inserted triggers (e.g. inline forms)
         var changeEventName = 'change.s3options',
             triggerEventName = 'triggerUpdate.' + triggerName;
-        targetForm.undelegate(triggerSelector, changeEventName)
-                  .delegate(triggerSelector, changeEventName, function() {
+        targetForm.off(changeEventName, triggerSelector)
+                  .on(changeEventName, triggerSelector, function() {
             var triggerData = getTriggerData($(this));
             targetForm.trigger(triggerEventName, triggerData);
         });
@@ -1751,7 +1751,7 @@ S3.slider = function(fieldname, min, max, step, value) {
                   .after('<p>' + i18n.slider_help + '</p>');
     }
     // Enable the field before form is submitted
-    real_input.closest('form').submit(function() {
+    real_input.closest('form').on('submit', function() {
         real_input.prop('disabled', false);
         // Normal Submit
         return true;
@@ -1907,7 +1907,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
     };
 
     // ========================================================================
-    $(document).ready(function() {
+    $(function() {
         // Web2Py Layer
         $('.alert-error').hide().slideDown(300);
         $('.alert-error').on('click', function() {
@@ -1967,24 +1967,24 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
             if (S3.FocusOnFirstField != false) {
                 // Focus On First Field
                 var s = 'select:visible,input:text:visible';
-                $(s, '.form-container form:not(".auth_login")').first().not('select').focus();
+                $(s, '.form-container form:not(".auth_login")').first().not('select').trigger('focus');
             }
         }
 
         // Accept comma as thousands separator
-        $('input.int_amount').keyup(function() {
+        $('input.int_amount').on('keyup', function() {
             this.value = this.value.reverse()
                                    .replace(/[^0-9\-,]|\-(?=.)/g, '')
                                    .reverse();
         });
-        $('input.float_amount').keyup(function() {
+        $('input.float_amount').on('keyup', function() {
             this.value = this.value.reverse()
                                    .replace(/[^0-9\-\.,]|[\-](?=.)|[\.](?=[0-9]*[\.])/g, '')
                                    .reverse();
         });
 
         // Auto-capitalize first names
-        $('input[name="first_name"]').focusout(function() {
+        $('input[name="first_name"]').on('focusout', function() {
             this.value = this.value.charAt(0).toLocaleUpperCase() + this.value.substring(1);
         });
 
@@ -1998,7 +1998,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
                     this.value = '\u200E' + value;
                 }
             });
-            $('.phone-widget').focusout(function() {
+            $('.phone-widget').on('focusout', function() {
                 var value = this.value;
                 if (value) {
                     // When new data is entered then:

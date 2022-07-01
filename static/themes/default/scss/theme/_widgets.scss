@@ -513,10 +513,6 @@ div.s3-groupedopts-widget {
         min-height: 1.2rem;
         margin: 2px 0;
     }
-    button {
-        @include tiny_button_style();
-        margin: 2px;
-    }
 }
 .pr-contact-actions {
   margin-bottom: 0.5rem;

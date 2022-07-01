@@ -5,7 +5,7 @@
             id = $(this).attr('id');
 
         try {
-            var kvs = $.parseJSON($(this).val());
+            var kvs = JSON.parse($(this).val());
         } catch (e) {
             s3_debug('There was an error parsing json for key value widget.', e);
             return;
@@ -37,7 +37,7 @@
             $item.append(key_label, $key, value_label, $value, ' ', $more);
             $list.append($item);
 
-            $key.focus();
+            $key.trigger('focus');
             $self.html(JSON.stringify(kvs));
         }
 
