@@ -461,7 +461,7 @@ var S3EnableNavigateAwayConfirm = function() {
                                   // This gets triggered by browsers' Autofill:
                                   //.on('change', S3SetNavigateAwayConfirm);
         $('select', form).change(S3SetNavigateAwayConfirm);
-        form.submit(S3ClearNavigateAwayConfirm);
+        form.on('submit', S3ClearNavigateAwayConfirm);
     });
 };
 

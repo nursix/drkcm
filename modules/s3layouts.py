@@ -433,7 +433,7 @@ class S3OptionsMenuDefaultLayout(S3NavigationItem):
                                       )
 
                         if items:
-                            section.append(UL(items))
+                            section.append(UL(items, _class="vertical menu"))
                         return section
 
                     else:

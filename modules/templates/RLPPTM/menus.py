@@ -4,11 +4,11 @@
     License: MIT
 """
 
-from gluon import current
+from gluon import current, URL, TAG, SPAN
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import MM, M
+from s3layouts import MM, M, ML, MP, MA
 try:
-    from ..RLP.layouts import *
+    from ..RLP.layouts import OM
 except ImportError:
     pass
 import s3menus as default
@@ -127,7 +127,7 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Organisation Logo and Name """
 
-        OM = S3OrgMenuLayout
+        #OM = S3OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------

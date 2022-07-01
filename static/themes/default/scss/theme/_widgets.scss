@@ -321,6 +321,13 @@ ul.x-tree-node-ct,
 ul.x-tree-root-ct {
     list-style: none outside none;
 }
+.x-toolbar table {
+    border-collapse: separate;
+    width: auto;
+    tbody, tr {
+        background: none;
+    }
+}
 
 // ----------------------------------------------------------------------------
 // Date picker

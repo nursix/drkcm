@@ -99,9 +99,7 @@ def s3_include_ext():
     xtheme = current.deployment_settings.get_base_xtheme()
     if xtheme:
         xtheme = "%smin.css" % xtheme[:-3]
-        xtheme = \
-    "<link href='/%s/static/themes/%s' rel='stylesheet' type='text/css' />" % \
-        (appname, xtheme)
+        xtheme = "<link href='/%s/static/themes/%s' rel='stylesheet' type='text/css' />" % (appname, xtheme)
 
     if s3.cdn:
         # For Sites Hosted on the Public Internet, using a CDN may provide better performance
@@ -113,20 +111,16 @@ def s3_include_ext():
         # Provide debug versions of CSS / JS
         adapter = "%s/adapter/jquery/ext-jquery-adapter-debug.js" % PATH
         main_js = "%s/ext-all-debug.js" % PATH
-        main_css = \
-    "<link href='%s/resources/css/ext-all-notheme.css' rel='stylesheet' type='text/css' />" % PATH
+        main_css = "<link href='%s/resources/css/ext-all-notheme.css' rel='stylesheet' type='text/css' />" % PATH
         if not xtheme:
-            xtheme = \
-    "<link href='%s/resources/css/xtheme-gray.css' rel='stylesheet' type='text/css' />" % PATH
+            xtheme = "<link href='%s/resources/css/xtheme-gray.css' rel='stylesheet' type='text/css' />" % PATH
     else:
         adapter = "%s/adapter/jquery/ext-jquery-adapter.js" % PATH
         main_js = "%s/ext-all.js" % PATH
         if xtheme:
-            main_css = \
-    "<link href='/%s/static/scripts/ext/resources/css/ext-notheme.min.css' rel='stylesheet' type='text/css' />" % appname
+            main_css = "<link href='/%s/static/scripts/ext/resources/css/ext-notheme.min.css' rel='stylesheet' type='text/css' />" % appname
         else:
-            main_css = \
-    "<link href='/%s/static/scripts/ext/resources/css/ext-gray.min.css' rel='stylesheet' type='text/css' />" % appname
+            main_css = "<link href='/%s/static/scripts/ext/resources/css/ext-gray.min.css' rel='stylesheet' type='text/css' />" % appname
 
     scripts = s3.scripts
     scripts_append = scripts.append
@@ -139,9 +133,10 @@ def s3_include_ext():
         scripts_append(locale)
 
     if xtheme:
-        s3.jquery_ready.append('''$('link:first').after("%s").after("%s")''' % (xtheme, main_css))
+        s3.jquery_ready.append('''$('#ext-styles').after("%s").after("%s").remove()''' % (xtheme, main_css))
     else:
-        s3.jquery_ready.append('''$('link:first').after("%s")''' % main_css)
+        s3.jquery_ready.append('''$('#ext-styles').after("%s").remove()''' % main_css)
+
     s3.ext_included = True
 
 # =============================================================================
