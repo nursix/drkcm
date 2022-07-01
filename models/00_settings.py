@@ -268,7 +268,6 @@ s3_crud.navigate_away_confirm = settings.get_ui_navigate_away_confirm()
 # and text/x-json for JSON formats, other content types must be
 # specified here:
 s3.content_type = Storage(
-    tc = "application/atom+xml", # TableCast feeds
     rss = "application/rss+xml", # RSS
     georss = "application/rss+xml", # GeoRSS
     kml = "application/vnd.google-earth.kml+xml", # KML
@@ -278,7 +277,7 @@ s3.content_type = Storage(
 s3.json_formats = ["geojson", "s3json"]
 
 # CSV Formats
-s3.csv_formats = ["hrf", "s3csv"]
+s3.csv_formats = ["s3csv"]
 
 # Datatables default number of rows per page
 s3.ROWSPERPAGE = 20

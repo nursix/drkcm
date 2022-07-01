@@ -47,7 +47,7 @@ $(document).ready(function() {
 
         var url = S3.Ap.concat('/inv/inv_item_quantity.json/' + id);
         if ($('#inv_quantity_throbber').length === 0) {
-            $('[name="quantity"]').after('<div id="inv_quantity_throbber" class="throbber"/>');
+            $('[name="quantity"]').after('<div id="inv_quantity_throbber" class="throbber">');
         }
 
         // Save JSON Request by element id
@@ -159,7 +159,7 @@ $(document).ready(function() {
 				ShipmentType = 'commit';
 				App = 'req';
 			}
-			DIV.after('<div class="ajax_throbber quantity_req_ajax_throbber"/>')
+			DIV.after('<div class="ajax_throbber quantity_req_ajax_throbber">')
 			   .removeClass('collapsed')
 			   .addClass('expanded');
 
@@ -257,7 +257,7 @@ $(document).ready(function() {
 
 			var site_id = $('#asset_log_site_id').val()
 			if (site_id != "") {
-				$('#dummy_asset_log_organisation_id').after('<div id="organisation_ajax_throbber" class="ajax_throbber"/>')
+				$('#dummy_asset_log_organisation_id').after('<div id="organisation_ajax_throbber" class="ajax_throbber">')
 													 .hide()
 				var url = S3.Ap.concat('/org/site_org_json/', site_id);
 
@@ -300,9 +300,9 @@ $(document).ready(function() {
 
 		var person_id = $('#asset_log_person_id').val()
 		if (person_id != '') {
-			$('#asset_log_site_id').after('<div id="site_ajax_throbber" class="ajax_throbber"/>')
+			$('#asset_log_site_id').after('<div id="site_ajax_throbber" class="ajax_throbber">')
 								   .hide()
-			$('#dummy_asset_log_organisation_id').after('<div id="organisation_ajax_throbber" class="ajax_throbber"/>')
+			$('#dummy_asset_log_organisation_id').after('<div id="organisation_ajax_throbber" class="ajax_throbber">')
 												 .hide()
 			var url = S3.Ap.concat('/hrm/staff_org_site_json/', person_id);
 

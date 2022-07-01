@@ -210,7 +210,7 @@ S3.gis.yx = [
 
     /**
      * Main Start Function
-     * - called by yepnope callback in s3.gis.loader
+     * - called by callback in s3.gis.loader
      *
      * Parameters:
      * map_id - {String} A unique ID for this map
@@ -4673,9 +4673,6 @@ S3.gis.yx = [
                     addCircleControl(map, toolbar, circle_pressed);
                 }
             }
-            if (options.color_picker) {
-                addColorPickerControl(map, toolbar);
-            }
             //toolbar.add(dragButton);
             //toolbar.add(resizeButton);
             //toolbar.add(rotateButton);
@@ -5708,84 +5705,6 @@ S3.gis.yx = [
     var rgb2hex = function(r, g, b) {
 
         return Number(0x1000000 + Math.round(r)*0x10000 + Math.round(g)*0x100 + Math.round(b)).toString(16).substring(1);
-    };
-
-    /**
-     * ColorPicker to style Features
-     * - currently used just by S3LocationSelector
-     * - need to pickup in postprocess
-     */
-    var addColorPickerControl = function(map, toolbar) {
-
-        var s3 = map.s3,
-            map_id = s3.id,
-            draft_style = s3.options.draft_style,
-            value;
-
-        if (draft_style) {
-            if (draft_style.fillOpacity) {
-                value = 'rgba(' + hex2rgb(draft_style.fill) + ',' + draft_style.fillOpacity + ')';
-            } else {
-                value = 'rgb(' + hex2rgb(draft_style.fill) + ')';
-            }
-        } else {
-            value = '';
-        }
-        var colorPickerButton = new Ext.Toolbar.Item({
-            html: '<input class="gis_colorpicker" name="colour" value="' + value + '"/>'
-        });
-        toolbar.add(colorPickerButton);
-        $.when(uiLoaded(map_id)).then(
-            function(/* status */) {
-                // Success: Load Colorpicker
-                $('#' + map_id + '_panel .gis_colorpicker').spectrum({
-                    showInput: true,
-                    showInitial: true,
-                    preferredFormat: 'rgb', // needed for Alpha
-                    showPaletteOnly: true,
-                    togglePaletteOnly: true,
-                    palette: ['rgba(255, 0, 0, .5)',    // red
-                              'rgba(255, 165, 0, .5)',  // orange
-                              'rgba(255, 255, 0, .5)',  // yellow
-                              'rgba(0, 255, 0, .5)',    // green
-                              'rgba(0, 0, 255, .5)',    // blue
-                              'rgba(255, 255, 255, .5)',// white
-                              'rgba(0, 0, 0, .5)'       // black
-                              ],
-                    showAlpha: true,
-                    cancelText: i18n.gis_cancelText,
-                    chooseText: i18n.gis_chooseText,
-                    togglePaletteMoreText: i18n.gis_togglePaletteMoreText,
-                    togglePaletteLessText: i18n.gis_togglePaletteLessText,
-                    clearText: i18n.gis_clearText,
-                    noColorSelectedText: i18n.gis_noColorSelectedText,
-                    change: function(colour) {
-                        // Modify the Style of the Draft Layer
-                        var style = {fill: rgb2hex(colour._r, colour._g, colour._b)};
-                        if (colour._a != 1) {
-                            style.fillOpacity = colour._a;
-                        }
-                        var layer = {
-                            'style': style,
-                            'opacity': 0.9 // trigger the 'select' renderIntent -> Opaque
-                        };
-                        var response = createStyleMap(map, layer);
-                        var featureStyleMap = response[0];
-                        var draftLayer = s3.draftLayer;
-                        draftLayer.styleMap = featureStyleMap;
-                        draftLayer.redraw();
-                    }
-                });
-            },
-            function(status) {
-                // Failed
-                s3_debug(status);
-            },
-            function(status) {
-                // Progress
-                s3_debug(status);
-            }
-        );
     };
 
     /**

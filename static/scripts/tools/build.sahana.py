@@ -235,25 +235,6 @@ def do_css():
             # Move files to correct locations
             move_to(outputFilenameCSS, "../../styles/plugins")
 
-        # Bootstrap
-        info("Bootstrap CSS")
-        listCSS = []
-        for file in ["bootstrap.css",
-                     "bootstrap-responsive.css",
-                     "font-awesome.css",
-                     #"bootstrap-multiselect.css",
-                     ]:
-            listCSS.append("../../styles/bootstrap/%s" % file)
-        outputFilenameCSS = "bootstrap-combined.min.css"
-        # Merge CSS files
-        info("Merging Bootstrap styles.")
-        mergedCSS = mergeCSS(listCSS, outputFilenameCSS)
-        # Compress CSS files
-        info("Writing to %s." % outputFilenameCSS)
-        compressCSS(mergedCSS, outputFilenameCSS)
-        # Move files to correct locations
-        move_to(outputFilenameCSS, "../../styles/bootstrap")
-
         # Ext
         info("Ext Gray CSS")
         listCSS = []
@@ -381,25 +362,6 @@ def do_js(minimize,
     shutil.move(outputFilename, "../S3")
 
     # -------------------------------------------------------------------------
-    # Build bootstrap
-    #
-    # Bootstrap
-    # info("Compressing Bootstrap")
-    # sourceDirectoryBootstrap = ".."
-    # configFilenameBootstrap = "sahana.js.bootstrap.cfg"
-    # outputFilenameBootstrap = "bootstrap.min.js"
-    # mergedBootstrap = mergejs.run(sourceDirectoryBootstrap,
-                                  # None,
-                                  # configFilenameBootstrap)
-    # minimizedBootstrap = minimize(mergedBootstrap)
-    # open(outputFilenameBootstrap, "w").write(minimizedBootstrap)
-    # try:
-        # os.remove("../%s" % outputFilenameBootstrap)
-    # except:
-        # pass
-    # shutil.move(outputFilenameBootstrap, "..")
-
-    # -------------------------------------------------------------------------
     # Build multi-component S3 scripts (=sahana.js.*.cfg files)
     # - configured as:
     #   (title, config-file, output-file, closure-extra-params)
@@ -421,8 +383,6 @@ def do_js(minimize,
          "sahana.js.jstree.cfg", "s3.jstree.min.js", None),
         ("Chat",
          "sahana.js.chat.cfg", "s3.chat.min.js", "--strict_mode_input=false"),
-        ("Timeline",
-         "sahana.js.timeline.cfg", "s3.timeline.min.js", None),
         )
 
     for name, cfg_name, out_filename, extra_params in s3_script_sets:
@@ -453,7 +413,6 @@ def do_js(minimize,
                      "register_validation",
                      "shelter_inspection",
                      "sync",
-                     #"timeline",
                      "ui.addperson",
                      "ui.anonymize",
                      "ui.cascadeselect",

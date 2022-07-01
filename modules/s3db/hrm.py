@@ -9177,12 +9177,8 @@ def hrm_training_event_controller():
     #           showadd_btn = output.get("showadd_btn", None)
     #           if showadd_btn:
     #               # Add an Import button
-    #               if s3.crud.formstyle == "bootstrap":
-    #                   _class = "s3_modal"
-    #               else:
-    #                   _class = "action-btn s3_modal"
     #               import_btn = S3CRUD.crud_button(label=current.T("Import Participants"),
-    #                                               _class=_class,
+    #                                               _class="action-btn s3_modal",
     #                                               _href=URL(f="training", args="import.popup",
     #                                                         vars={"~.training_event_id":r.id}),
     #                                               )

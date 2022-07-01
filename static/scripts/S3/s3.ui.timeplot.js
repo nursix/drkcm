@@ -223,12 +223,12 @@
                 lchartTotals = widgetID + '-lchart-totals';
 
             $(chartOpts).append($(
-                '<span id="' + lchartTotals + '" class="tp-chart-icon tp-lchart"/>' +
+                '<span id="' + lchartTotals + '" class="tp-chart-icon tp-lchart"></span>' +
                 '<span class="tp-chart-label">Line Chart</span>'
             ));
 
             $(chartOpts).append($(
-                '<span id="' + bchartTotals + '" class="tp-chart-icon tp-bchart"/>' +
+                '<span id="' + bchartTotals + '" class="tp-chart-icon tp-bchart"></span>' +
                 '<span class="tp-chart-label">Bar Chart</span>'
             ));
 

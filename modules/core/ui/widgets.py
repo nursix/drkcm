@@ -745,9 +745,6 @@ class S3AddPersonWidget(FormWidget):
             row = DIV(_id = "%s_box_bottom" % widget_id,
                       _class = "box_bottom hide",
                       )
-            if settings.ui.formstyle == "bootstrap":
-                # Need to add custom classes to core HTML markup
-                row.add_class("control-group")
         rows.append(row)
 
         return rows
@@ -3755,8 +3752,6 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
         append(canvas)
 
         btn_class = "imagecrop-btn button"
-        if current.deployment_settings.ui.formstyle == "bootstrap":
-            btn_class = "imagecrop-btn"
 
         buttons = [ A(T("Enable Crop"),
                       _id="select-crop-btn",
@@ -4581,7 +4576,6 @@ class S3LocationSelector(S3Selector):
                  points = True,
                  polygons = False,
                  circles = False,
-                 color_picker = False,
                  catalog_layers = False,
                  min_bbox = None,
                  labels = True,
@@ -4621,8 +4615,6 @@ class S3LocationSelector(S3Selector):
                 points: use a point draw tool
                 polygons: use a polygon draw tool
                 circles: use a circle draw tool
-                color_picker: display a color-picker to set per-feature styling
-                              (also need to enable in the feature layer to show on map)
                 catalog_layers: display catalogue layers or just the default base layer
                 min_bbox: minimum BBOX in map selector, used to determine automatic
                           zoom level for single-point locations
@@ -4683,7 +4675,6 @@ class S3LocationSelector(S3Selector):
         self.polygons = polygons
         self.circles = circles
 
-        self.color_picker = color_picker
         self.catalog_layers = catalog_layers
 
         self.min_bbox = min_bbox or settings.get_gis_bbox_min_size()
@@ -5491,8 +5482,7 @@ class S3LocationSelector(S3Selector):
             tuple_rows = True
             table_style = inline and row[0].tag == "tr"
         else:
-            # Formstyle with just a single row
-            # (e.g. Bootstrap, Foundation or DRRPP)
+            # Formstyle with just a single row (e.g. Foundation)
             tuple_rows = False
             table_style = False
 
@@ -5801,50 +5791,6 @@ class S3LocationSelector(S3Selector):
             raise SyntaxError
 
         s3 = current.response.s3
-
-        # ColorPicker options
-        color_picker = self.color_picker
-        if color_picker:
-            toolbar = True
-            # Requires the custom controller to store this before calling the widget
-            # - a bit hacky, but can't think of a better option currently without
-            # rewriting completely as an S3SQLSubForm
-            record_id = s3.record_id
-            if not record_id:
-                # Show Color Picker with default Style
-                color_picker = True
-            else:
-                # Do we have a style defined for this record?
-                # @ToDo: Support Layers using alternate controllers/functions
-                db = current.db
-                s3db = current.s3db
-                c, f = field.tablename.split("_", 1)
-                ftable = s3db.gis_layer_feature
-                query = (ftable.deleted == False) & \
-                        (ftable.controller == c) & \
-                        (ftable.function == f) & \
-                        (ftable.individual == True)
-                rows = db(query).select(ftable.layer_id)
-                if not rows:
-                    # Show Color Picker with default Style
-                    color_picker = True
-                else:
-                    # @ToDo: Handle multiple rows?
-                    layer_id = rows.first().layer_id
-                    stable = s3db.gis_style
-                    query = (stable.deleted == False) & \
-                            (stable.layer_id == layer_id) & \
-                            (stable.record_id == record_id)
-                    rows = db(query).select(stable.style)
-                    row = rows.first()
-                    if row:
-                        color_picker = row.style
-                    else:
-                        # Show Color Picker with default Style
-                        color_picker = True
-        else:
-            color_picker = False
-
         settings = current.deployment_settings
 
         # Create the map
@@ -5861,7 +5807,6 @@ class S3LocationSelector(S3Selector):
                                     add_circle = circles,
                                     add_circle_active = add_circle_active,
                                     catalogue_layers = self.catalog_layers,
-                                    color_picker = color_picker,
                                     toolbar = toolbar,
                                     # Hide controls from toolbar
                                     clear_layers = False,
@@ -5922,19 +5867,6 @@ i18n.map_feature_required="%s"''' % (show_map_add,
                                ),
                            _id = row_id,
                            _class = "form-row row hide",
-                           )
-        elif _formstyle == "bootstrap":
-            # Need to add custom classes to core HTML markup
-            map_icon = DIV(DIV(BUTTON(ICON("icon-map"),
-                                      SPAN(label),
-                                      _type = "button", # defaults to 'submit' otherwise!
-                                      _id = icon_id,
-                                      _class = "btn gis_loc_select_btn",
-                                      ),
-                               _class = "controls",
-                               ),
-                           _id = row_id,
-                           _class = "control-group hide",
                            )
         else:
             # Old default

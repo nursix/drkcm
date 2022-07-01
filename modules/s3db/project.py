@@ -172,15 +172,6 @@ class ProjectModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     Field("calendar",
-                           label = T("Calendar"),
-                           readable = mode_task,
-                           writable = mode_task,
-                           requires = IS_EMPTY_OR(IS_URL()),
-                           comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Calendar"),
-                                                           T("URL to a Google Calendar to display on the project timeline."))),
-                           ),
                      # multi_budgets deployments handle on the Budgets Tab
                      # buget_monitoring deployments handle as inline component
                      Field("budget", "double",
@@ -425,10 +416,6 @@ class ProjectModel(DataModel):
         set_method("project_project",
                    method = "map",
                    action = self.project_map)
-
-        set_method("project_project",
-                   method = "timeline",
-                   action = self.project_timeline)
 
         # Components
         add_components(tablename,
@@ -798,57 +785,6 @@ class ProjectModel(DataModel):
         output = json.dumps({})
 
         current.response.headers["Content-Type"] = "application/json"
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def project_timeline(r, **attr):
-        """
-            Display the project on a Simile Timeline
-
-            http://www.simile-widgets.org/wiki/Reference_Documentation_for_Timeline
-
-            Currently this just displays a Google Calendar
-
-            @ToDo: Add Milestones
-            @ToDo: Filters for different 'layers'
-            @ToDo: export milestones/tasks as .ics
-        """
-
-        if r.representation == "html" and r.name == "project":
-
-            #appname = r.application
-            response = current.response
-            s3 = response.s3
-
-            calendar = r.record.calendar
-
-            # Pass vars to our JS code
-            s3.js_global.append('''S3.timeline.calendar="%s"''' % calendar)
-
-            # Add core Simile Code
-            s3_include_simile()
-
-            # Create the DIV
-            item = DIV(_id = "s3timeline",
-                       _class = "s3-timeline",
-                       )
-
-            output = {"item": item}
-
-            output["title"] = current.T("Project Calendar")
-
-            # Maintain RHeader for consistency
-            if "rheader" in attr:
-                rheader = attr["rheader"](r)
-                if rheader:
-                    output["rheader"] = rheader
-
-            response.view = "timeline.html"
-
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
-
         return output
 
 # =============================================================================
@@ -4977,8 +4913,6 @@ def project_rheader(r):
             append((T("Activities"), "activity"))
         if mode_task:
             append((T("Tasks"), "task"))
-        if record.calendar:
-            append((T("Calendar"), "timeline"))
         if settings.get_project_budget_monitoring():
             append((T("Budget Monitoring"), "monitoring"))
         elif settings.get_project_multiple_budgets():

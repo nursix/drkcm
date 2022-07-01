@@ -742,14 +742,13 @@ class S3OptionsMenu(object):
         """ DVI / Disaster Victim Identification """
 
         return M(c="dvi")(
-                    #M("Home", f="index"),
                     M("Recovery Requests", f="recreq")(
                         M("New Request", m="create"),
                         M("List Current",
                           vars={"recreq.status":"1,2,3"}),
                     ),
                     M("Dead Bodies", f="body")(
-                        M("Add", m="create"),
+                        M("Register Body", m="create"),
                         M("List unidentified",
                           vars={"identification.status": "None"}),
                         M("Report by Age/Gender", m="report",
@@ -765,7 +764,6 @@ class S3OptionsMenu(object):
                     M("Morgues", f="morgue")(
                         M("Create", m="create"),
                     ),
-                    M("Dashboard", f="index"),
                 )
 
     # -------------------------------------------------------------------------
@@ -1187,12 +1185,10 @@ class S3OptionsMenu(object):
                     ),
                     M(inv_recv_list, c="inv", f="recv", translate=False)( # Already T()
                         M("Create", m="create"),
-                        M("Timeline", args="timeline"),
                     ),
                     M("Sent Shipments", c="inv", f="send")(
                         M("Create", m="create"),
                         M("Search Shipped Items", f="track_item"),
-                        M("Timeline", args="timeline"),
                     ),
                     M("Distributions", c="supply", f="distribution")(
                         M("Create", m="create"),
@@ -1251,7 +1247,6 @@ class S3OptionsMenu(object):
                         M("Create Incident Report", m="create"),
                         M("Open Incidents", vars={"open":1}),
                         M("Map", m="map"),
-                        M("Timeline", args="timeline"),
                         M("Import", m="import"),
                         M("Report", m="report")
                     ),

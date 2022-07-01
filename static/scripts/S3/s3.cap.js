@@ -113,14 +113,14 @@
                 case 'Private':
                     restriction_row.hide();
                 	if ($('#cap_alert_restriction').val()) {
-                	    $('#cap_alert_restriction').val('');	
+                	    $('#cap_alert_restriction').val('');
                 	}
                     recipient_row.show();
                     break;
                 case '':
                     recipient_row.hide();
                     restriction_row.hide();
-                    break;   
+                    break;
             }
         });
 
@@ -162,7 +162,7 @@
                             } else {
                             	$form.find('[name=priority]').val('');
                             	$form.find('[name=priority]').css('border', '2px solid gray');
-                              }                      
+                              }
                         });
                     return;
                 } else {
@@ -244,7 +244,7 @@
                                 $f.val(values[f]['@value'] || '');
                                 //refresh multiselect widget for display
                                 $('select#cap_alert_incidents').multiselect('refresh');
-                            }                                                
+                            }
                         } else {
                             break;
                         }
@@ -320,7 +320,7 @@
             var name = 'can_edit-' + field,
                 $label = $('<label for="' + name + '">' +
                                 (i18n.cap_locked || 'Locked') + '</label>'),
-                $checkbox = $('<input type="checkbox" name="' + name +'"/>');
+                $checkbox = $('<input type="checkbox" name="' + name +'">');
 
             $checkbox.change(function () {
                 var settings = get_settings();

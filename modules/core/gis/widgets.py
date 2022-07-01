@@ -83,17 +83,6 @@ class MAP(DIV):
         self.error_message = None
         self.parent = None
 
-        # Show Color Picker?
-        if opts_get("color_picker"):
-            # Can't be done in _setup() as usually run from xml() and hence we've already passed this part of the layout.html
-            s3 = current.response.s3
-            if s3.debug:
-                style = "plugins/spectrum.css"
-            else:
-                style = "plugins/spectrum.min.css"
-            if style not in s3.stylesheets:
-                s3.stylesheets.append(style)
-
         self.globals = None
         self.i18n = None
         self.scripts = None
@@ -408,20 +397,6 @@ class MAP(DIV):
                 options["area"] = True
                 i18n["gis_area_message"] = T("The area is")
                 i18n["gis_area_tooltip"] = T("Measure Area: Click the points around the polygon & end with a double-click")
-
-            # Show Color Picker?
-            color_picker = opts_get("color_picker", False)
-            if color_picker:
-                options["color_picker"] = True
-                if color_picker is not True:
-                    options["draft_style"] = json.loads(color_picker)
-                #i18n["gis_color_picker_tooltip"] = T("Select Color")
-                i18n["gis_cancelText"] = T("cancel")
-                i18n["gis_chooseText"] = T("choose")
-                i18n["gis_togglePaletteMoreText"] = T("more")
-                i18n["gis_togglePaletteLessText"] = T("less")
-                i18n["gis_clearText"] = T("Clear Color Selection")
-                i18n["gis_noColorSelectedText"] = T("No Color Selected")
 
             # Show Print control?
             print_control = opts_get("print_control") is not False and settings.get_gis_print()
@@ -859,14 +834,6 @@ class MAP(DIV):
         debug = s3.debug
         scripts = s3.scripts
 
-        if self.opts.get("color_picker", False):
-            if debug:
-                script = URL(c="static", f="scripts/spectrum.js")
-            else:
-                script = URL(c="static", f="scripts/spectrum.min.js")
-            if script not in scripts:
-                scripts.append(script)
-
         if debug:
             script = URL(c="static", f="scripts/S3/s3.gis.loader.js")
         else:
@@ -893,9 +860,6 @@ class MAP(DIV):
                 # Store options where they can be read by a later show_map()
                 js_global_append('''S3.gis.options["%s"]=%s''' % (map_id,
                                                                   options))
-            script = URL(c="static", f="scripts/yepnope.1.5.4-min.js")
-            if script not in scripts:
-                scripts.append(script)
             if plugin_callbacks:
                 callback = '''%s\n%s''' % (callback, plugin_callbacks)
             callback = '''function(){%s}''' % callback

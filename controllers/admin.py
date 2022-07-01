@@ -411,7 +411,7 @@ def user():
                 tuple_rows = True
                 form[0].insert(8, row)
             else:
-                # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+                # Formstyle with just a single row (e.g. Foundation)
                 tuple_rows = False
                 form[0].insert(4, row)
             # @ToDo: Ensure this reads existing values & creates/updates when saved

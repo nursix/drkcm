@@ -2375,20 +2375,15 @@ class S3CRUD(CRUDMethod):
 
         settings = current.deployment_settings
 
-        # If using Bootstrap then we need to amend our core HTML markup
-        bootstrap = settings.ui.formstyle == "bootstrap"
-
         # Custom button?
         if "custom" in attr:
             custom = attr["custom"]
             if custom is None:
                 custom = ""
-            elif bootstrap and hasattr(custom, "add_class"):
-                custom.add_class("btn btn-primary")
             return custom
 
         # Default class
-        if _class is None and not bootstrap:
+        if _class is None:
             _class = "action-btn"
 
         # Default label
@@ -2411,9 +2406,6 @@ class S3CRUD(CRUDMethod):
         if _target:
             button["_target"] = _target
 
-        # Additional classes?
-        if bootstrap:
-            button.add_class("btn btn-primary")
         return button
 
     # -------------------------------------------------------------------------

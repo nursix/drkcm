@@ -559,8 +559,7 @@ class S3SQLDefaultForm(S3SQLForm):
             try:
                 form[0][-1][0][0]["_class"] = settings.submit_style
             except:
-                # Submit button has been removed or a different formstyle,
-                # such as Bootstrap (which is already styled anyway)
+                # Submit button has been removed or a different formstyle
                 pass
 
         # Subheadings
@@ -1138,8 +1137,7 @@ class S3SQLCustomForm(S3SQLForm):
             try:
                 form[0][-1][0][0]["_class"] = crud_settings.submit_style
             except (KeyError, IndexError, TypeError):
-                # Submit button has been removed or a different formstyle,
-                # such as Bootstrap (which is already styled anyway)
+                # Submit button has been removed or a different formstyle
                 pass
 
         # Subheadings

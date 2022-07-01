@@ -1531,14 +1531,7 @@ def inject_enable(output):
                       _class="boolean",
                       )
         comment = ""
-        if s3_formstyle == "bootstrap":
-            _controls = DIV(widget, comment, _class="controls")
-            row = DIV(label,
-                      _controls,
-                      _class="control-group",
-                      _id="%s__row" % id
-                      )
-        elif callable(s3_formstyle):
+        if callable(s3_formstyle):
             row = s3_formstyle(id, label, widget, comment)
         else:
             # Unsupported

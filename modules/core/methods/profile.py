@@ -1254,11 +1254,6 @@ class S3Profile(S3CRUD):
         widget_cols = widget.get("colspan", 1)
         span = int(12 / page_cols) * widget_cols
 
-        #formstyle = current.deployment_settings.ui.get("formstyle", "default")
-        if current.deployment_settings.ui.get("formstyle") == "bootstrap":
-            # Bootstrap
-            return "profile-widget span%s" % span
-
         # Default (=foundation)
         return "profile-widget medium-%s columns" % span
 
@@ -1359,13 +1354,6 @@ class S3Profile(S3CRUD):
                 # Custom widget
                 create = insert(r, list_id, label_create, add_url)
 
-            elif current.deployment_settings.ui.formstyle == "bootstrap":
-                # Bootstrap-style action icon
-                create = A(ICON("plus-sign", _class="small-add"),
-                           _href = add_url,
-                           _class = "s3_modal",
-                           _title = label_create,
-                           )
             else:
                 # Standard action button
                 create = A(label_create,

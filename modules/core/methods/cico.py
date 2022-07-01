@@ -92,7 +92,7 @@ class S3CheckInMethod(CRUDMethod):
                     # Formstyle with separate row for label (e.g. default Eden formstyle)
                     tuple_rows = True
                 else:
-                    # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+                    # Formstyle with just a single row (e.g. Foundation)
                     tuple_rows = False
 
                 form_rows = []
@@ -190,7 +190,7 @@ class S3CheckOutMethod(CRUDMethod):
                 # Formstyle with separate row for label (e.g. default Eden formstyle)
                 tuple_rows = True
             else:
-                # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+                # Formstyle with just a single row (e.g. Foundation)
                 tuple_rows = False
 
             form_rows = []

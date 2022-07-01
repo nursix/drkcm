@@ -7,8 +7,9 @@
 
 // ============================================================================
 // STYLES
-
-/* Request (req) Statuses */
+//
+// Request (req) Statuses
+//
 .req_status_none {
     color: red;
     font-weight: bold;
@@ -23,7 +24,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* Avatars */
+// Avatars
+//
 .avatar {
     background: none repeat scroll 0 0 #fff;
     border-bottom: 1px solid #d7d7d7;
@@ -39,7 +41,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* Text representation */
+// Text representation
+//
 .text-body {
     white-space: pre-wrap;
 }
@@ -56,7 +59,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* Priority Representation */
+// Priority Representation
+//
 .prio {
     padding: 0 0.4rem;
     border: 1px solid #333;
@@ -96,7 +100,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* Weekly Hours Representation */
+// Weekly Hours Representation
+//
 .wh-schedule {
     list-style: none;
     white-space: pre;
@@ -112,7 +117,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* Comments-represent */
+// Comments-represent
+//
 .showall {
     display: none;
     position: absolute;
@@ -123,7 +129,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* CMS Newsletter Text Represent */
+// CMS Newsletter Text Represent
+//
 .newsletter-text {
     white-space: pre-line;
     background: #fcfcfc;
@@ -137,7 +144,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* File-Represent */
+// File-Represent
+//
 .file-repr {
     i.fa {
         font-size: 1.1rem;
@@ -154,7 +162,8 @@
 }
 
 // ----------------------------------------------------------------------------
-/* PersonRepresentContact */
+// PersonRepresentContact
+//
 .contact-repr {
     background-color: #FFF0C1;
     border: 1px solid #E0E0E0;

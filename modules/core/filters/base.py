@@ -538,9 +538,6 @@ class FilterForm:
                 form = FORM(TABLE(TBODY(rows)), **attr)
             else:
                 form = FORM(DIV(rows), **attr)
-                if settings.ui.formstyle == "bootstrap":
-                    # We need to amend the HTML markup to support this CSS framework
-                    form.add_class("form-horizontal")
             form.add_class("filter-form")
             if ajax:
                 form.add_class("filter-ajax")

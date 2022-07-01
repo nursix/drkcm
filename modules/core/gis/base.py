@@ -3104,7 +3104,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                      "filename": filename,
                      }
         try:
-            result = driver.execute_phantomjs(script)
+            driver.execute_phantomjs(script)
         except WebDriverException as e:
             driver.quit()
             current.log.error("WebDriver crashed: %s" % e)
@@ -6326,7 +6326,6 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                  legend = False,
                  toolbar = False,
                  area = False,
-                 color_picker = False,
                  clear_layers = None,
                  nav = None,
                  print_control = None,
@@ -6438,10 +6437,6 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                         False: No Panel, "float": New floating Legend Panel
                 toolbar: Show the Icon Toolbar of Controls
                 area: Show the Area tool on the Toolbar
-                color_picker: Show the Color Picker tool on the Toolbar (used
-                              for S3LocationSelector...pick up in postprocess),
-                              if a style is provided then this is used as the
-                              default style
                 nav: Show the Navigation controls on the Toolbar
                 save: Show the Save tool on the Toolbar
                 search: Show the Geonames search box (requires a username to be
@@ -6509,7 +6504,6 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                    legend = legend,
                    toolbar = toolbar,
                    area = area,
-                   color_picker = color_picker,
                    clear_layers = clear_layers,
                    nav = nav,
                    print_control = print_control,

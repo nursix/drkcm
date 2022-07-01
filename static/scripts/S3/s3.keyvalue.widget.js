@@ -29,8 +29,8 @@
             });
 
             var $item = $('<li></li>'),
-                $key = $('<input class="key" value="" />'),
-                $value = $('<input class="value" value="" />');
+                $key = $('<input class="key" value="">'),
+                $value = $('<input class="value" value="">');
 
             $value.blur(cleanup);
 
@@ -48,8 +48,8 @@
                 ops = item && item.options,
                 immutable = Number(item.immutable),
                 $item = $('<li></li>').attr('id', id + '-' + i),
-                $key = $('<input class="key" value="' + (item.key || '') + '" />'),
-                $value = $('<input class="value" value="' + (item.value || '') + '" />');
+                $key = $('<input class="key" value="' + (item.key || '') + '">'),
+                $value = $('<input class="value" value="' + (item.value || '') + '">');
 
             if (immutable) {
                 if (immutable & 1) {

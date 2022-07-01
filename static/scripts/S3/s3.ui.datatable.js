@@ -415,7 +415,7 @@
             }
 
             // Parse and store the table config
-            var tableConfig = $.parseJSON(config.val());
+            var tableConfig = JSON.parse(config.val());
             this.tableConfig = tableConfig;
 
             // Apply actions fallback

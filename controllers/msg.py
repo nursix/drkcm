@@ -1456,14 +1456,7 @@ def inject_search_after_save(output):
                        _id=id,
                        _class="boolean")
         comment = ""
-        if s3_formstyle == "bootstrap":
-            _controls = DIV(widget, comment, _class="controls")
-            row = DIV(label,
-                      _controls,
-                      _class="control-group",
-                      _id="%s__row" % id
-                      )
-        elif callable(s3_formstyle):
+        if callable(s3_formstyle):
             row = s3_formstyle(id, label, widget, comment)
         else:
             # Unsupported
@@ -2091,7 +2084,7 @@ def facebook_post():
         # Formstyle with separate row for label (e.g. default Eden formstyle)
         tuple_rows = True
     else:
-        # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+        # Formstyle with just a single row (e.g. Foundation)
         tuple_rows = False
 
     form_rows = []
@@ -2172,7 +2165,7 @@ def twitter_post():
         # Formstyle with separate row for label (e.g. default Eden formstyle)
         tuple_rows = True
     else:
-        # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+        # Formstyle with just a single row (e.g. Foundation)
         tuple_rows = False
 
     form_rows = []

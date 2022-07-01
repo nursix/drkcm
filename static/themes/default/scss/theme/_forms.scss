@@ -17,7 +17,9 @@ $form_error_bgcolor: #c60f13 !default;
 
 // ============================================================================
 // STYLES
-
+//
+// Forms and Form Elements
+//
 form {
     font-size: 0.8rem;
     .form-row {
@@ -60,6 +62,10 @@ form {
             min-width: 4rem;
         }
         .controls span.postfix {
+            border: 1px solid #ccc;
+            border-left: none;
+            text-align: center;
+            background-color: #f2f2f2;
             height: 1.75rem;
             line-height: 1.5rem;
             font-size: 0.8rem;
@@ -303,7 +309,9 @@ form {
     }
 }
 
-/* -------------------------------------------------------------------------------- */
+// ----------------------------------------------------------------------------
+// Containers
+//
 .form-container,
 .item-container {
     width: auto;
@@ -410,7 +418,9 @@ form {
     }
 }
 
-/* -------------------------------------------------------------------------------- */
+// ----------------------------------------------------------------------------
+// Author Info / Last Update / Mark Duplicate
+//
 #last_update,
 #markDuplicate {
     float: right;
@@ -422,7 +432,7 @@ form {
         text-align: left;
     }
 }
-.authorinfo, // Record merger
+.authorinfo,
 #last_update {
     font-style: italic;
     font-size: 80%;
@@ -439,7 +449,8 @@ form {
 }
 
 // ----------------------------------------------------------------------------
-/* Help Popup Icon */
+// Tooltip Icon
+//
 .inline-tooltip {
     display: inline-block;
     vertical-align: top;
@@ -476,6 +487,9 @@ form {
     }
     &:hover {
         cursor: help;
+        &:before {
+            color: $warning-color;
+        }
     }
 }
 
