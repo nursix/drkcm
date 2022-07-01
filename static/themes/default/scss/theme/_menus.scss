@@ -36,7 +36,6 @@ $side-bar-divider-color: #eaeaea !default;
 // Main menu
 //
 .main-menu {
-    z-index: 1000;
     font-size: 0.8125rem;
     .title-bar {
         background: $topbar-background;
@@ -46,6 +45,9 @@ $side-bar-divider-color: #eaeaea !default;
         }
     }
     .top-bar {
+        .top-bar-left, .top-bar-right {
+            z-index: 99; // always above alerts
+        }
         height: 2.25rem;
         .dropdown.menu, .drilldown.menu {
             li {
