@@ -4,11 +4,11 @@
     License: MIT
 """
 
-from gluon import current
-from core import *
-from s3layouts import *
+from gluon import current, URL
+from core import IS_ISO639_2_LANGUAGE_CODE
+from s3layouts import MM, M, ML, MP, MA, SEP, homepage
 try:
-    from .layouts import *
+    from .layouts import OM
 except ImportError:
     pass
 import s3menus as default
@@ -122,12 +122,11 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Custom Organisation Menu """
 
-        OM = S3OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_lang(cls):
+    def menu_lang(cls, **attr):
 
         languages = current.deployment_settings.get_L10n_languages()
         represent_local = IS_ISO639_2_LANGUAGE_CODE.represent_local

@@ -11,6 +11,17 @@ $side_bar_bgcolor: #f7f7f7;
 //$side_bar_border_color: #c0c1c2;
 $side_bar_divider_color: #eaeaea;
 
+$topbar-link-color: $white;
+$topbar-link-color-hover: $topbar-link-color;
+$topbar-link-color-active: $white;
+$topbar-link-color-active-hover: scale-color($topbar-link-color-active, $lightness: -10%);
+
+$topbar-link-bg-hover: scale-color($topbar-background, $lightness: -10%);
+$topbar-link-bg-active: $rcred;
+$topbar-link-bg-active-hover: scale-color($topbar-link-bg-active, $lightness: -10%);
+
+$topbar-arrow-color: rgba(255,255,255,0.4);
+
 // ============================================================================
 // RHEADERS
 // ============================================================================
@@ -104,11 +115,8 @@ $side_bar_divider_color: #eaeaea;
 //$alert_box_shadow_color: #aaaaa7;
 
 // Render page titles with background color
-$title_background: true;
+// $title_background: true;
 //$title_bgcolor: #f7f8f9;
-
-// Throbber style [sunflower|simple]
-$throbber_style: simple;
 
 // Footer
 //$footer_bgcolor: transparent;

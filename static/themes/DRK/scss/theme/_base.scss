@@ -4,12 +4,6 @@
 // Foundation Settings for the THEME
 @import '../settings';
 
-// Foundation Mixins
-$include-html-classes: false;
-$include-html-global-classes: false;
-@import "../../foundation/scss/components/global";
-@import "../../foundation/scss/components/forms";
-
 // THEME Config
 @import 'theme/config';
 
