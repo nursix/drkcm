@@ -3482,7 +3482,7 @@ table.hover.striped tr:nth-of-type(even):hover {
   line-height: 1;
   text-decoration: none;
   display: block;
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
 }
 /* line 81, ../../foundation/scss/components/_menu.scss */
 .menu input,
@@ -3698,7 +3698,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 509, ../../foundation/scss/components/_menu.scss */
 .menu .menu-text {
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
   font-weight: bold;
   line-height: 1;
   color: inherit;
@@ -3793,7 +3793,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 
 /* line 89, ../../foundation/scss/components/_drilldown.scss */
 .drilldown a {
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
   background: #fefefe;
 }
 /* line 95, ../../foundation/scss/components/_drilldown.scss */
@@ -3818,7 +3818,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 116, ../../foundation/scss/components/_drilldown.scss */
 .drilldown .is-drilldown-submenu a {
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
 }
 /* line 121, ../../foundation/scss/components/_drilldown.scss */
 .drilldown .nested.is-drilldown-submenu {
@@ -3926,7 +3926,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 154, ../../foundation/scss/components/_dropdown-menu.scss */
 .dropdown.menu > li > a {
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
 }
 /* line 160, ../../foundation/scss/components/_dropdown-menu.scss */
 .dropdown.menu > li.is-active > a {
@@ -4194,7 +4194,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 253, ../../foundation/scss/components/_dropdown-menu.scss */
 .dropdown .is-dropdown-submenu a {
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
 }
 /* line 67, ../../foundation/scss/components/_dropdown-menu.scss */
 .is-dropdown-submenu .is-dropdown-submenu-parent > a::after {

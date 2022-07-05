@@ -429,7 +429,7 @@
                     button.prop('disabled', true).show();
                     break;
                 case 'deny':
-                    disabled = $('<a class="tiny alert button disabled-' + buttonClass + '" disabled="disabled"><i class="fa fa-ban"></i>' + label + '</a>');
+                    disabled = $('<a class="small alert button disabled-' + buttonClass + '" disabled="disabled"><i class="fa fa-ban"></i>' + label + '</a>');
                     button.prop('disabled', true).hide().after(disabled);
                     break;
                 default:

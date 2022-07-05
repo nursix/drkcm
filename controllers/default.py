@@ -200,7 +200,7 @@ def about():
                                args = "create",
                                vars = get_vars,
                                ),
-                     _class="action-btn cms-edit" % _class)
+                     _class="action-btn cms-edit")
         else:
             item = H2(T("About"))
     else:

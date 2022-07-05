@@ -428,7 +428,7 @@
                 return;
             }
 
-            var button = $('<button class="tiny secondary button toggle-picture" type="button">'),
+            var button = $('<button class="small secondary button toggle-picture" type="button">'),
                 buttonRow = $('<div class="button-row">').append(button);
             button.text(opts.showPictureText);
 

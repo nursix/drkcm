@@ -6132,17 +6132,17 @@ class org_SiteCheckInMethod(CRUDMethod):
         }
 
         # Form buttons
-        check_btn = INPUT(_class = "tiny secondary button check-btn",
+        check_btn = INPUT(_class = "small secondary button check-btn",
                           _name = "check",
                           _type = "submit",
                           _value = T("Check ID"),
                           )
-        check_in_btn = INPUT(_class = "tiny primary button check-in-btn",
+        check_in_btn = INPUT(_class = "small primary button check-in-btn",
                              _name = "check_in",
                              _type = "submit",
                              _value = T("Check-in"),
                              )
-        check_out_btn = INPUT(_class = "tiny primary button check-out-btn",
+        check_out_btn = INPUT(_class = "small primary button check-out-btn",
                               _name = "check_out",
                               _type = "submit",
                               _value = T("Check-out"),
