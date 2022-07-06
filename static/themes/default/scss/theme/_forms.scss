@@ -25,7 +25,7 @@ form {
     .form-row {
         &.row {
             padding: 0 0.3rem;
-            margin-top: 0.7rem;
+            margin-top: 0.5rem;
         }
         .button {
             [dir=ltr] & {
@@ -94,7 +94,6 @@ form {
         margin-left: 0.125rem;
         &.inline {
             padding: 0;
-            line-height: normal;
             margin: 0 0 0.5rem;
         }
     }
@@ -295,11 +294,11 @@ form {
         border-top: solid 1px #FFD7A3;
         [dir=ltr] & {
             border-left: solid 1px #FFD7A3;
-            padding: 0.5rem 0.25rem 0.25rem 0.75rem;
+            padding: 0.25rem 0.25rem 0.25rem 0.75rem;
         }
         [dir=rtl] & {
             border-right: solid 1px #FFD7A3;
-            padding: 0.5rem 0.75rem 0.25rem 0.25rem;
+            padding: 0.25rem 0.75rem 0.25rem 0.25rem;
         }
         margin: 1.5rem 0 0.75rem;
         &:first-of-type {
@@ -455,15 +454,13 @@ form {
 // ----------------------------------------------------------------------------
 // Tooltip Icon
 //
-.inline-tooltip {
+.s3_add_resource_link {
     display: inline-block;
+    margin: 0.3rem 0.5rem;
+}
+.inline-tooltip {
     vertical-align: top;
-    padding-left: 0.75rem;
-    .s3_add_resource_link {
-        display: inline-block;
-        margin: -3px 0 -3px 0.7rem;
-        padding-right: 0.3rem;
-    }
+    margin: 0.2rem 0.5rem;
 }
 .tooltip,
 .tooltipbody,
@@ -472,11 +469,6 @@ form {
 .htmltip {
     display: inline-block;
     position: static;
-    &.inline-tooltip {
-        margin-left: 1rem;
-        vertical-align: middle;
-    }
-    padding: 0 0.3rem;
     text-transform: uppercase;
     width: auto;
     background: none;

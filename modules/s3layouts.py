@@ -693,7 +693,7 @@ class S3PopupLink(S3NavigationItem):
 
         tooltip = item.opts.tooltip
         if tooltip is not None:
-            ttip = DIV(_class = "tooltip",
+            ttip = DIV(_class = "tooltip inline-tooltip",
                        _title = "%s|%s" % (item.opts.title, tooltip))
         else:
             ttip = ""

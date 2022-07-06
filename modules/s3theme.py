@@ -72,17 +72,20 @@ def formstyle_foundation(form, fields, *args, **kwargs):
             if submit:
                 submit.add_class("small primary button")
 
-        _class = "form-row row hide" if hidden else "form-row row"
-        hints = DIV(render_tooltip(label, comment), _class="inline-tooltip")
+        tooltip = render_tooltip(label, comment, _class="tooltip")
+        if isinstance(tooltip, DIV):
+            tooltip.add_class("inline-tooltip")
+
         controls = DIV(label,
                        DIV(widget,
-                           hints,
+                           tooltip,
                            _class = "controls",
                            ),
                        _class = "small-12 columns",
                        )
+
         return DIV(controls,
-                   _class = _class,
+                   _class = "form-row row hide" if hidden else "form-row row",
                    _id = row_id,
                    )
 

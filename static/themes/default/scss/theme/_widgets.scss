@@ -203,9 +203,6 @@ button.ui-multiselect {
 .ui-widget {
     font-family: $body-font-family;
 }
-.ui-icon-triangle-1-s {
-    background-position: -68px -12px;
-}
 
 // ----------------------------------------------------------------------------
 // Password Widget
@@ -689,7 +686,6 @@ form.anonymize-form,
         font-weight: bold;
     }
     .consent-checkbox {
-        vertical-align: bottom;
         margin-right: 0.5rem!important;
     }
     .req {
