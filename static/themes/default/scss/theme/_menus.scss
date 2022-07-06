@@ -45,11 +45,9 @@ $side-bar-divider-color: #eaeaea !default;
         }
     }
     .top-bar {
-        .top-bar-left, .top-bar-right {
-            z-index: 99; // always above alerts
-        }
-        height: 2.25rem;
+        min-height: 2.27rem;
         .dropdown.menu, .drilldown.menu {
+            z-index: 99; // always above alerts
             li {
                 &.is-dropdown-submenu-parent > a::after {
                     border-color: $topbar-arrow-color transparent transparent;

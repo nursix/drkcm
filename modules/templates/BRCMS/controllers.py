@@ -94,9 +94,9 @@ class index(CustomController):
                     response.confirmation = "Thank you for your message - we'll be in touch shortly"
             if s3.cdn:
                 if s3.debug:
-                    s3.scripts.append("http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.js")
+                    s3.scripts.append("https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.js")
                 else:
-                    s3.scripts.append("http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js")
+                    s3.scripts.append("https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js")
             else:
                 if s3.debug:
                     s3.scripts.append("/%s/static/scripts/jquery.validate.js" % request.application)

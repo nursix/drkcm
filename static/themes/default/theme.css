@@ -1776,105 +1776,105 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 47, ../scss/theme/_menus.scss */
 .main-menu .top-bar {
-  height: 2.25rem;
+  min-height: 2.27rem;
 }
-/* line 48, ../scss/theme/_menus.scss */
-.main-menu .top-bar .top-bar-left, .main-menu .top-bar .top-bar-right {
+/* line 49, ../scss/theme/_menus.scss */
+.main-menu .top-bar .dropdown.menu, .main-menu .top-bar .drilldown.menu {
   z-index: 99;
 }
-/* line 54, ../scss/theme/_menus.scss */
+/* line 52, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li.is-dropdown-submenu-parent > a::after, .main-menu .top-bar .drilldown.menu li.is-dropdown-submenu-parent > a::after {
   border-color: rgba(255, 255, 255, 0.4) transparent transparent;
 }
-/* line 57, ../scss/theme/_menus.scss */
+/* line 55, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li.is-drilldown-submenu-parent > a::after, .main-menu .top-bar .drilldown.menu li.is-drilldown-submenu-parent > a::after {
   border-color: transparent transparent transparent rgba(255, 255, 255, 0.4);
 }
-/* line 60, ../scss/theme/_menus.scss */
+/* line 58, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li .js-drilldown-back > a::before, .main-menu .top-bar .drilldown.menu li .js-drilldown-back > a::before {
   border-color: transparent rgba(255, 255, 255, 0.4) transparent transparent;
 }
-/* line 63, ../scss/theme/_menus.scss */
+/* line 61, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li a, .main-menu .top-bar .drilldown.menu li a {
   background-color: #166068;
   color: #fefefe;
 }
-/* line 66, ../scss/theme/_menus.scss */
+/* line 64, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li a:hover, .main-menu .top-bar .drilldown.menu li a:hover {
   background-color: #14565e;
   color: #fefefe;
 }
-/* line 71, ../scss/theme/_menus.scss */
+/* line 69, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li.active > a, .main-menu .top-bar .drilldown.menu li.active > a {
   background-color: #444;
   color: #fefefe;
 }
-/* line 74, ../scss/theme/_menus.scss */
+/* line 72, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li.active > a:hover, .main-menu .top-bar .drilldown.menu li.active > a:hover {
   background-color: #3d3d3d;
   color: #e5e5e5;
 }
 
-/* line 87, ../scss/theme/_menus.scss */
+/* line 85, ../scss/theme/_menus.scss */
 .side-bar {
   background: none repeat scroll 0 0 #f7f7f7;
   margin-top: 10px;
   padding: 0.25rem 0;
 }
 
-/* line 94, ../scss/theme/_menus.scss */
+/* line 92, ../scss/theme/_menus.scss */
 .options-menu ul {
   margin-left: 0;
 }
-/* line 96, ../scss/theme/_menus.scss */
+/* line 94, ../scss/theme/_menus.scss */
 .options-menu ul li > a {
   padding-left: 1.25rem;
 }
-/* line 101, ../scss/theme/_menus.scss */
+/* line 99, ../scss/theme/_menus.scss */
 .options-menu > li {
   padding: 0.3rem 0;
 }
-/* line 103, ../scss/theme/_menus.scss */
+/* line 101, ../scss/theme/_menus.scss */
 .options-menu > li.active-section {
   background-color: #f2f2f2;
 }
-/* line 108, ../scss/theme/_menus.scss */
+/* line 106, ../scss/theme/_menus.scss */
 .options-menu li {
   font-size: 0.875rem;
   font-weight: normal;
   margin: 0;
 }
-/* line 112, ../scss/theme/_menus.scss */
+/* line 110, ../scss/theme/_menus.scss */
 .options-menu li a {
   color: #666;
   padding: 0.325rem 0.5rem;
 }
-/* line 115, ../scss/theme/_menus.scss */
+/* line 113, ../scss/theme/_menus.scss */
 .options-menu li a:hover {
   color: #208c98;
   background-color: rgba(0, 0, 0, 0.05);
 }
-/* line 122, ../scss/theme/_menus.scss */
+/* line 120, ../scss/theme/_menus.scss */
 .options-menu li.heading > a {
   font-weight: bold;
   text-transform: uppercase;
 }
-/* line 126, ../scss/theme/_menus.scss */
+/* line 124, ../scss/theme/_menus.scss */
 .options-menu li.heading:not(:first-child) {
   border-top: 1px solid #eaeaea;
 }
-/* line 132, ../scss/theme/_menus.scss */
+/* line 130, ../scss/theme/_menus.scss */
 .options-menu li.is-active > a:first-child:not(.button) {
   font-weight: bold;
   color: #444;
   background-color: #e0e1e2;
 }
-/* line 136, ../scss/theme/_menus.scss */
+/* line 134, ../scss/theme/_menus.scss */
 .options-menu li.is-active > a:first-child:not(.button):hover {
   color: #208c98;
   background-color: #e2e3e3;
 }
-/* line 144, ../scss/theme/_menus.scss */
+/* line 142, ../scss/theme/_menus.scss */
 .options-menu .num-pending {
   margin: 0 0.4rem;
   font-weight: normal;
@@ -1886,55 +1886,55 @@ body.rtl .sub-nav.about-menu {
   color: #712e05;
 }
 
-/* line 156, ../scss/theme/_menus.scss */
+/* line 154, ../scss/theme/_menus.scss */
 #menu-options-toggle {
   margin-top: 0.5rem;
   width: 100%;
 }
 
-/* line 164, ../scss/theme/_menus.scss */
+/* line 162, ../scss/theme/_menus.scss */
 .sub-nav {
   line-height: normal;
 }
-/* line 166, ../scss/theme/_menus.scss */
+/* line 164, ../scss/theme/_menus.scss */
 .sub-nav li {
   font-size: 0.75rem;
 }
-/* line 168, ../scss/theme/_menus.scss */
+/* line 166, ../scss/theme/_menus.scss */
 .sub-nav li:before {
   color: #999;
   content: "|";
   margin: 0 0.375rem;
 }
-/* line 173, ../scss/theme/_menus.scss */
+/* line 171, ../scss/theme/_menus.scss */
 .sub-nav li:first-child:before {
   content: "";
   margin: 0;
 }
-/* line 177, ../scss/theme/_menus.scss */
+/* line 175, ../scss/theme/_menus.scss */
 .sub-nav li a {
   color: #999;
   text-decoration: none;
   display: inline-block;
   padding: 0 0.375rem;
 }
-/* line 182, ../scss/theme/_menus.scss */
+/* line 180, ../scss/theme/_menus.scss */
 .sub-nav li a:hover {
   color: #666;
 }
-/* line 187, ../scss/theme/_menus.scss */
+/* line 185, ../scss/theme/_menus.scss */
 .sub-nav.personal-menu {
   float: right;
   clear: right;
   padding-top: 0;
   margin-bottom: 0.125rem;
 }
-/* line 190, ../scss/theme/_menus.scss */
+/* line 188, ../scss/theme/_menus.scss */
 [dir=rtl] .sub-nav.personal-menu {
   float: left;
   clear: left;
 }
-/* line 196, ../scss/theme/_menus.scss */
+/* line 194, ../scss/theme/_menus.scss */
 .sub-nav.personal-menu li a {
   padding: 0 0.375rem;
 }
