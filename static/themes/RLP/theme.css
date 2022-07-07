@@ -469,57 +469,62 @@ input[disabled='disabled'] {
 /* line 97, ../../default/scss/theme/_widgets.scss */
 .ui-dialog {
   padding: 0;
-  width: 750px !important;
+  width: auto;
 }
 /* line 100, ../../default/scss/theme/_widgets.scss */
+.ui-dialog:not(.qrinput-dialog) {
+  width: 750px !important;
+  max-width: 100%;
+}
+/* line 104, ../../default/scss/theme/_widgets.scss */
 .ui-dialog .ui-dialog-content {
   padding: 0 !important;
 }
 
 /* UI Multiselect */
-/* line 108, ../../default/scss/theme/_widgets.scss */
+/* line 112, ../../default/scss/theme/_widgets.scss */
 [dir=ltr] label.ui-corner-all span {
   left: 10px;
 }
-/* line 111, ../../default/scss/theme/_widgets.scss */
+/* line 115, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] label.ui-corner-all span {
   right: 10px;
 }
 
 /* S3SelectWidget() icons */
-/* line 117, ../../default/scss/theme/_widgets.scss */
+/* line 121, ../../default/scss/theme/_widgets.scss */
 .ui-selectmenu-menu .ui-menu.customicons {
   height: 400px;
 }
-/* line 119, ../../default/scss/theme/_widgets.scss */
+/* line 123, ../../default/scss/theme/_widgets.scss */
 .ui-selectmenu-menu .ui-menu.customicons .ui-menu-item {
   padding: 1em 0 1em 4em;
 }
-/* line 121, ../../default/scss/theme/_widgets.scss */
+/* line 125, ../../default/scss/theme/_widgets.scss */
 .ui-selectmenu-menu .ui-menu.customicons .ui-menu-item .ui-icon {
   background-repeat: no-repeat !important;
   background-position: left top;
   top: 0.1em;
 }
-/* line 128, ../../default/scss/theme/_widgets.scss */
+/* line 132, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ui-selectmenu-menu .ui-menu.customicons .ui-menu-item {
   padding: 1em 4em 1em 0;
 }
-/* line 130, ../../default/scss/theme/_widgets.scss */
+/* line 134, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ui-selectmenu-menu .ui-menu.customicons .ui-menu-item .ui-icon {
   background-position: right top;
 }
 
-/* line 136, ../../default/scss/theme/_widgets.scss */
+/* line 140, ../../default/scss/theme/_widgets.scss */
 .ui-widget-header {
   background: none;
   border: 1px solid #ADA6A0;
 }
-/* line 139, ../../default/scss/theme/_widgets.scss */
+/* line 143, ../../default/scss/theme/_widgets.scss */
 .ui-widget-header.ui-slider-range {
   background: #cccccc;
 }
-/* line 142, ../../default/scss/theme/_widgets.scss */
+/* line 146, ../../default/scss/theme/_widgets.scss */
 .ui-widget-header a {
   color: #222222 !important;
   border-color: #C7C7C7;
@@ -529,114 +534,114 @@ input[disabled='disabled'] {
   font-size: 0.85rem;
 }
 
-/* line 152, ../../default/scss/theme/_widgets.scss */
+/* line 156, ../../default/scss/theme/_widgets.scss */
 .ui-state-active,
 .ui-widget-content .ui-state-active,
 .ui-widget-header .ui-state-active {
   border-color: #ADA6A0;
 }
 
-/* line 157, ../../default/scss/theme/_widgets.scss */
+/* line 161, ../../default/scss/theme/_widgets.scss */
 .ui-widget-content .ui-state-active.ui-slider-handle {
   background: #007fff;
   border: 1px solid #003eff;
 }
 
-/* line 162, ../../default/scss/theme/_widgets.scss */
+/* line 166, ../../default/scss/theme/_widgets.scss */
 .ui-multiselect-header span.ui-icon {
   margin-top: 4px;
 }
-/* line 166, ../../default/scss/theme/_widgets.scss */
+/* line 170, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ui-multiselect-header .ui-multiselect-filter {
   direction: rtl;
   float: right;
   margin-right: 3px;
   margin-left: 10px;
 }
-/* line 172, ../../default/scss/theme/_widgets.scss */
+/* line 176, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ui-multiselect-header ul li {
   float: right;
   padding: 0 3px 0 10px;
 }
-/* line 176, ../../default/scss/theme/_widgets.scss */
+/* line 180, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ui-multiselect-header li.ui-multiselect-close {
   float: left;
   text-align: left;
   padding-left: 0;
 }
 
-/* line 183, ../../default/scss/theme/_widgets.scss */
+/* line 187, ../../default/scss/theme/_widgets.scss */
 .ui-multiselect-checkboxes li label input {
   margin-left: 0.2rem;
   margin-right: 0.3rem;
 }
 
-/* line 187, ../../default/scss/theme/_widgets.scss */
+/* line 191, ../../default/scss/theme/_widgets.scss */
 button.ui-multiselect {
   min-height: 1.75rem;
   background-color: #FAFAFA;
 }
-/* line 190, ../../default/scss/theme/_widgets.scss */
+/* line 194, ../../default/scss/theme/_widgets.scss */
 button.ui-multiselect:focus, button.ui-multiselect:focus:hover, button.ui-multiselect.ui-state-active {
   color: #222222;
   background-color: #fffbe0;
 }
-/* line 194, ../../default/scss/theme/_widgets.scss */
+/* line 198, ../../default/scss/theme/_widgets.scss */
 button.ui-multiselect:hover {
   color: #222222;
   background-color: #F8F8F8;
 }
-/* line 198, ../../default/scss/theme/_widgets.scss */
+/* line 202, ../../default/scss/theme/_widgets.scss */
 .filter-form button.ui-multiselect, .report-options button.ui-multiselect {
   max-width: 60%;
 }
 
-/* line 203, ../../default/scss/theme/_widgets.scss */
+/* line 207, ../../default/scss/theme/_widgets.scss */
 .ui-widget {
   font-family: Arial, "Helvetica Neue", Helvetica, Roboto, sans-serif;
 }
 
-/* line 210, ../../default/scss/theme/_widgets.scss */
+/* line 214, ../../default/scss/theme/_widgets.scss */
 .s3-password-widget {
   display: inline-block;
 }
 
-/* line 213, ../../default/scss/theme/_widgets.scss */
+/* line 217, ../../default/scss/theme/_widgets.scss */
 .s3-unmask {
   margin-left: 10px;
   cursor: pointer;
 }
 
-/* line 221, ../../default/scss/theme/_widgets.scss */
+/* line 225, ../../default/scss/theme/_widgets.scss */
 .s3-twitter-container {
   width: 350px;
   height: 130px;
 }
 
-/* line 229, ../../default/scss/theme/_widgets.scss */
+/* line 233, ../../default/scss/theme/_widgets.scss */
 .controls .checkboxes-widget-s3 {
   display: inline-flex;
 }
 
-/* line 236, ../../default/scss/theme/_widgets.scss */
+/* line 240, ../../default/scss/theme/_widgets.scss */
 .action-bar {
   color: #8a8989;
   font-size: 14px;
   position: relative;
   top: 4px;
 }
-/* line 241, ../../default/scss/theme/_widgets.scss */
+/* line 245, ../../default/scss/theme/_widgets.scss */
 .action-bar.fleft {
   margin-right: 8px;
 }
-/* line 244, ../../default/scss/theme/_widgets.scss */
+/* line 248, ../../default/scss/theme/_widgets.scss */
 .action-bar a:hover,
 .action-bar a:visited:hover {
   color: #ffa500;
   text-decoration: none;
 }
 
-/* line 254, ../../default/scss/theme/_widgets.scss */
+/* line 258, ../../default/scss/theme/_widgets.scss */
 .s3-hierarchy-tree.jstree,
 .s3-hierarchy-header {
   border: 1px solid #ccc;
@@ -644,98 +649,98 @@ button.ui-multiselect:hover {
   background: white;
 }
 
-/* line 260, ../../default/scss/theme/_widgets.scss */
+/* line 264, ../../default/scss/theme/_widgets.scss */
 .jstree-contextmenu {
   z-index: 9999;
 }
 
-/* line 263, ../../default/scss/theme/_widgets.scss */
+/* line 267, ../../default/scss/theme/_widgets.scss */
 .s3-hierarchy-wrapper {
   z-index: 9998;
 }
 
-/* line 266, ../../default/scss/theme/_widgets.scss */
+/* line 270, ../../default/scss/theme/_widgets.scss */
 .s3-hierarchy-header {
   font-size: 0.8rem;
   display: none;
 }
 
-/* line 270, ../../default/scss/theme/_widgets.scss */
+/* line 274, ../../default/scss/theme/_widgets.scss */
 .s3-hierarchy-action-node,
 .s3-hierarchy-none {
   font-style: italic;
 }
 
-/* line 278, ../../default/scss/theme/_widgets.scss */
+/* line 282, ../../default/scss/theme/_widgets.scss */
 .form-container form .translation_module_table td {
   padding: 0.3rem;
 }
 
-/* line 285, ../../default/scss/theme/_widgets.scss */
+/* line 289, ../../default/scss/theme/_widgets.scss */
 ul.s3-inline-link {
   font-size: inherit;
 }
 
-/* line 292, ../../default/scss/theme/_widgets.scss */
+/* line 296, ../../default/scss/theme/_widgets.scss */
 option.missing {
   background-color: yellow;
 }
 
-/* line 295, ../../default/scss/theme/_widgets.scss */
+/* line 299, ../../default/scss/theme/_widgets.scss */
 .geocode_fail,
 .geocode_success {
   margin: 0.2rem 0.7rem;
 }
 
-/* line 299, ../../default/scss/theme/_widgets.scss */
+/* line 303, ../../default/scss/theme/_widgets.scss */
 .geocode_success {
   color: #0a0;
 }
 
-/* line 302, ../../default/scss/theme/_widgets.scss */
+/* line 306, ../../default/scss/theme/_widgets.scss */
 .geocode_fail {
   color: #f00;
 }
 
-/* line 305, ../../default/scss/theme/_widgets.scss */
+/* line 309, ../../default/scss/theme/_widgets.scss */
 .dms-label {
   padding: 4px;
   font-weight: bold;
 }
 
-/* line 309, ../../default/scss/theme/_widgets.scss */
+/* line 313, ../../default/scss/theme/_widgets.scss */
 .dms-input.invalidinput {
   border: solid thin red;
 }
 
-/* line 316, ../../default/scss/theme/_widgets.scss */
+/* line 320, ../../default/scss/theme/_widgets.scss */
 ul.x-tab-strip,
 ul.x-tree-node-ct,
 ul.x-tree-root-ct {
   list-style: none outside none;
 }
 
-/* line 321, ../../default/scss/theme/_widgets.scss */
+/* line 325, ../../default/scss/theme/_widgets.scss */
 .x-toolbar table {
   border-collapse: separate;
   width: auto;
 }
-/* line 324, ../../default/scss/theme/_widgets.scss */
+/* line 328, ../../default/scss/theme/_widgets.scss */
 .x-toolbar table tbody, .x-toolbar table tr {
   background: none;
 }
 
-/* line 332, ../../default/scss/theme/_widgets.scss */
+/* line 336, ../../default/scss/theme/_widgets.scss */
 .calendar-widget-container {
   white-space: nowrap;
 }
 
-/* line 335, ../../default/scss/theme/_widgets.scss */
+/* line 339, ../../default/scss/theme/_widgets.scss */
 input.date.hasDatepicker {
   display: inline-block;
 }
 
-/* line 338, ../../default/scss/theme/_widgets.scss */
+/* line 342, ../../default/scss/theme/_widgets.scss */
 .ui-datepicker-trigger {
   background-color: transparent;
   background-image: url(../../img/calendar.gif);
@@ -748,127 +753,127 @@ input.date.hasDatepicker {
   border: 0;
   vertical-align: middle;
 }
-/* line 347, ../../default/scss/theme/_widgets.scss */
+/* line 351, ../../default/scss/theme/_widgets.scss */
 .form-container form .ui-datepicker-trigger {
   margin-left: 5px;
 }
-/* line 352, ../../default/scss/theme/_widgets.scss */
+/* line 356, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ui-datepicker-trigger, [dir=rtl] .form-container form .ui-datepicker-trigger {
   margin-left: 0;
   margin-right: 5px;
 }
 
-/* line 358, ../../default/scss/theme/_widgets.scss */
+/* line 362, ../../default/scss/theme/_widgets.scss */
 .ui-datepicker.ui-widget {
   z-index: 1000 !important;
 }
-/* line 360, ../../default/scss/theme/_widgets.scss */
+/* line 364, ../../default/scss/theme/_widgets.scss */
 .ui-datepicker.ui-widget dl dd, .ui-datepicker.ui-widget dl dt {
   font-size: 0.8rem;
 }
-/* line 363, ../../default/scss/theme/_widgets.scss */
+/* line 367, ../../default/scss/theme/_widgets.scss */
 .ui-datepicker.ui-widget dl dt {
   margin-bottom: 0;
 }
 
-/* line 367, ../../default/scss/theme/_widgets.scss */
+/* line 371, ../../default/scss/theme/_widgets.scss */
 .btn.date-clear-btn {
   font-size: 0.65rem;
   padding: 0.2rem 0.4rem;
   margin: 0 0.25rem;
 }
 
-/* line 372, ../../default/scss/theme/_widgets.scss */
+/* line 376, ../../default/scss/theme/_widgets.scss */
 .postfix.calendar-clear-btn {
   cursor: pointer;
 }
-/* line 374, ../../default/scss/theme/_widgets.scss */
+/* line 378, ../../default/scss/theme/_widgets.scss */
 .postfix.calendar-clear-btn .fa {
   color: #B0B0B0;
 }
 
-/* line 382, ../../default/scss/theme/_widgets.scss */
+/* line 386, ../../default/scss/theme/_widgets.scss */
 .range-filter,
 .date-filter {
   display: inline-block;
 }
 
-/* line 386, ../../default/scss/theme/_widgets.scss */
+/* line 390, ../../default/scss/theme/_widgets.scss */
 .range-filter-label label {
   font-size: 1.0em;
 }
 
-/* line 390, ../../default/scss/theme/_widgets.scss */
+/* line 394, ../../default/scss/theme/_widgets.scss */
 .range-filter-widget button.date-clear-btn {
   font-size: 0.85em;
   padding: 0.325em;
   margin-top: 0.5em;
 }
 
-/* line 401, ../../default/scss/theme/_widgets.scss */
+/* line 405, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-widget table {
   margin-left: 0;
   margin-bottom: 0.5rem;
 }
-/* line 405, ../../default/scss/theme/_widgets.scss */
+/* line 409, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-widget label {
   display: inline;
   margin-left: 5px;
   font-weight: normal;
 }
-/* line 409, ../../default/scss/theme/_widgets.scss */
+/* line 413, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-widget label .optlabel {
   vertical-align: middle;
 }
-/* line 412, ../../default/scss/theme/_widgets.scss */
+/* line 416, ../../default/scss/theme/_widgets.scss */
 .form-container form fieldset .s3-groupedopts-widget label {
   white-space: nowrap;
   text-align: left;
 }
-/* line 416, ../../default/scss/theme/_widgets.scss */
+/* line 420, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-widget label[title] .optlabel {
   border-bottom: dotted 1px #ccc;
 }
-/* line 420, ../../default/scss/theme/_widgets.scss */
+/* line 424, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-widget .optLabel {
   display: inline-block;
 }
-/* line 423, ../../default/scss/theme/_widgets.scss */
+/* line 427, ../../default/scss/theme/_widgets.scss */
 .filter-form .s3-groupedopts-widget, .report-options .s3-groupedopts-widget {
   display: inline-block;
 }
 
-/* line 428, ../../default/scss/theme/_widgets.scss */
+/* line 432, ../../default/scss/theme/_widgets.scss */
 table.s3-groupedopts-widget {
   margin-bottom: 0;
 }
-/* line 429, ../../default/scss/theme/_widgets.scss */
+/* line 433, ../../default/scss/theme/_widgets.scss */
 table.s3-groupedopts-widget td {
   white-space: nowrap;
 }
-/* line 431, ../../default/scss/theme/_widgets.scss */
+/* line 435, ../../default/scss/theme/_widgets.scss */
 table.s3-groupedopts-widget td input.s3-groupedopts-option {
   vertical-align: middle;
   margin: 0 0.3rem 0 0;
 }
-/* line 435, ../../default/scss/theme/_widgets.scss */
+/* line 439, ../../default/scss/theme/_widgets.scss */
 table.s3-groupedopts-widget td label {
   white-space: pre-wrap;
   margin: 0 0.5rem;
 }
 
-/* line 443, ../../default/scss/theme/_widgets.scss */
+/* line 447, ../../default/scss/theme/_widgets.scss */
 div.s3-groupedopts-widget .s3-groupedopts-item {
   display: inline-block;
   padding-top: 0.15rem;
 }
-/* line 447, ../../default/scss/theme/_widgets.scss */
+/* line 451, ../../default/scss/theme/_widgets.scss */
 div.s3-groupedopts-widget input.s3-groupedopts-option {
   vertical-align: text-top;
   margin: 0 0.3rem 0 0;
 }
 
-/* line 452, ../../default/scss/theme/_widgets.scss */
+/* line 456, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-label {
   margin: 10px 0 0 7px;
   margin-bottom: 0.3rem;
@@ -879,12 +884,12 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
   cursor: pointer;
   font-size: 0.7rem;
 }
-/* line 461, ../../default/scss/theme/_widgets.scss */
+/* line 465, ../../default/scss/theme/_widgets.scss */
 .s3-groupedopts-label.expanded {
   background: url(../../img/icon_blue_minus15px.png) no-repeat;
 }
 
-/* line 469, ../../default/scss/theme/_widgets.scss */
+/* line 473, ../../default/scss/theme/_widgets.scss */
 .imagecrop-drag {
   font-weight: bold;
   text-align: center;
@@ -895,26 +900,26 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
   border-radius: 7px;
   cursor: default;
 }
-/* line 478, ../../default/scss/theme/_widgets.scss */
+/* line 482, ../../default/scss/theme/_widgets.scss */
 .imagecrop-drag.hover {
   border-style: solid;
   background-color: #F7F8F9;
 }
 
-/* line 483, ../../default/scss/theme/_widgets.scss */
+/* line 487, ../../default/scss/theme/_widgets.scss */
 .imagecrop-btn {
   display: none;
   cursor: pointer;
 }
 
-/* line 487, ../../default/scss/theme/_widgets.scss */
+/* line 491, ../../default/scss/theme/_widgets.scss */
 .imagecrop-btn {
   font-size: 1em;
   margin-left: 0.2em;
   padding: 0.3em;
 }
 
-/* line 496, ../../default/scss/theme/_widgets.scss */
+/* line 500, ../../default/scss/theme/_widgets.scss */
 .widget-advice {
   max-width: 42rem;
   padding: 0.3rem 0.3rem 0.5rem;
@@ -924,42 +929,42 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
   margin: 0.1rem 0;
 }
 
-/* line 508, ../../default/scss/theme/_widgets.scss */
+/* line 512, ../../default/scss/theme/_widgets.scss */
 .pr-contacts-wrapper h3 {
   margin-top: 0.5rem;
   padding-bottom: 0 !important;
 }
 
-/* line 513, ../../default/scss/theme/_widgets.scss */
+/* line 517, ../../default/scss/theme/_widgets.scss */
 .pr-contacts-editable input, .pr-contacts-editable select {
   min-height: 1.2rem;
   margin: 2px 0;
 }
 
-/* line 518, ../../default/scss/theme/_widgets.scss */
+/* line 522, ../../default/scss/theme/_widgets.scss */
 .pr-contact-actions {
   margin-bottom: 0.5rem;
 }
 
-/* line 521, ../../default/scss/theme/_widgets.scss */
+/* line 525, ../../default/scss/theme/_widgets.scss */
 .pr-contact,
 .pr-emergency-contact {
   padding: 0.5rem;
 }
 
-/* line 525, ../../default/scss/theme/_widgets.scss */
+/* line 529, ../../default/scss/theme/_widgets.scss */
 .pr-contact-priority,
 .pr-contact-details {
   display: inline-block;
 }
 
-/* line 529, ../../default/scss/theme/_widgets.scss */
+/* line 533, ../../default/scss/theme/_widgets.scss */
 .pr-contact-subtitle {
   font-size: 0.8rem;
   font-style: italic;
 }
 
-/* line 533, ../../default/scss/theme/_widgets.scss */
+/* line 537, ../../default/scss/theme/_widgets.scss */
 .pr-contact-priority {
   border: thin solid #2ba6cb;
   border-radius: 2px;
@@ -970,121 +975,121 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
   padding: 0 0.25rem 0.125rem;
   vertical-align: top;
 }
-/* line 542, ../../default/scss/theme/_widgets.scss */
+/* line 546, ../../default/scss/theme/_widgets.scss */
 .pr-contact-priority input[type=submit] {
   color: black;
   line-height: 1.2rem;
   font-size: 0.8rem;
 }
-/* line 547, ../../default/scss/theme/_widgets.scss */
+/* line 551, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .pr-contact-priority {
   margin: 0.25rem 0 1rem 0;
 }
 
-/* line 555, ../../default/scss/theme/_widgets.scss */
+/* line 559, ../../default/scss/theme/_widgets.scss */
 .box_top,
 .box_top_inner {
   border-top: #bbb 1px solid;
 }
-/* line 558, ../../default/scss/theme/_widgets.scss */
+/* line 562, ../../default/scss/theme/_widgets.scss */
 .box_top label,
 .box_top_inner label {
   display: inline-block;
 }
 
-/* line 562, ../../default/scss/theme/_widgets.scss */
+/* line 566, ../../default/scss/theme/_widgets.scss */
 .box_top {
   padding-top: 1rem;
 }
-/* line 564, ../../default/scss/theme/_widgets.scss */
+/* line 568, ../../default/scss/theme/_widgets.scss */
 .box_top.form-row.row {
   margin: 0.7rem 0 0 0;
 }
-/* line 566, ../../default/scss/theme/_widgets.scss */
+/* line 570, ../../default/scss/theme/_widgets.scss */
 .box_top.form-row.row .columns {
   padding: 0;
 }
 
-/* line 571, ../../default/scss/theme/_widgets.scss */
+/* line 575, ../../default/scss/theme/_widgets.scss */
 .box_top_inner {
   padding-top: 0.2rem;
   padding-bottom: 0.5rem;
 }
 
-/* line 575, ../../default/scss/theme/_widgets.scss */
+/* line 579, ../../default/scss/theme/_widgets.scss */
 .box_bottom {
   border-bottom: 1px solid #bbb;
   padding-bottom: 1rem;
 }
 
-/* line 579, ../../default/scss/theme/_widgets.scss */
+/* line 583, ../../default/scss/theme/_widgets.scss */
 .add_person_edit_bar {
   cursor: pointer;
   display: inline-block;
   padding-left: 1.2rem;
   margin-top: 1rem;
 }
-/* line 584, ../../default/scss/theme/_widgets.scss */
+/* line 588, ../../default/scss/theme/_widgets.scss */
 .add_person_edit_bar a {
   text-decoration: none;
 }
-/* line 587, ../../default/scss/theme/_widgets.scss */
+/* line 591, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .add_person_edit_bar {
   padding-left: 0;
   padding-right: 1.2rem;
 }
 
-/* line 592, ../../default/scss/theme/_widgets.scss */
+/* line 596, ../../default/scss/theme/_widgets.scss */
 .card > .fleft {
   margin-right: 10px;
 }
-/* line 594, ../../default/scss/theme/_widgets.scss */
+/* line 598, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .card > .fleft {
   margin-right: 0;
   margin-left: 10px;
 }
 
-/* line 599, ../../default/scss/theme/_widgets.scss */
+/* line 603, ../../default/scss/theme/_widgets.scss */
 .media-object {
   display: block;
 }
 
-/* line 602, ../../default/scss/theme/_widgets.scss */
+/* line 606, ../../default/scss/theme/_widgets.scss */
 .ui-menu-item .pe-label {
   font-size: 0.7rem;
   color: #A0A0A0;
   vertical-align: super;
 }
 
-/* line 611, ../../default/scss/theme/_widgets.scss */
+/* line 615, ../../default/scss/theme/_widgets.scss */
 .qrinput {
   display: inline-block;
 }
-/* line 613, ../../default/scss/theme/_widgets.scss */
+/* line 617, ../../default/scss/theme/_widgets.scss */
 .qrinput .qrscan-btn {
   vertical-align: top;
   padding: 0.4rem 0.8rem;
   text-align: center;
   margin: 0 0.5rem;
 }
-/* line 618, ../../default/scss/theme/_widgets.scss */
+/* line 622, ../../default/scss/theme/_widgets.scss */
 .qrinput .qrscan-btn .fa {
   font-size: 16px;
   margin: 0 0.2rem;
   vertical-align: middle;
 }
-/* line 624, ../../default/scss/theme/_widgets.scss */
+/* line 628, ../../default/scss/theme/_widgets.scss */
 .qrinput .postfix.clear-btn {
   cursor: pointer;
   display: inline-block;
   width: 1.2rem;
 }
-/* line 626, ../../default/scss/theme/_widgets.scss */
+/* line 630, ../../default/scss/theme/_widgets.scss */
 .qrinput .postfix.clear-btn .fa {
   color: #B0B0B0;
 }
 
-/* line 633, ../../default/scss/theme/_widgets.scss */
+/* line 637, ../../default/scss/theme/_widgets.scss */
 .qrinput-success {
   text-align: center;
   font-size: 4rem;
@@ -1092,54 +1097,54 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
   color: darkgreen;
 }
 
-/* line 643, ../../default/scss/theme/_widgets.scss */
+/* line 647, ../../default/scss/theme/_widgets.scss */
 form.anonymize-form,
 .anonymize-success {
   padding: 1rem;
 }
 
-/* line 647, ../../default/scss/theme/_widgets.scss */
+/* line 651, ../../default/scss/theme/_widgets.scss */
 .anonymize-select,
 .anonymize-confirm {
   margin-left: 1rem;
 }
-/* line 650, ../../default/scss/theme/_widgets.scss */
+/* line 654, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .anonymize-select, [dir=rtl]
 .anonymize-confirm {
   margin-left: 0;
   margin-right: 1rem;
 }
 
-/* line 655, ../../default/scss/theme/_widgets.scss */
+/* line 659, ../../default/scss/theme/_widgets.scss */
 .anonymize-buttons {
   margin-top: 1rem;
 }
 
-/* line 658, ../../default/scss/theme/_widgets.scss */
+/* line 662, ../../default/scss/theme/_widgets.scss */
 .anonymize-btn {
   background-color: #D92C20;
 }
-/* line 660, ../../default/scss/theme/_widgets.scss */
+/* line 664, ../../default/scss/theme/_widgets.scss */
 .anonymize-btn:hover {
   background-color: #ae231a;
 }
 
-/* line 664, ../../default/scss/theme/_widgets.scss */
+/* line 668, ../../default/scss/theme/_widgets.scss */
 .s3-anonymize {
   display: inline-block;
   margin: 0.2rem;
 }
 
-/* line 672, ../../default/scss/theme/_widgets.scss */
+/* line 676, ../../default/scss/theme/_widgets.scss */
 .consent-widget {
   border: 1px solid #E0E0E0;
   padding: 0.5rem 1rem;
 }
-/* line 675, ../../default/scss/theme/_widgets.scss */
+/* line 679, ../../default/scss/theme/_widgets.scss */
 .consent-widget .consent-option {
   margin-top: 0.3rem;
 }
-/* line 678, ../../default/scss/theme/_widgets.scss */
+/* line 682, ../../default/scss/theme/_widgets.scss */
 .consent-widget .consent-explanation {
   white-space: pre-wrap;
   padding: 0.3rem 1.7rem;
@@ -1147,19 +1152,19 @@ form.anonymize-form,
   font-style: italic;
   color: #7F7F7F;
 }
-/* line 685, ../../default/scss/theme/_widgets.scss */
+/* line 689, ../../default/scss/theme/_widgets.scss */
 .consent-widget .consent-title {
   font-weight: bold;
 }
-/* line 688, ../../default/scss/theme/_widgets.scss */
+/* line 692, ../../default/scss/theme/_widgets.scss */
 .consent-widget .consent-checkbox {
   margin-right: 0.5rem !important;
 }
-/* line 691, ../../default/scss/theme/_widgets.scss */
+/* line 695, ../../default/scss/theme/_widgets.scss */
 .consent-widget .req {
   padding: 0 0.2rem;
 }
-/* line 694, ../../default/scss/theme/_widgets.scss */
+/* line 698, ../../default/scss/theme/_widgets.scss */
 .consent-widget .req_key {
   font-size: 0.7rem;
   font-weight: normal;
@@ -1167,45 +1172,45 @@ form.anonymize-form,
   margin: 0 0.5rem;
 }
 
-/* line 705, ../../default/scss/theme/_widgets.scss */
+/* line 709, ../../default/scss/theme/_widgets.scss */
 .wh-raster {
   margin-top: 0.3rem;
 }
-/* line 707, ../../default/scss/theme/_widgets.scss */
+/* line 711, ../../default/scss/theme/_widgets.scss */
 .wh-raster tr {
   border-bottom: 1px solid #ccc;
 }
-/* line 710, ../../default/scss/theme/_widgets.scss */
+/* line 714, ../../default/scss/theme/_widgets.scss */
 .wh-raster td {
   border-left: 1px solid #ccc;
 }
-/* line 712, ../../default/scss/theme/_widgets.scss */
+/* line 716, ../../default/scss/theme/_widgets.scss */
 .wh-raster td.wh-tick {
   border-left-width: 2px;
 }
-/* line 717, ../../default/scss/theme/_widgets.scss */
+/* line 721, ../../default/scss/theme/_widgets.scss */
 .wh-raster thead td {
   min-width: 1.8rem;
   padding-right: 0.6rem !important;
   font-size: 0.6rem;
   font-weight: normal;
 }
-/* line 726, ../../default/scss/theme/_widgets.scss */
+/* line 730, ../../default/scss/theme/_widgets.scss */
 .wh-raster tbody td.wh-hour {
   text-align: center;
   font-weight: normal;
 }
-/* line 729, ../../default/scss/theme/_widgets.scss */
+/* line 733, ../../default/scss/theme/_widgets.scss */
 .wh-raster tbody td.wh-hour.wh-on {
   color: darkgreen;
 }
-/* line 733, ../../default/scss/theme/_widgets.scss */
+/* line 737, ../../default/scss/theme/_widgets.scss */
 .wh-raster tbody td.wh-day {
   text-align: left;
   font-size: 0.7rem;
   padding: 0.2rem 0.4rem;
 }
-/* line 740, ../../default/scss/theme/_widgets.scss */
+/* line 744, ../../default/scss/theme/_widgets.scss */
 .wh-raster .wh-hour {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -1214,35 +1219,35 @@ form.anonymize-form,
   -ms-user-select: none;
   user-select: none;
 }
-/* line 748, ../../default/scss/theme/_widgets.scss */
+/* line 752, ../../default/scss/theme/_widgets.scss */
 .wh-raster .wh-hour.wh-on {
   background-color: lightgreen;
 }
-/* line 751, ../../default/scss/theme/_widgets.scss */
+/* line 755, ../../default/scss/theme/_widgets.scss */
 .wh-raster .wh-hour.wh-off {
   background-color: transparent;
 }
 
-/* line 760, ../../default/scss/theme/_widgets.scss */
+/* line 764, ../../default/scss/theme/_widgets.scss */
 #comments {
   margin: 0;
   padding: 0;
   list-style: none outside none;
 }
-/* line 764, ../../default/scss/theme/_widgets.scss */
+/* line 768, ../../default/scss/theme/_widgets.scss */
 #comments ul, #comments ol {
   padding-left: 20px;
   list-style: none outside none;
 }
-/* line 768, ../../default/scss/theme/_widgets.scss */
+/* line 772, ../../default/scss/theme/_widgets.scss */
 #comments li {
   padding: 10px 0 0;
 }
-/* line 770, ../../default/scss/theme/_widgets.scss */
+/* line 774, ../../default/scss/theme/_widgets.scss */
 #comments li a.jcollapsible:hover {
   background: none;
 }
-/* line 774, ../../default/scss/theme/_widgets.scss */
+/* line 778, ../../default/scss/theme/_widgets.scss */
 #comments .comment-box {
   overflow: hidden;
   padding: 15px 0;
@@ -1251,82 +1256,82 @@ form.anonymize-form,
   overflow: hidden;
   padding: 10px;
 }
-/* line 781, ../../default/scss/theme/_widgets.scss */
+/* line 785, ../../default/scss/theme/_widgets.scss */
 #comments .comment-box .avatar {
   display: inline-block;
   vertical-align: top;
 }
-/* line 786, ../../default/scss/theme/_widgets.scss */
+/* line 790, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text {
   padding: 0 0 0 0.5rem;
   display: inline-block;
 }
-/* line 789, ../../default/scss/theme/_widgets.scss */
+/* line 793, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text ul {
   list-style: disc outside none;
 }
-/* line 792, ../../default/scss/theme/_widgets.scss */
+/* line 796, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text ol {
   list-style: decimal outside none;
 }
-/* line 795, ../../default/scss/theme/_widgets.scss */
+/* line 799, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text li {
   padding: 0;
 }
-/* line 798, ../../default/scss/theme/_widgets.scss */
+/* line 802, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text div {
   white-space: pre-line;
 }
-/* line 801, ../../default/scss/theme/_widgets.scss */
+/* line 805, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text .comment-header {
   font-size: 0.8rem;
 }
-/* line 805, ../../default/scss/theme/_widgets.scss */
+/* line 809, ../../default/scss/theme/_widgets.scss */
 #comments .comment-text .comment-body p, #comments .comment-text .comment-body li {
   font-size: 0.9rem;
 }
-/* line 810, ../../default/scss/theme/_widgets.scss */
+/* line 814, ../../default/scss/theme/_widgets.scss */
 #comments .fright {
   float: right;
   text-align: right;
 }
-/* line 814, ../../default/scss/theme/_widgets.scss */
+/* line 818, ../../default/scss/theme/_widgets.scss */
 #comments .comment-date {
   font-size: 0.7rem;
   margin-bottom: 0.5rem;
 }
-/* line 819, ../../default/scss/theme/_widgets.scss */
+/* line 823, ../../default/scss/theme/_widgets.scss */
 #comments .comment-footer {
   clear: left;
 }
-/* line 823, ../../default/scss/theme/_widgets.scss */
+/* line 827, ../../default/scss/theme/_widgets.scss */
 #comments em {
   font-style: italic;
 }
-/* line 826, ../../default/scss/theme/_widgets.scss */
+/* line 830, ../../default/scss/theme/_widgets.scss */
 #comments strong {
   font-weight: bold;
 }
-/* line 830, ../../default/scss/theme/_widgets.scss */
+/* line 834, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] #comments ul, [dir=rtl] #comments ol {
   padding-left: 0;
   padding-right: 20px;
 }
-/* line 834, ../../default/scss/theme/_widgets.scss */
+/* line 838, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] #comments .comment-text {
   padding: 0 0.5rem 0 0;
 }
-/* line 837, ../../default/scss/theme/_widgets.scss */
+/* line 841, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] #comments .fright {
   float: left;
   text-align: left;
 }
-/* line 841, ../../default/scss/theme/_widgets.scss */
+/* line 845, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] #comments .comment-footer {
   clear: right;
 }
 
-/* line 846, ../../default/scss/theme/_widgets.scss */
+/* line 850, ../../default/scss/theme/_widgets.scss */
 #comment-form {
   width: 40rem;
   max-width: 100%;
@@ -1335,28 +1340,28 @@ form.anonymize-form,
   margin-top: 0.5rem;
 }
 
-/* line 857, ../../default/scss/theme/_widgets.scss */
+/* line 861, ../../default/scss/theme/_widgets.scss */
 .ajax_more {
   float: right;
   margin: 0 2px 2px 0;
   width: 16px;
   height: 16px;
 }
-/* line 860, ../../default/scss/theme/_widgets.scss */
+/* line 864, ../../default/scss/theme/_widgets.scss */
 [dir=rtl] .ajax_more {
   float: left;
   margin: 0 0 2px 2px;
 }
-/* line 866, ../../default/scss/theme/_widgets.scss */
+/* line 870, ../../default/scss/theme/_widgets.scss */
 .ajax_more.collapsed {
   background: url(../../img/icon_blue_plus15px.png) no-repeat left top;
 }
-/* line 869, ../../default/scss/theme/_widgets.scss */
+/* line 873, ../../default/scss/theme/_widgets.scss */
 .ajax_more.expanded {
   background: url(../../img/icon_blue_minus15px.png) no-repeat left top;
 }
 
-/* line 877, ../../default/scss/theme/_widgets.scss */
+/* line 881, ../../default/scss/theme/_widgets.scss */
 .rfilter {
   float: left;
   padding: 10px 20px 10px 10px;

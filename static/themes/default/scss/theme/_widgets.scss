@@ -96,7 +96,11 @@ input[disabled='disabled'] {
 //
 .ui-dialog {
     padding: 0;
-    width: 750px !important;
+    width: auto;
+    &:not(.qrinput-dialog) {
+        width: 750px!important;
+        max-width: 100%;
+    }
     .ui-dialog-content {
         // Ensure maximal space for iframe within Dialog
         padding: 0 !important;

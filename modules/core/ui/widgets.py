@@ -2941,9 +2941,8 @@ class S3QRInput(FormWidget):
         opts["workerPath"] = "/%s/static/scripts/qr-scanner/qr-scanner-worker.min.js" % appname
 
         # Global scripts
-        # TODO minify
         scripts = ["/%s/static/scripts/qr-scanner/qr-scanner.umd.min.js",
-                   "/%s/static/scripts/S3/s3.ui.qrinput.js",
+                   "/%%s/static/scripts/S3/s3.ui.qrinput.%s" % ("js" if s3.debug else "min.js")
                    ]
         for script in scripts:
             path = script % appname

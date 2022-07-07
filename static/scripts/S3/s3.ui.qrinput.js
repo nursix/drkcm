@@ -112,6 +112,7 @@
                         title: 'Scan QR Code',
                         autoOpen: false,
                         modal: true,
+                        classes: {"ui-dialog": "qrinput-dialog"},
                         close: function() {
                             if (scanner) {
                                 scanner.stop();
