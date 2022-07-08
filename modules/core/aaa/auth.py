@@ -4297,7 +4297,7 @@ Please go to %(url)s to approve this user."""
             self.s3_set_roles()
 
     # -------------------------------------------------------------------------
-    def s3_remove_role(self, user_id, group_id, for_pe=None):
+    def s3_remove_role(self, user_id, group_id, for_pe=DEFAULT):
         """
             Removes a role assignment from a user account
 
@@ -4309,7 +4309,7 @@ Please go to %(url)s to approve this user."""
                            - None: only remove for the default realm
                            - 0: only remove for the site-wide realm
                            - X: only remove for entity X
-                           - []: remove for any realms
+                           - []: remove for any realms (=default)
 
             Note:
                 strings are assumed to be role UIDs
@@ -4347,7 +4347,7 @@ Please go to %(url)s to approve this user."""
         unrestrictable = [str(sr.ADMIN),
                           str(sr.ANONYMOUS),
                           str(sr.AUTHENTICATED)]
-        if for_pe != []:
+        if for_pe is not DEFAULT and for_pe != []:
             query &= ((mtable.pe_id == for_pe) | \
                       (mtable.group_id.belongs(unrestrictable)))
         memberships = db(query).select()
