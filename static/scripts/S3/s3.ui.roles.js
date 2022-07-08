@@ -259,7 +259,7 @@
 
             // Realm column
             if (opts.useRealms) {
-                var realm = !item.u && opts.realms[assignment[1]].l || '';
+                let realm = !item.u && this._getRealm(assignment[1]).l || '';
                 $('<td>').text(realm).appendTo(row);
             }
 
@@ -723,6 +723,18 @@
         },
 
         /**
+         * Look up a realm entity
+         *
+         * @param {integer} id - the entity ID
+         *
+         * @returns: the entity as object {l: "Label", t: "InstanceType"}
+         */
+        _getRealm: function(id) {
+
+            return this.options.realms[id] || {l: '---', t: '---'};
+        },
+
+        /**
          * Compare two assignments (for sorting)
          *
          * @param {Array} a - the first assignment
@@ -764,8 +776,8 @@
             }
 
             var realms = this.options.realms,
-                aType = realms[a].t,
-                bType = realms[b].t,
+                aType = this._getRealm(a).t,
+                bType = this._getRealm(b).t,
                 realmTypeOrder = this._compareRealmTypes(aType, bType);
 
             if (!realmTypeOrder) {
@@ -774,8 +786,8 @@
                 // sort all other entities by their names
                 if (a) {
                     if (b) {
-                        var aName = realms[a].l,
-                            bName = realms[b].l;
+                        var aName = this._getRealm(a).l,
+                            bName = this._getRealm(b).l;
                         return aName > bName && 1 || -1;
                     } else {
                         return -1;

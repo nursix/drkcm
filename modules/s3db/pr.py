@@ -223,6 +223,7 @@ class PRPersonEntityModel(DataModel):
                                  "pe_label",
                                  ],
                   onaccept = self.pr_pentity_onaccept,
+                  ondelete = self.pr_pentity_ondelete,
                   referenced_by = [(auth_settings.table_membership_name, "pe_id")],
                   )
 
@@ -676,6 +677,29 @@ class PRPersonEntityModel(DataModel):
                 if instance:
                     s3db.org_update_affiliations("org_site", instance)
         return
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def pr_pentity_ondelete(row):
+        """
+            Ondelete of a PE:
+                - remove all role assignments for this PE
+
+            Args:
+                row: the deleted pr_pentity Row
+        """
+
+        auth = current.auth
+        mtable = auth.settings.table_membership
+
+        pe_id = row.pe_id
+        query = (mtable.pe_id == pe_id) & \
+                (mtable.deleted == False)
+        memberships = current.db(query).select(mtable.user_id,
+                                               mtable.group_id,
+                                               )
+        for m in memberships:
+            auth.s3_remove_role(m.user_id, m.group_id, for_pe=pe_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
