@@ -189,7 +189,7 @@ class S3Log(object):
         if current.deployment_settings.get_log_caller_info():
             caller = logger.findCaller()
             if caller:
-                extra = {"caller": "(%s %s %s)" % caller}
+                extra = {"caller": "(%s %s %s)" % caller[:3]}
 
         logger.log(severity, msg, extra=extra)
 

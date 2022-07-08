@@ -3988,132 +3988,140 @@ h4.profile-sub-header {
 }
 
 /* line 12, ../../default/scss/theme/_rolemgr.scss */
+.rm-form table {
+  font-size: 0.8rem;
+}
+/* line 14, ../../default/scss/theme/_rolemgr.scss */
+.rm-form table th, .rm-form table td {
+  text-align: left;
+}
+/* line 18, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .controls {
   width: 100%;
 }
-/* line 15, ../../default/scss/theme/_rolemgr.scss */
+/* line 21, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .action-lnk,
 .rm-form .rm-rules .action-lnk {
   display: inline-block;
   color: #386570;
   font-style: normal;
 }
-/* line 21, ../../default/scss/theme/_rolemgr.scss */
+/* line 27, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-toggle-all {
   margin-top: 0.2rem;
   margin-bottom: 0.5rem;
 }
-/* line 25, ../../default/scss/theme/_rolemgr.scss */
+/* line 31, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign {
   width: 80%;
   border-collapse: separate;
   border-spacing: 0;
 }
-/* line 29, ../../default/scss/theme/_rolemgr.scss */
+/* line 35, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign th {
   min-width: 10rem;
 }
-/* line 32, ../../default/scss/theme/_rolemgr.scss */
+/* line 38, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign th:first-child {
   width: 25%;
 }
-/* line 35, ../../default/scss/theme/_rolemgr.scss */
+/* line 41, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign td {
   padding: 0.5rem;
 }
-/* line 38, ../../default/scss/theme/_rolemgr.scss */
+/* line 44, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign tfoot td {
   border-top: 1px solid #C0C0C0;
 }
-/* line 41, ../../default/scss/theme/_rolemgr.scss */
+/* line 47, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-item-name,
 .rm-form .rm-assign .rm-item-title {
   display: block;
 }
-/* line 45, ../../default/scss/theme/_rolemgr.scss */
+/* line 51, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-item-title {
   font-size: 0.8rem;
   font-style: italic;
   color: #A0A0A0;
 }
-/* line 51, ../../default/scss/theme/_rolemgr.scss */
+/* line 57, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-duplicate td {
   border-top: 1px solid red;
   border-bottom: 1px solid red;
 }
-/* line 54, ../../default/scss/theme/_rolemgr.scss */
+/* line 60, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-duplicate td:first-child {
   border-left: 1px solid red;
 }
-/* line 57, ../../default/scss/theme/_rolemgr.scss */
+/* line 63, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-duplicate td:last-child {
   border-right: 1px solid red;
 }
-/* line 63, ../../default/scss/theme/_rolemgr.scss */
+/* line 69, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules {
   width: 100%;
 }
-/* line 65, ../../default/scss/theme/_rolemgr.scss */
+/* line 71, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header {
   cursor: pointer;
   background-color: #F0F0F0;
 }
-/* line 68, ../../default/scss/theme/_rolemgr.scss */
+/* line 74, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header div {
   margin-right: 0.3rem;
   display: inline-block;
 }
-/* line 72, ../../default/scss/theme/_rolemgr.scss */
+/* line 78, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header .rm-module-toggle {
   width: 0.5rem;
 }
-/* line 75, ../../default/scss/theme/_rolemgr.scss */
+/* line 81, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header .rm-module-prefix {
   width: 6.5rem;
 }
-/* line 78, ../../default/scss/theme/_rolemgr.scss */
+/* line 84, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header .rm-module-numrules {
   font-weight: normal;
 }
-/* line 82, ../../default/scss/theme/_rolemgr.scss */
+/* line 88, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules.hasrules .rm-module-header {
   background-color: #D0D0D0;
 }
-/* line 86, ../../default/scss/theme/_rolemgr.scss */
+/* line 92, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules th, .rm-form .rm-module-rules td {
   padding: 0.5rem;
 }
-/* line 90, ../../default/scss/theme/_rolemgr.scss */
+/* line 96, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-default-rule td,
 .rm-form .rm-module-rules .rm-default-permissions td {
   font-style: italic;
   color: #a0a0a0;
 }
-/* line 95, ../../default/scss/theme/_rolemgr.scss */
+/* line 101, ../../default/scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-rule-target {
   width: 20%;
 }
-/* line 99, ../../default/scss/theme/_rolemgr.scss */
+/* line 105, ../../default/scss/theme/_rolemgr.scss */
 .rm-form input.rm-invalid {
   background-color: #FFA0A0;
 }
-/* line 103, ../../default/scss/theme/_rolemgr.scss */
+/* line 109, ../../default/scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-form .rm-module-rules .rm-module-header div {
   margin-right: 0;
   margin-left: 0.3rem;
 }
-/* line 109, ../../default/scss/theme/_rolemgr.scss */
+/* line 115, ../../default/scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-form .rm-assign .rm-duplicate td:first-child {
   border-left: 0;
   border-right: 1px solid red;
 }
-/* line 113, ../../default/scss/theme/_rolemgr.scss */
+/* line 119, ../../default/scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-form .rm-assign .rm-duplicate td:last-child {
   border-right: 0;
   border-left: 1px solid red;
 }
 
-/* line 121, ../../default/scss/theme/_rolemgr.scss */
+/* line 127, ../../default/scss/theme/_rolemgr.scss */
 .rm-fixed,
 .rm-hint {
   display: block;
@@ -4122,11 +4130,11 @@ h4.profile-sub-header {
   color: #AAAAAA;
 }
 
-/* line 128, ../../default/scss/theme/_rolemgr.scss */
+/* line 134, ../../default/scss/theme/_rolemgr.scss */
 .rm-roles-actions {
   text-align: right !important;
 }
-/* line 130, ../../default/scss/theme/_rolemgr.scss */
+/* line 136, ../../default/scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-roles-actions {
   text-align: left !important;
 }

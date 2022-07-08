@@ -32,28 +32,28 @@
 /* line 59, ../scss/theme/_buttons.scss */
 .action-btn,
 .selected-action {
-  background-color: #166068;
+  background-color: #066e0b;
   color: #fefefe !important;
 }
 /* line 63, ../scss/theme/_buttons.scss */
 .action-btn:hover, .action-btn:focus,
 .selected-action:hover,
 .selected-action:focus {
-  background-color: #135258;
+  background-color: #055e09;
   color: #fefefe !important;
 }
 
 /* line 70, ../scss/theme/_buttons.scss */
 .delete-btn-ajax,
 .delete-btn {
-  background-color: #c60f13;
+  background-color: #b31c1f;
   color: #fefefe !important;
 }
 /* line 74, ../scss/theme/_buttons.scss */
 .delete-btn-ajax:hover, .delete-btn-ajax:focus,
 .delete-btn:hover,
 .delete-btn:focus {
-  background-color: #9e0c0f !important;
+  background-color: #8f1619 !important;
   color: #fefefe !important;
 }
 
@@ -123,7 +123,7 @@
 /* line 154, ../scss/theme/_buttons.scss */
 button.toggle-text {
   color: #fefefe;
-  background-color: #166068;
+  background-color: #066e0b;
   font-size: 0.7rem;
   margin: 0 0 0 0.7rem;
   line-height: 1.0;
@@ -146,7 +146,7 @@ button.toggle-text {
   text-decoration: none !important;
   white-space: nowrap;
   cursor: pointer;
-  background-color: #166068;
+  background-color: #066e0b;
   color: #fefefe !important;
   margin: 2px;
 }
@@ -1120,11 +1120,11 @@ form.anonymize-form,
 
 /* line 662, ../scss/theme/_widgets.scss */
 .anonymize-btn {
-  background-color: #c60f13;
+  background-color: #b31c1f;
 }
 /* line 664, ../scss/theme/_widgets.scss */
 .anonymize-btn:hover {
-  background-color: #9e0c0f;
+  background-color: #8f1619;
 }
 
 /* line 668, ../scss/theme/_widgets.scss */
@@ -1488,7 +1488,7 @@ html, body {
 .expired,
 .req,
 .req_key {
-  color: #c60f13;
+  color: #b31c1f;
   font-weight: bold;
 }
 
@@ -1499,7 +1499,7 @@ html, body {
 
 /* line 123, ../scss/theme/_page.scss */
 .mapError {
-  border: solid 1px #c60f13;
+  border: solid 1px #b31c1f;
 }
 
 /* line 130, ../scss/theme/_page.scss */
@@ -1766,7 +1766,7 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 40, ../scss/theme/_menus.scss */
 .main-menu .title-bar {
-  background: #166068;
+  background: #066e0b;
   margin: 0.5rem 0 0;
 }
 /* line 43, ../scss/theme/_menus.scss */
@@ -1795,12 +1795,12 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 61, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li a, .main-menu .top-bar .drilldown.menu li a {
-  background-color: #166068;
+  background-color: #066e0b;
   color: #fefefe;
 }
 /* line 64, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li a:hover, .main-menu .top-bar .drilldown.menu li a:hover {
-  background-color: #14565e;
+  background-color: #05630a;
   color: #fefefe;
 }
 /* line 69, ../scss/theme/_menus.scss */
@@ -1850,7 +1850,7 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 113, ../scss/theme/_menus.scss */
 .options-menu li a:hover {
-  color: #208c98;
+  color: #09a611;
   background-color: rgba(0, 0, 0, 0.05);
 }
 /* line 120, ../scss/theme/_menus.scss */
@@ -1870,7 +1870,7 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 134, ../scss/theme/_menus.scss */
 .options-menu li.is-active > a:first-child:not(.button):hover {
-  color: #208c98;
+  color: #09a611;
   background-color: #e2e3e3;
 }
 /* line 142, ../scss/theme/_menus.scss */
@@ -2031,7 +2031,7 @@ body.rtl .sub-nav.about-menu {
   margin: 5px 0 !important;
   padding: 4px 4px 0 0;
   text-align: left;
-  border-bottom: 1px solid #166068;
+  border-bottom: 1px solid #066e0b;
 }
 /* line 116, ../scss/theme/_rheader.scss */
 #rheader div.tabs span {
@@ -2041,16 +2041,16 @@ body.rtl .sub-nav.about-menu {
   font-weight: normal;
   margin: 3px 0.2rem 0 0;
   padding: 2px 0.4rem 1px;
-  border-color: #166068;
+  border-color: #066e0b;
   border-width: 1px;
   border-style: solid;
   border-radius: 3px 3px 0 0;
-  background-color: #166068;
+  background-color: #066e0b;
 }
 /* line 134, ../scss/theme/_rheader.scss */
 #rheader div.tabs span:hover {
-  background-color: #135258;
-  border-color: #135258;
+  background-color: #055e09;
+  border-color: #055e09;
 }
 /* line 139, ../scss/theme/_rheader.scss */
 #rheader div.tabs span a {
@@ -2072,7 +2072,7 @@ body.rtl .sub-nav.about-menu {
   margin-right: 0.4rem;
   padding: 3px 0.4rem 0px;
   background: #fefefe;
-  border-color: #166068;
+  border-color: #066e0b;
   border-style: solid;
   border-width: 2px 2px 2px 3px;
   border-bottom-style: solid;
@@ -3036,12 +3036,12 @@ table.dataTable input.bulkcheckbox[type=checkbox] {
 table.dataTable.dtr-inline.collapsed tbody td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody th:first-child::before {
   top: 0.6rem;
-  background-color: #166068;
+  background-color: #066e0b;
 }
 /* line 200, ../scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody tr.parent td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody tr.parent th:first-child::before {
-  background-color: #c60f13;
+  background-color: #b31c1f;
 }
 /* line 207, ../scss/theme/_tables.scss */
 table.dataTable table.import-item-details {
@@ -3986,132 +3986,140 @@ h4.profile-sub-header {
 }
 
 /* line 12, ../scss/theme/_rolemgr.scss */
+.rm-form table {
+  font-size: 0.8rem;
+}
+/* line 14, ../scss/theme/_rolemgr.scss */
+.rm-form table th, .rm-form table td {
+  text-align: left;
+}
+/* line 18, ../scss/theme/_rolemgr.scss */
 .rm-form .controls {
   width: 100%;
 }
-/* line 15, ../scss/theme/_rolemgr.scss */
+/* line 21, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .action-lnk,
 .rm-form .rm-rules .action-lnk {
   display: inline-block;
-  color: #166068;
+  color: #066e0b;
   font-style: normal;
 }
-/* line 21, ../scss/theme/_rolemgr.scss */
+/* line 27, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-toggle-all {
   margin-top: 0.2rem;
   margin-bottom: 0.5rem;
 }
-/* line 25, ../scss/theme/_rolemgr.scss */
+/* line 31, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign {
   width: 80%;
   border-collapse: separate;
   border-spacing: 0;
 }
-/* line 29, ../scss/theme/_rolemgr.scss */
+/* line 35, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign th {
   min-width: 10rem;
 }
-/* line 32, ../scss/theme/_rolemgr.scss */
+/* line 38, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign th:first-child {
   width: 25%;
 }
-/* line 35, ../scss/theme/_rolemgr.scss */
+/* line 41, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign td {
   padding: 0.5rem;
 }
-/* line 38, ../scss/theme/_rolemgr.scss */
+/* line 44, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign tfoot td {
   border-top: 1px solid #C0C0C0;
 }
-/* line 41, ../scss/theme/_rolemgr.scss */
+/* line 47, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-item-name,
 .rm-form .rm-assign .rm-item-title {
   display: block;
 }
-/* line 45, ../scss/theme/_rolemgr.scss */
+/* line 51, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-item-title {
   font-size: 0.8rem;
   font-style: italic;
   color: #A0A0A0;
 }
-/* line 51, ../scss/theme/_rolemgr.scss */
+/* line 57, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-duplicate td {
   border-top: 1px solid red;
   border-bottom: 1px solid red;
 }
-/* line 54, ../scss/theme/_rolemgr.scss */
+/* line 60, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-duplicate td:first-child {
   border-left: 1px solid red;
 }
-/* line 57, ../scss/theme/_rolemgr.scss */
+/* line 63, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-assign .rm-duplicate td:last-child {
   border-right: 1px solid red;
 }
-/* line 63, ../scss/theme/_rolemgr.scss */
+/* line 69, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules {
   width: 100%;
 }
-/* line 65, ../scss/theme/_rolemgr.scss */
+/* line 71, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header {
   cursor: pointer;
   background-color: #F0F0F0;
 }
-/* line 68, ../scss/theme/_rolemgr.scss */
+/* line 74, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header div {
   margin-right: 0.3rem;
   display: inline-block;
 }
-/* line 72, ../scss/theme/_rolemgr.scss */
+/* line 78, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header .rm-module-toggle {
   width: 0.5rem;
 }
-/* line 75, ../scss/theme/_rolemgr.scss */
+/* line 81, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header .rm-module-prefix {
   width: 6.5rem;
 }
-/* line 78, ../scss/theme/_rolemgr.scss */
+/* line 84, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-module-header .rm-module-numrules {
   font-weight: normal;
 }
-/* line 82, ../scss/theme/_rolemgr.scss */
+/* line 88, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules.hasrules .rm-module-header {
   background-color: #D0D0D0;
 }
-/* line 86, ../scss/theme/_rolemgr.scss */
+/* line 92, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules th, .rm-form .rm-module-rules td {
   padding: 0.5rem;
 }
-/* line 90, ../scss/theme/_rolemgr.scss */
+/* line 96, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-default-rule td,
 .rm-form .rm-module-rules .rm-default-permissions td {
   font-style: italic;
   color: #a0a0a0;
 }
-/* line 95, ../scss/theme/_rolemgr.scss */
+/* line 101, ../scss/theme/_rolemgr.scss */
 .rm-form .rm-module-rules .rm-rule-target {
   width: 20%;
 }
-/* line 99, ../scss/theme/_rolemgr.scss */
+/* line 105, ../scss/theme/_rolemgr.scss */
 .rm-form input.rm-invalid {
   background-color: #FFA0A0;
 }
-/* line 103, ../scss/theme/_rolemgr.scss */
+/* line 109, ../scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-form .rm-module-rules .rm-module-header div {
   margin-right: 0;
   margin-left: 0.3rem;
 }
-/* line 109, ../scss/theme/_rolemgr.scss */
+/* line 115, ../scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-form .rm-assign .rm-duplicate td:first-child {
   border-left: 0;
   border-right: 1px solid red;
 }
-/* line 113, ../scss/theme/_rolemgr.scss */
+/* line 119, ../scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-form .rm-assign .rm-duplicate td:last-child {
   border-right: 0;
   border-left: 1px solid red;
 }
 
-/* line 121, ../scss/theme/_rolemgr.scss */
+/* line 127, ../scss/theme/_rolemgr.scss */
 .rm-fixed,
 .rm-hint {
   display: block;
@@ -4120,11 +4128,11 @@ h4.profile-sub-header {
   color: #AAAAAA;
 }
 
-/* line 128, ../scss/theme/_rolemgr.scss */
+/* line 134, ../scss/theme/_rolemgr.scss */
 .rm-roles-actions {
   text-align: right !important;
 }
-/* line 130, ../scss/theme/_rolemgr.scss */
+/* line 136, ../scss/theme/_rolemgr.scss */
 [dir=rtl] .rm-roles-actions {
   text-align: left !important;
 }
@@ -4138,7 +4146,7 @@ h4.profile-sub-header {
 .system-info table {
   width: auto;
   margin: auto;
-  border: 2px solid #166068;
+  border: 2px solid #066e0b;
 }
 /* line 18, ../scss/theme/_sysinfo.scss */
 .system-info table tr {
@@ -4212,7 +4220,7 @@ h4.profile-sub-header {
 .announcements {
   margin: 0;
   padding: 0 0 0 1rem;
-  border-left: 1px solid #166068;
+  border-left: 1px solid #066e0b;
   list-style: none outside none;
 }
 /* line 58, ../scss/theme/_homepage.scss */
@@ -4307,7 +4315,7 @@ h4.profile-sub-header {
 [dir=rtl] .announcements {
   padding: 0 1rem 0 0;
   border-left: 0;
-  border-right: 1px solid #166068;
+  border-right: 1px solid #066e0b;
 }
 /* line 135, ../scss/theme/_homepage.scss */
 [dir=rtl] .announcements ul, [dir=rtl] .announcements ol {

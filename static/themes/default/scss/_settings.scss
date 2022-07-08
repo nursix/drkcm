@@ -65,15 +65,18 @@
 // 1. Global
 // ---------
 
+$eden-green: #066e0b;
+$eden-red: #b31c1f;
+
 $global-font-size: 100%;
 $global-width: rem-calc(2000);
 $global-lineheight: 1.5;
 $foundation-palette: (
-  primary: #166068,
+  primary: $eden-green, //#166068,
   secondary: #e7e7e7,
   success: #43AC6A,
   warning: #f08a24,
-  alert: #c60f13,
+  alert: $eden-red, //#c60f13,
 );
 $light-gray: #e6e6e6;
 $medium-gray: #cacaca;
