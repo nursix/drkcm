@@ -2371,16 +2371,18 @@ class TestFacilityInfo(CRUDMethod):
                     query &= (table.date <= end)
                 query &= (table.deleted == False)
                 total = table.tests_total.sum()
-                row = db(query).select(total).first()
+                positive = table.tests_positive.sum()
+                row = db(query).select(total, positive).first()
                 tests_total = row[total]
-                if not tests_total:
-                    tests_total = 0
+                tests_positive = row[positive]
 
                 # Add to output
                 output["report"] = [start.isoformat() if start else None,
                                     end.isoformat() if end else None,
                                     ]
-                output["activity"] = {"tests": tests_total}
+                output["activity"] = {"tests": tests_total if tests_total else 0,
+                                      "positive": tests_positive if tests_positive else 0,
+                                      }
             else:
                 r.error(400, "Invalid report parameter format")
 
