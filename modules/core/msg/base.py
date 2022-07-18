@@ -986,7 +986,9 @@ class S3Msg:
                 attachments = [attachments]
             from email.header import Header
             for attachment in attachments:
-                filename = attachment.my_filename.decode("utf-8")
+                filename = attachment.my_filename
+                if isinstance(filename, bytes):
+                    filename = filename.decode("utf-8")
                 header = Header('attachment; filename="%s"' % Header(filename, "utf-8").encode())
                 attachment.replace_header("Content-Disposition", header)
 
