@@ -4355,14 +4355,16 @@ Please go to %(url)s to approve this user."""
         # Archive the memberships
         for m in memberships:
             deleted_fk = {"user_id": m.user_id,
-                          "group_id": m.group_id}
-            if for_pe:
-                deleted_fk["pe_id"] = for_pe
+                          "group_id": m.group_id,
+                          }
+            if m.pe_id:
+                deleted_fk["pe_id"] = m.pe_id
             deleted_fk = json.dumps(deleted_fk)
             m.update_record(deleted = True,
                             deleted_fk = deleted_fk,
                             user_id = None,
-                            group_id = None)
+                            group_id = None,
+                            )
 
         # Update roles for current user if required
         if self.user and str(user_id) == str(self.user.id):
