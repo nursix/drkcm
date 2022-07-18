@@ -1742,7 +1742,7 @@
 
                 if (oSetting) {
 
-                    var args = 'id=' + self.tableid,
+                    var args = 'id=' + self.tableID,
                         sSearch = oSetting.oPreviousSearch.sSearch,
                         aaSort = oSetting.aaSorting,
                         aaSortFixed = oSetting.aaSortingFixed,
