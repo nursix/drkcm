@@ -1028,7 +1028,7 @@ S3.search = {};
                 for (var i=0; i<a.length; i++) {
                     b = a[i].split('=');
                     if (b.length > 1) {
-                        c = decodeURIComponent(b[0]);
+                        c = S3.urlDecode(b[0]);
                         if (c != name) {
                             vars.push(b[0] + '=' + b[1]);
                         }
@@ -1115,7 +1115,7 @@ S3.search = {};
             for (i=0, len=url_vars.length; i < len; i++) {
                 q = url_vars[i].split('=');
                 if (q.length > 1) {
-                    k = decodeURIComponent(q[0]);
+                    k = S3.urlDecode(q[0]);
                     if (reset[k] || update[k]) {
                         continue;
                     } else {

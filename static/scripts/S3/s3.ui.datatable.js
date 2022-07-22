@@ -106,7 +106,7 @@
         var extractFrom = function(query, f) {
             return query && query.split('&').filter(function(item) {
                 var q = item.split('=');
-                return q.length > 1 && f(decodeURIComponent(q[0]));
+                return q.length > 1 && f(S3.urlDecode(q[0]));
             }) || [];
         };
 
@@ -1805,7 +1805,7 @@
                     var items = link.search.slice(1).split('&'),
                         queries = items.map(function(item) {
                             var q = item.split('=');
-                            return [decodeURIComponent(q[0]), decodeURIComponent(q[1])];
+                            return [S3.urlDecode(q[0]), S3.urlDecode(q[1])];
                         }).filter(function(item) {
                             return item[0].indexOf('.') != -1;
                         });
