@@ -13,7 +13,7 @@ from core import FS, ICON, S3CRUD, S3Represent, \
 
 from ..helpers import workflow_tag_represent
 
-SITE_WORKFLOW = ("MPAV", "HYGIENE", "LAYOUT", "STATUS", "PUBLIC")
+SITE_WORKFLOW = ("MPAV", "HYGIENE", "LAYOUT", "STATUS", "PUBLIC", "DHASH")
 SITE_REVIEW = ("MPAV", "HYGIENE", "LAYOUT")
 
 # -------------------------------------------------------------------------
@@ -43,6 +43,36 @@ def add_org_tags():
                                                  },
                                                 ),
                         )
+
+# -------------------------------------------------------------------------
+# Helper functions for approval workflows
+#
+def get_dhash(*values):
+    """
+        Produce a data verification hash from the values
+
+        Args:
+            values: an (ordered) iterable of values
+        Returns:
+            the verification hash as string
+    """
+
+    import hashlib
+    dstr = "#".join([str(v) if v else "***" for v in values])
+
+    return hashlib.sha256(dstr.encode("utf-8")).hexdigest().lower()
+
+def reset_all(tags, value="N/A"):
+    """
+        Set all given workflow tags to initial status
+
+        Args:
+            tags: the tag Rows
+            value: the initial value
+    """
+
+    for tag in tags:
+        tag.update_record(value=value)
 
 # -------------------------------------------------------------------------
 def mgrinfo_opts():
@@ -122,6 +152,7 @@ def update_mgrinfo(organisation_id):
     reg_tag = httable.with_alias("reg_tag")
     crc_tag = httable.with_alias("crc_tag")
     scp_tag = httable.with_alias("scp_tag")
+    dsh_tag = httable.with_alias("dsh_tag")
 
     join = ptable.on(ptable.id == htable.person_id)
     left = [reg_tag.on((reg_tag.human_resource_id == htable.id) & \
@@ -133,6 +164,9 @@ def update_mgrinfo(organisation_id):
             scp_tag.on((scp_tag.human_resource_id == htable.id) & \
                        (scp_tag.tag == "SCP") & \
                        (scp_tag.deleted == False)),
+            dsh_tag.on((dsh_tag.human_resource_id == htable.id) & \
+                       (dsh_tag.tag == "DHASH") & \
+                       (dsh_tag.deleted == False)),
             ]
 
     query = (htable.organisation_id == organisation_id) & \
@@ -140,10 +174,18 @@ def update_mgrinfo(organisation_id):
             (htable.status == 1) & \
             (htable.deleted == False)
 
-    rows = db(query).select(ptable.pe_id,
+    rows = db(query).select(htable.id,
+                            ptable.pe_id,
+                            ptable.first_name,
+                            ptable.last_name,
                             ptable.date_of_birth,
+                            dsh_tag.id,
+                            dsh_tag.value,
+                            reg_tag.id,
                             reg_tag.value,
+                            crc_tag.id,
                             crc_tag.value,
+                            scp_tag.id,
                             scp_tag.value,
                             join = join,
                             left = left,
@@ -152,39 +194,73 @@ def update_mgrinfo(organisation_id):
         # No managers selected
         status = "N/A"
     else:
-        # Managers selected => check completeness of data/documentation
+        # Managers selected => check data/documentation
         status = "REVISE"
         ctable = s3db.pr_contact
 
         for row in rows:
 
-            # Check that all documentation tags are set as approved
-            doc_tags = True
-            for t in (reg_tag, crc_tag, scp_tag):
-                if row[t.value] != "APPROVED":
-                    doc_tags = False
-                    break
-            if not doc_tags:
-                continue
+            person = row.pr_person
+            dob = person.date_of_birth
+            vhash = get_dhash(person.first_name,
+                              person.last_name,
+                              dob.isoformat() if dob else None,
+                              )
+            doc_tags = [row[t._tablename] for t in (reg_tag, crc_tag, scp_tag)]
 
-            # Check DoB
-            if not row.pr_person.date_of_birth:
-                continue
+            # Do we have a verification hash (after previous approval)?
+            dhash = row.dsh_tag
+            verified = bool(dhash.id)
+            accepted = True
 
-            # Check that there is at least one contact details
-            # of phone/email type
-            query = (ctable.pe_id == row.pr_person.pe_id) & \
-                    (ctable.contact_method in ("SMS", "HOME_PHONE", "WORK_PHONE", "EMAIL")) & \
-                    (ctable.value != None) & \
-                    (ctable.deleted == False)
-            contact = db(query).select(ctable.id, limitby=(0, 1)).first()
-            if not contact:
-                continue
+            # Check completeness/integrity of data
 
-            # All that given, the manager-data status of the organisation
-            # can be set as complete
-            status = "COMPLETE"
-            break
+            # Must have DoB
+            if accepted and not dob:
+                # No documentation can be approved without DoB
+                reset_all(doc_tags)
+                accepted = False
+
+            # Must have at least one contact detail of the email/phone type
+            if accepted:
+                query = (ctable.pe_id == row.pr_person.pe_id) & \
+                        (ctable.contact_method in ("SMS", "HOME_PHONE", "WORK_PHONE", "EMAIL")) & \
+                        (ctable.value != None) & \
+                        (ctable.deleted == False)
+                contact = db(query).select(ctable.id, limitby=(0, 1)).first()
+                if not contact:
+                    accepted = False
+
+            # Do the data (still) match the verification hash?
+            if accepted and verified:
+                if dhash.value != vhash:
+                    if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+                        # Data changed by OrgGroupAdmin => update hash
+                        # (authorized change has no influence on approval)
+                        dhash.update_record(value=vhash)
+                    else:
+                        # Data changed by someone else => previous
+                        # approval of documentation no longer valid
+                        reset_all(doc_tags)
+                        accepted = False
+
+            # Check approval status for documentation
+            if accepted and all(tag.value == "APPROVED" for tag in doc_tags):
+                if not verified:
+                    # Set the verification hash
+                    dsh_tag.insert(human_resource_id = row[htable.id],
+                                   tag = "DHASH",
+                                   value = vhash,
+                                   )
+
+                # If at least one record is acceptable, the manager-data
+                # status of the organisation can be set as complete
+                status = "COMPLETE"
+            else:
+                # Remove the verification hash, if any (unapproved records
+                # do not need to be integrity-checked)
+                if verified:
+                    dhash.delete_record()
 
     # Update or add MGRINFO-tag with status
     ottable = s3db.org_organisation_tag
@@ -828,6 +904,8 @@ def add_facility_default_tags(facility_id, approve=False):
                 default = "REVIEW"
             else:
                 default = "APPROVED" if public else "REVIEW"
+        elif tag == "DHASH":
+            default = None
         else:
             default = "APPROVED" if public else "REVISE"
         ttable.insert(site_id = site_id,
@@ -877,6 +955,72 @@ def set_facility_code(facility_id):
     facility.update_record(code=code)
 
     return code
+
+# -----------------------------------------------------------------------------
+def facility_approval_hash(tags, site_id, location_id):
+    """
+        Compute and check the verification hash for facility details
+
+        Args:
+            tags: the current facility workflow tags (including existing hash)
+            site_id: the facility site ID
+            location_id: the facility location ID
+
+        Returns:
+            tuple (update, vhash), where
+            - update is a dict with workflow tag updates
+            - vhash is the computed verification hash
+
+        Notes:
+            - the verification hash encodes certain facility details, so
+              if those details are changed after approval, then the hash
+              becomes invalid and any previous approval is overturned
+              (=reduced to review-status)
+            - if the user is OrgGroupAdmin or Admin, the approval workflow
+              status is kept as-is (i.e. Admins can change details without
+              that impacting the current workflow status)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    dhash = tags.get("DHASH")
+    approved = tags.get("STATUS") == "APPROVED"
+
+    # Extract the location, and compute the hash
+    ltable = s3db.gis_location
+    query = (ltable.id == location_id) & \
+            (ltable.deleted == False)
+    location = db(query).select(ltable.id,
+                                ltable.parent,
+                                ltable.addr_street,
+                                ltable.addr_postcode,
+                                limitby = (0, 1),
+                                ).first()
+    if location:
+        vhash = get_dhash(location.id,
+                          location.parent,
+                          location.addr_street,
+                          location.addr_postcode,
+                          )
+    else:
+        vhash = get_dhash(None, None, None, None)
+
+    if approved and dhash and dhash != vhash and \
+       not current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+        update = {"PUBLIC": "N"}
+        status = "REVIEW"
+        for t in SITE_REVIEW:
+            value = tags.get(t)
+            if value == "APPROVED":
+                update[t] = "REVIEW"
+            elif value == "REVISE":
+                status = "REVISE"
+        update["STATUS"] = status
+    else:
+        update = None
+
+    return update, vhash
 
 # -----------------------------------------------------------------------------
 def facility_approval_status(tags, mgrinfo):
@@ -966,6 +1110,7 @@ def facility_approval_workflow(site_id):
     query = (ftable.site_id == site_id)
     facility = db(query).select(ftable.id,
                                 ftable.organisation_id,
+                                ftable.location_id,
                                 ottable.value,
                                 left = left,
                                 limitby = (0, 1),
@@ -1001,8 +1146,22 @@ def facility_approval_workflow(site_id):
         facility_approval_workflow(site_id)
         return
 
-    # Update tags
-    update, notify = facility_approval_status(tags, mgrinfo)
+    # Verify record integrity and compute the verification hash
+    update, vhash = facility_approval_hash(tags,
+                                           site_id,
+                                           facility.org_facility.location_id,
+                                           )
+    notify = False
+    if not update:
+        # Integrity check okay => proceed to workflow status
+        update, notify = facility_approval_status(tags, mgrinfo)
+
+    # If the record would be approved, add the verification hash to the
+    # update, otherwise reset it to None (=>unapproved records do not need
+    # to be integrity-checked)
+    status = update["STATUS"] if "STATUS" in update else tags.get("STATUS")
+    update["DHASH"] = vhash if status == "APPROVED" else None
+
     for row in rows:
         key = row.tag
         if key in update:

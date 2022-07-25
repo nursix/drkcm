@@ -23,6 +23,17 @@ S3.timeline = {};
 S3.JSONRequest = {}; // Used to store and abort JSON requests
 //S3.TimeoutVar = {}; // Used to store and abort JSON requests
 
+/**
+ * Some clients encode a space in the URL query as '+', which can
+ * produce invalid Ajax URLs - this function extends decodeURIComponent
+ * to convert the '+' back into a space before decoding (safe because
+ * an actual '+' would be encoded as %2B); to be used in place of
+ * decodeURIComponent, especially for filter parsing:
+ */
+S3.urlDecode = function(str) {
+    return decodeURIComponent(str.replace(/\+/g, ' '));
+};
+
 S3.queryString = {
     // From https://github.com/sindresorhus/query-string
     parse: function(str) {
@@ -41,10 +52,10 @@ S3.queryString = {
             var key = parts[0];
             var val = parts[1];
 
-            key = decodeURIComponent(key);
+            key = S3.urlDecode(key);
             // missing `=` should be `null`:
             // http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
-            val = val === undefined ? null : decodeURIComponent(val);
+            val = val === undefined ? null : S3.urlDecode(val);
 
             if (!ret.hasOwnProperty(key)) {
                 ret[key] = val;
@@ -1028,7 +1039,7 @@ S3.openPopup = function(url, center) {
             if (search) {
                 var items = search.substring(1).split('&');
                 items.forEach(function(item) {
-                    if (decodeURIComponent(item.split('=')[0]) != key) {
+                    if (S3.urlDecode(item.split('=')[0]) != key) {
                         queries.push(item);
                     }
                 });
