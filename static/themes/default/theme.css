@@ -32,14 +32,14 @@
 /* line 59, ../scss/theme/_buttons.scss */
 .action-btn,
 .selected-action {
-  background-color: #066e0b;
+  background-color: #0a5b29;
   color: #fefefe !important;
 }
 /* line 63, ../scss/theme/_buttons.scss */
 .action-btn:hover, .action-btn:focus,
 .selected-action:hover,
 .selected-action:focus {
-  background-color: #055e09;
+  background-color: #094d23;
   color: #fefefe !important;
 }
 
@@ -123,7 +123,7 @@
 /* line 154, ../scss/theme/_buttons.scss */
 button.toggle-text {
   color: #fefefe;
-  background-color: #066e0b;
+  background-color: #0a5b29;
   font-size: 0.7rem;
   margin: 0 0 0 0.7rem;
   line-height: 1.0;
@@ -146,7 +146,7 @@ button.toggle-text {
   text-decoration: none !important;
   white-space: nowrap;
   cursor: pointer;
-  background-color: #066e0b;
+  background-color: #0a5b29;
   color: #fefefe !important;
   margin: 2px;
 }
@@ -1766,7 +1766,7 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 40, ../scss/theme/_menus.scss */
 .main-menu .title-bar {
-  background: #066e0b;
+  background: #0a5b29;
   margin: 0.5rem 0 0;
 }
 /* line 43, ../scss/theme/_menus.scss */
@@ -1795,12 +1795,12 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 61, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li a, .main-menu .top-bar .drilldown.menu li a {
-  background-color: #066e0b;
+  background-color: #0a5b29;
   color: #fefefe;
 }
 /* line 64, ../scss/theme/_menus.scss */
 .main-menu .top-bar .dropdown.menu li a:hover, .main-menu .top-bar .drilldown.menu li a:hover {
-  background-color: #05630a;
+  background-color: #095225;
   color: #fefefe;
 }
 /* line 69, ../scss/theme/_menus.scss */
@@ -1850,7 +1850,7 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 113, ../scss/theme/_menus.scss */
 .options-menu li a:hover {
-  color: #09a611;
+  color: #109242;
   background-color: rgba(0, 0, 0, 0.05);
 }
 /* line 120, ../scss/theme/_menus.scss */
@@ -1870,7 +1870,7 @@ body.rtl .sub-nav.about-menu {
 }
 /* line 134, ../scss/theme/_menus.scss */
 .options-menu li.is-active > a:first-child:not(.button):hover {
-  color: #09a611;
+  color: #109242;
   background-color: #e2e3e3;
 }
 /* line 142, ../scss/theme/_menus.scss */
@@ -2031,7 +2031,7 @@ body.rtl .sub-nav.about-menu {
   margin: 5px 0 !important;
   padding: 4px 4px 0 0;
   text-align: left;
-  border-bottom: 1px solid #066e0b;
+  border-bottom: 1px solid #0a5b29;
 }
 /* line 116, ../scss/theme/_rheader.scss */
 #rheader div.tabs span {
@@ -2041,16 +2041,16 @@ body.rtl .sub-nav.about-menu {
   font-weight: normal;
   margin: 3px 0.2rem 0 0;
   padding: 2px 0.4rem 1px;
-  border-color: #066e0b;
+  border-color: #0a5b29;
   border-width: 1px;
   border-style: solid;
   border-radius: 3px 3px 0 0;
-  background-color: #066e0b;
+  background-color: #0a5b29;
 }
 /* line 134, ../scss/theme/_rheader.scss */
 #rheader div.tabs span:hover {
-  background-color: #055e09;
-  border-color: #055e09;
+  background-color: #094d23;
+  border-color: #094d23;
 }
 /* line 139, ../scss/theme/_rheader.scss */
 #rheader div.tabs span a {
@@ -2072,7 +2072,7 @@ body.rtl .sub-nav.about-menu {
   margin-right: 0.4rem;
   padding: 3px 0.4rem 0px;
   background: #fefefe;
-  border-color: #066e0b;
+  border-color: #0a5b29;
   border-style: solid;
   border-width: 2px 2px 2px 3px;
   border-bottom-style: solid;
@@ -3036,7 +3036,7 @@ table.dataTable input.bulkcheckbox[type=checkbox] {
 table.dataTable.dtr-inline.collapsed tbody td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody th:first-child::before {
   top: 0.6rem;
-  background-color: #066e0b;
+  background-color: #0a5b29;
 }
 /* line 200, ../scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody tr.parent td:first-child::before,
@@ -4001,7 +4001,7 @@ h4.profile-sub-header {
 .rm-form .rm-assign .action-lnk,
 .rm-form .rm-rules .action-lnk {
   display: inline-block;
-  color: #066e0b;
+  color: #0a5b29;
   font-style: normal;
 }
 /* line 27, ../scss/theme/_rolemgr.scss */
@@ -4146,7 +4146,7 @@ h4.profile-sub-header {
 .system-info table {
   width: auto;
   margin: auto;
-  border: 2px solid #066e0b;
+  border: 2px solid #0a5b29;
 }
 /* line 18, ../scss/theme/_sysinfo.scss */
 .system-info table tr {
@@ -4220,7 +4220,7 @@ h4.profile-sub-header {
 .announcements {
   margin: 0;
   padding: 0 0 0 1rem;
-  border-left: 1px solid #066e0b;
+  border-left: 1px solid #0a5b29;
   list-style: none outside none;
 }
 /* line 58, ../scss/theme/_homepage.scss */
@@ -4315,7 +4315,7 @@ h4.profile-sub-header {
 [dir=rtl] .announcements {
   padding: 0 1rem 0 0;
   border-left: 0;
-  border-right: 1px solid #066e0b;
+  border-right: 1px solid #0a5b29;
 }
 /* line 135, ../scss/theme/_homepage.scss */
 [dir=rtl] .announcements ul, [dir=rtl] .announcements ol {
