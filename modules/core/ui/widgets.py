@@ -63,7 +63,6 @@ __all__ = ("S3AddPersonWidget",
            "S3TimeIntervalWidget",
            #"S3UploadWidget",
            "S3WeeklyHoursWidget",
-           "S3QuestionEditorWidget",
            "CheckboxesWidgetS3",
            "s3_comments_widget",
            "s3_richtext_widget",
@@ -8583,249 +8582,6 @@ class S3XMLContents:
         return re.sub(r"\{\{(.+?)\}\}", self.link, self.contents)
 
 # =============================================================================
-class S3QuestionEditorWidget(FormWidget):
-    """
-        A Question Editor widget for DC
-        Client-side JS in s3.ui.question.js
-
-        Currently unused.
-        - replace with simple DIV + Hidden IINPUT & build UI client-side?
-            . less load on server
-            . DRYer (no need to read/extend settings in 2 places)
-            . faster for user (faster download and hence time before interaction)
-        - for now the replacement is in UCCE as styled to it's Theme
-    """
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attr):
-        """
-            Widget builder
-
-            Args:
-                field: the Field
-                value: the current value
-                attributes: the HTML attributes for the widget
-        """
-
-        selector = attr.get("id")
-        if not selector:
-            if isinstance(field, Field):
-                selector = str(field).replace(".", "_")
-            else:
-                selector = field.name.replace(".", "_")
-
-        # Field name
-        name = attr.get("_name")
-
-        if not name:
-            name = field.name
-
-        T = current.T
-        request = current.request
-        s3 = current.response.s3
-
-        # The actual hidden input containing the JSON of the fields
-        real_input = INPUT(_id=selector,
-                           _name=name,
-                           _value=value,
-                           _type="hidden",
-                           )
-
-        formstyle = s3.crud.formstyle
-
-        if value is None:
-            value = "{}"
-
-        value = eval(value)
-
-        type_options = (("string", "String"),
-                        ("integer", "Integer"),
-                        ("float", "Float"),
-                        ("text", "Text"),
-                        ("object", "Object"),
-                        ("date", "Date"),
-                        ("time", "Time"),
-                        ("datetime", "DateTime"),
-                        ("reference", "Reference"),
-                        ("location", "Location"),
-                        )
-
-        type_id = "%s_type" % selector
-
-        select_field = Field("type", requires=IS_IN_SET(type_options))
-        select_value = value.get("type", "")
-
-        # Used by OptionsWidget for creating DOM id for select input
-        select_field.tablename = "dc_question_model"
-        select = OptionsWidget.widget(select_field, select_value)
-
-        # Retrieve value of checkboxes
-        multiple = value.get("multiple", False)
-        if multiple == "true":
-            multiple = True
-        else:
-            multiple = False
-
-        is_required = value.get("is_required", False)
-        if is_required == "true":
-            is_required = True
-        else:
-            is_required = False
-
-        # Render visual components
-        components = {}
-        manual_input = self._input
-
-        components["type"] = ("Type: ", select, type_id)
-
-        components["is_required"] = manual_input(selector,
-                                                 "is_required",
-                                                 is_required,
-                                                 T("Is Required"),
-                                                 "checkbox")
-
-        components["description"] = manual_input(selector,
-                                                 "description",
-                                                 value.get("description", ""),
-                                                 T("Description"))
-
-        components["default_answer"] = manual_input(selector,
-                                                    "defaultanswer",
-                                                    value.get("defaultanswer", ""),
-                                                    T("Default Answer"))
-
-        components["max"] = manual_input(selector,
-                                         "max",
-                                         value.get("max", ""),
-                                         T("Maximum"))
-
-        components["min"] = manual_input(selector,
-                                         "min",
-                                         value.get("min", ""),
-                                         T("Minimum"))
-
-        components["filter"] = manual_input(selector,
-                                            "filter",
-                                            value.get("filter", ""),
-                                            T("Filter"))
-
-        components["reference"] = manual_input(selector,
-                                               "reference",
-                                               value.get("reference", ""),
-                                               T("Reference"))
-
-        components["represent"] = manual_input(selector,
-                                               "represent",
-                                               value.get("represent", ""),
-                                               T("Represent"))
-
-        components["location"] = manual_input(selector,
-                                              "location",
-                                              value.get("location", "[]"),
-                                              T("Location Fields"))
-
-        components["options"] = manual_input(selector,
-                                             "options",
-                                             value.get("options", "[]"),
-                                             T("Options"))
-
-        components["multiple"] = manual_input(selector,
-                                              "multiple",
-                                              multiple,
-                                              T("Multiple Options"),
-                                              "checkbox")
-
-        # Load the widget script
-        scripts = s3.scripts
-        script_dir = "/%s/static/scripts" % request.application
-
-        script = "%s/S3/s3.ui.question.js" % script_dir
-        if script not in scripts:
-            scripts.append(script)
-
-        # Call the widget
-        script = '''$('#%(widget_id)s').addQuestion()''' % \
-                {"widget_id": "dc_question_model"}
-
-        s3.jquery_ready.append(script)
-
-        # Get the layout for visible components
-        visible_components = self._layout(components, formstyle=formstyle)
-
-        return TAG[""](real_input,
-                       visible_components)
-
-    # -------------------------------------------------------------------------
-    def _layout(self, components, formstyle=None):
-        """
-            Overall layout for visible components
-
-            Args:
-                components: the components as dict
-                formstyle: the formstyle (falls back to CRUD formstyle)
-        """
-
-        if formstyle is None:
-            formstyle = current.response.s3.crud.formstyle
-
-        # Test the formstyle
-        row = formstyle("test", "test", "test", "test")
-
-        tuple_rows = isinstance(row, tuple)
-
-        inputs = TAG[""]()
-        for name in ("type", "is_required", "description", "default_answer",
-                     "max", "min", "filter", "reference", "represent",
-                     "location", "options", "multiple"):
-            if name in components:
-                label, widget, input_id = components[name]
-                formrow = formstyle("%s__row" % input_id,
-                                    label,
-                                    widget,
-                                    "")
-
-                if tuple_rows:
-                    inputs.append(formrow[0])
-                    inputs.append(formrow[1])
-                else:
-                    inputs.append(formrow)
-        return inputs
-
-    # -------------------------------------------------------------------------
-    def _input(self,
-               fieldname,
-               name,
-               value,
-               label,
-               _type = "text"
-               ):
-        """
-            Render a text input with given attributes
-
-            Args:
-                fieldname: the field name (for ID construction)
-                name: the name for the input field
-                value: the initial value for the input
-                label: the label for the input
-                hidden: render hidden
-
-            Returns:
-                a tuple (label, widget, id, hidden)
-        """
-
-        input_id = "%s_%s" % (fieldname, name)
-
-        _label = LABEL("%s: " % label, _for=input_id)
-
-        # If the input is of type checkbox
-        if name in ("is_required", "multiple"):
-            widget = INPUT(_type=_type, _id=input_id, value=s3_str(value))
-        else:
-            widget = INPUT(_type=_type, _id=input_id, _value=s3_str(value))
-
-        return (_label, widget, input_id)
-
-# =============================================================================
 class S3TagCheckboxWidget(FormWidget):
     """
         Simple widget to use a checkbox to toggle a string-type Field
@@ -8983,7 +8739,6 @@ class ICON(I):
             "incident": "fa-bolt",
             "info": "fa-info",
             "info-circle": "fa-info-circle",
-            #"instructions": "fa-edit", # UCCE
             "link": "fa-external-link",
             "list": "fa-list",
             "location": "fa-globe",
@@ -9010,13 +8765,11 @@ class ICON(I):
             "question-circle-o": "fa-question-circle-o",
             "radio": "fa-microphone",
             "remove": "fa-remove",
-            #"reports": "fi-bar-chart", # UCCE
             "request": "fa-flag",
             "responsibility": "fa-briefcase",
             "return": "fa-arrow-left",
             "rss": "fa-rss",
             "search": "fa-search",
-            #"section-break": "fa-minus", # UCCE
             "sent": "fa-check",
             "settings": "fa-wrench",
             "share": "fa-share-alt",
@@ -9088,7 +8841,6 @@ class ICON(I):
             "inactive": "fi-x",
             "info": "fi-info",
             "info-circle": "fi-info",
-            #"instructions": "fi-page-edit", # UCCE
             "link": "fi-web",
             "list": "fi-list-thumbnails",
             "location": "fi-map",
@@ -9109,13 +8861,11 @@ class ICON(I):
             "print": "fi-print",
             "radio": "fi-microphone",
             "remove": "fi-x",
-            #"reports": "fi-graph-bar", # UCCE
             "request": "fi-flag",
             "responsibility": "fi-sheriff-badge",
             "return": "fi-arrow-left",
             "rss": "fi-rss",
             "search": "fi-magnifying-glass",
-            #"section-break": "fi-minus", # UCCE
             "sent": "fi-check",
             "settings": "fi-wrench",
             "share": "fi-share",
@@ -9183,7 +8933,6 @@ class ICON(I):
             "inactive": "icon-check-empty",
             "info": "icon-info",
             "info-circle": "icon-info-sign",
-            #"instructions": "icon-edit", # UCCE
             "link": "icon-external-link",
             "list": "icon-list",
             "location": "icon-globe",
@@ -9205,13 +8954,11 @@ class ICON(I):
             "print": "icon-print",
             "radio": "icon-microphone",
             "remove": "icon-remove",
-            #"reports": "icon-bar-chart", # UCCE
             "request": "icon-flag",
             "responsibility": "icon-briefcase",
             "return": "icon-arrow-left",
             "rss": "icon-rss",
             "search": "icon-search",
-            #"section-break": "icon-minus", # UCCE
             "sent": "icon-ok",
             "settings": "icon-wrench",
             "share": "icon-share",

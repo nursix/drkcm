@@ -222,8 +222,7 @@ def do_css():
     if CSS_FULL:
 
         # Joyride, JSTree, Spectrum
-        for filename in ("joyride",
-                         "jstree",
+        for filename in ("jstree",
                          "spectrum",
                          ):
             info("Merging %s styles." % filename)
@@ -254,12 +253,6 @@ def do_css():
         info("Writing to %s." % outputFilenameCSS)
         compressCSS("../ext/resources/css/ext-all-notheme.css", outputFilenameCSS)
         move_to(outputFilenameCSS, "../ext/resources/css")
-
-        info("Ext Themes CSS")
-        outputFilenameCSS = "xtheme-ifrc.min.css"
-        info("Writing to %s." % outputFilenameCSS)
-        compressCSS("../../themes/IFRC/xtheme-ifrc.css", outputFilenameCSS)
-        move_to(outputFilenameCSS, "../../themes/IFRC")
 
 # =============================================================================
 # JS Building
@@ -448,12 +441,8 @@ def do_js(minimize,
         # To do just 1 file:
         # cd static/scripts
         # java -jar tools/compiler.jar --js jquery.fileupload.js --js_output_file jquery.fileupload.min.js
-        for filename in ("jquery.fileupload", # Used by UCCE
-                         "jquery.fileupload-process", # Used by UCCE
-                         "jquery.fileupload-image", # Used by UCCE
-                         "jquery.iframe-transport", # Used by jquery.fileupload
+        for filename in ("tag-it",
                          "spectrum",
-                         "tag-it",
                          ):
             info("Compressing %s.js" % filename)
             in_f = os.path.join("..", filename + ".js")
@@ -462,15 +451,15 @@ def do_js(minimize,
                 with openf(out_f, "w") as out:
                     out.write(minimize(inp.read()))
 
-        info("Compressing Foundation")
+        #info("Compressing Foundation")
         # Merge + minify
-        merged = mergejs.run("..", None, "foundation.cfg")
-        minimized = minimize(merged)
-        # Write minified file
-        with openf("foundation.min.js", "w") as outFile:
-            outFile.write(minimized)
-        # Replace target file
-        move_to("foundation.min.js", "../foundation")
+        #merged = mergejs.run("..", None, "foundation.cfg")
+        #minimized = minimize(merged)
+        ## Write minified file
+        #with openf("foundation.min.js", "w") as outFile:
+        #    outFile.write(minimized)
+        ## Replace target file
+        #move_to("foundation.min.js", "../foundation")
 
     # -------------------------------------------------------------------------
     # GIS
@@ -626,37 +615,7 @@ def do_js(minimize,
 
 def do_template(minimize, warnings):
 
-    if theme == "UCCE":
-        for filename in ("confirm_popup",
-                         "projects",
-                         "report",
-                         # Need to use Terser for this as Closure doesn't like ES6 modules
-                         #"s3.ui.template",
-                         ):
-            info("Compressing %s.js" % filename)
-            inputFilename = os.path.join("..", "..", "themes", "UCCE", "js", "%s.js" % filename)
-            outputFilename = "%s.min.js" % filename
-            with openf(inputFilename, "r") as inFile:
-                with openf(outputFilename, "w") as outFile:
-                    outFile.write(minimize(inFile.read()))
-            move_to(outputFilename, "../../themes/UCCE/js")
-
-        cwd = os.getcwd()
-        # Assume ol5-rollup at same level as eden
-        rollup_dir = os.path.join("..", "..", "..", "..", "ol5-rollup")
-        os.chdir(rollup_dir)
-        os.system("npm run-script build")
-        os.system("terser ol5.js -c --source-map -o ol5.min.js")
-        theme_dir = os.path.join("..", request.application, "static", "themes", "UCCE", "JS")
-        move_to("ol5.min.js", theme_dir)
-        #move_to("ol5.min.js.map", theme_dir)
-        os.chdir(theme_dir)
-        info("Compressing s3.ui.template.js")
-        os.system("terser s3.ui.template.js -c  -o s3.ui.template.min.js")
-        info("Compressing s3.ui.heatmap.js")
-        os.system("terser s3.ui.heatmap.js -c  -o s3.ui.heatmap.min.js")
-        # Restore CWD
-        os.chdir(cwd)
+    pass
 
 # =============================================================================
 # Main script
@@ -697,8 +656,7 @@ def main(argv):
                   do_gis = do_gis,
                   warnings = warnings)
 
-        do_template(minimize = minimize,
-                    warnings = warnings)
+        do_template(minimize = minimize, warnings = warnings)
         do_css()
 
     info("Done.")
