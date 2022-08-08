@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Run as:
-#   python web2py.py -S eden -M -R applications/eden/static/scripts/tools/build.sahana.py
+#   python web2py.py -S eden -M -R applications/eden/static/scripts/tools/build.eden.py
 # or:
-#   python web2py.py -S eden -M -R applications/eden/static/scripts/tools/build.sahana.py -A <options>
+#   python web2py.py -S eden -M -R applications/eden/static/scripts/tools/build.eden.py -A <options>
 #
 # Options:
 #   CSS    - CSS only (=do not build JavaScript)
@@ -72,14 +71,6 @@ def move_to(filename, path):
 # =============================================================================
 # CSS Building
 #
-
-## Untested as libsass failing to run for me:
-# For SCSS
-#try:
-#   import sass
-#except ImportError:
-#   info("Unable to import libsass: so if your theme includes SCSS sources, these won't be rebuilt")
-
 def mergeCSS(inputFilenames, outputFilename):
     """ Merge (=concatenate) CSS files """
 
