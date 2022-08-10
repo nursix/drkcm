@@ -1825,10 +1825,10 @@ def org_facility_resource(r, tablename):
                    "location_id$L4",
                    "location_id$L3",
                    "location_id$L2",
-                   #"obsolete",
                    (T("Opening Hours"), "opening_times"),
                    "site_details.service_mode_id",
                    "service_site.service_id",
+                   #"obsolete",
                    ]
 
     if show_pnd or show_rvw:
@@ -1838,7 +1838,7 @@ def org_facility_resource(r, tablename):
         if not in_org_controller:
             list_fields.insert(1, (T("Organization ID"), "organisation_id$orgid.value"))
     if show_all or in_org_controller:
-        list_fields.insert(-3, "obsolete")
+        list_fields.append("obsolete")
 
     s3db.configure(tablename, list_fields=list_fields)
 
