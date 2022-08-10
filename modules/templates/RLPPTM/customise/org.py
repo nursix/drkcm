@@ -895,7 +895,7 @@ def add_facility_default_tags(facility_id, approve=False):
     for tag in SITE_WORKFLOW:
         if tag in existing:
             continue
-        elif tag == "PUBLIC":
+        if tag == "PUBLIC":
             default = "Y" if public else "N"
         elif tag == "STATUS":
             if any(existing.get(t) == "REVISE" for t in SITE_REVIEW):
@@ -1820,22 +1820,25 @@ def org_facility_resource(r, tablename):
                    "organisation_id$organisation_type__link.organisation_type_id",
                    (T("Telephone"), "phone1"),
                    "email",
-                   (T("Opening Hours"), "opening_times"),
-                   "site_details.service_mode_id",
-                   "service_site.service_id",
                    "location_id$addr_street",
                    "location_id$addr_postcode",
                    "location_id$L4",
                    "location_id$L3",
                    "location_id$L2",
+                   #"obsolete",
+                   (T("Opening Hours"), "opening_times"),
+                   "site_details.service_mode_id",
+                   "service_site.service_id",
                    ]
 
     if show_pnd or show_rvw:
         list_fields.insert(1, "organisation_id")
     if is_org_group_admin:
         list_fields.insert(1, "code")
+        if not in_org_controller:
+            list_fields.insert(1, (T("Organization ID"), "organisation_id$orgid.value"))
     if show_all or in_org_controller:
-        list_fields.append("obsolete")
+        list_fields.insert(-3, "obsolete")
 
     s3db.configure(tablename, list_fields=list_fields)
 
@@ -1848,6 +1851,8 @@ def org_facility_resource(r, tablename):
                    ]
     if is_org_group_admin:
         text_fields.append("code")
+        if not in_org_controller:
+            text_fields.append("organisation_id$orgid.value")
     filter_widgets = [
         TextFilter(text_fields,
                    label = T("Search"),
