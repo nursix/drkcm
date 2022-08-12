@@ -165,7 +165,6 @@ class S3Config(Storage):
         self.cr = Storage()
         self.custom = Storage()
         self.database = Storage()
-        self.dc = Storage()
         self.deploy = Storage()
         self.disease = Storage()
         self.doc = Storage()
@@ -3561,102 +3560,6 @@ class S3Config(Storage):
         return self.cr.get("shelter_inspection_tasks_completed_status", 12)
 
     # -------------------------------------------------------------------------
-    # DC: Data Collection
-    #
-    def get_dc_mobile_data(self):
-        """
-            Whether Mobile Clients should download Assessments (Data not just Forms)
-            - e.g. when these are created through Targetting
-        """
-        return self.dc.get("mobile_data", False)
-
-    def get_dc_mobile_inserts(self):
-        """
-            Whether Mobile Clients should create Assessments locally
-        """
-        return self.dc.get("mobile_inserts", True)
-
-    def get_dc_response_label(self):
-        """
-            Label for Responses
-            - 'Assessment;
-            - 'Response' (default if set to None)
-            - 'Survey'
-        """
-        return self.dc.get("response_label", "Assessment")
-
-    def get_dc_response_mobile(self):
-        """
-            Whether Assessments are filled-out on the EdenMobile App
-        """
-        return self.dc.get("response_mobile", True)
-
-    def get_dc_response_web(self):
-        """
-            Whether Assessments are filled-out on the Web interface
-        """
-        return self.dc.get("response_web", True)
-
-    def get_dc_target_status(self):
-        """
-            Whether Assessment Targets have Statuses
-        """
-        return self.dc.get("target_status", False)
-
-    def get_dc_unique_question_names_per_template(self):
-        """
-            Deduplicate Questions by Name/Template
-             - needed for importing multiple translations
-        """
-        return self.dc.get("unique_question_names_per_template", False)
-
-    def get_dc_likert_options(self):
-        """
-            Likert Scales & Options
-        """
-        return self.dc.get("likert_options", {1: ["Very appropriate",
-                                                  "Somewhat appropriate",
-                                                  "Neither appropriate nor inappropriate",
-                                                  "Somewhat inappropriate",
-                                                  "Very inappropriate",
-                                                  ],
-                                              2: ["Extremely confident",
-                                                  "Very confident",
-                                                  "Moderately confident",
-                                                  "Slightly confident",
-                                                  "Not confident at all",
-                                                  ],
-                                              3: ["Always",
-                                                  "Often",
-                                                  "Occasionally",
-                                                  "Rarely",
-                                                  "Never",
-                                                  ],
-                                              4: ["Extremely safe",
-                                                  "Very safe",
-                                                  "Moderately safe",
-                                                  "Slightly safe",
-                                                  "Not safe at all",
-                                                  ],
-                                              5: ["Very satisfied",
-                                                  "Somewhat satisfied",
-                                                  "Neither satisfied nor dissatisfied",
-                                                  "Somewhat dissatisfied",
-                                                  "Very dissatisfied",
-                                                  ],
-                                              6: ["smiley-1",
-                                                  "smiley-2",
-                                                  "smiley-3",
-                                                  "smiley-4",
-                                                  "smiley-6",
-                                                  ],
-                                              7: ["smiley-3",
-                                                  "smiley-4",
-                                                  "smiley-5",
-                                                  ],
-                                              })
-
-    # -------------------------------------------------------------------------
     # Deployments
     #
     def get_deploy_alerts(self):
@@ -4066,12 +3969,6 @@ class S3Config(Storage):
         """
         return self.event.get("exercise", False)
 
-    def get_event_sitrep_dynamic(self):
-        """
-            Whether the SitRep resource should include a Dynamic Table section
-        """
-        return self.event.get("sitrep_dynamic", False)
-
     def get_event_sitrep_edxl(self):
         """
             Whether the SitRep resource should be configured for EDXL-Sitrep mode
@@ -4098,18 +3995,6 @@ class S3Config(Storage):
             Options: None, contact_method (e.g. "SMS", "EMAIL")
         """
         return self.event.get("task_notification", "EMAIL")
-
-    def get_event_dc_response_tab(self):
-        """
-            Whether to show the DC response tab for events
-        """
-        return self.event.get("dc_response_tab", True)
-
-    def get_event_dc_target_tab(self):
-        """
-            Whether to show the DC target tab for events
-        """
-        return self.event.get("dc_target_tab", True)
 
     def get_event_dispatch_tab(self):
         """

@@ -1895,7 +1895,6 @@ class S3SQLDummyField(S3SQLFormElement):
         A Dummy Field
 
         A simple DIV which can then be acted upon with JavaScript
-        - used by dc_question Grids
     """
 
     # -------------------------------------------------------------------------
@@ -1947,7 +1946,6 @@ class S3SQLSectionBreak(S3SQLFormElement):
         A Section Break
 
         A simple DIV which can then be acted upon with JavaScript &/or Styled
-        - used by dc_template.layout
     """
 
     # -------------------------------------------------------------------------
@@ -1999,7 +1997,6 @@ class S3SQLInlineInstruction(S3SQLFormElement):
         Inline Instructions
 
         A simple DIV which can then be acted upon with JavaScript &/or Styled
-        - used by dc_template.layout
     """
 
     # -------------------------------------------------------------------------

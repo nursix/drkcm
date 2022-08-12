@@ -1342,11 +1342,6 @@ def config(settings):
         #    #description = "Tracks the location, capacity and breakdown of victims in Shelters",
         #    module_type = 10
         #)),
-        #("dc", Storage(
-        #   name_nice = T("Assessments"),
-        #   #description = "Data collection tool",
-        #   module_type = 5
-        #)),
         #("hms", Storage(
         #    name_nice = T("Hospitals"),
         #    #description = "Helps to monitor status of hospitals",
@@ -1408,12 +1403,6 @@ def config(settings):
         #    #description = "Incident Reporting System",
         #    module_type = 10
         #)),
-        # Deprecated: Replaced by DC
-        #("survey", Storage(
-        #    name_nice = T("Surveys"),
-        #    #description = "Create, enter, and manage surveys.",
-        #    module_type = 5,
-        #)),
         # These are specialist modules
         #("cap", Storage(
         #    name_nice = T("CAP"),
@@ -1431,13 +1420,12 @@ def config(settings):
         #   #description = "Helps to report and search for missing persons",
         #   module_type = 10,
         #)),
-        # @ToDo: Port these Assessments to the Survey module
         #("building", Storage(
         #    name_nice = T("Building Assessments"),
         #    #description = "Building Safety Assessments",
         #    module_type = 10,
         #)),
-        # Deprecated by Surveys module
+        # Deprecated
         # - depends on CR, IRS & Impact
         #("assess", Storage(
         #    name_nice = T("Assessments"),

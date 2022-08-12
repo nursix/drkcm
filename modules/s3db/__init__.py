@@ -8,7 +8,6 @@ from . import budget
 from . import cap
 from . import cms
 from . import cr
-from . import dc
 from . import deploy
 from . import disease
 from . import doc

@@ -53,7 +53,6 @@ class DocumentEntityModel(DataModel):
     def model(self):
 
         T = current.T
-        settings = current.deployment_settings
 
         # ---------------------------------------------------------------------
         # Document-referencing entities
@@ -63,7 +62,6 @@ class DocumentEntityModel(DataModel):
                         "cms_post": T("Post"),
                         "cr_shelter": T("Shelter"),
                         "deploy_mission": T("Mission"),
-                        "dc_response": T(settings.get_dc_response_label()),
                         "dvr_case": T("Case"),
                         "dvr_case_activity": T("Case Activity"),
                         "event_event": T("Event"),

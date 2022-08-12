@@ -628,27 +628,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def dc():
-        """ Data Collection Tool """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="dc")(
-                    M("Templates", f="template")(
-                        M("Create", m="create"),
-                        M("Import", f="question", m="import"),
-                    ),
-                    M("Targets", f="target")(
-                        M("Create", m="create"),
-                    ),
-                    # @ToDo: Use settings for label
-                    M("Responses", f="respnse")(
-                        M("Create", m="create"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def deploy():
         """ Deployments """
 

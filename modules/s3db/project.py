@@ -43,7 +43,6 @@ __all__ = ("ProjectModel",
            "ProjectStatusModel",
            "ProjectTagModel",
            "ProjectThemeModel",
-           "ProjectTargetModel",
            "ProjectTaskModel",
            "ProjectTaskTagModel",
            "project_ActivityRepresent",
@@ -482,13 +481,6 @@ class ProjectModel(DataModel):
                        # Format needed by S3Filter (unless using $link)
                        project_theme_project = "project_id",
 
-                       # Data Collection Targets
-                       project_project_target = "project_id",
-                       dc_target = {"link": "project_project_target",
-                                    "joinby": "project_id",
-                                    "key": "target_id",
-                                    "actuate": "replace",
-                                    },
                        # Master Keys
                        project_project_masterkey = "project_id",
                        auth_masterkey = {"link": "project_project_masterkey",
@@ -2540,46 +2532,6 @@ class ProjectThemeModel(DataModel):
                 update_or_insert(project_location_id = row.id,
                                  theme_id = theme_id,
                                  percentage = percentages[theme_id])
-
-# =============================================================================
-class ProjectTargetModel(DataModel):
-
-    names = ("project_project_target",)
-
-    def model(self):
-
-        T = current.T
-
-        # ---------------------------------------------------------------------
-        # Projects <> DC Targets Link Table
-        #
-        tablename = "project_project_target"
-        self.define_table(tablename,
-                          self.project_project_id(empty = False,
-                                                  ondelete = "CASCADE",
-                                                  ),
-                          self.dc_target_id(empty = False,
-                                            ondelete = "CASCADE",
-                                            ),
-                          *s3_meta_fields()
-                          )
-
-        # CRUD Strings
-        current.response.s3.crud_strings[tablename] = Storage(
-            label_create = T("Add Data Collection Target"),
-            title_display = T("Data Collection Target"),
-            title_list = T("Data Collection Targets"),
-            title_update = T("Edit Data Collection Target"),
-            title_upload = T("Import Data Collection Targets"),
-            label_list_button = T("List Data Collection Targets"),
-            msg_record_created = T("Data Collection Target added to Project"),
-            msg_record_modified = T("Data Collection Target updated"),
-            msg_record_deleted = T("Data Collection Target removed from Project"),
-            msg_list_empty = T("No Data Collection Targets found for this Project"),
-            )
-
-        # Pass names back to global scope (s3.*)
-        return None
 
 # =============================================================================
 class ProjectActivityModel(DataModel):

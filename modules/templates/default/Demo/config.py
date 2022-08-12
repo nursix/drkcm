@@ -238,12 +238,6 @@ def config(settings):
         #    restricted = True,
         #    module_type = 5,
         #)),
-        ("dc", Storage(
-           name_nice = T("Assessments"),
-           #description = "Data collection tool",
-           restricted = True,
-           module_type = 5
-        )),
         ("cr", Storage(
             name_nice = T("Shelters"),
             #description = "Tracks the location, capacity and breakdown of victims in Shelters",
@@ -361,7 +355,7 @@ def config(settings):
         #    restricted = True,
         #    module_type = 10,
         #)),
-        # Deprecated by Surveys module
+        # Deprecated
         # - depends on CR, IRS & Impact
         #("assess", Storage(
         #    name_nice = T("Assessments"),

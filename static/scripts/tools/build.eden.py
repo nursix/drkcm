@@ -382,9 +382,6 @@ def do_js(minimize,
     # Build single-component S3 scripts
     #
     for filename in ("cap",
-                     "dc_answer",
-                     "dc_question",
-                     "dc_results",
                      "dvr",
                      "gis",
                      "gis.feature_crud",
