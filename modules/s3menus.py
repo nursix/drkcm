@@ -1289,46 +1289,6 @@ class S3OptionsMenu:
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def survey():
-        """ SURVEY / Survey """
-
-        ADMIN = current.session.s3.system_roles.ADMIN
-
-        # Do we have a series_id?
-        series_id = False
-        get_vars = Storage()
-        try:
-            series_id = int(current.request.args[0])
-        except (IndexError, ValueError):
-            try:
-                series_id = int(current.request.get_vars["viewing"].split(".")[1])
-            except (AttributeError, IndexError, ValueError):
-                pass
-        if series_id:
-            get_vars.viewing = "survey_complete.%s" % series_id
-
-        return M(c="survey")(
-                    M("Assessment Templates", f="template")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Section", f="section")(
-                    #    M("Create", args="create"),
-                    #),
-                    M("Disaster Assessments", f="series")(
-                        M("Create", m="create"),
-                    ),
-                    M("Administration", f="admin", restrict=[ADMIN])(
-                        M("Import Templates", f="question_list",
-                          m="import", p="create"),
-                        M("Import Template Layout", f="formatter",
-                          m="import", p="create"),
-                        M("Import Completed Assessment Forms", f="complete",
-                          m="import", p="create", vars=get_vars, check=series_id),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def member():
         """ Membership Management """
 

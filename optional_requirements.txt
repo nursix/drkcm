@@ -22,10 +22,6 @@ tweepy>=1.9
 sgmllib3k>=1.0.0
 # Warning: GIS unresolved dependency: selenium required for Map printing support
 selenium>=2.23.0
-# Warning: S3Chart unresolved dependency: matplotlib required for charting in Survey module
-matplotlib>=1.1.1
-# Warning: Survey unresolved dependency: PyRTF required if you want to export assessment/survey templates as a Word document
-PyRTF>=0.45
 # Warning: Message Parsing unresolved dependency: TwitterSearch required for fetching results from twitter keyword queries
 TwitterSearch>=1.0
 # Warning: S3 unresolved dependency: pyparsing required for Calendar Support and Advanced URL Queries

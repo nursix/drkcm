@@ -230,12 +230,6 @@ def config(settings):
             restricted = True,
             module_type = 2
         )),
-        #("survey", Storage(
-        #    name_nice = T("Surveys"),
-        #    #description = "Create, enter, and manage surveys.",
-        #    restricted = True,
-        #    module_type = 5,
-        #)),
         ("cr", Storage(
             name_nice = T("Shelters"),
             #description = "Tracks the location, capacity and breakdown of victims in Shelters",

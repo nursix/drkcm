@@ -41,7 +41,6 @@ if s3.debug:
     import s3db.sit
     import s3db.stats
     import s3db.supply
-    import s3db.survey
     import s3db.sync
     import s3db.translate
     import s3db.transport

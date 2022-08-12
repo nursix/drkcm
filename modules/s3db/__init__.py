@@ -34,7 +34,6 @@ from . import security
 from . import sit
 from . import stats
 from . import supply
-from . import survey
 from . import sync
 from . import translate
 from . import transport

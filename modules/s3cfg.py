@@ -987,7 +987,6 @@ class S3Config(Storage):
             ("inv", T("Warehouses")),
             ("asset", T("Assets")),
             ("project", T("Projects")),
-            ("survey", T("Assessments")),
             ("irs", T("Incidents"))
         ]))
 
