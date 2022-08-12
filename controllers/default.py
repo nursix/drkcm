@@ -1148,7 +1148,7 @@ def facebook():
     if not channel:
         redirect(URL(f="user", args=request.args, vars=get_vars))
 
-    from s3oauth import FaceBookAccount
+    from core.aaa.oauth import FaceBookAccount
     auth.settings.login_form = FaceBookAccount(channel)
     form = auth()
 
@@ -1163,7 +1163,7 @@ def google():
     if not channel:
         redirect(URL(f="user", args=request.args, vars=get_vars))
 
-    from s3oauth import GooglePlusAccount
+    from core.aaa.oauth import GooglePlusAccount
     auth.settings.login_form = GooglePlusAccount(channel)
     form = auth()
 
@@ -1178,7 +1178,7 @@ def humanitarian_id():
     if not channel:
         redirect(URL(f="user", args=request.args, vars=get_vars))
 
-    from s3oauth import HumanitarianIDAccount
+    from core.aaa.oauth import HumanitarianIDAccount
     auth.settings.login_form = HumanitarianIDAccount(channel)
     form = auth()
 
@@ -1192,7 +1192,7 @@ def openid_connect():
     if not channel:
         redirect(URL(f="user", args=request.args, vars=get_vars))
 
-    from s3oauth import OpenIDConnectAccount
+    from core.aaa.oauth import OpenIDConnectAccount
     auth.settings.login_form = OpenIDConnectAccount(channel)
     form = auth()
 
