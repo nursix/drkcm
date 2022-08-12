@@ -4984,11 +4984,6 @@ class DVRCaseEvaluationModel(DataModel):
                      *s3_meta_fields()
                      )
 
-        # Custom Report Method
-        #self.set_method("org_capacity_assessment_data",
-        #                method = "custom_report",
-        #                action = org_CapacityReport())
-
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         return None

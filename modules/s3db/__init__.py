@@ -1,6 +1,5 @@
 DEFAULT = lambda: None
 
-from . import assess
 from . import asset
 from . import auth
 from . import br

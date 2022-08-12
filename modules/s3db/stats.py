@@ -1257,7 +1257,6 @@ class StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
-        - might link to Assessments module in future
     """
 
     names = ("stats_impact",

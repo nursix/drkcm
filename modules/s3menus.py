@@ -350,41 +350,6 @@ class S3OptionsMenu:
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def assess():
-        """ ASSESS Menu """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="assess")(
-                    M("Building Assessments", f="building")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                    ),
-                    M("Canvassing", f="canvass")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                    ),
-                    #M("Rapid Assessments", f="rat")(
-                    #    M("Create", m="create"),
-                    #),
-                    #M("Impact Assessments", f="assess")(
-                    #    #M("Create", m="create"),
-                    #    M("Create", f="basic_assess", p="create"),
-                    #    #M("Search"),
-                    #    M("Mobile", f="mobile_basic_assess"),
-                    #),
-                    ##M("Baseline Data")(
-                    #    #M("Population", f="population"),
-                    ##),
-                    #M("Edit Options", restrict=ADMIN)(
-                    #    M("List / Add Baseline Types", f="baseline_type"),
-                    #    M("List / Add Impact Types", f="impact_type"),
-                    #)
-                )
-
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def asset():
         """ ASSET Controller """
 
@@ -518,27 +483,6 @@ class S3OptionsMenu:
                         M("Create", m="create"),
                     ),
                     M("Parameters", f="parameter"),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def building():
-        """ BUILDING Controller """
-
-        return M(c="building")(
-                    M("NZSEE Level 1", f="nzseel1")(
-                        M("Submit New (triage)", m="create",
-                          vars={"triage":1}),
-                        M("Submit New (full form)", m="create"),
-                    ),
-                    M("NZSEE Level 2", f="nzseel2")(
-                        M("Submit New", m="create"),
-                    ),
-                    M("Report", f="index")(
-                        M("Snapshot", f="report"),
-                        M("Assessment timeline", f="timeline"),
-                        M("Assessment admin level", f="adminLevel"),
-                    ),
                 )
 
     # -------------------------------------------------------------------------

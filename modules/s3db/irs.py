@@ -514,7 +514,6 @@ class IRSModel(DataModel):
         """
             Safe defaults for model-global names in case module is disabled
             - used by events module
-                    & legacy assess & impact modules
         """
 
         return {"irs_ireport_id": S3ReusableField.dummy("ireport_id"),

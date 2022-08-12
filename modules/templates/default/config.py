@@ -1418,23 +1418,6 @@ def config(settings):
         #   #description = "Helps to report and search for missing persons",
         #   module_type = 10,
         #)),
-        #("building", Storage(
-        #    name_nice = T("Building Assessments"),
-        #    #description = "Building Safety Assessments",
-        #    module_type = 10,
-        #)),
-        # Deprecated
-        # - depends on CR, IRS & Impact
-        #("assess", Storage(
-        #    name_nice = T("Assessments"),
-        #    #description = "Rapid Assessments & Flexible Impact Assessments",
-        #    module_type = 10,
-        #)),
-        #("impact", Storage(
-        #    name_nice = T("Impacts"),
-        #    #description = "Used by Assess",
-        #    module_type = None,
-        #)),
     ])
 
 # END =========================================================================

@@ -340,27 +340,6 @@ def config(settings):
         #    restricted = True,
         #    module_type = 10,
         #)),
-        # @ToDo: Port these Assessments to the Survey module
-        #("building", Storage(
-        #    name_nice = T("Building Assessments"),
-        #    #description = "Building Safety Assessments",
-        #    restricted = True,
-        #    module_type = 10,
-        #)),
-        # Deprecated
-        # - depends on CR, IRS & Impact
-        #("assess", Storage(
-        #    name_nice = T("Assessments"),
-        #    #description = "Rapid Assessments & Flexible Impact Assessments",
-        #    restricted = True,
-        #    module_type = 10,
-        #)),
-        #("impact", Storage(
-        #    name_nice = T("Impacts"),
-        #    #description = "Used by Assess",
-        #    restricted = True,
-        #    module_type = None,
-        #)),
     ])
 
 # END =========================================================================

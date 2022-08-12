@@ -190,16 +190,6 @@ def shelter():
                 elif r.component.name == "human_resource":
                     s3db.org_site_staff_config(r)
 
-                elif r.component.name == "rat":
-                    # Hide the Implied fields
-                    db.assess_rat.location_id.writable = False
-                    db.assess_rat.location_id.default = r.record.location_id
-                    db.assess_rat.location_id.comment = ""
-                    # Set defaults
-                    staff_id = auth.s3_logged_in_human_resource()
-                    if staff_id:
-                        db.assess_rat.staff_id.default = staff_id.id
-
                 elif r.component.name == "shelter_registration":
                     if settings.get_cr_shelter_units():
                         # Filter housing units to units of this shelter

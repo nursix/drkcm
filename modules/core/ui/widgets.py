@@ -8168,7 +8168,7 @@ class CheckboxesWidgetS3(OptionsWidget):
         - supports also integer-type keys in option sets
         - has an identifiable class for styling
 
-        Used in Sync, Projects, Assess, Facilities
+        Used in Sync, Projects, Facilities
     """
 
     # -------------------------------------------------------------------------
