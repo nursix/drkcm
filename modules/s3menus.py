@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Menu Structure and Layout
+"""
+    Sahana Eden Menu Structure and Layout
 
     @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -40,7 +39,7 @@ from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import M, MM, MP, ML, MA, OM, MOA, S3BreadcrumbsLayout
 
 # =============================================================================
-class S3MainMenu(object):
+class S3MainMenu:
     """ The default configurations for the main application menu """
 
     # -------------------------------------------------------------------------
@@ -258,7 +257,7 @@ class S3MainMenu(object):
                 )
 
 # =============================================================================
-class S3OptionsMenu(object):
+class S3OptionsMenu:
     """
         The default configurations for options menus
 

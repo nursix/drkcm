@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" S3 Theme Elements
+"""
+    S3 Theme Elements
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 

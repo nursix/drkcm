@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Layouts Unit Tests
 #
 # To run this script use:

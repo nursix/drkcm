@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # CMS Unit Tests
 #
 # To run this script use:

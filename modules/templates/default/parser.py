@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Message Parsing
+"""
+    Message Parsing
 
     Template-specific Message Parsers are defined here.
 
@@ -48,7 +47,7 @@ from core import S3Represent
 from core.msg.parser import S3Parsing
 
 # =============================================================================
-class S3Parser(object):
+class S3Parser:
     """
        Message Parsing Template
     """

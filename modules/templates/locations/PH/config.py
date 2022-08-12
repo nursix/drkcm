@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from gluon import current
 
 def config(settings):

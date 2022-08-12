@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Authentication via OAuth2 (e.g. Facebook & Google)
+"""
+    Authentication via OAuth2 (e.g. Facebook & Google)
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 

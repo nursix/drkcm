@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Inventory Model
+"""
+    Sahana Eden Inventory Model
 
     @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT

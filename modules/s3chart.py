@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" S3 Charting Toolkit
+"""
+    S3 Charting Toolkit
 
     @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -39,7 +38,7 @@ from gluon.storage import Storage
 from gluon.html import IMG
 
 # =============================================================================
-class S3Chart(object):
+class S3Chart:
     """
         Module for graphing
 

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Incident Reporting Model
+"""
+    Sahana Eden Incident Reporting Model
 
     @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
