@@ -1,0 +1,38 @@
+// ============================================================================
+// Styles for System Info
+// ============================================================================
+// VARIABLES
+
+// Foundation variables used:
+
+// ----------------------------------------------------------------------------
+// STYLES
+//
+.system-info {
+    width: 100%;
+    margin-top: 0.8rem;
+    table {
+        width: auto;
+        margin: auto;
+        border: 2px solid $primary-color;
+        tr {
+            border: 0;
+        }
+        td {
+            font-size: 0.8rem;
+            line-height: 0.8rem;
+            background-color: $datatables_bgcolor_even;
+            &:nth-child(2) {
+                font-size: 0.7rem;
+            }
+        }
+    }
+    .about-subheader td {
+        background-color: $datatables_bgcolor_odd_highlight;
+        font-size: 0.9rem;
+        font-weight: bold;
+        line-height: 0.9rem;
+    }
+}
+
+// END ========================================================================

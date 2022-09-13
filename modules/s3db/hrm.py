@@ -35,7 +35,6 @@ __all__ = ("HRModel",
            "HRTagModel",
            "HREventProgrammeModel",
            "HREventProjectModel",
-           "HREventAssessmentModel",
            "HRAppraisalModel",
            "HRExperienceModel",
            "HRAwardModel",
@@ -2889,12 +2888,6 @@ class HRSkillModel(DataModel):
                                           "key": "project_id",
                                           "actuate": "hide",
                                           },
-
-                       dc_target = {"link": "hrm_event_target",
-                                    "joinby": "training_event_id",
-                                    "key": "target_id",
-                                    "actuate": "replace",
-                                    },
                        )
 
         # =====================================================================
@@ -4226,53 +4219,6 @@ class HREventProjectModel(DataModel):
                           self.project_project_id(empty = False,
                                                   ondelete = "CASCADE",
                                                   ),
-                          *s3_meta_fields())
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-# =============================================================================
-class HREventAssessmentModel(DataModel):
-    """
-        (Training) Events <> Data Collection Assessments Link Table
-         Can be used for:
-            * Needs Assessment / Readiness checklist
-            * Tests (either for checking learning/application or for final grade)
-            * Evaluation (currently the only use case - for IFRC's Bangkok CCST)
-    """
-
-    names = ("hrm_event_target",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        # @ToDo: Deployment_setting if use expanded beyond Bangkok CCST
-        type_opts = {1: T("Other"),
-                     3: T("3-month post-event Evaluation"),
-                     12: T("12-month post-event Evaluation"),
-                     }
-
-        # =====================================================================
-        # (Training) Events <> DC Targets Link Table
-        #
-        tablename = "hrm_event_target"
-        self.define_table(tablename,
-                          self.hrm_training_event_id(empty = False,
-                                                     ondelete = "CASCADE",
-                                                     ),
-                          self.dc_target_id(empty = False,
-                                            ondelete = "CASCADE",
-                                            ),
-                          Field("survey_type",
-                                default = 1,
-                                label = T("Type"),
-                                requires = IS_EMPTY_OR(IS_IN_SET(type_opts)),
-                                represent = represent_option(type_opts),
-                                ),
                           *s3_meta_fields())
 
         # ---------------------------------------------------------------------
@@ -7551,13 +7497,6 @@ def hrm_rheader(r, tabs=None, profile=False):
             tabs = [(T("Training Event Details"), None),
                     (T("Participants"), "participant"),
                     ]
-            if settings.has_module("dc"):
-                label = settings.get_dc_response_label()
-                if label == "Survey":
-                    label = T("Surveys")
-                else:
-                    label = T("Assessments")
-                tabs.append((label, "target"),)
         rheader_tabs = s3_rheader_tabs(r, tabs)
         action = ""
         if settings.has_module("msg"):
@@ -9065,55 +9004,8 @@ def hrm_training_event_controller():
     s3 = current.response.s3
 
     def prep(r):
-        if r.component_name == "target":
 
-            tablename = "dc_target"
-
-            # Simplify
-            table = r.component.table
-            table.location_id.readable = table.location_id.writable = False
-            #table.organisation_id.readable = table.organisation_id.writable = False
-            #table.comments.readable = table.comments.writable = False
-
-            # CRUD strings
-            T = current.T
-            label = current.deployment_settings.get_dc_response_label()
-            if label == "Survey":
-                #label = T("Survey")
-                s3.crud_strings[tablename] = Storage(
-                    label_create = T("Create Survey"),
-                    title_display = T("Survey Details"),
-                    title_list = T("Surveys"),
-                    title_update = T("Edit Survey"),
-                    title_upload = T("Import Surveys"),
-                    label_list_button = T("List Surveys"),
-                    label_delete_button = T("Delete Survey"),
-                    msg_record_created = T("Survey added"),
-                    msg_record_modified = T("Survey updated"),
-                    msg_record_deleted = T("Survey deleted"),
-                    msg_list_empty = T("No Surveys currently registered"))
-            else:
-                #label = T("Assessment")
-                s3.crud_strings[tablename] = Storage(
-                    label_create = T("Create Assessment"),
-                    title_display = T("Assessment Details"),
-                    title_list = T("Assessments"),
-                    title_update = T("Edit Assessment"),
-                    title_upload = T("Import Assessments"),
-                    label_list_button = T("List Assessments"),
-                    label_delete_button = T("Delete Assessment"),
-                    msg_record_created = T("Assessment added"),
-                    msg_record_modified = T("Assessment updated"),
-                    msg_record_deleted = T("Assessment deleted"),
-                    msg_list_empty = T("No Assessments currently registered"))
-
-            # Open in native controller
-            current.s3db.configure(tablename,
-                                   linkto = lambda record_id: URL(c="dc", f="target", args=[record_id, "read"]),
-                                   linkto_update = lambda record_id: URL(c="dc", f="target", args=[record_id, "update"]),
-                                   )
-
-        elif r.component_name == "participant" and \
+        if r.component_name == "participant" and \
            (r.interactive or \
             r.representation in ("aadata", "pdf", "xlsx", "xls")):
 
@@ -9177,12 +9069,8 @@ def hrm_training_event_controller():
     #           showadd_btn = output.get("showadd_btn", None)
     #           if showadd_btn:
     #               # Add an Import button
-    #               if s3.crud.formstyle == "bootstrap":
-    #                   _class = "s3_modal"
-    #               else:
-    #                   _class = "action-btn s3_modal"
     #               import_btn = S3CRUD.crud_button(label=current.T("Import Participants"),
-    #                                               _class=_class,
+    #                                               _class="action-btn s3_modal",
     #                                               _href=URL(f="training", args="import.popup",
     #                                                         vars={"~.training_event_id":r.id}),
     #                                               )

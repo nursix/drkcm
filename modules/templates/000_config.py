@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Machine-specific settings
     All settings which are typically edited for a specific machine should be done here

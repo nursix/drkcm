@@ -3,37 +3,9 @@
 """
 
 module = request.controller
-#resourcename = request.function
 
 if not settings.has_module(module):
     raise HTTP(404, body="Module disabled: %s" % module)
-
-# -----------------------------------------------------------------------------
-#def s3_menu_postp():
-#    # @todo: rewrite this for new framework
-#    if len(request.args) > 0 and request.args[0].isdigit():
-#        newreq = dict(from_record="hms_hospital.%s" % request.args[0],
-#                      from_fields="hospital_id$id")
-#        #selreq = {"req.hospital_id":request.args[0]}
-#    else:
-#        newreq = dict()
-#    selreq = {"req.hospital_id__ne":"NONE"}
-#    menu_selected = []
-#    hospital_id = s3base.get_last_record_id("hms_hospital")
-#    if hospital_id:
-#        hospital = s3db.hms_hospital
-#        query = (hospital.id == hospital_id)
-#        record = db(query).select(hospital.id,
-#                                  hospital.name,
-#                                  limitby=(0, 1)).first()
-#        if record:
-#            name = record.name
-#            menu_selected.append(["%s: %s" % (T("Hospital"), name), False,
-#                                 URL(f="hospital",
-#                                     args=[record.id])])
-#    if menu_selected:
-#        menu_selected = [T("Open recent"), True, None, menu_selected]
-#        response.menu_options.append(menu_selected)
 
 # -----------------------------------------------------------------------------
 def index():

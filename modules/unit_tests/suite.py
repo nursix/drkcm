@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Eden Unit Tests
 #
 # To run this test suite use:

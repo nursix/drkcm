@@ -264,7 +264,7 @@
                 return rule[0] !== null && (rule[0] !== 0 || !rule[7]);
             });
 
-            this.input.val(JSON.stringify(rules)).change();
+            this.input.val(JSON.stringify(rules)).trigger('change');
         },
 
         /**
@@ -1397,7 +1397,7 @@
 
                 checkbox.data({selected: selected});
                 if (implied && implied.length) {
-                    implied.data('implied', selected).change();
+                    implied.data('implied', selected).trigger('change');
                 }
             }
 

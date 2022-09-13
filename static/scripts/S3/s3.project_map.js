@@ -7,8 +7,8 @@
 
 /* Global vars */
 
-$(document).ready(function() {
-    $('#project_theme_id').change(function() {
+$(function() {
+    $('#project_theme_id').on('change', function() {
         // Update the Layer accordingly
     });
 });

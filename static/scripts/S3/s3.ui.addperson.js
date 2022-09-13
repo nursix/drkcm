@@ -645,7 +645,7 @@
 
         // --------------------------------------------------------------------
         /**
-         * Clear the current selection and start selecting/entering a 
+         * Clear the current selection and start selecting/entering a
          * different person
          */
         _clear: function() {
@@ -1226,7 +1226,7 @@
                 if (dupesCount.data('submit')) {
                     this.data = {'id': personID};
                     this._serialize();
-                    dupesCount.closest('form').off(this.eventNamespace).submit();
+                    dupesCount.closest('form').off(this.eventNamespace).trigger('submit');
                 } else {
                     if (this.options.separateNameFields) {
                         this.trigger.val('');
@@ -1238,7 +1238,7 @@
                 this._clearDuplicates();
 
                 if (dupesCount.data('submit')) {
-                    dupesCount.closest('form').off(this.eventNamespace).submit();
+                    dupesCount.closest('form').off(this.eventNamespace).trigger('submit');
                 }
             }
         },
@@ -1298,7 +1298,7 @@
             }
             this._serialize();
 
-            $(form).off(this.eventNamespace).submit();
+            $(form).off(this.eventNamespace).trigger('submit');
 
             return true;
         },
@@ -1336,7 +1336,7 @@
             });
 
             // Filter Autocomplete-URL when selected organisation changes
-            $(selector + '_organisation_id').change(function() {
+            $(selector + '_organisation_id').on('change', function() {
                 self.acURL = updateURLQuery(self.acURL, {
                     '~.organisation_id': $(this).val()
                 });

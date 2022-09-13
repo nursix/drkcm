@@ -91,7 +91,7 @@ class index(CustomController):
                           _class="info button",
                           ),
                         ),
-                     _class="button-group stack-for-small", # add even-2 for 2 buttons
+                     _class="button-group expanded stacked-for-small",
                      )
 
         output = {"login_div": login_div,

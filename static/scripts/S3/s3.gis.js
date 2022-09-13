@@ -210,7 +210,7 @@ S3.gis.yx = [
 
     /**
      * Main Start Function
-     * - called by yepnope callback in s3.gis.loader
+     * - called by callback in s3.gis.loader
      *
      * Parameters:
      * map_id - {String} A unique ID for this map
@@ -3926,7 +3926,7 @@ S3.gis.yx = [
                     // Resize when images are loaded
                     //popup.registerImageListeners();
                     // Check for links to load in iframe
-                    $('#' + id + ' a.btn.iframe').click(function() {
+                    $('#' + id + ' a.btn.iframe').on('click', function() {
 
                         var url = $(this).attr('href');
                         if (url.indexOf('http://') === 0) {
@@ -4673,9 +4673,6 @@ S3.gis.yx = [
                     addCircleControl(map, toolbar, circle_pressed);
                 }
             }
-            if (options.color_picker) {
-                addColorPickerControl(map, toolbar);
-            }
             //toolbar.add(dragButton);
             //toolbar.add(resizeButton);
             //toolbar.add(rotateButton);
@@ -5100,7 +5097,7 @@ S3.gis.yx = [
         legendPanel.render(el);
 
         // Show/Hide Legend when clicking on Tab
-        $('#' + map_id + ' .map_legend_tab').click(function() {
+        $('#' + map_id + ' .map_legend_tab').on('click', function() {
             if ($(this).hasClass('right')) {
                 hideLegend(map);
             } else {
@@ -5473,7 +5470,7 @@ S3.gis.yx = [
 
         // Click Handlers
         var s3 = S3.gis.maps[map_id].s3;
-        $('#' + map_id + ' .map_polygon_finish').click(function() {
+        $('#' + map_id + ' .map_polygon_finish').on('click', function() {
             // Complete the Polygon (which in-turn will call pointPlaced)
             control.finishSketch();
 
@@ -5492,7 +5489,7 @@ S3.gis.yx = [
             }
         });
 
-        $('#' + map_id + ' .map_polygon_clear').click(function() {
+        $('#' + map_id + ' .map_polygon_clear').on('click', function() {
             if (s3.lastDraftFeature) {
                 s3.lastDraftFeature.destroy();
             } else if (s3.draftLayer.features.length > 1) {
@@ -5711,84 +5708,6 @@ S3.gis.yx = [
     };
 
     /**
-     * ColorPicker to style Features
-     * - currently used just by S3LocationSelector
-     * - need to pickup in postprocess
-     */
-    var addColorPickerControl = function(map, toolbar) {
-
-        var s3 = map.s3,
-            map_id = s3.id,
-            draft_style = s3.options.draft_style,
-            value;
-
-        if (draft_style) {
-            if (draft_style.fillOpacity) {
-                value = 'rgba(' + hex2rgb(draft_style.fill) + ',' + draft_style.fillOpacity + ')';
-            } else {
-                value = 'rgb(' + hex2rgb(draft_style.fill) + ')';
-            }
-        } else {
-            value = '';
-        }
-        var colorPickerButton = new Ext.Toolbar.Item({
-            html: '<input class="gis_colorpicker" name="colour" value="' + value + '"/>'
-        });
-        toolbar.add(colorPickerButton);
-        $.when(uiLoaded(map_id)).then(
-            function(/* status */) {
-                // Success: Load Colorpicker
-                $('#' + map_id + '_panel .gis_colorpicker').spectrum({
-                    showInput: true,
-                    showInitial: true,
-                    preferredFormat: 'rgb', // needed for Alpha
-                    showPaletteOnly: true,
-                    togglePaletteOnly: true,
-                    palette: ['rgba(255, 0, 0, .5)',    // red
-                              'rgba(255, 165, 0, .5)',  // orange
-                              'rgba(255, 255, 0, .5)',  // yellow
-                              'rgba(0, 255, 0, .5)',    // green
-                              'rgba(0, 0, 255, .5)',    // blue
-                              'rgba(255, 255, 255, .5)',// white
-                              'rgba(0, 0, 0, .5)'       // black
-                              ],
-                    showAlpha: true,
-                    cancelText: i18n.gis_cancelText,
-                    chooseText: i18n.gis_chooseText,
-                    togglePaletteMoreText: i18n.gis_togglePaletteMoreText,
-                    togglePaletteLessText: i18n.gis_togglePaletteLessText,
-                    clearText: i18n.gis_clearText,
-                    noColorSelectedText: i18n.gis_noColorSelectedText,
-                    change: function(colour) {
-                        // Modify the Style of the Draft Layer
-                        var style = {fill: rgb2hex(colour._r, colour._g, colour._b)};
-                        if (colour._a != 1) {
-                            style.fillOpacity = colour._a;
-                        }
-                        var layer = {
-                            'style': style,
-                            'opacity': 0.9 // trigger the 'select' renderIntent -> Opaque
-                        };
-                        var response = createStyleMap(map, layer);
-                        var featureStyleMap = response[0];
-                        var draftLayer = s3.draftLayer;
-                        draftLayer.styleMap = featureStyleMap;
-                        draftLayer.redraw();
-                    }
-                });
-            },
-            function(status) {
-                // Failed
-                s3_debug(status);
-            },
-            function(status) {
-                // Progress
-                s3_debug(status);
-            }
-        );
-    };
-
-    /**
      * Potlatch button for editing OpenStreetMap
      * @ToDo: Select a Polygon for editing rather than the whole Viewport
      */
@@ -5956,7 +5875,7 @@ S3.gis.yx = [
             $('#' + map_id + ' .map_save_panel').removeClass('off');
         }
         // Click Handler
-        $('#' + map_id + ' .map_save_button').click(function() {
+        $('#' + map_id + ' .map_save_button').on('click', function() {
             saveClickHandler(map);
         });
     };
@@ -6014,8 +5933,8 @@ S3.gis.yx = [
             $('#' + map_id + ' .map_save_panel label').labelOver('over');
         }
         // Click Handler
-        save_button.unbind('click')
-                   .click(function() {
+        save_button.off('click')
+                   .on('click', function() {
             saveConfig(map);
             //save_button.hide();
             // Update Map name
@@ -6037,25 +5956,25 @@ S3.gis.yx = [
             $('#' + map_id + ' .map_save_panel .checkbox').prop('checked', false)
                                                           .prop('disabled', false);
             // Restore original click handler
-            save_button.unbind('click')
-                       .click(function() {
+            save_button.off('click')
+                       .on('click', function() {
                 saveClickHandler(map);
             });
         });
         // Cancel Handler
         var savePanel = $('#' + map_id + ' .map_save_panel');
-        $('html').unbind('click.cancelSave')
-                 .bind('click.cancelSave', function() {
+        $('html').off('click.cancelSave')
+                 .on('click.cancelSave', function() {
             savePanel.addClass('off');
             // Restore original click handler
-            save_button.unbind('click')
-                       .click(function() {
+            save_button.off('click')
+                       .on('click', function() {
                 savePanel.removeClass('off')
-                         .unbind('click');
+                         .off('click');
                 nameConfig(map);
             });
         });
-        savePanel.click(function(event) {
+        savePanel.on('click', function(event) {
             // Don't activate if clicking inside
             event.stopPropagation();
         });
@@ -6499,7 +6418,7 @@ S3.gis.yx = [
                             });
                             propertiesWindow.show();
                             // Set the form to use AJAX submission
-                            $('#plain form').submit(function() {
+                            $('#plain form').on('submit', function() {
                                 var id = $('#plain input[name="id"]').val();
                                 var update_url = S3.Ap.concat('/gis/layer_' + layer_type + '/' + id + '.plain/update');
                                 var fields = $('#plain input');

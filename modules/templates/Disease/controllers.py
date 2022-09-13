@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from gluon import *
 from core import CustomController
 
@@ -52,16 +50,12 @@ class index(CustomController):
                 else:
                     item = DIV(XML(item.body))
             elif ADMIN:
-                if current.response.s3.crud.formstyle == "bootstrap":
-                    _class = "btn"
-                else:
-                    _class = "action-btn"
                 item = A(current.T("Edit"),
                          _href = URL(c="cms", f="post", args="create",
                                      vars = {"module": module,
                                              "resource": resource
                                              }),
-                         _class = "%s cms-edit" % _class,
+                         _class = "action-btn cms-edit",
                          )
             else:
                 item = ""

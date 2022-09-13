@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Menu Structure and Layout
+"""
+    Sahana Eden Menu Structure and Layout
 
     @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -40,7 +39,7 @@ from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import M, MM, MP, ML, MA, OM, MOA, S3BreadcrumbsLayout
 
 # =============================================================================
-class S3MainMenu(object):
+class S3MainMenu:
     """ The default configurations for the main application menu """
 
     # -------------------------------------------------------------------------
@@ -258,7 +257,7 @@ class S3MainMenu(object):
                 )
 
 # =============================================================================
-class S3OptionsMenu(object):
+class S3OptionsMenu:
     """
         The default configurations for options menus
 
@@ -348,41 +347,6 @@ class S3OptionsMenu(object):
                     #M("View Test Result Reports", c="admin", f="result"),
                     #M("Portable App", c="admin", f="portable")
                 )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def assess():
-        """ ASSESS Menu """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="assess")(
-                    M("Building Assessments", f="building")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                    ),
-                    M("Canvassing", f="canvass")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                    ),
-                    #M("Rapid Assessments", f="rat")(
-                    #    M("Create", m="create"),
-                    #),
-                    #M("Impact Assessments", f="assess")(
-                    #    #M("Create", m="create"),
-                    #    M("Create", f="basic_assess", p="create"),
-                    #    #M("Search"),
-                    #    M("Mobile", f="mobile_basic_assess"),
-                    #),
-                    ##M("Baseline Data")(
-                    #    #M("Population", f="population"),
-                    ##),
-                    #M("Edit Options", restrict=ADMIN)(
-                    #    M("List / Add Baseline Types", f="baseline_type"),
-                    #    M("List / Add Impact Types", f="impact_type"),
-                    #)
-                )
-
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -523,27 +487,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def building():
-        """ BUILDING Controller """
-
-        return M(c="building")(
-                    M("NZSEE Level 1", f="nzseel1")(
-                        M("Submit New (triage)", m="create",
-                          vars={"triage":1}),
-                        M("Submit New (full form)", m="create"),
-                    ),
-                    M("NZSEE Level 2", f="nzseel2")(
-                        M("Submit New", m="create"),
-                    ),
-                    M("Report", f="index")(
-                        M("Snapshot", f="report"),
-                        M("Assessment timeline", f="timeline"),
-                        M("Assessment admin level", f="adminLevel"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def cap():
         """ CAP menu """
 
@@ -625,27 +568,6 @@ class S3OptionsMenu(object):
                         #M("Compose and Send", f="newsletter", p="create"),
                         #),
                     )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def dc():
-        """ Data Collection Tool """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="dc")(
-                    M("Templates", f="template")(
-                        M("Create", m="create"),
-                        M("Import", f="question", m="import"),
-                    ),
-                    M("Targets", f="target")(
-                        M("Create", m="create"),
-                    ),
-                    # @ToDo: Use settings for label
-                    M("Responses", f="respnse")(
-                        M("Create", m="create"),
-                    ),
-                )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -742,14 +664,13 @@ class S3OptionsMenu(object):
         """ DVI / Disaster Victim Identification """
 
         return M(c="dvi")(
-                    #M("Home", f="index"),
                     M("Recovery Requests", f="recreq")(
                         M("New Request", m="create"),
                         M("List Current",
                           vars={"recreq.status":"1,2,3"}),
                     ),
                     M("Dead Bodies", f="body")(
-                        M("Add", m="create"),
+                        M("Register Body", m="create"),
                         M("List unidentified",
                           vars={"identification.status": "None"}),
                         M("Report by Age/Gender", m="report",
@@ -765,7 +686,6 @@ class S3OptionsMenu(object):
                     M("Morgues", f="morgue")(
                         M("Create", m="create"),
                     ),
-                    M("Dashboard", f="index"),
                 )
 
     # -------------------------------------------------------------------------
@@ -1187,12 +1107,10 @@ class S3OptionsMenu(object):
                     ),
                     M(inv_recv_list, c="inv", f="recv", translate=False)( # Already T()
                         M("Create", m="create"),
-                        M("Timeline", args="timeline"),
                     ),
                     M("Sent Shipments", c="inv", f="send")(
                         M("Create", m="create"),
                         M("Search Shipped Items", f="track_item"),
-                        M("Timeline", args="timeline"),
                     ),
                     M("Distributions", c="supply", f="distribution")(
                         M("Create", m="create"),
@@ -1251,7 +1169,6 @@ class S3OptionsMenu(object):
                         M("Create Incident Report", m="create"),
                         M("Open Incidents", vars={"open":1}),
                         M("Map", m="map"),
-                        M("Timeline", args="timeline"),
                         M("Import", m="import"),
                         M("Report", m="report")
                     ),
@@ -1313,46 +1230,6 @@ class S3OptionsMenu(object):
 
         # Use INV menu
         return self.inv()
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def survey():
-        """ SURVEY / Survey """
-
-        ADMIN = current.session.s3.system_roles.ADMIN
-
-        # Do we have a series_id?
-        series_id = False
-        get_vars = Storage()
-        try:
-            series_id = int(current.request.args[0])
-        except (IndexError, ValueError):
-            try:
-                series_id = int(current.request.get_vars["viewing"].split(".")[1])
-            except (AttributeError, IndexError, ValueError):
-                pass
-        if series_id:
-            get_vars.viewing = "survey_complete.%s" % series_id
-
-        return M(c="survey")(
-                    M("Assessment Templates", f="template")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Section", f="section")(
-                    #    M("Create", args="create"),
-                    #),
-                    M("Disaster Assessments", f="series")(
-                        M("Create", m="create"),
-                    ),
-                    M("Administration", f="admin", restrict=[ADMIN])(
-                        M("Import Templates", f="question_list",
-                          m="import", p="create"),
-                        M("Import Template Layout", f="formatter",
-                          m="import", p="create"),
-                        M("Import Completed Assessment Forms", f="complete",
-                          m="import", p="create", vars=get_vars, check=series_id),
-                    ),
-                )
 
     # -------------------------------------------------------------------------
     @staticmethod

@@ -64,12 +64,7 @@ def document_tabs(r):
         - currently unused as we don't have these tabs off documents
     """
 
-    tab_opts = [{"tablename": "assess_rat",
-                 "resource": "rat",
-                 "one_title": "1 Assessment",
-                 "num_title": " Assessments",
-                },
-                {"tablename": "irs_ireport",
+    tab_opts = [{"tablename": "irs_ireport",
                  "resource": "ireport",
                  "one_title": "1 Incident Report",
                  "num_title": " Incident Reports",
@@ -79,11 +74,6 @@ def document_tabs(r):
                  "one_title": "1 Shelter",
                  "num_title": " Shelters",
                 },
-                #{"tablename": "flood_freport",
-                # "resource": "freport",
-                # "one_title": "1 Flood Report",
-                # "num_title": " Flood Reports",
-                #},
                 {"tablename": "req_req",
                  "resource": "req",
                  "one_title": "1 Request",

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 
 #from gluon import current, URL
@@ -29,5 +27,5 @@ def config(settings):
         ("es", "Spanish"),
         ("fr", "French"),
     ])
-    
+
 # END =========================================================================

@@ -508,7 +508,7 @@
                                   .attr('class', 'pt-cell-value');
                 if (layer === null) {
                     value.text(labels.none);
-                } else if ($.isArray(layer)) {
+                } else if (Array.isArray(layer)) {
                     value.append('ul')
                          .selectAll('li')
                          .data(layer)
@@ -669,16 +669,16 @@
             }
             if (rowsLabel) {
                 $(chartOpts).append($(
-                    '<div id="' + pchartRows + '" class="pt-chart-icon pt-pchart"/>' +
-                    '<div id="' + vchartRows + '" class="pt-chart-icon pt-vchart"/>' +
+                    '<div id="' + pchartRows + '" class="pt-chart-icon pt-pchart"></div>' +
+                    '<div id="' + vchartRows + '" class="pt-chart-icon pt-vchart"></div>' +
                     '<span class="pt-chart-label">' + per + ' ' + rowsLabel + '</span>'
                 ));
             }
 
             if (colsLabel) {
                 $(chartOpts).append($(
-                    '<div id="' + pchartCols + '" class="pt-chart-icon pt-pchart"/>' +
-                    '<div id="' + vchartCols + '" class="pt-chart-icon pt-vchart"/>' +
+                    '<div id="' + pchartCols + '" class="pt-chart-icon pt-pchart"></div>' +
+                    '<div id="' + vchartCols + '" class="pt-chart-icon pt-vchart"></div>' +
                     '<span class="pt-chart-label">' + per + ' '  + colsLabel + '</span>'
                 ));
             }
@@ -686,11 +686,11 @@
             if (rowsLabel && colsLabel) {
                 $(chartOpts).append($(
                     '<span class="pt-chart-label">| ' + labels.breakdown + ': </span>' +
-                    '<div id="' + schartRows + '" class="pt-chart-icon pt-schart"/>' +
-                    '<div id="' + hchartRows + '" class="pt-chart-icon pt-hchart"/>' +
+                    '<div id="' + schartRows + '" class="pt-chart-icon pt-schart"></div>' +
+                    '<div id="' + hchartRows + '" class="pt-chart-icon pt-hchart"></div>' +
                     '<span class="pt-chart-label">' + per + ' ' + rowsLabel + '</span>' +
-                    '<div id="' + schartCols + '"  class="pt-chart-icon pt-schart"/>' +
-                    '<div id="' + hchartCols + '"  class="pt-chart-icon pt-hchart"/>' +
+                    '<div id="' + schartCols + '"  class="pt-chart-icon pt-schart"></div>' +
+                    '<div id="' + hchartCols + '"  class="pt-chart-icon pt-hchart"></div>' +
                     '<span class="pt-chart-label">' + per + ' ' + colsLabel + '</span>'
                 ));
             }
@@ -944,7 +944,6 @@
 
             // Prepare the data items
             var items = [],
-                truncateLabel = this._truncateLabel,
                 series,
                 set,
                 item;
@@ -1019,7 +1018,7 @@
                            .tickFormat(valueFormat);
                 reportChart.xAxis
                            .tickFormat(function(d) {
-                               return truncateLabel(d, 18);
+                               return pt._truncateLabel(d, 18);
                             });
 
                 // Render the chart
@@ -1169,8 +1168,7 @@
 
             // Chart
             var pt = this,
-                valueFormat = this.options.numberFormatter,
-                truncateLabel = this._truncateLabel;
+                valueFormat = this.options.numberFormatter;
 
             nv.addGraph(function() {
 
@@ -1190,7 +1188,7 @@
                            .tickFormat(valueFormat);
                 reportChart.xAxis
                            .tickFormat(function(d) {
-                               return truncateLabel(d, 24);
+                               return pt._truncateLabel(d, 24);
                             });
 
                 // Render the chart
@@ -1390,8 +1388,7 @@
                 barArea = $('<div class="pt-spectrum-bar">').appendTo(chart);
 
             // Define the bar chart
-            var valueFormat = this.options.numberFormatter,
-                truncateLabel = this._truncateLabel;
+            var valueFormat = this.options.numberFormatter;
 
             // On-hover data point tooltip
             var barChartTooltip = function(data) {
@@ -1419,7 +1416,7 @@
             barChart.yAxis
                     .tickFormat(valueFormat);
             barChart.xAxis
-                    .tickFormat(function(d) { return truncateLabel(d, 18); });
+                    .tickFormat(function(d) { return pt._truncateLabel(d, 18); });
 
             var barChartContainer = d3.select($(barArea).get(0))
                                       .append('svg')

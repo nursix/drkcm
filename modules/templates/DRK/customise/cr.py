@@ -535,7 +535,7 @@ def profile_header(r):
     # Get the number of free places in the BEA
     # => Non-BEA registrations do not occupy BEA capacity,
     #    so need to re-add the total here:
-    free = record.available_capacity + other_total
+    free = (record.available_capacity or 0) + other_total
     FREE = TR(TD(T("Free places")),
               TD(free),
               _class="dbstats-total",

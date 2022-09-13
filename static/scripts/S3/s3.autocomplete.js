@@ -79,12 +79,12 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
-                        //    create.click();
+                        //    create.trigger('click');
                         //} else {
                             // No link to create new (e.g. no permission to do so)
                             var extra = {id: 0};
@@ -114,7 +114,7 @@
                 var item = ui.item;
                 if (item.id) {
                     dummy_input.val(item[fieldname]);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -123,7 +123,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -143,15 +143,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.label != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -215,12 +215,12 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
-                        //    create.click();
+                        //    create.trigger('click');
                         //} else {
                             // No link to create new (e.g. no permission to do so)
                             data.push({
@@ -255,7 +255,7 @@
                 var id = item.id;
                 if (id) {
                     dummy_input.val(item.name);
-                    real_input.val(id).change();
+                    real_input.val(id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -264,7 +264,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -291,15 +291,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -447,12 +447,12 @@
                 }).done(function (data) {
                    if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
-                        //    create.click();
+                        //    create.trigger('click');
                         //} else {
                             // No link to create new (e.g. no permission to do so)
                             data.push({
@@ -486,7 +486,7 @@
                 var item = ui.item;
                 if (item.id) {
                     dummy_input.val(ui.item.name);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -495,7 +495,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -510,15 +510,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -607,12 +607,12 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
-                        //    create.click();
+                        //    create.trigger('click');
                         //} else {
                             // No link to create new (e.g. no permission to do so)
                             data.push({
@@ -647,7 +647,7 @@
                 if (item.id) {
                     var name = represent(item);
                     dummy_input.val(name);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -656,7 +656,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -670,15 +670,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -750,12 +750,12 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
-                        //    create.click();
+                        //    create.trigger('click');
                         //} else {
                             // No link to create new (e.g. no permission to do so)
                             data.push({
@@ -789,7 +789,7 @@
                 var item = ui.item;
                 if (item.id) {
                     dummy_input.val(item.name);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -798,7 +798,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -818,15 +818,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -930,12 +930,12 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
-                        //    create.click();
+                        //    create.trigger('click');
                         //} else {
                             // No link to create new (e.g. no permission to do so)
                             data.push({
@@ -970,7 +970,7 @@
                 if (item.id) {
                     var name = represent_person(item);
                     dummy_input.val(name);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -979,7 +979,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -994,15 +994,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -1106,7 +1106,7 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
@@ -1114,7 +1114,7 @@
                         //    var old_url = create.attr('href');
                         //    var new_url = old_url + '&name=' + dummy_input.val();
                         //    create.attr('href', new_url);
-                        //    create.click();
+                        //    create.trigger('click');
                             // Restore URL
                         //    create.attr('href', old_url);
                         //} else {
@@ -1150,7 +1150,7 @@
                 var item = ui.item;
                 if (item.id) {
                     dummy_input.val(item.name);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -1159,7 +1159,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -1174,15 +1174,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: Prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });
@@ -1371,7 +1371,7 @@
                 }).done(function (data) {
                     if (data.length == 0) {
                         // No Match
-                        real_input.val('').change();
+                        real_input.val('').trigger('change');
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
@@ -1379,7 +1379,7 @@
                         //    var old_url = create.attr('href');
                         //    var new_url = old_url + '&name=' + dummy_input.val();
                         //    create.attr('href', new_url);
-                        //    create.click();
+                        //    create.trigger('click');
                             // Restore URL
                         //    create.attr('href', old_url);
                         //} else {
@@ -1415,7 +1415,7 @@
                 var item = ui.item;
                 if (item.id) {
                     dummy_input.val(item.name);
-                    real_input.val(item.id).change();
+                    real_input.val(item.id).trigger('change');
                     // Update existing, so blur does not remove
                     // the selection again:
                     existing = {value: item.id,
@@ -1424,7 +1424,7 @@
                 } else {
                     // No Match & no ability to create new
                     dummy_input.val('');
-                    real_input.val('').change();
+                    real_input.val('').trigger('change');
                 }
                 if (postprocess) {
                     // postprocess has to be able to handle the 'no match' option
@@ -1439,15 +1439,15 @@
                             .append('<a>' + label + '</a>')
                             .appendTo(ul);
         };
-        dummy_input.blur(function() {
+        dummy_input.on('blur', function() {
             if (existing && existing.name != dummy_input.val()) {
                 // New Entry - without letting AC complete (e.g. tab out)
-                real_input.val('').change();
+                real_input.val('').trigger('change');
                 // @ToDo: Something better!
                 //if (create.length) {
                     // Open popup to create new entry
                     // @ToDo: Prepopulate name field
-                //    create.click();
+                //    create.trigger('click');
                 //}
             }
         });

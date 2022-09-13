@@ -77,7 +77,6 @@ class StatsParameterModel(DataModel):
                     # @ToDo; Deprecate
                     "stats_people_type": T("Types of People"),
                     "supply_distribution_item": T("Distribution Item"),
-                    #"survey_question_type": T("Survey Question Type"),
                     }
 
         tablename = "stats_parameter"
@@ -138,7 +137,6 @@ class StatsDataModel(DataModel):
                     # @ToDo: Deprecate
                     "stats_people": T("People"),
                     "supply_distribution": T("Distribution"),
-                    #"survey_answer": T("Survey Answer"),
                     }
 
         accuracy_opts = {1 : T("Official Measurement"),
@@ -215,7 +213,6 @@ class StatsSourceModel(DataModel):
                         #"org_organisation": T("Organization"),
                         #"pr_person": T("Person"),
                         #"flood_gauge": T("Flood Gauge"),
-                        #"survey_series": T("Survey")
                         }
 
         tablename = "stats_source"
@@ -1260,7 +1257,6 @@ class StatsImpactModel(DataModel):
     """
         Used to record Impacts of Events &/or Incidents
         - links to Needs (Requests module)
-        - might link to Assessments module in future
     """
 
     names = ("stats_impact",

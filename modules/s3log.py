@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" S3 Logging Facility
+"""
+    S3 Logging Facility
 
     @copyright: (c) 2015-2021 Sahana Software Foundation
     @license: MIT
@@ -33,7 +32,7 @@ import sys
 from gluon import current
 
 # =============================================================================
-class S3Log(object):
+class S3Log:
     """
         Simple global logging facility, called like:
 
@@ -189,7 +188,7 @@ class S3Log(object):
         if current.deployment_settings.get_log_caller_info():
             caller = logger.findCaller()
             if caller:
-                extra = {"caller": "(%s %s %s)" % caller}
+                extra = {"caller": "(%s %s %s)" % caller[:3]}
 
         logger.log(severity, msg, extra=extra)
 
@@ -259,7 +258,7 @@ class S3Log(object):
         cls._log(logging.DEBUG, message, value=value)
 
 # =============================================================================
-class S3LogRecorder(object):
+class S3LogRecorder:
     """
         S3Log recorder, simple facility to record log messages for tests
 

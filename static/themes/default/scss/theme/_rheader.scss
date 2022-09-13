@@ -8,20 +8,22 @@
 //$button-bg-hover
 
 // Active tab
-$rheader_tabs_bgcolor_active: $body-bg !default;
+$rheader_tabs_bgcolor_active: $body-background !default;
 $rheader_tabs_bgcolor_active_hover: #f1edec !default;
 $rheader_tabs_fgcolor_active: #666666 !default;
 $rheader_tabs_fgcolor_active_hover: #666666 !default;
 
 // Inactive tabs
-$rheader_tabs_bgcolor_inactive: $button-bg-color !default;
-$rheader_tabs_bgcolor_inactive_hover: $button-bg-hover !default;
+$rheader_tabs_bgcolor_inactive: $button-background !default;
+$rheader_tabs_bgcolor_inactive_hover: $button-background-hover !default;
 $rheader_tabs_fgcolor_inactive: #ffffff !default;
 $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
 
 // ============================================================================
 // STYLES
-
+//
+// Rheader section and tabs
+//
 #rheader {
     margin-bottom: 0.25rem;
     .rheader-title {
@@ -40,10 +42,12 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
         margin-bottom: 10px;
         border: none;
         background: none;
-        tr {
+        tbody, tr {
+            border: none;
             background: none;
         }
         th, td {
+            font-size: 0.85rem;
             text-align: left;
             padding: 0.1rem 0.5rem 0.05rem 0;
             [dir=rtl] & {
@@ -56,7 +60,6 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
             color: #7F7F7F;
             line-height: 1.1rem;
             font-weight: normal;
-            font-size: 0.85rem;
         }
         td {
             padding-right: 1.25rem;
@@ -100,7 +103,7 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
         display: block;
         clear: none;
 
-        height: 33px;
+        height: 32px;
         width: 100%;
 
         margin: 5px 0!important;
@@ -115,11 +118,11 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
             float: left;
             position: relative;
 
-            font-size: 14px;
+            font-size: 13px;
             font-weight: normal;
 
             margin: 3px 0.2rem 0 0;
-            padding: 2px 0.4rem 3px;
+            padding: 2px 0.4rem 1px;
 
             border: {
                 color: $rheader_tabs_bgcolor_inactive;
@@ -134,7 +137,7 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
             }
 
             a {
-                line-height: 18px;
+                line-height: 16px;
                 color: $rheader_tabs_fgcolor_inactive;
                 text-decoration: none;
                 background: transparent;
@@ -146,7 +149,7 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
 
             // Active tab
             &.tab_here {
-                font-size: 16px;
+                font-size: 14px;
                 font-weight: bold;
 
                 margin-top: 0;
@@ -154,13 +157,13 @@ $rheader_tabs_fgcolor_inactive_hover: #ffffff !default;
                 &:not(:first-child) {
                     margin-left: 0.2rem;
                 }
-                padding: 3px 0.4rem 5px;
+                padding: 3px 0.4rem 0px;
 
                 background: $rheader_tabs_bgcolor_active;
                 border: {
                     color: $rheader_tabs_bgcolor_inactive;
                     style: solid;
-                    width: 2px 2px 1px 3px; //rem_calc(2) rem_calc(2) rem_calc(3) rem_calc(3);
+                    width: 2px 2px 2px 3px; //rem_calc(2) rem_calc(2) rem_calc(2) rem_calc(3);
                     bottom: {
                         style: solid;
                         color: $rheader_tabs_bgcolor_active;

@@ -3015,15 +3015,9 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             if documents:
                 if not isinstance(documents, list):
                     documents = [documents]
-                bootstrap = current.response.s3.formstyle == "bootstrap"
-                if bootstrap:
-                    docs = UL(_class="dropdown-menu",
-                              _role="menu",
-                              )
-                else:
-                    docs = SPAN(_id="attachments",
-                                _class="profile-data-value",
-                                )
+                docs = SPAN(_id="attachments",
+                            _class="profile-data-value",
+                            )
                 retrieve = db.doc_document.file.retrieve
                 for doc in documents:
                     try:
@@ -3034,42 +3028,22 @@ class deploy_MissionProfileLayout(S3DataListLayout):
                                   f = "download",
                                   args=[doc],
                                   )
-                    if bootstrap:
-                        doc_item = LI(A(ICON("file"),
-                                        " ",
-                                        doc_name,
-                                        _href = doc_url,
-                                        ),
-                                      _role="menuitem",
-                                      )
-                    else:
-                        doc_item = A(ICON("file"),
-                                     " ",
-                                     doc_name,
-                                     _href = doc_url,
-                                     )
+                    doc_item = A(ICON("file"),
+                                 " ",
+                                 doc_name,
+                                 _href = doc_url,
+                                 )
                     docs.append(doc_item)
                     docs.append(", ")
-                if bootstrap:
-                    docs = DIV(A(ICON("attachment"),
-                                 SPAN(_class="caret"),
-                                 _class = "btn dropdown-toggle",
-                                 _href = "#",
-                                 data = {"toggle": "dropdown"},
+                # Remove final comma
+                docs.components.pop()
+                docs = DIV(LABEL("%s:" % T("Attachments"),
+                                 _class = "profile-data-label",
+                                 _for = "attachments",
                                  ),
-                               docs,
-                               _class = "btn-group attachments dropdown pull-right",
-                               )
-                else:
-                    # Remove final comma
-                    docs.components.pop()
-                    docs = DIV(LABEL("%s:" % T("Attachments"),
-                                     _class = "profile-data-label",
-                                     _for = "attachments",
-                                     ),
-                               docs,
-                               _class = "profile-data",
-                               )
+                           docs,
+                           _class = "profile-data",
+                           )
             else:
                 docs = ""
 

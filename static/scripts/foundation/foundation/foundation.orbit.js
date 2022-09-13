@@ -1,476 +1,886 @@
-;(function ($, window, document, undefined) {
-  'use strict';
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory(require("./foundation.core"), require("./foundation.util.imageLoader"), require("./foundation.util.keyboard"), require("./foundation.util.motion"), require("./foundation.util.timer"), require("./foundation.util.touch"), require("jquery"));
+	else if(typeof define === 'function' && define.amd)
+		define(["./foundation.core", "./foundation.util.imageLoader", "./foundation.util.keyboard", "./foundation.util.motion", "./foundation.util.timer", "./foundation.util.touch", "jquery"], factory);
+	else if(typeof exports === 'object')
+		exports["foundation.orbit"] = factory(require("./foundation.core"), require("./foundation.util.imageLoader"), require("./foundation.util.keyboard"), require("./foundation.util.motion"), require("./foundation.util.timer"), require("./foundation.util.touch"), require("jquery"));
+	else
+		root["__FOUNDATION_EXTERNAL__"] = root["__FOUNDATION_EXTERNAL__"] || {}, root["__FOUNDATION_EXTERNAL__"]["foundation.orbit"] = factory(root["__FOUNDATION_EXTERNAL__"]["foundation.core"], root["__FOUNDATION_EXTERNAL__"]["foundation.util.imageLoader"], root["__FOUNDATION_EXTERNAL__"]["foundation.util.keyboard"], root["__FOUNDATION_EXTERNAL__"]["foundation.util.motion"], root["__FOUNDATION_EXTERNAL__"]["foundation.util.timer"], root["__FOUNDATION_EXTERNAL__"]["foundation.util.touch"], root["jQuery"]);
+})(window, function(__WEBPACK_EXTERNAL_MODULE__foundation_core__, __WEBPACK_EXTERNAL_MODULE__foundation_util_imageLoader__, __WEBPACK_EXTERNAL_MODULE__foundation_util_keyboard__, __WEBPACK_EXTERNAL_MODULE__foundation_util_motion__, __WEBPACK_EXTERNAL_MODULE__foundation_util_timer__, __WEBPACK_EXTERNAL_MODULE__foundation_util_touch__, __WEBPACK_EXTERNAL_MODULE_jquery__) {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ })
+/************************************************************************/
+/******/ ({
 
-  var noop = function () {};
+/***/ "./foundation.core":
+/*!****************************************************************************************************************************************************************!*\
+  !*** external {"root":["__FOUNDATION_EXTERNAL__","foundation.core"],"amd":"./foundation.core","commonjs":"./foundation.core","commonjs2":"./foundation.core"} ***!
+  \****************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
 
-  var Orbit = function (el, settings) {
-    // Don't reinitialize plugin
-    if (el.hasClass(settings.slides_container_class)) {
-      return this;
+module.exports = __WEBPACK_EXTERNAL_MODULE__foundation_core__;
+
+/***/ }),
+
+/***/ "./foundation.util.imageLoader":
+/*!****************************************************************************************************************************************************************************************************************!*\
+  !*** external {"root":["__FOUNDATION_EXTERNAL__","foundation.util.imageLoader"],"amd":"./foundation.util.imageLoader","commonjs":"./foundation.util.imageLoader","commonjs2":"./foundation.util.imageLoader"} ***!
+  \****************************************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE__foundation_util_imageLoader__;
+
+/***/ }),
+
+/***/ "./foundation.util.keyboard":
+/*!****************************************************************************************************************************************************************************************************!*\
+  !*** external {"root":["__FOUNDATION_EXTERNAL__","foundation.util.keyboard"],"amd":"./foundation.util.keyboard","commonjs":"./foundation.util.keyboard","commonjs2":"./foundation.util.keyboard"} ***!
+  \****************************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE__foundation_util_keyboard__;
+
+/***/ }),
+
+/***/ "./foundation.util.motion":
+/*!********************************************************************************************************************************************************************************************!*\
+  !*** external {"root":["__FOUNDATION_EXTERNAL__","foundation.util.motion"],"amd":"./foundation.util.motion","commonjs":"./foundation.util.motion","commonjs2":"./foundation.util.motion"} ***!
+  \********************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE__foundation_util_motion__;
+
+/***/ }),
+
+/***/ "./foundation.util.timer":
+/*!****************************************************************************************************************************************************************************************!*\
+  !*** external {"root":["__FOUNDATION_EXTERNAL__","foundation.util.timer"],"amd":"./foundation.util.timer","commonjs":"./foundation.util.timer","commonjs2":"./foundation.util.timer"} ***!
+  \****************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE__foundation_util_timer__;
+
+/***/ }),
+
+/***/ "./foundation.util.touch":
+/*!****************************************************************************************************************************************************************************************!*\
+  !*** external {"root":["__FOUNDATION_EXTERNAL__","foundation.util.touch"],"amd":"./foundation.util.touch","commonjs":"./foundation.util.touch","commonjs2":"./foundation.util.touch"} ***!
+  \****************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE__foundation_util_touch__;
+
+/***/ }),
+
+/***/ "./js/entries/plugins/foundation.orbit.js":
+/*!************************************************!*\
+  !*** ./js/entries/plugins/foundation.orbit.js ***!
+  \************************************************/
+/*! exports provided: Foundation, Orbit */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _foundation_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./foundation.core */ "./foundation.core");
+/* harmony import */ var _foundation_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_foundation_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Foundation", function() { return _foundation_core__WEBPACK_IMPORTED_MODULE_0__["Foundation"]; });
+
+/* harmony import */ var _foundation_orbit__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../foundation.orbit */ "./js/foundation.orbit.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Orbit", function() { return _foundation_orbit__WEBPACK_IMPORTED_MODULE_1__["Orbit"]; });
+
+
+
+_foundation_core__WEBPACK_IMPORTED_MODULE_0__["Foundation"].plugin(_foundation_orbit__WEBPACK_IMPORTED_MODULE_1__["Orbit"], 'Orbit');
+
+
+/***/ }),
+
+/***/ "./js/foundation.orbit.js":
+/*!********************************!*\
+  !*** ./js/foundation.orbit.js ***!
+  \********************************/
+/*! exports provided: Orbit */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Orbit", function() { return Orbit; });
+/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jquery */ "jquery");
+/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(jquery__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _foundation_util_keyboard__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./foundation.util.keyboard */ "./foundation.util.keyboard");
+/* harmony import */ var _foundation_util_keyboard__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_foundation_util_keyboard__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _foundation_util_motion__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./foundation.util.motion */ "./foundation.util.motion");
+/* harmony import */ var _foundation_util_motion__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_foundation_util_motion__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _foundation_util_timer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./foundation.util.timer */ "./foundation.util.timer");
+/* harmony import */ var _foundation_util_timer__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_foundation_util_timer__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _foundation_util_imageLoader__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./foundation.util.imageLoader */ "./foundation.util.imageLoader");
+/* harmony import */ var _foundation_util_imageLoader__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_foundation_util_imageLoader__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _foundation_core_utils__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./foundation.core.utils */ "./foundation.core");
+/* harmony import */ var _foundation_core_utils__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_foundation_core_utils__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _foundation_util_touch__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./foundation.util.touch */ "./foundation.util.touch");
+/* harmony import */ var _foundation_util_touch__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(_foundation_util_touch__WEBPACK_IMPORTED_MODULE_6__);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } else if (call !== void 0) { throw new TypeError("Derived constructors may only return object or undefined"); } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+
+
+
+
+
+
+
+
+/**
+ * Orbit module.
+ * @module foundation.orbit
+ * @requires foundation.util.keyboard
+ * @requires foundation.util.motion
+ * @requires foundation.util.timer
+ * @requires foundation.util.imageLoader
+ * @requires foundation.util.touch
+ */
+
+var Orbit = /*#__PURE__*/function (_Plugin) {
+  _inherits(Orbit, _Plugin);
+
+  var _super = _createSuper(Orbit);
+
+  function Orbit() {
+    _classCallCheck(this, Orbit);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(Orbit, [{
+    key: "_setup",
+    value:
+    /**
+    * Creates a new instance of an orbit carousel.
+    * @class
+    * @name Orbit
+    * @param {jQuery} element - jQuery object to make into an Orbit Carousel.
+    * @param {Object} options - Overrides to the default plugin settings.
+    */
+    function _setup(element, options) {
+      this.$element = element;
+      this.options = jquery__WEBPACK_IMPORTED_MODULE_0___default.a.extend({}, Orbit.defaults, this.$element.data(), options);
+      this.className = 'Orbit'; // ie9 back compat
+
+      _foundation_util_touch__WEBPACK_IMPORTED_MODULE_6__["Touch"].init(jquery__WEBPACK_IMPORTED_MODULE_0___default.a); // Touch init is idempotent, we just need to make sure it's initialied.
+
+      this._init();
+
+      _foundation_util_keyboard__WEBPACK_IMPORTED_MODULE_1__["Keyboard"].register('Orbit', {
+        'ltr': {
+          'ARROW_RIGHT': 'next',
+          'ARROW_LEFT': 'previous'
+        },
+        'rtl': {
+          'ARROW_LEFT': 'next',
+          'ARROW_RIGHT': 'previous'
+        }
+      });
     }
+    /**
+    * Initializes the plugin by creating jQuery collections, setting attributes, and starting the animation.
+    * @function
+    * @private
+    */
 
-    var self = this,
-        container,
-        slides_container = el,
-        number_container,
-        bullets_container,
-        timer_container,
-        idx = 0,
-        animate,
-        timer,
-        locked = false,
-        adjust_height_after = false;
+  }, {
+    key: "_init",
+    value: function _init() {
+      // @TODO: consider discussion on PR #9278 about DOM pollution by changeSlide
+      this._reset();
 
-    self.slides = function () {
-      return slides_container.children(settings.slide_selector);
-    };
+      this.$wrapper = this.$element.find(".".concat(this.options.containerClass));
+      this.$slides = this.$element.find(".".concat(this.options.slideClass));
+      var $images = this.$element.find('img'),
+          initActive = this.$slides.filter('.is-active'),
+          id = this.$element[0].id || Object(_foundation_core_utils__WEBPACK_IMPORTED_MODULE_5__["GetYoDigits"])(6, 'orbit');
+      this.$element.attr({
+        'data-resize': id,
+        'id': id
+      });
 
-    self.slides().first().addClass(settings.active_slide_class);
-
-    self.update_slide_number = function (index) {
-      if (settings.slide_number) {
-        number_container.find('span:first').text(parseInt(index) + 1);
-        number_container.find('span:last').text(self.slides().length);
-      }
-      if (settings.bullets) {
-        bullets_container.children().removeClass(settings.bullets_active_class);
-        $(bullets_container.children().get(index)).addClass(settings.bullets_active_class);
-      }
-    };
-
-    self.update_active_link = function (index) {
-      var link = $('[data-orbit-link="' + self.slides().eq(index).attr('data-orbit-slide') + '"]');
-      link.siblings().removeClass(settings.bullets_active_class);
-      link.addClass(settings.bullets_active_class);
-    };
-
-    self.build_markup = function () {
-      slides_container.wrap('<div class="' + settings.container_class + '"></div>');
-      container = slides_container.parent();
-      slides_container.addClass(settings.slides_container_class);
-
-      if (settings.stack_on_small) {
-        container.addClass(settings.stack_on_small_class);
+      if (!initActive.length) {
+        this.$slides.eq(0).addClass('is-active');
       }
 
-      if (settings.navigation_arrows) {
-        container.append($('<a href="#"><span></span></a>').addClass(settings.prev_class));
-        container.append($('<a href="#"><span></span></a>').addClass(settings.next_class));
+      if (!this.options.useMUI) {
+        this.$slides.addClass('no-motionui');
       }
 
-      if (settings.timer) {
-        timer_container = $('<div>').addClass(settings.timer_container_class);
-        timer_container.append('<span>');
-        timer_container.append($('<div>').addClass(settings.timer_progress_class));
-        timer_container.addClass(settings.timer_paused_class);
-        container.append(timer_container);
-      }
-
-      if (settings.slide_number) {
-        number_container = $('<div>').addClass(settings.slide_number_class);
-        number_container.append('<span></span> ' + settings.slide_number_text + ' <span></span>');
-        container.append(number_container);
-      }
-
-      if (settings.bullets) {
-        bullets_container = $('<ol>').addClass(settings.bullets_container_class);
-        container.append(bullets_container);
-        bullets_container.wrap('<div class="orbit-bullets-container"></div>');
-        self.slides().each(function (idx, el) {
-          var bullet = $('<li>').attr('data-orbit-slide', idx).on('click', self.link_bullet);;
-          bullets_container.append(bullet);
-        });
-      }
-
-    };
-
-    self._goto = function (next_idx, start_timer) {
-      // if (locked) {return false;}
-      if (next_idx === idx) {return false;}
-      if (typeof timer === 'object') {timer.restart();}
-      var slides = self.slides();
-
-      var dir = 'next';
-      locked = true;
-      if (next_idx < idx) {dir = 'prev';}
-      if (next_idx >= slides.length) {
-        if (!settings.circular) {
-          return false;
-        }
-        next_idx = 0;
-      } else if (next_idx < 0) {
-        if (!settings.circular) {
-          return false;
-        }
-        next_idx = slides.length - 1;
-      }
-
-      var current = $(slides.get(idx));
-      var next = $(slides.get(next_idx));
-
-      current.css('zIndex', 2);
-      current.removeClass(settings.active_slide_class);
-      next.css('zIndex', 4).addClass(settings.active_slide_class);
-
-      slides_container.trigger('before-slide-change.fndtn.orbit');
-      settings.before_slide_change();
-      self.update_active_link(next_idx);
-
-      var callback = function () {
-        var unlock = function () {
-          idx = next_idx;
-          locked = false;
-          if (start_timer === true) {timer = self.create_timer(); timer.start();}
-          self.update_slide_number(idx);
-          slides_container.trigger('after-slide-change.fndtn.orbit', [{slide_number : idx, total_slides : slides.length}]);
-          settings.after_slide_change(idx, slides.length);
-        };
-        if (slides_container.outerHeight() != next.outerHeight() && settings.variable_height) {
-          slides_container.animate({'height': next.outerHeight()}, 250, 'linear', unlock);
-        } else {
-          unlock();
-        }
-      };
-
-      if (slides.length === 1) {callback(); return false;}
-
-      var start_animation = function () {
-        if (dir === 'next') {animate.next(current, next, callback);}
-        if (dir === 'prev') {animate.prev(current, next, callback);}
-      };
-
-      if (next.outerHeight() > slides_container.outerHeight() && settings.variable_height) {
-        slides_container.animate({'height': next.outerHeight()}, 250, 'linear', start_animation);
+      if ($images.length) {
+        Object(_foundation_util_imageLoader__WEBPACK_IMPORTED_MODULE_4__["onImagesLoaded"])($images, this._prepareForOrbit.bind(this));
       } else {
-        start_animation();
+        this._prepareForOrbit(); //hehe
+
       }
-    };
 
-    self.next = function (e) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      self._goto(idx + 1);
-    };
-
-    self.prev = function (e) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      self._goto(idx - 1);
-    };
-
-    self.link_custom = function (e) {
-      e.preventDefault();
-      var link = $(this).attr('data-orbit-link');
-      if ((typeof link === 'string') && (link = $.trim(link)) != '') {
-        var slide = container.find('[data-orbit-slide=' + link + ']');
-        if (slide.index() != -1) {self._goto(slide.index());}
+      if (this.options.bullets) {
+        this._loadBullets();
       }
-    };
 
-    self.link_bullet = function (e) {
-      var index = $(this).attr('data-orbit-slide');
-      if ((typeof index === 'string') && (index = $.trim(index)) != '') {
-        if (isNaN(parseInt(index))) {
-          var slide = container.find('[data-orbit-slide=' + index + ']');
-          if (slide.index() != -1) {self._goto(slide.index() + 1);}
-        } else {
-          self._goto(parseInt(index));
+      this._events();
+
+      if (this.options.autoPlay && this.$slides.length > 1) {
+        this.geoSync();
+      }
+
+      if (this.options.accessible) {
+        // allow wrapper to be focusable to enable arrow navigation
+        this.$wrapper.attr('tabindex', 0);
+      }
+    }
+    /**
+    * Creates a jQuery collection of bullets, if they are being used.
+    * @function
+    * @private
+    */
+
+  }, {
+    key: "_loadBullets",
+    value: function _loadBullets() {
+      this.$bullets = this.$element.find(".".concat(this.options.boxOfBullets)).find('button');
+    }
+    /**
+    * Sets a `timer` object on the orbit, and starts the counter for the next slide.
+    * @function
+    */
+
+  }, {
+    key: "geoSync",
+    value: function geoSync() {
+      var _this = this;
+
+      this.timer = new _foundation_util_timer__WEBPACK_IMPORTED_MODULE_3__["Timer"](this.$element, {
+        duration: this.options.timerDelay,
+        infinite: false
+      }, function () {
+        _this.changeSlide(true);
+      });
+      this.timer.start();
+    }
+    /**
+    * Sets wrapper and slide heights for the orbit.
+    * @function
+    * @private
+    */
+
+  }, {
+    key: "_prepareForOrbit",
+    value: function _prepareForOrbit() {
+      this._setWrapperHeight();
+    }
+    /**
+    * Calulates the height of each slide in the collection, and uses the tallest one for the wrapper height.
+    * @function
+    * @private
+    * @param {Function} cb - a callback function to fire when complete.
+    */
+
+  }, {
+    key: "_setWrapperHeight",
+    value: function _setWrapperHeight(cb) {
+      //rewrite this to `for` loop
+      var max = 0,
+          temp,
+          counter = 0,
+          _this = this;
+
+      this.$slides.each(function () {
+        temp = this.getBoundingClientRect().height;
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(this).attr('data-slide', counter); // hide all slides but the active one
+
+        if (!/mui/g.test(jquery__WEBPACK_IMPORTED_MODULE_0___default()(this)[0].className) && _this.$slides.filter('.is-active')[0] !== _this.$slides.eq(counter)[0]) {
+          jquery__WEBPACK_IMPORTED_MODULE_0___default()(this).css({
+            'display': 'none'
+          });
         }
-      }
 
+        max = temp > max ? temp : max;
+        counter++;
+      });
+
+      if (counter === this.$slides.length) {
+        this.$wrapper.css({
+          'height': max
+        }); //only change the wrapper height property once.
+
+        if (cb) {
+          cb(max);
+        } //fire callback with max height dimension.
+
+      }
     }
+    /**
+    * Sets the max-height of each slide.
+    * @function
+    * @private
+    */
 
-    self.timer_callback = function () {
-      self._goto(idx + 1, true);
+  }, {
+    key: "_setSlideHeight",
+    value: function _setSlideHeight(height) {
+      this.$slides.each(function () {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(this).css('max-height', height);
+      });
     }
+    /**
+    * Adds event listeners to basically everything within the element.
+    * @function
+    * @private
+    */
 
-    self.compute_dimensions = function () {
-      var current = $(self.slides().get(idx));
-      var h = current.outerHeight();
-      if (!settings.variable_height) {
-        self.slides().each(function(){
-          if ($(this).outerHeight() > h) { h = $(this).outerHeight(); }
-        });
-      }
-      slides_container.height(h);
-    };
+  }, {
+    key: "_events",
+    value: function _events() {
+      var _this = this; //***************************************
+      //**Now using custom event - thanks to:**
+      //**      Yohai Ararat of Toronto      **
+      //***************************************
+      //
 
-    self.create_timer = function () {
-      var t = new Timer(
-        container.find('.' + settings.timer_container_class),
-        settings,
-        self.timer_callback
-      );
-      return t;
-    };
 
-    self.stop_timer = function () {
-      if (typeof timer === 'object') {
-        timer.stop();
-      }
-    };
+      this.$element.off('.resizeme.zf.trigger').on({
+        'resizeme.zf.trigger': this._prepareForOrbit.bind(this)
+      });
 
-    self.toggle_timer = function () {
-      var t = container.find('.' + settings.timer_container_class);
-      if (t.hasClass(settings.timer_paused_class)) {
-        if (typeof timer === 'undefined') {timer = self.create_timer();}
-        timer.start();
-      } else {
-        if (typeof timer === 'object') {timer.stop();}
-      }
-    };
-
-    self.init = function () {
-      self.build_markup();
-      if (settings.timer) {
-        timer = self.create_timer();
-        Foundation.utils.image_loaded(this.slides().children('img'), timer.start);
-      }
-      animate = new FadeAnimation(settings, slides_container);
-      if (settings.animation === 'slide') {
-        animate = new SlideAnimation(settings, slides_container);
-      }
-
-      container.on('click', '.' + settings.next_class, self.next);
-      container.on('click', '.' + settings.prev_class, self.prev);
-
-      if (settings.next_on_click) {
-        container.on('click', '.' + settings.slides_container_class + ' [data-orbit-slide]', self.link_bullet);
-      }
-
-      container.on('click', self.toggle_timer);
-      if (settings.swipe) {
-        container.on('touchstart.fndtn.orbit', function (e) {
-          if (!e.touches) {e = e.originalEvent;}
-          var data = {
-            start_page_x : e.touches[0].pageX,
-            start_page_y : e.touches[0].pageY,
-            start_time : (new Date()).getTime(),
-            delta_x : 0,
-            is_scrolling : undefined
-          };
-          container.data('swipe-transition', data);
-          e.stopPropagation();
-        })
-        .on('touchmove.fndtn.orbit', function (e) {
-          if (!e.touches) {
-            e = e.originalEvent;
-          }
-          // Ignore pinch/zoom events
-          if (e.touches.length > 1 || e.scale && e.scale !== 1) {
-            return;
-          }
-
-          var data = container.data('swipe-transition');
-          if (typeof data === 'undefined') {data = {};}
-
-          data.delta_x = e.touches[0].pageX - data.start_page_x;
-
-          if ( typeof data.is_scrolling === 'undefined') {
-            data.is_scrolling = !!( data.is_scrolling || Math.abs(data.delta_x) < Math.abs(e.touches[0].pageY - data.start_page_y) );
-          }
-
-          if (!data.is_scrolling && !data.active) {
+      if (this.$slides.length > 1) {
+        if (this.options.swipe) {
+          this.$slides.off('swipeleft.zf.orbit swiperight.zf.orbit').on('swipeleft.zf.orbit', function (e) {
             e.preventDefault();
-            var direction = (data.delta_x < 0) ? (idx + 1) : (idx - 1);
-            data.active = true;
-            self._goto(direction);
+
+            _this.changeSlide(true);
+          }).on('swiperight.zf.orbit', function (e) {
+            e.preventDefault();
+
+            _this.changeSlide(false);
+          });
+        } //***************************************
+
+
+        if (this.options.autoPlay) {
+          this.$slides.on('click.zf.orbit', function () {
+            _this.$element.data('clickedOn', _this.$element.data('clickedOn') ? false : true);
+
+            _this.timer[_this.$element.data('clickedOn') ? 'pause' : 'start']();
+          });
+
+          if (this.options.pauseOnHover) {
+            this.$element.on('mouseenter.zf.orbit', function () {
+              _this.timer.pause();
+            }).on('mouseleave.zf.orbit', function () {
+              if (!_this.$element.data('clickedOn')) {
+                _this.timer.start();
+              }
+            });
           }
-        })
-        .on('touchend.fndtn.orbit', function (e) {
-          container.data('swipe-transition', {});
-          e.stopPropagation();
-        })
-      }
-      container.on('mouseenter.fndtn.orbit', function (e) {
-        if (settings.timer && settings.pause_on_hover) {
-          self.stop_timer();
         }
-      })
-      .on('mouseleave.fndtn.orbit', function (e) {
-        if (settings.timer && settings.resume_on_mouseout) {
-          timer.start();
+
+        if (this.options.navButtons) {
+          var $controls = this.$element.find(".".concat(this.options.nextClass, ", .").concat(this.options.prevClass));
+          $controls.attr('tabindex', 0) //also need to handle enter/return and spacebar key presses
+          .on('click.zf.orbit touchend.zf.orbit', function (e) {
+            e.preventDefault();
+
+            _this.changeSlide(jquery__WEBPACK_IMPORTED_MODULE_0___default()(this).hasClass(_this.options.nextClass));
+          });
         }
-      });
 
-      $(document).on('click', '[data-orbit-link]', self.link_custom);
-      $(window).on('load resize', self.compute_dimensions);
-      Foundation.utils.image_loaded(this.slides().children('img'), self.compute_dimensions);
-      Foundation.utils.image_loaded(this.slides().children('img'), function () {
-        container.prev('.' + settings.preloader_class).css('display', 'none');
-        self.update_slide_number(0);
-        self.update_active_link(0);
-        slides_container.trigger('ready.fndtn.orbit');
-      });
-    };
+        if (this.options.bullets) {
+          this.$bullets.on('click.zf.orbit touchend.zf.orbit', function () {
+            if (/is-active/g.test(this.className)) {
+              return false;
+            } //if this is active, kick out of function.
 
-    self.init();
-  };
 
-  var Timer = function (el, settings, callback) {
-    var self = this,
-        duration = settings.timer_speed,
-        progress = el.find('.' + settings.timer_progress_class),
-        start,
-        timeout,
-        left = -1;
+            var idx = jquery__WEBPACK_IMPORTED_MODULE_0___default()(this).data('slide'),
+                ltr = idx > _this.$slides.filter('.is-active').data('slide'),
+                $slide = _this.$slides.eq(idx);
 
-    this.update_progress = function (w) {
-      var new_progress = progress.clone();
-      new_progress.attr('style', '');
-      new_progress.css('width', w + '%');
-      progress.replaceWith(new_progress);
-      progress = new_progress;
-    };
+            _this.changeSlide(ltr, $slide, idx);
+          });
+        }
 
-    this.restart = function () {
-      clearTimeout(timeout);
-      el.addClass(settings.timer_paused_class);
-      left = -1;
-      self.update_progress(0);
-    };
-
-    this.start = function () {
-      if (!el.hasClass(settings.timer_paused_class)) {return true;}
-      left = (left === -1) ? duration : left;
-      el.removeClass(settings.timer_paused_class);
-      start = new Date().getTime();
-      progress.animate({'width' : '100%'}, left, 'linear');
-      timeout = setTimeout(function () {
-        self.restart();
-        callback();
-      }, left);
-      el.trigger('timer-started.fndtn.orbit')
-    };
-
-    this.stop = function () {
-      if (el.hasClass(settings.timer_paused_class)) {return true;}
-      clearTimeout(timeout);
-      el.addClass(settings.timer_paused_class);
-      var end = new Date().getTime();
-      left = left - (end - start);
-      var w = 100 - ((left / duration) * 100);
-      self.update_progress(w);
-      el.trigger('timer-stopped.fndtn.orbit');
-    };
-  };
-
-  var SlideAnimation = function (settings, container) {
-    var duration = settings.animation_speed;
-    var is_rtl = ($('html[dir=rtl]').length === 1);
-    var margin = is_rtl ? 'marginRight' : 'marginLeft';
-    var animMargin = {};
-    animMargin[margin] = '0%';
-
-    this.next = function (current, next, callback) {
-      current.animate({marginLeft : '-100%'}, duration);
-      next.animate(animMargin, duration, function () {
-        current.css(margin, '100%');
-        callback();
-      });
-    };
-
-    this.prev = function (current, prev, callback) {
-      current.animate({marginLeft : '100%'}, duration);
-      prev.css(margin, '-100%');
-      prev.animate(animMargin, duration, function () {
-        current.css(margin, '100%');
-        callback();
-      });
-    };
-  };
-
-  var FadeAnimation = function (settings, container) {
-    var duration = settings.animation_speed;
-    var is_rtl = ($('html[dir=rtl]').length === 1);
-    var margin = is_rtl ? 'marginRight' : 'marginLeft';
-
-    this.next = function (current, next, callback) {
-      next.css({'margin' : '0%', 'opacity' : '0.01'});
-      next.animate({'opacity' :'1'}, duration, 'linear', function () {
-        current.css('margin', '100%');
-        callback();
-      });
-    };
-
-    this.prev = function (current, prev, callback) {
-      prev.css({'margin' : '0%', 'opacity' : '0.01'});
-      prev.animate({'opacity' : '1'}, duration, 'linear', function () {
-        current.css('margin', '100%');
-        callback();
-      });
-    };
-  };
-
-  Foundation.libs = Foundation.libs || {};
-
-  Foundation.libs.orbit = {
-    name : 'orbit',
-
-    version : '{{VERSION}}',
-
-    settings : {
-      animation : 'slide',
-      timer_speed : 10000,
-      pause_on_hover : true,
-      resume_on_mouseout : false,
-      next_on_click : true,
-      animation_speed : 500,
-      stack_on_small : false,
-      navigation_arrows : true,
-      slide_number : true,
-      slide_number_text : 'of',
-      container_class : 'orbit-container',
-      stack_on_small_class : 'orbit-stack-on-small',
-      next_class : 'orbit-next',
-      prev_class : 'orbit-prev',
-      timer_container_class : 'orbit-timer',
-      timer_paused_class : 'paused',
-      timer_progress_class : 'orbit-progress',
-      slides_container_class : 'orbit-slides-container',
-      preloader_class : 'preloader',
-      slide_selector : '*',
-      bullets_container_class : 'orbit-bullets',
-      bullets_active_class : 'active',
-      slide_number_class : 'orbit-slide-number',
-      caption_class : 'orbit-caption',
-      active_slide_class : 'active',
-      orbit_transition_class : 'orbit-transitioning',
-      bullets : true,
-      circular : true,
-      timer : true,
-      variable_height : false,
-      swipe : true,
-      before_slide_change : noop,
-      after_slide_change : noop
-    },
-
-    init : function (scope, method, options) {
-      var self = this;
-      this.bindings(method, options);
-    },
-
-    events : function (instance) {
-      var orbit_instance = new Orbit(this.S(instance), this.S(instance).data('orbit-init'));
-      this.S(instance).data(this.name + '-instance', orbit_instance);
-    },
-
-    reflow : function () {
-      var self = this;
-
-      if (self.S(self.scope).is('[data-orbit]')) {
-        var $el = self.S(self.scope);
-        var instance = $el.data(self.name + '-instance');
-        instance.compute_dimensions();
-      } else {
-        self.S('[data-orbit]', self.scope).each(function (idx, el) {
-          var $el = self.S(el);
-          var opts = self.data_options($el);
-          var instance = $el.data(self.name + '-instance');
-          instance.compute_dimensions();
-        });
+        if (this.options.accessible) {
+          this.$wrapper.add(this.$bullets).on('keydown.zf.orbit', function (e) {
+            // handle keyboard event with keyboard util
+            _foundation_util_keyboard__WEBPACK_IMPORTED_MODULE_1__["Keyboard"].handleKey(e, 'Orbit', {
+              next: function next() {
+                _this.changeSlide(true);
+              },
+              previous: function previous() {
+                _this.changeSlide(false);
+              },
+              handled: function handled() {
+                // if bullet is focused, make sure focus moves
+                if (jquery__WEBPACK_IMPORTED_MODULE_0___default()(e.target).is(_this.$bullets)) {
+                  _this.$bullets.filter('.is-active').focus();
+                }
+              }
+            });
+          });
+        }
       }
     }
-  };
+    /**
+     * Resets Orbit so it can be reinitialized
+     */
 
-}(jQuery, window, window.document));
+  }, {
+    key: "_reset",
+    value: function _reset() {
+      // Don't do anything if there are no slides (first run)
+      if (typeof this.$slides === 'undefined') {
+        return;
+      }
+
+      if (this.$slides.length > 1) {
+        // Remove old events
+        this.$element.off('.zf.orbit').find('*').off('.zf.orbit'); // Restart timer if autoPlay is enabled
+
+        if (this.options.autoPlay) {
+          this.timer.restart();
+        } // Reset all sliddes
+
+
+        this.$slides.each(function (el) {
+          jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).removeClass('is-active is-active is-in').removeAttr('aria-live').hide();
+        }); // Show the first slide
+
+        this.$slides.first().addClass('is-active').show(); // Triggers when the slide has finished animating
+
+        this.$element.trigger('slidechange.zf.orbit', [this.$slides.first()]); // Select first bullet if bullets are present
+
+        if (this.options.bullets) {
+          this._updateBullets(0);
+        }
+      }
+    }
+    /**
+    * Changes the current slide to a new one.
+    * @function
+    * @param {Boolean} isLTR - if true the slide moves from right to left, if false the slide moves from left to right.
+    * @param {jQuery} chosenSlide - the jQuery element of the slide to show next, if one is selected.
+    * @param {Number} idx - the index of the new slide in its collection, if one chosen.
+    * @fires Orbit#slidechange
+    */
+
+  }, {
+    key: "changeSlide",
+    value: function changeSlide(isLTR, chosenSlide, idx) {
+      if (!this.$slides) {
+        return;
+      } // Don't freak out if we're in the middle of cleanup
+
+
+      var $curSlide = this.$slides.filter('.is-active').eq(0);
+
+      if (/mui/g.test($curSlide[0].className)) {
+        return false;
+      } //if the slide is currently animating, kick out of the function
+
+
+      var $firstSlide = this.$slides.first(),
+          $lastSlide = this.$slides.last(),
+          dirIn = isLTR ? 'Right' : 'Left',
+          dirOut = isLTR ? 'Left' : 'Right',
+          _this = this,
+          $newSlide;
+
+      if (!chosenSlide) {
+        //most of the time, this will be auto played or clicked from the navButtons.
+        $newSlide = isLTR ? //if wrapping enabled, check to see if there is a `next` or `prev` sibling, if not, select the first or last slide to fill in. if wrapping not enabled, attempt to select `next` or `prev`, if there's nothing there, the function will kick out on next step. CRAZY NESTED TERNARIES!!!!!
+        this.options.infiniteWrap ? $curSlide.next(".".concat(this.options.slideClass)).length ? $curSlide.next(".".concat(this.options.slideClass)) : $firstSlide : $curSlide.next(".".concat(this.options.slideClass)) //pick next slide if moving left to right
+        : this.options.infiniteWrap ? $curSlide.prev(".".concat(this.options.slideClass)).length ? $curSlide.prev(".".concat(this.options.slideClass)) : $lastSlide : $curSlide.prev(".".concat(this.options.slideClass)); //pick prev slide if moving right to left
+      } else {
+        $newSlide = chosenSlide;
+      }
+
+      if ($newSlide.length) {
+        /**
+        * Triggers before the next slide starts animating in and only if a next slide has been found.
+        * @event Orbit#beforeslidechange
+        */
+        this.$element.trigger('beforeslidechange.zf.orbit', [$curSlide, $newSlide]);
+
+        if (this.options.bullets) {
+          idx = idx || this.$slides.index($newSlide); //grab index to update bullets
+
+          this._updateBullets(idx);
+        }
+
+        if (this.options.useMUI && !this.$element.is(':hidden')) {
+          _foundation_util_motion__WEBPACK_IMPORTED_MODULE_2__["Motion"].animateIn($newSlide.addClass('is-active'), this.options["animInFrom".concat(dirIn)], function () {
+            $newSlide.css({
+              'display': 'block'
+            }).attr('aria-live', 'polite');
+          });
+          _foundation_util_motion__WEBPACK_IMPORTED_MODULE_2__["Motion"].animateOut($curSlide.removeClass('is-active'), this.options["animOutTo".concat(dirOut)], function () {
+            $curSlide.removeAttr('aria-live');
+
+            if (_this.options.autoPlay && !_this.timer.isPaused) {
+              _this.timer.restart();
+            } //do stuff?
+
+          });
+        } else {
+          $curSlide.removeClass('is-active is-in').removeAttr('aria-live').hide();
+          $newSlide.addClass('is-active is-in').attr('aria-live', 'polite').show();
+
+          if (this.options.autoPlay && !this.timer.isPaused) {
+            this.timer.restart();
+          }
+        }
+        /**
+        * Triggers when the slide has finished animating in.
+        * @event Orbit#slidechange
+        */
+
+
+        this.$element.trigger('slidechange.zf.orbit', [$newSlide]);
+      }
+    }
+    /**
+    * Updates the active state of the bullets, if displayed.
+    * Move the descriptor of the current slide `[data-slide-active-label]` to the newly active bullet.
+    * If no `[data-slide-active-label]` is set, will move the exceeding `span` element.
+    *
+    * @function
+    * @private
+    * @param {Number} idx - the index of the current slide.
+    */
+
+  }, {
+    key: "_updateBullets",
+    value: function _updateBullets(idx) {
+      var $oldBullet = this.$bullets.filter('.is-active');
+      var $othersBullets = this.$bullets.not('.is-active');
+      var $newBullet = this.$bullets.eq(idx);
+      $oldBullet.removeClass('is-active').blur();
+      $newBullet.addClass('is-active'); // Find the descriptor for the current slide to move it to the new slide button
+
+      var activeStateDescriptor = $oldBullet.children('[data-slide-active-label]').last(); // If not explicitely given, search for the last "exceeding" span element (compared to others bullets).
+
+      if (!activeStateDescriptor.length) {
+        var spans = $oldBullet.children('span');
+        var spanCountInOthersBullets = $othersBullets.toArray().map(function (b) {
+          return jquery__WEBPACK_IMPORTED_MODULE_0___default()(b).children('span').length;
+        }); // If there is an exceeding span element, use it as current slide descriptor
+
+        if (spanCountInOthersBullets.every(function (count) {
+          return count < spans.length;
+        })) {
+          activeStateDescriptor = spans.last();
+          activeStateDescriptor.attr('data-slide-active-label', '');
+        }
+      } // Move the current slide descriptor to the new slide button
+
+
+      if (activeStateDescriptor.length) {
+        activeStateDescriptor.detach();
+        $newBullet.append(activeStateDescriptor);
+      }
+    }
+    /**
+    * Destroys the carousel and hides the element.
+    * @function
+    */
+
+  }, {
+    key: "_destroy",
+    value: function _destroy() {
+      this.$element.off('.zf.orbit').find('*').off('.zf.orbit').end().hide();
+    }
+  }]);
+
+  return Orbit;
+}(_foundation_core_utils__WEBPACK_IMPORTED_MODULE_5__["Plugin"]);
+
+Orbit.defaults = {
+  /**
+  * Tells the JS to look for and loadBullets.
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  bullets: true,
+
+  /**
+  * Tells the JS to apply event listeners to nav buttons
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  navButtons: true,
+
+  /**
+  * motion-ui animation class to apply
+  * @option
+   * @type {string}
+  * @default 'slide-in-right'
+  */
+  animInFromRight: 'slide-in-right',
+
+  /**
+  * motion-ui animation class to apply
+  * @option
+   * @type {string}
+  * @default 'slide-out-right'
+  */
+  animOutToRight: 'slide-out-right',
+
+  /**
+  * motion-ui animation class to apply
+  * @option
+   * @type {string}
+  * @default 'slide-in-left'
+  *
+  */
+  animInFromLeft: 'slide-in-left',
+
+  /**
+  * motion-ui animation class to apply
+  * @option
+   * @type {string}
+  * @default 'slide-out-left'
+  */
+  animOutToLeft: 'slide-out-left',
+
+  /**
+  * Allows Orbit to automatically animate on page load.
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  autoPlay: true,
+
+  /**
+  * Amount of time, in ms, between slide transitions
+  * @option
+   * @type {number}
+  * @default 5000
+  */
+  timerDelay: 5000,
+
+  /**
+  * Allows Orbit to infinitely loop through the slides
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  infiniteWrap: true,
+
+  /**
+  * Allows the Orbit slides to bind to swipe events for mobile, requires an additional util library
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  swipe: true,
+
+  /**
+  * Allows the timing function to pause animation on hover.
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  pauseOnHover: true,
+
+  /**
+  * Allows Orbit to bind keyboard events to the slider, to animate frames with arrow keys
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  accessible: true,
+
+  /**
+  * Class applied to the container of Orbit
+  * @option
+   * @type {string}
+  * @default 'orbit-container'
+  */
+  containerClass: 'orbit-container',
+
+  /**
+  * Class applied to individual slides.
+  * @option
+   * @type {string}
+  * @default 'orbit-slide'
+  */
+  slideClass: 'orbit-slide',
+
+  /**
+  * Class applied to the bullet container. You're welcome.
+  * @option
+   * @type {string}
+  * @default 'orbit-bullets'
+  */
+  boxOfBullets: 'orbit-bullets',
+
+  /**
+  * Class applied to the `next` navigation button.
+  * @option
+   * @type {string}
+  * @default 'orbit-next'
+  */
+  nextClass: 'orbit-next',
+
+  /**
+  * Class applied to the `previous` navigation button.
+  * @option
+   * @type {string}
+  * @default 'orbit-previous'
+  */
+  prevClass: 'orbit-previous',
+
+  /**
+  * Boolean to flag the js to use motion ui classes or not. Default to true for backwards compatibility.
+  * @option
+   * @type {boolean}
+  * @default true
+  */
+  useMUI: true
+};
+
+
+/***/ }),
+
+/***/ 10:
+/*!******************************************************!*\
+  !*** multi ./js/entries/plugins/foundation.orbit.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(/*! /Users/joeworkman/Development/foundation-sites/js/entries/plugins/foundation.orbit.js */"./js/entries/plugins/foundation.orbit.js");
+
+
+/***/ }),
+
+/***/ "jquery":
+/*!********************************************************************************************!*\
+  !*** external {"root":["jQuery"],"amd":"jquery","commonjs":"jquery","commonjs2":"jquery"} ***!
+  \********************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_jquery__;
+
+/***/ })
+
+/******/ });
+});
+//# sourceMappingURL=foundation.orbit.js.map

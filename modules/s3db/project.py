@@ -43,7 +43,6 @@ __all__ = ("ProjectModel",
            "ProjectStatusModel",
            "ProjectTagModel",
            "ProjectThemeModel",
-           "ProjectTargetModel",
            "ProjectTaskModel",
            "ProjectTaskTagModel",
            "project_ActivityRepresent",
@@ -171,15 +170,6 @@ class ProjectModel(DataModel):
                            label = T("Duration"),
                            readable = False,
                            writable = False,
-                           ),
-                     Field("calendar",
-                           label = T("Calendar"),
-                           readable = mode_task,
-                           writable = mode_task,
-                           requires = IS_EMPTY_OR(IS_URL()),
-                           comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Calendar"),
-                                                           T("URL to a Google Calendar to display on the project timeline."))),
                            ),
                      # multi_budgets deployments handle on the Budgets Tab
                      # buget_monitoring deployments handle as inline component
@@ -426,10 +416,6 @@ class ProjectModel(DataModel):
                    method = "map",
                    action = self.project_map)
 
-        set_method("project_project",
-                   method = "timeline",
-                   action = self.project_timeline)
-
         # Components
         add_components(tablename,
                        # Activities
@@ -495,13 +481,6 @@ class ProjectModel(DataModel):
                        # Format needed by S3Filter (unless using $link)
                        project_theme_project = "project_id",
 
-                       # Data Collection Targets
-                       project_project_target = "project_id",
-                       dc_target = {"link": "project_project_target",
-                                    "joinby": "project_id",
-                                    "key": "target_id",
-                                    "actuate": "replace",
-                                    },
                        # Master Keys
                        project_project_masterkey = "project_id",
                        auth_masterkey = {"link": "project_project_masterkey",
@@ -798,57 +777,6 @@ class ProjectModel(DataModel):
         output = json.dumps({})
 
         current.response.headers["Content-Type"] = "application/json"
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def project_timeline(r, **attr):
-        """
-            Display the project on a Simile Timeline
-
-            http://www.simile-widgets.org/wiki/Reference_Documentation_for_Timeline
-
-            Currently this just displays a Google Calendar
-
-            @ToDo: Add Milestones
-            @ToDo: Filters for different 'layers'
-            @ToDo: export milestones/tasks as .ics
-        """
-
-        if r.representation == "html" and r.name == "project":
-
-            #appname = r.application
-            response = current.response
-            s3 = response.s3
-
-            calendar = r.record.calendar
-
-            # Pass vars to our JS code
-            s3.js_global.append('''S3.timeline.calendar="%s"''' % calendar)
-
-            # Add core Simile Code
-            s3_include_simile()
-
-            # Create the DIV
-            item = DIV(_id = "s3timeline",
-                       _class = "s3-timeline",
-                       )
-
-            output = {"item": item}
-
-            output["title"] = current.T("Project Calendar")
-
-            # Maintain RHeader for consistency
-            if "rheader" in attr:
-                rheader = attr["rheader"](r)
-                if rheader:
-                    output["rheader"] = rheader
-
-            response.view = "timeline.html"
-
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
-
         return output
 
 # =============================================================================
@@ -2604,46 +2532,6 @@ class ProjectThemeModel(DataModel):
                 update_or_insert(project_location_id = row.id,
                                  theme_id = theme_id,
                                  percentage = percentages[theme_id])
-
-# =============================================================================
-class ProjectTargetModel(DataModel):
-
-    names = ("project_project_target",)
-
-    def model(self):
-
-        T = current.T
-
-        # ---------------------------------------------------------------------
-        # Projects <> DC Targets Link Table
-        #
-        tablename = "project_project_target"
-        self.define_table(tablename,
-                          self.project_project_id(empty = False,
-                                                  ondelete = "CASCADE",
-                                                  ),
-                          self.dc_target_id(empty = False,
-                                            ondelete = "CASCADE",
-                                            ),
-                          *s3_meta_fields()
-                          )
-
-        # CRUD Strings
-        current.response.s3.crud_strings[tablename] = Storage(
-            label_create = T("Add Data Collection Target"),
-            title_display = T("Data Collection Target"),
-            title_list = T("Data Collection Targets"),
-            title_update = T("Edit Data Collection Target"),
-            title_upload = T("Import Data Collection Targets"),
-            label_list_button = T("List Data Collection Targets"),
-            msg_record_created = T("Data Collection Target added to Project"),
-            msg_record_modified = T("Data Collection Target updated"),
-            msg_record_deleted = T("Data Collection Target removed from Project"),
-            msg_list_empty = T("No Data Collection Targets found for this Project"),
-            )
-
-        # Pass names back to global scope (s3.*)
-        return None
 
 # =============================================================================
 class ProjectActivityModel(DataModel):
@@ -4977,8 +4865,6 @@ def project_rheader(r):
             append((T("Activities"), "activity"))
         if mode_task:
             append((T("Tasks"), "task"))
-        if record.calendar:
-            append((T("Calendar"), "timeline"))
         if settings.get_project_budget_monitoring():
             append((T("Budget Monitoring"), "monitoring"))
         elif settings.get_project_multiple_budgets():

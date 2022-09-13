@@ -1761,7 +1761,7 @@ class ResourceDataAccessTests(unittest.TestCase):
 
         # Should still not give any duplicates:
         resource = s3db.resource("org_organisation")
-        class FakeVirtualFields(object):
+        class FakeVirtualFields:
             def testfield(self):
                 return "TEST"
         resource.table.virtualfields.append(FakeVirtualFields())
@@ -1796,7 +1796,7 @@ class ResourceDataAccessTests(unittest.TestCase):
 
         # Should still not give any duplicates:
         resource = s3db.resource("org_organisation")
-        class FakeVirtualFields(object):
+        class FakeVirtualFields:
             def testfield(self):
                 return "TEST"
         resource.table.virtualfields.append(FakeVirtualFields())
@@ -1830,7 +1830,7 @@ class ResourceDataAccessTests(unittest.TestCase):
 
         # Try the same with an additional virtual field filter:
         resource = s3db.resource("org_organisation")
-        class FakeVirtualFields(object):
+        class FakeVirtualFields:
             def testfield(self):
                 return "TEST"
         resource.table.virtualfields.append(FakeVirtualFields())

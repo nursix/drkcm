@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # PR Unit Tests
 #
 # To run this script use:

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" S3 pyDAL Imports (with fallbacks for older DAL versions)
+"""
+    S3 pyDAL Imports (with fallbacks for older DAL versions)
 
     @copyright: 2015-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -56,7 +55,7 @@ except ImportError:
 from gluon import current
 
 # =============================================================================
-class S3DAL(object):
+class S3DAL:
     """ Adapter class for backwards-incompatible PyDAL changes """
 
     def __init__(self):

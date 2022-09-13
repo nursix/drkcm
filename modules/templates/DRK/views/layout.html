@@ -1,5 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="{{=T.accepted_language or "en"}}" dir="{{=s3.direction}}">{{# class="no-js" needed for modernizr }}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="{{=T.accepted_language or "en"}}" dir="{{=s3.direction}}" class="no-js">{{# class="no-js" needed for modernizr }}
 <head>{{theme_styles=response.s3.theme_styles}}
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 {{# Always force latest IE rendering engine (even in intranet) & Chrome Frame }}
@@ -26,6 +26,7 @@
  <link href="{{=sheet}}" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
 {{pass}}
 {{include "foundation.css.html"}}
+<link id="ext-styles" disabled="disabled">
 {{for sheet in s3.stylesheets:}}
  <link href="/{{=appname}}/static/styles/{{=sheet}}" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
 {{pass}}
@@ -53,7 +54,7 @@
 <body class='{{=s3.direction}}'>
  <main>
   <div class='row main-title'>
-   <div class='large-4 medium-6 columns'>
+   <div class='large-5 medium-6 columns'>
     <a href='{{=URL(c="default", f="index")}}'>
      {{org_menu = current.menu.org.render() if current.menu.org else ("", "")}}
      <div class="org-logo">{{=org_menu[1]}}</div>
@@ -63,10 +64,10 @@
      </div>
     </a>
    </div>
-   <div class='large-push-6 large-2 medium-6 columns'>
+   <div class='large-push-5 large-2 medium-6 columns'>
     {{=current.menu.lang}}
    </div>
-   <div class='large-pull-2 large-6 medium-12 columns personal-menu-area'>
+   <div class='large-pull-2 large-5 medium-12 columns personal-menu-area'>
     <div class="username">{{if auth.is_logged_in():}}{{=auth.user.email}}{{else:}}{{=T("anonymous user")}}{{pass}}<i class='fa fa-user'></i></div>
     {{=current.menu.personal}}
    </div>
@@ -79,14 +80,14 @@
   <div class='row main-content'>
    {{if current.menu.options is not None:}}
    <div class='small-12 columns'>
-    <a id='menu-options-toggle' class='tiny secondary button show-for-small' data-status='off' data-off='{{=T("Show Options")}}' data-on='{{=T("Hide Options")}}'>{{=T("Show Options")}}</a>
+    <a id='menu-options-toggle' class='tiny secondary button show-for-small-only' data-status='off' data-off='{{=T("Show Options")}}' data-on='{{=T("Hide Options")}}'>{{=T("Show Options")}}</a>
    </div>
-   <div class='medium-3 large-2 columns hide-for-small' id='menu-options'>
+   <div class='medium-3 large-2 columns hide-for-small-only' id='menu-options'>
     {{=current.menu.options}}
    </div>
    <div class='medium-9 large-10 columns' id='content'>
    {{else:}}
-   <div class='medium-12 columns'>
+   <div class='medium-12 columns' id='content'>
    {{pass}}
     <div class='row'>
      <div class='medium-8 medium-centered columns' id='alert-space'>

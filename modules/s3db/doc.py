@@ -53,7 +53,6 @@ class DocumentEntityModel(DataModel):
     def model(self):
 
         T = current.T
-        settings = current.deployment_settings
 
         # ---------------------------------------------------------------------
         # Document-referencing entities
@@ -63,7 +62,6 @@ class DocumentEntityModel(DataModel):
                         "cms_post": T("Post"),
                         "cr_shelter": T("Shelter"),
                         "deploy_mission": T("Mission"),
-                        "dc_response": T(settings.get_dc_response_label()),
                         "dvr_case": T("Case"),
                         "dvr_case_activity": T("Case Activity"),
                         "event_event": T("Event"),
@@ -88,7 +86,6 @@ class DocumentEntityModel(DataModel):
                         "org_group": T("Organization Group"),
                         "org_office": T("Office"),
                         "req_need": T("Need"),
-                        "req_need_response": T("Activity Group"),
                         "req_req": T("Request"),
                         "security_seized_item": T("Seized Item"),
                         }
@@ -939,12 +936,11 @@ class DocumentDataCardModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @classmethod
-    def defaults(cls):
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"doc_card_types": {},
-                "doc_update_card_type_requires": cls.update_card_type_requires,
+                "doc_update_card_type_requires": self.update_card_type_requires,
                 }
 
     # -------------------------------------------------------------------------

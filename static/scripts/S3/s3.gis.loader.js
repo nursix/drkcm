@@ -17,7 +17,7 @@
  * Parameters:
  * debug - {Boolean} Whether to run in Debug mode or not
  * projection - {Integer} The projection to run the map in (900913 & 4236 are handled natively. Other projections require a Proj4 file to be loadable)
- * callback - {Function} The function to be called after the JS is loaded (requires yepnope.js to be loaded)
+ * callback - {Function} The function to be called after the JS is loaded
  * scripts - {Array} A list of additional scripts to load after the core OpenLayers/GeoExt but before the callback is run (These come from Layers & Plugins)
  */
 var s3_gis_loadjs = function(debug, projection, callback, scripts) {
@@ -476,41 +476,6 @@ var s3_gis_loadjs = function(debug, projection, callback, scripts) {
     jsFiles = jsFiles.concat(scripts);
 
     var path = S3.Ap.concat('/static/scripts/');
-
-    // Original version with yepnope (TODO remove when sufficiently tested)
-    /*
-    if (callback) {
-        // Add the full path
-        for (var i=0, len=jsFiles.length; i < len; i++) {
-            jsFiles[i] = path + jsFiles[i];
-        }
-        // Use yepnope for guaranteed execution order & ability to run a callback once-completed
-        yepnope({
-            load: jsFiles,
-            complete: function() {
-                // Hide the Loader
-                $('.map_loader').hide();
-                // Loading complete, now we can run the callback
-                callback.call();
-            }
-        });
-    } else {
-        // Use "parser-inserted scripts" for guaranteed execution order
-        // http://hsivonen.iki.fi/script-execution/
-        var src, script;
-        var head = document.getElementsByTagName('head');
-        for (var i=0, len=jsFiles.length; i < len; i++) {
-            src = path + jsFiles[i];
-            script = document.createElement('script');
-            script.src = src;
-            // Maintain execution order
-            script.async = false;
-            head[0].appendChild(script);
-        }
-        // Hide the Loader
-        $('.map_loader').hide();
-    }
-    */
 
     // Use "parser-inserted scripts" for guaranteed execution order
     // http://hsivonen.iki.fi/script-execution/

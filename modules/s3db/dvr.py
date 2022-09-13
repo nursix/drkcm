@@ -4984,11 +4984,6 @@ class DVRCaseEvaluationModel(DataModel):
                      *s3_meta_fields()
                      )
 
-        # Custom Report Method
-        #self.set_method("org_capacity_assessment_data",
-        #                method = "custom_report",
-        #                action = org_CapacityReport())
-
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         return None
@@ -7064,12 +7059,12 @@ class DVRRegisterCaseEvent(CRUDMethod):
                                                )
 
         # Form buttons
-        check_btn = INPUT(_class = "tiny secondary button check-btn",
+        check_btn = INPUT(_class = "small secondary button check-btn",
                           _name = "check",
                           _type = "submit",
                           _value = T("Check ID"),
                           )
-        submit_btn = INPUT(_class = "tiny primary button submit-btn",
+        submit_btn = INPUT(_class = "small primary button submit-btn",
                            _name = "submit",
                            _type = "submit",
                            _value = submit,
@@ -7514,18 +7509,17 @@ class DVRRegisterCaseEvent(CRUDMethod):
         buttons = []
         for k, v in event_types.items():
             if k != "_default":
-                button = LI(A(T(v.name),
-                              _class = "secondary button event-type-selector",
-                              data = {"code": s3_str(v.code),
-                                      "name": s3_str(T(v.name)),
-                                      },
-                              ),
-                            )
+                button = A(T(v.name),
+                           _class = "secondary button event-type-selector",
+                           data = {"code": s3_str(v.code),
+                                   "name": s3_str(T(v.name)),
+                                   },
+                           )
                 buttons.append(button)
-        output["event_type_selector"] = UL(buttons,
-                                           _class="button-group stack hide event-type-selector",
-                                           _id="event-type-selector",
-                                           )
+        output["event_type_selector"] = DIV(buttons,
+                                            _class="button-group stacked hide event-type-selector",
+                                            _id="event-type-selector",
+                                            )
 
         return output
 
@@ -8151,7 +8145,7 @@ class DVRRegisterCaseEvent(CRUDMethod):
         # Construct button
         return A(T("Scan with Zxing"),
                  _href = template % ret,
-                 _class = "tiny primary button zxing-button",
+                 _class = "small primary button zxing-button",
                  data = {"tmp": template % tmp,
                          },
                  )

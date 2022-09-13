@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Members Model
+"""
+    Sahana Eden Members Model
 
     @copyright: 2012-2021 (c) Sahana Software Foundation
     @license: MIT

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Incident Reporting Model
+"""
+    Sahana Eden Incident Reporting Model
 
     @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -31,8 +30,6 @@ __all__ = ("IRSModel",
            "IRSResponseModel",
            "irs_rheader"
            )
-
-import json
 
 from gluon import *
 from gluon.storage import Storage
@@ -482,10 +479,6 @@ class IRSModel(DataModel):
                    action=self.irs_dispatch)
 
         set_method("irs_ireport",
-                   method = "timeline",
-                   action = self.irs_timeline)
-
-        set_method("irs_ireport",
                    method = "ushahidi",
                    action = self.irs_ushahidi_import)
 
@@ -521,7 +514,6 @@ class IRSModel(DataModel):
         """
             Safe defaults for model-global names in case module is disabled
             - used by events module
-                    & legacy assess & impact modules
         """
 
         return {"irs_ireport_id": S3ReusableField.dummy("ireport_id"),
@@ -760,134 +752,6 @@ class IRSModel(DataModel):
 
             output["title"] = T("Send Dispatch Update")
             current.response.view = "msg/compose.html"
-            return output
-
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def irs_timeline(r, **attr):
-        """
-            Display the Incidents on a Simile Timeline
-
-            http://www.simile-widgets.org/wiki/Reference_Documentation_for_Timeline
-
-            @ToDo: Play button
-            http://www.simile-widgets.org/wiki/Timeline_Moving_the_Timeline_via_Javascript
-        """
-
-        if r.representation == "html" and r.name == "ireport":
-
-            T = current.T
-            db = current.db
-            #appname = r.application
-            response = current.response
-            s3 = response.s3
-
-            itable = current.s3db.doc_image
-
-            # Add core Simile Code
-            #s3.scripts.append("/%s/static/scripts/simile/timeline/timeline-api.js" % appname)
-
-            # Add our controlled script
-            #if s3.debug:
-            #    s3.scripts.append("/%s/static/scripts/S3/s3.timeline.js" % appname)
-            #else:
-            #    s3.scripts.append("/%s/static/scripts/S3/s3.timeline.min.js" % appname)
-            s3_include_simile()
-
-            # Add our data
-            # @ToDo: Make this the initial data & then collect extra via REST with a stylesheet
-            # add in JS using S3.timeline.eventSource.addMany(events) where events is a []
-            if r.record:
-                # Single record
-                rows = [r.record]
-            else:
-                # Multiple records
-                # @ToDo: Load all records & sort to closest in time
-                # http://stackoverflow.com/questions/7327689/how-to-generate-a-sequence-of-future-datetimes-in-python-and-determine-nearest-d
-                r.resource.load(fields = ["id",
-                                          "datetime",
-                                          "expiry",
-                                          "name",
-                                          "message",
-                                          ],
-                                limit = 2000,
-                                virtual = False,
-                                )
-                rows = r.resource._rows
-
-            data = {"dateTimeFormat": "iso8601",
-                    }
-
-            now = r.utcnow
-            tl_start = tl_end = now
-            events = []
-            eappend = events.append
-            for row in rows:
-                # Dates
-                start = row.datetime or ""
-                if start:
-                    if start < tl_start:
-                        tl_start = start
-                    if start > tl_end:
-                        tl_end = start
-                    start = start.isoformat()
-                end = row.expiry or ""
-                if end:
-                    if end > tl_end:
-                        tl_end = end
-                    end = end.isoformat()
-                # Image
-                # Just grab the first one for now
-                query = (itable.deleted == False) & \
-                        (itable.doc_id == row.doc_id)
-                image = db(query).select(itable.url,
-                                         limitby = (0, 1),
-                                         ).first()
-                if image:
-                    image = image.url or ""
-                # URL
-                link = URL(args = [row.id])
-                eappend({"start": start,
-                         "end": end,
-                         "title": row.name,
-                         "caption": row.message or "",
-                         "description": row.message or "",
-                         "image": image or "",
-                         "link": link,
-                         # @ToDo: Colour based on Category (More generically: Resource or Resource Type)
-                         #"color" : "blue",
-                         })
-            data["events"] = events
-            data = json.dumps(data, separators=SEPARATORS)
-
-            code = "".join((
-'''S3.timeline.data=''', data, '''
-S3.timeline.tl_start="''', tl_start.isoformat(), '''"
-S3.timeline.tl_end="''', tl_end.isoformat(), '''"
-S3.timeline.now="''', now.isoformat(), '''"
-'''))
-
-            # Control our code in static/scripts/S3/s3.timeline.js
-            s3.js_global.append(code)
-
-            # Create the DIV
-            item = DIV(_id = "s3timeline",
-                       _class = "s3-timeline",
-                       )
-
-            output = {"item": item}
-
-            # Maintain RHeader for consistency
-            if attr.get("rheader"):
-                rheader = attr["rheader"](r)
-                if rheader:
-                    output["rheader"] = rheader
-
-            output["title"] = T("Incident Timeline")
-            response.view = "timeline.html"
             return output
 
         else:

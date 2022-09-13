@@ -2787,10 +2787,6 @@ class S3CMS(CRUDMethod):
         ADMIN = auth.get_system_roles().ADMIN
         ADMIN = auth.s3_has_role(ADMIN)
         if ADMIN:
-            if current.response.s3.crud.formstyle == "bootstrap":
-                _class = "btn"
-            else:
-                _class = "action-btn"
             url_vars = {"module": module,
                         "resource": resource,
                         }
@@ -2803,7 +2799,7 @@ class S3CMS(CRUDMethod):
                                        args = [_item.id, "update"],
                                        vars = url_vars,
                                        ),
-                             _class="%s cms-edit" % _class,
+                             _class="action-btn cms-edit",
                              ))
             else:
                 item = A(current.T("Edit"),
@@ -2811,7 +2807,7 @@ class S3CMS(CRUDMethod):
                                    args = "create",
                                    vars = url_vars,
                                    ),
-                         _class="%s cms-edit" % _class,
+                         _class="action-btn cms-edit",
                          )
         elif _item:
             item = XML(_item.body)
@@ -3287,12 +3283,10 @@ def cms_post_list_layout(list_id, item_id, resource, rfields, record):
                      SPAN(_class="caret"),
                      _class="btn dropdown-toggle dropdown",
                      _href="#",
-                     data={# Both Bootstrap & Foundation:
+                     data={# Foundation:
                            "dropdown": doc_list_id,
                            # Foundation:
                            "options": "is_hover:true; hover_timeout:5000",
-                           # Bootstrap:
-                           "toggle": "dropdown",
                            },
                      ),
                    doc_list,

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Database Migration Toolkit
+"""
+    Database Migration Toolkit
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
@@ -53,7 +52,7 @@ import subprocess
 #else:
 #    GITPYTHON = True
 
-class S3Migration(object):
+class S3Migration:
     """
         Database Migration Toolkit
         - used to help migrate both a production database on a server

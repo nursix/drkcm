@@ -559,8 +559,7 @@ class S3SQLDefaultForm(S3SQLForm):
             try:
                 form[0][-1][0][0]["_class"] = settings.submit_style
             except:
-                # Submit button has been removed or a different formstyle,
-                # such as Bootstrap (which is already styled anyway)
+                # Submit button has been removed or a different formstyle
                 pass
 
         # Subheadings
@@ -1138,8 +1137,7 @@ class S3SQLCustomForm(S3SQLForm):
             try:
                 form[0][-1][0][0]["_class"] = crud_settings.submit_style
             except (KeyError, IndexError, TypeError):
-                # Submit button has been removed or a different formstyle,
-                # such as Bootstrap (which is already styled anyway)
+                # Submit button has been removed or a different formstyle
                 pass
 
         # Subheadings
@@ -1897,7 +1895,6 @@ class S3SQLDummyField(S3SQLFormElement):
         A Dummy Field
 
         A simple DIV which can then be acted upon with JavaScript
-        - used by dc_question Grids
     """
 
     # -------------------------------------------------------------------------
@@ -1949,7 +1946,6 @@ class S3SQLSectionBreak(S3SQLFormElement):
         A Section Break
 
         A simple DIV which can then be acted upon with JavaScript &/or Styled
-        - used by dc_template.layout
     """
 
     # -------------------------------------------------------------------------
@@ -2001,7 +1997,6 @@ class S3SQLInlineInstruction(S3SQLFormElement):
         Inline Instructions
 
         A simple DIV which can then be acted upon with JavaScript &/or Styled
-        - used by dc_template.layout
     """
 
     # -------------------------------------------------------------------------

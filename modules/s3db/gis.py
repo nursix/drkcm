@@ -3774,14 +3774,13 @@ class GISMapModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Feature Type"),
-                                                           T("Mandatory. In GeoServer, this is the Layer Name. Within the WFS getCapabilities, this is the FeatureType Name part after the colon(:)."))),
+                                                           T("Mandatory. In the WFS getCapabilities response, this is the FeatureType name part after the colon(:)."))),
                            ),
                      Field("featureNS",
                            label = T("Feature Namespace"),
-                           requires = IS_EMPTY_OR(IS_URL()),
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Feature Namespace"),
-                                                           T("Optional. In GeoServer, this is the Workspace Namespace URI (not the name!). Within the WFS getCapabilities, the workspace is the FeatureType Name part before the colon(:)."))),
+                                                           T("Optional. In the WFS getCapabilities response, this is the FeatureType name part before the colon(:)."))),
                            ),
                      Field("title",
                            default = "name",
@@ -3827,7 +3826,7 @@ class GISMapModel(DataModel):
                                                 zero=None),
                            ),
                      gis_refresh()(default=0), # Default to Off as 'External Source' which is uneditable
-                      cluster_attribute()(),
+                     cluster_attribute()(),
                      #Field("editable", "boolean", default=False, label=T("Editable?")),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)

@@ -1456,14 +1456,7 @@ def inject_search_after_save(output):
                        _id=id,
                        _class="boolean")
         comment = ""
-        if s3_formstyle == "bootstrap":
-            _controls = DIV(widget, comment, _class="controls")
-            row = DIV(label,
-                      _controls,
-                      _class="control-group",
-                      _id="%s__row" % id
-                      )
-        elif callable(s3_formstyle):
+        if callable(s3_formstyle):
             row = s3_formstyle(id, label, widget, comment)
         else:
             # Unsupported
@@ -2091,7 +2084,7 @@ def facebook_post():
         # Formstyle with separate row for label (e.g. default Eden formstyle)
         tuple_rows = True
     else:
-        # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+        # Formstyle with just a single row (e.g. Foundation)
         tuple_rows = False
 
     form_rows = []
@@ -2172,7 +2165,7 @@ def twitter_post():
         # Formstyle with separate row for label (e.g. default Eden formstyle)
         tuple_rows = True
     else:
-        # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+        # Formstyle with just a single row (e.g. Foundation)
         tuple_rows = False
 
     form_rows = []
@@ -2245,86 +2238,5 @@ def tag():
     """ RESTful CRUD controller """
 
     return crud_controller()
-
-# =============================================================================
-# Enabled only for testing:
-#
-def readKeyGraph(queryID):
-    """  """
-
-    import os
-    curpath = os.getcwd()
-
-    f = open("%s.txt" % queryID, "r")
-
-    topics = int(next(f))
-
-    nodelabel = {}
-    E = []
-    nodetopic = {}
-    for x in range(0, topics):
-        thisnodes = []
-        nodes = int(next(f).split("KEYGRAPH_NODES:")[1])
-        for y in range(0, nodes):
-            s = next(f)
-            nodeid = s.split(":")[0]
-            nodetopic[str(nodeid)] = x
-            l1 = s.split(":")[1]
-            l2 = s.split(":")[2]
-            try:
-                nodelabel[str(nodeid)] = unicode(l2.strip())
-            except:
-                pass
-        edges = int(next(f).split("KEYGRAPH_EDGES:")[1])
-        edges = edges / 2
-        for y in range(0,edges):
-            s = next(f)
-            n1 = s.split(" ")[0].strip()
-            n2 = s.split(" ")[1].strip()
-            if (n1 in nodelabel.keys()) and (n2 in nodelabel.keys()):
-                E.append((str(n1), str(n2)))
-
-        next(f)
-        next(f)
-
-    """
-    for x in range(0,len(E)):
-        lx = list(E[x])
-        lx.append((nodetopic[E[x][0]] - nodetopic[E[x][1]] + 3)*100)
-        E[x] = tuple(lx)
-    """
-    #import networkx as nx
-    from igraph import Graph, write_svg
-    #g = nx.Graph()
-    g = Graph()
-    g.add_vertices([ str(s) for s in nodelabel.keys()])
-    #g.add_nodes_from(nodelabel)
-    g.add_edges(E)
-    g.vs["name"] = list(nodelabel.values())
-    g.vs["label"] = g.vs["name"]
-    g.vs["doc_id"] = list(nodelabel.keys())
-    layout = g.layout_lgl()
-    #layout = g.layout_kamada_kawai()
-    visual_style = {}
-    visual_style["vertex_size"] = 20
-    #visual_style["vertex_color"] = [color_dict[gender] for gender in g.vs["gender"]]
-    visual_style["vertex_label"] = g.vs["name"]
-    #visual_style["edge_width"] = [1 + 2 * int(len(is_formal)) for is_formal in g.vs["label"]]
-    visual_style["layout"] = layout
-    visual_style["bbox"] = (2000, 2000)
-    visual_style["margin"] = 20
-    #plot(g, **visual_style)
-    #c =  g.clusters().subgraphs()
-    filename = "%s.svg" % queryID
-    write_svg(g.community_fastgreedy().as_clustering().graph, layout=layout, **visual_style)
-    #plot(g.community_fastgreedy().as_clustering(), layout=layout)
-    #plot(g)
-    #g.add_weighted_edges_from(E)
-    #nx.relabel_nodes(g, nodelabel, copy=False)
-    #nx.draw(g, node_size=100, font_size=8, edge_size=10000)
-    #labels = nx.draw_networkx_labels(g,pos=nx.spring_layout(g),labels=nodelabel)
-    #import matplotlib.pyplot as plt
-    #plt.savefig('kg3.png', facecolor='w', edgecolor='w',orientation='portrait', papertype=None, format=None,transparent=False, bbox_inches=None, pad_inches=0.1)
-    #plt.show()
 
 # END ================================================================================

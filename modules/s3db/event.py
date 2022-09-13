@@ -40,7 +40,6 @@ __all__ = ("EventModel",
            "EventBookmarkModel",
            "EventCMSModel",
            "EventCMSTagModel",
-           "EventDCModel",
            "EventExpenseModel",
            "EventForumModel",
            "EventHRModel",
@@ -48,7 +47,6 @@ __all__ = ("EventModel",
            "EventImpactModel",
            "EventMapModel",
            "EventNeedModel",
-           "EventNeedResponseModel",
            "EventOrganisationModel",
            "EventProjectModel",
            "EventRequestModel",
@@ -475,16 +473,6 @@ class EventModel(DataModel):
                             event_event_tag = "event_id", # Key-Value Store
                             event_incident = "event_id",
                             event_sitrep = "event_id",
-                            dc_response = {"link": "event_response",
-                                           "joinby": "event_id",
-                                           "key": "response_id",
-                                           "actuate": "replace",
-                                           },
-                            dc_target = {"link": "event_target",
-                                         "joinby": "event_id",
-                                         "key": "target_id",
-                                         "actuate": "replace",
-                                         },
                             gis_location = {"link": "event_event_location",
                                             "joinby": "event_id",
                                             "key": "location_id",
@@ -605,8 +593,7 @@ class EventModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -1716,8 +1703,6 @@ class EventIncidentModel(DataModel):
                               #"event_site",
                               #"event_incident_report",
                               "event_event_impact",
-                              "event_response",
-                              "event_target",
                               "event_organisation",
                               "event_post",
                               "event_request",
@@ -3321,76 +3306,6 @@ class EventCMSTagModel(DataModel):
         return None
 
 # =============================================================================
-class EventDCModel(DataModel):
-    """
-        Link Data Collections to Events &/or Incidents
-    """
-
-    names = ("event_response",
-             "event_target",
-             )
-
-    def model(self):
-
-        #T = current.T
-
-        configure = self.configure
-        define_table = self.define_table
-
-        event_id = self.event_event_id
-        incident_id = self.event_incident_id
-
-        if current.deployment_settings.get_event_cascade_delete_incidents():
-            ondelete = "CASCADE"
-        else:
-            ondelete = "SET NULL"
-
-        # ---------------------------------------------------------------------
-        # Link table between Assessments & Events/Incidents
-        tablename = "event_response"
-        define_table(tablename,
-                     event_id(ondelete = ondelete),
-                     incident_id(ondelete = "CASCADE"),
-                     self.dc_response_id(empty = False,
-                                         ondelete = "CASCADE",
-                                         ),
-                     *s3_meta_fields())
-
-        configure(tablename,
-                  deduplicate = S3Duplicate(primary = ("event_id",
-                                                       "incident_id",
-                                                       "response_id",
-                                                       ),
-                                            ),
-                  onaccept = lambda form: \
-                    set_event_from_incident(form, "event_response"),
-                  )
-
-        # ---------------------------------------------------------------------
-        # Link table between Targets & Events/Incidents
-        tablename = "event_target"
-        define_table(tablename,
-                     event_id(ondelete = ondelete),
-                     incident_id(ondelete = "CASCADE"),
-                     self.dc_target_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
-                     *s3_meta_fields())
-
-        configure(tablename,
-                  deduplicate = S3Duplicate(primary = ("event_id",
-                                                       "incident_id",
-                                                       "target_id",
-                                                       ),
-                                            ),
-                  onaccept = lambda form: \
-                    set_event_from_incident(form, "event_target"),
-                  )
-
-        # Pass names back to global scope (s3.*)
-        return None
-
-# =============================================================================
 class EventExpenseModel(DataModel):
     """
         Link Expenses to Incidents &/or Events
@@ -4016,64 +3931,6 @@ class EventNeedModel(DataModel):
         #    msg_record_modified = T("Need updated"),
         #    msg_record_deleted = T("Need removed"),
         #    msg_list_empty = T("No Needs currently registered in this Event"))
-
-        # Pass names back to global scope (s3.*)
-        return None
-
-# =============================================================================
-class EventNeedResponseModel(DataModel):
-    """
-        Link Events &/or Incidents with Need Responses (Activity Groups)
-    """
-
-    names = ("event_event_need_response",
-             )
-
-    def model(self):
-
-        #T = current.T
-
-        if current.deployment_settings.get_event_cascade_delete_incidents():
-            ondelete = "CASCADE"
-        else:
-            ondelete = "SET NULL"
-
-        # ---------------------------------------------------------------------
-        # Events <> Impacts
-        #
-
-        tablename = "event_event_need_response"
-        self.define_table(tablename,
-                          self.event_event_id(ondelete = ondelete),
-                          self.event_incident_id(ondelete = "CASCADE"),
-                          self.req_need_response_id(empty = False,
-                                                    ondelete = "CASCADE",
-                                                    ),
-                          *s3_meta_fields())
-
-        # Table configuration
-        self.configure(tablename,
-                       deduplicate = S3Duplicate(primary = ("event_id",
-                                                            "incident_id",
-                                                            "need_response_id",
-                                                            ),
-                                                 ),
-                       onaccept = lambda form: \
-                        set_event_from_incident(form, "event_event_need_response"),
-                       )
-
-        # Not accessed directly
-        #current.response.s3.crud_strings[tablename] = Storage(
-        #    label_create = T("Add Activity Group"),
-        #    title_display = T("Activity Group Details"),
-        #    title_list = T("Activity Groups"),
-        #    title_update = T("Edit Activity Group"),
-        #    label_list_button = T("List Activity Groups"),
-        #    label_delete_button = T("Delete Activity Group"),
-        #    msg_record_created = T("Activity Group added"),
-        #    msg_record_modified = T("Activity Group updated"),
-        #    msg_record_deleted = T("Activity Group removed"),
-        #    msg_list_empty = T("No Activity Groups currently registered in this Event"))
 
         # Pass names back to global scope (s3.*)
         return None
@@ -4849,7 +4706,6 @@ class EventSitRepModel(DataModel):
 
         T = current.T
         settings = current.deployment_settings
-        sitrep_dynamic = settings.get_event_sitrep_dynamic()
         sitrep_edxl = settings.get_event_sitrep_edxl()
         use_incidents = settings.get_event_incident()
 
@@ -4995,9 +4851,6 @@ class EventSitRepModel(DataModel):
                           #            readable = sitrep_edxl,
                           #            writable = sitrep_edxl,
                           #            ),
-                          self.dc_template_id(readable = sitrep_dynamic,
-                                              writable = sitrep_dynamic,
-                                              ),
                           s3_comments("summary",
                                       comment = None,
                                       label = T("Summary"),
@@ -5081,9 +4934,6 @@ class EventSitRepModel(DataModel):
 
         self.configure(tablename,
                        crud_form = crud_form,
-                       # Question Answers are in a Dynamic Component
-                       # - however they all have the same component name so add correct one in controller instead!
-                       #dynamic_components = True,
                        filter_widgets = filter_widgets,
                        list_fields = list_fields,
                        orderby = "event_sitrep.date desc",
@@ -5124,53 +4974,6 @@ class EventSitRepModel(DataModel):
 
         return {"event_sitrep_id": S3ReusableField.dummy("sitrep_id"),
                 }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def event_sitrep_create_onaccept(form):
-        """
-            On-accept routine for event_sitrep:
-                - Create & link a Dynamic Table to use to store the Questions
-        """
-
-        form_vars = form.vars
-        try:
-            sitrep_id = form_vars.id
-        except AttributeError:
-            return
-
-        # Create the Dynamic Table
-        #settings = current.deployment_settings
-        #mobile_data = settings.get_dc_mobile_data()
-        #if settings.get_dc_mobile_inserts():
-        #    table_settings = "" # Default
-        #else:
-        #    table_settings = {"insertable": False}
-
-        table_id = current.s3db.s3_table.insert(title = form_vars.get("name"),
-                                                mobile_form = False, # Setting for SCPHIMS, deployment_setting if this needs changing for other contexts
-                                                #mobile_data = mobile_data, # False by default
-                                                #settings = table_settings,
-                                                )
-
-        # Add a Field to link Answers together
-        db = current.db
-        db.s3_field.insert(table_id = table_id,
-                           name = "sitrep_id",
-                           field_type = "reference event_sitrep",
-                           #label = "Response",
-                           require_not_empty = True,
-                           component_key = True,
-                           component_alias = "answer",
-                           component_tab = True,
-                           master = "dc_response",
-                           settings = {"component_multiple": False},
-                           )
-        # @ToDo: Call onaccept if this starts doing anything other than just setting 'master'
-        # @ToDo: Call set_record_owner() once we start restricting these
-
-        # Link this Table to the Template
-        db(db.event_sitrep.id == sitrep_id).update(table_id=table_id)
 
 # =============================================================================
 class EventTaskModel(DataModel):
@@ -7163,10 +6966,6 @@ def event_rheader(r):
                          ]
             if settings.get_event_impact_tab():
                 tabs.append((T("Impact"), "impact"))
-            if settings.get_event_dc_target_tab():
-                tabs.append((T("Assessment Targets"), "target"))
-            if settings.get_event_dc_response_tab():
-                tabs.append((T("Assessments"), "response"))
             if settings.get_project_event_projects():
                 tabs.append((T("Projects"), "project"))
             if settings.get_project_event_activities():
@@ -7313,10 +7112,6 @@ def event_rheader(r):
         elif name == "sitrep":
             # SitRep Controller
             tabs = [(T("Header"), None)]
-
-            # Dynamic Answers tab
-            if settings.get_event_sitrep_dynamic():
-                tabs.append((T("Details"), "answer"))
 
             # EDXL tabs
             #if settings.get_event_sitrep_edxl():

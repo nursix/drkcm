@@ -2,7 +2,7 @@
  * Shim for the S3LocationSelector to Geocode the Lx from the Postcode
  */
 
-$(document).ready(function(){
+$(function(){
 
     S3.rlp_GeoCoder = function(fieldname) {
 

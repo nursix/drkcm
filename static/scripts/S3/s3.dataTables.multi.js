@@ -16,9 +16,9 @@ S3.pluginDefaults = {
 
 			if (instance.bulk_actions) {
 				var row_id = parseInt(aData[0]);
-				chbx = $('<input/>').attr({'value': row_id,
-				                           'name': 'action_selected',
-				                           'type': 'checkbox'});
+				chbx = $('<input>').attr({'value': row_id,
+				                          'name': 'action_selected',
+				                          'type': 'checkbox'});
 				$row.children().first().html(chbx);
 			}
 
@@ -31,10 +31,10 @@ S3.pluginDefaults = {
 					var action = instance.row_actions[i];
 
 					if (action.restrict.indexOf(row_id) != -1) {
-						btn = $('<a/>').attr({'href': action.url.replace('%5Bid%5D', row_id)})
-									   .text(action.label)
-									   .addClass('.btn')
-									   .addClass(action.css);
+						btn = $('<a>').attr({'href': action.url.replace('%5Bid%5D', row_id)})
+									  .text(action.label)
+									  .addClass('.btn')
+									  .addClass(action.css);
 						$row.children().last().append(btn);
 					}
 				}
@@ -43,7 +43,7 @@ S3.pluginDefaults = {
 	}
 };
 
-$(document).ready(function() {
+$(function() {
 	$('table.dataTable').each(function(index) {
 		var table = $(this);
 		var options = $.extend(

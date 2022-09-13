@@ -2,7 +2,7 @@
  * Plugin for the S3LocationSelector to Geocode the Lx from the Postcode
  */
 
-$(document).ready(function(){
+$(function(){
 
     S3.gis.geocodeDecisionPlugin = function(selector, data, self) {
         // Postcode or Address is mandatory for geocoding

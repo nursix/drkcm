@@ -9,6 +9,12 @@
 // STYLES
 
 .rm-form {
+    table {
+        font-size: 0.8rem;
+        th, td {
+            text-align: left;
+        }
+    }
     .controls {
         width: 100%;
     }

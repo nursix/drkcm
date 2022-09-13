@@ -2,7 +2,7 @@
    - inserted into page in req_create_form_mods()
 */
 
-$(document).ready(function() {
+$(function() {
     // Read current value
     var site_id = $('#req_req_site_id').val();
     if (site_id) {
@@ -13,7 +13,7 @@ $(document).ready(function() {
     }
     // onChange happens in S3.js FilterOptionsS3
 
-    $('#req_req_is_template').change(function() {
+    $('#req_req_is_template').on('change', function() {
         if ($('#req_req_is_template').is(':checked')) {
             $('#req_req_date__row1').hide();
             $('#req_req_date__row').hide();

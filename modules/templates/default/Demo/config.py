@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 
 from gluon import current
@@ -232,18 +230,6 @@ def config(settings):
             restricted = True,
             module_type = 2
         )),
-        #("survey", Storage(
-        #    name_nice = T("Surveys"),
-        #    #description = "Create, enter, and manage surveys.",
-        #    restricted = True,
-        #    module_type = 5,
-        #)),
-        ("dc", Storage(
-           name_nice = T("Assessments"),
-           #description = "Data collection tool",
-           restricted = True,
-           module_type = 5
-        )),
         ("cr", Storage(
             name_nice = T("Shelters"),
             #description = "Tracks the location, capacity and breakdown of victims in Shelters",
@@ -353,27 +339,6 @@ def config(settings):
         #    #description = "Create & broadcast CAP alerts",
         #    restricted = True,
         #    module_type = 10,
-        #)),
-        # @ToDo: Port these Assessments to the Survey module
-        #("building", Storage(
-        #    name_nice = T("Building Assessments"),
-        #    #description = "Building Safety Assessments",
-        #    restricted = True,
-        #    module_type = 10,
-        #)),
-        # Deprecated by Surveys module
-        # - depends on CR, IRS & Impact
-        #("assess", Storage(
-        #    name_nice = T("Assessments"),
-        #    #description = "Rapid Assessments & Flexible Impact Assessments",
-        #    restricted = True,
-        #    module_type = 10,
-        #)),
-        #("impact", Storage(
-        #    name_nice = T("Impacts"),
-        #    #description = "Used by Assess",
-        #    restricted = True,
-        #    module_type = None,
         #)),
     ])
 

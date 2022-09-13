@@ -1,8 +1,6 @@
 {{if s3.debug:}}{{scripts_append = s3.scripts.append}}
  {{scripts_append("/%s/static/scripts/jquery.dataTables.js" % appname)}}
- {{scripts_append("/%s/static/scripts/jquery.dataTables.foundation.js" % appname)}}
  {{scripts_append("/%s/static/scripts/jquery.dataTables.responsive.js" % appname)}}
- {{scripts_append("/%s/static/scripts/jquery.dataTables.sortFunctions.js" % appname)}}
  {{scripts_append("/%s/static/scripts/S3/s3.ui.datatable.js" % appname)}}
 {{else:}}{{s3.scripts.append("/%s/static/scripts/S3/s3.ui.datatable.min.js" % appname)}}{{pass}}
 <script type="text/javascript">

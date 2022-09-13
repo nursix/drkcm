@@ -8,7 +8,7 @@
 
     "use strict";
 
-    $(document).ready(function() {
+    $(function() {
 
         var ns = '.register-result',
             reportToCWA = $('#test_result_report_to_cwa'),
