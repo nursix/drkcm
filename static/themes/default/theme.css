@@ -3035,7 +3035,7 @@ table.dataTable input.bulkcheckbox[type=checkbox] {
 /* line 194, ../scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody th:first-child::before {
-  top: 0.6rem;
+  top: 0.4rem;
   background-color: #0a5b29;
 }
 /* line 200, ../scss/theme/_tables.scss */

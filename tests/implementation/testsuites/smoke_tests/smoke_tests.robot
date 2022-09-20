@@ -45,7 +45,7 @@ Check For Invalidity
     [Documentation]  Check for invalid controller or function
     [Arguments]  ${Failed URL}  ${level}
     ${passed}=  Run Keyword and Return Status  Page Should Contain  invalid ${level}
-    Run Keyword Unless  ${passed}  Return From Keyword  ${0}
+    Run Keyword If  not ${passed}  Return From Keyword  ${0}
     ${message}=  Get Text  xpath=/html/body/h1
     Log  FAILED: ${Failed URL} - ${message}  WARN
     Append To File  ${Log File}  FAILED: ${Failed URL} - ${message}\n
@@ -115,7 +115,7 @@ Create Log File
     ${Time}=  Convert Date  ${Time}  result_format=%d.%m.%Y.%H.%M
 
     Run Keyword If  '${name}'=='default'  Set Global Variable  ${Log File}  ${Time}_smoke_tests_log.txt
-    Run Keyword Unless  '${name}'=='default'  Set Global Variable  ${Log File}  ${name}
+    Run Keyword If  '${name}'!='default'  Set Global Variable  ${Log File}  ${name}
 
     Remove File  ${Log File}
     Create File  ${Log File}
