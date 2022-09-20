@@ -139,10 +139,21 @@ class AuthS3(Auth):
 
         Auth.__init__(self, current.db)
 
-        self.settings.lock_keys = False
-        self.settings.login_userfield = "email"
-        self.settings.lock_keys = True
+        # Deployment options
+        deployment_settings = current.deployment_settings
+        log_failed_logins = deployment_settings.get_auth_log_failed_logins()
 
+        # Adjust settings
+        settings = self.settings
+        settings.lock_keys = False
+
+        settings.login_userfield = "email"
+        if log_failed_logins is True: # rather than "VALIDONLY"
+            settings.log_all_failed_logins = True
+
+        settings.lock_keys = True
+
+        # Adjust messages
         messages = self.messages
         messages.lock_keys = False
 
@@ -155,10 +166,17 @@ class AuthS3(Auth):
         messages.help_mobile_phone = "Entering a phone number is optional, but doing so allows you to subscribe to receive SMS messages."
         messages.help_organisation = "Entering an Organization is optional, but doing so directs you to the appropriate approver & means you automatically get the appropriate permissions."
         messages.help_image = "You can either use %(gravatar)s or else upload a picture here. The picture will be resized to 50x50."
+
         messages.label_image = "Profile Image"
         messages.label_organisation_id = "Organization"
         messages.label_org_group_id = "Coalition"
         messages.label_remember_me = "Remember Me"
+        #messages.label_time_stamp = "Timestamp"
+        #messages.label_client_ip = "Client IP"
+        #messages.label_origin = "Origin"
+        #messages.label_description = "Description"
+        messages.label_acting_user = "Acting User"
+
         #messages.logged_in = "Signed In"
         #messages.logged_out = "Signed Out"
         #messages.submit_button = "Signed In"
@@ -180,6 +198,11 @@ No action is required."""
  - You can start using %(system_name)s at: %(url)s
  - To edit your profile go to: %(url)s%(profile)s
 Thank you"""
+
+        # Optional log messages
+        if log_failed_logins:
+            messages.login_failed_log = "Login for user %%(%s)s failed" % settings.login_userfield
+
         messages.lock_keys = True
 
         # S3Permission
@@ -380,7 +403,8 @@ Thank you"""
 
         # Define Eden permission table
         self.permission.define_table(migrate = migrate,
-                                     fake_migrate = fake_migrate)
+                                     fake_migrate = fake_migrate,
+                                     )
 
         #security_policy = deployment_settings.get_security_policy()
         #if security_policy not in (1, 2, 3, 4, 5, 6, 7, 8) and \
@@ -407,37 +431,32 @@ Thank you"""
         #        fake_migrate=fake_migrate)
 
         # Event table (auth_event)
-        # Records Logins & ?
-        # @ToDo: Move to s3db.auth to prevent it from being defined every request
-        #        (lazy tables means no big issue for Production but helps Devs)
-        # Deprecate?
-        # - date of most recent login is the most useful thing recorded, which we already record in the main auth_user table
         if not settings.table_event:
             request = current.request
             define_table(
                 settings.table_event_name,
                 Field("time_stamp", "datetime",
                       default = request.utcnow,
-                      #label = messages.label_time_stamp
+                      label = messages.label_time_stamp
                       ),
                 Field("client_ip",
                       default = request.client,
-                      #label=messages.label_client_ip
+                      label = messages.label_client_ip
                       ),
                 Field("user_id", utable,
                       default = None,
                       requires = IS_IN_DB(db, "%s.id" % uname,
                                           "%(id)s: %(first_name)s %(last_name)s"),
-                      #label=messages.label_user_id
+                      label = messages.label_acting_user
                       ),
                 Field("origin", length=512,
                       default = "auth",
-                      #label = messages.label_origin,
+                      label = messages.label_origin,
                       requires = IS_NOT_EMPTY(),
                       ),
                 Field("description", "text",
                       default = "",
-                      #label = messages.label_description,
+                      label = messages.label_description,
                       requires = IS_NOT_EMPTY(),
                       ),
                 migrate = migrate,
@@ -677,11 +696,16 @@ Thank you"""
                                 email_auth("smtp.office365.com:587", "@%s" % domain))
 
                 # Check for username in db
+                existing = None
+
                 query = (utable[userfield] == form.vars[userfield])
                 user = db(query).select(limitby=(0, 1)).first()
+
                 if user:
-                    # User in db, check if registration pending or disabled
-                    temp_user = user
+                    # User in db
+                    existing = temp_user = user
+
+                    # Check if registration pending or account disabled
                     if temp_user.registration_key == "pending":
                         response.warning = deployment_settings.get_auth_registration_pending()
                         return form
@@ -690,9 +714,9 @@ Thank you"""
                         return form
                     elif not temp_user.registration_key is None and \
                              temp_user.registration_key.strip():
-                        response.warning = \
-                            messages.registration_verifying
+                        response.warning = messages.registration_verifying
                         return form
+
                     # Try alternate logins 1st as these have the
                     # current version of the password
                     user = None
@@ -705,6 +729,7 @@ Thank you"""
                                 form.vars[passfield] = None
                             user = self.get_or_create_user(form.vars)
                             break
+
                     if not user:
                         # Alternates have failed, maybe because service inaccessible
                         if settings.login_methods[0] == self:
@@ -734,10 +759,11 @@ Thank you"""
                                     settings.register_onaccept = self.s3_register_onaccept
                                 user = self.get_or_create_user(form.vars)
                                 break
+
                 if not user:
-                    self.log_event(settings.login_failed_log,
-                                   request.post_vars)
                     # Invalid login
+                    if existing or settings.log_all_failed_logins:
+                        self.log_event(messages.login_failed_log, request.post_vars)
                     session.error = messages.invalid_login
                     if inline:
                         # If inline, stay on the same page
@@ -3823,8 +3849,7 @@ Please go to %(url)s to approve this user."""
             if not user:
                 # Invalid user ID
                 raise ValueError("User not found")
-            else:
-                user = Storage(utable._filter_fields(user, id=True))
+            user = Storage(utable._filter_fields(user, id=True))
 
         self.user = user
         session = current.session

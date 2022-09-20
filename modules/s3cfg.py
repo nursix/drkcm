@@ -150,7 +150,7 @@ class S3Config(Storage):
 
     def __init__(self):
 
-        super(S3Config, self).__init__()
+        super().__init__()
 
         self.asset = Storage()
         self.auth = Storage()
@@ -325,8 +325,8 @@ class S3Config(Storage):
             try:
                 # Import the template
                 template = getattr(__import__(package, fromlist=[config]), config)
-            except ImportError:
-                raise RuntimeError("Template not found: %s" % name)
+            except ImportError as e:
+                raise RuntimeError("Template not found: %s" % name) from e
             else:
                 template.config(self)
 
@@ -541,11 +541,27 @@ class S3Config(Storage):
 
     # -------------------------------------------------------------------------
     # Authentication settings
+    # -------------------------------------------------------------------------
     def get_auth_hmac_key(self):
         """
             Salt to encrypt passwords - normally randomised during 1st run
         """
         return self.auth.get("hmac_key", "akeytochange")
+
+    def get_auth_logging(self):
+        """
+            Whether auth events should be logged
+        """
+        return self.auth.get("logging", True)
+
+    def get_auth_log_failed_logins(self):
+        """
+            Log failed logins, options:
+                - True          : log all failed logins
+                - "VALIDONLY"   : log failed logins for valid accounts
+                - False         : do not log failed logins
+        """
+        return self.auth.get("log_failed_logins", False)
 
     def get_auth_password_changes(self):
         """
@@ -689,33 +705,6 @@ class S3Config(Storage):
                in the context dict!
         """
         return self.auth.get("masterkey_context")
-
-    def get_security_self_registration(self):
-        """
-            Whether Users can register themselves
-            - False to disable self-registration
-            - True to use the default registration page at default/user/register
-            - "index" to use a cyustom registration page defined in private/templates/<template>/controllers.py
-
-        """
-        return self.security.get("self_registration", True)
-
-    def get_security_registration_visible(self):
-        visible = self.get_security_self_registration() and \
-                  self.security.get("registration_visible", True)
-        return visible
-
-    def get_security_version_info(self):
-        """
-            Whether to show version info on the about page
-        """
-        return self.security.get("version_info", True)
-
-    def get_security_version_info_requires_login(self):
-        """
-            Whether the version info on the About page requires login
-        """
-        return self.security.get("version_info_requires_login", False)
 
     def get_auth_registration_requires_verification(self):
         return self.auth.get("registration_requires_verification", False)
@@ -1012,15 +1001,49 @@ class S3Config(Storage):
     def get_auth_create_unknown_locations(self):
         return self.auth.get("create_unknown_locations", False)
 
+    # -------------------------------------------------------------------------
+    # System Security Settings
+    # -------------------------------------------------------------------------
+    def get_security_self_registration(self):
+        """
+            Whether Users can register themselves
+            - False to disable self-registration
+            - True to use the default registration page at default/user/register
+            - "index" to use a cyustom registration page defined in private/templates/<template>/controllers.py
+
+        """
+        return self.security.get("self_registration", True)
+
+    def get_security_registration_visible(self):
+        visible = self.get_security_self_registration() and \
+                  self.security.get("registration_visible", True)
+        return visible
+
+    def get_security_version_info(self):
+        """
+            Whether to show version info on the about page
+        """
+        return self.security.get("version_info", True)
+
+    def get_security_version_info_requires_login(self):
+        """
+            Whether the version info on the About page requires login
+        """
+        return self.security.get("version_info_requires_login", False)
+
     def get_security_archive_not_delete(self):
         return self.security.get("archive_not_delete", True)
+
     def get_security_audit_read(self):
         return self.security.get("audit_read", False)
+
     def get_security_audit_write(self):
         return self.security.get("audit_write", False)
+
     def get_security_policy(self):
         " Default is Simple Security Policy "
         return self.security.get("policy", 1)
+
     def get_security_strict_ownership(self):
         """
             Ownership-rule for records without owner:
@@ -1028,6 +1051,7 @@ class S3Config(Storage):
             False = owned by any authenticated user
         """
         return self.security.get("strict_ownership", True)
+
     def get_security_map(self):
         return self.security.get("map", False)
 
@@ -2113,12 +2137,10 @@ class S3Config(Storage):
         if callable(setting):
             # A custom formstyle defined in the template
             formstyle = setting
-        elif setting in FORMSTYLES:
-            # One of the standard supported formstyles
-            formstyle = FORMSTYLES[setting]
         else:
-            # A default web2py formstyle
-            formstyle = setting
+            # One of the standard supported formstyles,
+            # or a default web2py formstyle
+            formstyle = FORMSTYLES.get(setting, setting)
         return formstyle
 
     def get_ui_formstyle(self):

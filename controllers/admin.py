@@ -531,6 +531,47 @@ def audit():
     return crud_controller("s3", "audit")
 
 # =============================================================================
+@auth.s3_requires_membership(1)
+def event():
+    """
+        CRUD controller for Auth event log
+    """
+
+    def prep(r):
+
+        from core import S3DateTime
+
+        table = auth.settings.table_event
+
+        field = table.time_stamp
+        field.represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
+
+        field = table.user_id
+        field.represent = auth.user_represent
+
+        list_fields = ["time_stamp", "user_id", "description"]
+
+        s3db.configure(table,
+                       insertable = False,
+                       editable = False,
+                       deletable = False,
+                       list_fields = list_fields,
+                       orderby = ~table.time_stamp,
+                       )
+
+        s3.crud_strings[auth.settings.table_event_name] = Storage(
+            title_display = T("Event"),
+            title_list = T("Events Log"),
+            label_list_button = T("List Events"),
+            msg_list_empty = T("No Events currently registered"),
+            )
+
+        return True
+    s3.prep = prep
+
+    return crud_controller("auth", "event")
+
+# =============================================================================
 # Consent Tracking
 #
 @auth.s3_requires_membership(1)
@@ -613,7 +654,7 @@ def consent_option():
                            csv_stylesheet = ("auth", "consent_option.xsl"),
                            )
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 @auth.s3_requires_membership(1)
 def consent():
 
