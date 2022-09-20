@@ -560,8 +560,8 @@ def event():
                        )
 
         s3.crud_strings[auth.settings.table_event_name] = Storage(
-            title_display = T("Event"),
-            title_list = T("Events Log"),
+            title_display = T("Logged Event"),
+            title_list = T("Logged Events"),
             label_list_button = T("List Events"),
             msg_list_empty = T("No Events currently registered"),
             )

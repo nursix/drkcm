@@ -256,6 +256,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     ),
                     M("Scheduler", c="admin", f="task"),
                     M("Error Tickets", c="admin", f="errors"),
+                    M("Event Log", c="admin", f="event"),
                 )
 
     # -------------------------------------------------------------------------
