@@ -2685,12 +2685,12 @@ code, .code-inline {
 }
 /* line 198, ../../foundation/scss/components/_button.scss */
 .button.secondary, .button.secondary.disabled, .button.secondary[disabled], .button.secondary.disabled:hover, .button.secondary[disabled]:hover, .button.secondary.disabled:focus, .button.secondary[disabled]:focus {
-  background-color: #e7e7e7;
+  background-color: #cde;
   color: #444;
 }
 /* line 206, ../../foundation/scss/components/_button.scss */
 .button.secondary:hover, .button.secondary:focus {
-  background-color: #b9b9b9;
+  background-color: #8ab1d8;
   color: #444;
 }
 /* line 198, ../../foundation/scss/components/_button.scss */
@@ -2759,13 +2759,13 @@ code, .code-inline {
 }
 /* line 234, ../../foundation/scss/components/_button.scss */
 .button.hollow.secondary, .button.hollow.secondary.disabled, .button.hollow.secondary[disabled], .button.hollow.secondary.disabled:hover, .button.hollow.secondary[disabled]:hover, .button.hollow.secondary.disabled:focus, .button.hollow.secondary[disabled]:focus {
-  border: 1px solid #e7e7e7;
-  color: #e7e7e7;
+  border: 1px solid #cde;
+  color: #cde;
 }
 /* line 242, ../../foundation/scss/components/_button.scss */
 .button.hollow.secondary:hover, .button.hollow.secondary:focus {
-  border-color: #747474;
-  color: #747474;
+  border-color: #376fa6;
+  color: #376fa6;
 }
 /* line 234, ../../foundation/scss/components/_button.scss */
 .button.hollow.success, .button.hollow.success.disabled, .button.hollow.success[disabled], .button.hollow.success.disabled:hover, .button.hollow.success[disabled]:hover, .button.hollow.success.disabled:focus, .button.hollow.success[disabled]:focus {
@@ -2830,11 +2830,11 @@ code, .code-inline {
 }
 /* line 269, ../../foundation/scss/components/_button.scss */
 .button.clear.secondary, .button.clear.secondary.disabled, .button.clear.secondary[disabled], .button.clear.secondary.disabled:hover, .button.clear.secondary[disabled]:hover, .button.clear.secondary.disabled:focus, .button.clear.secondary[disabled]:focus {
-  color: #e7e7e7;
+  color: #cde;
 }
 /* line 276, ../../foundation/scss/components/_button.scss */
 .button.clear.secondary:hover, .button.clear.secondary:focus {
-  color: #747474;
+  color: #376fa6;
 }
 /* line 269, ../../foundation/scss/components/_button.scss */
 .button.clear.success, .button.clear.success.disabled, .button.clear.success[disabled], .button.clear.success.disabled:hover, .button.clear.success[disabled]:hover, .button.clear.success.disabled:focus, .button.clear.success[disabled]:focus {
@@ -2899,7 +2899,7 @@ code, .code-inline {
 }
 /* line 406, ../../foundation/scss/components/_button.scss */
 .button.dropdown.hollow.secondary::after, .button.dropdown.clear.secondary::after {
-  border-top-color: #e7e7e7;
+  border-top-color: #cde;
 }
 /* line 406, ../../foundation/scss/components/_button.scss */
 .button.dropdown.hollow.success::after, .button.dropdown.clear.success::after {
@@ -2992,12 +2992,12 @@ a.button:hover, a.button:focus {
 }
 /* line 198, ../../foundation/scss/components/_button.scss */
 .button-group.secondary .button, .button-group.secondary .button.disabled, .button-group.secondary .button[disabled], .button-group.secondary .button.disabled:hover, .button-group.secondary .button[disabled]:hover, .button-group.secondary .button.disabled:focus, .button-group.secondary .button[disabled]:focus {
-  background-color: #e7e7e7;
+  background-color: #cde;
   color: #444;
 }
 /* line 206, ../../foundation/scss/components/_button.scss */
 .button-group.secondary .button:hover, .button-group.secondary .button:focus {
-  background-color: #b9b9b9;
+  background-color: #8ab1d8;
   color: #444;
 }
 /* line 198, ../../foundation/scss/components/_button.scss */
@@ -3066,13 +3066,13 @@ a.button:hover, a.button:focus {
 }
 /* line 234, ../../foundation/scss/components/_button.scss */
 .button-group.hollow.secondary .button, .button-group.hollow.secondary .button.disabled, .button-group.hollow.secondary .button[disabled], .button-group.hollow.secondary .button.disabled:hover, .button-group.hollow.secondary .button[disabled]:hover, .button-group.hollow.secondary .button.disabled:focus, .button-group.hollow.secondary .button[disabled]:focus, .button-group.hollow .button.secondary, .button-group.hollow .button.secondary.disabled, .button-group.hollow .button.secondary[disabled], .button-group.hollow .button.secondary.disabled:hover, .button-group.hollow .button.secondary[disabled]:hover, .button-group.hollow .button.secondary.disabled:focus, .button-group.hollow .button.secondary[disabled]:focus {
-  border: 1px solid #e7e7e7;
-  color: #e7e7e7;
+  border: 1px solid #cde;
+  color: #cde;
 }
 /* line 242, ../../foundation/scss/components/_button.scss */
 .button-group.hollow.secondary .button:hover, .button-group.hollow.secondary .button:focus, .button-group.hollow .button.secondary:hover, .button-group.hollow .button.secondary:focus {
-  border-color: #747474;
-  color: #747474;
+  border-color: #376fa6;
+  color: #376fa6;
 }
 /* line 234, ../../foundation/scss/components/_button.scss */
 .button-group.hollow.success .button, .button-group.hollow.success .button.disabled, .button-group.hollow.success .button[disabled], .button-group.hollow.success .button.disabled:hover, .button-group.hollow.success .button[disabled]:hover, .button-group.hollow.success .button.disabled:focus, .button-group.hollow.success .button[disabled]:focus, .button-group.hollow .button.success, .button-group.hollow .button.success.disabled, .button-group.hollow .button.success[disabled], .button-group.hollow .button.success.disabled:hover, .button-group.hollow .button.success[disabled]:hover, .button-group.hollow .button.success.disabled:focus, .button-group.hollow .button.success[disabled]:focus {
@@ -3137,11 +3137,11 @@ a.button:hover, a.button:focus {
 }
 /* line 269, ../../foundation/scss/components/_button.scss */
 .button-group.clear.secondary .button, .button-group.clear.secondary .button.disabled, .button-group.clear.secondary .button[disabled], .button-group.clear.secondary .button.disabled:hover, .button-group.clear.secondary .button[disabled]:hover, .button-group.clear.secondary .button.disabled:focus, .button-group.clear.secondary .button[disabled]:focus, .button-group.clear .button.secondary, .button-group.clear .button.secondary.disabled, .button-group.clear .button.secondary[disabled], .button-group.clear .button.secondary.disabled:hover, .button-group.clear .button.secondary[disabled]:hover, .button-group.clear .button.secondary.disabled:focus, .button-group.clear .button.secondary[disabled]:focus {
-  color: #e7e7e7;
+  color: #cde;
 }
 /* line 276, ../../foundation/scss/components/_button.scss */
 .button-group.clear.secondary .button:hover, .button-group.clear.secondary .button:focus, .button-group.clear .button.secondary:hover, .button-group.clear .button.secondary:focus {
-  color: #747474;
+  color: #376fa6;
 }
 /* line 269, ../../foundation/scss/components/_button.scss */
 .button-group.clear.success .button, .button-group.clear.success .button.disabled, .button-group.clear.success .button[disabled], .button-group.clear.success .button.disabled:hover, .button-group.clear.success .button[disabled]:hover, .button-group.clear.success .button.disabled:focus, .button-group.clear.success .button[disabled]:focus, .button-group.clear .button.success, .button-group.clear .button.success.disabled, .button-group.clear .button.success[disabled], .button-group.clear .button.success.disabled:hover, .button-group.clear .button.success[disabled]:hover, .button-group.clear .button.success.disabled:focus, .button-group.clear .button.success[disabled]:focus {
@@ -3285,7 +3285,7 @@ a.button:hover, a.button:focus {
 }
 /* line 58, ../../foundation/scss/components/_label.scss */
 .label.secondary {
-  background: #e7e7e7;
+  background: #cde;
   color: #444;
 }
 /* line 58, ../../foundation/scss/components/_label.scss */
@@ -3482,7 +3482,7 @@ table.hover.striped tr:nth-of-type(even):hover {
   line-height: 1;
   text-decoration: none;
   display: block;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
 }
 /* line 81, ../../foundation/scss/components/_menu.scss */
 .menu input,
@@ -3698,7 +3698,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 509, ../../foundation/scss/components/_menu.scss */
 .menu .menu-text {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   font-weight: bold;
   line-height: 1;
   color: inherit;
@@ -3793,7 +3793,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 
 /* line 89, ../../foundation/scss/components/_drilldown.scss */
 .drilldown a {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   background: #fefefe;
 }
 /* line 95, ../../foundation/scss/components/_drilldown.scss */
@@ -3818,7 +3818,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 116, ../../foundation/scss/components/_drilldown.scss */
 .drilldown .is-drilldown-submenu a {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
 }
 /* line 121, ../../foundation/scss/components/_drilldown.scss */
 .drilldown .nested.is-drilldown-submenu {
@@ -3926,7 +3926,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 154, ../../foundation/scss/components/_dropdown-menu.scss */
 .dropdown.menu > li > a {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
 }
 /* line 160, ../../foundation/scss/components/_dropdown-menu.scss */
 .dropdown.menu > li.is-active > a {
@@ -4194,7 +4194,7 @@ table.hover.striped tr:nth-of-type(even):hover {
 }
 /* line 253, ../../foundation/scss/components/_dropdown-menu.scss */
 .dropdown .is-dropdown-submenu a {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
 }
 /* line 67, ../../foundation/scss/components/_dropdown-menu.scss */
 .is-dropdown-submenu .is-dropdown-submenu-parent > a::after {

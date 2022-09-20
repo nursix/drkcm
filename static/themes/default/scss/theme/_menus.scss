@@ -59,6 +59,7 @@ $side-bar-divider-color: #eaeaea !default;
                     border-color: transparent $topbar-arrow-color transparent transparent;
                 }
                 a {
+                    line-height: 1.5;
                     background-color: $topbar-background;
                     color: $topbar-link-color;
                     &:hover {

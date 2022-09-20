@@ -73,7 +73,7 @@ $global-width: rem-calc(2000);
 $global-lineheight: 1.5;
 $foundation-palette: (
   primary: $rlpred,
-  secondary: #e7e7e7,
+  secondary: #cde, // #e7e7e7,
   success: #43AC6A,
   warning: #f08a24,
   alert: #D92C20,
@@ -95,7 +95,7 @@ $global-position: 1rem;
 $global-weight-normal: normal;
 $global-weight-bold: bold;
 $global-radius: 0;
-$global-menu-padding: 0.75rem 1rem;
+$global-menu-padding: 0.5rem 1rem;
 $global-menu-nested-margin: 1rem;
 $global-text-direction: ltr;
 $global-flexbox: true;

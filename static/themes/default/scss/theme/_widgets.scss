@@ -50,6 +50,14 @@ textarea {
 input {
     &[type=file] {
         width: auto;
+        cursor: pointer;
+        &::file-selector-button {
+            background-color: #ccc;
+            color: #333;
+            border: 0;
+            border-radius: 0;
+            padding: 5px 10px;
+        }
     }
     // Date Picker Widget
     &.datetimepicker,

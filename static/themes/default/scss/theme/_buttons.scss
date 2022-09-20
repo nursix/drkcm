@@ -126,9 +126,8 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 
     border: 1px solid transparent;
     &:hover {
-        color: white;
-        background-color: $warning-color;
-        border-color: $warning-color;
+        background-color: $white;
+        border-color: $primary-color;
     }
 }
 
