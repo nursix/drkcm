@@ -3326,7 +3326,7 @@ tfoot {
 
 /* line 118, ../../foundation/scss/components/_table.scss */
 caption {
-  padding: 0.5rem 0.625rem 0.625rem;
+  padding: 0.375rem 0.5rem 0.375rem;
   font-weight: bold;
 }
 
@@ -3352,7 +3352,7 @@ thead th,
 thead td,
 tfoot th,
 tfoot td {
-  padding: 0.5rem 0.625rem 0.625rem;
+  padding: 0.375rem 0.5rem 0.375rem;
   font-weight: bold;
   text-align: left;
 }
@@ -3360,7 +3360,7 @@ tfoot td {
 /* line 154, ../../foundation/scss/components/_table.scss */
 tbody th,
 tbody td {
-  padding: 0.5rem 0.625rem 0.625rem;
+  padding: 0.375rem 0.5rem 0.375rem;
 }
 
 /* line 103, ../../foundation/scss/components/_table.scss */

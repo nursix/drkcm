@@ -33,7 +33,7 @@
 
                         // Send form
                         document.body.appendChild(form);
-                        form.trigger('submit');
+                        form.submit();
                     }
                 }
             };

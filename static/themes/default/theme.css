@@ -2557,7 +2557,7 @@ form.auth_login #submit_record__row {
 /* line 383, ../scss/theme/_forms.scss */
 .form-container form input[type="checkbox"],
 .form-container form input[type="radio"] {
-  margin: 2px 5px;
+  margin: 5px 5px;
 }
 /* line 387, ../scss/theme/_forms.scss */
 .form-container form fieldset {
@@ -2843,262 +2843,275 @@ select.multiselect-filter-widget {
 }
 
 /* line 28, ../scss/theme/_tables.scss */
+table {
+  width: auto;
+}
+/* line 30, ../scss/theme/_tables.scss */
+table th, table td {
+  text-align: left;
+}
+/* line 32, ../scss/theme/_tables.scss */
+[dir=rtl] table th, [dir=rtl] table td {
+  text-align: right;
+}
+
+/* line 40, ../scss/theme/_tables.scss */
 #table-container {
   display: block;
   margin-bottom: 1.5rem;
   width: 100%;
 }
-/* line 32, ../scss/theme/_tables.scss */
+/* line 44, ../scss/theme/_tables.scss */
 #table-container .empty {
   margin-top: 30px;
   margin-left: 10px;
 }
 
-/* line 37, ../scss/theme/_tables.scss */
+/* line 49, ../scss/theme/_tables.scss */
 .dataTable_table {
   overflow: auto;
   clear: both;
 }
 
-/* line 43, ../scss/theme/_tables.scss */
+/* line 54, ../scss/theme/_tables.scss */
 table.dataTable {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
-/* line 48, ../scss/theme/_tables.scss */
+/* line 59, ../scss/theme/_tables.scss */
 table.dataTable thead th, table.dataTable thead td, table.dataTable tbody th, table.dataTable tbody td, table.dataTable tfoot th, table.dataTable tfoot td {
   border: 1px solid #cccccc;
   padding: 0.2rem 1.5rem 0.2rem 0.5rem;
 }
-/* line 51, ../scss/theme/_tables.scss */
+/* line 62, ../scss/theme/_tables.scss */
 [dir=rtl] table.dataTable thead th, [dir=rtl] table.dataTable thead td, [dir=rtl] table.dataTable tbody th, [dir=rtl] table.dataTable tbody td, [dir=rtl] table.dataTable tfoot th, [dir=rtl] table.dataTable tfoot td {
   padding: 0.2rem 0.5rem 0.2rem 1.5rem;
 }
-/* line 55, ../scss/theme/_tables.scss */
+/* line 66, ../scss/theme/_tables.scss */
 table.dataTable thead th, table.dataTable tbody th, table.dataTable tfoot th {
   text-align: center;
 }
-/* line 60, ../scss/theme/_tables.scss */
+/* line 71, ../scss/theme/_tables.scss */
 table.dataTable thead {
   background-color: #ffffff;
 }
-/* line 62, ../scss/theme/_tables.scss */
+/* line 73, ../scss/theme/_tables.scss */
 table.dataTable thead th {
   border-bottom: 1px solid #cccccc;
 }
-/* line 66, ../scss/theme/_tables.scss */
+/* line 77, ../scss/theme/_tables.scss */
 [dir=rtl] table.dataTable thead th.sorting, [dir=rtl] table.dataTable thead th.sorting_asc, [dir=rtl] table.dataTable thead th.sorting_desc {
   background-position-x: left;
 }
-/* line 75, ../scss/theme/_tables.scss */
+/* line 86, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.even {
   background-color: #ffffff;
 }
-/* line 77, ../scss/theme/_tables.scss */
+/* line 88, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.even td.sorting_1 {
   background-color: #fafafa;
 }
-/* line 81, ../scss/theme/_tables.scss */
+/* line 92, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.odd {
   background-color: #f7f8f9;
 }
-/* line 83, ../scss/theme/_tables.scss */
+/* line 94, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.odd td.sorting_1 {
   background-color: #f0f1f2;
 }
-/* line 88, ../scss/theme/_tables.scss */
+/* line 99, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.even {
   background-color: #ffffa0;
 }
-/* line 90, ../scss/theme/_tables.scss */
+/* line 101, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.even td.sorting_1 {
   background-color: #fffff0;
 }
-/* line 92, ../scss/theme/_tables.scss */
+/* line 103, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.odd {
   background-color: #ffffc0;
 }
-/* line 94, ../scss/theme/_tables.scss */
+/* line 105, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.odd td.sorting_1 {
   background-color: #ffffb0;
 }
-/* line 98, ../scss/theme/_tables.scss */
+/* line 109, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.even {
   background-color: #ffa6a6;
 }
-/* line 100, ../scss/theme/_tables.scss */
+/* line 111, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.even td.sorting_1 {
   background-color: #ff8383;
 }
-/* line 102, ../scss/theme/_tables.scss */
+/* line 113, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.odd {
   background-color: #ffd9d9;
 }
-/* line 104, ../scss/theme/_tables.scss */
+/* line 115, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.odd td.sorting_1 {
   background-color: #ffb6b6;
 }
-/* line 108, ../scss/theme/_tables.scss */
+/* line 119, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.odd {
   background-color: #40fa8d;
 }
-/* line 110, ../scss/theme/_tables.scss */
+/* line 121, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.odd td.sorting_1 {
   background-color: #20f0ad;
 }
-/* line 112, ../scss/theme/_tables.scss */
+/* line 123, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.even {
   background-color: #60f6ad;
 }
-/* line 114, ../scss/theme/_tables.scss */
+/* line 125, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.even td.sorting_1 {
   background-color: #40fa8d;
 }
-/* line 117, ../scss/theme/_tables.scss */
+/* line 128, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group {
   background-color: #ddd;
   border: 1px solid #aaa;
 }
-/* line 120, ../scss/theme/_tables.scss */
+/* line 131, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_1 {
   background-color: #999;
   color: #def;
 }
-/* line 123, ../scss/theme/_tables.scss */
+/* line 134, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_1.activeRow {
   background-color: #1d70cf;
 }
-/* line 126, ../scss/theme/_tables.scss */
+/* line 137, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_1 a {
   color: #def;
 }
-/* line 130, ../scss/theme/_tables.scss */
+/* line 141, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_2 {
   background-color: #ddd;
   color: #248;
 }
-/* line 133, ../scss/theme/_tables.scss */
+/* line 144, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_2.activeRow {
   background-color: #528dd1;
 }
-/* line 136, ../scss/theme/_tables.scss */
+/* line 147, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_2 a {
   color: #248;
 }
-/* line 140, ../scss/theme/_tables.scss */
+/* line 151, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group span.ui-icon {
   display: inline-block;
 }
-/* line 143, ../scss/theme/_tables.scss */
+/* line 154, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group .group-indent {
   width: 10px;
 }
-/* line 146, ../scss/theme/_tables.scss */
+/* line 157, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group .group-opened,
 table.dataTable tbody tr.group .group-closed {
   padding: 0.2rem;
 }
-/* line 150, ../scss/theme/_tables.scss */
+/* line 161, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.group .group-collapse,
 table.dataTable tbody tr.group .group-expand {
   cursor: pointer;
   float: right;
 }
-/* line 156, ../scss/theme/_tables.scss */
+/* line 167, ../scss/theme/_tables.scss */
 table.dataTable tbody tr.dtdisable {
   text-shadow: #ccc 1px 1px 1px;
   color: #888;
 }
-/* line 160, ../scss/theme/_tables.scss */
+/* line 171, ../scss/theme/_tables.scss */
 table.dataTable tbody tr td {
   vertical-align: top;
 }
-/* line 166, ../scss/theme/_tables.scss */
+/* line 177, ../scss/theme/_tables.scss */
 table.dataTable tfoot th, table.dataTable tfoot td {
   background-color: #f7f8f9;
   border-top: 2px solid #cccccc;
   padding: 0.5em;
 }
-/* line 174, ../scss/theme/_tables.scss */
+/* line 185, ../scss/theme/_tables.scss */
 table.dataTable .selected-action {
   margin: 0.35rem 0.2rem;
 }
-/* line 177, ../scss/theme/_tables.scss */
+/* line 188, ../scss/theme/_tables.scss */
 table.dataTable .bulk-select-options {
   font-size: 0.7rem;
   font-weight: normal;
 }
-/* line 180, ../scss/theme/_tables.scss */
+/* line 191, ../scss/theme/_tables.scss */
 table.dataTable .bulk-select-options input[type=checkbox] {
   margin-bottom: 0.2rem;
   margin-right: 0.5rem;
   vertical-align: middle;
 }
-/* line 186, ../scss/theme/_tables.scss */
+/* line 197, ../scss/theme/_tables.scss */
 table.dataTable input.bulkcheckbox[type=checkbox] {
   position: relative;
   left: 50%;
   margin-top: 0.5rem;
 }
-/* line 194, ../scss/theme/_tables.scss */
+/* line 205, ../scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody th:first-child::before {
   top: 0.4rem;
   background-color: #0a5b29;
 }
-/* line 200, ../scss/theme/_tables.scss */
+/* line 211, ../scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody tr.parent td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody tr.parent th:first-child::before {
   background-color: #b31c1f;
 }
-/* line 207, ../scss/theme/_tables.scss */
+/* line 218, ../scss/theme/_tables.scss */
 table.dataTable table.import-item-details {
   display: none;
 }
 
-/* line 213, ../scss/theme/_tables.scss */
+/* line 224, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_filter {
   float: left;
   text-align: left;
   margin-right: 3rem;
 }
-/* line 217, ../scss/theme/_tables.scss */
+/* line 228, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_filter label {
   margin-left: 0.3rem;
   font-size: 0.75rem;
   font-weight: normal;
 }
-/* line 222, ../scss/theme/_tables.scss */
+/* line 233, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_filter input[type="search"] {
   margin-left: 0.3rem;
 }
-/* line 225, ../scss/theme/_tables.scss */
+/* line 236, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_filter {
   float: right;
   text-align: right;
   margin-right: 0;
   margin-left: 3rem;
 }
-/* line 230, ../scss/theme/_tables.scss */
+/* line 241, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_filter label,
 [dir=rtl] .dataTables_wrapper .dataTables_filter input[type="search"] {
   margin-left: 0rem;
   margin-right: 0.3rem;
 }
-/* line 237, ../scss/theme/_tables.scss */
+/* line 248, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_length {
   float: left;
   margin-bottom: 4px;
 }
-/* line 240, ../scss/theme/_tables.scss */
+/* line 251, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_length label {
   font-size: 0.75rem;
   font-weight: normal;
   white-space: nowrap;
   margin: 0 10rem 0.3rem 0.3rem;
 }
-/* line 246, ../scss/theme/_tables.scss */
+/* line 257, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_length select {
   font-size: 0.75rem;
   text-align: center;
@@ -3108,19 +3121,19 @@ table.dataTable table.import-item-details {
   margin: 0 0.2rem;
   min-width: 3rem;
 }
-/* line 255, ../scss/theme/_tables.scss */
+/* line 266, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_length {
   float: right;
 }
-/* line 257, ../scss/theme/_tables.scss */
+/* line 268, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_length label {
   margin: 0 0.3rem 0.3rem 10rem;
 }
-/* line 260, ../scss/theme/_tables.scss */
+/* line 271, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_length select {
   padding: 0.2rem 0 0.2rem 1.1rem !important;
 }
-/* line 265, ../scss/theme/_tables.scss */
+/* line 276, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_processing {
   padding: 1rem 0 2rem;
   top: 2.5rem;
@@ -3129,89 +3142,89 @@ table.dataTable table.import-item-details {
   color: #737373;
   border-color: #737373;
 }
-/* line 272, ../scss/theme/_tables.scss */
+/* line 283, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_processing {
   left: unset;
   right: 30%;
 }
-/* line 277, ../scss/theme/_tables.scss */
+/* line 288, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_info {
   float: right;
   clear: none;
   margin: 0.5rem 0;
   padding-top: 0.3rem;
 }
-/* line 279, ../scss/theme/_tables.scss */
+/* line 290, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_info {
   float: left;
 }
-/* line 282, ../scss/theme/_tables.scss */
+/* line 293, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_info:last-of-type {
   float: left;
 }
-/* line 284, ../scss/theme/_tables.scss */
+/* line 295, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_info:last-of-type {
   float: right;
 }
-/* line 292, ../scss/theme/_tables.scss */
+/* line 303, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate {
   float: right;
   margin: 0.3rem 0 0.3rem 0.7rem;
   padding-top: 0.3rem;
 }
-/* line 296, ../scss/theme/_tables.scss */
+/* line 307, ../scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_paginate {
   float: left;
   margin: 0.3rem 0.7rem 0.3rem 0;
 }
-/* line 301, ../scss/theme/_tables.scss */
+/* line 312, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate.paging_full_numbers {
   width: auto;
 }
-/* line 304, ../scss/theme/_tables.scss */
+/* line 315, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button,
 .dataTables_wrapper .dataTables_paginate .paginate_active {
   padding: 0.1rem 0.5rem !important;
   font-size: 0.8rem;
 }
-/* line 308, ../scss/theme/_tables.scss */
+/* line 319, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button a,
 .dataTables_wrapper .dataTables_paginate .paginate_active a {
   text-decoration: none;
   color: #333 !important;
 }
-/* line 312, ../scss/theme/_tables.scss */
+/* line 323, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover a,
 .dataTables_wrapper .dataTables_paginate .paginate_active:hover a {
   color: #eee !important;
 }
-/* line 315, ../scss/theme/_tables.scss */
+/* line 326, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button:active a,
 .dataTables_wrapper .dataTables_paginate .paginate_active:active a {
   color: rgba(0, 0, 0, 0.5) !important;
 }
-/* line 318, ../scss/theme/_tables.scss */
+/* line 329, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled a,
 .dataTables_wrapper .dataTables_paginate .paginate_active.disabled a {
   color: #666 !important;
 }
-/* line 321, ../scss/theme/_tables.scss */
+/* line 332, ../scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current a,
 .dataTables_wrapper .dataTables_paginate .paginate_active.current a {
   color: #333 !important;
 }
 
-/* line 331, ../scss/theme/_tables.scss */
+/* line 342, ../scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 334, ../scss/theme/_tables.scss */
+/* line 345, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 337, ../scss/theme/_tables.scss */
+/* line 348, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   float: right;
   margin: 0 0.1rem;
@@ -3221,58 +3234,58 @@ table.dataTable table.import-item-details {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 345, ../scss/theme/_tables.scss */
+/* line 356, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 350, ../scss/theme/_tables.scss */
+/* line 361, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 353, ../scss/theme/_tables.scss */
+/* line 364, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 356, ../scss/theme/_tables.scss */
+/* line 367, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 359, ../scss/theme/_tables.scss */
+/* line 370, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 362, ../scss/theme/_tables.scss */
+/* line 373, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 365, ../scss/theme/_tables.scss */
+/* line 376, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 368, ../scss/theme/_tables.scss */
+/* line 379, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 371, ../scss/theme/_tables.scss */
+/* line 382, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 374, ../scss/theme/_tables.scss */
+/* line 385, ../scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 379, ../scss/theme/_tables.scss */
+/* line 390, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 381, ../scss/theme/_tables.scss */
+/* line 392, ../scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options .dt-export {
   float: left;
 }
 
-/* line 390, ../scss/theme/_tables.scss */
+/* line 401, ../scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

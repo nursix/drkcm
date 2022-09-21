@@ -23,6 +23,18 @@ $datatables_bgcolor_head: #ffffff !default;
 // ============================================================================
 // STYLES
 //
+// General table styles
+//
+table {
+    width: auto;
+    th, td {
+        text-align: left;
+        [dir=rtl] & {
+            text-align: right;
+        }
+    }
+}
+
 // DataTable
 //
 #table-container {
@@ -39,7 +51,6 @@ $datatables_bgcolor_head: #ffffff !default;
     overflow: auto;
     clear: both;
 }
-
 table.dataTable {
     width: 100%;
     border-collapse: collapse;

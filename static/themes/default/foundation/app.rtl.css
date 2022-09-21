@@ -2980,7 +2980,7 @@ tfoot {
 
 /* line 118, ../../foundation/scss/components/_table.scss */
 caption {
-  padding: 0.5rem 0.625rem 0.625rem;
+  padding: 0.375rem 0.5rem 0.375rem;
   font-weight: bold;
 }
 
@@ -3006,7 +3006,7 @@ thead th,
 thead td,
 tfoot th,
 tfoot td {
-  padding: 0.5rem 0.625rem 0.625rem;
+  padding: 0.375rem 0.5rem 0.375rem;
   font-weight: bold;
   text-align: right;
 }
@@ -3014,19 +3014,23 @@ tfoot td {
 /* line 154, ../../foundation/scss/components/_table.scss */
 tbody th,
 tbody td {
-  padding: 0.5rem 0.625rem 0.625rem;
-}
-
-/* line 103, ../../foundation/scss/components/_table.scss */
-tbody tr {
-  border-bottom: 1px solid #f1f1f1;
-  background-color: #fefefe;
+  padding: 0.375rem 0.5rem 0.375rem;
 }
 
 /* line 87, ../../foundation/scss/components/_table.scss */
-table.striped tbody tr:nth-child(even) {
+tbody tr:nth-child(even) {
   border-bottom: 0;
   background-color: #f1f1f1;
+}
+
+/* line 167, ../../foundation/scss/components/_table.scss */
+table.unstriped tbody {
+  background-color: #fefefe;
+}
+/* line 103, ../../foundation/scss/components/_table.scss */
+table.unstriped tbody tr {
+  border-bottom: 1px solid #f1f1f1;
+  background-color: #fefefe;
 }
 
 @media print, screen and (max-width: 63.99875em) {
@@ -3069,8 +3073,8 @@ table.hover tfoot tr:hover {
 table.hover tbody tr:hover {
   background-color: #f9f9f9;
 }
-/* line 259, ../../foundation/scss/components/_table.scss */
-table.hover.striped tr:nth-of-type(even):hover {
+/* line 243, ../../foundation/scss/components/_table.scss */
+table.hover:not(.unstriped) tr:nth-of-type(even):hover {
   background-color: #ececec;
 }
 
