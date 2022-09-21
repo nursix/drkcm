@@ -194,7 +194,7 @@ S3.search = {};
         }
         form.style.display = 'none';
         document.body.appendChild(form);
-        form.trigger('submit');
+        form.submit();
     };
 
     /**
