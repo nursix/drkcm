@@ -253,12 +253,12 @@ S3.gis.yx = [
             center;
         if ((lat !== undefined) && (lon !== undefined)) {
             center = new OpenLayers.LonLat(lon, lat);
-            center.transform(proj4326, projection_current);
         } else {
             // BBOX
             bounds = OpenLayers.Bounds.fromArray(options.bbox);
             center = bounds.getCenterLonLat();
         }
+        center.transform(proj4326, projection_current);
         options.center = center;
 
         // Configue clustering
@@ -276,7 +276,7 @@ S3.gis.yx = [
         // Resize the Map when the Browser window is resized
         var map_div = $('#' + map_id + '_panel');
         map_div.css('width', '100%');
-        $(window).resize(function() {
+        $(window).on('resize', function() {
             //map.updateSize();
             var w = map_div.width();
             map.s3.mapWin.setWidth(w);
