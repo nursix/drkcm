@@ -883,8 +883,8 @@ var s3_viewMap = function(location_id, iframe_height, popup, controller, func) {
 
         if ($iframe_map.length==0) {
             // 1st iframe to be loaded in 'map'
-            var iframe = $("<iframe id='iframe-map' data-feature='" + location_id + "' style='border-style:none' width='100%' height='" + iframe_height + "' src='" + url + "' >"),
-                closelink = $("<a class='button tiny' id='close-iframe-map'>" + i18n.close_map + "</a>");
+            var iframe = $("<iframe id='iframe-map' data-feature='" + location_id + "' style='border-style:none' width='100%' height='" + iframe_height + "' marginWidth='0' marginHeight='0' src='" + url + "' >"),
+                closelink = $("<a class='action-btn' id='close-iframe-map'>" + i18n.close_map + "</a>");
 
             closelink.on('click', closeMap);
             // Display Map
