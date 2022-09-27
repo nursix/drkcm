@@ -589,27 +589,15 @@ def doc_image_represent(filename):
         return current.messages["NONE"]
 
     return DIV(A(IMG(_src = URL(c="default", f="download", args=filename),
-                     _height = 80,
-                     _width = 120,
+                     # handled by CSS:
+                     #_height = 80,
+                     #_width = 120,
                      _class = "img-preview",
                      ),
                  _class = "zoom",
                  _href = URL(c="default", f="download", args=filename),
                  ),
                )
-
-    # @todo: implement/activate the JavaScript for this:
-    #anchor = "zoom-media-image-%s" % uuid4()
-    #return DIV(A(IMG(_src=URL(c="default", f="download",
-                              #args=filename),
-                     #_height=40),
-                     #_class="zoom",
-                     #_href="#%s" % anchor),
-               #DIV(IMG(_src=URL(c="default", f="download",
-                                #args=filename),
-                       #_width=600),
-                       #_id="%s" % anchor,
-                       #_class="hide"))
 
 # =============================================================================
 def doc_checksum(docstr):

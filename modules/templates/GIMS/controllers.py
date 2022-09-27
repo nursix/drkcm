@@ -86,13 +86,12 @@ class index(CustomController):
             login_form = auth.login(inline=True)
 
         # Homepage action buttons
-        buttons = UL(LI(A(ICON("book"), T("Guides & Videos"),
-                          _href = URL(c="default", f="help"),
-                          _class="info button",
-                          ),
+        buttons = DIV(A(ICON("book"), T("Guides & Videos"),
+                        _href = URL(c="default", f="help"),
+                        _class="info button",
                         ),
-                     _class="button-group expanded stacked-for-small",
-                     )
+                      _class="button-group stacked-for-small",
+                      )
 
         output = {"login_div": login_div,
                   "login_form": login_form,
