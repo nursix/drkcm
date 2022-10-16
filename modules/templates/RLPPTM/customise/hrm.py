@@ -148,8 +148,8 @@ def human_resource_postprocess(form):
                                       limitby = (0, 1),
                                       ).first()
     if record:
-        from .org import update_mgrinfo
-        update_mgrinfo(record.organisation_id)
+        from ..models.org import TestProvider
+        TestProvider(record.organisation_id).update_verification()
 
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):

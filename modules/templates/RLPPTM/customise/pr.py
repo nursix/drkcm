@@ -34,9 +34,9 @@ def person_postprocess(form):
                             )
 
     # Update manager info status tag for each org
-    from .org import update_mgrinfo
+    from ..models.org import TestProvider
     for row in rows:
-        update_mgrinfo(row.organisation_id)
+        TestProvider(row.organisation_id).update_verification()
 
 # -----------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
@@ -159,9 +159,9 @@ def contact_update_mgrinfo(record_id, pe_id=None):
         query = (ctable.id == record_id)
     rows = db(query).select(htable.organisation_id, join=join)
 
-    from .org import update_mgrinfo
+    from ..models.org import TestProvider
     for row in rows:
-        update_mgrinfo(row.organisation_id)
+        TestProvider(row.organisation_id).update_verification()
 
 # -----------------------------------------------------------------------------
 def contact_ondelete(row):

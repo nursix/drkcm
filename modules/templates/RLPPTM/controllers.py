@@ -300,8 +300,8 @@ class approve(CustomController):
 
         try:
             org_group_pe_id = org_group.pe_id
-        except:
-            raise RuntimeError("Cannot approve user account as Org Group '%s' is missing " % TESTSTATIONS)
+        except Exception as e:
+            raise RuntimeError("Cannot approve user account as Org Group '%s' is missing " % TESTSTATIONS) from e
 
         has_role = auth.s3_has_role
         if has_role("ORG_GROUP_ADMIN",
@@ -624,9 +624,11 @@ class approve(CustomController):
                                 set_record_owner(ltable, link)
                                 s3db_onaccept(ltable, link, method="create")
 
-                        # Add default tags
-                        from .customise.org import add_organisation_default_tags
-                        add_organisation_default_tags(organisation_id)
+                        # Add verification defaults (after establishing type links)
+                        from .models.org import TestProvider
+                        provider = TestProvider(organisation_id)
+                        provider.add_default_tags()
+                        provider.add_verification_defaults()
 
                         # Update user
                         user.update_record(organisation_id = organisation_id,
@@ -665,7 +667,7 @@ class approve(CustomController):
                                 "opening_times": opening_times,
                                 "comments": comments,
                                 }
-                    facility_id = facility["id"] = ftable.insert(**facility)
+                    facility["id"] = ftable.insert(**facility)
                     update_super(ftable, facility)
                     set_record_owner(ftable, facility, owned_by_user=user_id)
                     s3db_onaccept(ftable, facility, method="create")
@@ -705,9 +707,10 @@ class approve(CustomController):
                             s3db_onaccept(sltable, link, method="create")
 
                     # Add default tags for facility
-                    from .customise.org import set_facility_code, add_facility_default_tags
-                    set_facility_code(facility_id)
-                    add_facility_default_tags(facility_id)
+                    from .models.org import TestStation
+                    ts = TestStation(site_id)
+                    ts.add_facility_code()
+                    ts.add_approval_defaults()
 
                     # Approve user
                     auth.s3_approve_user(user)
@@ -1030,8 +1033,8 @@ class register(CustomController):
                                                                 ).first()
             try:
                 org_group_id = org_group.id
-            except:
-                raise RuntimeError("Cannot register user account as Org Group '%s' is missing " % TESTSTATIONS)
+            except Exception as e:
+                raise RuntimeError("Cannot register user account as Org Group '%s' is missing " % TESTSTATIONS) from e
             db(utable.id == user_id).update(org_group_id = org_group_id)
 
             # Save temporary user fields in s3db.auth_user_temp
