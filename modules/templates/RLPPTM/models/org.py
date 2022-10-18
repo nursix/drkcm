@@ -70,8 +70,7 @@ COMMISSION_REASON = WorkflowOptions(("N/V", "Verification Pending"),
                                     )
 
 #TODO PUBLIC_STATUS
-PUBLIC_REASON = WorkflowOptions(("NEW", "New registration"),
-                                ("COMMISSION", "Organisation not currently commissioned"),
+PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Organisation not currently commissioned"),
                                 ("REVISE", "Documentation incomplete"),
                                 ("REVIEW", "Review pending"),
                                 ("OVERRIDE", "set by Administrator"),
@@ -335,7 +334,7 @@ class TestProviderModel(DataModel):
 
         update = {}
         if provider.verification.accepted:
-            if record.end_date < today:
+            if record.end_date and record.end_date < today:
                 update["status"] = "EXPIRED"
                 update["status_reason"] = None
         elif record.status == "CURRENT":
@@ -1553,7 +1552,7 @@ class TestStation:
         record_id = table.insert(site_id = self.site_id,
                                  organisation_id = self.organisation_id,
                                  public = "N",
-                                 public_reason = "NEW",
+                                 public_reason = "REVISE",
                                  )
 
         self._approval = self.lookup_approval(table.id == record_id)
@@ -1758,7 +1757,8 @@ class TestStation:
         update_public = update.get("public")
         if update_public == "N":
             # Determine reason from status
-            if update.get("status") == "REVISE":
+            status = update.get("status") or approval.status
+            if status == "REVISE":
                 update["public_reason"] = "REVISE"
             else:
                 update["public_reason"] = "REVIEW"
@@ -1775,7 +1775,7 @@ class TestStation:
 
         # Public=N with non-automatic reason must not be overwritten
         if approval.public == "N" and \
-           approval.public_reason not in ("NEW", "COMMISSION", "REVISE", "REVIEW"):
+           approval.public_reason not in ("COMMISSION", "REVISE", "REVIEW"):
             update.pop("public", None)
             update.pop("public_reason", None)
             notify = False # no change happening

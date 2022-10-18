@@ -11,10 +11,8 @@ from gluon import current, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
 from core import FS, ICON, S3CRUD, S3Represent, \
                  get_filter_options, get_form_record_id, s3_fieldmethod
 
-from ..models.org import MGRINFO_STATUS, TestProvider, TestStation
-
-SITE_WORKFLOW = ("MPAV", "HYGIENE", "LAYOUT", "STATUS", "PUBLIC", "DHASH")
-SITE_REVIEW = ("MPAV", "HYGIENE", "LAYOUT")
+from ..models.org import TestProvider, TestStation, \
+                         MGRINFO_STATUS, PUBLIC_REASON
 
 # -------------------------------------------------------------------------
 def add_org_tags():
@@ -1004,6 +1002,14 @@ def org_facility_resource(r, tablename):
                                                                ),
                           ),
             ])
+
+        if show_pnd:
+            filter_widgets.extend([
+                OptionsFilter("approval.public_reason",
+                              label = T("Reason for unlisting"),
+                              options = OrderedDict(PUBLIC_REASON.labels),
+                              ),
+                ])
 
         if show_all or r.method == "report":
             binary_tag_opts = OrderedDict([("Y", T("Yes")), ("N", T("No"))])
