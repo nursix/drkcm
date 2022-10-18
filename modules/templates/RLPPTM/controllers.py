@@ -625,6 +625,7 @@ class approve(CustomController):
                                 s3db_onaccept(ltable, link, method="create")
 
                         # Add verification defaults (after establishing type links)
+                        # - see organisation_postprocess
                         from .models.org import TestProvider
                         provider = TestProvider(organisation_id)
                         provider.add_default_tags()
@@ -706,11 +707,12 @@ class approve(CustomController):
                             set_record_owner(sltable, link, owned_by_user=user_id)
                             s3db_onaccept(sltable, link, method="create")
 
-                    # Add default tags for facility
+                    # Add code and approval defaults for facility
+                    # - see facility_postprocess
                     from .models.org import TestStation
                     ts = TestStation(site_id)
                     ts.add_facility_code()
-                    ts.add_approval_defaults()
+                    ts.update_approval()
 
                     # Approve user
                     auth.s3_approve_user(user)

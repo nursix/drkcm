@@ -11,8 +11,7 @@ from gluon import current, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
 from core import FS, ICON, S3CRUD, S3Represent, \
                  get_filter_options, get_form_record_id, s3_fieldmethod
 
-from ..helpers import workflow_tag_represent
-from ..models.org import TestProvider, TestStation
+from ..models.org import MGRINFO_STATUS, TestProvider, TestStation
 
 SITE_WORKFLOW = ("MPAV", "HYGIENE", "LAYOUT", "STATUS", "PUBLIC", "DHASH")
 SITE_REVIEW = ("MPAV", "HYGIENE", "LAYOUT")
@@ -37,59 +36,8 @@ def add_org_tags():
                                                  "filterby": {"tag": "OrgID"},
                                                  "multiple": False,
                                                  },
-                                                {"name": "mgrinfo",
-                                                 "joinby": "organisation_id",
-                                                 "filterby": {"tag": "MGRINFO"},
-                                                 "multiple": False,
-                                                 },
                                                 ),
                         )
-
-# -------------------------------------------------------------------------
-# Helper functions for approval workflows
-#
-def get_dhash(*values):
-    """
-        Produce a data verification hash from the values
-
-        Args:
-            values: an (ordered) iterable of values
-        Returns:
-            the verification hash as string
-    """
-
-    import hashlib
-    dstr = "#".join([str(v) if v else "***" for v in values])
-
-    return hashlib.sha256(dstr.encode("utf-8")).hexdigest().lower()
-
-def reset_all(tags, value="N/A"):
-    """
-        Set all given workflow tags to initial status
-
-        Args:
-            tags: the tag Rows
-            value: the initial value
-    """
-
-    for tag in tags:
-        tag.update_record(value=value)
-
-# -------------------------------------------------------------------------
-def mgrinfo_opts():
-    """
-        Options for the MGRINFO-tag, and their labels
-
-        Returns:
-            tuple list of options
-    """
-
-    T = current.T
-
-    return (("N/A", T("not specified")),
-            ("REVISE", T("Completion/Adjustment Required")),
-            ("COMPLETE", T("complete")),
-            )
 
 # -------------------------------------------------------------------------
 def configure_org_tags(resource):
@@ -113,14 +61,6 @@ def configure_org_tags(resource):
     field.label = T("Delivery##supplying")
     field.requires = IS_IN_SET(delivery_opts, zero=None)
     field.represent = lambda v, row=None: delivery_opts.get(v, "-")
-
-    # Configure mgrinfo-tag
-    component = resource.components.get("mgrinfo")
-    ctable = component.table
-    field = ctable.value
-    field.label = T("Documentation Test Station Manager")
-    field.writable = False
-    field.represent = workflow_tag_represent(dict(mgrinfo_opts()))
 
 # -------------------------------------------------------------------------
 def organisation_create_onaccept(form):
@@ -151,6 +91,25 @@ def organisation_postprocess(form):
         return
 
     TestProvider(record_id).update_verification()
+
+# -------------------------------------------------------------------------
+def organisation_organisation_type_onaccept(form):
+    """
+        Onaccept of organisation type link:
+            - update verification (requirements could have changed)
+
+        Notes:
+            - workaround for bulk-imports, where the usual
+              form-postprocess is not called
+    """
+
+    if current.response.s3.bulk:
+        try:
+            organisation_id = form.vars.organisation_id
+        except AttributeError:
+            return
+
+        TestProvider(organisation_id).update_verification()
 
 # -------------------------------------------------------------------------
 def org_organisation_resource(r, tablename):
@@ -194,6 +153,12 @@ def org_organisation_resource(r, tablename):
                              "onaccept",
                              organisation_create_onaccept,
                              method = "create",
+                             )
+
+    # Custom onaccept for type links to initialize verification
+    s3db.add_custom_callback("org_organisation_organisation_type",
+                             "onaccept",
+                             organisation_organisation_type_onaccept,
                              )
 
 # -------------------------------------------------------------------------
@@ -331,13 +296,8 @@ def org_organisation_controller(**attr):
 
                     # Show delivery-tag
                     delivery = "delivery.value"
-
-                    # Configure post-process to update verification
-                    postprocess = organisation_postprocess
-
                 else:
                     groups = projects = delivery = types = type_check = None
-                    postprocess = None
 
                 crud_fields = [groups,
                                "name",
@@ -362,6 +322,11 @@ def org_organisation_controller(**attr):
                                "comments",
                                ]
 
+                # Configure post-process to add/update verification
+                crud_form = S3SQLCustomForm(*crud_fields,
+                                            postprocess = organisation_postprocess,
+                                            )
+
                 # Filters
                 text_fields = ["name", "acronym", "website", "phone"]
                 if is_org_group_admin:
@@ -383,17 +348,15 @@ def org_organisation_controller(**attr):
                             options = lambda: get_filter_options("org_organisation_type"),
                             ),
                         OptionsFilter(
-                            "mgrinfo.value",
+                            "verification.mgrinfo",
                             label = T("TestSt Manager##abbr"),
-                            options = OrderedDict(mgrinfo_opts()),
+                            options = OrderedDict(MGRINFO_STATUS.labels),
                             sort = False,
                             hidden = True,
                             ),
                         ])
 
-                resource.configure(crud_form = S3SQLCustomForm(*crud_fields,
-                                                               postprocess = postprocess,
-                                                               ),
+                resource.configure(crud_form = crud_form,
                                    filter_widgets = filter_widgets,
                                    )
 
@@ -606,7 +569,12 @@ def facility_create_onaccept(form):
         return
 
     # Generate facility ID
-    TestStation(facility_id=record_id).add_facility_code()
+    ts = TestStation(facility_id=record_id)
+    ts.add_facility_code()
+    if current.response.s3.bulk:
+        # Postprocess not called during imports
+        # => call approval update manually
+        ts.update_approval()
 
 # -------------------------------------------------------------------------
 def facility_postprocess(form):
@@ -622,14 +590,8 @@ def facility_postprocess(form):
     if not record_id:
         return
 
-    # Lookup site_id
-    table = current.s3db.org_facility
-    row = current.db(table.id == record_id).select(table.site_id,
-                                                   limitby = (0, 1),
-                                                   ).first()
-    if row and row.site_id:
-        # Update approval workflow
-        TestStation(row.site_id).update_approval()
+    # Add/update approval workflow tags
+    TestStation(facility_id=record_id).update_approval()
 
 # -------------------------------------------------------------------------
 def facility_mgrinfo(row):
@@ -697,7 +659,7 @@ def configure_facility_form(r, is_org_group_admin=False):
                      S3SQLInlineLink, \
                      WithAdvice
 
-    visible_tags = postprocess = None
+    visible_tags = None
     if fresource:
         # Inline service selector and documents
         services = S3SQLInlineLink(
@@ -780,7 +742,7 @@ def configure_facility_form(r, is_org_group_admin=False):
 
         table = fresource.table
         table.mgrinfo = s3_fieldmethod("mgrinfo", facility_mgrinfo,
-                                       represent = workflow_tag_represent(dict(mgrinfo_opts())),
+                                       represent = MGRINFO_STATUS.represent,
                                        )
         extra_fields = ["organisation_id$verification.mgrinfo"]
 
@@ -798,16 +760,16 @@ def configure_facility_form(r, is_org_group_admin=False):
         subheadings[fname] = T("Approval and Publication")
         crud_fields.extend(visible_tags)
 
-        # Add postprocess to update workflow statuses
-        postprocess = facility_postprocess
-
     else:
         extra_fields = None
 
+    # Configure postprocess to add/update workflow statuses
+    crud_form = S3SQLCustomForm(*crud_fields,
+                                postprocess = facility_postprocess,
+                                )
+
     s3db.configure("org_facility",
-                   crud_form = S3SQLCustomForm(*crud_fields,
-                                               postprocess = postprocess,
-                                               ),
+                   crud_form = crud_form,
                    extra_fields = extra_fields,
                    subheadings = subheadings,
                    )

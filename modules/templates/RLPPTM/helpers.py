@@ -13,7 +13,8 @@ from gluon import current, Field, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
 from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
-                 CRUDMethod, S3Represent, s3_fullname, s3_mark_required, s3_str
+                 CRUDMethod, S3Represent, S3PriorityRepresent, \
+                 s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact
 
@@ -434,7 +435,7 @@ def assign_pending_invoices(billing_id, organisation_id=None, invoice_id=None):
                                    organisation_id = organisation_id,
                                    )
     else:
-        accountants = None
+        accountants = []
 
     # Query for any pending invoices of this billing cycle
     itable = s3db.fin_voucher_invoice
@@ -1079,6 +1080,137 @@ def rlp_holidays(start, end):
     return rules
 
 # =============================================================================
+class WorkflowOptions:
+    # TODO docstring
+    # TODO optimize
+
+    icons = {"red": "fa fa-exclamation-triangle",
+             "amber": "fa fa-hourglass",
+             "green": "fa fa-check",
+             "grey": "fa fa-minus-circle",
+             }
+
+    css_classes = {"red": "workflow-red",
+                   "amber": "workflow-amber",
+                   "green": "workflow-green",
+                   "grey": "workflow-grey",
+                   }
+
+    # -------------------------------------------------------------------------
+    def __init__(self, *theset, selectable=None, represent="workflow", none=None):
+        # TODO docstring
+
+        self.theset = theset
+        self._represent = represent
+        self.none = none
+
+        self._colors = None
+        self._labels = None
+
+        self._keys = [o[0] for o in theset] #list(dict(theset).keys())
+        if selectable:
+            self._selectable = [k for k in self._keys if k in selectable]
+        else:
+            self._selectable = self._keys
+
+    # -------------------------------------------------------------------------
+    def selectable(self, values=False, current_value=None):
+        # TODO docstring
+
+        if values is False:
+            selectable = self._keys
+        elif values is True:
+            selectable = self._selectable
+        elif isinstance(values, (tuple, list, set)):
+            selectable = list(values)
+        else:
+            selectable = []
+
+        if current_value and current_value not in selectable:
+            selectable = [current_value] + selectable
+
+        return [o for o in self.labels if o[0] in selectable]
+
+    # -------------------------------------------------------------------------
+    @property
+    def colors(self):
+        # TODO docstring
+
+        colors = self._colors
+        if not colors:
+            colors = self._colors = {}
+            for opt in self.theset:
+                if len(opt) > 2:
+                    colors[opt[0]] = opt[2]
+                else:
+                    colors[opt[0]] = None
+        return colors
+
+    # -------------------------------------------------------------------------
+    @property
+    def labels(self):
+        # TODO docstring
+
+        labels = self._labels
+        if not labels:
+            T = current.T
+            labels = self._labels = [(o[0], T(o[1])) for o in self.theset]
+        return labels
+
+    # -------------------------------------------------------------------------
+    @property
+    def represent(self):
+        # TODO docstring
+
+        represent = self._represent
+        if not callable(represent):
+            if represent == "workflow":
+                represent = self.represent_workflow()
+            elif represent == "status":
+                represent = self.represent_status()
+            else:
+                represent = None
+            self._represent = represent
+        return represent
+
+    # -------------------------------------------------------------------------
+    def represent_workflow(self):
+        # TODO docstring
+
+        none = self.none
+        labels = dict(self.labels)
+        colors = self.colors
+        icons = self.icons
+        css_classes = self.css_classes
+
+        def represent(value, row=None):
+
+            if value is None and none:
+                value = none
+
+            label = DIV(_class="approve-workflow")
+
+            color = colors.get(value)
+            if color:
+                icon = icons.get(color)
+                if icon:
+                    label.append(I(_class=icon))
+                css_class = css_classes.get(color)
+                if css_class:
+                    label.add_class(css_class)
+            label.append(labels.get(value, "-"))
+
+            return label
+
+        return represent
+
+    # -------------------------------------------------------------------------
+    def represent_status(self):
+        # TODO docstring
+
+        return S3PriorityRepresent(dict(self.labels), self.colors)
+
+# =============================================================================
 class ServiceListRepresent(S3Represent):
 
     always_list = True
@@ -1121,10 +1253,10 @@ class OrganisationRepresent(S3Represent):
 
     def __init__(self, show_type=True, show_link=True):
 
-        super(OrganisationRepresent, self).__init__(lookup = "org_organisation",
-                                                    fields = ["name",],
-                                                    show_link = show_link,
-                                                    )
+        super().__init__(lookup = "org_organisation",
+                         fields = ["name",],
+                         show_link = show_link,
+                         )
         self.show_type = show_type
         self.org_types = {}
         self.type_names = {}
@@ -2289,7 +2421,7 @@ class TestFacilityInfo(CRUDMethod):
                   "name": facility.name,
                   "phone": facility.phone1,
                   "email": facility.email,
-                  "public": True if public.value == "Y" else False,
+                  "public": public.value == "Y",
                   }
 
         # Look up organisation data
@@ -2457,7 +2589,7 @@ class PersonRepresentManager(pr_PersonRepresentContact):
                 fields: unused (retained for API compatibility)
         """
 
-        rows = super(PersonRepresentManager, self).lookup_rows(key, values, fields=fields)
+        rows = super().lookup_rows(key, values, fields=fields)
 
         # Lookup dates of birth
         table = self.table

@@ -37,7 +37,46 @@ from core import DataModel, \
                  s3_comments_widget, s3_date, s3_datetime, s3_meta_fields, \
                  s3_text_represent, s3_yes_no_represent
 
+from ..helpers import WorkflowOptions
+
 DEFAULT = lambda: None
+
+# =============================================================================
+# Status and Reason Options
+#
+ORGTYPE_STATUS = WorkflowOptions(("N/A", "not specified", "grey"),
+                                 ("ACCEPT", "not required", "green"),
+                                 ("N/V", "not verified", "amber"),
+                                 ("VERIFIED", "verified", "green"),
+                                 selectable = ("N/V", "VERIFIED"),
+                                 )
+
+MGRINFO_STATUS = WorkflowOptions(("N/A", "not specified", "grey"),
+                                 ("ACCEPT", "not required", "green"),
+                                 ("REVISE", "Completion/Adjustment required", "red"),
+                                 ("COMPLETE", "complete", "green"),
+                                 )
+
+COMMISSION_STATUS = WorkflowOptions(("CURRENT", "current", "green"),
+                                    ("SUSPENDED", "suspended", "amber"),
+                                    ("REVOKED", "revoked", "black"),
+                                    ("EXPIRED", "expired", "grey"),
+                                    selectable = ("CURRENT", "SUSPENDED", "REVOKED"),
+                                    represent = "status",
+                                    )
+COMMISSION_REASON = WorkflowOptions(("N/V", "Verification Pending"),
+                                    ("OVERRIDE", "set by Administrator"),
+                                    selectable = ("OVERRIDE",),
+                                    )
+
+#TODO PUBLIC_STATUS
+PUBLIC_REASON = WorkflowOptions(("NEW", "New registration"),
+                                ("COMMISSION", "Organisation not currently commissioned"),
+                                ("REVISE", "Documentation incomplete"),
+                                ("REVIEW", "Review pending"),
+                                ("OVERRIDE", "set by Administrator"),
+                                selectable = ("OVERRIDE",),
+                                )
 
 # =============================================================================
 class TestProviderModel(DataModel):
@@ -58,22 +97,11 @@ class TestProviderModel(DataModel):
         configure = self.configure
         define_table = self.define_table
 
-        # ---------------------------------------------------------------------
-        mgrinfo_opts = (("N/A", T("not specified")),
-                        ("ACCEPT", T("not required")),
-                        ("REVISE", T("Completion/Adjustment required")),
-                        ("COMPLETE", T("complete")),
-                        )
-
-        commission_status_reasons = (("N/V", T("Verification Pending")),
-                                     ("OVERRIDE", T("Set by Administrator")),
-                                     )
+        crud_strings = current.response.s3.crud_strings
 
         # ---------------------------------------------------------------------
         # Verification details
         #
-        orgtype_opts = self.orgtype_status_opts
-
         tablename = "org_verification"
         define_table(tablename,
                      organisation_id(),
@@ -86,11 +114,11 @@ class TestProviderModel(DataModel):
                      Field("orgtype",
                            label = T("Type Verification"),
                            default = "N/A",
-                           requires = IS_IN_SET(orgtype_opts(selectable=True),
+                           requires = IS_IN_SET(ORGTYPE_STATUS.selectable(True),
                                                 sort = False,
                                                 zero = None,
                                                 ),
-                           represent = workflow_tag_represent(dict(orgtype_opts())),
+                           represent = ORGTYPE_STATUS.represent,
                            readable = True,
                            writable = False,
                            ),
@@ -98,8 +126,11 @@ class TestProviderModel(DataModel):
                      Field("mgrinfo",
                            label = T("Test Station Manager Information"),
                            default = "N/A",
-                           requires = IS_IN_SET(mgrinfo_opts, zero=None),
-                           represent = workflow_tag_represent(dict(mgrinfo_opts)),
+                           requires = IS_IN_SET(MGRINFO_STATUS.selectable(),
+                                                sort = False,
+                                                zero = None,
+                                                ),
+                           represent = MGRINFO_STATUS.represent,
                            readable = True,
                            writable = False,
                            ),
@@ -116,8 +147,6 @@ class TestProviderModel(DataModel):
         # ---------------------------------------------------------------------
         # Commission
         #
-        status_opts = self.commission_status_opts
-
         tablename = "org_commission"
         define_table(tablename,
                      organisation_id(empty=False),
@@ -126,18 +155,18 @@ class TestProviderModel(DataModel):
                              set_min="#org_commission_end_date",
                              ),
                      s3_date("end_date",
+                             label = T("Valid until"),
                              default = None,
-                             label = T("expires on"),
                              set_max="#org_commission_date",
                              ),
-                     # TODO color-coded representation
                      Field("status",
+                           label = T("Status"),
                            default = "CURRENT",
-                           requires = IS_IN_SET(status_opts(selectable=True),
+                           requires = IS_IN_SET(COMMISSION_STATUS.selectable(True),
                                                 zero = None,
                                                 sort = False,
                                                 ),
-                           represent = represent_option(dict(status_opts())),
+                           represent = COMMISSION_STATUS.represent,
                            readable = True,
                            writable = False,
                            ),
@@ -150,11 +179,12 @@ class TestProviderModel(DataModel):
                              writable = False,
                              ),
                      Field("status_reason",
+                           label = T("Status Reason"),
                            requires = IS_EMPTY_OR(
-                                        IS_IN_SET(commission_status_reasons,
+                                        IS_IN_SET(COMMISSION_REASON.selectable(True),
                                                   sort = False,
                                                   )),
-                           represent = workflow_tag_represent(dict(commission_status_reasons)),
+                           represent = represent_option(dict(COMMISSION_REASON.labels)),
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -166,71 +196,22 @@ class TestProviderModel(DataModel):
                   deletable = False,
                   onvalidation = self.commission_onvalidation,
                   onaccept = self.commission_onaccept,
-                  # TODO default orderby start date (newest first)
+                  orderby = "%s.date desc" % tablename,
                   )
 
-        # TODO CRUD strings
-
-    #--------------------------------------------------------------------------
-    @staticmethod
-    def orgtype_status_opts(selectable=False):
-        """
-            Status options for organisation type verification
-
-            Args:
-                selectable: the selectable options
-                            - a list of status codes
-                            - True for default selectable options
-                            - False for all options
-
-            Returns:
-                tuple|list of (code, label)
-        """
-
-        T = current.T
-
-        opts =(("N/A", T("not specified")),
-               ("ACCEPT", T("not required")),
-               ("N/V", T("not verified")),
-               ("VERIFIED", T("verified")),
-               )
-        if not selectable:
-            return opts
-        elif selectable is True:
-            # Default selectable options
-            return [o for o in opts if o in ("N/V", "VERIFIED")]
-        else:
-            return [o for o in opts if o in selectable]
-
-    #--------------------------------------------------------------------------
-    @staticmethod
-    def commission_status_opts(selectable=False):
-        """
-            Status options for commissions
-
-            Args:
-                selectable: the selectable options
-                            - a list of status codes
-                            - True for default selectable options
-                            - False for all options
-
-            Returns:
-                tuple|list of (code, label)
-        """
-
-        T = current.T
-        opts = (("CURRENT", T("current")),
-                ("SUSPENDED", T("suspended")),
-                ("REVOKED", T("revoked")),
-                ("EXPIRED", T("expired")),
-                )
-        if not selectable:
-            return opts
-        elif selectable is True:
-            # Default selectable options
-            return [o for o in opts if o[0] in ("CURRENT", "SUSPENDED", "REVOKED")]
-        else:
-            return [o for o in opts if o[0] in selectable]
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Commission"),
+            title_display = T("Commission Details"),
+            title_list = T("Commissions"),
+            title_update = T("Edit Commission"),
+            label_list_button = T("List Commissions"),
+            label_delete_button = T("Delete Commission"),
+            msg_record_created = T("Commission added"),
+            msg_record_modified = T("Commission updated"),
+            msg_record_deleted = T("Commission deleted"),
+            msg_list_empty = T("No Commissions currently registered"),
+            )
 
     #--------------------------------------------------------------------------
     @staticmethod
@@ -360,16 +341,16 @@ class TestProviderModel(DataModel):
         elif record.status == "CURRENT":
             update["status"] = "SUSPENDED"
             update["status_reason"] = "N/V"
-        elif record.status in ("CURRENT", "REVOKED", "EXPIRED"):
+        if record.status in ("CURRENT", "REVOKED", "EXPIRED"):
             update["status_reason"] = None
 
         new_status = update.get("status") or record.status
         status_change = new_status != record.prev_status
 
+        if status_change:
+            update["status_date"] = today
+            update["prev_status"] = new_status
         if update:
-            if status_change:
-                update["status_date"] = today
-                update["prev_status"] = new_status
             record.update_record(**update)
 
         if status_change:
@@ -424,13 +405,6 @@ class TestStationModel(DataModel):
 
         binary_opts = (("N", T("No")), ("Y", T("Yes")))
         binary_represent = workflow_tag_represent(dict(binary_opts, none="N"))
-
-        public_reasons = {"NEW": T("New registration"),
-                          "COMMISSION": T("Organisation not currently commissioned"),
-                          "REVISE": T("Documentation incomplete"),
-                          "REVIEW": T("Review pending"),
-                          "OVERRIDE": T("De-listed manually"),
-                          }
 
         # ---------------------------------------------------------------------
         # Current approval details
@@ -504,7 +478,12 @@ class TestStationModel(DataModel):
                      Field("public_reason",
                            label = T("Reason for unlisting"),
                            default = "REVISE",
-                           represent = represent_option(public_reasons),
+                           requires = IS_EMPTY_OR(
+                                        IS_IN_SET(PUBLIC_REASON.selectable(True),
+                                                  sort = False,
+                                                  zero = None,
+                                                  )),
+                           represent = represent_option(dict(PUBLIC_REASON.labels)),
                            readable = True,
                            writable = False,
                            ),
@@ -560,7 +539,7 @@ class TestStationModel(DataModel):
                            ),
                      Field("public_reason",
                            label = T("Reason for unlisting"),
-                           represent = represent_option(public_reasons),
+                           represent = represent_option(dict(PUBLIC_REASON.labels)),
                            readable = True,
                            writable = False,
                            ),
@@ -574,11 +553,8 @@ class TestStationModel(DataModel):
         # List fields
         list_fields = ["timestmp",
                        "status",
-                       "mpav",
-                       "hygiene",
-                       "layout",
                        "public",
-                       "advice",
+                       "public_reason",
                        ]
 
         # Table configuration
@@ -1035,14 +1011,7 @@ class TestProvider:
                 - does not evaluate whether manager info is required
         """
 
-        from ..config import TESTSTATIONS
-        from ..helpers import is_org_group
-
         organisation_id = self.organisation_id
-
-        # Check if the organisation belongs to the TESTSTATIONS group
-        if not is_org_group(organisation_id, TESTSTATIONS):
-            return None
 
         db = current.db
         s3db = current.s3db
@@ -1326,13 +1295,11 @@ class TestProvider:
             field = table.orgtype
             if provider.verifreq:
                 # Configure selectable options
-                selectable = {"N/V", "VERIFIED"}
                 current_value = provider.verification.orgtype
-                if current_value not in selectable:
+                options = ORGTYPE_STATUS.selectable(True)
+                if current_value not in dict(options):
                     field.writable = False
                 else:
-                    options = TestProviderModel.orgtype_status_opts()
-                    options = [o for o in options if o[0] in selectable]
                     field.requires = IS_IN_SET(options,
                                                sort = False,
                                                zero = None,
@@ -1392,9 +1359,9 @@ class TestProvider:
                     field = table.status
                     field.writable = True
                     selectable = True if accepted else ("SUSPENDED", "REVOKED")
-                    options = TestProviderModel.commission_status_opts(selectable=selectable)
+                    options = COMMISSION_STATUS.selectable(selectable)
                     field.requires = IS_IN_SET(options, sort=False, zero=None)
-                elif commission.status in ("REVOKED", "EXPIRED"):
+                else:
                     editable = False
             else:
                 editable = True
@@ -1450,7 +1417,7 @@ class TestStation:
         site_id = self._site_id
         if not site_id:
             record = self.record
-            site_id = record.site_id if site_id else None
+            site_id = record.site_id if record else None
 
         return site_id
 
@@ -1532,10 +1499,11 @@ class TestStation:
 
         approval = self._approval
         if not approval:
-            approval = self._approval = self.lookup_approval()
+            approval = self.lookup_approval()
             if not approval:
                 # Create approval status record with defaults
                 approval = self.add_approval_defaults()
+            self._approval = approval
 
         return approval
 
@@ -1803,12 +1771,14 @@ class TestStation:
             else:
                 update["public"] = "N"
                 update["public_reason"] = "COMMISSION"
+                notify = False # commission change already notified
 
         # Public=N with non-automatic reason must not be overwritten
         if approval.public == "N" and \
            approval.public_reason not in ("NEW", "COMMISSION", "REVISE", "REVIEW"):
             update.pop("public", None)
             update.pop("public_reason", None)
+            notify = False # no change happening
 
         # Detect public-status change
         public_changed = "public" in update and update["public"] != approval.public
@@ -1829,7 +1799,10 @@ class TestStation:
             if approval.public == "Y":
                 msg = T("Facility added to public registry")
             else:
-                msg = T("Facility removed from public registry pending review")
+                table = current.s3db.org_site_approval
+                field = table.public_reason
+                msg = T("Facility removed from public registry (%(reason)s)") % \
+                      {"reason": field.represent(approval.public_reason)}
             current.response.information = msg
 
         # Send Notifications
@@ -2081,19 +2054,8 @@ class TestStation:
             return None
         ctable = component.table
 
-        # Configure status-field
-        #   - applicants can change to READY if current status is REVISE
-        #   - read-only for applicants otherwise
-        #   - invisible for approvers (default)
-        field = ctable.status
-        status_tag_opts = dict(field.requires.options())
-        review_tags_visible = False
-        if role == "applicant" and record_id:
-
-            field.readable = True
-            visible_tags.append("approval.status")
-
-            # Get current status to determine selectable values
+        if record_id:
+            # Get the current approval status and public-tag
             db = current.db
             s3db = current.s3db
             ftable = s3db.org_facility
@@ -2101,18 +2063,37 @@ class TestStation:
             join = ftable.on((ftable.site_id == atable.site_id) & \
                              (ftable.id == record_id))
             query = (atable.deleted == False)
-            row = db(query).select(atable.status, join=join, limitby=(0, 1)).first()
+            row = db(query).select(atable.status,
+                                   atable.public,
+                                   atable.public_reason,
+                                   join = join,
+                                   limitby = (0, 1),
+                                   ).first()
+        else:
+            row = None
 
-            if row:
-                status = row.status
-                if status == "REVISE":
-                    field.writable = True
-                    selectable = [(v, status_tag_opts[v]) for v in ("REVISE", "READY")]
-                    field.requires = IS_IN_SET(selectable, zero=None)
-                    review_tags_visible = True
-                elif status == "REVIEW":
-                    field.writable = False
-                    review_tags_visible = True
+        # Configure status-field
+        #   - applicants can change to READY if current status is REVISE
+        #   - read-only for applicants otherwise
+        #   - invisible for approvers (default)
+        review_tags_visible = False
+        if role == "applicant" and row:
+            field = ctable.status
+            field.readable = True
+
+            visible_tags.append("approval.status")
+
+            # Determine selectable values from current status
+            status = row.status
+            if status == "REVISE":
+                field.writable = True
+                status_tag_opts = dict(field.requires.options())
+                selectable = [(v, status_tag_opts[v]) for v in ("REVISE", "READY")]
+                field.requires = IS_IN_SET(selectable, zero=None, sort=False)
+                review_tags_visible = True
+            elif status == "REVIEW":
+                field.writable = False
+                review_tags_visible = True
 
         # Configure review-tags
         #   - read-only for applicants if status REVISE|REVIEW
@@ -2136,8 +2117,18 @@ class TestStation:
         field = ctable.public
         field.writable = role == "approver"
 
+        field = ctable.public_reason
+        if row and role == "approver":
+            field.writable = True
+            selectable = PUBLIC_REASON.selectable(True,
+                                                  current_value = row.public_reason,
+                                                  )
+            field.requires = IS_EMPTY_OR(IS_IN_SET(selectable,
+                                                   sort=False,
+                                                   ))
+
         visible_tags.extend(["approval.public",
-                             #"approval.public_reason",
+                             "approval.public_reason",
                              "approval.advice",
                              ])
 
