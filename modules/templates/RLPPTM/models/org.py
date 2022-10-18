@@ -495,6 +495,8 @@ class TestStationModel(DataModel):
                                          ),
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
+                           readable = False,
+                           writable = False,
                            ),
                      *s3_meta_fields())
 
@@ -568,8 +570,8 @@ class TestStationModel(DataModel):
         # CRUD strings
         crud_strings[tablename] = Storage(
             title_display = T("Approval Status"),
-            title_list = T("Approval Status History"),
-            label_list_button = T("See Approval History"),
+            title_list = T("Approval History"),
+            label_list_button = T("Approval History"),
             msg_list_empty = T("No Approval Statuses currently registered"),
             )
 
@@ -625,8 +627,8 @@ class TestStationModel(DataModel):
         update = {}
 
         # Set/remove public-reason as required
-        if record.public == "N" and not record.public_reason:
-            update["public_reason"] = "OVERRIDE"
+        #if record.public == "N" and not record.public_reason:
+        #    update["public_reason"] = "OVERRIDE"
         if record.public == "Y":
             update["public_reason"] = None
 
@@ -1768,6 +1770,7 @@ class TestStation:
             # Check if organisation has a current commission
             if commissioned:
                 update["public_reason"] = None
+                update["advice"] = None
             else:
                 update["public"] = "N"
                 update["public_reason"] = "COMMISSION"
@@ -1775,7 +1778,7 @@ class TestStation:
 
         # Public=N with non-automatic reason must not be overwritten
         if approval.public == "N" and \
-           approval.public_reason not in ("COMMISSION", "REVISE", "REVIEW"):
+           approval.public_reason not in (None, "COMMISSION", "REVISE", "REVIEW"):
             update.pop("public", None)
             update.pop("public_reason", None)
             notify = False # no change happening
@@ -2073,9 +2076,6 @@ class TestStation:
             row = None
 
         # Configure status-field
-        #   - applicants can change to READY if current status is REVISE
-        #   - read-only for applicants otherwise
-        #   - invisible for approvers (default)
         review_tags_visible = False
         if role == "applicant" and row:
             field = ctable.status
@@ -2095,15 +2095,14 @@ class TestStation:
                 field.writable = False
                 review_tags_visible = True
 
+        is_approver = role == "approver"
+
         # Configure review-tags
-        #   - read-only for applicants if status REVISE|REVIEW
-        #   - invisible for applicants otherwise
-        #   - writable for approvers
         review_tags = ("mpav", "hygiene", "layout")
         for fn in review_tags:
             field = ctable[fn]
             field.default = "REVISE"
-            if role == "approver":
+            if is_approver:
                 field.readable = field.writable = True
             else:
                 field.readable = review_tags_visible
@@ -2112,13 +2111,11 @@ class TestStation:
                 visible_tags.append("approval.%s" % fn)
 
         # Configure public-tag
-        #   - readable for all
-        #   - writable for approvers
         field = ctable.public
-        field.writable = role == "approver"
+        field.writable = is_approver
 
         field = ctable.public_reason
-        if row and role == "approver":
+        if row and is_approver:
             field.writable = True
             selectable = PUBLIC_REASON.selectable(True,
                                                   current_value = row.public_reason,
@@ -2126,6 +2123,11 @@ class TestStation:
             field.requires = IS_EMPTY_OR(IS_IN_SET(selectable,
                                                    sort=False,
                                                    ))
+
+        # Configure advice
+        field = ctable.advice
+        field.readable = is_approver or row and row.public != "Y"
+        field.writable = is_approver
 
         visible_tags.extend(["approval.public",
                              "approval.public_reason",
