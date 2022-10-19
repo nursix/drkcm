@@ -214,7 +214,7 @@ def rlp_org_rheader(r, tabs=None):
         if tablename == "org_organisation":
 
             if not tabs:
-                tabs = [(T("Organisation"), None),
+                tabs = [(T("Organization"), None),
                         (T("Administrative Offices"), "office"),
                         (T("Facilities"), "facility"),
                         (T("Staff"), "human_resource"),

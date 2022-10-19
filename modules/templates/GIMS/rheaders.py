@@ -69,7 +69,7 @@ def org_rheader(r, tabs=None):
             is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
             if not tabs:
-                tabs = [(T("Organisation"), None),
+                tabs = [(T("Organization"), None),
                         (T("Offices"), "office"),
                         ]
                 if is_org_group_admin:

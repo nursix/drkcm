@@ -4145,7 +4145,7 @@ def br_rheader(r, tabs=None):
 
             rheader_fields = [[(T("ID"), "pe_label"),
                                (T("Case Status"), case_status),
-                               (T("Organisation"), organisation),
+                               (T("Organization"), organisation),
                                ],
                               ["date_of_birth",
                                household_size,

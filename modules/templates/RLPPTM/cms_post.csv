@@ -106,3 +106,13 @@ Ihr Landesamt für Soziales, Jugend und Versorgung
 DaycareTestingInquiry,disease,daycare_testing,Zu Planungszwecken benötigen wir die folgenden Angaben zu Ihrer Organisation:,
 TestStationManagerIntro,hrm,human_resource,"Hinweis: Teststellenverantwortliche müssen ein Benutzerkonto haben, im persönlichen Profil ihr Geburtsdatum, Steuer-ID, Email-Adresse und Telefonnummer hinterlegen, sowie ein polizeiliches Führungszeugnis und eine schriftliche Erklärung zu anhängigen Ermittlungs- und Strafverfahren einreichen.
 Mehr Informationen dazu in der Hilfe [Link einfügen].",
+Message CommissionStatusChanged,org,commission,Der Status der Beauftragung für den Teststellenbetreiber {name} hat sich geändert. Details siehe {url},
+Message CommissionIssued,org,commission,"Für den Teststellenbetreiber {name} wurde die Beauftragung ab {start} erteilt, siehe {url}",
+Message CommissionSuspended,org,commission,"Für den Teststellenbetreiber {name} wurde die Beauftragung mit Wirkung vom {status_date} ausgesetzt, und alle zugehörigen Teststellen deaktiviert. Grund: {reason}, Details siehe {url}",
+Message CommissionRevoked,org,commission,"Für den Teststellenbetreiber {name} wurde die Beauftragung mit Wirkung vom {status_date} entzogen, und alle zugehörigen Teststellen deaktiviert. Details siehe {url}.",
+Message CommissionExpired,org,commission,Für den Teststellenbetreiber {name} ist die Beauftragung ausgelaufen. Alle zugehörigen Teststellen wurden deaktiviert. Details siehe {url}.,
+Subject CommissionStatusChanged,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionIssued,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionSuspended,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionRevoked,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionExpired,org,commission,Änderungsmitteilung zur Beauftragung von {name},

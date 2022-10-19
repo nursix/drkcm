@@ -211,7 +211,7 @@ class DiseaseDaycareTestingInquiryModel(DataModel):
                                              limitby = (0, 1),
                                              ).first()
         if duplicate:
-            form.errors.organisation_id = T("Response for this organisation already registered")
+            form.errors.organisation_id = T("Response for this organization already registered")
             return
 
         daycare_testing = form_vars.daycare_testing

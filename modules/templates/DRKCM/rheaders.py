@@ -251,7 +251,7 @@ def drk_dvr_rheader(r, tabs=None):
 
             if multiple_orgs:
                 # Show organisation if user can see cases from multiple orgs
-                rheader_fields.insert(0, [(T("Organisation"), organisation, colspan)])
+                rheader_fields.insert(0, [(T("Organization"), organisation, colspan)])
             if flags_sel:
                 rheader_fields.append([(T("Flags"), flags, colspan)])
             if ui_opts_get("case_header_protection_themes"):

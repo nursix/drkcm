@@ -84,11 +84,10 @@ def get_managed_facilities(role="ORG_ADMIN", public_only=True, cacheable=True):
         return realms
 
     if public_only:
-        ttable = s3db.org_site_tag
-        join = ttable.on((ttable.site_id == ftable.site_id) & \
-                         (ttable.tag == "PUBLIC") & \
-                         (ttable.deleted == False))
-        query &= (ttable.value == "Y")
+        atable = s3db.org_site_approval
+        join = atable.on((atable.site_id == ftable.site_id) & \
+                         (atable.public == "Y") & \
+                         (atable.deleted == False))
     else:
         join = None
 
@@ -1402,7 +1401,7 @@ class InviteUserOrg(CRUDMethod):
         auth_settings = auth.settings
         auth_messages = auth.messages
 
-        output = {"title": T("Invite Organisation"),
+        output = {"title": T("Invite Organization"),
                   }
 
         # Check for existing accounts
@@ -1508,7 +1507,7 @@ class InviteUserOrg(CRUDMethod):
                 response.confirmation = T("Invitation sent")
         else:
             if account:
-                response.warning = T("This organisation has been invited before!")
+                response.warning = T("This organization has been invited before!")
 
         output["form"] = form
 
@@ -2390,10 +2389,9 @@ class TestFacilityInfo(CRUDMethod):
                 r.error(400, current.ERROR.BAD_REQUEST)
             query = (table.code.upper() == code.upper())
 
-        ttable = s3db.org_site_tag
-        left = ttable.on((ttable.site_id == table.site_id) & \
-                         (ttable.tag == "PUBLIC") & \
-                         (ttable.deleted == False))
+        atable = s3db.org_site_approval
+        left = atable.on((atable.site_id == table.site_id) & \
+                         (atable.deleted == False))
 
         query &= (table.deleted == False)
         row = db(query).select(table.code,
@@ -2404,8 +2402,7 @@ class TestFacilityInfo(CRUDMethod):
                                table.organisation_id,
                                table.location_id,
                                table.site_id,
-                               ttable.id,
-                               ttable.value,
+                               atable.public,
                                left = left,
                                limitby = (0, 1),
                                ).first()
@@ -2414,14 +2411,14 @@ class TestFacilityInfo(CRUDMethod):
             r.error(404, current.ERROR.BAD_RECORD)
         else:
             facility = row.org_facility
-            public = row.org_site_tag
+            approval = row.org_site_approval
 
         # Prepare facility info
         output = {"code": facility.code,
                   "name": facility.name,
                   "phone": facility.phone1,
                   "email": facility.email,
-                  "public": public.value == "Y",
+                  "public": approval.public == "Y",
                   }
 
         # Look up organisation data

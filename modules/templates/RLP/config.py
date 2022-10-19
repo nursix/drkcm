@@ -2203,7 +2203,7 @@ def config(settings):
                             TR(represent("REQ"), T("Requested")),
                             TR(represent("APPR"), T("Accepted by coordinator/volunteer")),
                             TR(represent("DECL"), T("Declined by coordinator/volunteer")),
-                            TR(represent("CANC"), T("Cancelled by requesting organisation or volunteer")),
+                            TR(represent("CANC"), T("Cancelled by requesting organization or volunteer")),
                             TR(represent("IMPL"), T("Deployment carried out")),
                             TR(represent("NVLD"), T("Invalid Record")),
                             )
@@ -2580,7 +2580,7 @@ def config(settings):
 
             # Configure reports
             axes = [(T("Pool"), "person_id$pool_membership.group_id"),
-                    (T("Deploying Organisation"), "organisation_id"),
+                    (T("Deploying Organization"), "organisation_id"),
                     "status",
                     ]
             facts = [(T("Number of Deployments"), "count(id)"),

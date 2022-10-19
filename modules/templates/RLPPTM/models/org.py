@@ -32,7 +32,7 @@ __all__ = ("TestProviderModel",
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV, I
 from gluon.storage import Storage
 
-from core import DataModel, \
+from core import DataModel, IS_UTC_DATE, \
                  get_form_record_id, represent_option, s3_comments, \
                  s3_comments_widget, s3_date, s3_datetime, s3_meta_fields, \
                  s3_text_represent, s3_yes_no_represent
@@ -283,7 +283,7 @@ class TestProviderModel(DataModel):
             # CURRENT only allowed when org verification valid
             if status == "CURRENT" and \
                not TestProvider(organisation_id).verification.accepted:
-                form.errors["status"] = T("Organisation not verified")
+                form.errors["status"] = T("Organization not verified")
 
             # CURRENT/SUSPENDED only allowed before end date
             today = current.request.utcnow.date()
@@ -362,6 +362,7 @@ class TestProviderModel(DataModel):
             # Notify the provider
             provider.notify_commission_change(status = new_status,
                                               reason = record.status_reason,
+                                              commission_ids = [record_id],
                                               )
 
 # =============================================================================
@@ -1194,15 +1195,20 @@ class TestProvider:
         query = (table.organisation_id == self.organisation_id) & \
                 (table.status == "CURRENT") & \
                 (table.deleted == False)
-        updated = db(query).update(status = "SUSPENDED",
-                                   status_date = current.request.utcnow.date(),
-                                   status_reason = reason,
-                                   modified_by = table.modified_by,
-                                   modified_on = table.modified_on,
-                                   )
-        if updated:
+        rows = db(query).select(table.id)
+        if rows:
+            commission_ids = [row.id for row in rows]
+            db(query).update(status = "SUSPENDED",
+                             status_date = current.request.utcnow.date(),
+                             status_reason = reason,
+                             prev_status = "CURRENT",
+                             modified_by = table.modified_by,
+                             modified_on = table.modified_on,
+                             )
+
             self.notify_commission_change(status = "SUSPENDED",
                                           reason = reason,
+                                          commission_ids = commission_ids,
                                           )
 
         TestStation.update_all(self.organisation_id,
@@ -1231,15 +1237,20 @@ class TestProvider:
                 (table.status == "SUSPENDED") & \
                 (table.status_reason == reason) & \
                 (table.deleted == False)
-        updated = db(query).update(status = "CURRENT",
-                                   status_date = current.request.utcnow.date(),
-                                   status_reason = None,
-                                   modified_by = table.modified_by,
-                                   modified_on = table.modified_on,
-                                   )
-        if updated:
+        rows = db(query).select(table.id)
+        if rows:
+            commission_ids = [row.id for row in rows]
+            db(query).update(status = "CURRENT",
+                             status_date = current.request.utcnow.date(),
+                             status_reason = None,
+                             prev_status = "SUSPENDED",
+                             modified_by = table.modified_by,
+                             modified_on = table.modified_on,
+                             )
+
             self.notify_commission_change(status = "CURRENT",
                                           reason = reason,
+                                          commission_ids = commission_ids,
                                           )
 
         TestStation.update_all(self.organisation_id,
@@ -1248,12 +1259,112 @@ class TestProvider:
                                )
 
     # -------------------------------------------------------------------------
-    def notify_commission_change(self, status=None, reason=None):
-        # TODO implement
+    def notify_commission_change(self,
+                                 status = None,
+                                 reason = None,
+                                 commission_ids = None,
+                                 force = False,
+                                 ):
+        """
+            Notifies the OrgAdmin of this provider about the status change
+            of their commission
 
-        import sys
-        sys.stderr.write("Notifying provider %s about commission change\n" % self.organisation_id)
-        sys.stderr.write("status=%s, reason=%s\n" % (status, reason))
+            Args:
+                status: the new commission status
+                reason: the reason for the status (if SUSPENDED)
+                commission_ids: the affected commissions
+                force: notify suspension even if the provider still has
+                       a current commission
+
+            Returns:
+                error message on error, else None
+        """
+
+        if not commission_ids:
+            return "No commission records specified"
+        if status != "CURRENT" and self.current_commission and not force:
+            return "Notification not required"
+
+        # Get the organisation ID
+        organisation_id = self.organisation_id
+        if not organisation_id:
+            return "Organisation not found"
+
+        # Find the OrgAdmin email addresses
+        from ..helpers import get_role_emails
+        email = get_role_emails("ORG_ADMIN",
+                                organisation_id = organisation_id,
+                                )
+        if not email:
+            return "No Organisation Administrator found"
+
+        # Lookup email address of current user
+        from ..notifications import CMSNotifications
+        auth = current.auth
+        if auth.user:
+            cc = CMSNotifications.lookup_contact(auth.user.pe_id)
+        else:
+            cc = None
+
+        # Data for the notification email
+        org_data = {"name": self.record.name,
+                    "url": URL(c = "org",
+                               f = "organisation",
+                               args = [organisation_id, "commission"],
+                               host = True,
+                               ),
+                    }
+
+        template = {"CURRENT": "CommissionIssued",
+                    "SUSPENDED": "CommissionSuspended",
+                    "REVOKED": "CommissionRevoked",
+                    "EXPIRED": "CommissionExpired",
+                    }.get(status)
+        if not template:
+            template = "CommissionStatusChanged"
+
+        reason_labels = dict(COMMISSION_REASON.labels)
+
+        db = current.db
+        table = current.s3db.org_commission
+
+        error = "No commission found"
+        for commission_id in commission_ids:
+
+            # Get the commission record
+            query = (table.id == commission_id)
+            commission = db(query).select(table.id,
+                                          table.date,
+                                          table.end_date,
+                                          table.status_date,
+                                          table.status_reason,
+                                          table.comments,
+                                          limitby = (0, 1),
+                                          ).first()
+
+            if not commission:
+                continue
+
+            if not reason:
+                reason = commission.status_reason
+            if reason:
+                reason = reason_labels.get(reason)
+            data = {"start": table.date.represent(commission.date),
+                    "end": table.end_date.represent(commission.end_date),
+                    "status_date": table.status_date.represent(commission.status_date),
+                    "reason": reason if reason else "-",
+                    "comments": table.comments,
+                    }
+            data.update(org_data)
+
+            error = CMSNotifications.send(email,
+                                          template,
+                                          data,
+                                          module = "org",
+                                          resource = "commission",
+                                          cc = cc,
+                                          )
+        return error
 
     # -------------------------------------------------------------------------
     # Configuration helpers
@@ -1343,38 +1454,67 @@ class TestProvider:
                 query = (table.id == commission_id) & \
                         (table.deleted == False)
                 commission = current.db(query).select(table.status,
+                                                      table.date,
                                                       limitby = (0, 1),
                                                       ).first()
             else:
                 commission = None
 
+            # Has the provider verification been accepted?
             if record_id:
                 accepted = TestProvider(record_id).verification.accepted
             else:
                 accepted = False
 
-            # Status only writable if CURRENT|SUSPENDED
+            # Determine whether commission is editable
+            editable = False
             if commission:
-                if commission.status in ("CURRENT", "SUSPENDED"):
-                    editable = True
-                    field = table.status
-                    field.writable = True
-                    selectable = True if accepted else ("SUSPENDED", "REVOKED")
-                    options = COMMISSION_STATUS.selectable(selectable)
-                    field.requires = IS_IN_SET(options, sort=False, zero=None)
-                else:
-                    editable = False
-            else:
-                editable = True
+                # Existing commission, editable if current or suspended
+                editable = commission.status in ("CURRENT", "SUSPENDED")
 
-            resource.configure(insertable = accepted,
+                # Allow to keep the original commission date
+                field = table.date
+                field.requires = IS_UTC_DATE(minimum=commission.date)
+            else:
+                # List view or new commission, always editable
+                editable = True
+            resource.configure(insertable = True,
                                editable = editable,
                                )
+
+            if accepted:
+                status = True, "CURRENT"
+                reason = ("OVERRIDE",), None
+            else:
+                status = ("SUSPENDED", "REVOKED"), "SUSPENDED"
+                reason = ("N/V", "OVERRIDE"), "N/V"
+
+            # Configure status field
+            options, default = status
+            field = table.status
+            field.writable = editable
+            field.requires = IS_IN_SET(COMMISSION_STATUS.selectable(options),
+                                       sort = False,
+                                       zero = None,
+                                       )
+            field.default = default
+
+            # Configure reason field
+            options, default = reason
+            field = table.status_reason
+            field.requires = IS_EMPTY_OR(
+                                IS_IN_SET(COMMISSION_REASON.selectable(options),
+                                          sort = False,
+                                          zero = None,
+                                          ))
+            field.default = default
+
         else:
             # Render read-only
             for fn in table.fields:
                 field = table[fn]
                 field.readable = field.writable = False
+            #resource.configure(editable = False) # is the model default
 
 # =============================================================================
 class TestStation:
@@ -2072,8 +2212,20 @@ class TestStation:
                                    join = join,
                                    limitby = (0, 1),
                                    ).first()
+
+            # Has the site ever been approved?
+            htable = s3db.org_site_approval_status
+            join = ftable.on((ftable.site_id == htable.site_id) & \
+                             (ftable.id == record_id))
+            query = (htable.status.belongs("APPROVED", "REVIEW")) & \
+                    (htable.deleted == False)
+            applied_before = bool(db(query).select(htable.id,
+                                                   join = join,
+                                                   limitby = (0, 1),
+                                                   ).first())
         else:
             row = None
+            applied_before = False
 
         # Configure status-field
         review_tags_visible = False
@@ -2094,6 +2246,13 @@ class TestStation:
             elif status == "REVIEW":
                 field.writable = False
                 review_tags_visible = True
+
+            # Once the site has applied for approval, prevent further changes
+            # to the address (must be done by administrator after considering
+            # the reasons for the change)
+            if applied_before:
+                field = ftable.location_id
+                field.writable = False
 
         is_approver = role == "approver"
 

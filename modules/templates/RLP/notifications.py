@@ -771,7 +771,7 @@ class InlineNotifications(S3SQLSubForm):
                      )
 
         # Add field set per recipient type
-        labels = {"organisation": T("Requesting Organisation"),
+        labels = {"organisation": T("Requesting Organization"),
                   "volunteer": T("Volunteer"),
                   "office": T("Office##gov"),
                   }
@@ -913,7 +913,7 @@ class InlineNotifications(S3SQLSubForm):
                                        status = "SENT" if success else "FAILED",
                                        )
             if not success:
-                warnings.append(T("Organisation could not be notified"))
+                warnings.append(T("Organization could not be notified"))
 
         # Send notification to volunteer
         notify_volunteer = form_vars.get("%s_notify_volunteer" % formname)

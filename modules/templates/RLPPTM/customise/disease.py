@@ -624,13 +624,13 @@ def disease_daycare_testing_controller(**attr):
             # Configure custom form
             from core import S3SQLCustomForm
             crud_form = S3SQLCustomForm("organisation_id",
-                                        (T("Does your organisation conduct tests in daycare centers?"),
+                                        (T("Does your organization conduct tests in daycare centers?"),
                                          "daycare_testing"),
                                         (T("Do you test in daycare centers on a regular basis?"),
                                          "regular_testing"),
                                         (T("How frequently do you test in daycare centers?"),
                                          "frequency"),
-                                        (T("How many daycare centers are regularly serviced by your organisation?"),
+                                        (T("How many daycare centers are regularly serviced by your organization?"),
                                          "number_of_dc"),
                                         "comments",
                                         )

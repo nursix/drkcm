@@ -181,7 +181,7 @@ class Daily():
         s3db = current.s3db
 
         ftable = s3db.org_facility
-        ttable = s3db.org_site_tag
+        atable = s3db.org_site_approval
         otable = s3db.org_organisation
         gtable = s3db.org_group
         mtable = s3db.org_group_membership
@@ -192,9 +192,9 @@ class Daily():
         four_weeks_ago = today - datetime.timedelta(days=28)
 
         from .config import TESTSTATIONS
-        join = [ttable.on((ttable.site_id == ftable.site_id) & \
-                          (ttable.tag == "PUBLIC") & \
-                          (ttable.deleted == False)),
+        join = [atable.on((atable.site_id == ftable.site_id) & \
+                          (atable.public == "Y") & \
+                          (atable.deleted == False)),
                 otable.on((otable.id == ftable.organisation_id)),
                 gtable.on((mtable.organisation_id == otable.id) & \
                           (mtable.deleted == False) & \
@@ -207,7 +207,6 @@ class Daily():
                 ltable.on((ltable.id == ftable.location_id)),
                 ]
         query = (rtable.id == None) & \
-                (ttable.value == "Y") & \
                 (ftable.created_on < four_weeks_ago) & \
                 (ftable.obsolete == False) & \
                 (ftable.deleted == False)

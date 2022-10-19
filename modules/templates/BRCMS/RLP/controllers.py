@@ -1361,7 +1361,7 @@ class register_org(CustomController):
 
         # Subheadings
         subheadings = ((0, T("User Account")),
-                       (5, T("Organisation")),
+                       (5, T("Organization")),
                        (8, T("Address")),
                        (9, T("Contact Information")),
                        (12, "%s / %s" % (T("Privacy"), T("Terms of Service"))),
@@ -1700,7 +1700,7 @@ class approve_org(CustomController):
             if ORG_ADMIN:
                 if not organisation_id or \
                    not has_role("ORG_ADMIN", for_pe=org.pe_id):
-                    session.error = T("Account not within your Organisation!")
+                    session.error = T("Account not within your Organization!")
                     redirect(URL(c="default", f="index", args=["approve"]))
 
             person = "%(first_name)s %(last_name)s <%(email)s>" % {"first_name": user.first_name,

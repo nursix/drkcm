@@ -354,7 +354,7 @@ class approve(CustomController):
                 if not organisation_id or \
                    not has_role("ORG_ADMIN",
                                 for_pe = org.pe_id):
-                    session.error = T("Account not within your Organisation!")
+                    session.error = T("Account not within your Organization!")
                     redirect(URL(c = "default",
                                  f = "index",
                                  args = ["approve"],

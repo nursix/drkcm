@@ -191,7 +191,7 @@ def rlpptm_org_rheader(r, tabs=None):
                     rheader_fields[0].append((T("Documentation Test Station Manager"),
                                               lambda row: mgrinfo,
                                               ))
-                    rheader_fields[1].append((T("Organisation Type Verification"),
+                    rheader_fields[1].append((T("Organization Type Verification"),
                                               lambda row: orgtype,
                                               ))
 
@@ -247,7 +247,7 @@ def default_org_tabs(record, group=None, is_org_group_admin=False):
         elif group == GOVERNMENT:
             sites_tab = (T("Warehouses"), "warehouse")
 
-    return [(T("Organisation"), None),
+    return [(T("Organization"), None),
             invite_tab,
             sites_tab,
             (T("Staff"), "human_resource"),

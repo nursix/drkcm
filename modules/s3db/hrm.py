@@ -5341,8 +5341,8 @@ class HRDelegationModel(DataModel):
                          empty = False,
                          comment = DIV(_class = "tooltip",
                                        # TODO tooltip depends on workflow
-                                       _title = "%s|%s" % (T("Requesting Organisation"),
-                                                           T("The organisation requesting the delegation"),
+                                       _title = "%s|%s" % (T("Requesting Organization"),
+                                                           T("The organization requesting the delegation"),
                                                            ),
                                        ),
                          ),

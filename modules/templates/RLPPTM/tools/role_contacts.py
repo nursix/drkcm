@@ -69,7 +69,7 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
     gmtable = s3db.org_group_membership
     ftable = s3db.org_facility
     sltable = s3db.org_service_site
-    sttable = s3db.org_site_tag
+    atable = s3db.org_site_approval
     stable = s3db.org_service
 
     join = [gmtable.on((gmtable.organisation_id == otable.id) & \
@@ -103,10 +103,9 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
                                (stable.deleted == False)),
                      ])
     if public is not None:
-        join.extend([sttable.on((sttable.site_id == ftable.site_id) & \
-                                (sttable.tag == "PUBLIC") & \
-                                (sttable.value == public) & \
-                                (sttable.deleted == False)),
+        join.extend([atable.on((atable.site_id == ftable.site_id) & \
+                               (atable.public == public) & \
+                               (atable.deleted == False)),
                      ])
 
     query = (otable.deleted == False)
@@ -139,10 +138,10 @@ def get_role_contacts(org_group, include=None, exclude=None, project=None):
             # Look up those among the realm users who have
             # the exclude-role for either pe_id or for their default realm
             join = [mtable.on((mtable.user_id == ltable.user_id) & \
-                            ((mtable.pe_id == None) | (mtable.pe_id.belongs(org_pe_ids))) & \
-                            (mtable.deleted == False)),
+                              ((mtable.pe_id == None) | (mtable.pe_id.belongs(org_pe_ids))) & \
+                              (mtable.deleted == False)),
                     gtable.on((gtable.id == mtable.group_id) & \
-                            (gtable.uuid == exclude)),
+                              (gtable.uuid == exclude)),
                     ]
             query = (ltable.user_id.belongs(set(users.keys()))) & \
                     (ltable.deleted == False)
