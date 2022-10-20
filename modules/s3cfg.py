@@ -2410,17 +2410,37 @@ class S3Config(Storage):
         """
         return current.T(self.ui.get("label_postcode", "Postcode"))
 
+    def get_ui_label_open(self):
+        """
+            Label for datatable action-buttons that open records for
+            either read or update, depending on record-specific permissions
+
+            Note:
+                Using the same action-label for all records in the list
+                reduces cognitive load, even if the label is ambiguous
+        """
+        return self.ui.get("open_label", "Open")
+
     def get_ui_label_read(self):
         """
-            Label for buttons in list views which lead to a Read-only 'Display' page
+            Label for datatable action-buttons that open records read-only
+
+            Note:
+                Differentiating explicit "View" from ambiguous "Open" does
+                not improve UX, even if it would appear more consistent.
         """
         return self.ui.get("read_label", "Open")
 
     def get_ui_label_update(self):
         """
-            Label for buttons in list views which lead to an Editable 'Update' page
+            Label for action buttons in single-record perspectives to open
+            the record for editing
+
+            Note:
+                This label should be explicit about editing, not ambiguous
+                as the two above
         """
-        return self.ui.get("update_label", "Open")
+        return self.ui.get("update_label", "Edit")
 
     def get_ui_multiselect_widget(self):
         """

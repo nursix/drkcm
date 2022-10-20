@@ -52,7 +52,7 @@ class S3CRUD(CRUDMethod):
 
     def __init__(self):
 
-        super(S3CRUD, self).__init__()
+        super().__init__()
 
         self.settings = current.response.s3.crud
         self.sqlform = None
@@ -83,8 +83,6 @@ class S3CRUD(CRUDMethod):
                     self.data = populate(r, **attr)
                 except TypeError:
                     self.data = None
-                except:
-                    raise
             elif isinstance(populate, dict):
                 self.data = populate
 
@@ -533,8 +531,6 @@ class S3CRUD(CRUDMethod):
                             self.data = populate(r, **attr)
                         except TypeError:
                             self.data = None
-                        except:
-                            raise
                     elif isinstance(populate, dict):
                         self.data = populate
 
@@ -2214,8 +2210,9 @@ class S3CRUD(CRUDMethod):
                     validated["value"] = value
                     validated["_error"] = "invalid field"
                     continue
-                else:
-                    field = table[fname]
+
+                field = table[fname]
+                ftype = field.type
 
                 # Convert numeric types (does not always happen in the widget)
                 widget = field.widget
@@ -2223,7 +2220,6 @@ class S3CRUD(CRUDMethod):
                     parser = widget.parse_input
                 else:
                     parser = None
-                ftype = field.type
                 if ftype == "integer":
                     if value not in (None, ""):
                         if not callable(parser):
@@ -2686,14 +2682,17 @@ class S3CRUD(CRUDMethod):
                        "auto" if settings.get_ui_auto_open_update() else True
 
         # Open-action (Update or Read)
-        authorised = has_permission("update", table)
-        if editable and authorised and not ownership_required("update", table):
-            # User has permission to edit all records, and caller allows edit
+        authorised = editable and has_permission("update", table)
+
+        label = labels.OPEN if authorised else labels.READ
+
+        if authorised and not ownership_required("update", table):
+            # User has permission to edit all records
             if not update_url:
                 update_url = iframe_safe(URL(args = args + ["update"], #.popup to use modals
                                              vars = get_vars,
                                              ))
-            s3crud.action_button(labels.UPDATE, update_url,
+            s3crud.action_button(label, update_url,
                                  # To use modals
                                  #_class="action-btn s3_modal"
                                  _class="action-btn edit",
@@ -2701,14 +2700,13 @@ class S3CRUD(CRUDMethod):
                                  **target
                                  )
         else:
-            # User is not permitted to edit at least some of the records,
-            # or caller doesn't allow edit
+            # User has permission to edit only some - or none - of the records
             if not read_url:
-                method = ["read"] if not editable or not authorised else []
+                method = [] if authorised else ["read"]
                 read_url = iframe_safe(URL(args = args + method, #.popup to use modals
                                            vars = get_vars,
                                            ))
-            s3crud.action_button(labels.READ, read_url,
+            s3crud.action_button(label, read_url,
                                  # To use modals
                                  #_class="action-btn s3_modal"
                                  _class="action-btn read",
@@ -2889,7 +2887,8 @@ class S3CRUD(CRUDMethod):
         return link
 
     # -------------------------------------------------------------------------
-    def _postprocess_embedded(self, form, component=None, key=None):
+    @staticmethod
+    def _postprocess_embedded(form, component=None, key=None):
         """
             Post-processes a form with an S3EmbeddedComponentWidget and
             created/updates the component record.

@@ -28,6 +28,7 @@ s3.download_url = "%s/default/download" % s3.base_url
 messages["UNKNOWN_OPT"] = "Unknown"
 messages["NONE"] = "-"
 messages["OBSOLETE"] = "Obsolete"
+messages["OPEN"] = settings.get_ui_label_open()
 messages["READ"] = settings.get_ui_label_read()
 messages["UPDATE"] = settings.get_ui_label_update()
 messages["DELETE"] = "Delete"
@@ -45,7 +46,8 @@ for u in messages:
         globals()[u] = T(messages[u])
 
 # CRUD Labels
-s3.crud_labels = Storage(READ = READ,
+s3.crud_labels = Storage(OPEN = OPEN,
+                         READ = READ,
                          UPDATE = UPDATE,
                          DELETE = DELETE,
                          COPY = COPY,
