@@ -208,6 +208,8 @@ def rlpptm_org_rheader(r, tabs=None):
                               ["code",
                                ],
                               ]
+            if record.obsolete:
+                rheader_fields.append(["obsolete"])
 
             rheader_title = "name"
 

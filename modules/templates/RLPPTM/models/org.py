@@ -70,7 +70,7 @@ COMMISSION_REASON = WorkflowOptions(("N/V", "Verification Pending"),
                                     )
 
 #TODO PUBLIC_STATUS
-PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Organisation not currently commissioned"),
+PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Organization not currently commissioned"),
                                 ("REVISE", "Documentation incomplete"),
                                 ("REVIEW", "Review pending"),
                                 ("OVERRIDE", "set by Administrator"),
@@ -1153,7 +1153,7 @@ class TestProvider:
 
         update = self.vhash()[0]
         if update:
-            accepted = verification.accepted
+            accepted = update["accepted"]
         else:
             update = {}
 
@@ -1513,7 +1513,7 @@ class TestProvider:
             # Render read-only
             for fn in table.fields:
                 field = table[fn]
-                field.readable = field.writable = False
+                field.writable = False
             #resource.configure(editable = False) # is the model default
 
 # =============================================================================
