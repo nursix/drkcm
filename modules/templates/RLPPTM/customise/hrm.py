@@ -7,6 +7,17 @@
 from gluon import current, IS_IN_SET
 from core import get_form_record_id
 
+from ..helpers import WorkflowOptions
+
+# -------------------------------------------------------------------------
+# Test Station Manager Documentation Status
+#
+MGRINFO_STATUS = WorkflowOptions(("N/A", "not provided", "grey"),
+                                 ("APPROVED", "provided / appropriate", "green"),
+                                 ("REJECT", "not up to requirements", "red"),
+                                 none = "N/A",
+                                 )
+
 # -------------------------------------------------------------------------
 def add_manager_tags():
     """
@@ -55,18 +66,10 @@ def configure_manager_tags(resource):
     T = current.T
     components = resource.components
 
-    # Document status options
-    doc_opts = (("N/A", T("not provided")),
-                ("APPROVED", T("provided / appropriate")),
-                ("REJECT", T("not up to requirements")),
-                )
-
     labels = {"reg_form": T("Signed form for registration"),
               "crc": T("Criminal Record Certificate"),
               "scp": T("Statement on Pending Criminal Proceedings"),
               }
-
-    from ..helpers import workflow_tag_represent
 
     for alias in ("reg_form", "crc", "scp"):
 
@@ -78,8 +81,11 @@ def configure_manager_tags(resource):
         field = table.value
         field.label = labels.get(alias)
         field.default = "N/A"
-        field.requires = IS_IN_SET(doc_opts, sort=False, zero=None)
-        field.represent = workflow_tag_represent(dict(doc_opts), none="N/A")
+        field.requires = IS_IN_SET(MGRINFO_STATUS.selectable(),
+                                   sort = False,
+                                   zero = None,
+                                   )
+        field.represent = MGRINFO_STATUS.represent
 
 # -------------------------------------------------------------------------
 def human_resource_onvalidation(form):

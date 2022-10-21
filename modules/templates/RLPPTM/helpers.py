@@ -632,55 +632,6 @@ def configure_binary_tags(resource, tag_components):
             field.represent = lambda v, row=None: binary_tag_opts.get(v, "-")
 
 # -----------------------------------------------------------------------------
-def workflow_tag_represent(options, none=None):
-    """
-        Color-coded and icon-supported representation of
-        facility approval workflow tags
-
-        Args:
-            options: the tag options as dict {value: label}
-            none: treat None-values like this option (str)
-    """
-
-    icons = {"REVISE": "fa fa-exclamation-triangle",
-             "REJECT": "fa fa-exclamation-triangle",
-             "REVIEW": "fa fa-hourglass",
-             "APPROVED": "fa fa-check",
-             "COMPLETE": "fa fa-check",
-             "N/A": "fa fa-minus-circle",
-             "N": "fa fa-minus-circle",
-             "Y": "fa fa-check",
-             }
-
-    css_classes = {"REVISE": "workflow-red",
-                   "REJECT": "workflow-red",
-                   "REVIEW": "workflow-amber",
-                   "APPROVED": "workflow-green",
-                   "COMPLETE": "workflow-green",
-                   "N/A": "workflow-grey",
-                   "N": "workflow-red",
-                   "Y": "workflow-green",
-                   }
-
-    def represent(value, row=None):
-
-        if value is None and none:
-            value = none
-
-        label = DIV(_class="approve-workflow")
-        color = css_classes.get(value)
-        if color:
-            label.add_class(color)
-        icon = icons.get(value)
-        if icon:
-            label.append(I(_class=icon))
-        label.append(options.get(value, "-"))
-
-        return label
-
-    return represent
-
-# -----------------------------------------------------------------------------
 def applicable_org_types(organisation_id, group=None, represent=False):
     """
         Look up organisation types by OrgGroup-tag
@@ -1080,8 +1031,9 @@ def rlp_holidays(start, end):
 
 # =============================================================================
 class WorkflowOptions:
-    # TODO docstring
-    # TODO optimize
+    """
+        Option sets for workflow statuses or status reasons
+    """
 
     icons = {"red": "fa fa-exclamation-triangle",
              "amber": "fa fa-hourglass",
@@ -1097,7 +1049,16 @@ class WorkflowOptions:
 
     # -------------------------------------------------------------------------
     def __init__(self, *theset, selectable=None, represent="workflow", none=None):
-        # TODO docstring
+        """
+            Args:
+                theset: tuple|list of tuples specifying all options,
+                        (value, label) or (value, label, color)
+                selectable: tuple|list of manually selectable values
+                represent: how to represent values, either:
+                            - "workflow" for icon + red|amber|green
+                            - "status"   to use S3PriorityRepresent
+                none: treat None-value like this value
+        """
 
         self.theset = theset
         self._represent = represent
@@ -1106,7 +1067,7 @@ class WorkflowOptions:
         self._colors = None
         self._labels = None
 
-        self._keys = [o[0] for o in theset] #list(dict(theset).keys())
+        self._keys = [o[0] for o in theset]
         if selectable:
             self._selectable = [k for k in self._keys if k in selectable]
         else:
@@ -1114,7 +1075,17 @@ class WorkflowOptions:
 
     # -------------------------------------------------------------------------
     def selectable(self, values=False, current_value=None):
-        # TODO docstring
+        """
+            Produces a list of selectable options for use with IS_IN_SET
+
+            Args:
+                values: which values to use
+                        - True for the manually selectable options as configured
+                        - tuple of values to override the manually selectable options
+                        - False for all possible options
+                current_value: the current value of the field, to be included
+                               in the selectable options
+        """
 
         if values is False:
             selectable = self._keys
@@ -1133,7 +1104,12 @@ class WorkflowOptions:
     # -------------------------------------------------------------------------
     @property
     def colors(self):
-        # TODO docstring
+        """
+            The option "colors", for representation
+
+            Returns:
+                a dict {value: color}
+        """
 
         colors = self._colors
         if not colors:
@@ -1148,7 +1124,12 @@ class WorkflowOptions:
     # -------------------------------------------------------------------------
     @property
     def labels(self):
-        # TODO docstring
+        """
+            The (localized) option labels, for representation
+
+            Returns:
+                a list of tuples [(value, T(label)), ...]
+        """
 
         labels = self._labels
         if not labels:
@@ -1159,7 +1140,12 @@ class WorkflowOptions:
     # -------------------------------------------------------------------------
     @property
     def represent(self):
-        # TODO docstring
+        """
+            The representation method for this option set
+
+            Returns:
+                the representation function
+        """
 
         represent = self._represent
         if not callable(represent):
@@ -1174,7 +1160,12 @@ class WorkflowOptions:
 
     # -------------------------------------------------------------------------
     def represent_workflow(self):
-        # TODO docstring
+        """
+            Representation as workflow element (icon + red|amber|green)
+
+            Returns:
+                the representation function
+        """
 
         none = self.none
         labels = dict(self.labels)
@@ -1205,7 +1196,12 @@ class WorkflowOptions:
 
     # -------------------------------------------------------------------------
     def represent_status(self):
-        # TODO docstring
+        """
+            Representation using S3PriorityRepresent
+
+            Returns:
+                a S3PriorityRepresent instance
+        """
 
         return S3PriorityRepresent(dict(self.labels), self.colors)
 

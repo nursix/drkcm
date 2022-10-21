@@ -29,7 +29,7 @@ __all__ = ("TestProviderModel",
            "TestStationModel"
            )
 
-from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV, I
+from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
 from core import DataModel, IS_UTC_DATE, \
@@ -69,7 +69,23 @@ COMMISSION_REASON = WorkflowOptions(("N/V", "Verification Pending"),
                                     selectable = ("OVERRIDE",),
                                     )
 
-#TODO PUBLIC_STATUS
+APPROVAL_STATUS = WorkflowOptions(("REVISE", "Completion/Adjustment Required", "red"),
+                                  ("READY", "Ready for Review", "amber"),
+                                  ("REVIEW", "Review Pending", "amber"),
+                                  ("APPROVED", "Approved##actionable", "green"),
+                                  selectable = ("REVISE", "READY"),
+                                  none = "REVISE",
+                                  )
+
+REVIEW_STATUS = WorkflowOptions(("REVISE", "Completion/Adjustment Required", "red"),
+                                ("REVIEW", "Review Pending", "amber"),
+                                ("APPROVED", "Approved##actionable", "green"),
+                                none = "REVISE",
+                                )
+
+PUBLIC_STATUS = WorkflowOptions(("N", "No", "grey"),
+                                ("Y", "Yes", "green"),
+                                )
 PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Organization not currently commissioned"),
                                 ("REVISE", "Documentation incomplete"),
                                 ("REVIEW", "Review pending"),
@@ -388,25 +404,6 @@ class TestStationModel(DataModel):
         crud_strings = current.response.s3.crud_strings
 
         # ---------------------------------------------------------------------
-        # Workflow options
-        #
-        status_opts = (("REVISE", T("Completion/Adjustment Required")),
-                       ("READY", T("Ready for Review")),
-                       ("REVIEW", T("Review Pending")),
-                       ("APPROVED", T("Approved##actionable")),
-                       )
-        status_represent = workflow_tag_represent(dict(status_opts))
-
-        review_opts = (("REVISE", T("Completion/Adjustment Required")),
-                       ("REVIEW", T("Review Pending")),
-                       ("APPROVED", T("Approved##actionable")),
-                       )
-        review_represent = workflow_tag_represent(dict(review_opts))
-
-        binary_opts = (("N", T("No")), ("Y", T("Yes")))
-        binary_represent = workflow_tag_represent(dict(binary_opts, none="N"))
-
-        # ---------------------------------------------------------------------
         # Current approval details
         #
         tablename = "org_site_approval"
@@ -422,58 +419,61 @@ class TestStationModel(DataModel):
                      Field("status",
                            label = T("Processing Status"),
                            default = "REVISE",
-                           requires = IS_IN_SET(status_opts,
+                           requires = IS_IN_SET(APPROVAL_STATUS.selectable(True),
                                                 zero = None,
                                                 sort = False,
                                                 ),
-                           represent = status_represent,
+                           represent = APPROVAL_STATUS.represent,
                            readable = True,
-                           writable = False, # restricted to applicants
+                           writable = False,
                            ),
                      # MPAV qualification
                      Field("mpav",
                            label = T("MPAV Qualification"),
                            default = "REVISE",
-                           requires = IS_IN_SET(review_opts,
+                           requires = IS_IN_SET(REVIEW_STATUS.selectable(True),
                                                 zero = None,
                                                 sort = False,
                                                 ),
-                           represent = review_represent,
+                           represent = REVIEW_STATUS.represent,
                            readable = True,
-                           writable = False, # restricted to approvers
+                           writable = False,
                            ),
                      # Hygiene concept
                      Field("hygiene",
                            label = T("Hygiene Plan"),
                            default = "REVISE",
-                           requires = IS_IN_SET(review_opts,
+                           requires = IS_IN_SET(REVIEW_STATUS.selectable(True),
                                                 zero = None,
                                                 sort = False,
                                                 ),
-                           represent = review_represent,
+                           represent = REVIEW_STATUS.represent,
                            readable = True,
-                           writable = False, # restricted to approvers
+                           writable = False,
                            ),
                      # Facility layout
                      Field("layout",
                            label = T("Facility Layout Plan"),
                            default = "REVISE",
-                           requires = IS_IN_SET(review_opts,
+                           requires = IS_IN_SET(REVIEW_STATUS.selectable(True),
                                                 zero = None,
                                                 sort = False,
                                                 ),
-                           represent = review_represent,
+                           represent = REVIEW_STATUS.represent,
                            readable = True,
-                           writable = False, # restricted to approvers
+                           writable = False,
                            ),
                      # Listed in public registry
                      Field("public",
                            label = T("In Public Registry"),
                            default = "N",
-                           requires = IS_IN_SET(binary_opts, zero=None, sort=False),
-                           represent = binary_represent,
+                           requires = IS_IN_SET(PUBLIC_STATUS.selectable(True),
+                                                zero = None,
+                                                sort = False,
+                                                ),
+                           represent = PUBLIC_STATUS.represent,
                            readable = True,
-                           writable = False, # restricted to approvers
+                           writable = False,
                            ),
                      Field("public_reason",
                            label = T("Reason for unlisting"),
@@ -516,27 +516,27 @@ class TestStationModel(DataModel):
                      s3_datetime("timestmp", writable=False),
                      Field("status",
                            label = T("Processing Status"),
-                           represent = status_represent,
+                           represent = APPROVAL_STATUS.represent,
                            writable = False,
                            ),
                      Field("mpav",
                            label = T("MPAV Qualification"),
-                           represent = review_represent,
+                           represent = REVIEW_STATUS.represent,
                            writable = False,
                            ),
                      Field("hygiene",
                            label = T("Hygiene Plan"),
-                           represent = review_represent,
+                           represent = REVIEW_STATUS.represent,
                            writable = False,
                            ),
                      Field("layout",
                            label = T("Facility Layout Plan"),
-                           represent = review_represent,
+                           represent = REVIEW_STATUS.represent,
                            writable = False,
                            ),
                      Field("public",
                            label = T("In Public Registry"),
-                           represent = binary_represent,
+                           represent = PUBLIC_STATUS.represent,
                            writable = False,
                            ),
                      Field("public_reason",
@@ -2239,9 +2239,11 @@ class TestStation:
             status = row.status
             if status == "REVISE":
                 field.writable = True
-                status_tag_opts = dict(field.requires.options())
-                selectable = [(v, status_tag_opts[v]) for v in ("REVISE", "READY")]
-                field.requires = IS_IN_SET(selectable, zero=None, sort=False)
+                # This is the default:
+                #field.requires = IS_IN_SET(APPROVAL_STATUS.selectable(True),
+                #                           zero = None,
+                #                           sort = False,
+                #                           )
                 review_tags_visible = True
             elif status == "REVIEW":
                 field.writable = False
@@ -2310,64 +2312,5 @@ def get_dhash(*values):
     dstr = "#".join([str(v) if v else "***" for v in values])
 
     return hashlib.sha256(dstr.encode("utf-8")).hexdigest().lower()
-
-# -----------------------------------------------------------------------------
-def workflow_tag_represent(options, none=None):
-    """
-        Color-coded and icon-supported representation of
-        organisation/facility approval workflow tags
-
-        Args:
-            options: the tag options as dict {value: label}
-            none: treat None-values like this option (str)
-    """
-
-    icons = {"REVISE": "fa fa-exclamation-triangle",
-             "REJECT": "fa fa-exclamation-triangle",
-             "REVIEW": "fa fa-hourglass",
-             "N/V": "fa fa-hourglass",
-             "APPROVED": "fa fa-check",
-             "ACCEPT": "fa fa-check",
-             "VERIFIED":  "fa fa-check",
-             "COMPLETE": "fa fa-check",
-             "N/A": "fa fa-minus-circle",
-             "N": "fa fa-minus-circle",
-             False: "fa fa-minus-circle",
-             "Y": "fa fa-check",
-             True: "fa fa-check",
-             }
-
-    css_classes = {"REVISE": "workflow-red",
-                   "REJECT": "workflow-red",
-                   "REVIEW": "workflow-amber",
-                   "N/V": "workflow-amber",
-                   "APPROVED": "workflow-green",
-                   "ACCEPT": "workflow-green",
-                   "VERIFIED": "workflow-green",
-                   "COMPLETE": "workflow-green",
-                   "N/A": "workflow-grey",
-                   "N": "workflow-red",
-                   False: "workflow-red",
-                   "Y": "workflow-green",
-                   True: "workflow-green",
-                   }
-
-    def represent(value, row=None):
-
-        if value is None and none:
-            value = none
-
-        label = DIV(_class="approve-workflow")
-        color = css_classes.get(value)
-        if color:
-            label.add_class(color)
-        icon = icons.get(value)
-        if icon:
-            label.append(I(_class=icon))
-        label.append(options.get(value, "-"))
-
-        return label
-
-    return represent
 
 # END =========================================================================
