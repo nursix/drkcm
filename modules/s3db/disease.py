@@ -193,9 +193,9 @@ class DiseaseDataModel(DataModel):
 
         tablename = "disease_testing_device"
         define_table(tablename,
-                     disease_id(
-                         ondelete = "CASCADE",
-                         ),
+                     disease_id(ondelete = "CASCADE",
+                                comment = None,
+                                ),
                      Field("name",
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),

@@ -400,6 +400,23 @@ def earliest_reporting_date(today=None):
     return earliest
 
 # -------------------------------------------------------------------------
+def disease_testing_device_resource(r, tablename):
+
+    s3db = current.s3db
+
+    table = s3db.disease_testing_device
+
+    # Cannot modify approved-flag manually
+    field = table.approved
+    field.writable = False
+
+    s3db.configure("disease_testing_device",
+                   insertable = False,
+                   editable = current.auth.s3_has_role("ADMIN"),
+                   deletable = False,
+                   )
+
+# -------------------------------------------------------------------------
 def disease_testing_report_resource(r, tablename):
 
     from core import S3CalendarWidget, DateFilter, TextFilter

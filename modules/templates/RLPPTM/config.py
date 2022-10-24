@@ -265,6 +265,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     from .customise.disease import disease_case_diagnostics_resource, \
                                    disease_case_diagnostics_controller, \
+                                   disease_testing_device_resource, \
                                    disease_testing_report_resource, \
                                    disease_testing_report_controller, \
                                    disease_testing_demographic_resource, \
@@ -273,6 +274,7 @@ def config(settings):
 
     settings.customise_disease_case_diagnostics_resource = disease_case_diagnostics_resource
     settings.customise_disease_case_diagnostics_controller = disease_case_diagnostics_controller
+    settings.customise_disease_testing_device_resource = disease_testing_device_resource
     settings.customise_disease_testing_report_resource = disease_testing_report_resource
     settings.customise_disease_testing_report_controller = disease_testing_report_controller
     settings.customise_disease_testing_demographic_resource = disease_testing_demographic_resource
