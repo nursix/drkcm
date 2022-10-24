@@ -302,6 +302,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Administration", restrict="ADMIN")(
                         M("Diseases", f="disease"),
                         M("Demographics", f="demographic"),
+                        M("Testing Devices", f="testing_device"),
                         )
                     )
 
