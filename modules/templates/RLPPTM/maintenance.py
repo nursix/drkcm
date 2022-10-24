@@ -48,16 +48,17 @@ class Daily():
         from .dcc import DCC
         DCC.cleanup()
 
+        # Check for expired commissions
+        self.expire_commissions()
+
+        # Check/update verification status for changed org type requirements
+        self.check_verification_status()
+
         # On Sundays, cleanup public test station registry
         settings = current.deployment_settings
         if settings.get_custom(key="test_station_cleanup") and \
            now.weekday() == 6:
             errors = self.cleanup_public_registry()
-
-        ## If test station manager info is required, update the
-        ## workflow-status for sites with incomplete manager info
-        #if settings.get_custom(key="test_station_manager_required"):
-            #self.check_teststation_manager()
 
         return errors if errors else None
 
@@ -279,47 +280,93 @@ class Daily():
         return "\n".join(errors) if errors else None
 
     # -------------------------------------------------------------------------
-    #@staticmethod
-    #def check_teststation_manager():
-        ## TODO deprecate
-        #"""
-            #Update workflow status of test stations with incomplete
-            #manager information
-        #"""
+    @staticmethod
+    def expire_commissions():
+        """
+            Check for expired test station commissions
+        """
 
-        #db = current.db
-        #s3db = current.s3db
+        from .config import TESTSTATIONS
+        from .models.org import TestProvider
 
-        #from .config import TESTSTATIONS
+        db = current.db
+        s3db = current.s3db
 
-        #gtable = s3db.org_group
-        #mtable = s3db.org_group_membership
-        #otable = s3db.org_organisation
-        #ottable = s3db.org_organisation_tag
+        today = datetime.datetime.utcnow().date()
 
-        ## All organisations in the TESTSTATIONS group with MGRINFO!=COMPLETE
-        #join =  [gtable.on((mtable.organisation_id == otable.id) & \
-                           #(mtable.deleted == False) & \
-                           #(gtable.id == mtable.group_id) & \
-                           #(gtable.name == TESTSTATIONS)),
-                 #]
-        #left = ottable.on((ottable.organisation_id == otable.id) & \
-                          #(ottable.tag == "MGRINFO") & \
-                          #(ottable.deleted == False))
+        # Look up affected organisations in the TESTSTATIONS group
+        ctable = s3db.org_commission
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
 
-        #query = (ottable.value != "COMPLETE") & \
-                #(otable.deleted == False)
-        #rows = db(query).select(otable.id,
-                                #ottable.value,
-                                #join = join,
-                                #left = left,
-                                #)
+        join = gtable.on((mtable.organisation_id == ctable.organisation_id) & \
+                         (gtable.id == mtable.group_id) & \
+                         (gtable.name == TESTSTATIONS) & \
+                         (mtable.deleted == False)
+                         )
 
-        #from .customise.org import facility_approval_update_mgrinfo
-        #for row in rows:
-            #facility_approval_update_mgrinfo(row.org_organisation.id,
-                                             #row.org_organisation_tag.value,
-                                             #notify_unlist = True,
-                                             #)
+        query = (ctable.status in ("CURRENT", "SUSPENDED")) & \
+                (ctable.end_date != None) & \
+                (ctable.end_date < today) & \
+                (ctable.deleted == False)
+        rows = db(query).select(ctable.id,
+                                ctable.status,
+                                ctable.organisation_id,
+                                join = join,
+                                )
+        for row in rows:
+            TestProvider(row.organisation_id).expire_commission()
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def check_verification_status():
+        """
+            Check verification status of all test stations for which
+            organisation type requirements have changed
+        """
+
+        from .config import TESTSTATIONS
+        from .models.org import TestProvider
+
+        db = current.db
+        s3db = current.s3db
+
+        # Organisation types with requirements changed in the last 36 hours
+        tags = {"MINFOREQ", "VERIFREQ"}
+        limit = (datetime.datetime.utcnow() - datetime.timedelta(hours=36)).date()
+
+        ottable = s3db.org_organisation_type
+        tttable = s3db.org_organisation_type_tag
+
+        join = tttable.on((tttable.organisation_type_id == ottable.id) & \
+                          (tttable.tag.belongs(tags)) & \
+                          (tttable.modified_on >= limit) & \
+                          (tttable.deleted == False))
+        query = (ottable.deleted == False)
+        types = db(query)._select(ottable.id, join=join)
+
+        # Look up affected organisations in the TESTSTATIONS group
+        otable = s3db.org_organisation
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        ltable = s3db.org_organisation_organisation_type
+
+        join = [gtable.on((mtable.organisation_id == otable.id) & \
+                          (gtable.id == mtable.group_id) & \
+                          (gtable.name == TESTSTATIONS) & \
+                          (mtable.deleted == False)
+                          ),
+                ltable.on((ltable.organisation_id == otable.id) & \
+                          (ltable.organisation_type_id.belongs(types)) & \
+                          (ltable.deleted == False)
+                          ),
+                ]
+        query = (otable.deleted == False)
+        rows = db(query).select(otable.id, join=join)
+        organisation_ids = {row.id for row in rows}
+
+        # Update verification status for these organisations
+        for organisation_id in organisation_ids:
+            TestProvider(organisation_id).update_verification()
 
 # END =========================================================================

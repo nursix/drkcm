@@ -29,6 +29,8 @@ __all__ = ("TestProviderModel",
            "TestStationModel"
            )
 
+import datetime
+
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
@@ -268,7 +270,7 @@ class TestProviderModel(DataModel):
 
         if "end_date" in form_vars:
             # End date must be after start date
-            if start and end and end <= start:
+            if start and end and end < start:
                 form.errors["end_date"] = T("End date must be after start date")
                 return
 
@@ -303,7 +305,7 @@ class TestProviderModel(DataModel):
 
             # CURRENT/SUSPENDED only allowed before end date
             today = current.request.utcnow.date()
-            if end and end <= today and status in active_statuses:
+            if end and end < today and status in active_statuses:
                 form.errors["status"] = T("Invalid status past end date")
                 return
 
@@ -1146,7 +1148,7 @@ class TestProvider:
             whenever relevant details change:
                 - organisation form post-process
                 - staff record, person record, contact details
-                - TODO org type tags regarding verification requirements
+                - org type tags regarding verification requirements
         """
 
         verification = self.verification
@@ -1157,7 +1159,15 @@ class TestProvider:
         else:
             update = {}
 
-            orgtype = self.verification.orgtype
+            orgtype = verification.orgtype
+            if self.verifreq:
+                if orgtype == "ACCEPT":
+                    orgtype = "N/V"
+            else:
+                if orgtype == "N/V":
+                    orgtype = "ACCEPT"
+            if orgtype != verification.orgtype:
+                update["orgtype"] = orgtype
 
             mgrinfo = self.check_mgrinfo() if self.minforeq else "ACCEPT"
             if mgrinfo != verification.mgrinfo:
@@ -1257,6 +1267,50 @@ class TestProvider:
                                public = "Y",
                                reason = "COMMISSION",
                                )
+
+    # -------------------------------------------------------------------------
+    def expire_commission(self):
+        """
+            Deactivate all current/suspended commissions of this provider
+            which have expired
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        today = datetime.datetime.utcnow().date()
+
+        # Look up all expired commissions
+        table = s3db.org_commission
+        query = (table.organisation_id == self.organisation_id) & \
+                (table.status.belongs("CURRENT", "SUSPENDED")) & \
+                (table.end_date != None) & \
+                (table.end_date < today) & \
+                (table.deleted == False)
+        rows = db(query).select(table.id,
+                                table.status,
+                                )
+        commission_ids = [row.id for row in rows]
+        if commission_ids:
+            # Mark them as expired
+            query = (table.id.belongs(commission_ids))
+            db(query).update(prev_status = table.status,
+                             status = "EXPIRED",
+                             status_date = today,
+                             status_reason = None,
+                             )
+
+            # If there is no current commission, de-list all test stations
+            # and notify the organisation
+            self._commission = None
+            if not self.current_commission:
+                TestStation.update_all(self.organisation_id,
+                                       public = "N",
+                                       reason = "COMMISSION",
+                                       )
+                self.notify_commission_change(status = "EXPIRED",
+                                              commission_ids = commission_ids,
+                                              )
 
     # -------------------------------------------------------------------------
     def notify_commission_change(self,
@@ -1475,6 +1529,7 @@ class TestProvider:
                 # Allow to keep the original commission date
                 field = table.date
                 field.requires = IS_UTC_DATE(minimum=commission.date)
+                field.widget.minimum = commission.date
             else:
                 # List view or new commission, always editable
                 editable = True
