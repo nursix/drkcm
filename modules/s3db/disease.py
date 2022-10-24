@@ -235,7 +235,7 @@ class DiseaseDataModel(DataModel):
 
         # Table configuration
         self.configure(tablename,
-                       onaccept = self.testing_device_onaccept,
+                       #onaccept = self.testing_device_onaccept,
                        )
 
         # CRUD Strings
