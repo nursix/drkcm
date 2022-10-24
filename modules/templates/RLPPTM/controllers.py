@@ -686,16 +686,6 @@ class approve(CustomController):
                     set_record_owner(dtable, details, owned_by_user=user_id)
                     s3db_onaccept(dtable, details, method="create")
 
-                    # Link facility to facility type
-                    fttable = s3db.org_facility_type
-                    tltable = s3db.org_site_facility_type
-                    facility_type = db(fttable.name == "Infection Test Station") \
-                                      .select(fttable.id, limitby=(0, 1)).first()
-                    if facility_type:
-                        tltable.insert(site_id = site_id,
-                                       facility_type_id = facility_type.id,
-                                       )
-
                     # Link facility to services
                     if service_ids:
                         sltable = s3db.org_service_site
@@ -711,6 +701,7 @@ class approve(CustomController):
                     # - see facility_postprocess
                     from .models.org import TestStation
                     ts = TestStation(site_id)
+                    ts.set_facility_type()
                     ts.add_facility_code()
                     ts.update_approval()
 

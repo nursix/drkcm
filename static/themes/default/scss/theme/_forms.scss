@@ -315,6 +315,10 @@ form {
 // ----------------------------------------------------------------------------
 // Containers
 //
+.form-info {
+    height: 1.2rem;
+}
+
 .form-container,
 .item-container {
     width: auto;
@@ -444,7 +448,7 @@ form {
 #markDuplicate {
     padding-bottom: 8px;
     margin-bottom: 0;
-    margin-top: -0.5rem;
+    margin-top: -0.25rem;
 }
 
 .crud-actions {

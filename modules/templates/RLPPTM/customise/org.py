@@ -243,10 +243,18 @@ def org_organisation_controller(**attr):
                                  S3SQLInlineLink, \
                                  OptionsFilter, \
                                  TextFilter
+                from ..config import TESTSTATIONS
+                from ..helpers import is_org_group
 
                 # Custom form
-                if is_org_group_admin:
 
+                is_test_station = record and is_org_group(record.id, TESTSTATIONS)
+                if is_test_station:
+                    acronym = logo = None # irrelevant for test stations
+                else:
+                    acronym, logo = "acronym", "logo"
+
+                if is_org_group_admin:
                     # Show organisation type(s) and verification tag as required
                     types = S3SQLInlineLink("organisation_type",
                                             field = "organisation_type_id",
@@ -255,10 +263,7 @@ def org_organisation_controller(**attr):
                                             multiple = settings.get_org_organisation_types_multiple(),
                                             widget = "multiselect",
                                             )
-                    from ..config import TESTSTATIONS
-                    from ..helpers import is_org_group
-                    if record and is_org_group(record.id, TESTSTATIONS) and \
-                       TestProvider(record.id).verifreq:
+                    if is_test_station and TestProvider(record.id).verifreq:
                         TestProvider.configure_verification(r.resource,
                                                             role = "approver",
                                                             record_id = record.id,
@@ -295,14 +300,21 @@ def org_organisation_controller(**attr):
                     # Show delivery-tag
                     delivery = "delivery.value"
                 else:
+                    # Test provider cannot change the name of their organisation
+                    if is_test_station:
+                        table = resource.table
+                        field = table.name
+                        field.writable = False
+
+                    # Administrative fields not visible
                     groups = projects = delivery = types = type_check = None
 
-                crud_fields = [groups,
-                               "name",
-                               "acronym",
+                crud_fields = ["name",
+                               acronym,
+                               groups,
                                types,
-                               projects,
                                type_check,
+                               projects,
                                delivery,
                                S3SQLInlineComponent(
                                     "contact",
@@ -316,7 +328,7 @@ def org_organisation_controller(**attr):
                                     ),
                                "phone",
                                "website",
-                               "logo",
+                               logo,
                                "comments",
                                ]
 
@@ -566,9 +578,14 @@ def facility_create_onaccept(form):
     if not record_id:
         return
 
-    # Generate facility ID
     ts = TestStation(facility_id=record_id)
+
+    # Set default facility type
+    ts.set_facility_type()
+
+    # Generate facility ID
     ts.add_facility_code()
+
     if current.response.s3.bulk:
         # Postprocess not called during imports
         # => call approval update manually
@@ -705,13 +722,13 @@ def configure_facility_form(r, is_org_group_admin=False):
                    # -- Facility
                    "name",
                    "code",
-                   S3SQLInlineLink(
-                       "facility_type",
-                       label = T("Facility Type"),
-                       field = "facility_type_id",
-                       widget = "groupedopts",
-                       cols = 3,
-                       ),
+                   #S3SQLInlineLink(
+                   #    "facility_type",
+                   #    label = T("Facility Type"),
+                   #    field = "facility_type_id",
+                   #    widget = "groupedopts",
+                   #    cols = 3,
+                   #    ),
                    # -- Address
                    "location_id",
                    # -- Service Offer
@@ -814,7 +831,6 @@ def org_facility_resource(r, tablename):
                       S3LocationSelector,
                       OptionsFilter,
                       TextFilter,
-                      s3_text_represent,
                       )
 
     table = s3db.org_facility
@@ -900,25 +916,6 @@ def org_facility_resource(r, tablename):
     requires = field.requires
     if isinstance(requires, IS_EMPTY_OR):
         field.requires = requires.other
-
-    field = dtable.authorisation_advice
-    field.label = T("Advice")
-    css = "approve-workflow"
-    field.represent = lambda v, row=None: \
-                        s3_text_represent(v,
-                            truncate = False,
-                            _class = ("%s workflow-advice" % css) if v else css,
-                            )
-    field.readable = True
-    if is_org_group_admin:
-        field.comment = DIV(_class="tooltip",
-                            _title="%s|%s" % (T("Advice"),
-                                              T("Instructions/advice for the test station how to proceed with regard to authorization"),
-                                              ),
-                            )
-        field.writable = True
-    else:
-        field.writable = False
 
     # Special views
     get_vars = r.get_vars

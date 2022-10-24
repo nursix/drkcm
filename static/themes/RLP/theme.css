@@ -1552,6 +1552,10 @@ html, body {
   color: #666;
 }
 /* line 168, ../../default/scss/theme/_page.scss */
+#content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
+  margin-bottom: 0.25rem;
+}
+/* line 171, ../../default/scss/theme/_page.scss */
 #content h1,
 #content h2 {
   font-size: 1.3em;
@@ -1559,36 +1563,42 @@ html, body {
   background-color: #F7F8F9;
   padding: 0.35rem;
 }
-/* line 177, ../../default/scss/theme/_page.scss */
+/* line 180, ../../default/scss/theme/_page.scss */
 #content h2 {
   margin-top: 10px;
   font-size: 1.0rem;
   padding-left: 0.7rem;
 }
-/* line 184, ../../default/scss/theme/_page.scss */
+/* line 187, ../../default/scss/theme/_page.scss */
 #content h3 {
-  font-size: 1.1em;
+  font-size: 1.0em;
   padding-bottom: 5px;
 }
+/* line 191, ../../default/scss/theme/_page.scss */
+#content h6 {
+  font-size: 1rem;
+  line-height: 1.2;
+  margin-top: 0;
+}
 
-/* line 193, ../../default/scss/theme/_page.scss */
+/* line 201, ../../default/scss/theme/_page.scss */
 #map {
   width: 100%;
   overflow: auto;
 }
 
-/* line 197, ../../default/scss/theme/_page.scss */
+/* line 205, ../../default/scss/theme/_page.scss */
 #component {
   float: none;
 }
 
-/* line 200, ../../default/scss/theme/_page.scss */
+/* line 208, ../../default/scss/theme/_page.scss */
 .map_home {
   margin: 0;
   margin-top: 0.5rem;
 }
 
-/* line 205, ../../default/scss/theme/_page.scss */
+/* line 213, ../../default/scss/theme/_page.scss */
 #datalist-filter-form,
 #datatable-filter-form,
 #summary-filter-form,
@@ -1597,19 +1607,19 @@ html, body {
   border: 1px solid #E0E0E0;
 }
 
-/* line 212, ../../default/scss/theme/_page.scss */
+/* line 220, ../../default/scss/theme/_page.scss */
 #summary-filter-form {
   margin: 0;
 }
 
-/* line 219, ../../default/scss/theme/_page.scss */
+/* line 227, ../../default/scss/theme/_page.scss */
 body.popup {
   background-color: #fbfbfb;
   min-width: auto;
   height: auto;
 }
 
-/* line 224, ../../default/scss/theme/_page.scss */
+/* line 232, ../../default/scss/theme/_page.scss */
 #popup {
   max-width: 750px;
   width: 100%;
@@ -1617,37 +1627,37 @@ body.popup {
   display: none;
 }
 
-/* line 230, ../../default/scss/theme/_page.scss */
+/* line 238, ../../default/scss/theme/_page.scss */
 .loading {
   background: url(../../img/ajax-loader.gif) center no-repeat !important;
 }
 
-/* line 233, ../../default/scss/theme/_page.scss */
+/* line 241, ../../default/scss/theme/_page.scss */
 #popup .form-container {
   /* Ensure scrollbars are all on the Modal, not inside */
   overflow: inherit;
 }
 
-/* line 237, ../../default/scss/theme/_page.scss */
+/* line 245, ../../default/scss/theme/_page.scss */
 #popup .control-group {
   padding-right: 20px;
 }
 
-/* line 244, ../../default/scss/theme/_page.scss */
+/* line 252, ../../default/scss/theme/_page.scss */
 #list-btn-add,
 .list-btn-add {
   float: right;
   margin-right: 0.35rem;
   margin-bottom: 10px;
 }
-/* line 249, ../../default/scss/theme/_page.scss */
+/* line 257, ../../default/scss/theme/_page.scss */
 .widget-container #list-btn-add, .widget-container
 .list-btn-add {
   margin-bottom: 0;
   position: relative;
   top: 1.0rem;
 }
-/* line 254, ../../default/scss/theme/_page.scss */
+/* line 262, ../../default/scss/theme/_page.scss */
 [dir=rtl] #list-btn-add, [dir=rtl]
 .list-btn-add {
   float: left;
@@ -1655,18 +1665,18 @@ body.popup {
   margin-left: 0.35rem;
 }
 
-/* line 260, ../../default/scss/theme/_page.scss */
+/* line 268, ../../default/scss/theme/_page.scss */
 #list-add {
   display: none;
 }
 
-/* line 267, ../../default/scss/theme/_page.scss */
+/* line 275, ../../default/scss/theme/_page.scss */
 #close-iframe-map {
   padding: 7px;
   margin-top: 5px;
 }
 
-/* line 275, ../../default/scss/theme/_page.scss */
+/* line 283, ../../default/scss/theme/_page.scss */
 #footer {
   background: transparent;
   padding-top: 20px;
@@ -1677,28 +1687,28 @@ body.popup {
 }
 
 /* Footer bottom position */
-/* line 287, ../../default/scss/theme/_page.scss */
+/* line 295, ../../default/scss/theme/_page.scss */
 main {
   min-height: 90%;
 }
 
-/* line 294, ../../default/scss/theme/_page.scss */
+/* line 302, ../../default/scss/theme/_page.scss */
 .sub-nav.about-menu {
   color: #999;
   text-align: left;
   margin-left: 0;
   margin-right: 0;
 }
-/* line 296, ../../default/scss/theme/_page.scss */
+/* line 304, ../../default/scss/theme/_page.scss */
 .sub-nav.about-menu a {
   color: #999;
 }
-/* line 302, ../../default/scss/theme/_page.scss */
+/* line 310, ../../default/scss/theme/_page.scss */
 body.rtl .sub-nav.about-menu {
   text-align: right;
 }
 
-/* line 310, ../../default/scss/theme/_page.scss */
+/* line 318, ../../default/scss/theme/_page.scss */
 #poweredby {
   color: #999;
   font-size: 0.625rem;
@@ -1706,36 +1716,36 @@ body.rtl .sub-nav.about-menu {
   margin-right: 0.5rem;
   text-align: right;
 }
-/* line 316, ../../default/scss/theme/_page.scss */
+/* line 324, ../../default/scss/theme/_page.scss */
 #poweredby a {
   color: #999;
   font-size: 0.625rem;
   margin-left: 0.2rem;
   text-decoration: none;
 }
-/* line 322, ../../default/scss/theme/_page.scss */
+/* line 330, ../../default/scss/theme/_page.scss */
 #poweredby img {
   margin-right: 5px;
   vertical-align: text-bottom;
 }
-/* line 326, ../../default/scss/theme/_page.scss */
+/* line 334, ../../default/scss/theme/_page.scss */
 [dir=rtl] #poweredby {
   margin-right: 0rem;
   margin-left: 0.5rem;
   text-align: left;
 }
-/* line 330, ../../default/scss/theme/_page.scss */
+/* line 338, ../../default/scss/theme/_page.scss */
 [dir=rtl] #poweredby a {
   margin-left: 0;
   margin-right: 0.2rem;
 }
-/* line 334, ../../default/scss/theme/_page.scss */
+/* line 342, ../../default/scss/theme/_page.scss */
 [dir=rtl] #poweredby img {
   margin-right: 0;
   margin-left: 5px;
 }
 
-/* line 345, ../../default/scss/theme/_page.scss */
+/* line 353, ../../default/scss/theme/_page.scss */
 .throbber,
 .layer_throbber,
 .s3-twitter-throbber,
@@ -1747,13 +1757,13 @@ body.rtl .sub-nav.about-menu {
   width: 32px;
 }
 
-/* line 355, ../../default/scss/theme/_page.scss */
+/* line 363, ../../default/scss/theme/_page.scss */
 .throbber {
   margin-bottom: -16px;
   padding: 0 0 0 10px;
 }
 
-/* line 360, ../../default/scss/theme/_page.scss */
+/* line 368, ../../default/scss/theme/_page.scss */
 .input_throbber {
   background-size: 60% !important;
   height: 24px;
@@ -1762,7 +1772,7 @@ body.rtl .sub-nav.about-menu {
   margin: 0 0 -11px -24px;
 }
 
-/* line 367, ../../default/scss/theme/_page.scss */
+/* line 375, ../../default/scss/theme/_page.scss */
 .s3-twitter-throbber {
   height: 0px;
   margin: 66px 0 0 42px;
@@ -2466,118 +2476,123 @@ form.auth_login #submit_record__row {
 }
 
 /* line 318, ../../default/scss/theme/_forms.scss */
+.form-info {
+  height: 1.2rem;
+}
+
+/* line 322, ../../default/scss/theme/_forms.scss */
 .form-container,
 .item-container {
   width: auto;
   overflow: inherit;
 }
-/* line 322, ../../default/scss/theme/_forms.scss */
+/* line 326, ../../default/scss/theme/_forms.scss */
 .form-container form,
 .item-container form {
   border: 1px solid #E0E0E0;
   background: #fefefe;
   padding: 0.35rem 0.7rem;
 }
-/* line 324, ../../default/scss/theme/_forms.scss */
+/* line 328, ../../default/scss/theme/_forms.scss */
 .form-container form td.w2p_fl,
 .item-container form td.w2p_fl {
   font-weight: bold;
 }
-/* line 327, ../../default/scss/theme/_forms.scss */
+/* line 331, ../../default/scss/theme/_forms.scss */
 .form-container form tr td,
 .item-container form tr td {
   padding: 3px 0 0 3px;
 }
-/* line 332, ../../default/scss/theme/_forms.scss */
+/* line 336, ../../default/scss/theme/_forms.scss */
 .form-container form tr td,
 .item-container form tr td {
   padding: 0.1875rem;
 }
-/* line 336, ../../default/scss/theme/_forms.scss */
+/* line 340, ../../default/scss/theme/_forms.scss */
 [dir=ltr] .form-container form .embeddedComponent td, [dir=ltr]
 .item-container form .embeddedComponent td {
   padding-right: 0.5625rem;
 }
-/* line 339, ../../default/scss/theme/_forms.scss */
+/* line 343, ../../default/scss/theme/_forms.scss */
 [dir=rtl] .form-container form .embeddedComponent td, [dir=rtl]
 .item-container form .embeddedComponent td {
   padding-left: 0.5625rem;
 }
-/* line 344, ../../default/scss/theme/_forms.scss */
+/* line 348, ../../default/scss/theme/_forms.scss */
 .form-container .controls,
 .item-container .controls {
   display: inline-block;
   min-height: 1.7rem;
   padding: 0 0.1rem;
 }
-/* line 347, ../../default/scss/theme/_forms.scss */
+/* line 351, ../../default/scss/theme/_forms.scss */
 .form-container .controls:not(.columns),
 .item-container .controls:not(.columns) {
   max-width: 100%;
 }
-/* line 352, ../../default/scss/theme/_forms.scss */
+/* line 356, ../../default/scss/theme/_forms.scss */
 .form-container .no-options-available,
 .item-container .no-options-available {
   color: #aaa;
   font-style: italic;
 }
-/* line 355, ../../default/scss/theme/_forms.scss */
+/* line 359, ../../default/scss/theme/_forms.scss */
 [dir=ltr] .form-container .no-options-available, [dir=ltr]
 .item-container .no-options-available {
   padding-left: 0.7rem;
 }
-/* line 358, ../../default/scss/theme/_forms.scss */
+/* line 362, ../../default/scss/theme/_forms.scss */
 [dir=rtl] .form-container .no-options-available, [dir=rtl]
 .item-container .no-options-available {
   padding-right: 0.7rem;
 }
 
-/* line 364, ../../default/scss/theme/_forms.scss */
+/* line 368, ../../default/scss/theme/_forms.scss */
 .form-container {
   margin-top: 0.125rem;
   margin-bottom: 0.875rem;
 }
-/* line 367, ../../default/scss/theme/_forms.scss */
+/* line 371, ../../default/scss/theme/_forms.scss */
 .form-container p {
   margin: 0.5em 0 0 0;
 }
-/* line 371, ../../default/scss/theme/_forms.scss */
+/* line 375, ../../default/scss/theme/_forms.scss */
 .form-container form p {
   margin: 0;
 }
-/* line 373, ../../default/scss/theme/_forms.scss */
+/* line 377, ../../default/scss/theme/_forms.scss */
 .form-container form p.note {
   font-style: italic;
   margin-left: 18em;
   font-size: 80%;
   color: #666;
 }
-/* line 380, ../../default/scss/theme/_forms.scss */
+/* line 384, ../../default/scss/theme/_forms.scss */
 .form-container form input.date {
   width: auto;
 }
-/* line 383, ../../default/scss/theme/_forms.scss */
+/* line 387, ../../default/scss/theme/_forms.scss */
 .form-container form input[type="checkbox"],
 .form-container form input[type="radio"] {
   margin: 5px 5px;
 }
-/* line 387, ../../default/scss/theme/_forms.scss */
+/* line 391, ../../default/scss/theme/_forms.scss */
 .form-container form fieldset {
   margin: 0 0 10px 0;
   padding: 10px;
   border: #ddd 1px solid;
   background-color: #fff;
 }
-/* line 393, ../../default/scss/theme/_forms.scss */
+/* line 397, ../../default/scss/theme/_forms.scss */
 .form-container form legend {
   font-weight: bold;
   color: #666;
 }
-/* line 397, ../../default/scss/theme/_forms.scss */
+/* line 401, ../../default/scss/theme/_forms.scss */
 .form-container form textarea {
   width: 28rem;
 }
-/* line 400, ../../default/scss/theme/_forms.scss */
+/* line 404, ../../default/scss/theme/_forms.scss */
 .form-container form .ui-multiselect {
   max-width: 100%;
   display: inline-block !important;
@@ -2586,29 +2601,29 @@ form.auth_login #submit_record__row {
   margin-right: 0.3rem;
   margin-bottom: 0;
 }
-/* line 409, ../../default/scss/theme/_forms.scss */
+/* line 413, ../../default/scss/theme/_forms.scss */
 .form-container form:not(.filter-form):not(.auth_login):not(.auth_register):not(.rm-form) input[type="text"]:not(.integer):not(.double):not(.datetimepicker):not(.date):not(.hours):not(.dms-input) {
   width: 20rem !important;
 }
 
-/* line 416, ../../default/scss/theme/_forms.scss */
+/* line 420, ../../default/scss/theme/_forms.scss */
 .item-container {
   margin: 0 0 0.5rem;
 }
-/* line 418, ../../default/scss/theme/_forms.scss */
+/* line 422, ../../default/scss/theme/_forms.scss */
 .item-container .controls {
   background: #fefefe;
   padding: 0.3rem;
 }
 
-/* line 427, ../../default/scss/theme/_forms.scss */
+/* line 431, ../../default/scss/theme/_forms.scss */
 #last_update,
 #markDuplicate {
   float: right;
   clear: right;
   text-align: right;
 }
-/* line 432, ../../default/scss/theme/_forms.scss */
+/* line 436, ../../default/scss/theme/_forms.scss */
 [dir=rtl] #last_update, [dir=rtl]
 #markDuplicate {
   float: left;
@@ -2616,7 +2631,7 @@ form.auth_login #submit_record__row {
   text-align: left;
 }
 
-/* line 438, ../../default/scss/theme/_forms.scss */
+/* line 442, ../../default/scss/theme/_forms.scss */
 .authorinfo,
 #last_update {
   font-style: italic;
@@ -2624,31 +2639,31 @@ form.auth_login #submit_record__row {
   color: #666;
 }
 
-/* line 444, ../../default/scss/theme/_forms.scss */
+/* line 448, ../../default/scss/theme/_forms.scss */
 #markDuplicate {
   padding-bottom: 8px;
   margin-bottom: 0;
-  margin-top: -0.5rem;
+  margin-top: -0.25rem;
 }
 
-/* line 450, ../../default/scss/theme/_forms.scss */
+/* line 454, ../../default/scss/theme/_forms.scss */
 .crud-actions {
   margin-bottom: 0.25rem;
 }
 
-/* line 457, ../../default/scss/theme/_forms.scss */
+/* line 461, ../../default/scss/theme/_forms.scss */
 .s3_add_resource_link {
   display: inline-block;
   margin: 0.3rem 0.5rem;
 }
 
-/* line 461, ../../default/scss/theme/_forms.scss */
+/* line 465, ../../default/scss/theme/_forms.scss */
 .inline-tooltip {
   vertical-align: top;
   margin: 0.2rem 0.5rem;
 }
 
-/* line 465, ../../default/scss/theme/_forms.scss */
+/* line 469, ../../default/scss/theme/_forms.scss */
 .tooltip,
 .tooltipbody,
 .stickytip,
@@ -2660,7 +2675,7 @@ form.auth_login #submit_record__row {
   width: auto;
   background: none;
 }
-/* line 475, ../../default/scss/theme/_forms.scss */
+/* line 479, ../../default/scss/theme/_forms.scss */
 .tooltip:before,
 .tooltipbody:before,
 .stickytip:before,
@@ -2674,7 +2689,7 @@ form.auth_login #submit_record__row {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* line 484, ../../default/scss/theme/_forms.scss */
+/* line 488, ../../default/scss/theme/_forms.scss */
 .tooltip:hover,
 .tooltipbody:hover,
 .stickytip:hover,
@@ -2682,7 +2697,7 @@ form.auth_login #submit_record__row {
 .htmltip:hover {
   cursor: help;
 }
-/* line 486, ../../default/scss/theme/_forms.scss */
+/* line 490, ../../default/scss/theme/_forms.scss */
 .tooltip:hover:before,
 .tooltipbody:hover:before,
 .stickytip:hover:before,

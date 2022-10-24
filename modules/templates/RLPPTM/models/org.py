@@ -404,6 +404,7 @@ class TestStationModel(DataModel):
         configure = self.configure
 
         crud_strings = current.response.s3.crud_strings
+        css = "approval-workflow"
 
         # ---------------------------------------------------------------------
         # Current approval details
@@ -491,12 +492,11 @@ class TestStationModel(DataModel):
                            ),
                      Field("advice", "text",
                            label = T("Advice"),
-                           comment = DIV(_class="tooltip",
-                                         _title="%s|%s" % (T("Advice"),
-                                                           T("Instructions/advice for the test station how to proceed with regard to authorization"),
-                                                           ),
-                                         ),
-                           represent = s3_text_represent,
+                           represent = lambda v, row=None: \
+                                       s3_text_represent(v,
+                                                         truncate = False,
+                                                         _class = ("%s workflow-advice" % css) if v else css,
+                                                         ),
                            widget = s3_comments_widget,
                            readable = False,
                            writable = False,
@@ -1757,6 +1757,33 @@ class TestStation:
         return self._approval
 
     # -------------------------------------------------------------------------
+    def set_facility_type(self):
+        """
+            Link this test station to the default facility type, if it
+            does not have a type yet
+        """
+
+        site_id = self.site_id
+
+        db = current.db
+        s3db = current.s3db
+
+        fttable = s3db.org_facility_type
+        tltable = s3db.org_site_facility_type
+
+        query = (tltable.site_id == site_id) & \
+                (tltable.deleted == False)
+        if not db(query).select(tltable.id, limitby=(0, 1)).first():
+            query = (fttable.name == "Infection Test Station") & \
+                    (fttable.deleted == False)
+            facility_type = db(query).select(fttable.id, limitby=(0, 1)).first()
+            if facility_type:
+                tltable.insert(site_id = site_id,
+                               facility_type_id = facility_type.id,
+                               )
+
+
+    # -------------------------------------------------------------------------
     def add_facility_code(self):
         """
             Adds a facility code (Test Station ID) for this test station
@@ -2305,11 +2332,11 @@ class TestStation:
                 review_tags_visible = True
 
             # Once the site has applied for approval, prevent further changes
-            # to the address (must be done by administrator after considering
+            # to certain details (must be done by administrator after considering
             # the reasons for the change)
             if applied_before:
-                field = ftable.location_id
-                field.writable = False
+                for fn in ("name", "location_id"):
+                    ftable[fn].writable = False
 
         is_approver = role == "approver"
 
@@ -2342,8 +2369,16 @@ class TestStation:
 
         # Configure advice
         field = ctable.advice
-        field.readable = is_approver or row and row.public != "Y"
-        field.writable = is_approver
+        if is_approver:
+            T = current.T
+            field.readable = field.writable = True
+            field.comment = DIV(_class="tooltip",
+                                _title="%s|%s" % (T("Advice"),
+                                                  T("Instructions/advice for the test station how to proceed with regard to authorization"),
+                                                  ),
+                                )
+        elif row and row.public != "Y":
+            field.readable = True
 
         visible_tags.extend(["approval.public",
                              "approval.public_reason",
