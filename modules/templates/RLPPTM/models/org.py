@@ -66,7 +66,7 @@ COMMISSION_STATUS = WorkflowOptions(("CURRENT", "current", "green"),
                                     selectable = ("CURRENT", "SUSPENDED", "REVOKED"),
                                     represent = "status",
                                     )
-COMMISSION_REASON = WorkflowOptions(("N/V", "Verification Pending"),
+COMMISSION_REASON = WorkflowOptions(("N/V", "Documentation/Verification incomplete"),
                                     ("OVERRIDE", "set by Administrator"),
                                     selectable = ("OVERRIDE",),
                                     )
@@ -88,7 +88,8 @@ REVIEW_STATUS = WorkflowOptions(("REVISE", "Completion/Adjustment Required", "re
 PUBLIC_STATUS = WorkflowOptions(("N", "No", "grey"),
                                 ("Y", "Yes", "green"),
                                 )
-PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Organization not currently commissioned"),
+PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Provider not currently commissioned"),
+                                ("SUSPENDED", "Commission suspended"),
                                 ("REVISE", "Documentation incomplete"),
                                 ("REVIEW", "Review pending"),
                                 ("OVERRIDE", "set by Administrator"),
@@ -315,6 +316,11 @@ class TestProviderModel(DataModel):
                 form.errors["status_reason"] = T("Reason required for suspended-status")
                 return
 
+            # SUSPENDED with reason OVERRIDE requires comments
+            comments = form_vars.get("comments") if "comments" in form_vars else True
+            if status == "SUSPENDED" and reason == "OVERRIDE" and not comments:
+                form.errors["comments"] = T("More details required")
+
     #--------------------------------------------------------------------------
     @staticmethod
     def commission_onaccept(form):
@@ -505,6 +511,7 @@ class TestStationModel(DataModel):
 
         # Table configuration
         configure(tablename,
+                  onvalidation = self.site_approval_onvalidation,
                   onaccept = self.site_approval_onaccept,
                   )
 
@@ -598,6 +605,23 @@ class TestStationModel(DataModel):
                 "public_reason",
                 "advice",
                 )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def site_approval_onvalidation(form):
+        """
+            Form validation of approval status:
+                - require advice for manual override of public-status
+        """
+
+        form_vars = form.vars
+
+        public = form_vars.get("public")
+        reason = form_vars.get("public_reason")
+        advice = form_vars.get("advice") if "advice" in form_vars else True
+
+        if public == "N" and reason == "OVERRIDE" and not advice:
+            form.errors["advice"] = current.T("More details required")
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1208,6 +1232,7 @@ class TestProvider:
         rows = db(query).select(table.id)
         if rows:
             commission_ids = [row.id for row in rows]
+            query = (table.id.belongs(commission_ids))
             db(query).update(status = "SUSPENDED",
                              status_date = current.request.utcnow.date(),
                              status_reason = reason,
@@ -1223,17 +1248,17 @@ class TestProvider:
 
         TestStation.update_all(self.organisation_id,
                                public = "N",
-                               reason = "COMMISSION",
+                               reason = "SUSPENDED",
                                )
 
     # -------------------------------------------------------------------------
     def reinstate_commission(self, reason):
         """
             Reinstates commissions of this provider that have previously
-            been suspended for the given reason
+            been suspended for the given reason(s)
 
             Args:
-                reason: the reason code (required)
+                reason: the reason code, or a list of codes (required)
         """
 
         if not reason:
@@ -1244,12 +1269,18 @@ class TestProvider:
 
         table = s3db.org_commission
         query = (table.organisation_id == self.organisation_id) & \
-                (table.status == "SUSPENDED") & \
-                (table.status_reason == reason) & \
-                (table.deleted == False)
+                (table.status == "SUSPENDED")
+        if isinstance(reason, (tuple, list, set)):
+            query &= (table.status_reason.belongs(reason))
+        else:
+            query &= (table.status_reason == reason)
+        today = datetime.datetime.utcnow().date()
+        query &= ((table.end_date == None) | (table.end_date >= today)) & \
+                 (table.deleted == False)
         rows = db(query).select(table.id)
         if rows:
             commission_ids = [row.id for row in rows]
+            query = (table.id.belongs(commission_ids))
             db(query).update(status = "CURRENT",
                              status_date = current.request.utcnow.date(),
                              status_reason = None,
@@ -1263,10 +1294,13 @@ class TestProvider:
                                           commission_ids = commission_ids,
                                           )
 
-        TestStation.update_all(self.organisation_id,
-                               public = "Y",
-                               reason = "COMMISSION",
-                               )
+        self._commission = None
+
+        if self.current_commission:
+            TestStation.update_all(self.organisation_id,
+                                   public = "Y",
+                                   reason = ("SUSPENDED", "COMMISSION"),
+                                   )
 
     # -------------------------------------------------------------------------
     def expire_commission(self):
@@ -1380,7 +1414,9 @@ class TestProvider:
         reason_labels = dict(COMMISSION_REASON.labels)
 
         db = current.db
-        table = current.s3db.org_commission
+        s3db = current.s3db
+
+        table = s3db.org_commission
 
         error = "No commission found"
         for commission_id in commission_ids:
@@ -1402,14 +1438,41 @@ class TestProvider:
             if not reason:
                 reason = commission.status_reason
             if reason:
+                requirements = {"N/V": "TestProviderRequirements",
+                                }.get(reason)
+                print(requirements)
                 reason = reason_labels.get(reason)
+            else:
+                requirements = None
+                reason = "-"
+
             data = {"start": table.date.represent(commission.date),
                     "end": table.end_date.represent(commission.end_date),
                     "status_date": table.status_date.represent(commission.status_date),
-                    "reason": reason if reason else "-",
-                    "comments": table.comments,
+                    "reason": reason,
+                    "comments": commission.comments,
+                    "explanation": "",
                     }
             data.update(org_data)
+
+            # Add a requirements hint, if available
+            if requirements:
+                ctable = s3db.cms_post
+                ltable = s3db.cms_post_module
+                join = ltable.on((ltable.post_id == ctable.id) & \
+                                 (ltable.module == "org") & \
+                                 (ltable.resource == "commission") & \
+                                 (ltable.deleted == False))
+                query = (ctable.name == requirements) & \
+                        (ctable.deleted == False)
+                row = db(query).select(ctable.body,
+                                       join = join,
+                                       limitby = (0, 1),
+                                       ).first()
+                print(row)
+                print(db._lastsql)
+                if row:
+                    data["explanation"] = row.body
 
             error = CMSNotifications.send(email,
                                           template,
