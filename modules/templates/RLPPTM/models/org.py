@@ -378,10 +378,15 @@ class TestProviderModel(DataModel):
 
         if status_change:
             # Deactivate/reactivate all test stations
-            public = "Y" if new_status == "CURRENT" else "N"
+            if new_status == "CURRENT":
+                public = "Y"
+                reason = ("SUSPENDED", "COMMISSION")
+            else:
+                public = "N"
+                reason = "SUSPENDED" if new_status == "SUSPENDED" else "COMMISSION"
             TestStation.update_all(record.organisation_id,
                                    public = public,
-                                   reason = "COMMISSION",
+                                   reason = reason,
                                    )
             # Notify the provider
             provider.notify_commission_change(status = new_status,
@@ -1440,7 +1445,6 @@ class TestProvider:
             if reason:
                 requirements = {"N/V": "TestProviderRequirements",
                                 }.get(reason)
-                print(requirements)
                 reason = reason_labels.get(reason)
             else:
                 requirements = None
@@ -1469,8 +1473,6 @@ class TestProvider:
                                        join = join,
                                        limitby = (0, 1),
                                        ).first()
-                print(row)
-                print(db._lastsql)
                 if row:
                     data["explanation"] = row.body
 
