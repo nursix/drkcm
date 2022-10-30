@@ -1892,7 +1892,9 @@ class S3ResourceHeader:
                     if value is False:
                         continue
                     if label is not None:
-                        tr.append(TH(("%s: " % label) if label else ""))
+                        if not isinstance(label, DIV):
+                            label = ("%s: " % label) if label else ""
+                        tr.append(TH(label))
                     tr.append(TD(value, _colspan=colspan) if colspan else TD(value))
                 trs.append(tr)
 

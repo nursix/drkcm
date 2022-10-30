@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current, A, URL
+from gluon import current, A, URL, SPAN
 
 from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
@@ -209,7 +209,12 @@ def rlpptm_org_rheader(r, tabs=None):
                                ],
                               ]
             if record.obsolete:
-                rheader_fields.append(["obsolete"])
+                field = resource.table.obsolete
+                rheader_fields.append([(SPAN("%s: " % field.label,
+                                             _class = "expired",
+                                             ),
+                                        "obsolete",
+                                        )])
 
             rheader_title = "name"
 
