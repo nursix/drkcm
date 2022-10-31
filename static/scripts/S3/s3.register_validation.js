@@ -107,7 +107,7 @@ var s3_register_validation = function() {
             }
         },
         submitHandler: function(form) {
-            form.trigger('submit');
+            form.submit();
         }
     });
 
