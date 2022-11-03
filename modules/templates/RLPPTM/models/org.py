@@ -389,10 +389,17 @@ class TestProviderModel(DataModel):
                                    reason = reason,
                                    )
             # Notify the provider
-            provider.notify_commission_change(status = new_status,
-                                              reason = record.status_reason,
-                                              commission_ids = [record_id],
-                                              )
+            T = current.T
+            msg = provider.notify_commission_change(status = new_status,
+                                                    reason = record.status_reason,
+                                                    commission_ids = [record_id],
+                                                    )
+            if msg:
+                current.response.warning = \
+                    T("Test station could not be notified: %(error)s") % {"error": msg}
+            else:
+                current.response.information = \
+                    T("Test station notified")
 
 # =============================================================================
 class TestStationModel(DataModel):
@@ -1209,11 +1216,12 @@ class TestProvider:
 
         if update:
             verification.update_record(**update)
-
         if accepted:
-            self.reinstate_commission("N/V")
+            info, warn = self.reinstate_commission("N/V")
         else:
-            self.suspend_commission("N/V")
+            info, warn = self.suspend_commission("N/V")
+
+        return info, warn
 
     # -------------------------------------------------------------------------
     def suspend_commission(self, reason):
@@ -1227,6 +1235,8 @@ class TestProvider:
         if not reason:
             raise RuntimeError("reason required")
 
+        info, warn = None, None
+
         db = current.db
         s3db = current.s3db
 
@@ -1236,25 +1246,34 @@ class TestProvider:
                 (table.deleted == False)
         rows = db(query).select(table.id)
         if rows:
+            T = current.T
             commission_ids = [row.id for row in rows]
             query = (table.id.belongs(commission_ids))
             db(query).update(status = "SUSPENDED",
                              status_date = current.request.utcnow.date(),
                              status_reason = reason,
-                             prev_status = "CURRENT",
+                             prev_status = "SUSPENDED",
                              modified_by = table.modified_by,
                              modified_on = table.modified_on,
                              )
 
-            self.notify_commission_change(status = "SUSPENDED",
-                                          reason = reason,
-                                          commission_ids = commission_ids,
-                                          )
+            msg = self.notify_commission_change(status = "SUSPENDED",
+                                                reason = reason,
+                                                commission_ids = commission_ids,
+                                                )
+            if msg is None:
+                info = "%s - %s" % (T("Commission suspended"), T("Test station notified"))
+                warn = None
+            elif msg:
+                info = T("Commission suspended")
+                warn = T("Test station could not be notified: %(error)s") % {"error": msg}
 
         TestStation.update_all(self.organisation_id,
                                public = "N",
                                reason = "SUSPENDED",
                                )
+
+        return info, warn
 
     # -------------------------------------------------------------------------
     def reinstate_commission(self, reason):
@@ -1268,6 +1287,8 @@ class TestProvider:
 
         if not reason:
             raise RuntimeError("reason required")
+
+        info, warn = None, None
 
         db = current.db
         s3db = current.s3db
@@ -1284,20 +1305,27 @@ class TestProvider:
                  (table.deleted == False)
         rows = db(query).select(table.id)
         if rows:
+            T = current.T
             commission_ids = [row.id for row in rows]
             query = (table.id.belongs(commission_ids))
             db(query).update(status = "CURRENT",
                              status_date = current.request.utcnow.date(),
                              status_reason = None,
-                             prev_status = "SUSPENDED",
+                             prev_status = "CURRENT",
                              modified_by = table.modified_by,
                              modified_on = table.modified_on,
                              )
 
-            self.notify_commission_change(status = "CURRENT",
-                                          reason = reason,
-                                          commission_ids = commission_ids,
-                                          )
+            msg = self.notify_commission_change(status = "CURRENT",
+                                                reason = reason,
+                                                commission_ids = commission_ids,
+                                                )
+            if msg is None:
+                info = "%s - %s" % (T("Commission reinstated"), T("Test station notified"))
+                warn = None
+            elif msg:
+                info = T("Commission reinstated")
+                warn = T("Test station could not be notified: %(error)s") % {"error": msg}
 
         self._commission = None
 
@@ -1306,6 +1334,8 @@ class TestProvider:
                                    public = "Y",
                                    reason = ("SUSPENDED", "COMMISSION"),
                                    )
+
+        return info, warn
 
     # -------------------------------------------------------------------------
     def expire_commission(self):
@@ -1374,9 +1404,9 @@ class TestProvider:
         """
 
         if not commission_ids:
-            return "No commission records specified"
+            return False
         if status != "CURRENT" and self.current_commission and not force:
-            return "Notification not required"
+            return False
 
         # Get the organisation ID
         organisation_id = self.organisation_id

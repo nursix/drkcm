@@ -1077,6 +1077,8 @@
 'Commission Details': 'Details zur Beauftragung',
 'Commission added': 'Beauftragung hinzugefügt',
 'Commission deleted': 'Beauftragung gelöscht',
+'Commission reinstated': 'Beauftragung wieder eingesetzt',
+'Commission suspended': 'Beauftragung ausgesetzt',
 'Commission suspended': 'Beauftragung ausgesetzt',
 'Commission updated': 'Beauftragung aktualisiert',
 'Commissions': 'Beauftragungen',

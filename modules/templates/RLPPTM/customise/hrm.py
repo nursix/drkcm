@@ -155,7 +155,12 @@ def human_resource_postprocess(form):
                                       ).first()
     if record:
         from ..models.org import TestProvider
-        TestProvider(record.organisation_id).update_verification()
+        info, warn = TestProvider(record.organisation_id).update_verification()
+        if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+            if info:
+                current.response.information = info
+            if warn:
+                current.response.warning = warn
 
 # -------------------------------------------------------------------------
 def hrm_human_resource_resource(r, tablename):

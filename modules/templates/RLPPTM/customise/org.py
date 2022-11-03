@@ -89,7 +89,12 @@ def organisation_postprocess(form):
     if not record_id:
         return
 
-    TestProvider(record_id).update_verification()
+    info, warn = TestProvider(record_id).update_verification()
+    if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+        if info:
+            current.response.information = info
+        if warn:
+            current.response.warning = warn
 
 # -------------------------------------------------------------------------
 def organisation_organisation_type_onaccept(form):
@@ -108,7 +113,12 @@ def organisation_organisation_type_onaccept(form):
         except AttributeError:
             return
 
-        TestProvider(organisation_id).update_verification()
+        info, warn = TestProvider(organisation_id).update_verification()
+        if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+            if info:
+                current.response.information = info
+            if warn:
+                current.response.warning = warn
 
 # -------------------------------------------------------------------------
 def org_organisation_resource(r, tablename):
