@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from gluon import current, DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
 
-from core import FS, ICON, S3CRUD, S3Represent, \
+from core import FS, ICON, IS_ONE_OF, S3CRUD, S3Represent, \
                  get_filter_options, get_form_record_id, s3_fieldmethod
 
 from ..models.org import TestProvider, TestStation, \
@@ -170,18 +170,7 @@ def org_organisation_controller(**attr):
     settings.base.bigtable = True
 
     # Add custom components
-    current.s3db.add_components("org_organisation",
-                                hrm_human_resource = {"name": "managers",
-                                                      "joinby": "organisation_id",
-                                                      "filterby": {"org_contact": True,
-                                                                   "status": 1, # active
-                                                                   },
-                                                      },
-                                org_verification = {"joinby": "organisation_id",
-                                                    "multiple": False,
-                                                    },
-                                org_commission = "organisation_id",
-                                )
+    TestProvider.add_components()
 
     # Custom prep
     standard_prep = s3.prep
@@ -420,6 +409,36 @@ def org_organisation_controller(**attr):
                                               record_id = r.id,
                                               commission_id = r.component_id,
                                               )
+
+        elif component_name == "issue":
+
+            ctable = r.component.table
+
+            # Make site_id visible
+            field = ctable.site_id
+            field.label = T("Test Station")
+            field.readable = field.writable = True
+
+            # Limit to sites of this org
+            stable = s3db.org_site
+            dbset = current.db((stable.organisation_id == r.id) & \
+                               (stable.instance_type == "org_facility"))
+            field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "org_site.site_id",
+                                                   field.represent,
+                                                   ))
+
+            # List fields
+            list_fields = ["date",
+                           "site_id",
+                           "name",
+                           "description",
+                           "status",
+                           ]
+            r.component.configure(list_fields = list_fields,
+                                  )
+
+            # Open read-view first
+            settings.ui.open_read_first = True
 
         return result
     s3.prep = prep

@@ -1495,10 +1495,17 @@ class TestProvider:
         """
 
         current.s3db.add_components("org_organisation",
+                                    hrm_human_resource = {"name": "managers",
+                                                          "joinby": "organisation_id",
+                                                          "filterby": {"org_contact": True,
+                                                                       "status": 1, # active
+                                                                       },
+                                                          },
                                     org_verification = {"joinby": "organisation_id",
                                                         "multiple": False,
                                                         },
                                     org_commission = "organisation_id",
+                                    jnl_issue = "organisation_id",
                                     )
 
     # -------------------------------------------------------------------------
@@ -2320,6 +2327,7 @@ class TestStation:
                                                 "multiple": False,
                                                 },
                             org_site_approval_status = "site_id",
+                            jnl_issue = "site_id",
                             )
 
     # -------------------------------------------------------------------------

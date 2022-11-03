@@ -496,6 +496,10 @@ def config(settings):
             #description = "Used within Inventory Management, Request Management and Asset Management",
             module_type = None, # Not displayed
         )),
+        ("jnl", Storage(
+            name_nice = T("Management Journal"),
+            module_type = None,
+        )),
     ])
 
 # END =========================================================================

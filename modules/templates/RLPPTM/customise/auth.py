@@ -31,7 +31,6 @@ def rlpptm_realm_entity(table, row):
     #    realm_entity = 0
     #
     if tablename == "pr_person":
-
         # Human resources belong to their org's realm
         htable = s3db.hrm_human_resource
         otable = s3db.org_organisation
@@ -122,7 +121,6 @@ def rlpptm_realm_entity(table, row):
     #    realm_entity = 0
     #
     elif tablename == "fin_voucher_invoice":
-
         # Invoices are owned by the accountant organization of the billing
         table = s3db.table(tablename)
         btable = s3db.fin_voucher_billing
@@ -144,7 +142,6 @@ def rlpptm_realm_entity(table, row):
     elif tablename in ("fin_voucher_billing",
                        "fin_voucher_transaction",
                        ):
-
         # Billings and transactions inherit realm-entity of the program
         table = s3db.table(tablename)
         ptable = s3db.fin_voucher_program
@@ -156,10 +153,26 @@ def rlpptm_realm_entity(table, row):
         if program:
             realm_entity = program.realm_entity
 
+    #elif tablename == "jnl_issue":
+    #
+    #    # Journal issues are owned by the organisation they are about (default ok)
+    #    realm_entity = 0
+    #
+    elif tablename == "jnl_note":
+        # Journal notes inherit from the issue they belong to
+        table = s3db.table(tablename)
+        itable = s3db.jnl_issue
+        query = (table._id == row.id) & \
+                (itable.id == table.issue_id)
+        issue = db(query).select(itable.realm_entity,
+                                 limitby = (0, 1),
+                                 ).first()
+        if issue:
+            realm_entity = issue.realm_entity
+
     elif tablename in ("pr_person_details",
                        "pr_person_tag",
                        ):
-
         # Inherit from person via person_id
         table = s3db.table(tablename)
         ptable = s3db.pr_person
@@ -175,7 +188,6 @@ def rlpptm_realm_entity(table, row):
                        "pr_contact",
                        "pr_contact_emergency",
                        ):
-
         # Inherit from person via PE
         table = s3db.table(tablename)
         ptable = s3db.pr_person

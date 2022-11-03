@@ -202,6 +202,7 @@ def rlpptm_org_rheader(r, tabs=None):
             if not tabs:
                 tabs = [(T("Basic Details"), None),
                         (T("Approval History"), "site_approval_status"),
+                        (T("Administration##authority"), "issue"),
                         ]
             rheader_fields = [["organisation_id",
                                ],
@@ -237,6 +238,7 @@ def default_org_tabs(record, group=None, is_org_group_admin=False):
     doc_tab = None
     managers_tab = None
     commission_tab = None
+    journal_tab = None
 
     if group:
 
@@ -247,6 +249,7 @@ def default_org_tabs(record, group=None, is_org_group_admin=False):
             if is_org_group_admin:
                 managers_tab = (T("Test Station Managers"), "managers")
             commission_tab = (T("Commissions"), "commission")
+            journal_tab = (T("Administration##authority"), "issue")
         elif group == SCHOOLS:
             sites_tab = (T("Administrative Offices"), "office")
             if is_org_group_admin:
@@ -261,6 +264,7 @@ def default_org_tabs(record, group=None, is_org_group_admin=False):
             managers_tab,
             commission_tab,
             doc_tab,
+            journal_tab,
             ]
 
 # =============================================================================

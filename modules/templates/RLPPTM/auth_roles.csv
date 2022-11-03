@@ -85,7 +85,7 @@ ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,person,,CREATE|READ|UPDATE|DELETE
 ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,staff,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,compose,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,msg,compose,,CREATE|READ|UPDATE,,
-ORG_GROUP_ADMIN,Organisation Group Admin,,,org,facility,,READ|UPDATE,,
+ORG_GROUP_ADMIN,Organisation Group Admin,,,org,facility,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,org,organisation,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,org,,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,disease_daycare_testing,READ,,any
@@ -94,6 +94,8 @@ ORG_GROUP_ADMIN,Organisation Group Admin,,,,,fin_voucher_claim,READ,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,fin_voucher_debit,READ,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,hrm_human_resource,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,inv_warehouse,CREATE|READ|UPDATE|DELETE,,
+ORG_GROUP_ADMIN,Organisation Group Admin,,,,,jnl_issue,CREATE|READ|UPDATE|DELETE,,
+ORG_GROUP_ADMIN,Organisation Group Admin,,,,,jnl_note,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_commission,CREATE|READ|UPDATE|DELETE,,any
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_facility,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_facility_type,CREATE|READ|UPDATE|DELETE,,
