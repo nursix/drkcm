@@ -3505,6 +3505,7 @@
 'Manage requests for supplies, assets, staff or other resources. Matches against Inventories where supplies are requested.': 'Verwaltung der Anfragen nach Vorräten, Anlagen, Mitarbeitern oder anderen Ressourcen. Vergleich mit den Beständen, wo Vorräte angefordert werden',
 'Manage requests of hospitals for assistance.': 'Verwaltung der Anfragen von Krankenhäusern nach Unterstützung.',
 'Manage volunteers by capturing their skills, availability and allocation': 'Verwaltung der Freiwilligen Helfer anhand ihrer Fähigkeiten, Verfügbarkeit und Zuordnung.',
+'Manage': 'Verwalten',
 'Managed by me': 'Von mir verwaltet',
 'Manager Information required': 'Dokumentation Teststellenverantwortliche(r) erforderlich',
 'Managing Office': 'Verwaltungsbüro',
