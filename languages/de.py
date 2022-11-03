@@ -1079,7 +1079,6 @@
 'Commission deleted': 'Beauftragung gelöscht',
 'Commission reinstated': 'Beauftragung wieder eingesetzt',
 'Commission suspended': 'Beauftragung ausgesetzt',
-'Commission suspended': 'Beauftragung ausgesetzt',
 'Commission updated': 'Beauftragung aktualisiert',
 'Commissions': 'Beauftragungen',
 'Commit Date': 'Datum der Einstellung',
