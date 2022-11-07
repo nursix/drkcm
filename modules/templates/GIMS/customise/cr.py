@@ -398,6 +398,28 @@ def cr_shelter_status_resource(r, tablename):
     field = table.population_children
     field.label = T("Population (Minors)")
 
+    # Timeplot options
+    # TODO need end date for proper timeplot report
+    #facts = [(T("Current Population (Total)"), "sum(population)"),
+    #         (T("Current Population (Adults)"), "sum(population_adults)"),
+    #         (T("Current Population (Children)"), "sum(population_children)"),
+    #         (T("Total Capacity"), "sum(capacity)"),
+    #         ]
+    #timeplot_options = {
+    #    "facts": facts,
+    #    "timestamp": (#(T("per interval"), "date,date"),
+    #                  (T("cumulative"), "date"),
+    #                  ),
+    #    "defaults": {"fact": facts[0],
+    #                 "timestamp": "date",
+    #                 "time": "<-0 months||days",
+    #                 },
+    #    }
+    #
+    #s3db.configure("cr_shelter_status",
+    #               timeplot_options = timeplot_options,
+    #               )
+
 # -------------------------------------------------------------------------
 def cr_shelter_population_resource(r, tablename):
 
