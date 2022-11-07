@@ -155,19 +155,20 @@ class IS_JSONS3(Validator):
             # which would still be valid Python though, so try
             # using ast to decode, then re-dumps as valid JSON:
             import ast
+            invalid = JSONERRORS + (SyntaxError,)
             try:
                 v = json.dumps(ast.literal_eval(value),
                                separators = JSONSEPARATORS,
                                )
-            except JSONERRORS + (SyntaxError,) as e:
-                raise ValidationError(error(e))
+            except invalid as e:
+                raise ValidationError(error(e)) from e
             ret = v if self.native_json else json.loads(v)
         else:
             # Coming from UI, so expect valid JSON
             try:
                 parsed = json.loads(value)
             except JSONERRORS as e:
-                raise ValidationError(error(e))
+                raise ValidationError(error(e)) from e
             else:
                 ret = value if self.native_json else parsed
 
@@ -235,23 +236,22 @@ class IS_LAT(Validator):
             raise ValidationError(self.error_message)
         try:
             value = float(value)
-        except ValueError:
+        except ValueError as e:
             # DMS format
             match = self.schema.match(value)
             if not match:
-                raise ValidationError(self.error_message)
-            else:
-                try:
-                    d = float(match.group(1))
-                    m = float(match.group(2))
-                    s = float(match.group(3))
-                except (ValueError, TypeError):
-                    raise ValidationError(self.error_message)
+                raise ValidationError(self.error_message) from e
+            try:
+                d = float(match.group(1))
+                m = float(match.group(2))
+                s = float(match.group(3))
+            except (ValueError, TypeError) as ee:
+                raise ValidationError(self.error_message) from ee
 
-                h = match.group(5)
-                sign = -1 if h in ("S", "W") else 1
+            h = match.group(5)
+            sign = -1 if h in ("S", "W") else 1
 
-                deg = sign * (d + m / 60 + s / 3600)
+            deg = sign * (d + m / 60 + s / 3600)
         else:
             deg = value
 
@@ -279,7 +279,7 @@ class IS_LON(IS_LAT):
                 error_message: alternative error message
         """
 
-        super(IS_LON, self).__init__(error_message=error_message)
+        super().__init__(error_message=error_message)
 
         self.schema = LON_SCHEMA
         self.minimum = -180
@@ -793,6 +793,10 @@ class IS_ONE_OF_EMPTY(Validator):
             if not label:
                 label = "%%(%s)s" % kfield
                 fields = [pkey]
+                # Include name-field as fallback for build-set
+                table = current.s3db.table(ktable)
+                if table and "name" in table.fields:
+                    fields.append("name")
             elif hasattr(label, "bulk"):
                 # S3Represent
                 if label.custom_lookup:
@@ -1289,12 +1293,12 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
                              (e.g. to let deduplicate take care of duplicates)
         """
 
-        super(IS_NOT_ONE_OF, self).__init__(dbset,
-                                            field,
-                                            error_message = error_message,
-                                            allowed_override = allowed_override,
-                                            ignore_common_filters = ignore_common_filters,
-                                            )
+        super().__init__(dbset,
+                         field,
+                         error_message = error_message,
+                         allowed_override = allowed_override,
+                         ignore_common_filters = ignore_common_filters,
+                         )
         self.skip_imports = skip_imports
 
     # -------------------------------------------------------------------------
@@ -1378,9 +1382,9 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
                                           )
                     try:
                         row.update_record(**{fieldname: tagged})
-                    except Exception:
+                    except Exception as e:
                         # Failed => nothing else we can try
-                        ValidationError(translate(self.error_message))
+                        raise ValidationError(translate(self.error_message)) from e
                 else:
                     raise ValidationError(translate(self.error_message))
 
@@ -1795,13 +1799,13 @@ class IS_UTC_DATE(IS_UTC_DATETIME):
                 maximum: the maximum acceptable date (datetime.date)
         """
 
-        super(IS_UTC_DATE, self).__init__(format = format,
-                                          error_message = error_message,
-                                          offset_error = offset_error,
-                                          calendar = calendar,
-                                          minimum = minimum,
-                                          maximum = maximum,
-                                          )
+        super().__init__(format = format,
+                         error_message = error_message,
+                         offset_error = offset_error,
+                         calendar = calendar,
+                         minimum = minimum,
+                         maximum = maximum,
+                         )
 
         if format is None:
             self.format = str(current.deployment_settings.get_L10n_date_format())
@@ -2105,7 +2109,7 @@ class IS_IN_SET_LAZY(Validator):
 
         failures = [x for x in values if not x in self.theset]
         if failures and self.theset:
-            if multiple and (value == None or value == ""):
+            if multiple and value in (None, ""):
                 return []
             raise ValidationError(translate(self.error_message))
 
@@ -2141,7 +2145,7 @@ class IS_PERSON_GENDER(IS_IN_SET):
             # 4 = other, always accepted even if hidden
             return value
 
-        return super(IS_PERSON_GENDER, self).validate(value)
+        return super().validate(value)
 
 # =============================================================================
 # Phone number patterns
@@ -2280,8 +2284,8 @@ class IS_PHONE_NUMBER_MULTI(Validator):
         requires = IS_MATCH(MULTI_PHONE_NUMBER_PATTERN)
         try:
             number = requires.validate(s3_str(value))
-        except ValidationError:
-            raise ValidationError(translate(self.error_message))
+        except ValidationError as e:
+            raise ValidationError(translate(self.error_message)) from e
 
         return number
 
@@ -2415,13 +2419,12 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 zero: use this label for the empty-option (default="")
         """
 
-        super(IS_ISO639_2_LANGUAGE_CODE, self).__init__(
-                                                self.language_codes(),
-                                                error_message = error_message,
-                                                multiple = multiple,
-                                                zero = zero,
-                                                sort = sort,
-                                                )
+        super().__init__(self.language_codes(),
+                         error_message = error_message,
+                         multiple = multiple,
+                         zero = zero,
+                         sort = sort,
+                         )
 
         if select is DEFAULT:
             self._select = current.deployment_settings.get_L10n_languages()

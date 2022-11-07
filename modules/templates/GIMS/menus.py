@@ -200,7 +200,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                             ),
                         M("Statistics", link=False)(
                             M("Capacity / Occupancy", f="reception_center", m="report"),
-                            #M("Status History", f="reception_center_status", m="timeplot"),
+                            M("Status History", f="reception_center_status", m="timeplot"),
                             ),
                         M("Administration", link=False, restrict=(ADMIN,))(
                             M("Facility Types", f="reception_center_type"),

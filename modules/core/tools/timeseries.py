@@ -525,10 +525,15 @@ class TimeSeries:
         rfilter.transformed = None
 
         # Do we need to convert dates into datetimes?
-        convert_start = True if event_start.ftype == "date" else False
-        convert_end = True if event_start.ftype == "date" else False
-        fromordinal = datetime.datetime.fromordinal
-        convert_date = lambda d: fromordinal(d.toordinal())
+        if event_start.ftype == "date":
+            convert_start = lambda d: datetime.datetime.fromordinal(d.toordinal())
+        else:
+            convert_start = False
+        if event_end and event_end.ftype == "date":
+            eod = datetime.time(23,59,59) # End of day
+            convert_end = lambda d: datetime.datetime.combine(d, eod)
+        else:
+            convert_end = False
 
         # Column names for extractions
         pkey = str(resource._id)
@@ -556,11 +561,11 @@ class TimeSeries:
 
             # Extract start/end date
             start = row[start_colname]
-            if convert_start and start:
-                start = convert_date(start)
+            if start and convert_start:
+                start = convert_start(start)
             end = row[end_colname] if end_colname else None
-            if convert_end and end:
-                end = convert_date(end)
+            if end and convert_end:
+                end = convert_end(end)
 
             # values = (base, slope)
             event = TimeSeriesEvent(row[pkey],
@@ -994,8 +999,7 @@ class TimeSeriesFact:
                 if base_value is None:
                     if not slope or slope_value is None:
                         continue
-                    else:
-                        base_value = 0
+                    base_value = 0
                 elif type(base_value) is list:
                     try:
                         base_value = sum(base_value)
@@ -1005,8 +1009,7 @@ class TimeSeriesFact:
                 if slope_value is None:
                     if not base or base_value is None:
                         continue
-                    else:
-                        slope_value = 0
+                    slope_value = 0
                 elif type(slope_value) is list:
                     try:
                         slope_value = sum(slope_value)
@@ -1029,7 +1032,7 @@ class TimeSeriesFact:
                 value = event[base]
                 if value is None:
                     continue
-                elif type(value) is list:
+                if type(value) is list:
                     values.extend([v for v in value if v is not None])
                 else:
                     values.append(value)

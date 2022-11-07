@@ -44,10 +44,21 @@ def shelter_service():
 
 # -----------------------------------------------------------------------------
 def shelter_population():
+    """
+        Shelter population, CRUD controller
+    """
 
     def prep(r):
         return r.http == "GET"
     s3.prep = prep
+
+    return crud_controller()
+
+# -----------------------------------------------------------------------------
+def shelter_status():
+    """
+        Shelter status history, CRUD controller
+    """
 
     return crud_controller()
 
