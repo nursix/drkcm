@@ -523,22 +523,12 @@ def cr_shelter_population_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
-def cr_reception_center_resource(r, tablename):
-
-    pass
-
-# -------------------------------------------------------------------------
 def cr_reception_center_controller(**attr):
 
     from ..rheaders import cr_rheader
     attr["rheader"] = cr_rheader
 
     return attr
-
-# -------------------------------------------------------------------------
-def cr_reception_center_type_resource(r, tablename):
-
-    pass
 
 # -------------------------------------------------------------------------
 def cr_reception_center_type_controller(**attr):

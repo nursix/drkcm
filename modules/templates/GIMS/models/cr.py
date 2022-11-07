@@ -40,7 +40,7 @@ from core import DataModel, S3Duplicate, S3LocationSelector, S3PriorityRepresent
                  S3Represent, S3ReusableField, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
                  get_form_record_id, s3_comments, s3_date, s3_meta_fields, \
-                 OptionsFilter, TextFilter, get_filter_options
+                 LocationFilter, OptionsFilter, TextFilter, get_filter_options
 
 # =============================================================================
 class CRReceptionCenterModel(DataModel):
@@ -368,11 +368,20 @@ class CRReceptionCenterModel(DataModel):
                           OptionsFilter("facility_id$type_id",
                                         options = get_filter_options("cr_reception_center_type"),
                                         ),
-                          OptionsFilter("facility_id$status",
+                          OptionsFilter("status",
                                         options = OrderedDict(status_opts),
                                         cols = 3,
+                                        default = ["OP", "SB"],
                                         sort = False,
                                         ),
+                          OptionsFilter("facility_id",
+                                        options = get_filter_options("cr_reception_center"),
+                                        hidden = True,
+                                        ),
+                          LocationFilter("facility_id$location_id",
+                                         levels = ["L2", "L3"],
+                                         hidden = True,
+                                         ),
                           ]
 
         # Timeplot options
@@ -387,8 +396,12 @@ class CRReceptionCenterModel(DataModel):
         timeplot_options = {
             "facts": facts,
             "timestamp": ((T("per interval"), "date,date_until"),
-                          (T("cumulative"), "date"),
+                          #(T("cumulative"), "date"),
                           ),
+            "time": ((T("Last 3 Months"), "-3 months", "", "days"),
+                     (T("This Month"), "<-0 months", "", "days"),
+                     (T("This Week"), "<-0 weeks", "", "days"),
+                     ),
             "defaults": {"fact": facts[0],
                          "timestamp": "date,date_until",
                          "time": "<-0 months||days",

@@ -737,6 +737,13 @@ class TimeSeries:
             if not length:
                 raise SyntaxError("Invalid date/time: %s" % timestr)
 
+            # Avoid unnecessary time details
+            start = start.replace(hour = 0 if length != "hours" else start.hour,
+                                  minute = 0,
+                                  second = 0,
+                                  microsecond = 0,
+                                  )
+
             num = int(groups[2])
             if groups[1] == "-":
                 num *= -1

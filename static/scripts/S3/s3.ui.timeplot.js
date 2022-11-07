@@ -95,7 +95,10 @@
             precision: null,
 
             defaultChartType: 'barchart',
-            defaultChartAxis: 'totals'
+            defaultChartAxis: 'totals',
+
+            labelGrouped: 'Grouped',
+            labelStacked: 'Stacked'
         },
 
         /**
@@ -350,6 +353,7 @@
 
             var items = multiSeries(facts, data),
                 currentChart = this.currentChart,
+                opts = this.options,
                 barChart,
                 barChartContainer;
 
@@ -358,6 +362,7 @@
                 barChart = currentChart.chart;
 
                 // Update the data
+                barChart.showControls(facts.length > 1);
                 barChartContainer.datum(items)
                                  .transition()
                                  .duration(50)
@@ -378,6 +383,10 @@
                                     .y(function(d) { return d.value; })
                                     .staggerLabels(true)
                                     .showControls(facts.length > 1)
+                                    .controlLabels({
+                                        'grouped': opts.labelGrouped,
+                                        'stacked': opts.labelStacked
+                                    })
                                     .forceY([0, 1]);
 
                 barChart.tooltip.enabled(false);
