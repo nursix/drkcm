@@ -25,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("TestProviderModel",
+__all__ = ("TestProviderRequirementsModel",
+           "TestProviderModel",
            "TestStationModel"
            )
 
@@ -34,7 +35,7 @@ import datetime
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
-from core import DataModel, IS_UTC_DATE, \
+from core import BooleanRepresent, DataModel, S3Duplicate, IS_UTC_DATE, \
                  get_form_record_id, represent_option, s3_comments, \
                  s3_comments_widget, s3_date, s3_datetime, s3_meta_fields, \
                  s3_text_represent, s3_yes_no_represent
@@ -95,6 +96,50 @@ PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Provider not currently commissio
                                 ("OVERRIDE", "set by Administrator"),
                                 selectable = ("OVERRIDE",),
                                 )
+
+# =============================================================================
+class TestProviderRequirementsModel(DataModel):
+    """
+        Approval characteristics/requirements for types of test providers
+    """
+
+    names = ("org_requirements",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        flag_represent = BooleanRepresent(icons=True, flag=True)
+
+        # ---------------------------------------------------------------------
+        # Requirements
+        #
+        tablename = "org_requirements"
+        self.define_table(tablename,
+                          self.org_organisation_type_id(),
+                          Field("commercial", "boolean",
+                                label = T("Commercial Providers"),
+                                default = False,
+                                represent = flag_represent,
+                                ),
+                          Field("verifreq", "boolean",
+                                label = T("Verification required"),
+                                default = False,
+                                represent = flag_represent,
+                                ),
+                          Field("minforeq", "boolean",
+                                label = T("Manager Information required"),
+                                default = False,
+                                represent = flag_represent,
+                                ),
+                          *s3_meta_fields())
+
+        # Table configuration
+        self.configure(tablename,
+                       deduplicate = S3Duplicate(primary=("organisation_type_id",),
+                                                 ),
+                       )
 
 # =============================================================================
 class TestProviderModel(DataModel):
@@ -782,11 +827,10 @@ class TestProvider:
     @property
     def types(self):
         """
-            The types and corresponding type tags for the organisation type
-            of this provider
+            The organisation types and corresponding requirements for this provider
 
             Returns:
-                dict {type_id: {tag: value}} with all current types and tags
+                dict {type_id: requirements}
         """
 
         types = self._types
@@ -798,26 +842,32 @@ class TestProvider:
             s3db = current.s3db
 
             ltable = s3db.org_organisation_organisation_type
-            ttable = s3db.org_organisation_type_tag
+            rtable = s3db.org_requirements
 
-            left = ttable.on((ttable.organisation_type_id == ltable.organisation_type_id) & \
-                             (ttable.deleted == False))
+            left = rtable.on((rtable.organisation_type_id == ltable.organisation_type_id) & \
+                             (rtable.deleted == False))
             query = (ltable.organisation_id == self.organisation_id) & \
                     (ltable.deleted == False)
             rows = db(query).select(ltable.organisation_type_id,
-                                    ttable.tag,
-                                    ttable.value,
+                                    rtable.id,
+                                    rtable.commercial,
+                                    rtable.minforeq,
+                                    rtable.verifreq,
                                     left=left,
                                     )
+
+            # Default provider requirements
+            defaults = Storage(commercial = False,
+                               minforeq = False,
+                               verifreq = False,
+                               )
+
             for row in rows:
-                tag = row[ttable]
-                type_id = row[ltable].organisation_type_id
-                if type_id not in types:
-                    tags = types[type_id] = {}
+                requirements = row[rtable]
+                if requirements.id:
+                    types[row[ltable].organisation_type_id] = requirements
                 else:
-                    tags = types[type_id]
-                if tag.tag:
-                    tags[tag.tag] = tag.value
+                    types[row[ltable].organisation_type_id] = defaults
 
             self._types = types
 
@@ -834,7 +884,7 @@ class TestProvider:
         """
 
         types = self.types
-        return any(types[t].get("Commercial") == "Y" for t in types)
+        return any(types[t].commercial for t in types)
 
     # -------------------------------------------------------------------------
     @property
@@ -847,7 +897,7 @@ class TestProvider:
         """
 
         types = self.types
-        return any(types[t].get("VERIFREQ") == "Y" for t in types)
+        return any(types[t].verifreq for t in types)
 
     # -------------------------------------------------------------------------
     @property
@@ -860,7 +910,7 @@ class TestProvider:
         """
 
         types = self.types
-        return any(types[t].get("MINFOREQ") == "Y" for t in types)
+        return any(types[t].minforeq for t in types)
 
     # -------------------------------------------------------------------------
     # Instance methods

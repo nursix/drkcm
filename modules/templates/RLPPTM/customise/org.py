@@ -500,25 +500,10 @@ def org_organisation_type_resource(r, tablename):
                                                       "filterby": {"tag": "OrgGroup"},
                                                       "multiple": False,
                                                       },
-                                                     # Commercial provider type
-                                                     {"name": "commercial",
-                                                      "joinby": "organisation_type_id",
-                                                      "filterby": {"tag": "Commercial"},
-                                                      "multiple": False,
-                                                      },
-                                                     # Manager info required
-                                                     {"name": "minforeq",
-                                                      "joinby": "organisation_type_id",
-                                                      "filterby": {"tag": "MINFOREQ"},
-                                                      "multiple": False,
-                                                      },
-                                                     # Type verification required
-                                                     {"name": "verifreq",
-                                                      "joinby": "organisation_type_id",
-                                                      "filterby": {"tag": "VERIFREQ"},
-                                                      "multiple": False,
-                                                      },
                                                      ),
+                        org_requirements = {"joinby": "organisation_type_id",
+                                            "multiple": False,
+                                            },
                         )
 
     if r.tablename == "org_organisation_type":
@@ -542,10 +527,6 @@ def org_organisation_type_resource(r, tablename):
             field.label = T("Organization Group")
             field.requires = IS_EMPTY_OR(IS_IN_SET(options))
 
-        # Configure binary tag representation
-        from ..helpers import configure_binary_tags
-        configure_binary_tags(r.resource, ("commercial", "verifreq", "minforeq"))
-
         # Expose orderable item categories
         ltable = s3db.req_requester_category
         field = ltable.item_category_id
@@ -555,9 +536,9 @@ def org_organisation_type_resource(r, tablename):
         from core import S3SQLCustomForm, S3SQLInlineLink
         crud_form = S3SQLCustomForm("name",
                                     "group.value",
-                                    (T("Commercial Providers"), "commercial.value"),
-                                    (T("Verification required"), "verifreq.value"),
-                                    (T("Manager Information required"), "minforeq.value"),
+                                    "requirements.commercial",
+                                    "requirements.verifreq",
+                                    "requirements.minforeq",
                                     S3SQLInlineLink("item_category",
                                                     field = "item_category_id",
                                                     label = T("Orderable Item Categories"),
@@ -569,7 +550,7 @@ def org_organisation_type_resource(r, tablename):
         list_fields = ["id",
                        "name",
                        "group.value",
-                       (T("Commercial Providers"), "commercial.value"),
+                       "requirements.commercial",
                        (T("Orderable Item Categories"), "requester_category.item_category_id"),
                        "comments",
                        ]

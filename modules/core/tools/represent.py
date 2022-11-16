@@ -25,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3Represent",
+__all__ = ("BooleanRepresent",
+           "S3Represent",
            "S3RepresentLazy",
            "S3PriorityRepresent",
            "s3_URLise",
@@ -52,7 +53,7 @@ import sys
 
 from itertools import chain
 
-from gluon import current, A, DIV, IMG, IS_URL, SPAN, TAG, URL, XML
+from gluon import current, A, DIV, I, IMG, IS_URL, SPAN, TAG, URL, XML
 from gluon.storage import Storage
 from gluon.languages import lazyT
 
@@ -325,8 +326,8 @@ class S3Represent:
                 values = list(set(chain.from_iterable(values)))
                 if hasnone:
                     values.append(None)
-            except TypeError:
-                raise ValueError("List of lists expected, got %s" % values)
+            except TypeError as e:
+                raise ValueError("List of lists expected, got %s" % values) from e
         else:
             values = [values] if type(values) is not list else values
 
@@ -393,8 +394,8 @@ class S3Represent:
                 values = list(set(chain.from_iterable(values)))
                 if hasnone:
                     values.append(None)
-            except TypeError:
-                raise ValueError("List of lists expected, got %s" % values)
+            except TypeError as e:
+                raise ValueError("List of lists expected, got %s" % values) from e
         else:
             values = [values] if type(values) is not list else values
 
@@ -811,6 +812,155 @@ class S3PriorityRepresent:
         return self(value, row=row)
 
 # =============================================================================
+class BooleanRepresent:
+    """
+        Visually enhanced representation of boolean values
+    """
+
+    RED = "bool-red"
+    GREEN = "bool-green"
+    BLUE = "bool-blue"
+    GREY = "bool-grey"
+
+    POS = "fa fa-check"
+    NEG = "fa fa-remove"
+
+    CSS = "bool"
+
+    # -------------------------------------------------------------------------
+    def __init__(self, labels=True, icons=False, colors=False, flag=None):
+        """
+            Args:
+                labels: show labels for values
+                        - True:                        use default Yes|No labels
+                        - tuple (yes_label, no_label): use alternative labels
+                        - False:                       hide labels
+                icons: show icons for values
+                        - True:                        use default icons
+                        - tuple (yes_css, no_css)      use alternative CSS classes for icons
+                        - False:                       hide icons
+                colors: use colors for representation
+                        - True:                        use default red|green colors
+                        - tuple (yes_css, no_css)      use alternative CSS classes for color
+                        - False:                       no colors
+                flag: show only positive|negative values
+                        - True:                        hide if False (positive flag)
+                        - False:                       hide if True (negative flag)
+                        - None:                        show both
+        """
+
+        self.labels = bool(labels)
+        if isinstance(labels, tuple):
+            self.yes, self.no = labels
+        elif labels:
+            T = current.T
+            self.yes, self.no = T("Yes"), T("No")
+        else:
+            self.yes, self.no = "", ""
+
+        if isinstance(icons, tuple):
+            self.icons = icons
+        elif icons:
+            self.icons = (self.POS, self.NEG)
+        else:
+            self.icons = None
+
+        if isinstance(colors, tuple):
+            self.colors = colors
+        elif colors:
+            self.colors = (self.GREEN, self.RED)
+        else:
+            self.colors = None
+
+        self.flag = flag
+
+        self._pos = None
+        self._neg = None
+
+    # -------------------------------------------------------------------------
+    @property
+    def pos(self):
+        """
+            Representation of positive (True) value
+        """
+
+        v = self._pos
+        if v is None:
+            if self.flag is False:
+                v = "-"
+            else:
+                v = self.yes
+                icons, colors = self.icons, self.colors
+                if icons or colors:
+                    v = SPAN(v, _class=self.CSS) if v else SPAN(_class=self.CSS)
+                    v.add_class(self.CSS)
+                    if icons and icons[0]:
+                        v.insert(0, I(_class=icons[0]))
+                    if colors and colors[0]:
+                        v.add_class(colors[0])
+            self._pos = v
+        return v
+
+    # -------------------------------------------------------------------------
+    @property
+    def neg(self):
+        """
+            Representation of negative (False) values
+        """
+
+        v = self._neg
+        if v is None:
+            if self.flag is True:
+                v = "-"
+            else:
+                v = self.no
+                icons, colors = self.icons, self.colors
+                if icons or colors:
+                    v = SPAN(v, _class=self.CSS) if v else SPAN(_class=self.CSS)
+                    if icons and icons[1]:
+                        v.insert(0, I(_class=icons[1]))
+                    if colors and colors[1]:
+                        v.add_class(colors[1])
+            self._neg = v
+        return v
+
+    # -------------------------------------------------------------------------
+    def __call__(self, value, row=None):
+        """
+            Value representation applying configured options
+
+            Args:
+                value: the value
+                row: the Row (unused)
+
+            Returns:
+                the represented value
+        """
+
+        return self.pos if value else self.neg
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def yesno(value, row=None):
+        """
+            Classic yes|no text representation of boolean values
+
+            Args:
+                value: the value
+                row: the Row (unused)
+
+            Returns:
+                the represented value
+        """
+
+        if value is True:
+            return current.T("Yes")
+        elif value is False:
+            return current.T("No")
+        else:
+            return "-"
+
+# =============================================================================
 # Uploaded file representation
 #
 FILE_ICONS = {".pdf": "file-pdf",
@@ -870,8 +1020,7 @@ def represent_file(value, row=None):
             unit = u
             if fsize < 1024:
                 break
-            else:
-                fsize /= 1024
+            fsize /= 1024
         fsize = "%s %s" % (round(fsize), unit)
         output.append(SPAN(fsize, _class="file-size"))
 

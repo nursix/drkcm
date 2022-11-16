@@ -59,6 +59,27 @@
 }
 
 // ----------------------------------------------------------------------------
+// Boolean Representation
+//
+.bool {
+    i {
+        margin-right: 0.2rem;
+    }
+    &.bool-red {
+        color: #d01717;
+    }
+    &.bool-green {
+        color: #018801;
+    }
+    &.bool-blue {
+        color: #1754b3;
+    }
+    &.bool-grey {
+        color: #7f7f7f;
+    }
+}
+
+// ----------------------------------------------------------------------------
 // Priority Representation
 //
 .prio {

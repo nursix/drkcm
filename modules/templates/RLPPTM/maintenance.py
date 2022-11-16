@@ -332,18 +332,16 @@ class Daily():
         s3db = current.s3db
 
         # Organisation types with requirements changed in the last 36 hours
-        tags = {"MINFOREQ", "VERIFREQ"}
         limit = (datetime.datetime.utcnow() - datetime.timedelta(hours=36)).date()
 
-        ottable = s3db.org_organisation_type
-        tttable = s3db.org_organisation_type_tag
+        ttable = s3db.org_organisation_type
+        rtable = s3db.org_requirements
 
-        join = tttable.on((tttable.organisation_type_id == ottable.id) & \
-                          (tttable.tag.belongs(tags)) & \
-                          (tttable.modified_on >= limit) & \
-                          (tttable.deleted == False))
-        query = (ottable.deleted == False)
-        types = db(query)._select(ottable.id, join=join)
+        join = rtable.on((rtable.organisation_type_id == ttable.id) & \
+                         (rtable.modified_on >= limit) & \
+                         (rtable.deleted == False))
+        query = (ttable.deleted == False)
+        types = db(query)._select(ttable.id, join=join)
 
         # Look up affected organisations in the TESTSTATIONS group
         otable = s3db.org_organisation
