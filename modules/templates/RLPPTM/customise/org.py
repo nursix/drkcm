@@ -13,7 +13,7 @@ from core import FS, ICON, IS_ONE_OF, S3CRUD, S3Represent, \
                  get_filter_options, get_form_record_id, s3_fieldmethod
 
 from ..models.org import TestProvider, TestStation, \
-                         MGRINFO_STATUS, PUBLIC_REASON
+                         ORG_RQM, PUBLIC_REASON
 
 # -------------------------------------------------------------------------
 def add_org_tags():
@@ -361,7 +361,7 @@ def org_organisation_controller(**attr):
                         OptionsFilter(
                             "verification.mgrinfo",
                             label = T("TestSt Manager##abbr"),
-                            options = OrderedDict(MGRINFO_STATUS.labels),
+                            options = OrderedDict(ORG_RQM.labels),
                             sort = False,
                             hidden = True,
                             ),
@@ -795,7 +795,7 @@ def configure_facility_form(r, is_org_group_admin=False):
 
         table = fresource.table
         table.mgrinfo = s3_fieldmethod("mgrinfo", facility_mgrinfo,
-                                       represent = MGRINFO_STATUS.represent,
+                                       represent = ORG_RQM.represent,
                                        )
         extra_fields = ["organisation_id$verification.mgrinfo"]
 
