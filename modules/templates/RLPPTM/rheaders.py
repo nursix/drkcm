@@ -177,24 +177,18 @@ def rlpptm_org_rheader(r, tabs=None):
 
                 from .config import TESTSTATIONS
                 if group == TESTSTATIONS:
-                    rows = resource.select(["verification.mgrinfo",
-                                            "verification.orgtype",
+                    rows = resource.select(["verification.status",
                                             ],
                                            represent = True,
                                            ).rows
                     if rows:
-                        mgrinfo = rows[0]["org_verification.mgrinfo"]
-                        orgtype = rows[0]["org_verification.orgtype"]
+                        status = rows[0]["org_verification.status"]
                     else:
-                        mgrinfo = orgtype = "-"
+                        status = None
 
-                    rheader_fields[0].append((T("Documentation Test Station Manager"),
-                                              lambda row: mgrinfo,
+                    rheader_fields[0].append((T("Documentation / Verification"),
+                                              lambda row: status,
                                               ))
-                    rheader_fields[1].append((T("Organization Type Verification"),
-                                              lambda row: orgtype,
-                                              ))
-
             rheader_title = "name"
 
         elif tablename == "org_facility" and is_org_group_admin:

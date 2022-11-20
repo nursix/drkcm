@@ -248,6 +248,9 @@ def org_organisation_controller(**attr):
                 from ..helpers import is_org_group
 
                 # Custom form
+                subheadings = {"name": T("Organization"),
+                               "emailcontact": T("Contact Information"),
+                               }
 
                 is_test_station = record and is_org_group(record.id, TESTSTATIONS)
                 if is_test_station:
@@ -256,6 +259,7 @@ def org_organisation_controller(**attr):
                     acronym, logo = "acronym", "logo"
 
                 if is_org_group_admin:
+
                     # Show organisation type(s) and verification tag as required
                     types = S3SQLInlineLink("organisation_type",
                                             field = "organisation_type_id",
@@ -264,14 +268,6 @@ def org_organisation_controller(**attr):
                                             multiple = settings.get_org_organisation_types_multiple(),
                                             widget = "multiselect",
                                             )
-                    if is_test_station and TestProvider(record.id).verifreq:
-                        TestProvider.configure_verification(r.resource,
-                                                            role = "approver",
-                                                            record_id = record.id,
-                                                            )
-                        type_check = "verification.orgtype"
-                    else:
-                        type_check = None
 
                     # Show org groups
                     if record:
@@ -300,6 +296,9 @@ def org_organisation_controller(**attr):
 
                     # Show delivery-tag
                     delivery = "delivery.value"
+
+                    # Role for verification fields
+                    role = "approver"
                 else:
                     # Test provider cannot change the name of their organisation
                     if is_test_station:
@@ -308,13 +307,23 @@ def org_organisation_controller(**attr):
                         field.writable = False
 
                     # Administrative fields not visible
-                    groups = projects = delivery = types = type_check = None
+                    types = groups = projects = delivery = None
+
+                    # Role for verification fields
+                    role = "applicant"
+
+                if is_test_station:
+                    verification = TestProvider.configure_verification(r.resource,
+                                                                       role = role,
+                                                                       record_id = record.id,
+                                                                       )
+                else:
+                    verification = None
 
                 crud_fields = ["name",
                                acronym,
                                groups,
                                types,
-                               type_check,
                                projects,
                                delivery,
                                S3SQLInlineComponent(
@@ -332,6 +341,10 @@ def org_organisation_controller(**attr):
                                logo,
                                "comments",
                                ]
+
+                if verification:
+                    crud_fields.extend(verification)
+                    subheadings[verification[0].replace(".", "_")] = T("Documentation / Verification")
 
                 # Configure post-process to add/update verification
                 crud_form = S3SQLCustomForm(*crud_fields,
@@ -369,6 +382,7 @@ def org_organisation_controller(**attr):
 
                 resource.configure(crud_form = crud_form,
                                    filter_widgets = filter_widgets,
+                                   subheadings = subheadings,
                                    )
 
             # Custom list fields
@@ -385,7 +399,7 @@ def org_organisation_controller(**attr):
                 list_fields.insert(0, (T("Organization Group"), "group__link.group_id"))
                 list_fields.append((T("Email"), "email.value"))
             r.resource.configure(list_fields = list_fields,
-                                    )
+                                 )
 
         elif component_name == "facility":
 

@@ -53,7 +53,7 @@ ORG_RQM = WorkflowOptions(("N/A", "not specified", "grey"),
                           ("REVIEW", "Review Pending", "amber"),
                           ("VERIFIED", "verified", "green"),
                           ("ACCEPT", "not required", "green"),
-                          selectable = ("REVISE", "REVIEW", "VERIFIED"),
+                          selectable = ("REVISE", "VERIFIED"),
                           none = "REVISE",
                           )
 
@@ -195,7 +195,7 @@ class TestProviderModel(DataModel):
                            ),
                      # Whether organisation type is verified
                      Field("orgtype",
-                           label = T("Type Verification"),
+                           label = T("Organization Type Verification"),
                            default = "N/A",
                            requires = IS_IN_SET(ORG_RQM.selectable(True),
                                                 sort = False,
@@ -207,7 +207,7 @@ class TestProviderModel(DataModel):
                            ),
                      # Whether manager information is complete and verified
                      Field("mgrinfo",
-                           label = T("Test Station Manager Information"),
+                           label = T("Documentation Test Station Manager"),
                            default = "N/A",
                            requires = IS_IN_SET(ORG_RQM.selectable(),
                                                 sort = False,
@@ -218,6 +218,7 @@ class TestProviderModel(DataModel):
                            writable = False,
                            ),
                      # Overall accepted-status
+                     # TODO deprecate
                      Field("accepted", "boolean",
                            label = T("Verified"),
                            default = False,
@@ -1689,7 +1690,7 @@ class TestProvider:
             field = table.orgtype
             if provider.verifreq:
                 current_value = provider.verification.orgtype
-                options = ORG_RQM.selectable(True)
+                options = ORG_RQM.selectable(True, current_value=current_value)
                 if current_value not in dict(options):
                     field.writable = False
                 else:
@@ -1707,7 +1708,6 @@ class TestProvider:
                 field = table[fn]
                 if field.readable or field.writable:
                     visible.append("verification.%s" % fn)
-
         else:
             for fn in ("status", "orgtype", "mgrinfo"):
                 field = table[fn]
