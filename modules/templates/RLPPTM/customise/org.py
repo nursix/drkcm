@@ -13,7 +13,7 @@ from core import FS, ICON, IS_ONE_OF, S3CRUD, S3Represent, \
                  get_filter_options, get_form_record_id, s3_fieldmethod
 
 from ..models.org import TestProvider, TestStation, \
-                         ORG_RQM, PUBLIC_REASON
+                         ORG_RQM, VERIFICATION_STATUS, PUBLIC_REASON
 
 # -------------------------------------------------------------------------
 def add_org_tags():
@@ -260,7 +260,7 @@ def org_organisation_controller(**attr):
 
                 if is_org_group_admin:
 
-                    # Show organisation type(s) and verification tag as required
+                    # Show organisation type(s) as required
                     types = S3SQLInlineLink("organisation_type",
                                             field = "organisation_type_id",
                                             search = False,
@@ -300,14 +300,27 @@ def org_organisation_controller(**attr):
                     # Role for verification fields
                     role = "approver"
                 else:
-                    # Test provider cannot change the name of their organisation
+
                     if is_test_station:
                         table = resource.table
+
+                        # Test provider cannot change the name of their organisation
                         field = table.name
                         field.writable = False
 
-                    # Administrative fields not visible
-                    types = groups = projects = delivery = None
+                        # Show type(s) read-only
+                        types = S3SQLInlineLink("organisation_type",
+                                                field = "organisation_type_id",
+                                                search = False,
+                                                label = T("Type"),
+                                                multiple = settings.get_org_organisation_types_multiple(),
+                                                widget = "multiselect",
+                                                readonly = True,
+                                                )
+                    else:
+                        types = None
+
+                    groups = projects = delivery = None
 
                     # Role for verification fields
                     role = "applicant"
@@ -360,6 +373,7 @@ def org_organisation_controller(**attr):
                                              ),
                                   ]
                 if is_org_group_admin:
+                    verification_filter_opts = ("REVISE", "REVIEW", "COMPLETE")
                     filter_widgets.extend([
                         OptionsFilter(
                             "group__link.group_id",
@@ -372,12 +386,19 @@ def org_organisation_controller(**attr):
                             options = lambda: get_filter_options("org_organisation_type"),
                             ),
                         OptionsFilter(
-                            "verification.mgrinfo",
-                            label = T("TestSt Manager##abbr"),
-                            options = OrderedDict(ORG_RQM.labels),
+                            "verification.status",
+                            label = T("Documentation / Verification"),
+                            options = OrderedDict(VERIFICATION_STATUS.selectable(values=verification_filter_opts)),
                             sort = False,
                             hidden = True,
                             ),
+                        #OptionsFilter(
+                        #    "verification.mgrinfo",
+                        #    label = T("TestSt Manager##abbr"),
+                        #    options = OrderedDict(ORG_RQM.labels),
+                        #    sort = False,
+                        #    hidden = True,
+                        #    ),
                         ])
 
                 resource.configure(crud_form = crud_form,
