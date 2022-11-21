@@ -10,10 +10,10 @@ from gluon import current, URL, \
                   DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, TAG
 
 from core import FS, ICON, IS_ONE_OF, S3CRUD, S3Represent, \
-                 get_filter_options, get_form_record_id, s3_fieldmethod
+                 get_filter_options, get_form_record_id
 
 from ..models.org import TestProvider, TestStation, \
-                         ORG_RQM, VERIFICATION_STATUS, PUBLIC_REASON
+                         VERIFICATION_STATUS, PUBLIC_REASON
 
 # -------------------------------------------------------------------------
 def add_org_tags():
@@ -288,6 +288,7 @@ def org_organisation_controller(**attr):
                                              )
 
                     # Show projects
+                    subheadings["project"] = T("Administrative")
                     projects = S3SQLInlineLink("project",
                                                field = "project_id",
                                                label = T("Project Partner for"),
@@ -827,29 +828,9 @@ def configure_facility_form(r, is_org_group_admin=False):
                    }
 
     if visible_tags:
-
-        table = fresource.table
-        table.mgrinfo = s3_fieldmethod("mgrinfo", facility_mgrinfo,
-                                       represent = ORG_RQM.represent,
-                                       )
-        extra_fields = ["organisation_id$verification.mgrinfo"]
-
-        if is_org_group_admin:
-            # Include MGRINFO status
-            from core import S3SQLVirtualField
-            crud_fields.append(S3SQLVirtualField("mgrinfo",
-                                                 label = T("Documentation Test Station Manager"),
-                                                 ))
-            fname = "mgrinfo"
-        else:
-            fname = visible_tags[0].replace(".", "_")
-
         # Append workflow tags in separate section
-        subheadings[fname] = T("Approval and Publication")
+        subheadings[visible_tags[0].replace(".", "_")] = T("Approval and Publication")
         crud_fields.extend(visible_tags)
-
-    else:
-        extra_fields = None
 
     # Configure postprocess to add/update workflow statuses
     crud_form = S3SQLCustomForm(*crud_fields,
@@ -858,7 +839,6 @@ def configure_facility_form(r, is_org_group_admin=False):
 
     s3db.configure("org_facility",
                    crud_form = crud_form,
-                   extra_fields = extra_fields,
                    subheadings = subheadings,
                    )
 

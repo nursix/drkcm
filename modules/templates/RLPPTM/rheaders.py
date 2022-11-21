@@ -169,26 +169,22 @@ def rlpptm_org_rheader(r, tabs=None):
             rheader_fields = [[(T("Organization ID"), org_id)]]
 
             if is_org_group_admin:
-                # Check for active user accounts
+                # Show number of active user accounts
                 from .helpers import get_org_accounts
                 active = get_org_accounts(record.id)[0]
                 active_accounts = lambda row: len(active)
                 rheader_fields.append([(T("Active Accounts"), active_accounts)])
 
-                from .config import TESTSTATIONS
-                if group == TESTSTATIONS:
-                    rows = resource.select(["verification.status",
-                                            ],
-                                           represent = True,
-                                           ).rows
-                    if rows:
-                        status = rows[0]["org_verification.status"]
-                    else:
-                        status = None
-
-                    rheader_fields[0].append((T("Documentation / Verification"),
-                                              lambda row: status,
-                                              ))
+            from .config import TESTSTATIONS
+            if group == TESTSTATIONS:
+                # Show verification status
+                rows = resource.select(["verification.status"],
+                                       represent = True,
+                                       ).rows
+                status = rows[0]["org_verification.status"] if rows else "-"
+                rheader_fields[0].append((T("Documentation / Verification"),
+                                          lambda row: status,
+                                          ))
             rheader_title = "name"
 
         elif tablename == "org_facility" and is_org_group_admin:
