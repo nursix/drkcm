@@ -1,9 +1,9 @@
-Type,Commercial,ManagerInfo Required,Verification Required
-Zahnarztpraxis,false,false,true
-Arztpraxis (Vertragsarztpraxis),false,false,true
-Tierarztpraxis,false,false,true
-Apotheke,false,false,true
-Rotes Kreuz,false,false,true
-Hilfsorganisation,false,false,true
-Kommunale Teststelle,false,false,true
-Kommerzieller Anbieter,true,true,false
+Type,Commercial,Natural Persons,Verification Required,MPAV Required,ManagerInfo Required
+Zahnarztpraxis,false,false,true,false,false
+Arztpraxis (Vertragsarztpraxis),false,false,true,false,false
+Tierarztpraxis,false,false,true,false,false
+Apotheke,false,false,true,false,false
+Rotes Kreuz,false,false,true,false,false
+Hilfsorganisation,false,false,true,true,false
+Kommunale Teststelle,false,false,true,true,false
+Kommerzieller Anbieter,true,false,false,true,true

@@ -12,6 +12,8 @@
                                                      true|false (default false)
          Verification Required.......string..........Type Verification Required
                                                      true|false (default false)
+         MPAV Required...............string..........MPAV Qualification Verification Required
+                                                     true|false (default true)
          ManagerInfo Required........string..........Manager Info Required
                                                      true|false (default false)
 
@@ -45,19 +47,6 @@
     </xsl:template>
 
     <!-- ****************************************************************** -->
-    <xsl:template name="FlagValue">
-        <xsl:param name="Value"></xsl:param>
-        <xsl:choose>
-            <xsl:when test="$Value='true'">
-                <xsl:value-of select="'true'"/>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="'false'"/>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
     <xsl:template match="row">
         <resource name="org_requirements">
             <reference field="organisation_type_id" resource="org_organisation_type">
@@ -77,6 +66,18 @@
                     </xsl:choose>
                 </xsl:attribute>
             </data>
+            <data field="natpersn">
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="col[@field='Natural Persons']/text()='true'">
+                            <xsl:value-of select="'true'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="'false'"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
             <data field="verifreq">
                 <xsl:attribute name="value">
                     <xsl:choose>
@@ -85,6 +86,18 @@
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:value-of select="'false'"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
+            <data field="mpavreq">
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="col[@field='MPAV Required']/text()='false'">
+                            <xsl:value-of select="'false'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="'true'"/>
                         </xsl:otherwise>
                     </xsl:choose>
                 </xsl:attribute>
