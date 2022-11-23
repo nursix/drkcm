@@ -35,10 +35,10 @@ import datetime
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
-from core import BooleanRepresent, DataModel, S3Duplicate, IS_UTC_DATE, \
+from core import BooleanRepresent, DataModel, S3Duplicate, \
                  get_form_record_id, represent_option, s3_comments, \
                  s3_comments_widget, s3_date, s3_datetime, s3_meta_fields, \
-                 s3_text_represent, s3_yes_no_represent
+                 s3_text_represent
 
 from ..helpers import WorkflowOptions
 
@@ -237,15 +237,6 @@ class TestProviderModel(DataModel):
                                                 ),
                            represent = ORG_RQM.represent,
                            readable = True,
-                           writable = False,
-                           ),
-                     # Overall accepted-status
-                     # TODO drop when migrated
-                     Field("accepted", "boolean",
-                           label = T("Verified"),
-                           default = False,
-                           represent = s3_yes_no_represent,
-                           readable = False,
                            writable = False,
                            ),
                      *s3_meta_fields())
@@ -536,19 +527,6 @@ class TestStationModel(DataModel):
                            readable = True,
                            writable = False,
                            ),
-                     # MPAV qualification
-                     # TODO drop when migrated
-                     Field("mpav",
-                           label = T("MPAV Qualification"),
-                           default = "REVISE",
-                           requires = IS_IN_SET(SITE_RQM.selectable(True),
-                                                zero = None,
-                                                sort = False,
-                                                ),
-                           represent = SITE_RQM.represent,
-                           readable = False,
-                           writable = False,
-                           ),
                      # Hygiene concept
                      Field("hygiene",
                            label = T("Hygiene Plan"),
@@ -629,7 +607,7 @@ class TestStationModel(DataModel):
                            represent = APPROVAL_STATUS.represent,
                            writable = False,
                            ),
-                     # TODO drop when migrated
+                     # Retained since relevant in historic records:
                      Field("mpav",
                            label = T("MPAV Qualification"),
                            represent = SITE_RQM.represent,
@@ -1828,10 +1806,16 @@ class TestProvider:
                 # Existing commission, editable if current or suspended
                 editable = commission.status in ("CURRENT", "SUSPENDED")
 
-                # Allow to keep the original commission date
+                # Dates are not editable once commission has been issued
                 field = table.date
-                field.requires = IS_UTC_DATE(minimum=commission.date)
-                field.widget.minimum = commission.date
+                field.writable = False
+                field = table.end_date
+                field.writable = False
+
+                # Allow to keep the original commission date
+                #field = table.date
+                #field.requires = IS_UTC_DATE(minimum=commission.date)
+                #field.widget.minimum = commission.date
             else:
                 # List view or new commission, always editable
                 editable = True

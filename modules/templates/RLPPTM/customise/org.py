@@ -420,6 +420,9 @@ def org_organisation_controller(**attr):
                 list_fields.insert(2, (T("Type"), "organisation_type__link.organisation_type_id"))
                 list_fields.insert(0, (T("Organization Group"), "group__link.group_id"))
                 list_fields.append((T("Email"), "email.value"))
+                if r.representation in ("xlsx", "xls"):
+                    list_fields.insert(1, (T("Organization ID"), "orgid.value"))
+                    list_fields.append("comments")
             r.resource.configure(list_fields = list_fields,
                                  )
 
