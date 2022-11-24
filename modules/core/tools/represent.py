@@ -976,55 +976,59 @@ FILE_ICONS = {".pdf": "file-pdf",
               ".bmp": "file-image",
               }
 
-def represent_file(value, row=None):
-    """
-        Represent an upload-field (file) as icon+size
+def represent_file(tablename="doc_document", fieldname="file"):
 
-        Args:
-            value: the uploaded file name
-            row: unused, for API compatibility
+    def represent(value, row=None):
+        """
+            Represent an upload-field (file) as icon+size
 
-        Returns:
-            representation (DIV-type)
-    """
+            Args:
+                value: the uploaded file name
+                row: unused, for API compatibility
 
-    if not value:
-        return current.messages["NONE"]
+            Returns:
+                representation (DIV-type)
+        """
 
-    try:
-        # Check whether file exists and extract the original
-        # file name from the stored file name
-        name, f = current.db.doc_document.file.retrieve(value)
-    except IOError:
-        return current.T("File not found")
+        if not value:
+            return current.messages["NONE"]
 
-    # Get the file extension and generate corresponding icon
-    ext = os.path.splitext(name)[1].lower()
-    icon_type = FILE_ICONS.get(ext)
-    if not icon_type:
-        icon_type = "file-generic"
+        try:
+            # Check whether file exists and extract the original
+            # file name from the stored file name
+            name, f = current.s3db[tablename][fieldname].retrieve(value)
+        except IOError:
+            return current.T("File not found")
 
-    from ..ui import ICON
-    icon = ICON(icon_type)
+        # Get the file extension and generate corresponding icon
+        ext = os.path.splitext(name)[1].lower()
+        icon_type = FILE_ICONS.get(ext)
+        if not icon_type:
+            icon_type = "file-generic"
 
-    output = A(icon,
-               _href = URL(c="default", f="download", args=[value]),
-               _title = name,
-               _class = "file-repr",
-               )
+        from ..ui import ICON
+        icon = ICON(icon_type)
 
-    # Determine the file size
-    fsize = f.seek(0, 2) if f else None
-    if fsize is not None:
-        for u in ("B", "kB", "MB", "GB"):
-            unit = u
-            if fsize < 1024:
-                break
-            fsize /= 1024
-        fsize = "%s %s" % (round(fsize), unit)
-        output.append(SPAN(fsize, _class="file-size"))
+        output = A(icon,
+                _href = URL(c="default", f="download", args=[value]),
+                _title = name,
+                _class = "file-repr",
+                )
 
-    return output
+        # Determine the file size
+        fsize = f.seek(0, 2) if f else None
+        if fsize is not None:
+            for u in ("B", "kB", "MB", "GB"):
+                unit = u
+                if fsize < 1024:
+                    break
+                fsize /= 1024
+            fsize = "%s %s" % (round(fsize), unit)
+            output.append(SPAN(fsize, _class="file-size"))
+
+        return output
+
+    return represent
 
 # =============================================================================
 def represent_option(options, default="-"):

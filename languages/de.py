@@ -1080,6 +1080,7 @@
 'Commission reinstated': 'Beauftragung wieder eingesetzt',
 'Commission suspended': 'Beauftragung ausgesetzt',
 'Commission updated': 'Beauftragung aktualisiert',
+'Commissioning Note': 'Beauftragungsbescheid',
 'Commissions': 'Beauftragungen',
 'Commit Date': 'Datum der Einstellung',
 'Commit Status': 'Zusagestatus',

@@ -95,6 +95,9 @@ class ProviderCommission:
                                            table.organisation_id,
                                            table.date,
                                            table.end_date,
+                                           table.status,
+                                           table.cnote,
+                                           table.vhash,
                                            limitby = (0, 1),
                                            ).first()
             commission = self._commission = row
@@ -351,6 +354,27 @@ class ProviderCommission:
             output_stream = None
 
         return output_stream
+
+    # -------------------------------------------------------------------------
+    def issue_note(self):
+        """
+            Issue a commissioning note as PDF document in the record, and
+            store the hash for verification of the document
+        """
+
+        commission = self.commission
+        if commission.status != "CURRENT" and commission.vhash:
+            return
+
+        note = self.pdf()
+        if note is not None:
+            table = current.s3db.org_commission
+            filename = table.cnote.store(note,
+                                         filename="commission_note.pdf",
+                                         )
+            commission.update_record(cnote = filename,
+                                     vhash = self.vhash,
+                                     )
 
 # =============================================================================
 class CommissionDocTemplate(BaseDocTemplate):

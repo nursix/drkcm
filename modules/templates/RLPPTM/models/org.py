@@ -31,13 +31,15 @@ __all__ = ("TestProviderRequirementsModel",
            )
 
 import datetime
+import os
 
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
 from core import BooleanRepresent, DataModel, S3Duplicate, \
-                 get_form_record_id, represent_option, s3_comments, \
-                 s3_comments_widget, s3_date, s3_datetime, s3_meta_fields, \
+                 get_form_record_id, represent_file, represent_option, \
+                 s3_comments, s3_comments_widget, \
+                 s3_date, s3_datetime, s3_meta_fields, \
                  s3_text_represent
 
 from ..helpers import WorkflowOptions
@@ -239,12 +241,12 @@ class TestProviderModel(DataModel):
                            readable = True,
                            writable = False,
                            ),
-                     # TODO add fields for commission_doc and hash
                      *s3_meta_fields())
 
         # ---------------------------------------------------------------------
         # Commission
         #
+        folder = current.request.folder
         tablename = "org_commission"
         define_table(tablename,
                      organisation_id(empty=False),
@@ -283,6 +285,16 @@ class TestProviderModel(DataModel):
                                                   sort = False,
                                                   )),
                            represent = represent_option(dict(COMMISSION_REASON.labels)),
+                           ),
+                     Field("cnote", "upload",
+                           label = T("Commissioning Note"),
+                           uploadfolder = os.path.join(folder, "uploads", "commissions"),
+                           represent = represent_file("org_commission", "cnote"),
+                           writable = False,
+                           ),
+                     Field("vhash",
+                           readable = False,
+                           writable = False,
                            ),
                      s3_comments(),
                      *s3_meta_fields())
@@ -428,6 +440,8 @@ class TestProviderModel(DataModel):
                                                   table.prev_status,
                                                   table.status,
                                                   table.status_reason,
+                                                  table.cnote,
+                                                  table.vhash,
                                                   limitby = (0, 1),
                                                   ).first()
         if not record:
@@ -454,10 +468,13 @@ class TestProviderModel(DataModel):
             update["status_date"] = today
             update["prev_status"] = new_status
 
-        # TODO generate PDF+hash if new_status=="CURRENT" and no hash
-
         if update:
             record.update_record(**update)
+
+        # Issue commissioning note
+        if record.status == "CURRENT" and not record.vhash:
+            from ..commission import ProviderCommission
+            ProviderCommission(record.id).issue_note()
 
         if status_change:
             # Deactivate/reactivate all test stations
@@ -1468,6 +1485,11 @@ class TestProvider:
                              modified_by = table.modified_by,
                              modified_on = table.modified_on,
                              )
+
+            # Issue any missing commissioning notes
+            from ..commission import ProviderCommission
+            for commission_id in commission_ids:
+                ProviderCommission(commission_id).issue_note()
 
             msg = self.notify_commission_change(status = "CURRENT",
                                                 reason = reason,

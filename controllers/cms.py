@@ -1061,7 +1061,7 @@ def configure_newsletter_attachments(file_icons=False):
         # Represent files as icon+size
         from core import represent_file
         field = dtable.file
-        field.represent = represent_file
+        field.represent = represent_file()
 
     # Reduced list fields
     s3db.configure("doc_document",
