@@ -25,7 +25,6 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-# TODO cleanup+sort imports
 import base64
 import datetime
 import hashlib
@@ -34,19 +33,18 @@ import secrets
 
 from io import BytesIO
 from lxml import etree
+from reportlab.pdfgen import canvas
 from uuid import UUID
 
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, LETTER
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import cm
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, KeepTogether
-from reportlab.lib.enums import TA_LEFT
-
-from reportlab.lib.utils import ImageReader
 from reportlab.graphics import renderPDF
 from reportlab.graphics.barcode import qr
 from reportlab.graphics.shapes import Drawing
+from reportlab.lib.enums import TA_LEFT, TA_JUSTIFY
+from reportlab.lib.pagesizes import A4, LETTER
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
+from reportlab.platypus import BaseDocTemplate, Frame, KeepTogether, PageTemplate, Paragraph
 
 from gluon import current
 
@@ -425,7 +423,6 @@ class CommissionDocTemplate(BaseDocTemplate):
                 list of PageTemplates
         """
 
-        # TODO parametrize (class-level)
         footer_height = 1*cm
         header_height = 5.4*cm
 
@@ -463,6 +460,8 @@ class CommissionDocTemplate(BaseDocTemplate):
         style_sheet = getSampleStyleSheet()
         style = style_sheet["Normal"]
         style.spaceAfter = 10
+        style.alignment = TA_JUSTIFY
+        style.fontName = NORMAL
 
         body = []
 
