@@ -239,6 +239,7 @@ class TestProviderModel(DataModel):
                            readable = True,
                            writable = False,
                            ),
+                     # TODO add fields for commission_doc and hash
                      *s3_meta_fields())
 
         # ---------------------------------------------------------------------
@@ -452,6 +453,9 @@ class TestProviderModel(DataModel):
         if status_change:
             update["status_date"] = today
             update["prev_status"] = new_status
+
+        # TODO generate PDF+hash if new_status=="CURRENT" and no hash
+
         if update:
             record.update_record(**update)
 
