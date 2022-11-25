@@ -361,15 +361,17 @@ class ProviderCommission:
         """
 
         commission = self.commission
-        if commission.status != "CURRENT" and commission.vhash:
+        if commission.status != "CURRENT" or commission.vhash:
             return
 
         note = self.pdf()
-        if note is not None:
+        if note is None:
+            # Remove any existing document
+            commission.update_record(cnote=None, vhash=None)
+        else:
+            # Store new document and hash
             table = current.s3db.org_commission
-            filename = table.cnote.store(note,
-                                         filename="commission_note.pdf",
-                                         )
+            filename = table.cnote.store(note, filename="commission_note.pdf")
             commission.update_record(cnote = filename,
                                      vhash = self.vhash,
                                      )

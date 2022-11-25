@@ -140,4 +140,4 @@ Subject CommissionIssued,org,commission,Änderungsmitteilung zur Beauftragung vo
 Subject CommissionSuspended,org,commission,Änderungsmitteilung zur Beauftragung von {name},
 Subject CommissionRevoked,org,commission,Änderungsmitteilung zur Beauftragung von {name},
 Subject CommissionExpired,org,commission,Änderungsmitteilung zur Beauftragung von {name},
-Commission20221126,org,commission,"<template><para align=""center"">Ungültige Dokumentvorlage</para></template>",
+CommissionYYYYMMDD,org,commission,"<template><para align=""center"">Ungültige Dokumentvorlage</para></template>",
