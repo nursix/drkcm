@@ -28,6 +28,7 @@
 import base64
 import datetime
 import hashlib
+import json
 import os
 import secrets
 
@@ -48,7 +49,7 @@ from reportlab.platypus import BaseDocTemplate, Frame, KeepTogether, PageTemplat
 
 from gluon import current
 
-from core import s3_str
+from core import CRUDMethod, JSONERRORS, s3_str
 
 # Fonts we use in this layout
 NORMAL = "Helvetica"
@@ -375,6 +376,41 @@ class ProviderCommission:
             commission.update_record(cnote = filename,
                                      vhash = self.vhash,
                                      )
+
+    @staticmethod
+    def parse_vcode(vcode):
+
+        msg = "invalid verification code"
+
+        if isinstance(vcode, str):
+            vcode = vcode.encode("utf-8")
+
+        try:
+            parsed = base64.b64decode(vcode).decode("utf-8")
+        except Exception as e:
+            raise ValueError(msg) from e
+
+        parsed = parsed.split("|")
+        if not parsed or len(parsed) != 5:
+            raise ValueError(msg)
+
+        parse_date = current.calendar.parse_date
+        try:
+            start, end = parse_date(parsed[2]), parse_date(parsed[3])
+        except Exception:
+            start, end = None, None
+
+        try:
+            uuid = UUID(parsed[1]).urn
+        except ValueError:
+            uuid = parsed[1]
+
+        return {"provider_id": parsed[0],
+                "uuid": uuid,
+                "start": start,
+                "end": end,
+                "vhash": hashlib.sha256(vcode).hexdigest().lower()
+                }
 
 # =============================================================================
 class CommissionDocTemplate(BaseDocTemplate):
@@ -794,5 +830,125 @@ class NumberedCanvas(canvas.Canvas):
                              1.8*cm,
                              "%d / %d" % (self._pageNumber, page_count),
                              )
+
+# =============================================================================
+class VerifyCommission(CRUDMethod):
+
+    def apply_method(self, r, **attr):
+        """
+            Report test facility information
+
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
+        """
+
+        if r.http == "GET":
+            output = self.form(r, **attr)
+
+        elif r.http == "POST":
+            if r.representation == "json":
+                output = self.verify(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    def form(self, r, **attr):
+
+        T = current.T
+
+        response = current.response
+        settings = current.deployment_settings
+
+        from core import S3QRInput, ICON, CustomController
+        from gluon import IS_NOT_EMPTY, BUTTON, INPUT, DIV
+
+        hidden_input = INPUT(_type="hidden", _name="vcode", _id="vcode")
+        scan_button = BUTTON(ICON("fa fa-qrcode"),
+                             "",
+                             _title = "Scan QR Code",
+                             _type = "button",
+                             _class = "primary button qrscan-btn wide-button",
+                             )
+        widget = DIV(hidden_input, scan_button, _class="qrinput")
+        S3QRInput.inject_script("vcode", {})
+
+        CustomController._view("RLPPTM", "verify.html")
+        return {"widget": widget}
+
+
+    def verify(self, r, **attr):
+
+        # Read the body JSON of the request
+        # Must be {"vcode": "..."}
+        body = r.body
+        body.seek(0)
+        try:
+            s = body.read().decode("utf-8")
+        except (ValueError, AttributeError, UnicodeDecodeError):
+            r.error(400, current.ERROR.BAD_REQUEST)
+        try:
+            ref = json.loads(s)
+        except JSONERRORS:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        vcode = ref.get("vcode")
+        if not vcode:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        provider_id = ref.get("id")
+
+        response = current.response
+        if response:
+            response.headers["Content-Type"] = "application/json; charset=utf-8"
+        return json.dumps(self._verify(vcode, provider_id=provider_id),
+                          separators = (",", ":"),
+                          ensure_ascii = False,
+                          )
+
+    @staticmethod
+    def _verify(vcode, provider_id=None):
+
+        commission, output = None, {}
+        try:
+            parsed = ProviderCommission.parse_vcode(vcode)
+        except ValueError:
+            signature = "INVALID"
+        else:
+            table = current.s3db.org_commission
+            record = current.db(table.uuid == parsed["uuid"]).select(table.id,
+                                                                     table.deleted,
+                                                                     limitby = (0, 1),
+                                                                     ).first()
+            if not record:
+                signature = "NOT FOUND"
+            elif record.deleted:
+                signature = "DELETED"
+            else:
+                signature = "VALID"
+                commission = ProviderCommission(record.id)
+
+        if commission:
+            # Verify the hash
+            record = commission.commission
+            if record.vhash != parsed["vhash"]:
+                signature = "INVALID"
+            elif provider_id and provider_id != commission.provider_id:
+                signature = "PROVIDER ID MISMATCH"
+            else:
+                output.update(
+                    {"organisation": commission.organisation_name,
+                     "organisation_id": commission.provider_id,
+                     "start": record.date.isoformat() if record.date else "0000-00-00",
+                     "end": record.end_date.isoformat() if record.end_date else "0000-00-00",
+                     "status": record.status,
+                     })
+
+        output["signature"] = signature
+
+        return output
 
 # END =========================================================================

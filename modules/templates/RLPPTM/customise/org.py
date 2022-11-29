@@ -1162,6 +1162,13 @@ def org_facility_resource(r, tablename):
                        report_options = report_options,
                        )
 
+    # Custom method to verify commissions
+    from ..commission import VerifyCommission
+    s3db.set_method("org_facility",
+                    method = "verify",
+                    action = VerifyCommission,
+                    )
+
     # Custom method to produce KV report
     from ..helpers import TestFacilityInfo
     s3db.set_method("org_facility",
