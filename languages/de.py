@@ -6414,6 +6414,7 @@
 'Verification Status': 'Prüfstatus',
 'Verified': 'Verifiziert',
 'Verified?': 'Geprüft?',
+'Verify Commission': 'Beauftragung prüfen',
 'Verify Password': 'Passwort-Kontrolle',
 'Verify password': 'Passwortprüfung',
 'Very Good': 'Sehr gut',

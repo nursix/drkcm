@@ -928,9 +928,9 @@ class VerifyCommission(CRUDMethod):
                                                                      limitby = (0, 1),
                                                                      ).first()
             if not record:
-                signature = "NOT FOUND"
+                signature = "RECORD NOT FOUND"
             elif record.deleted:
-                signature = "DELETED"
+                signature = "RECORD DELETED"
             else:
                 signature = "VALID"
                 commission = ProviderCommission(record.id)
