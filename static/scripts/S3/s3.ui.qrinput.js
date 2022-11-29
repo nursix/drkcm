@@ -128,6 +128,7 @@
                         dialog.dialog('open');
                         scanner = new QrScanner(videoInput.get(0),
                             function(result) {
+                                scanner.stop();
                                 videoInput.hide();
                                 success.show();
                                 navigator.vibrate([100]);
