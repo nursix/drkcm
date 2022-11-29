@@ -128,9 +128,9 @@
                         dialog.dialog('open');
                         scanner = new QrScanner(videoInput.get(0),
                             function(result) {
-                                navigator.vibrate(100);
                                 videoInput.hide();
                                 success.show();
+                                navigator.vibrate([100]);
                                 $el.val(result).trigger('change' + self.eventNamespace);
                                 setTimeout(function() {
                                     dialog.dialog('close');
