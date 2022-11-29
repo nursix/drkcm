@@ -131,9 +131,7 @@
                                 scanner.stop();
                                 videoInput.hide();
                                 success.show();
-                                window.navigator.vibrate(0);
-                                window.navigator.vibrate(100);
-                                alert("testing");
+                                window.navigator.vibrate(30);
                                 $el.val(result).trigger('change' + self.eventNamespace);
                                 setTimeout(function() {
                                     dialog.dialog('close');
