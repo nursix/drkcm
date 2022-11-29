@@ -59,27 +59,27 @@
        <h3>{{=T("Commission Details")}}</h3>
        <label>
         <span>{{=T("Verification Code")}}</span>
-        <div class="data-value">{{=T("valid")}}</div>
+        <div id='verification-result' class="data-value"></div>
        </label>
        <label>
         <span>{{=T("Organization ID")}}</span>
-        <div class="data-value">000000000000</div>
+        <div id='provider-id' class="data-value"></div>
        </label>
        <label>
         <span>{{=T("Name")}}</span>
-        <div class="data-value">Example Organization</div>
+        <div id='provider-name' class="data-value"></div>
        </label>
        <label>
         <span>{{=T("Valid From")}}</span>
-        <div class="data-value">00.00.0000</div>
+        <div id='start-date' class="data-value"></div>
        </label>
        <label>
         <span>{{=T("Valid Until")}}</span>
-        <div class="data-value">00.00.0000</div>
+        <div id='end-date' class="data-value">00.00.0000</div>
        </label>
        <label>
         <span>{{=T("Status")}}</span>
-        <div class="data-value">aktuell</div>
+        <div id='commission-status' class="data-value"></div>
        </label>
       </div>
       <div class="scan">
@@ -105,5 +105,6 @@
  </footer>
 {{include "scripts.html"}}
 {{include "foundation.js.html"}}
+<script src="/{{=appname}}/static/themes/RLP/js/verify.js"></script>
 </body>
 </html>

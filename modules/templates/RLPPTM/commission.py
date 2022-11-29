@@ -864,9 +864,13 @@ class VerifyCommission(CRUDMethod):
         settings = current.deployment_settings
 
         from core import S3QRInput, ICON, CustomController
-        from gluon import IS_NOT_EMPTY, BUTTON, INPUT, DIV
+        from gluon import IS_NOT_EMPTY, BUTTON, INPUT, DIV, URL
 
-        hidden_input = INPUT(_type="hidden", _name="vcode", _id="vcode")
+        hidden_input = INPUT(_type="hidden",
+                             _name="vcode",
+                             _id="vcode",
+                             data = {"url": URL(c="org", f="facility", args=["verify.json"])},
+                             )
         scan_button = BUTTON(ICON("fa fa-qrcode"),
                              "",
                              _title = "Scan QR Code",
