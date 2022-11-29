@@ -11,7 +11,7 @@
     var reset = function() {
         $('.data, .loading').hide();
         $('.data-empty, .scan').removeClass('hide').show();
-        $('#verification-result, #provider-id, #provider-name, #start-date, #end-date, #commission-status, #status-date').text('--');
+        $('#verification-result, #provider-id, #provider-name, #start-date, #end-date, #status, #status-date').text('--');
     };
 
     var showPending = function() {
