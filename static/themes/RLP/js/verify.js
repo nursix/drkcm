@@ -11,7 +11,7 @@
     var reset = function() {
         $('.data, .loading').hide();
         $('.data-empty, .scan').removeClass('hide').show();
-        $('#verification-result, #provider-id, #provider-name, #start-date, #end-date, #commission-status').text('--');
+        $('#verification-result, #provider-id, #provider-name, #start-date, #end-date, #commission-status, #status-date').text('--');
     };
 
     var showPending = function() {
@@ -50,7 +50,8 @@
                 $('#provider-name').text(response.organisation);
                 $('#start-date').text(response.start);
                 $('#end-date').text(response.end);
-                $('#commission-status').text(response.status);
+                $('#status').text(response.status);
+                $('#status-date').text(response.status_date);
                 showResult();
             },
             'error': function () {

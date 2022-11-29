@@ -95,6 +95,7 @@ class ProviderCommission:
                                            table.date,
                                            table.end_date,
                                            table.status,
+                                           table.status_date,
                                            table.cnote,
                                            table.vhash,
                                            limitby = (0, 1),
@@ -943,12 +944,14 @@ class VerifyCommission(CRUDMethod):
             elif provider_id and provider_id != commission.provider_id:
                 signature = "PROVIDER ID MISMATCH"
             else:
+                dtfmt = lambda dt: dt.isoformat() if dt else "--"
                 output.update(
                     {"organisation": commission.organisation_name,
                      "organisation_id": commission.provider_id,
-                     "start": record.date.isoformat() if record.date else "0000-00-00",
-                     "end": record.end_date.isoformat() if record.end_date else "0000-00-00",
+                     "start": dtfmt(record.date),
+                     "end": dtfmt(record.end_date),
                      "status": record.status,
+                     "status_date": dtfmt(record.status_date),
                      })
 
         output["signature"] = signature
