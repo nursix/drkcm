@@ -33,9 +33,9 @@
 {{if s3.debug:}}{{=s3base.s3_include_debug_css()}}{{else:}}
  {{# Built by /static/scripts/tools/build.sahana.py }}
  <link href="/{{=appname}}/static/themes/{{=theme_styles}}/eden.min.css" rel="stylesheet" type="text/css" />
- <link href="/{{=appname}}/static/themes/{{=theme_styles}}/verify.css" rel="stylesheet" type="text/css" />
 {{pass}}
 {{include "scripts_top.html"}}
+ <link href="/{{=appname}}/static/themes/{{=theme_styles}}/verify.css" rel="stylesheet" type="text/css" />
 </head>
 <body class='{{=s3.direction}}'>
  <main>
