@@ -135,7 +135,7 @@
                                 $el.val(result).trigger('change' + self.eventNamespace);
                                 setTimeout(function() {
                                     dialog.dialog('close');
-                                }, 1000);
+                                }, 400);
                             },
                             function( /* error */ ) {
                                 // TODO handle error

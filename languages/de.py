@@ -6408,6 +6408,7 @@
 'Vehicles are assets with some extra details.': 'Fahrzeuge sind Anlagen, die mit einigen speziellen Funktionen ausgestattet sind',
 'Vehicles': 'Fahrzeuge',
 'Venue': 'Örtlichkeit',
+'Verification Code': 'Verifizierungscode',
 'Verification Details': 'Verifizierungsdetails',
 'Verification Email sent - please check your email to validate. If you do not receive this email please check your junk email or spam filters': 'Bestätigungs-Email gesendet - Bitte prüfen Sie ihren Posteingang zur Bestätigung. Falls Sie die Email nicht erhalten haben, überprüfen Sie bitte Ihrem SPAM-Ordner bzw. -Filter.',
 'Verification Status': 'Prüfstatus',

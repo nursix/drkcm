@@ -9,19 +9,19 @@
     "use strict";
 
     var reset = function() {
-        $('.data, .reset, .throbber').hide();
-        $('.scan, .data-empty').removeClass('hide').show();
+        $('.data, .loading').hide();
+        $('.data-empty, .scan').removeClass('hide').show();
         $('#verification-result, #provider-id, #provider-name, #start-date, #end-date, #commission-status').text('--');
     };
 
     var showPending = function() {
-        $('.data, .reset, .scan').hide();
+        $('.data, .scan').hide();
         $('.data-empty, .loading').removeClass('hide').show();
     };
 
     var showResult = function() {
-        $('.data-empty, .loading, .scan').hide();
-        $('.data, .reset').removeClass('hide').show();
+        $('.data-empty, .loading').hide();
+        $('.data, .scan').removeClass('hide').show();
     };
 
     var verify = function() {
@@ -63,8 +63,8 @@
     $(function() {
 
         reset();
+        $('.qrscan-btn').off('.verification').on('click.verification', reset);
         $('#vcode').off('.qrInput').on('change.qrInput', verify);
-        $('.reset').off('.verification').on('click.verification', reset);
     });
 
 })(jQuery);
