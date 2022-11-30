@@ -2326,6 +2326,13 @@ class TestFacilityInfo(CRUDMethod):
                      "name": "ORG-NAME",    - the organisation name
                      "type": "ORG-TYPE",    - the organisation type
                      "website": "URL"       - the organisation website URL
+                     "commission": [        - commissioning details
+                        {"start": YYYY-MM-DD,
+                        "end": YYYY-MM-DD,
+                        "status": CURRENT|SUSPENDED|REVOKED|EXPIRED,
+                        "status_date": YYYY-MM-DD,
+                        }, ...
+                       ]
                      },
                  "location":
                     {"L1": "L1-NAME",       - the L1 name (state)
@@ -2338,7 +2345,7 @@ class TestFacilityInfo(CRUDMethod):
                  "report": ["start","end"], - echoed from input, ISO-format dates YYYY-MM-DD
                  "activity":
                     {"tests": NN            - the total number of tests reported for the period
-                    }
+                    },
                  }
         """
 
@@ -2431,7 +2438,8 @@ class TestFacilityInfo(CRUDMethod):
                 ]
         query = (otable.id == facility.organisation_id) & \
                 (otable.deleted == False)
-        row = db(query).select(otable.name,
+        row = db(query).select(otable.id,
+                               otable.name,
                                otable.website,
                                ttable.name,
                                ottable.value,
@@ -2447,6 +2455,26 @@ class TestFacilityInfo(CRUDMethod):
                        "type": orgtype.name,
                        "website": organisation.website,
                        }
+
+            # Add commission data
+            ctable = s3db.org_commission
+            query = (ctable.organisation_id == organisation.id) & \
+                    (ctable.deleted == False)
+            commissions = db(query).select(ctable.date,
+                                           ctable.end_date,
+                                           ctable.status,
+                                           ctable.status_date,
+                                           )
+            dtfmt = lambda dt: dt.isoformat() if dt else '--'
+            clist = []
+            for commission in commissions:
+                clist.append({"start": dtfmt(commission.date),
+                              "end": dtfmt(commission.end_date),
+                              "status": commission.status,
+                              "status_date": dtfmt(commission.status_date),
+                              })
+            orgdata["commission"] = clist
+
             output["organisation"] = orgdata
 
         # Look up location data
