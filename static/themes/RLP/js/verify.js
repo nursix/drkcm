@@ -11,6 +11,7 @@
     var reset = function() {
         $('.data, .loading').hide();
         $('.data-empty, .scan').removeClass('hide').show();
+        $('#verification-result').css({color: ''});
         $('#verification-result, #provider-id, #provider-name, #start-date, #end-date, #status, #status-date').text('--');
     };
 
@@ -44,18 +45,35 @@
             'dataType': 'json',
             'data': JSON.stringify({vcode: vCode}),
             'contentType': 'application/json; charset=utf-8',
+            'timeout' : 5000,
+            'retryLimit': 0,
             'success': function(response) {
+
+                // Prefer represented over raw data
+                var data = response.repr;
+                if (data === undefined) {
+                    data = response.data;
+                }
+
+                // Update the data display
                 $('#verification-result').text(response.signature);
-                $('#provider-id').text(response.organisation_id);
-                $('#provider-name').text(response.organisation);
-                $('#start-date').text(response.start);
-                $('#end-date').text(response.end);
-                $('#status').text(response.status);
-                $('#status-date').text(response.status_date);
+
+                if (response.signature == 'VALID') {
+                    $('#verification-result').css({color: ''});
+                    $('#provider-id').html(data.organisation_id);
+                    $('#provider-name').html(data.organisation);
+                    $('#start-date').html(data.start);
+                    $('#end-date').html(data.end);
+                    $('#status').html(data.status);
+                    $('#status-date').html(data.status_date);
+                } else {
+                    $('#verification-result').css({color: '#db1b1b'});
+                    $('#provider-id, #provider-name, #start-date, #end-date, #status, #status-date').text('--');
+                }
                 showResult();
             },
             'error': function () {
-                alert('error!');
+                // ajaxS3 does the error reporting
                 reset();
             }
         });
