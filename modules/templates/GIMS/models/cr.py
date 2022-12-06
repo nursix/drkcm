@@ -636,7 +636,7 @@ class CapacityOverview(CRUDMethod):
                                     )
 
         rfields = data.rfields
-        tr = TR()
+        tr = TR(_style="background-color:#d7d7d7;")
         append = tr.append
         for rfield in rfields:
             append(TH(rfield.label))
@@ -671,7 +671,7 @@ class CapacityOverview(CRUDMethod):
         field = self.resource.table.occupancy
         totals["occupancy"] = field.represent(occupancy)
 
-        tr = TR()
+        tr = TR(_style="border-top:1px solid #ccc;font-size:0.9rem;background-color:#d7d7d7;")
         append = tr.append
         for rfield in rfields:
             fn = rfield.field.name if rfield.field else None

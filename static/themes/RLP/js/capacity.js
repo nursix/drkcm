@@ -36,7 +36,7 @@
         var chart = nv.models.lineChart()
                              .x(function(d) { return d[0]; })
                              .y(function(d) { return d[1]; })
-                             .interpolate('step')
+                             .interpolate('linear')
                              .margin({right: 50, bottom: 80})
                              .duration(50)
                              .showLegend(legend)
