@@ -29,6 +29,7 @@ __all__ = ("CRReceptionCenterModel",
            )
 
 import datetime
+import json
 
 from collections import OrderedDict
 
@@ -36,10 +37,11 @@ from gluon import current, Field, DIV, \
                   IS_EMAIL, IS_EMPTY_OR, IS_INT_IN_RANGE, IS_IN_SET, IS_NOT_EMPTY
 from gluon.storage import Storage
 
-from core import DataModel, S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
-                 S3Represent, S3ReusableField, S3SQLCustomForm, \
+from core import CustomController, CRUDMethod, DataModel, \
+                 S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
+                 S3Report, S3Represent, S3ReusableField, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
-                 get_form_record_id, s3_comments, s3_date, s3_meta_fields, \
+                 get_form_record_id, s3_comments, s3_date, s3_meta_fields, s3_str, \
                  LocationFilter, OptionsFilter, TextFilter, get_filter_options
 
 # =============================================================================
@@ -300,6 +302,12 @@ class CRReceptionCenterModel(DataModel):
                   report_options = report_options,
                   onaccept = self.reception_center_onaccept,
                   )
+
+        # Overview method
+        self.set_method(tablename,
+                        method = "overview",
+                        action = CapacityOverview,
+                        )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -574,5 +582,196 @@ class CRReceptionCenterModel(DataModel):
                    DIV(_class="occupancy %s" % css_class),
                    _class="occupancy-bar",
                    )
+
+# =============================================================================
+class CapacityOverview(CRUDMethod):
+
+    def apply_method(self, r, **attr):
+
+        self.inject_script()
+        CustomController._view("GIMS", "capacity.html")
+
+        output = self.overview(r, **attr)
+
+        return output
+
+    def overview(self, r, **attr):
+
+        output = {"title": "Capacity Overview"}
+
+        output["table"] = self.render_table(r, **attr)
+        output["chart"] = self.render_chart(r, **attr)
+
+        return output
+
+    def render_table(self, r, **attr):
+
+        T = current.T
+
+        from gluon import TABLE, TR, TH, TD, TBODY, THEAD, TFOOT
+
+        list_fields = ["location_id$L3",
+                       "name",
+                       "status",
+                       "capacity",
+                       "population",
+                       "population_unregistered",
+                       "available_capacity",
+                       "allocatable_capacity",
+                       "comments",
+                       "occupancy",
+                       ]
+        capacity_fields = ["capacity",
+                           "population",
+                           "population_unregistered",
+                           "available_capacity",
+                           "allocatable_capacity",
+                           ]
+
+        data = self.resource.select(list_fields,
+                                    represent = True,
+                                    raw_data = True,
+                                    limit = None,
+                                    orderby = "cr_reception_center.occupancy asc"
+                                    )
+
+        rfields = data.rfields
+        tr = TR()
+        append = tr.append
+        for rfield in rfields:
+            append(TH(rfield.label))
+        thead = THEAD(tr)
+
+        rows = data.rows
+        tbody = TBODY()
+        append = tbody.append
+
+        totals = {fn: 0 for fn in capacity_fields}
+        for row in rows:
+
+            # Compute totals
+            raw = row._row
+            for fn in capacity_fields:
+                value = raw["cr_reception_center.%s" % fn]
+                if value:
+                    totals[fn] += value
+
+            # Render table row
+            tr = TR()
+            for rfield in rfields:
+                tr.append(TD(row[rfield.colname]))
+            append(tr)
+
+        # Compute total occupancy
+        capacity, population = totals["capacity"], totals["population"]
+        if capacity > 0:
+            occupancy = population * 100 // capacity
+        else:
+            occupancy = 100
+        field = self.resource.table.occupancy
+        totals["occupancy"] = field.represent(occupancy)
+
+        tr = TR()
+        append = tr.append
+        for rfield in rfields:
+            fn = rfield.field.name if rfield.field else None
+            if fn in totals:
+                append(TD(totals[fn]))
+            elif fn == "name":
+                append(TD(T("Total")))
+            else:
+                append(TD())
+        tfoot = TFOOT(tr)
+
+        table = TABLE(thead, tbody, tfoot, _style="width:100%;")
+        return table
+
+    def render_chart(self, r, **attr):
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        ftable = s3db.cr_reception_center
+        stable = s3db.cr_reception_center_status
+
+        # Get the record IDs of any non-deleted reception center
+        facilities = db(ftable.deleted == False).select(ftable.id,
+                                                        ftable.name,
+                                                        )
+
+        one_year_ago = datetime.datetime.utcnow().date() - datetime.timedelta(days=365)
+        population = {}
+        labels = {0 : s3_str(T("Total")),
+                  }
+
+        for facility in facilities:
+            query = (stable.facility_id == facility.id) & \
+                    (stable.date < one_year_ago) & \
+                    (stable.deleted == False)
+            initial = db(query).select(stable.status,
+                                       stable.population,
+                                       orderby = ~stable.date,
+                                       limitby = (0, 1),
+                                       ).first()
+            if initial:
+                if initial.population and initial.status in ("OP", "SB"):
+                    population[facility.id] = [initial.population] * 365
+                else:
+                    population[facility.id] = [0] * 365
+            else:
+                population[facility.id] = [0] * 365
+            labels[facility.id] = facility.name
+
+        query = (stable.facility_id.belongs(population.keys())) & \
+                (stable.date >= one_year_ago) & \
+                (stable.deleted == False)
+        rows = db(query).select(stable.facility_id,
+                                stable.date,
+                                stable.status,
+                                stable.population,
+                                orderby = stable.date,
+                                )
+
+        for row in rows:
+            facility_id = row.facility_id
+            series = population[facility_id]
+
+            # Compute day
+            dt = row.date
+            if not dt:
+                continue
+            day = (dt - one_year_ago).days
+
+            series[(day - 1):365] = [row.population if row.population else 0] * (366 - day)
+
+        # Compute totals
+        total = [sum(series[i] for series in population.values()) for i in range(365)]
+        population[0] = total
+
+        data = {"population": population,
+                "labels": labels,
+                "start": int(datetime.datetime.combine(one_year_ago, datetime.time(12,0,0)).timestamp()),
+                }
+
+        from gluon import DIV, INPUT
+
+        chart = DIV(INPUT(_type="hidden", _value=json.dumps(data), _id="history-data"),
+                    DIV(_id="history-chart"),
+                    _class = "capacity-chart",
+                    )
+
+        return chart
+
+    def inject_script(self):
+
+        s3 = current.response.s3
+
+        S3Report.inject_d3()
+
+        script = "/%s/static/themes/RLP/js/capacity.js" % current.request.application
+        if script not in s3.scripts:
+            s3.scripts.append(script)
 
 # END =========================================================================

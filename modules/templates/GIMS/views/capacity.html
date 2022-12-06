@@ -1,0 +1,28 @@
+{{extend "layout.html"}}
+<div id='home'>
+
+ <div class='row'>
+  <div class='small-12 columns text-center'>
+   <h2>{{=title}}</h2>
+  </div>
+ </div>
+
+ <div class='row'>
+  <div class='small-12 columns text-center'>
+   <h4 style="margin-top:1.5rem;">Aktuelle Kapazitäten und Belegung</h4>
+   <div style="width:100%;padding:1.5rem;font-size:0.8rem;">
+    {{=table}}
+   </div>
+  </div>
+ </div>
+
+ <div class='row'>
+  <div class='small-12 columns text-center'>
+   <h4 style="margin-top:1.5rem;">Entwicklung der Belegungszahlen</h4>
+   <div style="width:100%;padding:1.5rem;font-size:0.8rem;">
+    {{=chart}}
+   </div>
+  </div>
+ </div>
+
+</div>
