@@ -599,7 +599,6 @@ body.rtl {
     color: #E0E0E0;
     background-color: #d10000;
 }
-
 .occupancy-bar {
     border: 1px solid black;
     position: relative;
@@ -663,7 +662,31 @@ body.rtl {
             background-color: rgba(200, 0, 0, 0.6);
         }
     }
-
 }
+
+// Capacity overview
+.capacity-overview {
+    h4 {
+        margin-top: 1.5rem;
+    }
+    .capacity-data {
+        width: 100%;
+        padding: 1.5rem;
+        font-size: 0.8rem;
+    }
+    table {
+        width: 100%;
+        thead, tfoot {
+            tr {
+                background-color: #d7d7d7;
+            }
+        }
+        tfoot tr {
+            border-top: 1px solid #ccc;
+            font-size: 0.9rem;
+        }
+    }
+}
+
 
 // END ========================================================================

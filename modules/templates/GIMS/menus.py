@@ -198,8 +198,9 @@ class S3OptionsMenu(default.S3OptionsMenu):
         if current.request.function in rc_functions:
             # Reception center perspective
             menu = M(c="cr")(
+                        M("Overview", f="reception_center", m="overview"),
                         M("Facilities", f="reception_center")(
-                            M("Create", m="create"),
+                            M("Create Facility", m="create"),
                             M("Map", m="map"),
                             ),
                         M("Statistics", link=False)(

@@ -463,8 +463,7 @@ class CRShelterModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Returns safe defaults in case the model has been deactivated.
         """
@@ -604,7 +603,7 @@ class CRShelterPopulationModel(DataModel):
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
         population = S3ReusableField("population", "integer",
-                                     label = T("Population"),
+                                     label = T("Population##shelter"),
                                      represent = IS_INT_AMOUNT.represent,
                                      requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                                      readable = True,
@@ -839,8 +838,7 @@ class CRShelterUnitModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Returns safe defaults in case the model has been deactivated.
         """
@@ -969,7 +967,7 @@ class CRShelterStatusModel(DataModel):
         status_opts = shelter_status_opts()
 
         population = S3ReusableField("population", "integer",
-                                     label = T("Population"),
+                                     label = T("Population##shelter"),
                                      represent = IS_INT_AMOUNT.represent,
                                      requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                                      readable = True,
@@ -1448,8 +1446,7 @@ class CRShelterInspectionModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"cr_shelter_flag_id":  S3ReusableField.dummy("flag_id"),
@@ -2636,10 +2633,9 @@ class ShelterInspectionFlagRepresent(S3Represent):
                 show_link: represent as link to the shelter inspection
         """
 
-        super(ShelterInspectionFlagRepresent, self).__init__(
-                                       lookup="cr_shelter_inspection_flag",
-                                       show_link=show_link,
-                                       )
+        super().__init__(lookup = "cr_shelter_inspection_flag",
+                         show_link = show_link,
+                         )
 
     # ---------------------------------------------------------------------
     def link(self, k, v, row=None):
@@ -2727,10 +2723,9 @@ class ShelterInspectionRepresent(S3Represent):
                 show_link: represent as link to the shelter inspection
         """
 
-        super(ShelterInspectionRepresent, self).__init__(
-                                       lookup="cr_shelter_inspection",
-                                       show_link=show_link,
-                                       )
+        super().__init__(lookup = "cr_shelter_inspection",
+                         show_link = show_link,
+                         )
 
     # ---------------------------------------------------------------------
     def link(self, k, v, row=None):
@@ -3035,11 +3030,10 @@ class CRShelterInspection(CRUDMethod):
                         if not success:
                             error = True
                             break
-                        else:
-                            # Call onaccept to auto-create tasks
-                            record = Storage(data)
-                            record["id"] = success
-                            s3db.onaccept(ftable, record)
+                        # Call onaccept to auto-create tasks
+                        record = Storage(data)
+                        record["id"] = success
+                        s3db.onaccept(ftable, record)
             else:
                 error = True
 
