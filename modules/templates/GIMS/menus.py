@@ -54,12 +54,11 @@ class S3MainMenu(default.S3MainMenu):
                                           ),
                    restrict=("SHELTER_MANAGER", "SHELTER_READER"),
                    ),
-                MM("Reception Centers", c="cr", f=("reception_center",
-                                                   "reception_center_status",
-                                                   ),
-                   m = "overview",
-                   restrict=("AFA_MANAGER", "AFA_READER"),
-                   ),
+                MM("Reception Centers", c="cr", f=("reception_center", "reception_center_status"),
+                   restrict=("AFA_MANAGER", "AFA_READER"), link=False)(
+                    MM("Overview", f="reception_center", m="overview"),
+                    MM("Facilities", f="reception_center"),
+                    ),
                 MM("Newsletters", c="cms", f="read_newsletter"),
                 ]
 
