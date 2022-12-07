@@ -763,9 +763,9 @@ class CapacityOverview(CRUDMethod):
 
         # Look up reception centers
         ftable = s3db.cr_reception_center
-        facilities = db(ftable.deleted == False).select(ftable.id,
-                                                        ftable.name,
-                                                        )
+        query = current.auth.s3_accessible_query("read", ftable) & \
+                (ftable.deleted == False)
+        facilities = db(query).select(ftable.id, ftable.name)
 
         # Use facility names as labels for data series
         labels = {facility.id: facility.name for facility in facilities}
