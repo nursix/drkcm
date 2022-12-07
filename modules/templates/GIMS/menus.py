@@ -57,6 +57,7 @@ class S3MainMenu(default.S3MainMenu):
                 MM("Reception Centers", c="cr", f=("reception_center",
                                                    "reception_center_status",
                                                    ),
+                   m = "overview",
                    restrict=("AFA_MANAGER", "AFA_READER"),
                    ),
                 MM("Newsletters", c="cms", f="read_newsletter"),
