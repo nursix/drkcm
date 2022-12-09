@@ -658,8 +658,7 @@ class CapacityOverview(CRUDMethod):
         resource.add_filter(FS("status").belongs(("OP", "SB")))
 
         # Fields to show (in order)
-        list_fields = ["id",
-                       (T("Place"), "location_id$L3"),
+        list_fields = [(T("Place"), "location_id$L3"),
                        (T("Facility"), "name"),
                        "status",
                        "capacity",
@@ -672,19 +671,26 @@ class CapacityOverview(CRUDMethod):
                        ]
 
         # Extract the data (least occupied facilities first)
-        data = resource.select(list_fields,
+        data = resource.select(list_fields + ["id", "location_id$L4"],
                                represent = True,
                                raw_data = True,
                                limit = None,
-                               orderby = "cr_reception_center.occupancy asc"
+                               orderby = ["gis_location.L3 asc",
+                                          "gis_location.L4 asc",
+                                          "cr_reception_center.occupancy asc",
+                                          ],
                                )
         rfields = data.rfields
 
+        # Display columns
+        exclude = ("gis_location.L4")
+        columns = [(rfield.colname, rfield.label)
+                   for rfield in rfields
+                   if rfield.show and rfield.ftype != "id" and rfield.colname not in exclude
+                   ]
+
         # Label row
-        thead = THEAD(TR([TH(rfield.label)
-                          for rfield in rfields
-                          if rfield.show and rfield.ftype != "id"
-                          ]))
+        thead = THEAD(TR([TH(col[1]) for col in columns]))
 
         # Data rows
         capacity_fields = ["capacity",
@@ -713,9 +719,12 @@ class CapacityOverview(CRUDMethod):
                 row["cr_reception_center.name"] = A(name, _href=url)
 
             # Append data row to table
-            append(TR([TD(row[rfield.colname])
-                       for rfield in rfields if rfield.ftype != "id"
-                       ]))
+            if raw["gis_location.L4"]:
+                # Replace L3 by L4
+                display = [col[0] if col[0] != "gis_location.L3" else "gis_location.L4" for col in columns]
+            else:
+                display = [col[0] for col in columns]
+            append(TR([TD(row[colname]) for colname in display]))
 
         # Compute total occupancy
         capacity, population = totals["capacity"], totals["population"]
