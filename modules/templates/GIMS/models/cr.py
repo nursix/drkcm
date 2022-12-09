@@ -677,7 +677,8 @@ class CapacityOverview(CRUDMethod):
                                limit = None,
                                orderby = ["gis_location.L3 asc",
                                           "gis_location.L4 asc",
-                                          "cr_reception_center.occupancy asc",
+                                          "cr_reception_center.capacity desc",
+                                          "cr_reception_center.occupancy desc",
                                           ],
                                )
         rfields = data.rfields
