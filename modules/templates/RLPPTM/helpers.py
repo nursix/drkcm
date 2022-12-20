@@ -12,8 +12,8 @@ from gluon import current, Field, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
-from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
-                 CRUDMethod, S3Represent, S3PriorityRepresent, \
+from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, CRUDMethod, \
+                 BooleanRepresent, S3Represent, S3PriorityRepresent, \
                  s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact
@@ -380,6 +380,91 @@ def is_org_type_tag(organisation_id, tag, value=None):
             (ltable.deleted == False)
     row = db(query).select(ttable.id, join=join, limitby=(0, 1)).first()
     return bool(row)
+
+# -----------------------------------------------------------------------------
+def account_status(record, represent=True):
+    """
+        Checks the status of the user account for a person
+
+        Args:
+            record: the person record
+            represent: represent the result as workflow option
+
+        Returns:
+            workflow option HTML if represent=True, otherwise boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ltable = s3db.pr_person_user
+    utable = current.auth.table_user()
+
+    query = (ltable.pe_id == record.pe_id) & \
+            (ltable.deleted == False) & \
+            (utable.id == ltable.user_id)
+
+    account = db(query).select(utable.id,
+                               utable.registration_key,
+                               cache = s3db.cache,
+                               limitby = (0, 1),
+                               ).first()
+
+    if account:
+        status = "DISABLED" if account.registration_key else "ACTIVE"
+    else:
+        status = "N/A"
+
+    if represent:
+        represent = WorkflowOptions(("N/A", "nonexistent", "grey"),
+                                    ("DISABLED", "disabled##account", "red"),
+                                    ("ACTIVE", "active", "green"),
+                                    ).represent
+        status = represent(status)
+
+    return status
+
+# -----------------------------------------------------------------------------
+def is_test_station_manager(person_id, represent=True):
+    """
+        Checks if a person is a test station manager
+
+        Args:
+            person_id: the person record ID
+            represent: represent a positive result as check mark
+
+        Returns:
+            HTML representing boolean (if represent=True), or boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    gtable = s3db.org_group
+    mtable = s3db.org_group_membership
+    htable = s3db.hrm_human_resource
+
+    from .config import TESTSTATIONS
+    join = [mtable.on((mtable.organisation_id == htable.organisation_id) & \
+                      (mtable.deleted == False)),
+            gtable.on((gtable.id == mtable.group_id) & \
+                      (gtable.name == TESTSTATIONS)),
+            ]
+    query = (htable.person_id == person_id) & \
+            (htable.org_contact == True) & \
+            (htable.deleted == False)
+    row = db(query).select(htable.id,
+                           cache = s3db.cache,
+                           join = join,
+                           limitby = (0, 1),
+                           ).first()
+    if row:
+        if represent:
+            return BooleanRepresent(labels=False, icons=True, colors=True)(True)
+        else:
+            return True
+    else:
+        return False
 
 # -----------------------------------------------------------------------------
 def restrict_data_formats(r):

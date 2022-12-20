@@ -8,6 +8,8 @@ from gluon import current, A, URL, SPAN
 
 from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
+from .helpers import is_test_station_manager, account_status
+
 # =============================================================================
 def rlpptm_fin_rheader(r, tabs=None):
     """ FIN custom resource headers """
@@ -566,7 +568,7 @@ def rlpptm_profile_rheader(r, tabs=None):
                                                          )
     return rheader
 
-# =============================================================================
+# -----------------------------------------------------------------------------
 def rlpptm_hr_rheader(r, tabs=None):
     """ Custom rheader for hrm/person """
 
@@ -594,7 +596,16 @@ def rlpptm_hr_rheader(r, tabs=None):
                     (T("Address"), "address"),
                     (T("Staff Record"), "human_resource"),
                     ]
-            rheader_fields = []
+
+            rheader_fields = [[(T("User Account"), account_status)],
+                              ]
+
+            manager = is_test_station_manager(record.id)
+            if manager:
+                rheader_fields.append([
+                    (T("Test Station Manager"), lambda i: manager)
+                    ])
+
             rheader_title = s3_fullname
 
             rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)

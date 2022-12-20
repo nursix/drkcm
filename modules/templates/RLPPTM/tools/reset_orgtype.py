@@ -38,19 +38,19 @@ dtable = s3db.doc_document
 #TEMPLATE_FOLDER = os.path.join(request.folder, "modules", "templates", "RLPPTM")
 
 # Verification requirements
-# TODO make sure type names match database exactly
+# - make sure type names match database exactly
 
 # Types for which document upload is required
 DREQ = {"Apotheke",
         "Hilfsorganisation",
+        "Hilfsorganisation (kommunal beauftragt)",
+        "Rotes Kreuz",
         }
 # Types for which IDs (e.g. BSNr) must be provided in the comments-field
 # of the organisation record
 IREQ = {"Arztpraxis (Vertragsarztpraxis)",
         "Zahnarztpraxis",
         }
-
-failed = True # TODO remove this line when type sets are complete
 
 # -----------------------------------------------------------------------------
 # Fix end date of commissions
