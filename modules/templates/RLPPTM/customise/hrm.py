@@ -298,11 +298,11 @@ def hrm_human_resource_resource(r, tablename):
         field.writable = False
         field.comment = None
 
-        crud_fields = ("organisation_id",
-                       "person_id",
+        crud_fields = ("person_id",
+                       "organisation_id",
                        "site_id",
-                       "job_title_id",
                        org_contact,
+                       "job_title_id",
                        "start_date",
                        "end_date",
                        "status",

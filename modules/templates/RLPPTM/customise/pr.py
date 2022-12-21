@@ -79,13 +79,23 @@ def pr_person_controller(**attr):
         controller = r.controller
         if controller in ("default", "hrm") and not r.component:
             # Personal profile (default/person) or staff
+            resource = r.resource
 
             # Last name is required
-            table = r.resource.table
+            table = resource.table
             table.last_name.requires = IS_NOT_EMPTY()
 
+            # Make place of birth accessible
+            details = resource.components.get("person_details")
+            if details:
+                field = details.table.place_of_birth
+                field.readable = field.writable = True
+
             # Custom Form
-            crud_fields = name_fields + ["date_of_birth", "gender"]
+            crud_fields = name_fields + ["date_of_birth",
+                                         "person_details.place_of_birth",
+                                         "gender",
+                                         ]
 
             r.resource.configure(crud_form = S3SQLCustomForm(*crud_fields,
                                                              postprocess = person_postprocess,
