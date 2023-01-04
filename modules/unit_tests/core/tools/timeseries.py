@@ -1276,23 +1276,23 @@ class DtParseTests(unittest.TestCase):
 
         result = ts.dtparse("+1 year", start=start)
         assertTrue(isinstance(result, datetime.datetime))
-        assertEqual(result, datetime.datetime(2015, 1, 3, 11, 30, 0))
+        assertEqual(result, datetime.datetime(2015, 1, 3, 0, 0, 0))
 
         result = ts.dtparse("-3 days", start=start)
         assertTrue(isinstance(result, datetime.datetime))
-        assertEqual(result, datetime.datetime(2013, 12, 31, 11, 30, 0))
+        assertEqual(result, datetime.datetime(2013, 12, 31, 0, 0, 0))
 
         result = ts.dtparse("+5 hours", start=start)
         assertTrue(isinstance(result, datetime.datetime))
-        assertEqual(result, datetime.datetime(2014, 1, 3, 16, 30, 0))
+        assertEqual(result, datetime.datetime(2014, 1, 3, 16, 0, 0))
 
         result = ts.dtparse("-6 months", start=start)
         assertTrue(isinstance(result, datetime.datetime))
-        assertEqual(result, datetime.datetime(2013, 7, 3, 11, 30, 0))
+        assertEqual(result, datetime.datetime(2013, 7, 3, 0, 0, 0))
 
         result = ts.dtparse("+12 weeks", start=start)
         assertTrue(isinstance(result, datetime.datetime))
-        assertEqual(result, datetime.datetime(2014, 3, 28, 11, 30, 0))
+        assertEqual(result, datetime.datetime(2014, 3, 28, 0, 0, 0))
 
         # Empty string defaults to start
         result = ts.dtparse("", start=start)
