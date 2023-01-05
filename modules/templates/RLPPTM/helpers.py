@@ -2662,6 +2662,22 @@ class PersonRepresentManager(pr_PersonRepresentContact):
             dob = None
         dob = table.date_of_birth.represent(dob) if dob else "-"
 
+        try:
+            pob = row.place_of_birth
+        except AttributeError:
+            pob = None
+        if not pob:
+            pob = "-"
+
+        addr_details = {"place": row.get("addr_place") or "-",
+                        "postcode": row.get("addr_postcode") or "",
+                        "street": row.get("addr_street") or "-",
+                        }
+        if any(value and value != "-" for value in addr_details.values()):
+            address = "{street}, {postcode} {place}".format(**addr_details)
+        else:
+            address = "-"
+
         pe_id = row.pe_id
         email = self._email.get(pe_id) if self.show_email else None
         phone = self._phone.get(pe_id) if self.show_phone else None
@@ -2670,6 +2686,10 @@ class PersonRepresentManager(pr_PersonRepresentContact):
                            TD(dob),
                            _class = "manager-dob"
                            ),
+                        TR(TH("%s:" % T("Place of Birth")),
+                           TD(pob),
+                           _class = "manager-pob"
+                           ),
                         TR(TH(ICON("mail")),
                            TD(A(email, _href="mailto:%s" % email) if email else "-"),
                            _class = "manager-email"
@@ -2677,6 +2697,10 @@ class PersonRepresentManager(pr_PersonRepresentContact):
                         TR(TH(ICON("phone")),
                            TD(phone if phone else "-"),
                            _class = "manager-phone",
+                           ),
+                        TR(TH(ICON("home")),
+                           TD(address),
+                           _class = "manager-address",
                            ),
                         _class="manager-details",
                         )
@@ -2695,20 +2719,76 @@ class PersonRepresentManager(pr_PersonRepresentContact):
                 fields: unused (retained for API compatibility)
         """
 
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup person rows + store contact details in instance
         rows = super().lookup_rows(key, values, fields=fields)
 
         # Lookup dates of birth
         table = self.table
         count = len(values)
         query = (key == values[0]) if count == 1 else key.belongs(values)
-        dob = current.db(query).select(table.id,
-                                       table.date_of_birth,
-                                       limitby = (0, count),
-                                       ).as_dict()
+        dob = db(query).select(table.id,
+                               table.date_of_birth,
+                               limitby = (0, count),
+                               ).as_dict()
+
+        # Lookup places of birth
+        dtable = s3db.pr_person_details
+        if count == 1:
+            query = (dtable.person_id == values[0])
+        else:
+            query = (dtable.person_id.belongs(values))
+        query &= (dtable.place_of_birth != None) & \
+                 (dtable.deleted == False)
+
+        details = db(query).select(dtable.person_id,
+                                   dtable.place_of_birth,
+                                   ).as_dict(key="person_id")
+
+        # Lookup addresses
+        atable = s3db.pr_address
+        ltable = s3db.gis_location
+
+        join = ltable.on(ltable.id == atable.location_id)
+        query = (atable.pe_id.belongs({row.pe_id for row in rows})) & \
+                (atable.type.belongs((1,2))) & \
+                (atable.deleted == False)
+        addresses = db(query).select(atable.pe_id,
+                                     ltable.id,
+                                     #ltable.L2,
+                                     ltable.L3,
+                                     ltable.L4,
+                                     ltable.L5,
+                                     ltable.addr_street,
+                                     ltable.addr_postcode,
+                                     join = join,
+                                     orderby = (atable.type, atable.created_on),
+                                     ).as_dict(key="pr_address.pe_id")
+
+        # Extend person rows with additional details
         for row in rows:
-            date_of_birth = dob.get(row.id)
-            if date_of_birth:
-                row.date_of_birth = date_of_birth.get("date_of_birth")
+            detail = dob.get(row.id)
+            if detail:
+                row.date_of_birth = detail["date_of_birth"]
+
+            detail = details.get(row.id)
+            if detail:
+                row.place_of_birth = detail["place_of_birth"]
+
+            address = addresses.get(row.pe_id)
+            if address:
+                location, place = address["gis_location"], None
+                for level in ("L5", "L4", "L3"):
+                    place = location[level]
+                    if place:
+                        break
+                if place:
+                    row.addr_place = place
+                    row.addr_street = location["addr_street"]
+                    row.addr_postcode = location["addr_postcode"]
+                    #row.addr_adm = location["L2"]
 
         return rows
 
