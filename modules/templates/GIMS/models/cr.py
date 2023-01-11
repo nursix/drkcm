@@ -33,9 +33,10 @@ import json
 
 from collections import OrderedDict
 
-from gluon import current, Field, URL, \
+from gluon import current, Field, HTTP, URL, \
                   A, DIV, INPUT, TABLE, TBODY, TD, TFOOT, TH, THEAD, TR, \
                   IS_EMAIL, IS_EMPTY_OR, IS_INT_IN_RANGE, IS_IN_SET, IS_NOT_EMPTY
+from gluon.contenttype import contenttype
 from gluon.storage import Storage
 
 from core import CustomController, CRUDMethod, DataModel, FS, S3Report,  \
@@ -309,6 +310,10 @@ class CRReceptionCenterModel(DataModel):
         self.set_method(tablename,
                         method = "overview",
                         action = CapacityOverview,
+                        )
+        self.set_method(tablename,
+                        method = "occupancy",
+                        action = OccupancyData,
                         )
 
         # CRUD Strings
@@ -887,5 +892,576 @@ class CapacityOverview(CRUDMethod):
         script = "/%s/static/themes/RLP/js/capacity.js" % current.request.application
         if script not in s3.scripts:
             s3.scripts.append(script)
+
+# =============================================================================
+class OccupancyData(CRUDMethod):
+    """ Method to produce a occupancy data sheet """
+
+    # -------------------------------------------------------------------------
+    def apply_method(self, r, **attr):
+        """
+            Entry point for CRUD controller
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+            Returns:
+                output data for view
+        """
+
+        if r.http == "GET":
+            if r.representation == "xlsx":
+                output = self.export_data(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def export_data(self, r, **attr):
+        """
+            Exports the occupancy data in Excel format
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+            Returns:
+                output data for view
+        """
+
+        year = r.get_vars.get("year")
+        if year:
+            try:
+                year = int(year)
+            except ValueError:
+                year = None
+            if 2100 < year < 2000:
+                year = None
+        if not year:
+            year = datetime.datetime.utcnow().year
+
+        facilities = self.get_facilities()
+
+        matrix = self.get_occupancy(facilities, year)#, start, end)
+
+        response = current.response
+
+        title = "Belegungszahlen %04d" % year
+
+        # Set response headers
+        filename = "%s.xlsx" % title
+        disposition = "attachment; filename=\"%s\"" % filename
+        response = current.response
+        response.headers["Content-Type"] = contenttype(".xlsx")
+        response.headers["Content-disposition"] = disposition
+
+        return self.write_xlsx(facilities, year, matrix)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_facilities():
+        """
+            Selects the relevant (accessible) facilities
+
+            Returns:
+                Rows
+        """
+
+        # TODO orderby L2, L3, L4 of location_id
+
+        ftable = current.s3db.cr_reception_center
+        query = current.auth.s3_accessible_query("read", ftable) & \
+                (ftable.deleted == False)
+        return current.db(query).select(ftable.id,
+                                        ftable.name,
+                                        orderby = ftable.name,
+                                        )
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def get_occupancy(cls, facilities, year):
+        """
+            Returns the occupancy data for the facilities for a certain year
+
+            Args:
+                facilities: the facility Rows
+                year: the year
+
+            Returns:
+                Array [[date, value, value, ...], ...] with the
+                occupancy numbers for each facility and each day of the year
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        start = datetime.date(year, 1 ,1)
+        end = datetime.date(year, 12, 31)
+
+        # Lookup initial occupancy numbers
+        initial = cls.get_initial_occupancy(facilities, start)
+
+        # Lookup occupancy updates within the year
+        stable = s3db.cr_reception_center_status
+        query = (stable.facility_id.belongs(initial.keys())) & \
+                (stable.date != None) & \
+                (stable.date >= start) & \
+                (stable.date <= end) & \
+                (stable.deleted == False)
+        rows = db(query).select(stable.facility_id,
+                                stable.date,
+                                stable.status,
+                                stable.population,
+                                orderby = stable.date,
+                                )
+
+        # Order the updates by date
+        data = {}
+        for row in rows:
+            facility_id = row.facility_id
+            if facility_id in data:
+                series = data[facility_id]
+            else:
+                series = data[facility_id] = {}
+            series[row.date] = row.population if row.status in ("OP", "SB") else -1
+
+        # Convert into a continuous value matrix
+        date = start
+        today = datetime.datetime.utcnow().date()
+        matrix = []
+        while date <= end:
+
+            row, total = [date], 0
+            for facility in facilities:
+                facility_id = facility.id
+
+                series = data.get(facility_id)
+                value = series.get(date) if series else None
+
+                if date > today or value == -1:
+                    initial[facility_id] = value = None
+                elif value is None:
+                    value = initial.get(facility_id)
+                else:
+                    initial[facility_id] = value
+
+                row.append(value)
+                if value:
+                    total += value
+
+            if any(value != None for value in row[1:]):
+                row.append(total)
+            else:
+                row.append(None)
+            matrix.append(row)
+            date += datetime.timedelta(days=1)
+
+        return matrix
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def write_xlsx(cls, facilities, year, matrix):
+        """
+            Produces an Excel document from the occupancy data matrix
+
+            Args:
+                facilities: the facility Rows
+                year: the year
+                matrix: the data matrix from get_occupancy
+        """
+
+        # Import OpenPyXL
+        try:
+            from openpyxl import Workbook
+        except ImportError:
+            error = current.T("Export failed: OpenPyXL library not installed on server")
+            current.log.error(error)
+            raise HTTP(503, body=error)
+
+        # Create the workbook
+        wb = Workbook(iso_dates=True)
+
+        # Add named styles
+        from core import XLSXWriter
+        XLSXWriter.add_styles(wb, use_color=False, even_odd=True)
+
+        # Write annual data (first sheet)
+        cls.add_annual_data(wb, facilities, matrix, year)
+
+        # Write monthly data (subsequent sheets)
+        cls.add_monthly_data(wb, facilities, matrix)
+
+        # Save workbook and read its contents
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile() as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            output = tmp.read()
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def add_annual_data(cls, wb, facilities, matrix, year):
+        """
+            Writes annual statistics to the Excel workbook
+
+            Args:
+                wb: the workbook
+                facilities: the facility Rows
+                matrix: the occupancy data matrix
+                year: the year in question
+        """
+
+        T = current.T
+
+        # Use active data sheet
+        ws = wb.active
+        ws.title = "%04d" % year
+
+        # Add label row
+        labels = [T("Facility"),
+                  T("Days"),
+                  T("Minimum"),
+                  T("Average"),
+                  T("Median"),
+                  T("Q80"), # 80%-quantil
+                  T("Maximum"),
+                  ]
+        label_row, column_widths = [], []
+        for label in labels:
+            label_str = s3_str(label)
+            column_widths.append(len(label_str))
+            label_row.append((label_str, label_str, None, "label"))
+        cls.add_row(ws, label_row, column_widths)
+
+        # Add data rows
+        totals = cls.compute_totals(matrix)
+        for i, (days, min_, avg_, med_, q80_, max_) in enumerate(totals):
+            if i < len(facilities):
+                facility = facilities[i]
+                label = facility.name
+            else:
+                label = s3_str(T("Total##set"))
+            cls.add_row(ws,
+                        [(label, label, None, None),
+                         (days, str(days), "0", None),
+                         (min_, str(min_), "0", None),
+                         (avg_, str(avg_), "0", None),
+                         (med_, str(avg_), "0", None),
+                         (q80_, str(q80_), "0", None),
+                         (max_, str(max_), "0", None),
+                         ],
+                        column_widths,
+                        )
+
+        # Adjust column widths
+        cls.adjust_column_widths(ws, column_widths)
+
+        # Scroll only data rows, not labels
+        ws.freeze_panes = "A2"
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def add_monthly_data(cls, wb, facilities, matrix):
+        """
+            Writes the monthly occupancy data to the Excel workbook
+
+            Args:
+                wb: the workbook
+                facilities: the facility Rows
+                matrix: the occupancy data matrix
+        """
+
+        T = current.T
+
+        # Generate columns labels and initialize totals
+        labels = [s3_str(T("Date"))]
+        totals = []
+        for facility in facilities:
+            labels.append(s3_str(facility.name))
+            totals.append((0, 0))
+        labels.append(s3_str(T("Total##set")))
+        totals.append((0, 0))
+        label_widths = [len(label) + 1 for label in labels]
+
+        AVG = s3_str(T("Average"))
+        if label_widths[0] < len(AVG) + 1:
+            label_widths[0] = len(AVG) + 1
+
+        # Date format
+        from core.formats.xlsx import dt_format_translate
+        settings = current.deployment_settings
+        date_format = dt_format_translate(settings.get_L10n_date_format())
+
+        from core import S3DateTime
+        date_represent = S3DateTime.date_represent
+
+        # Write one sheet per month
+        ws = None
+        current_month = (None, None)
+
+        for row in matrix:
+
+            date = row[0]
+            month = (date.year, date.month)
+
+            last = (date + datetime.timedelta(days=1)).month != date.month
+
+            if month != current_month:
+
+                current_month = month
+                values = [[] for _ in range(len(row) - 1)]
+                column_widths = label_widths
+                row_index = 0
+
+                # Create new sheet
+                ws = wb.create_sheet(title="%04d-%02d" % month)
+
+                # Add column labels
+                label_row = [(l, l, None, "label") for l in labels]
+                cls.add_row(ws, label_row, column_widths)
+
+                # Scroll only data rows, not labels
+                ws.freeze_panes = "A2"
+
+            row_index += 1
+            row_style = "odd" if row_index % 2 else "even"
+
+            col_idx = 0
+            outrow = []
+
+            # Write outrow
+            for col_idx, value in enumerate(row):
+
+                if col_idx == 0:
+                    formatter = date_represent
+                    number_format = date_format
+                else:
+                    formatter = s3_str
+                    number_format = "0"
+
+                if value is not None:
+                    if col_idx > 0:
+                        values[col_idx - 1].append(value)
+                    formatted = formatter(value)
+                else:
+                    formatted = ""
+                item = (value, formatted, number_format, row_style)
+
+                outrow.append(item)
+
+            # Append row to current sheet
+            cls.add_row(ws, outrow, column_widths)
+
+            # Post-process last row
+            if last:
+                # Compute and write averages
+                outrow = [(AVG, AVG, None, "label")]
+
+                for i, col_values in enumerate(values):
+                    if len(col_values):
+                        total, days = sum(col_values), len(col_values)
+                        value = round(total / days, 0)
+                    else:
+                        total, days = 0, 0
+                        value = 0
+                    outrow.append((value, str(value), "0", "label"))
+
+                    # Update totals
+                    t = totals[i]
+                    totals[i] = t[0] + total, t[1] + days
+
+                cls.add_row(ws, outrow, column_widths)
+
+                # Adjust column widths
+                cls.adjust_column_widths(ws, column_widths)
+
+        return totals
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def add_row(ws, items, column_widths):
+        """
+            Writes a row to a worksheet, and updates columns widths as needed
+
+            Args:
+                ws: the worksheet
+                items: the items,
+                       array [(raw_value, formatted, number_format, style)]
+                column_widths: mutable array of column widths
+        """
+
+        from openpyxl.cell import Cell
+
+        row = []
+        for i, item in enumerate(items):
+
+            value, text, number_format, style = item
+
+            if value is None:
+                cell = Cell(ws)
+            else:
+                cell = Cell(ws, value=value)
+
+            if style:
+                cell.style = style
+            if number_format:
+                cell.number_format = number_format
+
+            row.append(cell)
+
+            width = len(text)
+            if style == "label":
+                width += 1
+            if width > column_widths[i]:
+                column_widths[i] = width
+
+        ws.append(row)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def adjust_column_widths(ws, column_widths):
+        """
+            Adjusts the column widths of a worksheet
+
+            Args:
+                ws: the worksheet
+                column_widths: array of column widths
+        """
+
+        from openpyxl.utils import get_column_letter
+
+        for i in range(len(column_widths)):
+            ws.column_dimensions[get_column_letter(i+1)].width = column_widths[i] * 1.23
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_initial_occupancy(facilities, start):
+        """
+            Determines the initial occupancy for the given facilities
+            at the given start date (...from the last status update
+            before that start date, if one exists)
+
+            Args:
+                facilities: the facility Rows
+                start: the start date
+
+            Returns:
+                a dict {facility_id: number|None}
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        stable = s3db.cr_reception_center_status
+
+        # Lookup initial population numbers (per facility)
+        initial = {}
+        for facility in facilities:
+            facility_id = facility.id
+            query = (stable.facility_id == facility_id) & \
+                    (stable.date < start) & \
+                    (stable.deleted == False)
+            row = db(query).select(stable.status,
+                                   stable.population,
+                                   orderby = ~stable.date,
+                                   limitby = (0, 1),
+                                   ).first()
+
+            if row and row.status in ("OP", "SB"):
+                initial[facility_id] = row.population
+            else:
+                initial[facility_id] = None
+
+        return initial
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def compute_totals(cls, matrix):
+        """
+            Computes totals for the data matrix
+
+            Args:
+                matrix: the occupancy data matrix
+
+            Returns:
+                Array [(days, min, avg, median, q80, max), ...] with one
+                tuple per facility, and one additional tuple for totals
+
+            Notes:
+                days = the number of days the facility was in use during the year
+                min = the minimum occupancy
+                avg = the average occupancy
+                median = the median occupancy (=50% of days were at or above this value)
+                q80 = the 80. percentile (=80% of days were at or below this value)
+                max = the maximum occupancy
+        """
+
+        values = None
+
+        for row in matrix:
+            if values is None:
+                values = [[] for _ in range(len(row) - 1)]
+            for i, value in enumerate(row[1:]):
+                if value is not None:
+                    values[i].append(value)
+
+        import statistics
+
+        totals = []
+        for series in values:
+            days = len(series)
+            if not days:
+                totals.append((0, 0, 0, 0, 0, 0))
+            else:
+                totals.append((days,
+                               min(series),
+                               round(sum(series) / days, 0),
+                               statistics.median(series),
+                               cls.quantile(series, 0.8),
+                               max(series),
+                               ))
+
+        return totals
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def quantile(a, q, precision=0):
+        """
+            Determines a quantile for array a, such that q% of the values
+            in a are less than or equal to the quantile
+
+            Args:
+                a: array of int|float
+                q: the quantile 0..100
+                precision: the rounding precision for interpolated values
+
+            Returns:
+                the quantile value (float)
+        """
+
+        if not a:
+            raise RuntimeError("empty sample")
+        if len(a) == 1:
+            return a[0]
+
+        s = sorted(a)
+        n = len(s)
+        p = (n - 1) * q + 1
+
+        i = int(p)
+        if float(i) == p:
+            # Choose
+            quantile = float(s[i-1])
+        else:
+            # Interpolate
+            a = float(s[i-1])
+            b = float(s[i])
+            quantile = a + (b - a) * (p - i)
+
+        return round(quantile, precision)
 
 # END =========================================================================
