@@ -111,6 +111,7 @@ ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_site,READ,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_site_approval,READ|UPDATE,,any
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_site_approval_status,READ,,any
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,org_verification,READ|UPDATE,,
+ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_address,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_contact,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_contact_emergency,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,pr_person,CREATE|READ|UPDATE|DELETE,,
