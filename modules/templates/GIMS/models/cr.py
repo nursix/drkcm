@@ -1035,8 +1035,10 @@ class OccupancyData(CRUDMethod):
         query = current.auth.s3_accessible_query("read", ftable) & \
                 (ftable.deleted == False)
 
-        return current.db(query).select(ftable.id,
+        rows = current.db(query).select(ftable.id,
                                         ftable.name,
+                                        gtable.L3,
+                                        gtable.L4,
                                         orderby = [gtable.L2,
                                                    gtable.L3,
                                                    gtable.L4,
@@ -1044,6 +1046,14 @@ class OccupancyData(CRUDMethod):
                                                    ],
                                         left = left,
                                         )
+        facilities = []
+        for row in rows:
+            facility = row.cr_reception_center
+            location = row.gis_location
+            facility.place = location.L4 if location.L4 else location.L3
+            facilities.append(facility)
+
+        return facilities
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1188,7 +1198,8 @@ class OccupancyData(CRUDMethod):
         ws.title = "%04d" % year
 
         # Add label row
-        labels = [T("Facility"),
+        labels = [T("Place"),
+                  T("Facility"),
                   T("Days"),
                   T("Minimum"),
                   T("Average"),
@@ -1208,17 +1219,22 @@ class OccupancyData(CRUDMethod):
         for i, (days, min_, avg_, med_, q80_, max_) in enumerate(totals):
             if i < len(facilities):
                 facility = facilities[i]
+                place = facility.place
                 label = facility.name
+                style = None
             else:
+                place = ""
                 label = s3_str(T("Total##set"))
+                style = "label"
             cls.add_row(ws,
-                        [(label, label, None, None),
-                         (days, str(days), "0", None),
-                         (min_, str(min_), "0", None),
-                         (avg_, str(avg_), "0", None),
-                         (med_, str(avg_), "0", None),
-                         (q80_, str(q80_), "0", None),
-                         (max_, str(max_), "0", None),
+                        [(place, place, None, style),
+                         (label, label, None, style),
+                         (days, str(days), "0", style),
+                         (min_, str(min_), "0", style),
+                         (avg_, str(avg_), "0", style),
+                         (med_, str(avg_), "0", style),
+                         (q80_, str(q80_), "0", style),
+                         (max_, str(max_), "0", style),
                          ],
                         column_widths,
                         )
