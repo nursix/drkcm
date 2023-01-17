@@ -34,7 +34,8 @@ import json
 from collections import OrderedDict
 
 from gluon import current, Field, HTTP, URL, \
-                  A, DIV, INPUT, TABLE, TBODY, TD, TFOOT, TH, THEAD, TR, \
+                  A, DIV, INPUT, OPTION, SELECT, SPAN, \
+                  TABLE, TBODY, TD, TFOOT, TH, THEAD, TR, \
                   IS_EMAIL, IS_EMPTY_OR, IS_INT_IN_RANGE, IS_IN_SET, IS_NOT_EMPTY
 from gluon.contenttype import contenttype
 from gluon.storage import Storage
@@ -635,6 +636,7 @@ class CapacityOverview(CRUDMethod):
         output = {"title": T("Reception Centers Overview"),
                   "table": self.render_table(),
                   "chart": self.render_chart(),
+                  "export": self.export_widget(),
                   }
 
         # Inject JS
@@ -877,6 +879,60 @@ class CapacityOverview(CRUDMethod):
         population[0] = total
 
         return population
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def export_widget():
+        """
+            Widget to download occupancy raw data
+
+            Returns:
+                a DIV
+        """
+
+        T = current.T
+
+        # Get the date of the first status record
+        table = current.s3db.cr_reception_center_status
+        query = (table.status.belongs(("OP", "SB"))) & \
+                (table.population != None) & \
+                (table.date != None) & \
+                (table.deleted == False)
+        row = current.db(query).select(table.date,
+                                       limitby = (0, 1),
+                                       orderby = table.date,
+                                       ).first()
+
+        # Determine year range
+        current_year = current.request.utcnow.year
+        first_year = row.date.year if row else current_year
+
+        # Build the year selector
+        selector = SELECT(_id="data-year")
+        for year in range(first_year, current_year+1):
+            year_str = str(year)
+            option = OPTION(year_str,
+                            _value = year_str,
+                            _selected = "selected" if year == current_year else None,
+                            )
+            selector.append(option)
+
+        # Build the widget
+        return DIV(SPAN(T("Occupancy Data"),
+                        _class = "action-lbl",
+                        ),
+                   selector,
+                   A(T("download##verb"),
+                     _id = "data-download",
+                     _class = "action-lnk",
+                     data = {"url": URL(c = "cr",
+                                        f = "reception_center",
+                                        args = ["occupancy.xlsx"],
+                                        ),
+                             },
+                     ),
+                   _class="occupancy-export",
+                   )
 
     # -------------------------------------------------------------------------
     @staticmethod

@@ -72,8 +72,28 @@
         });
     };
 
+    var downloadData = function() {
+        // Get the year from #data-year
+        var year = $('#data-year').val(),
+            url = $('#data-download').data('url');
+        if (url) {
+            var link = document.createElement('a');
+            link.href = url;
+            if (year) {
+                var query = 'year=' + year;
+                if (link.search) {
+                    link.search += '&' + query;
+                } else {
+                    link.search = query;
+                }
+            }
+            window.open(link.href);
+        }
+    };
+
     $(function() {
         renderChart();
+        $('#data-download').off('.capacity').on('click.capacity', downloadData);
     });
 
 })(jQuery);
