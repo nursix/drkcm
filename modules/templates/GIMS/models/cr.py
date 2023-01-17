@@ -969,14 +969,24 @@ class OccupancyData(CRUDMethod):
                 Rows
         """
 
-        # TODO orderby L2, L3, L4 of location_id
+        s3db = current.s3db
 
-        ftable = current.s3db.cr_reception_center
+        ftable = s3db.cr_reception_center
+        gtable = s3db.gis_location
+
+        left = gtable.on(gtable.id == ftable.location_id)
+
         query = current.auth.s3_accessible_query("read", ftable) & \
                 (ftable.deleted == False)
+
         return current.db(query).select(ftable.id,
                                         ftable.name,
-                                        orderby = ftable.name,
+                                        orderby = [gtable.L2,
+                                                   gtable.L3,
+                                                   gtable.L4,
+                                                   ftable.name,
+                                                   ],
+                                        left = left,
                                         )
 
     # -------------------------------------------------------------------------
