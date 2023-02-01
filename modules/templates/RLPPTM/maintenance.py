@@ -331,14 +331,19 @@ class Daily():
         db = current.db
         s3db = current.s3db
 
-        # Organisation types with requirements changed in the last 36 hours
-        limit = (datetime.datetime.utcnow() - datetime.timedelta(hours=36)).date()
+        # New organisation type requirements will be enforced for
+        # existing organisations after a grace period of 3 days
+        delay = 3 # days
+        now = datetime.datetime.utcnow()
+        earliest = now - datetime.timedelta(days=delay + 1)
+        latest   = now - datetime.timedelta(days=delay)
 
         ttable = s3db.org_organisation_type
         rtable = s3db.org_requirements
 
         join = rtable.on((rtable.organisation_type_id == ttable.id) & \
-                         (rtable.modified_on >= limit) & \
+                         (rtable.modified_on >= earliest) & \
+                         (rtable.modified_on < latest) & \
                          (rtable.deleted == False))
         query = (ttable.deleted == False)
         types = db(query)._select(ttable.id, join=join)
