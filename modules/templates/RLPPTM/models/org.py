@@ -1334,7 +1334,7 @@ class TestProvider:
 
         verification = self.verification
 
-        update = self.vhash()[0]
+        update, vhash = self.vhash()
         if update:
             if "status" in update:
                 status = update["status"]
