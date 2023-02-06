@@ -1339,7 +1339,7 @@ class TestProvider:
             if "status" in update:
                 status = update["status"]
         else:
-            if vhash != verification.dash:
+            if vhash != verification.dhash:
                 update = {"dhash": vhash}
             else:
                 update = {}
