@@ -393,13 +393,6 @@ def org_organisation_controller(**attr):
                             sort = False,
                             hidden = True,
                             ),
-                        #OptionsFilter(
-                        #    "verification.mgrinfo",
-                        #    label = T("TestSt Manager##abbr"),
-                        #    options = OrderedDict(ORG_RQM.labels),
-                        #    sort = False,
-                        #    hidden = True,
-                        #    ),
                         ])
 
                 resource.configure(crud_form = crud_form,
@@ -439,14 +432,18 @@ def org_organisation_controller(**attr):
                 field = ctable.obsolete
                 field.readable = field.writable = True
 
-        elif component_name in ("human_resource", "managers"):
+        elif component_name == "representative":
+
+            from ..models.org import ProviderRepresentative
+            ProviderRepresentative.configure(r)
+
+        elif component_name == "human_resource":
 
             phone_label = settings.get_ui_label_mobile_phone()
-            site_id = None if component_name == "managers" else "site_id"
             list_fields = ["organisation_id",
                            "person_id",
                            "job_title_id",
-                           site_id,
+                           "site_id",
                            (T("Email"), "person_id$email.value"),
                            (phone_label, "person_id$phone.value"),
                            "status",
@@ -579,7 +576,7 @@ def org_organisation_type_resource(r, tablename):
                                     "requirements.natpersn",
                                     "requirements.verifreq",
                                     "requirements.mpavreq",
-                                    "requirements.minforeq",
+                                    "requirements.rinforeq",
                                     S3SQLInlineLink("item_category",
                                                     field = "item_category_id",
                                                     label = T("Orderable Item Categories"),
@@ -686,36 +683,6 @@ def facility_postprocess(form):
 
     # Add/update approval workflow tags
     TestStation(facility_id=record_id).update_approval()
-
-# -------------------------------------------------------------------------
-def facility_mgrinfo(row):
-    """
-        Field method to determine the MGRINFO status of the organisation
-
-        Args:
-            row: the facility Row
-
-        Returns:
-            the value of the MGRINFO tag of the organisation
-    """
-
-    if hasattr(row, "org_verification"):
-        # Provided as extra-field
-        tag = row.org_verification.mgrinfo
-
-    else:
-        # Must look up
-        db = current.db
-        s3db = current.s3db
-        vtable = s3db.org_verification
-        query = (vtable.organisation_id == row.org_facility.organisation_id) & \
-                (vtable.deleted == False)
-        row = db(query).select(vtable.mgrinfo,
-                               limitby = (0, 1),
-                               ).first()
-        tag = row.mgrinfo if row else None
-
-    return tag
 
 # -------------------------------------------------------------------------
 def configure_facility_form(r, is_org_group_admin=False):

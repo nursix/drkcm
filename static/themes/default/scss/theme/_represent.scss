@@ -62,8 +62,19 @@
 // Boolean Representation
 //
 .bool {
+    .controls & {
+        margin-left: 0.5rem;
+        [dir=rtl] & {
+            margin-left: 0;
+            margin-right: 0.5rem;
+        }
+    }
     i {
         margin-right: 0.2rem;
+        [dir=rtl] & {
+            margin-right: 0;
+            margin-left: 0.2rem;
+        }
     }
     &.bool-red {
         color: #d01717;

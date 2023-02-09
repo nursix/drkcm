@@ -221,8 +221,6 @@ def config(settings):
     settings.custom.test_station_registration = True
     settings.custom.test_station_cleanup = True
 
-    settings.custom.test_station_manager_required = False
-
     settings.custom.daycare_testing_data = False
     settings.custom.daycare_testing_inquiry = False
 
@@ -349,13 +347,16 @@ def config(settings):
     settings.customise_org_facility_controller = org_facility_controller
 
     # -------------------------------------------------------------------------
-    from .customise.pr import pr_person_resource, \
+    from .customise.pr import pr_address_resource, \
+                              pr_contact_resource, \
                               pr_person_controller, \
-                              pr_contact_resource
+                              pr_person_resource
+
+    settings.customise_pr_address_resource = pr_address_resource
+    settings.customise_pr_contact_resource = pr_contact_resource
 
     settings.customise_pr_person_controller = pr_person_controller
     settings.customise_pr_person_resource = pr_person_resource
-    settings.customise_pr_contact_resource = pr_contact_resource
 
     # -------------------------------------------------------------------------
     from .customise.project import project_project_resource, \

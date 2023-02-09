@@ -27,6 +27,7 @@
 
 __all__ = ("TestProviderRequirementsModel",
            "TestProviderModel",
+           "TestProviderRepresentativeModel",
            "TestStationModel"
            )
 
@@ -40,9 +41,9 @@ from core import BooleanRepresent, DataModel, S3Duplicate, \
                  get_form_record_id, represent_file, represent_option, \
                  s3_comments, s3_comments_widget, \
                  s3_date, s3_datetime, s3_meta_fields, \
-                 s3_text_represent
+                 s3_str, s3_text_represent
 
-from ..helpers import WorkflowOptions
+from ..helpers import WorkflowOptions, PersonRepresentDetails
 
 DEFAULT = lambda: None
 
@@ -63,9 +64,17 @@ VERIFICATION_STATUS = WorkflowOptions(("REVISE", "Completion/Adjustment Required
                                       ("READY", "Ready for Review", "amber"),
                                       ("REVIEW", "Review Pending", "amber"),
                                       ("COMPLETE", "complete", "green"),
-                                      selectable = ("REVISE", "READY"),
+                                      selectable = ("READY",),
                                       none = "REVISE",
                                       )
+
+# Representative documentation status
+DOCUMENTATION_STATUS = WorkflowOptions(("N/A", "not provided", "grey"),
+                                       ("REVIEW", "Review Pending", "amber"),
+                                       ("APPROVED", "provided / appropriate", "green"),
+                                       ("REJECTED", "not up to requirements", "red"),
+                                       none = "N/A",
+                                       )
 
 # Commission status and reasons
 COMMISSION_STATUS = WorkflowOptions(("CURRENT", "current", "green"),
@@ -148,10 +157,16 @@ class TestProviderRequirementsModel(DataModel):
                                 default = True,
                                 represent = flag_represent,
                                 ),
-                          Field("minforeq", "boolean",
-                                label = T("Manager Information required"),
+                          Field("rinforeq", "boolean",
+                                label = T("Representative Information required"),
                                 default = False,
                                 represent = flag_represent,
+                                ),
+                          # TODO deprecated, retained for migration
+                          Field("minforeq", "boolean",
+                                default = False,
+                                readable = False,
+                                writable = False,
                                 ),
                           *s3_meta_fields())
 
@@ -229,9 +244,9 @@ class TestProviderModel(DataModel):
                            readable = True,
                            writable = False,
                            ),
-                     # Whether manager information is complete and verified
-                     Field("mgrinfo",
-                           label = T("Documentation Test Station Manager"),
+                     # Whether representative documentation is complete and verified
+                     Field("reprinfo",
+                           label = T("Representatives Documentation"),
                            default = "N/A",
                            requires = IS_IN_SET(ORG_RQM.selectable(),
                                                 sort = False,
@@ -500,6 +515,181 @@ class TestProviderModel(DataModel):
             else:
                 current.response.information = \
                     T("Test station notified")
+
+# =============================================================================
+class TestProviderRepresentativeModel(DataModel):
+    """
+        Data model extensions for representative vetting/approval workflow
+    """
+
+    names = ("org_representative",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        crud_strings = current.response.s3.crud_strings
+
+        flag_represent = BooleanRepresent(labels = (T("complete"), T("incomplete")),
+                                          icons = True,
+                                          colors = True,
+                                          )
+
+        # ---------------------------------------------------------------------
+        # Representative
+        #
+        tablename = "org_representative"
+        self.define_table(tablename,
+                          self.pr_person_id(
+                              represent = PersonRepresentDetails(show_email = True,
+                                                                 show_phone = True,
+                                                                 show_link = False,
+                                                                 styleable = True,
+                                                                 ),
+                              comment = None,
+                              readable = False,
+                              writable = False,
+                              ),
+                          self.org_organisation_id(
+                              comment = None,
+                              readable = False,
+                              writable = False,
+                              ),
+                          self.super_link("doc_id", "doc_entity"),
+
+                          Field("active", "boolean",
+                                label = T("Active"),
+                                default = False,
+                                represent = BooleanRepresent(icons=True),
+                                writable = False,
+                                ),
+                          s3_date(label = T("Start Date"),
+                                  writable = False,
+                                  ),
+                          s3_date("end_date",
+                                  label = T("End Date"),
+                                  writable = False,
+                                  ),
+
+                          # Hidden data hash to detect relevant changes
+                          Field("dhash",
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("status",
+                                label = T("Processing Status"),
+                                default = "REVISE",
+                                requires = IS_IN_SET(APPROVAL_STATUS.selectable(True),
+                                                     zero = None,
+                                                     sort = False,
+                                                     ),
+                                represent = APPROVAL_STATUS.represent,
+                                readable = True,
+                                writable = False,
+                                ),
+
+                          Field("person_data", "boolean",
+                                label = T("Person Details"),
+                                default = False,
+                                represent = flag_represent,
+                                writable = False,
+                                ),
+                          Field("contact_data", "boolean",
+                                label = T("Contact Information"),
+                                default = False,
+                                represent = flag_represent,
+                                writable = False,
+                                ),
+                          Field("address_data", "boolean",
+                                label = T("Address"),
+                                default = False,
+                                represent = flag_represent,
+                                writable = False,
+                                ),
+                          Field("user_account", "boolean",
+                                label = T("User Account"),
+                                default = False,
+                                represent = flag_represent,
+                                readable = False,
+                                writable = False,
+                                ),
+
+                          Field("regform",
+                                label = T("Signed form for registration"),
+                                requires = IS_IN_SET(DOCUMENTATION_STATUS.selectable(True),
+                                                     zero = None,
+                                                     sort = False,
+                                                     ),
+                                represent = DOCUMENTATION_STATUS.represent,
+                                readable = True,
+                                writable = False,
+                                ),
+                          Field("crc",
+                                label = T("Criminal Record Certificate"),
+                                requires = IS_IN_SET(DOCUMENTATION_STATUS.selectable(True),
+                                                     zero = None,
+                                                     sort = False,
+                                                     ),
+                                represent = DOCUMENTATION_STATUS.represent,
+                                readable = True,
+                                writable = False,
+                                ),
+                          Field("scp",
+                                label = T("Statement on Pending Criminal Proceedings"),
+                                requires = IS_IN_SET(DOCUMENTATION_STATUS.selectable(True),
+                                                     zero = None,
+                                                     sort = False,
+                                                     ),
+                                represent = DOCUMENTATION_STATUS.represent,
+                                readable = True,
+                                writable = False,
+                                ),
+                          s3_comments(
+                              label = T("Advice"),
+                              writable = False,
+                              comment = None,
+                              ),
+                          *s3_meta_fields())
+
+        # Table configuration
+        self.configure(tablename,
+                       insertable = False,
+                       deletable = False,
+                       onaccept = self.representative_onaccept,
+                       super_entity = "doc_entity",
+                       )
+
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            title_display = T("Representative Details"),
+            title_list = T("Representatives"),
+            title_update = T("Edit Verification Details"),
+            label_list_button = T("List Representatives"),
+            msg_record_modified = T("Verification updated"),
+            )
+
+        # ---------------------------------------------------------------------
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def representative_onaccept(form):
+        """
+            Onaccept of representative
+                - update verification status
+        """
+
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        info, warn = ProviderRepresentative(record_id).update_verification()
+        if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+            if info:
+                current.response.information = info
+            if warn:
+                current.response.warning = warn
 
 # =============================================================================
 class TestStationModel(DataModel):
@@ -907,7 +1097,7 @@ class TestProvider:
             rows = db(query).select(ltable.organisation_type_id,
                                     rtable.id,
                                     rtable.commercial,
-                                    rtable.minforeq,
+                                    rtable.rinforeq,
                                     rtable.mpavreq,
                                     rtable.verifreq,
                                     left=left,
@@ -915,7 +1105,7 @@ class TestProvider:
 
             # Default provider requirements
             defaults = Storage(commercial = False,
-                               minforeq = False,
+                               rinforeq = False,
                                verifreq = False,
                                mpavreq = True,
                                )
@@ -972,16 +1162,16 @@ class TestProvider:
 
     # -------------------------------------------------------------------------
     @property
-    def minforeq(self):
+    def rinforeq(self):
         """
-            Whether manager information is required for this provider
+            Whether representative documentation is required for this provider
 
             Returns:
                 bool
         """
 
         types = self.types
-        return any(types[t].minforeq for t in types)
+        return any(types[t].rinforeq for t in types)
 
     # -------------------------------------------------------------------------
     # Instance methods
@@ -1008,7 +1198,7 @@ class TestProvider:
                                                 table.status,
                                                 table.orgtype,
                                                 table.mpav,
-                                                table.mgrinfo,
+                                                table.reprinfo,
                                                 limitby = (0, 1),
                                                 ).first()
         return verification
@@ -1030,9 +1220,9 @@ class TestProvider:
             orgtype = "N/A"
             mpav = "REVISE"
 
-        mgrinfo = self.check_mgrinfo() if self.minforeq else "ACCEPT"
+        reprinfo = self.check_reprinfo() if self.rinforeq else "ACCEPT"
 
-        review = (orgtype, mpav, mgrinfo)
+        review = (orgtype, mpav, reprinfo)
 
         if all(v in ("VERIFIED", "ACCEPT") for v in review):
             status = "COMPLETE"
@@ -1044,7 +1234,7 @@ class TestProvider:
         return {"status": status,
                 "orgtype": orgtype,
                 "mpav": mpav,
-                "mgrinfo": mgrinfo,
+                "reprinfo": reprinfo,
                 }
 
     # -----------------------------------------------------------------------------
@@ -1125,6 +1315,7 @@ class TestProvider:
 
         table = current.s3db.org_verification
         record_id = table.insert(**data)
+        current.auth.s3_set_record_owner(table, record_id)
 
         return self.lookup_verification(table.id == record_id)
 
@@ -1172,155 +1363,41 @@ class TestProvider:
             tag.update_record(value=value)
 
     # -------------------------------------------------------------------------
-    def check_mgrinfo(self):
+    def check_reprinfo(self):
         """
-            Checks whether the manager documentation for this provider is
-            complete and verified/accepted
+            Checks whether this provider has at least one verified and
+            active representative
 
             Returns:
-                status N/A|REVISE|REVIEW|COMPLETE
+                status N/A|REVISE|REVIEW|VERIFIED
 
             Notes:
-                - does not evaluate whether manager info is required
+                - does not evaluate whether representative info is required
         """
-
-        organisation_id = self.organisation_id
 
         db = current.db
         s3db = current.s3db
 
-        # Look up test station managers, and related data/tags
-        ptable = s3db.pr_person
+        rtable = s3db.org_representative
         htable = s3db.hrm_human_resource
 
-        httable = s3db.hrm_human_resource_tag
-        reg_tag = httable.with_alias("reg_tag")
-        crc_tag = httable.with_alias("crc_tag")
-        scp_tag = httable.with_alias("scp_tag")
-        dsh_tag = httable.with_alias("dsh_tag")
+        join = htable.on((htable.person_id == rtable.person_id) & \
+                         (htable.organisation_id == rtable.organisation_id) & \
+                         (htable.org_contact == True) & \
+                         (htable.status == 1) & \
+                         (htable.deleted == False))
 
-        join = ptable.on(ptable.id == htable.person_id)
-        left = [reg_tag.on((reg_tag.human_resource_id == htable.id) & \
-                           (reg_tag.tag == "REGFORM") & \
-                           (reg_tag.deleted == False)),
-                crc_tag.on((crc_tag.human_resource_id == htable.id) & \
-                           (crc_tag.tag == "CRC") & \
-                           (crc_tag.deleted == False)),
-                scp_tag.on((scp_tag.human_resource_id == htable.id) & \
-                           (scp_tag.tag == "SCP") & \
-                           (scp_tag.deleted == False)),
-                dsh_tag.on((dsh_tag.human_resource_id == htable.id) & \
-                           (dsh_tag.tag == "DHASH") & \
-                           (dsh_tag.deleted == False)),
-                ]
+        query = (rtable.organisation_id == self.organisation_id)
+        rows = db(query).select(rtable.status, join=join)
 
-        query = (htable.organisation_id == organisation_id) & \
-                (htable.org_contact == True) & \
-                (htable.status == 1) & \
-                (htable.deleted == False)
-
-        rows = db(query).select(htable.id,
-                                ptable.pe_id,
-                                ptable.first_name,
-                                ptable.last_name,
-                                ptable.date_of_birth,
-                                dsh_tag.id,
-                                dsh_tag.value,
-                                reg_tag.id,
-                                reg_tag.value,
-                                crc_tag.id,
-                                crc_tag.value,
-                                scp_tag.id,
-                                scp_tag.value,
-                                join = join,
-                                left = left,
-                                )
         if not rows:
-            # No managers selected
-            status = "N/A"
+            return "N/A"
+        elif any(row.status == "APPROVED" for row in rows):
+            return "COMPLETE"
+        elif any(row.status == "REVIEW" for row in rows):
+            return "REVIEW"
         else:
-            # Managers selected => check data/documentation
-            status = "REVISE"
-            ctable = s3db.pr_contact
-
-            reset_all = self.reset_all
-
-            for row in rows:
-
-                person = row.pr_person
-                dob = person.date_of_birth
-                vhash = get_dhash(person.first_name,
-                                  person.last_name,
-                                  dob.isoformat() if dob else None,
-                                  )
-                doc_tags = [row[t._tablename] for t in (reg_tag, crc_tag, scp_tag)]
-
-                # Do we have a verification hash (after previous approval)?
-                dhash = row.dsh_tag
-                verified = bool(dhash.id)
-                accepted = True
-
-                # Check completeness/integrity of data
-
-                # Must have DoB
-                if accepted and not dob:
-                    # No documentation can be approved without DoB
-                    reset_all(doc_tags)
-                    accepted = False
-
-                # Must have at least one contact detail of the email/phone type
-                if accepted:
-                    query = (ctable.pe_id == row.pr_person.pe_id) & \
-                            (ctable.contact_method in ("SMS", "HOME_PHONE", "WORK_PHONE", "EMAIL")) & \
-                            (ctable.value != None) & \
-                            (ctable.deleted == False)
-                    contact = db(query).select(ctable.id, limitby=(0, 1)).first()
-                    if not contact:
-                        accepted = False
-
-                # Do the data (still) match the verification hash?
-                if accepted and verified:
-                    if dhash.value != vhash:
-                        if current.auth.s3_has_role("ORG_GROUP_ADMIN"):
-                            # Data changed by OrgGroupAdmin => update hash
-                            # (authorized change has no influence on approval)
-                            dhash.update_record(value=vhash)
-                        else:
-                            # Data changed by someone else => previous
-                            # approval of documentation no longer valid
-                            reset_all(doc_tags)
-
-                # Determine overall approval status for the manager documentation
-                if accepted:
-                    if all(tag.value == "APPROVED" for tag in doc_tags):
-                        # If at least one manager record is acceptable, the
-                        # manager-data status of the organisation can be set
-                        # as complete
-                        status = "VERIFIED"
-                    else:
-                        accepted = False
-
-                    if status != "VERIFIED" and \
-                       all(tag.value != "REJECT" for tag in doc_tags):
-                        # If at least one manager record is complete and none
-                        # of its documents have been rejected, the overall
-                        # manager-data status of the organisation can be set
-                        # to REVIEW, i.e. assuming that the relevant documents
-                        # have been handed in for review, but not reviewed yet
-                        status = "REVIEW"
-
-                # Update verification hash
-                if not verified and accepted:
-                    # Add verification hash
-                    dsh_tag.insert(human_resource_id = row[htable.id],
-                                   tag = "DHASH",
-                                   value = vhash,
-                                   )
-                elif verified and not accepted:
-                    # Remove verification hash
-                    dhash.delete_record()
-
-        return status
+            return "REVISE"
 
     # -------------------------------------------------------------------------
     def update_verification(self):
@@ -1371,13 +1448,13 @@ class TestProvider:
             if mpav != verification.mpav:
                 update["mpav"] = mpav
 
-            # Update mgrinfo
-            mgrinfo = self.check_mgrinfo() if self.minforeq else "ACCEPT"
-            if mgrinfo != verification.mgrinfo:
-                update["mgrinfo"] = mgrinfo
+            # Update reprinfo
+            reprinfo = self.check_reprinfo() if self.rinforeq else "ACCEPT"
+            if reprinfo != verification.reprinfo:
+                update["reprinfo"] = reprinfo
 
             # Determine overall status
-            review = (orgtype, mpav, mgrinfo)
+            review = (orgtype, mpav, reprinfo)
             if all(v in ("VERIFIED", "ACCEPT") for v in review):
                 status = "COMPLETE"
             elif any(v == "REVIEW" for v in review):
@@ -1704,15 +1781,10 @@ class TestProvider:
         """
 
         current.s3db.add_components("org_organisation",
-                                    hrm_human_resource = {"name": "managers",
-                                                          "joinby": "organisation_id",
-                                                          "filterby": {"org_contact": True,
-                                                                       "status": 1, # active
-                                                                       },
-                                                          },
                                     org_verification = {"joinby": "organisation_id",
                                                         "multiple": False,
                                                         },
+                                    org_representative = "organisation_id",
                                     org_commission = "organisation_id",
                                     jnl_issue = "organisation_id",
                                     )
@@ -1777,17 +1849,17 @@ class TestProvider:
             else:
                 field.readable = False
 
-            # Manager Info (if required, always read-only)
-            field = table.mgrinfo
-            if not provider.minforeq:
+            # Representative Info (if required, always read-only)
+            field = table.reprinfo
+            if not provider.rinforeq:
                 field.readable = False
 
-            for fn in ("status", "orgtype", "mpav", "mgrinfo"):
+            for fn in ("status", "orgtype", "mpav", "reprinfo"):
                 field = table[fn]
                 if field.readable or field.writable:
                     visible.append("verification.%s" % fn)
         else:
-            for fn in ("status", "orgtype", "mpav", "mgrinfo"):
+            for fn in ("status", "orgtype", "mpav", "reprinfo"):
                 field = table[fn]
                 field.readable = field.writable = False
 
@@ -1886,6 +1958,621 @@ class TestProvider:
                 field = table[fn]
                 field.writable = False
             #resource.configure(editable = False) # is the model default
+
+# =============================================================================
+class ProviderRepresentative:
+    """ Service functions for provider representative verification """
+
+    # Data requirements for representatives
+    # - for future activation
+    place_of_birth_required = False
+    email_required = False
+    phone_required = False
+    address_required = False
+    account_required = False
+    role_required = False
+
+    def __init__(self, record_id=None):
+        """
+            Args:
+                record_id: the org_representative record ID
+        """
+
+        self.record_id = record_id
+        self._record = None
+
+    # -------------------------------------------------------------------------
+    @property
+    def record(self):
+        """
+            The org_representative record (lazy property)
+
+            Returns:
+                Row
+        """
+
+        record = self._record
+        if not record and self.record_id:
+            table = current.s3db.org_representative
+            query = (table.id == self.record_id) & \
+                    (table.deleted == False)
+            record = current.db(query).select(table.id,
+                                              table.person_id,
+                                              table.organisation_id,
+                                              table.doc_id,
+                                              table.active,
+                                              table.date,
+                                              table.end_date,
+                                              table.dhash,
+                                              table.status,
+                                              table.person_data,
+                                              table.contact_data,
+                                              table.address_data,
+                                              table.user_account,
+                                              table.regform,
+                                              table.crc,
+                                              table.scp,
+                                              #table.comments,
+                                              limitby = (0, 1),
+                                              ).first()
+            self._record = record
+
+        return record
+
+    # -------------------------------------------------------------------------
+    def vhash(self):
+        """
+            Generate and verify a verification hash for this record
+
+            Returns:
+                tuple (update, vhash)
+                - update: a dict {field: value} with required updates
+                - vhash: the (new) verification hash
+        """
+
+        record = self.record
+        if not record:
+            return None, None
+
+        # Get person record
+        ptable = current.s3db.pr_person
+        query = (ptable.id == record.person_id) & \
+                (ptable.deleted == False)
+        person = current.db(query).select(ptable.id,
+                                          ptable.first_name,
+                                          ptable.last_name,
+                                          ptable.date_of_birth,
+                                          limitby = (0, 1),
+                                          ).first()
+        if not person:
+            return None, None
+
+        dob = person.date_of_birth
+        if dob:
+            dob = dob.isoformat()
+
+        vhash = get_dhash(record.organisation_id,
+                          record.person_id,
+                          person.first_name,
+                          person.last_name,
+                          dob,
+                          )
+
+        update = {}
+        if record.dhash and record.dhash != vhash and \
+           not current.auth.s3_has_role("ORG_GROUP_ADMIN"):
+            for fn in ("regform", "crc", "scp"):
+                if record[fn] == "APPROVED":
+                    update[fn] = "REVIEW"
+
+        return update, vhash
+
+    # -------------------------------------------------------------------------
+    def update_verification(self, show_errors=False):
+        """
+            Update the verification status (also checks for required data)
+
+            Args:
+                show_errors: set interactive error messages (response.error)
+
+            Returns:
+                tuple (info, warn) with messages about notification success
+        """
+
+        record = self.record
+        if not record:
+            return None, None
+
+        # Have data changed?
+        update, vhash = self.vhash()
+
+        # Check completeness of data
+        accepted, errors = self.check_data(record = record,
+                                           update = update,
+                                           show_errors = show_errors,
+                                           )
+
+        # Report errors if/as requested
+        if show_errors and errors:
+            msg = current.T("Data incomplete (%(details)s)") % {"details": ", ".join(errors)}
+            current.response.warning = msg
+
+        # Process tags and determine overall processing status
+        status = record.status
+        tags = ["regform", "crc", "scp"]
+        value = lambda t: update.get(t) or record[t]
+
+        if status == "READY":
+            if all(value(tag) == "APPROVED" for tag in tags):
+                for tag in tags:
+                    update[tag] = "REVIEW"
+            else:
+                for tag in tags:
+                    if value(tag) in ("N/A", "REJECT"):
+                        update[tag] = "REVIEW"
+
+        if accepted:
+            if all(value(tag) == "APPROVED" for tag in tags):
+                status = "APPROVED"
+            elif any(value(tag) == "REVIEW" for tag in tags):
+                status = "REVIEW"
+            else:
+                status = "REVISE"
+        else:
+            status = "REVISE"
+
+        if status != record.status:
+            update["status"] = status
+
+        # Update or remove dhash as required
+        if status != "APPROVED" and record.dhash:
+            update["dhash"] = None
+        elif status == "APPROVED" and record.dhash != vhash:
+            update["dhash"] = vhash
+
+        # Determine active status and start/end dates
+        active = self.check_active() and status == "APPROVED"
+        if active != record.active:
+            update["active"] = active
+
+        today = current.request.utcnow.date()
+        if active:
+            if not record.date:
+                update["date"] = today
+            if record.end_date:
+                update["end_date"] = None
+        elif not record.end_date:
+            update["end_date"] = today
+
+        # Update record and trigger provider status update
+        if update:
+            record.update_record(**update)
+            info, warn = TestProvider(record.organisation_id).update_verification()
+        else:
+            info, warn = None, None
+
+        return info, warn
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def check_data(cls, person_id=None, record=None, update=None, show_errors=True):
+        """
+            Check completeness of data
+
+            Args:
+                person_id: the person ID
+                record: the org_representative record (overrides person_id)
+                update: dict with updates for representative record
+                show_errors: which errors to report (True for all)
+
+            Returns:
+                tuple (accepted, missing)
+                - accepted: whether data can be accepted for verification
+                - missing: string specifying which data are missing
+        """
+
+        if record:
+            person_id = record.person_id
+
+        errors = []
+        append = errors.append
+
+        def check(flag, method):
+            acceptable, missing = method(person_id)
+            complete = not bool(missing)
+            if update is not None and record and record[flag] != complete:
+                update[flag] = complete
+            if missing and show_errors is True or show_errors == flag:
+                append(missing)
+            return acceptable
+
+        accepted = check("person_data", cls.check_person_data)
+        accepted &= check("contact_data", cls.check_contact_data)
+        accepted &= check("address_data", cls.check_address_data)
+        accepted &= check("user_account", cls.check_account)
+
+        return accepted, errors
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def check_person_data(cls, person_id):
+        """
+            Check whether person data are complete/acceptable
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                tuple (acceptable, missing)
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        # Get the person record
+        ptable = s3db.pr_person
+        query = (ptable.id == person_id) & (ptable.deleted == False)
+        row = db(query).select(ptable.first_name,
+                               ptable.last_name,
+                               ptable.date_of_birth,
+                               limitby = (0, 1),
+                               ).first()
+        if not row:
+            return False, s3_str(T("record not found"))
+
+        # Validate details
+        acceptable = True
+        missing = []
+        append = missing.append
+
+        if not row.first_name or not row.last_name:
+            acceptable = False
+            append(T("first or last name"))
+        if not row.date_of_birth:
+            acceptable = False
+            append(T("date of birth"))
+
+        dtable = s3db.pr_person_details
+        query = (dtable.person_id == person_id) & (dtable.deleted == False)
+        row = db(query).select(dtable.place_of_birth,
+                               limitby = (0, 1),
+                               ).first()
+        if not row or not row.place_of_birth:
+            if cls.place_of_birth_required:
+                acceptable = False
+            append(T("place of birth"))
+
+        if missing:
+            missing = ", ".join(s3_str(detail) for detail in missing)
+        else:
+            missing = None
+
+        return acceptable, missing
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def check_contact_data(cls, person_id):
+        """
+            Check whether contact information is complete/acceptable
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                tuple (acceptable, missing)
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        ptable = s3db.pr_person
+        ctable = s3db.pr_contact
+
+        join = ptable.on(ptable.pe_id == ctable.pe_id)
+
+        phone = email = True
+        missing = []
+        append = missing.append
+
+        # Check email address
+        query = (ptable.id == person_id) & \
+                (ctable.contact_method == "EMAIL") & \
+                (ctable.value != None) & \
+                (ctable.deleted == False)
+        if not db(query).select(ctable.id, join=join, limitby=(0, 1)).first():
+            append(T("email address"))
+            email = False
+
+        # Check phone number
+        query = (ptable.id == person_id) & \
+                (ctable.contact_method.belongs("SMS", "HOME_PHONE", "WORK_PHONE")) & \
+                (ctable.value != None) & \
+                (ctable.deleted == False)
+        if not db(query).select(ctable.id, join=join, limitby=(0, 1)).first():
+            append(T("phone number"))
+            phone = False
+
+        # At least one contact detail must be provided,
+        # as well as any required detail
+        acceptable = (email or phone) & \
+                     (email or not cls.email_required) & \
+                     (phone or not cls.phone_required)
+        if missing:
+            missing = ", ".join(s3_str(detail) for detail in missing)
+        else:
+            missing = None
+
+        return acceptable, missing
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def check_address_data(cls, person_id):
+        """
+            Check whether address information is complete/acceptable
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                tuple (acceptable, missing)
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        ptable = s3db.pr_person
+        atable = s3db.pr_address
+        ltable = s3db.gis_location
+
+        join = [ptable.on(ptable.pe_id == atable.pe_id),
+                ltable.on(ltable.id == atable.location_id),
+                ]
+
+        # Check email address
+        query = (ptable.id == person_id) & \
+                (atable.type.belongs((1, 2))) & \
+                (atable.deleted == False) & \
+                (ltable.addr_street != None) & \
+                (ltable.addr_postcode != None)
+        if not db(query).select(atable.id, join=join, limitby=(0, 1)).first():
+            acceptable, missing = not cls.address_required, s3_str(T("address"))
+        else:
+            acceptable, missing = True, None
+
+        return acceptable, missing
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def check_account(cls, person_id):
+        """
+            Check whether user account and roles are complete/acceptable
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                tuple (acceptable, missing)
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+        auth = current.auth
+
+        sr = auth.get_system_roles()
+        required_role = sr.ORG_ADMIN
+        alternative_role = sr.ADMIN
+
+        acceptable, missing = True, None
+
+        # Look up user account
+        ptable = s3db.pr_person
+        ltable = s3db.pr_person_user
+        utable = auth.settings.table_user
+        mtable = auth.settings.table_membership
+
+        join = [ltable.on((ltable.pe_id == ptable.pe_id) & \
+                          (ltable.deleted == False)),
+                utable.on((utable.id == ltable.user_id) & \
+                          (utable.deleted == False)),
+                ]
+        query = (ptable.id == person_id) & \
+                ((utable.registration_key == None) | \
+                 (utable.registration_key == ""))
+        user = db(query).select(utable.id,
+                                join = join,
+                                limitby = (0, 1),
+                                ).first()
+
+        if user:
+            # Check for required role
+            query = (mtable.user_id == user.id) & \
+                    (mtable.group_id.belongs((required_role, alternative_role))) & \
+                    (mtable.deleted == False)
+            if not db(query).select(mtable.id, limitby=(0, 1)).first():
+                missing = s3_str(T("user role"))
+                acceptable = not cls.role_required
+        else:
+            missing = s3_str(T("user account"))
+            acceptable = not cls.account_required
+
+        return acceptable, missing
+
+    # -------------------------------------------------------------------------
+    def check_active(self):
+        """
+            Check if the representative is an active staff member and
+            currently marked as org contact
+
+            Returns:
+                bool
+        """
+
+        record = self.record
+        if not record:
+            return False
+
+        htable = current.s3db.hrm_human_resource
+        query = (htable.person_id == record.person_id) & \
+                (htable.organisation_id == record.organisation_id) & \
+                (htable.status == 1) & \
+                (htable.org_contact == True) & \
+                (htable.deleted == False)
+        row = current.db(query).select(htable.id, limitby=(0, 1)).first()
+        return bool(row)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def configure(r):
+        """
+            Configure the verification form and representatives list,
+            depending on user role and current status
+
+            Args:
+                r: the CRUDRequest
+        """
+
+        T = current.T
+
+        s3db = current.s3db
+
+        record = None
+
+        if r.tablename == "org_representative":
+            resource = r.resource
+            table = resource.table
+            record = r.record
+
+        elif r.component and r.component.tablename == "org_representative":
+            resource = r.component
+            table = resource.table
+
+            from core import CRUDMethod
+            record_id = CRUDMethod._record_id(r)
+
+            if record_id:
+                query = (table.id == record_id)
+                record = current.db(query).select(table.status,
+                                                  limitby=(0, 1),
+                                                  ).first()
+        else:
+            return
+
+        is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
+        if is_org_group_admin:
+            # Document status and advice writable
+            for fn in ("regform", "crc", "scp", "comments"):
+                field = table[fn]
+                field.readable = field.writable = True
+
+            # Documents readonly
+            documents_readonly = True
+
+        else:
+            # Status writable except when in REVIEW
+            field = table.status
+            if record and record.status != "REVIEW":
+                field.writable = True
+                options = APPROVAL_STATUS.selectable(["READY"],
+                                                     current_value = record.status,
+                                                     )
+                field.requires = IS_IN_SET(options, zero=None, sort=False)
+
+            # Documents writable
+            documents_readonly = False
+
+        active = None
+        if r.controller == "org":
+            # Show person_id
+            field = table.person_id
+            field.readable = True
+            if not record:
+                # Represent as name + link to staff view
+                linkto = URL(c = "hrm",
+                             f = "person",
+                             args = ["[id]"],
+                             vars = {"group": "staff"},
+                             extension = "",
+                             )
+                field.represent = s3db.pr_PersonRepresent(show_link = True,
+                                                          linkto = linkto,
+                                                          )
+            else:
+                field.label = T("Personal Data")
+            active = "active"
+
+        elif r.controller == "hrm":
+
+            if is_org_group_admin:
+                table.organisation_id.readable = True
+
+            for fn in ("active", "date", "end_date"):
+                field = table[fn]
+                field.readable = False
+
+        else:
+            # Show both person_id and organisation_id
+            table.person_id.readable = True
+            table.organisation_id.readable = True
+
+        from core import S3SQLCustomForm, S3SQLInlineComponent
+        crud_form = S3SQLCustomForm(
+                        "person_id",
+                        active,
+                        "organisation_id",
+                        # --- Documentation ---
+                        "person_data",
+                        "contact_data",
+                        "address_data",
+                        S3SQLInlineComponent(
+                            "document",
+                            name = "file",
+                            label = T("Documents"),
+                            fields = ["name", "file", "comments"],
+                            filterby = {"field": "file",
+                                        "options": "",
+                                        "invert": True,
+                                        },
+                            readonly = documents_readonly,
+                            ),
+
+                        # --- Account status ---
+                        "user_account",
+
+                        # --- Verification ---
+                        "status",
+                        "regform",
+                        "crc",
+                        "scp",
+                        "comments",
+                        )
+
+        subheadings = {"person_id": T("Staff"),
+                       "organisation_id": T("Organization"),
+                       "person_data": T("Documentation"),
+                       "user_account": T("Account Status"),
+                       "status": T("Verification"),
+                       }
+
+        list_fields = ["organisation_id",
+                       "person_id",
+                       "active",
+                       "date",
+                       "end_date",
+                       "status",
+                       ]
+
+        resource.configure(crud_form = crud_form,
+                           list_fields = list_fields,
+                           subheadings = subheadings,
+                           )
 
 # =============================================================================
 class TestStation:

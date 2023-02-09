@@ -12,31 +12,25 @@ from core import get_form_record_id
 def person_postprocess(form):
     """
         Postprocess person-form
-            - update manager info status tag for all organisations
-              for which the person is marked as test station manager
+            - update representative verification status
     """
 
     record_id = get_form_record_id(form)
     if not record_id:
         return
 
-    # Lookup active HR records with org_contact flag
     db = current.db
     s3db = current.s3db
 
-    table = s3db.hrm_human_resource
+    # Lookup all representative records for this person
+    table = s3db.org_representative
     query = (table.person_id == record_id) & \
-            (table.org_contact == True) & \
-            (table.status == 1) & \
             (table.deleted == False)
-    rows = db(query).select(table.organisation_id,
-                            groupby = table.organisation_id,
-                            )
+    rows = db(query).select(table.id)
 
-    # Update manager info status tag for each org
-    from ..models.org import TestProvider
+    from ..models.org import ProviderRepresentative
     for row in rows:
-        TestProvider(row.organisation_id).update_verification()
+        ProviderRepresentative(row.id).update_verification()
 
 # -----------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
@@ -58,6 +52,13 @@ def pr_person_controller(**attr):
     settings = current.deployment_settings
 
     T = current.T
+
+    if current.request.controller == "hrm":
+        current.s3db.add_components("pr_person",
+                                    org_representative = {"joinby": "person_id",
+                                                          "multiple": False,
+                                                          },
+                                    )
 
     # Custom prep
     standard_prep = s3.prep
@@ -130,6 +131,11 @@ def pr_person_controller(**attr):
                                   )
             s3.crud_strings["hrm_human_resource"]["label_list_button"] = T("List Staff Records")
 
+        elif r.component_name == "representative":
+
+            from ..models.org import ProviderRepresentative
+            ProviderRepresentative.configure(r)
+
         return result
     s3.prep = prep
 
@@ -144,39 +150,75 @@ def pr_person_controller(**attr):
     return attr
 
 # -----------------------------------------------------------------------------
-def contact_update_mgrinfo(record_id, pe_id=None):
+def update_representative(tablename, record_id, pe_id=None):
     """
-        Updates the manager info status tag of related organisations
+        Update representative verification status upon update of relevant
+        component data (e.g. address, contact)
 
         Args:
-            record_id: the pr_contact record_id
+            tablename: the name of the component table
+            record_id: the component record ID
+            pe_id: the pe_id of the person, if known (prevents lookup)
     """
 
     db = current.db
     s3db = current.s3db
 
-    ctable = s3db.pr_contact
+    # Retrieve pe_id if not provided
+    if not pe_id:
+        table = s3db[tablename]
+        row = db(table.id == record_id).select(table.pe_id,
+                                               limitby = (0, 1),
+                                               ).first()
+        pe_id = row.pe_id if row else None
+    if not pe_id:
+        return
+
+    # Get all representative records for this PE
     ptable = s3db.pr_person
-    htable = s3db.hrm_human_resource
+    rtable = s3db.org_representative
+    join = ptable.on((ptable.id == rtable.person_id) & \
+                     (ptable.pe_id == pe_id))
+    query = (rtable.deleted == False)
+    rows = db(query).select(rtable.id, join=join)
 
-    join = [htable.on((htable.person_id == ptable.id) & \
-                      (htable.deleted == False)),
-            ]
-    if pe_id:
-        query = (ptable.pe_id == pe_id)
-    else:
-        join.insert(0, ptable.on(ptable.pe_id == ctable.pe_id))
-        query = (ctable.id == record_id)
-    rows = db(query).select(htable.organisation_id, join=join)
+    # Update verifications
+    if rows:
+        from ..models.org import ProviderRepresentative
+        if tablename == "pr_address":
+            show_errors = "address_data"
+        elif tablename == "pr_contact":
+            show_errors = "contact_data"
+        else:
+            show_errors = False
+        for row in rows:
+            ProviderRepresentative(row.id).update_verification(show_errors=show_errors)
 
-    from ..models.org import TestProvider
-    for row in rows:
-        TestProvider(row.organisation_id).update_verification()
+# -----------------------------------------------------------------------------
+def address_ondelete(row):
+
+    update_representative(current.s3db.pr_address, row.id, pe_id=row.pe_id)
+
+# -----------------------------------------------------------------------------
+def address_onaccept(form):
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return
+    update_representative(current.s3db.pr_address, record_id)
+
+# -----------------------------------------------------------------------------
+def pr_address_resource(r, tablename):
+
+    s3db = current.s3db
+
+    s3db.add_custom_callback("pr_address", "onaccept", address_onaccept)
+    s3db.add_custom_callback("pr_address", "ondelete", address_ondelete)
 
 # -----------------------------------------------------------------------------
 def contact_ondelete(row):
 
-    contact_update_mgrinfo(row.id, pe_id=row.pe_id)
+    update_representative(current.s3db.pr_contact, row.id, pe_id=row.pe_id)
 
 # -----------------------------------------------------------------------------
 def contact_onaccept(form):
@@ -184,7 +226,7 @@ def contact_onaccept(form):
     record_id = get_form_record_id(form)
     if not record_id:
         return
-    contact_update_mgrinfo(record_id)
+    update_representative(current.s3db.pr_contact, record_id)
 
 # -----------------------------------------------------------------------------
 def pr_contact_resource(r, tablename):

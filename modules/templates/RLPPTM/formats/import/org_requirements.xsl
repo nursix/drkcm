@@ -14,7 +14,7 @@
                                                      true|false (default false)
          MPAV Required...............string..........MPAV Qualification Verification Required
                                                      true|false (default true)
-         ManagerInfo Required........string..........Manager Info Required
+         ReprInfo Required...........string..........Representative Info Required
                                                      true|false (default false)
 
     *********************************************************************** -->
@@ -102,10 +102,10 @@
                     </xsl:choose>
                 </xsl:attribute>
             </data>
-            <data field="minforeq">
+            <data field="rinforeq">
                 <xsl:attribute name="value">
                     <xsl:choose>
-                        <xsl:when test="col[@field='ManagerInfo Required']/text()='true'">
+                        <xsl:when test="col[@field='ReprInfo Required']/text()='true'">
                             <xsl:value-of select="'true'"/>
                         </xsl:when>
                         <xsl:otherwise>

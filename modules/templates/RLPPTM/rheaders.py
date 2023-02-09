@@ -8,7 +8,7 @@ from gluon import current, A, URL, SPAN
 
 from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
-from .helpers import is_test_station_manager, account_status
+from .helpers import hr_details
 
 # =============================================================================
 def rlpptm_fin_rheader(r, tabs=None):
@@ -227,25 +227,28 @@ def default_org_tabs(record, group=None, is_org_group_admin=False):
 
     invite_tab = None
     sites_tab = None
-    doc_tab = None
-    managers_tab = None
+    representatives_tab = None
     commission_tab = None
+    doc_tab = None
     journal_tab = None
 
     if group:
 
         from .config import TESTSTATIONS, SCHOOLS, GOVERNMENT
+
         if group == TESTSTATIONS:
             sites_tab = (T("Test Stations"), "facility")
             doc_tab = (T("Documents"), "document")
             if is_org_group_admin:
-                managers_tab = (T("Test Station Managers"), "managers")
+                representatives_tab = (T("Representatives"), "representative")
             commission_tab = (T("Commissions"), "commission")
             journal_tab = (T("Administration##authority"), "issue")
+
         elif group == SCHOOLS:
             sites_tab = (T("Administrative Offices"), "office")
             if is_org_group_admin:
                 invite_tab = (T("Invite"), "invite")
+
         elif group == GOVERNMENT:
             sites_tab = (T("Warehouses"), "warehouse")
 
@@ -253,7 +256,7 @@ def default_org_tabs(record, group=None, is_org_group_admin=False):
             invite_tab,
             sites_tab,
             (T("Staff"), "human_resource"),
-            managers_tab,
+            representatives_tab,
             commission_tab,
             doc_tab,
             journal_tab,
@@ -597,14 +600,21 @@ def rlpptm_hr_rheader(r, tabs=None):
                     (T("Staff Record"), "human_resource"),
                     ]
 
-            rheader_fields = [[(T("User Account"), account_status)],
+            details = hr_details(record)
+            rheader_fields = [[(T("User Account"), lambda i: details["account"])],
                               ]
 
-            manager = is_test_station_manager(record.id)
-            if manager:
+            organisation = details["organisation"]
+            if organisation:
+                rheader_fields[0].insert(0, (T("Organization"), lambda i: organisation))
+
+            representative, status = details["representative"], details["status"]
+            if representative:
                 rheader_fields.append([
-                    (T("Test Station Manager"), lambda i: manager)
+                    (T("Representative Status"), lambda i: representative),
+                    (T("Verification"), lambda i: status),
                     ])
+                tabs.append((T("Verification"), "representative"))
 
             rheader_title = s3_fullname
 

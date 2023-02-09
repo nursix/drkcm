@@ -8,12 +8,12 @@ import json
 
 from dateutil import rrule
 
-from gluon import current, Field, \
+from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
 from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, CRUDMethod, \
-                 BooleanRepresent, S3Represent, S3PriorityRepresent, \
+                 S3Represent, S3PriorityRepresent, \
                  s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact
@@ -425,46 +425,92 @@ def account_status(record, represent=True):
     return status
 
 # -----------------------------------------------------------------------------
-def is_test_station_manager(person_id, represent=True):
+def hr_details(record):
     """
-        Checks if a person is a test station manager
+        Looks up relevant HR details for a person
 
         Args:
-            person_id: the person record ID
-            represent: represent a positive result as check mark
+            record: the pr_person record in question
 
         Returns:
-            HTML representing boolean (if represent=True), or boolean
+            dict {"organisation": organisation name,
+                  "representative": representative status,
+                  "account": account status,
+                  "status": verification status (for legal representatives),
+                  }
+
+        Note:
+            all data returned are represented (no raw data)
     """
+
+    T = current.T
 
     db = current.db
     s3db = current.s3db
 
-    gtable = s3db.org_group
-    mtable = s3db.org_group_membership
-    htable = s3db.hrm_human_resource
+    person_id = record.id
 
-    from .config import TESTSTATIONS
-    join = [mtable.on((mtable.organisation_id == htable.organisation_id) & \
-                      (mtable.deleted == False)),
-            gtable.on((gtable.id == mtable.group_id) & \
-                      (gtable.name == TESTSTATIONS)),
-            ]
-    query = (htable.person_id == person_id) & \
-            (htable.org_contact == True) & \
-            (htable.deleted == False)
-    row = db(query).select(htable.id,
-                           cache = s3db.cache,
-                           join = join,
-                           limitby = (0, 1),
-                           ).first()
-    if row:
-        if represent:
-            return BooleanRepresent(labels=False, icons=True, colors=True)(True)
-        else:
-            return True
+    # Get HR record
+    htable = s3db.hrm_human_resource
+    query = (htable.person_id == person_id)
+
+    hr_id = current.request.get_vars.get("human_resource.id")
+    if hr_id:
+        query &= (htable.id == hr_id)
+    query &= (htable.deleted == False)
+
+    rows = db(query).select(htable.organisation_id,
+                            htable.org_contact,
+                            htable.status,
+                            orderby = htable.created_on,
+                            )
+    if not rows:
+        human_resource = None
+    elif len(rows) > 1:
+        rrows = rows
+        rrows = rrows.filter(lambda row: row.status == 1) or rrows
+        rrows = rrows.filter(lambda row: row.org_contact) or rrows
+        human_resource = rrows.first()
     else:
-        return False
+        human_resource = rows.first()
+
+    output = {"organisation": None,
+              "representative": None,
+              "account": account_status(record),
+              "status": None,
+              }
+
+    if human_resource:
+        otable = s3db.org_organisation
+        rtable = s3db.org_representative
+
+        # Link to organisation
+        query = (otable.id == human_resource.organisation_id)
+        organisation = db(query).select(otable.id,
+                                        otable.name,
+                                        limitby = (0, 1),
+                                        ).first()
+        output["organisation"] = A(organisation.name,
+                                   _href = URL(c = "org",
+                                               f = "organisation",
+                                               args = [organisation.id],
+                                               ),
+                                   )
+
+        # Representative/verification status
+        query = (rtable.person_id == person_id) & \
+                (rtable.organisation_id == human_resource.organisation_id) & \
+                (rtable.deleted == False)
+        representative = db(query).select(rtable.active,
+                                          rtable.status,
+                                          limitby = (0, 1),
+                                          ).first()
+
+        if representative:
+            output["representative"] = T("active") if representative.active else T("inactive")
+            output["status"] = rtable.status.represent(representative.status)
+
+    return output
 
 # -----------------------------------------------------------------------------
 def restrict_data_formats(r):
@@ -2631,10 +2677,11 @@ class TestFacilityInfo(CRUDMethod):
         return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
 
 # =============================================================================
-class PersonRepresentManager(pr_PersonRepresentContact):
+class PersonRepresentDetails(pr_PersonRepresentContact):
     """
         Custom representation of person_id in read-perspective on
-        test station managers tab; include DoB
+        representatives tab of organisations, includes additional
+        person details like date and place of birth, address
     """
 
     # -------------------------------------------------------------------------
@@ -2649,9 +2696,9 @@ class PersonRepresentManager(pr_PersonRepresentContact):
         T = current.T
 
         output = DIV(SPAN(s3_fullname(row),
-                          _class = "manager-name",
+                          _class = "person-name",
                           ),
-                     _class = "manager-repr",
+                     _class = "person-repr",
                      )
 
         table = self.table
@@ -2684,25 +2731,25 @@ class PersonRepresentManager(pr_PersonRepresentContact):
 
         details = TABLE(TR(TH("%s:" % T("Date of Birth")),
                            TD(dob),
-                           _class = "manager-dob"
+                           _class = "person-dob"
                            ),
                         TR(TH("%s:" % T("Place of Birth")),
                            TD(pob),
-                           _class = "manager-pob"
+                           _class = "person-pob"
                            ),
                         TR(TH(ICON("mail")),
                            TD(A(email, _href="mailto:%s" % email) if email else "-"),
-                           _class = "manager-email"
+                           _class = "person-email"
                            ),
                         TR(TH(ICON("phone")),
                            TD(phone if phone else "-"),
-                           _class = "manager-phone",
+                           _class = "person-phone",
                            ),
                         TR(TH(ICON("home")),
                            TD(address),
-                           _class = "manager-address",
+                           _class = "person-address",
                            ),
-                        _class="manager-details",
+                        _class="person-details",
                         )
         output.append(details)
 

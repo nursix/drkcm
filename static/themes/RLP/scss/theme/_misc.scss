@@ -423,9 +423,17 @@ body.rtl {
     }
     .fa {
         margin-right: 0.2rem;
+        [dir=rtl] & {
+            margin-right: 0;
+            margin-left: 0.2rem;
+        }
     }
     .controls & {
         margin-left: 0.5rem;
+        [dir=rtl] & {
+            margin-left: 0;
+            margin-right: 0.5rem;
+        }
     }
 }
 
@@ -548,24 +556,24 @@ body.rtl {
 }
 
 // Test Station Manager person_id representation
-.manager-repr {
+.person-repr {
     border: 1px solid #ccc;
     margin-top: 0.5rem;
     width: 25rem;
     background-color: #fff3c6;
     max-width: 100%;
-    .manager-name {
+    .person-name {
         padding: 0.4rem;
         font-size: 0.9rem;
         display: block;
         background-color: #f7e9ae;
     }
-    .manager-email {
+    .person-email {
         th, td {
             padding-top: 0.4rem;
         }
     }
-    .manager-details {
+    .person-details {
         width: 100%;
         border: 0;
         margin-bottom: 0.3rem;

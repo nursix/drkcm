@@ -1,4 +1,4 @@
-Type,Commercial,Natural Persons,Verification Required,MPAV Required,ManagerInfo Required
+Type,Commercial,Natural Persons,Verification Required,MPAV Required,ReprInfo Required
 Zahnarztpraxis,false,false,true,false,false
 Arztpraxis (Vertragsarztpraxis),false,false,true,false,false
 Tierarztpraxis,false,false,true,false,false

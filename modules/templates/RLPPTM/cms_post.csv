@@ -104,8 +104,6 @@ Mit freundlichen Grüßen,
 Ihr Landesamt für Soziales, Jugend und Versorgung
 ",
 DaycareTestingInquiry,disease,daycare_testing,Zu Planungszwecken benötigen wir die folgenden Angaben zu Ihrer Organisation:,
-TestStationManagerIntro,hrm,human_resource,"Hinweis: Teststellenverantwortliche müssen ein Benutzerkonto haben, im persönlichen Profil ihr Geburtsdatum, Steuer-ID, Email-Adresse und Telefonnummer hinterlegen, sowie ein polizeiliches Führungszeugnis und eine schriftliche Erklärung zu anhängigen Ermittlungs- und Strafverfahren einreichen.
-Mehr Informationen dazu in der Hilfe [Link einfügen].",
 Message CommissionStatusChanged,org,commission,"Der Status der Beauftragung für den Teststellenbetreiber {name} hat sich geändert. 
 
 Details siehe {url}
@@ -141,3 +139,5 @@ Subject CommissionSuspended,org,commission,Änderungsmitteilung zur Beauftragung
 Subject CommissionRevoked,org,commission,Änderungsmitteilung zur Beauftragung von {name},
 Subject CommissionExpired,org,commission,Änderungsmitteilung zur Beauftragung von {name},
 CommissionYYYYMMDD,org,commission,"<template><para align=""center"">Ungültige Dokumentvorlage</para></template>",
+OrgContactIntro,hrm,human_resource,"Hinweis: Vertreter der Organisation müssen ein Benutzerkonto haben, im persönlichen Profil ihr Geburtsdatum, Geburtsort, Adresse, Email-Adresse und Telefonnummer hinterlegen, sowie ein polizeiliches Führungszeugnis und eine schriftliche Erklärung zu anhängigen Ermittlungs- und Strafverfahren einreichen. Außerdem ist ein Nachweis ihrer Vertreterschaft zur Verifizierung hochzuladen.
+Mehr Informationen dazu in der Hilfe [Link einfügen].",
