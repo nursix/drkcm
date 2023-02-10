@@ -183,6 +183,7 @@ class DocumentLibrary(DataModel):
                                      writable = False,
                                      ),
                      s3_date(label = T("Date Published"),
+                             default = "now",
                              ),
                      # @ToDo: Move location to link table
                      location_id(# Enable when-required
