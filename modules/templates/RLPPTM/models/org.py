@@ -1393,7 +1393,7 @@ class TestProvider:
         if not rows:
             return "N/A"
         elif any(row.status == "APPROVED" for row in rows):
-            return "COMPLETE"
+            return "VERIFIED"
         elif any(row.status == "REVIEW" for row in rows):
             return "REVIEW"
         else:
@@ -1816,23 +1816,20 @@ class TestProvider:
             # Overall status
             field = table.status
             current_value = provider.verification.status
-            options = VERIFICATION_STATUS.selectable(True)
-            if current_value not in dict(options):
-                field.writable = False
-            else:
+            if current_value == "REVISE":
+                options = VERIFICATION_STATUS.selectable(True, current_value=current_value)
                 field.requires = IS_IN_SET(options, sort=False, zero=None)
                 field.writable = not is_approver
+            else:
+                field.writable = False
 
             # Organisation type verification (if required)
             field = table.orgtype
             if provider.verifreq:
                 current_value = provider.verification.orgtype
                 options = ORG_RQM.selectable(True, current_value=current_value)
-                if current_value not in dict(options):
-                    field.writable = False
-                else:
-                    field.requires = IS_IN_SET(options, sort=False, zero=None)
-                    field.writable = is_approver
+                field.requires = IS_IN_SET(options, sort=False, zero=None)
+                field.writable = is_approver
             else:
                 field.readable = False
 
@@ -1841,11 +1838,8 @@ class TestProvider:
             if provider.mpavreq:
                 current_value = provider.verification.mpav
                 options = ORG_RQM.selectable(True, current_value=current_value)
-                if current_value not in dict(options):
-                    field.writable = False
-                else:
-                    field.requires = IS_IN_SET(options, sort=False, zero=None)
-                    field.writable = is_approver
+                field.requires = IS_IN_SET(options, sort=False, zero=None)
+                field.writable = is_approver
             else:
                 field.readable = False
 
@@ -2097,9 +2091,14 @@ class ProviderRepresentative:
             msg = current.T("Data incomplete (%(details)s)") % {"details": ", ".join(errors)}
             current.response.warning = msg
 
+        # Initialize missing tags
+        tags = ["regform", "crc", "scp"]
+        for tag in tags:
+            if tag not in update and record[tag] is None:
+                update[tag] = "N/A"
+
         # Process tags and determine overall processing status
         status = record.status
-        tags = ["regform", "crc", "scp"]
         value = lambda t: update.get(t) or record[t]
 
         if status == "READY":
@@ -2108,7 +2107,7 @@ class ProviderRepresentative:
                     update[tag] = "REVIEW"
             else:
                 for tag in tags:
-                    if value(tag) in ("N/A", "REJECT"):
+                    if value(tag) in ("N/A", "REJECTED"):
                         update[tag] = "REVIEW"
 
         if accepted:
