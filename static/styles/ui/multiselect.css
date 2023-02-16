@@ -41,3 +41,17 @@
 @media print{
     .ui-multiselect-menu {display: none;}
 }
+
+/* For filter plugin */
+.ui-multiselect-hasfilter ul { position:relative; top:2px }
+.ui-multiselect-filter { float:left; margin-right:10px; font-size:1em; width:100%; }
+.ui-multiselect-header .ui-multiselect-filter input { width:100px; font-size:.9em; margin-left:5px; height:15px; padding:2px; border:1px solid #292929; -webkit-appearance:textfield; -webkit-box-sizing:content-box; }
+.ui-multiselect-excluded {display: none}
+
+/* RTL */
+body.rtl .ui-multiselect { direction: rtl; padding:2px 4px 2px 0; text-align:right; }
+body.rtl .ui-multiselect-menu { text-align:right; }
+body.rtl .ui-multiselect-header { direction: rtl; padding:3px 4px 3px 0; }
+body.rtl .ui-multiselect-checkboxes li:not(.ui-multiselect-optgroup) { padding-left:3px; }
+body.rtl .ui-multiselect-checkboxes label { padding:3px 21px 3px 1px; }
+body.rtl .ui-multiselect-checkboxes img { margin-left: 3px; }
