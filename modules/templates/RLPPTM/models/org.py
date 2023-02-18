@@ -162,12 +162,6 @@ class TestProviderRequirementsModel(DataModel):
                                 default = False,
                                 represent = flag_represent,
                                 ),
-                          # TODO deprecated, retained for migration
-                          Field("minforeq", "boolean",
-                                default = False,
-                                readable = False,
-                                writable = False,
-                                ),
                           *s3_meta_fields())
 
         # Table configuration
@@ -1204,6 +1198,28 @@ class TestProvider:
         return verification
 
     # -------------------------------------------------------------------------
+    @staticmethod
+    def status(values):
+        """
+            Determines overall verification status from tag values
+
+            Args:
+                values: the tag values
+
+            Returns:
+                the overall verification status
+        """
+
+        if all(v in ("VERIFIED", "ACCEPT") for v in values):
+            status = "COMPLETE"
+        elif any(v == "REVIEW" for v in values):
+            status = "REVIEW"
+        else:
+            status = "REVISE"
+
+        return status
+
+    # -------------------------------------------------------------------------
     def verification_defaults(self):
         """
             Gets defaults for the verification record for this provider
@@ -1222,14 +1238,7 @@ class TestProvider:
 
         reprinfo = self.check_reprinfo() if self.rinforeq else "ACCEPT"
 
-        review = (orgtype, mpav, reprinfo)
-
-        if all(v in ("VERIFIED", "ACCEPT") for v in review):
-            status = "COMPLETE"
-        elif any(v == "REVIEW" for v in review):
-            status = "REVIEW"
-        else:
-            status = "REVISE"
+        status = self.status((orgtype, mpav, reprinfo))
 
         return {"status": status,
                 "orgtype": orgtype,
@@ -1336,31 +1345,37 @@ class TestProvider:
         types = "|".join(str(x) for x in sorted(self.types))
         vhash = get_dhash([types])
 
+        verification = self.verification
+
         # Check the current hash to detect relevant changes
-        if vhash != self.verification.dhash and \
-           not current.auth.s3_has_role("ORG_GROUP_ADMIN"):
-            # Data have changed
-            # => reset verification to type-specific defaults
+        if vhash != verification.dhash:
+            # Data have changed => reset verification
             update = self.verification_defaults()
+            tags = ("orgtype", "mpav", "reprinfo")
+            is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
+            for tag in tags:
+                if update[tag] in ("N/A", "ACCEPT", "VERIFIED"):
+                    continue # reset unconditionally
+
+                # Reset depending on current value
+                current_value = verification[tag]
+                if current_value == "N/A":
+                    update[tag] = current_value if is_org_group_admin else "REVISE"
+                elif current_value == "REVISE":
+                    update[tag] = "REVIEW" if verification.status == "READY" else "REVISE"
+                elif current_value == "REVIEW":
+                    update[tag] = current_value
+                elif current_value == "ACCEPT":
+                    update[tag] = "REVIEW" if is_org_group_admin else "REVISE"
+                else: # VERIFIED
+                    update[tag] = current_value if is_org_group_admin else "REVIEW"
+
+            update["status"] = self.status(update[t] for t in tags)
             update["dhash"] = vhash
         else:
             update = None
 
         return update, vhash
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def reset_all(tags, value="N/A"):
-        """
-            Sets all given workflow tags to initial status
-
-            Args:
-                tags: the tag Rows
-                value: the initial value
-        """
-
-        for tag in tags:
-            tag.update_record(value=value)
 
     # -------------------------------------------------------------------------
     def check_reprinfo(self):
@@ -1428,8 +1443,7 @@ class TestProvider:
                 if orgtype == "ACCEPT":
                     orgtype = "REVIEW"
             else:
-                if orgtype == "REVIEW":
-                    orgtype = "ACCEPT"
+                orgtype = "ACCEPT"
             if orgtype == "REVISE" and status == "READY":
                 orgtype = "REVIEW"
             if orgtype != verification.orgtype:
@@ -1441,8 +1455,7 @@ class TestProvider:
                 if mpav == "ACCEPT":
                     mpav = "REVIEW"
             else:
-                if mpav == "REVIEW":
-                    mpav = "ACCEPT"
+                mpav = "ACCEPT"
             if mpav == "REVISE" and status == "READY":
                 mpav = "REVIEW"
             if mpav != verification.mpav:
@@ -1454,13 +1467,7 @@ class TestProvider:
                 update["reprinfo"] = reprinfo
 
             # Determine overall status
-            review = (orgtype, mpav, reprinfo)
-            if all(v in ("VERIFIED", "ACCEPT") for v in review):
-                status = "COMPLETE"
-            elif any(v == "REVIEW" for v in review):
-                status = "REVIEW"
-            else:
-                status = "REVISE"
+            status = self.status((orgtype, mpav, reprinfo))
             if status != verification.status:
                 update["status"] = status
 
