@@ -1349,27 +1349,30 @@ class TestProvider:
 
         # Check the current hash to detect relevant changes
         if vhash != verification.dhash:
-            # Data have changed => reset verification
+            # Relevant data have changed
+
+            # Determine default statuses
             update = self.verification_defaults()
-            tags = ("orgtype", "mpav", "reprinfo")
+
+            # Update statuses for manually approved requirements
             is_org_group_admin = current.auth.s3_has_role("ORG_GROUP_ADMIN")
-            for tag in tags:
+            for tag in ("orgtype", "mpav"): # reprinfo determined by own workflow
                 if update[tag] in ("N/A", "ACCEPT", "VERIFIED"):
                     continue # reset unconditionally
-
-                # Reset depending on current value
                 current_value = verification[tag]
-                if current_value == "N/A":
-                    update[tag] = current_value if is_org_group_admin else "REVISE"
-                elif current_value == "REVISE":
-                    update[tag] = "REVIEW" if verification.status == "READY" else "REVISE"
-                elif current_value == "REVIEW":
-                    update[tag] = current_value
-                elif current_value == "ACCEPT":
-                    update[tag] = "REVIEW" if is_org_group_admin else "REVISE"
-                else: # VERIFIED
-                    update[tag] = current_value if is_org_group_admin else "REVIEW"
+                if is_org_group_admin:
+                    if current_value == "ACCEPT":
+                        update[tag] = "REVIEW"
+                    else:
+                        update[tag] = current_value
+                else:
+                    if verification.status == "READY" or current_value == "REVIEW":
+                        update[tag] = "REVIEW"
+                    else:
+                        update[tag] = "REVISE"
 
+            # Determine overall status
+            tags = ("orgtype", "mpav", "reprinfo")
             update["status"] = self.status(update[t] for t in tags)
             update["dhash"] = vhash
         else:
