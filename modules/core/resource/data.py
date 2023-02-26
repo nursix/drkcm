@@ -42,7 +42,7 @@ osetattr = object.__setattr__
 ogetattr = object.__getattribute__
 
 # =============================================================================
-class S3ResourceData:
+class ResourceData:
     """ Class representing data in a resource """
 
     def __init__(self,

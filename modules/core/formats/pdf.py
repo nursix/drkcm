@@ -744,7 +744,7 @@ class PDFList:
             Args:
                 document: the DocTemplate
                 rfields: the S3ResourceFields (for labels and order)
-                rows: the data (S3ResourceData.rows)
+                rows: the data (ResourceData.rows)
                 totalrows: total number of rows matching the filter
         """
 
@@ -990,8 +990,8 @@ class PDFTable:
                 document: the EdenDocTemplate instance in which the table
                           shall be rendered
                 rfields: list of resolved field selectors for
-                         the columns (S3ResourceData.rfields)
-                rows: the represented rows (S3ResourceData.rows)
+                         the columns (ResourceData.rfields)
+                rows: the represented rows (ResourceData.rows)
                 groupby: a field name that is to be used as a sub-group
                             - all records with the same value in that the
                               groupby column will be clustered together

@@ -378,7 +378,7 @@ class XLSXWriter(FormatWriter):
             Args:
                 rfield: the column (S3ResourceField)
                 num_levels: the number of levels (from root)
-                rows: the Rows from S3ResourceData
+                rows: the Rows from ResourceData
 
             Returns:
                 list of keys (column names) for the inserted columns
