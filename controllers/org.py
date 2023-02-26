@@ -24,75 +24,6 @@ def index_alt():
     s3_redirect_default(URL(f="organisation"))
 
 # -----------------------------------------------------------------------------
-def capacity_assessment():
-    """ RESTful CRUD controller """
-
-    S3SQLInlineComponent = s3base.S3SQLInlineComponent
-
-    crud_fields = ["organisation_id",
-                   "date",
-                   "person_id",
-                   ]
-    cappend = crud_fields.append
-
-    table = s3db.org_capacity_indicator
-    rows = db(table.deleted != True).select(table.id,
-                                            table.section,
-                                            table.header,
-                                            table.number,
-                                            table.name,
-                                            orderby = table.number,
-                                            )
-
-    #subheadings = {}
-
-    section = None
-    for row in rows:
-        name = "number%s" % row.number
-        if row.section != section:
-            label = section = row.section
-            #subheadings["sub_%sdata" % name] = T(section)
-        else:
-            label = ""
-        cappend(S3SQLInlineComponent("data",
-                                     name = name,
-                                     label = label,
-                                     fields = ((row.header, "indicator_id"),
-                                               "rating",
-                                               "ranking",
-                                               ),
-                                     filterby = {"field": "indicator_id",
-                                                 "options": row.id
-                                                 },
-                                     multiple = False,
-                                     ),
-                )
-
-    crud_form = s3base.S3SQLCustomForm(*crud_fields)
-
-    s3db.configure("org_capacity_assessment",
-                   crud_form = crud_form,
-                   #subheadings = subheadings,
-                   )
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def capacity_assessment_data():
-    """
-        RESTful CRUD controller
-        - just used for the custom_report method
-    """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def capacity_indicator():
-    """ RESTful CRUD controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
 def group():
     """ RESTful CRUD controller """
 
@@ -197,20 +128,6 @@ def org_search():
     s3.prep = lambda r: r.method == "search_ac"
 
     return crud_controller(module, "organisation")
-
-# -----------------------------------------------------------------------------
-def organisation_list_represent(l):
-
-    organisation_represent = s3db.org_organisation_represent
-    if l:
-        max_length = 4
-        if len(l) > max_length:
-            return "%s, etc" % \
-                   organisation_represent.multiple(l[:max_length])
-        else:
-            return organisation_represent.multiple(l)
-    else:
-        return NONE
 
 # -----------------------------------------------------------------------------
 def region():
@@ -390,38 +307,6 @@ def mailing_list():
     rheader = lambda r: _rheader(r, tabs = _tabs)
 
     return crud_controller("pr", "group", rheader=rheader)
-
-# -----------------------------------------------------------------------------
-def donor():
-    """ RESTful CRUD controller """
-
-    tablename = "org_donor"
-    table = s3db[tablename]
-
-    tablename = "org_donor"
-    s3.crud_strings[tablename] = Storage(
-        label_create = ADD_DONOR,
-        title_display = T("Donor Details"),
-        title_list = T("Donors Report"),
-        title_update = T("Edit Donor"),
-        label_list_button = T("List Donors"),
-        label_delete_button = T("Delete Donor"),
-        msg_record_created = T("Donor added"),
-        msg_record_modified = T("Donor updated"),
-        msg_record_deleted = T("Donor deleted"),
-        msg_list_empty = T("No Donors currently registered"))
-
-    s3db.configure(tablename,
-                   listadd = False,
-                   )
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-#def organisation_location():
-#    """ RESTful CRUD controller """
-
-#    return crud_controller()
 
 # -----------------------------------------------------------------------------
 def resource():
