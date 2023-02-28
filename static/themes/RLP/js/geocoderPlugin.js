@@ -100,8 +100,10 @@ $(function(){
                             }
                         });
 
-                        // Reset Geocoder-option
-                        self.useGeocoder = true;
+                        // Restore Geocoder-option
+                        $.when(pending).always(function() {
+                            self.useGeocoder = true;
+                        });
                     }
 
                     // Notify results
