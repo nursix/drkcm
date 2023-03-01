@@ -711,12 +711,13 @@ class approve(CustomController):
                     # Send welcome email
                     settings = current.deployment_settings
                     from .notifications import CMSNotifications
+                    data = {"name": organisation or org.name,
+                            "homepage": settings.get_base_public_url(),
+                            "profile": "%s/default/person" % settings.get_base_app_url(),
+                            }
                     error = CMSNotifications.send(user.email,
                                                   "WelcomeProvider",
-                                                  {"name": organisation or org.name,
-                                                   "homepage": settings.get_base_public_url(),
-                                                   "profile": URL("default", "person", host=True),
-                                                   },
+                                                  data,
                                                   module = "auth",
                                                   resource = "user",
                                                   )

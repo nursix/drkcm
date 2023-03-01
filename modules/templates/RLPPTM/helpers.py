@@ -1646,8 +1646,6 @@ class InviteUserOrg(CRUDMethod):
     @classmethod
     def invite_account(cls, organisation, email, account=None):
 
-        request = current.request
-
         data = {"first_name": organisation.name,
                 "email": email,
                 # TODO language => use default language
@@ -1686,13 +1684,8 @@ class InviteUserOrg(CRUDMethod):
                 return "could not create preliminary account"
 
         # Compose and send invitation email
-        # => must use public_url setting because URL() produces a
-        #    localhost address when called from CLI or script
-        base_url = current.deployment_settings.get_base_public_url()
-        appname = request.application
-        registration_url = "%s/%s/default/index/register_invited/%s"
-
-        data = {"url": registration_url % (base_url, appname, key),
+        app_url = current.deployment_settings.get_base_app_url()
+        data = {"url": "%s/default/index/register_invited/%s" % (app_url, key),
                 "code": code,
                 }
 

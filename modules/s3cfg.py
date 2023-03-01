@@ -1120,7 +1120,8 @@ class S3Config(Storage):
 
     def get_base_public_url(self):
         """
-            The Public URL for the site - for use in email links, etc
+            The public URL for the site
+                - for use in email links, etc
         """
         public_url = self.base.get("public_url")
         if not public_url:
@@ -1129,6 +1130,15 @@ class S3Config(Storage):
             host = env.get("http_host") or "127.0.0.1:8000"
             self.base.public_url = public_url = "%s://%s" % (scheme, host)
         return public_url
+
+    def get_base_app_url(self):
+        """
+            The public URL for the site, including the main application path
+                - for construction of links in emails etc
+        """
+
+        host = self.get_base_public_url().rstrip("/")
+        return "%s/%s" % (host, current.request.application)
 
     def get_base_bigtable(self):
         """

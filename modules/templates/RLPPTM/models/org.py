@@ -1696,12 +1696,9 @@ class TestProvider:
             cc = None
 
         # Data for the notification email
+        app_url = current.deployment_settings.get_base_app_url()
         org_data = {"name": self.record.name,
-                    "url": URL(c = "org",
-                               f = "organisation",
-                               args = [organisation_id, "commission"],
-                               host = True,
-                               ),
+                    "url": "%s/org/organisation/%s/commission" % (app_url, organisation_id)
                     }
 
         template = {"CURRENT": "CommissionIssued",
@@ -3126,12 +3123,10 @@ class TestStation:
             return "No Organisation Administrator found"
 
         # Data for the notification email
+        app_url = current.deployment_settings.get_base_app_url()
         data = {"name": facility.name,
-                "url": URL(c = "org",
-                           f = "organisation",
-                           args = [organisation_id, "facility", facility.id],
-                           host = True,
-                           ),
+                "url": "%s/org/organisation/%s/facility/%s" % \
+                       (app_url, organisation_id, facility.id),
                 }
 
         approval = self.approval
