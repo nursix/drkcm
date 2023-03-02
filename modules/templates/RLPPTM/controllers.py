@@ -2290,6 +2290,19 @@ class geocode(CustomController):
         return output
 
 # =============================================================================
+class geocode_all_states(CustomController):
+    """
+        Wrapper for custom geocoder:
+        - allow addresses in all federal states
+    """
+
+    def __call__(self):
+
+        current.gis.geocode.geocode_path = "/mapbender/geoportal/gaz_geom_mobile.php?q=fall%2010&outputFormat=json&resultTarget=web&searchEPSG=4326&forcePoint=true&forceGeonames=true"
+
+        return geocode()()
+
+# =============================================================================
 class ocert(CustomController):
     """
         Custom controller to certify the eligibility of an organisation
