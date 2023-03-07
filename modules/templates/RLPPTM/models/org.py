@@ -349,6 +349,14 @@ class TestProviderModel(DataModel):
                            ),
                      *s3_meta_fields())
 
+        # Table configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary = ("organisation_id",
+                                                       "bsnr",
+                                                       ),
+                                            ),
+                  )
+
     #--------------------------------------------------------------------------
     @staticmethod
     def commission_onvalidation(form):
