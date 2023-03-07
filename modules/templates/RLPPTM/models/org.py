@@ -1965,11 +1965,10 @@ class ProviderRepresentative:
     """ Service functions for provider representative verification """
 
     # Data requirements for representatives
-    # - for future activation
-    place_of_birth_required = False
-    email_required = False
-    phone_required = False
-    address_required = False
+    place_of_birth_required = True
+    email_required = True
+    phone_required = True
+    address_required = True
     account_required = False
     role_required = False
 
