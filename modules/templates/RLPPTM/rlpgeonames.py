@@ -105,3 +105,10 @@ except ImportError:
     # Geopy not installed
     class rlp_GeoNames:
         enable = False
+
+class rlp_GeoNamesAllStates(rlp_GeoNames):
+    """
+        Alternative geocode to allow addresses in all federal states
+    """
+
+    geocode_path = "/mapbender/geoportal/gaz_geom_mobile.php?q=fall%2010&outputFormat=json&resultTarget=web&searchEPSG=4326&forcePoint=true&forceGeonames=true"
