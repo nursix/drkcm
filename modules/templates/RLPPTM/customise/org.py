@@ -287,6 +287,16 @@ def org_organisation_controller(**attr):
                                              readonly = groups_readonly,
                                              )
 
+                    # Show BSNR for test providers
+                    if is_test_station:
+                        bsnr = S3SQLInlineComponent("bsnr",
+                                                    fields = [("", "bsnr")],
+                                                    label = T("BSNR"),
+                                                    readonly = True,
+                                                    )
+                    else:
+                        bsnr = None
+
                     # Show projects
                     subheadings["project"] = T("Administrative")
                     projects = S3SQLInlineLink("project",
@@ -321,7 +331,7 @@ def org_organisation_controller(**attr):
                     else:
                         types = None
 
-                    groups = projects = delivery = None
+                    groups = bsnr = projects = delivery = None
 
                     # Role for verification fields
                     role = "applicant"
@@ -338,6 +348,7 @@ def org_organisation_controller(**attr):
                                acronym,
                                groups,
                                types,
+                               bsnr,
                                projects,
                                delivery,
                                S3SQLInlineComponent(
@@ -385,6 +396,12 @@ def org_organisation_controller(**attr):
                             "organisation_type__link.organisation_type_id",
                             label = T("Type"),
                             options = lambda: get_filter_options("org_organisation_type"),
+                            ),
+                        TextFilter(
+                            ["bsnr.bsnr",],
+                            label = T("BSNR"),
+                            match_any = True,
+                            hidden = True,
                             ),
                         OptionsFilter(
                             "verification.status",
