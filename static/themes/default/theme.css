@@ -590,7 +590,7 @@ input[disabled='disabled'] {
 
 /* line 174, ../scss/theme/_widgets.scss */
 .ui-multiselect-header span.ui-icon {
-  margin-top: 4px;
+  margin-top: 1px;
 }
 /* line 178, ../scss/theme/_widgets.scss */
 [dir=rtl] .ui-multiselect-header .ui-multiselect-filter {
@@ -2803,7 +2803,7 @@ form.auth_login #submit_record__row {
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
   display: block;
-  min-width: 220px;
+  min-width: 225px;
 }
 
 /* line 62, ../scss/theme/_filters.scss */
@@ -2815,7 +2815,7 @@ form.auth_login #submit_record__row {
 /* line 67, ../scss/theme/_filters.scss */
 .ui-selectmenu-button,
 .ui-multiselect-menu {
-  min-width: 220px;
+  min-width: 225px;
 }
 
 /* Don't display the default widget, only the multiselect generated widget is displayed */
@@ -3512,10 +3512,17 @@ table.dataTable table.import-item-details {
 }
 
 /* Full Calendar */
-/* line 34, ../scss/theme/_organizer.scss */
-.fc table,
-.fc table tr {
+/* line 35, ../scss/theme/_organizer.scss */
+.fc table {
+  margin-bottom: 0;
+}
+/* line 38, ../scss/theme/_organizer.scss */
+.fc thead, .fc tbody, .fc tfoot, .fc tr, .fc th, .fc td {
   background: transparent;
+}
+/* line 41, ../scss/theme/_organizer.scss */
+.fc .fc-time, .fc .fc-day-header {
+  font-size: 0.9rem;
 }
 
 /* line 11, ../scss/theme/_profile.scss */
