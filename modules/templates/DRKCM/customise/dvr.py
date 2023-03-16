@@ -1814,6 +1814,10 @@ def configure_response_action_tab(person_id,
     field.readable = field.writable = False
 
     if themes_details:
+        # Hide case_activity_id
+        field = table.case_activity_id
+        field.readable = False
+
         list_fields = ["start_date",
                        (T("Themes"), "dvr_response_action_theme.id"),
                        "human_resource_id",

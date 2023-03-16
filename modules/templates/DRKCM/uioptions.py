@@ -48,7 +48,7 @@ UI_DEFAULTS = {#"case_arrival_date_label": "Date of Entry",
                "appointments_staff_link": False,
                "appointments_use_organizer": False,
 
-               "response_types": False,
+               "response_types": True,
                "response_activity_autolink": False,
                "response_use_organizer": False,
                "response_use_time": False,
