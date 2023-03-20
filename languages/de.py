@@ -4397,6 +4397,7 @@
 'Parsers': 'Parser',
 'Partial': 'Teil',
 'Participant': 'Teilnehmer',
+'Participated': 'Teilgenommen',
 'Pashto': 'Paschtu',
 'Pass': 'Übergeben',
 'Passport': 'Reisepass',
