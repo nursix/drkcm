@@ -2701,6 +2701,18 @@ class S3Config(Storage):
         """
         return self.__lazy("ui", "organizer_snap_duration", None)
 
+    def get_ui_organizer_week_numbers(self):
+        """
+            Show week numbers in organizer
+        """
+        return self.ui.get("organizer_week_numbers", True)
+
+    def get_ui_organizer_year_view(self):
+        """
+            Enable year view in organizer
+        """
+        return self.ui.get("organizer_year_view", False)
+
     # =========================================================================
     # Messaging
     #

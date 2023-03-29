@@ -847,9 +847,14 @@ class S3OrganizerWidget:
                        "useTime": use_time,
                        "labelEdit": s3_str(T("Edit")),
                        "labelDelete": s3_str(T("Delete")),
+                       "labelReload": s3_str(T("Reload")),
+                       "labelGoto": s3_str(T("Go to Date")),
                        "deleteConfirmation": s3_str(T("Do you want to delete this entry?")),
-                       "firstDay": settings.get_L10n_firstDOW(),
+                       "firstDay": current.calendar.first_dow,
+                       "weekNumbers": settings.get_ui_organizer_week_numbers(),
+                       "yearView": settings.get_ui_organizer_year_view(),
                        }
+
         # Options from settings
         bhours = settings.get_ui_organizer_business_hours()
         if bhours:
@@ -898,24 +903,21 @@ class S3OrganizerWidget:
         appname = request.application
 
         # Inject CSS
-        # TODO move into themes?
         if s3.debug:
-            s3.stylesheets.append("fullcalendar/fullcalendar.css")
             s3.stylesheets.append("qtip/jquery.qtip.css")
         else:
-            s3.stylesheets.append("fullcalendar/fullcalendar.min.css")
             s3.stylesheets.append("qtip/jquery.qtip.min.css")
 
         # Select scripts
         if s3.debug:
-            inject = ["moment.js",
-                      "fullcalendar/fullcalendar.js",
+            inject = ["moment/moment-with-locales.js",
+                      "fullcalendar/dist/index.global.js",
                       "jquery.qtip.js",
                       "S3/s3.ui.organizer.js",
                       ]
         else:
-            inject = ["moment.min.js",
-                      "fullcalendar/fullcalendar.min.js",
+            inject = ["moment/moment-with-locales.min.js",
+                      "fullcalendar/dist/index.global.min.js",
                       "jquery.qtip.min.js",
                       "S3/s3.ui.organizer.min.js",
                       ]
@@ -923,14 +925,14 @@ class S3OrganizerWidget:
         # Choose locale
         language = current.session.s3.language
         l10n_path = os.path.join(request.folder,
-                                 "static", "scripts", "fullcalendar", "locale",
+                                 "static", "scripts", "fullcalendar", "packages", "core", "locales",
                                  )
-        l10n_file = "%s.js" % language
-        script = "fullcalendar/locale/%s" % l10n_file
+        l10n_file = "%s.global.js" % language
+        script = "fullcalendar/packages/core/locales/%s" % l10n_file
         if script not in scripts and \
            os.path.exists(os.path.join(l10n_path, l10n_file)):
             options["locale"] = language
-            inject.insert(-1, "fullcalendar/locale/%s" % l10n_file)
+            inject.insert(-1, script)
 
         # Choose icon set (other than default FA4)
         icon_set = current.deployment_settings.get_ui_icons()
