@@ -462,7 +462,7 @@
 
             // Add throbber
             let throbber = $('<div class="inline-throbber">').css({visibility: 'hidden'});
-            $('.fc-header-toolbar .fc-left', this.element).append(throbber);
+            $('.fc-reload-button', this.element).after(throbber);
             this.throbber = throbber;
 
             // Configure resources
