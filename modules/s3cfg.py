@@ -3584,6 +3584,15 @@ class S3Config(Storage):
         """
         return self.cr.get("shelter_allocation", False)
 
+    def get_org_site_check_in_qrcode(self):
+        """
+            Use QRInput for site check-in/out
+                - True to enable and use QR contents verbatim
+                - a tuple (pattern, index) for QR contents parsing
+                - False to disable
+        """
+        return self.org.get("site_check_in_qrcode", False)
+
     def get_cr_check_out_is_final(self):
         """
             Whether checking out of a shelter frees up the place

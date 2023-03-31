@@ -58,13 +58,13 @@ class S3MainMenu(default.S3MainMenu):
                    args = [shelter_id, "check-in"],
                    check = shelter_id is not None,
                    ),
-                #MM("Confiscation", c="security", f="seized_item"),
+                MM("Confiscation", c="security", f="seized_item"),
             ]
 
         elif not_admin and has_role("QUARTIER"):
             return [
                 MM("Residents", c=("dvr", "cr"), f=("person", "shelter_registration")),
-                #MM("Confiscation", c="security", f="seized_item"),
+                MM("Confiscation", c="security", f="seized_item"),
             ]
 
         else:
@@ -107,7 +107,7 @@ class S3MainMenu(default.S3MainMenu):
                     #homepage("req"),
                     homepage("inv"),
                     SEP(link=False),
-                    #MM("Confiscation", c="security", f="seized_item"),
+                    MM("Confiscation", c="security", f="seized_item"),
                     SEP(link=False),
                     MM("Surplus Meals", c="default", f="index",
                        args = "surplus_meals",

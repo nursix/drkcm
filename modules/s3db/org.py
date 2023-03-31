@@ -6092,11 +6092,21 @@ class org_SiteCheckInMethod(CRUDMethod):
                 pe_label = person.pe_label
                 person_data = self.ajax_data(person, status)
 
+        # Configure label input
+        label_input = self.label_input
+        use_qr_code = settings.get_org_site_check_in_qrcode()
+        if use_qr_code:
+            if use_qr_code is True:
+                label_input = S3QRInput()
+            elif isinstance(use_qr_code, tuple):
+                pattern, index = use_qr_code[:2]
+                label_input = S3QRInput(pattern=pattern, index=index)
+
         # Standard form fields and data
         formfields = [Field("label",
                             label = T("ID"),
                             requires = IS_NOT_EMPTY(error_message=T("Enter or scan an ID")),
-                            widget = self.label_input,
+                            widget = label_input,
                             ),
                       Field("person",
                             label = "",
