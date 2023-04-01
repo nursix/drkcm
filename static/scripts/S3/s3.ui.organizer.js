@@ -1,16 +1,19 @@
 /**
  * jQuery UI Widget for S3Organizer
  *
- * @copyright 2018-2021 (c) Sahana Software Foundation
+ * @copyright 2018-2023 (c) Sahana Software Foundation
  * @license MIT
  *
  * requires jQuery 1.9.1+
  * requires jQuery UI 1.10 widget factory
- * requires moment.js
- * requires jQuery fullCalendar plugin
- * requires qTip2
  * requires jQuery UI datepicker
+ * requires moment.js
+ * requires fullCalendar
+ * requires qTip2
  */
+
+/* jshint esversion: 6 */
+
 (function($, undefined) {
 
     "use strict";
@@ -38,13 +41,13 @@
     EventCache.prototype.store = function(start, end, items) {
 
         // Convert items array into object with item IDs as keys
-        var events = {};
+        let events = {};
         items.forEach(function(item) {
             this.items[item.id] = events[item.id] = item;
         }, this);
 
         // Add the new slice
-        var slices = this.slices,
+        let slices = this.slices,
             slice = [moment(start), moment(end), events];
         slices.push(slice);
 
@@ -66,8 +69,8 @@
 
         // Merge overlapping/adjacent slices
         if (slices.length > 1) {
-            var newSlices = [];
-            var merged = slices.reduce(function(x, y) {
+            let newSlices = [];
+            let merged = slices.reduce(function(x, y) {
                 if (x[1].isBefore(y[0]) || x[0].isAfter(y[1])) {
                     // Slices do not overlap
                     newSlices.push(x);
@@ -100,7 +103,7 @@
         start = moment(start);
         end = moment(end);
 
-        var slices = this.slices,
+        let slices = this.slices,
             numSlices = slices.length,
             slice,
             events,
@@ -109,7 +112,7 @@
             eventStart,
             items = [];
 
-        for (var i = 0; i < numSlices; i++) {
+        for (let i = 0; i < numSlices; i++) {
             slice = slices[i];
             if (slice[0].isSameOrBefore(start) && slice[1].isSameOrAfter(end)) {
                 events = slice[2];
@@ -150,7 +153,7 @@
      */
     EventCache.prototype.updateItem = function(itemID, data) {
 
-        var item = this.items[itemID];
+        let item = this.items[itemID];
 
         if (item && data) {
             $.extend(item, data);
@@ -221,14 +224,17 @@
          *                                     objects of the format:
          *                                     {dow:[0,1,2,3,4,5,6], start: "HH:MM", end: "HH:MM"},
          *                                     - false to disable
-         * @prop {string} timeFormat: time format for events, to override the locale default
+         * @prop {string} timeFormat: time format for events
          * @prop {integer} firstDay: first day of the week (0=Sunday, 1=Monday etc.)
+         * @prop {boolean} useTime: use date+time for events (rather than just dates)
+         * @prop {boolean} yearView: whether to have a year view (only when not using time)
          * @prop {string} labelEdit: label for Edit-button
          * @prop {string} labelDelete: label for the Delete-button
+         * @prop {string} labelReload: label for the Reload-button
+         * @prop {string} labelGoto: label for the Goto-button
          * @prop {string} deleteConfirmation: the question for the delete-confirmation
          * @prop {string} refreshIconClass: the CSS class for the refresh button icon
          * @prop {string} calendarIconClass: the CSS class for the calendar button icon
-         *
          */
         options: {
 
@@ -242,12 +248,20 @@
             snapDuration: '00:15:00',
             defaultTimedEventDuration: '00:30:00',
             businessHours: false,
-            timeFormat: null,
+            weekNumbers: true,
+            timeFormat: {
+                hour: '2-digit',
+                minute: '2-digit'
+            },
+            firstDay: 1,
+            useTime: false,
+            yearView: true,
 
             labelEdit: 'Edit',
             labelDelete: 'Delete',
+            labelReload: 'Reload',
+            labelGoto: 'Go to Date',
             deleteConfirmation: 'Do you want to delete this entry?',
-            firstDay: 1,
 
             refreshIconClass: 'fa fa-refresh',
             calendarIconClass: 'fa fa-calendar'
@@ -269,6 +283,8 @@
          */
         _init: function() {
 
+            this.calendar = null;
+
             this.openRequest = null;
             this.loadCount = -1;
 
@@ -280,6 +296,11 @@
          */
         _destroy: function() {
 
+            if (this.calendar !== null) {
+                this.calendar.destroy();
+                this.calendar = null;
+            }
+
             $.Widget.prototype.destroy.call(this);
         },
 
@@ -288,15 +309,19 @@
          */
         refresh: function() {
 
-            var opts = this.options,
-                resourceConfigs = opts.resources,
-                el = $(this.element),
-                widgetID = el.attr('id');
-
             this._unbindEvents();
 
+            // Remove any previous calendar
+            if (this.calendar !== null) {
+                this.calendar.destroy();
+                this.calendar = null;
+            }
+
+            let opts = this.options;
+
             // Can records be created for any resource?
-            var insertable = false,
+            let resourceConfigs = opts.resources,
+                insertable = false,
                 allDaySlot = false;
             resourceConfigs.forEach(function(resourceConfig) {
                 if (resourceConfig.insertable) {
@@ -308,20 +333,24 @@
             });
 
             // Determine available views and default view
-            // TODO make configurable (override options)
-            var leftHeader,
+            let leftHeader,
                 defaultView;
             if (opts.useTime) {
-                leftHeader = 'month,agendaWeek,agendaDay reload';
-                defaultView = 'agendaWeek';
+                leftHeader = 'dayGridMonth,timeGridWeek,timeGridDay reload';
+                defaultView = 'timeGridWeek';
             } else {
-                leftHeader = 'month,basicWeek reload';
-                defaultView = 'month';
+                if (opts.yearView) {
+                    leftHeader = 'multiMonthYear,dayGridMonth,dayGridWeek reload';
+                } else {
+                    leftHeader = 'dayGridMonth,dayGridWeek reload';
+                }
+                defaultView = 'dayGridMonth';
             }
 
-            var self = this,
-                datePicker = $('#' + widgetID + '-date-picker');
-            $(this.element).fullCalendar({
+            let datePicker = $('#' + $(this.element).attr('id') + '-date-picker'),
+                self = this;
+
+            let calendar = new FullCalendar.Calendar(this.element[0], {
 
                 // General options
                 aspectRatio: opts.aspectRatio,
@@ -332,50 +361,70 @@
                 defaultTimedEventDuration: opts.defaultTimedEventDuration,
                 allDaySlot: allDaySlot,
                 firstDay: opts.firstDay,
-                timeFormat: opts.timeFormat,
+                eventTimeFormat: opts.timeFormat,
                 slotLabelFormat: opts.timeFormat,
                 businessHours: opts.businessHours,
+                weekNumbers: opts.weekNumbers,
 
                 // Permitted actions
                 selectable: insertable,
                 editable: true,
-                eventDrop: function(event, delta, revertFunc /* , jsEvent, ui, view */) {
-                    self._updateItem(event, revertFunc);
-                },
-                eventResize: function(event, delta, revertFunc /* , jsEvent, ui, view */) {
-                    self._updateItem(event, revertFunc);
-                },
 
-                // View options
+                // Header toolbar
                 customButtons: {
                     reload: {
-                        text: 'Reload',
+                        text: '',
+                        hint: opts.labelReload,
                         click: function() {
                             self.reload();
                         }
                     },
                     calendar: {
-                        text: 'Calendar',
+                        text: '',
+                        hint: opts.labelGoto,
                         click: function() {
                             datePicker.datepicker('show');
                         }
                     }
                 },
-                header: {
-                    left: leftHeader,
+                headerToolbar: {
+                    start: leftHeader,
                     center: 'title',
-                    right: 'calendar today prev,next'
+                    end: 'calendar today prev,next'
                 },
-                defaultView: defaultView,
+                initialView: defaultView,
 
-                eventRender: function(item, element) {
-                    self._eventRender(item, element);
+                // View-specific options
+                multiMonthMaxColumns: 2,
+                views: {
+                    dayGridWeek: {
+                        selectable: !opts.useTime,
+                        aspectRatio: opts.aspectRatio * 3 / 2
+                    },
+                    dayGridMonth: {
+                        selectable: !opts.useTime
+                    },
+                    multiMonthYear: {
+                        selectable: !opts.useTime,
+                        aspectRatio: opts.aspectRatio * 2 / 3
+                    }
                 },
-                eventDestroy: function(item, element) {
-                    self._eventDestroy(item, element);
+
+                // Callbacks
+                eventDidMount: function(item) {
+                    self._eventRender(item);
                 },
-                select: function(start, end, jsEvent /*, view */) {
-                    self._selectDate(start, end, jsEvent);
+                eventWillUnmount: function(item) {
+                    self._eventDestroy(item);
+                },
+                eventDrop: function(updateInfo) {
+                    self._updateItem(updateInfo);
+                },
+                eventResize: function(updateInfo) {
+                    self._updateItem(updateInfo);
+                },
+                select: function(selectInfo) {
+                    self._selectDate(selectInfo);
                 },
                 unselect: function(/* jsEvent, view */) {
                     $(self.element).qtip('destroy', true);
@@ -387,21 +436,24 @@
                 timezone: 'local'
             });
 
+            this.calendar = calendar;
+            calendar.render();
+
             // Button icons
-            var refreshIcon = $('<i>').addClass(opts.refreshIconClass),
+            let refreshIcon = $('<i>').addClass(opts.refreshIconClass),
                 calendarIcon = $('<i>').addClass(opts.calendarIconClass);
 
             // Store reloadButton, use icon
             this.reloadButton = $('.fc-reload-button').empty().append(refreshIcon);
 
             // Move datepicker into header, use icon for calendar button
-            var calendarButton = $('.fc-calendar-button').empty().append(calendarIcon);
+            let calendarButton = $('.fc-calendar-button').empty().append(calendarIcon);
             datePicker.datepicker('option', {showOn: 'focus', showButtonPanel: true, firstDay: opts.firstDay})
                       .insertBefore(calendarButton)
                       .on('change', function() {
-                          var date = datePicker.datepicker('getDate');
+                          let date = datePicker.datepicker('getDate');
                           if (date) {
-                              el.fullCalendar('gotoDate', date);
+                              calendar.gotoDate(date);
                           }
                       });
 
@@ -409,8 +461,8 @@
             datePicker.datepicker('widget').hide();
 
             // Add throbber
-            var throbber = $('<div class="inline-throbber">').css({visibility: 'hidden'});
-            $('.fc-header-toolbar .fc-left', this.element).append(throbber);
+            let throbber = $('<div class="inline-throbber">').css({visibility: 'hidden'});
+            $('.fc-reload-button', this.element).after(throbber);
             this.throbber = throbber;
 
             // Configure resources
@@ -431,23 +483,24 @@
          */
         _addResource: function(resourceConfig, index) {
 
-            var resource = $.extend({}, resourceConfig, {_cache: new EventCache()});
+            let resource = $.extend({}, resourceConfig, {_cache: new EventCache()});
 
             this.resources.push(resource);
-            var timeout = resource.timeout;
+
+            let timeout = resource.timeout;
             if (timeout === undefined) {
                 timeout = this.options.timeout;
             }
 
-            var self = this;
-            $(this.element).fullCalendar('addEventSource', {
+            let self = this;
+            this.calendar.addEventSource({
                 id: '' + index, // must be string, falsy gets dropped
                 allDayDefault: !resource.useTime,
                 editable: !!resource.editable, // can be overridden per-record
                 startEditable: !!resource.startEditable,
                 durationEditable: !!resource.end && !!resource.durationEditable,
-                events: function(start, end, timezone, callback) {
-                    self._fetchItems(resource, start, end, timezone, callback);
+                events: function(fetchInfo, callback) {
+                    self._fetchItems(resource, fetchInfo, callback);
                 }
             });
         },
@@ -456,13 +509,17 @@
          * Actions after a calendar item has been rendered
          *
          * @param {object} item - the calendar item
-         * @param {jQuery} element - the DOM node of the item
          */
-        _eventRender: function(item, element) {
+        _eventRender: function(item) {
 
-            var self = this;
+            // Get the element
+            let element = item.el;
+            if (element === undefined) {
+                return;
+            }
 
             // Attach the item popup
+            let self = this;
             $(element).qtip({
                 content: {
                     title: function(jsEvent, api) {
@@ -504,12 +561,14 @@
          * Actions before a calendar item is removed from the DOM
          *
          * @param {object} item - the calendar item
-         * @param {jQuery} element - the DOM node of the item
          */
-        _eventDestroy: function(item, element) {
+        _eventDestroy: function(item) {
 
-            // Remove the item popup
-            $(element).qtip('destroy', true);
+            let element = item.el;
+            if (element) {
+                // Remove the popup
+                $(element).qtip('destroy', true);
+            }
         },
 
         /**
@@ -519,14 +578,17 @@
          *
          * @returns {string} - the popup title
          */
-        _itemTitle: function(item) {
+        _itemTitle: function(item, api) {
 
-            var dateFormat = item.allDay && 'L' || 'L LT',
-                timeFormat = 'LT',
-                dates = [item.start.format(dateFormat)];
+            let locale = this.options.locale || 'en',
+                eventInfo = item.event,
+                dateFormat = eventInfo.allDay ? 'L' : 'L LT',
+                timeFormat = 'LT';
 
-            if (item.end) {
-                var end = moment(item.end).endOf('minute');
+            let dates = [moment(eventInfo.start).locale(locale).format(dateFormat)];
+
+            if (eventInfo.end) {
+                let end = moment(eventInfo.end).locale(locale).endOf('minute');
                 dates.push(end.format(timeFormat));
             }
 
@@ -543,19 +605,20 @@
          */
         _itemDisplay: function(item, api) {
 
-            var contents = $('<div class="s3-organizer-popup">'),
+            let eventInfo = item.event,
+                contents = $('<div class="s3-organizer-popup">'),
                 opts = this.options,
-                resource = opts.resources[item.source.id];
+                resource = opts.resources[eventInfo.source.id];
 
             // Item Title
-            $('<h6>').html(item.popupTitle).appendTo(contents);
+            $('<h6>').html(eventInfo.popupTitle).appendTo(contents);
 
             // Item Description
-            var columns = resource.columns,
-                description = item.description;
+            let columns = resource.columns,
+                description = eventInfo.extendedProps.description;
             if (columns && description) {
                 columns.forEach(function(column) {
-                    var colName = column[0],
+                    let colName = column[0],
                         label = column[1];
                     if (description[colName] !== undefined) {
                         if (label) {
@@ -567,18 +630,19 @@
             }
 
             // Edit/Delete Buttons
-            var widgetID = $(this.element).attr('id'),
+            let widgetID = $(this.element).attr('id'),
                 ns = this.eventNamespace,
                 self = this,
                 buttons = [],
                 btn,
                 baseURL = resource.baseURL;
+
             if (baseURL) {
                 // Edit button
-                if (resource.editable && item.editable !== false) {
-                    var link = document.createElement('a');
+                if (resource.editable && eventInfo.editable !== false) {
+                    let link = document.createElement('a');
                     link.href = baseURL;
-                    link.pathname += '/' + item.id + '/update.popup';
+                    link.pathname += '/' + eventInfo.id + '/update.popup';
                     if (link.search) {
                         link.search += '&refresh=' + widgetID;
                     } else {
@@ -592,7 +656,7 @@
                     buttons.push(btn);
                 }
                 // Delete button
-                if (resource.deletable && item.deletable !== false) {
+                if (resource.deletable && eventInfo.extendedProps.deletable !== false) {
                     btn = $('<a class="action-btn delete-btn-ajax">').text(opts.labelDelete);
                     btn.on('click' + ns, function() {
                         if (confirm(opts.deleteConfirmation)) {
@@ -616,17 +680,17 @@
         /**
          * Actions when a date interval has been selected
          *
-         * @param {moment} start - the start date
-         * @param {moment} end - the end date
-         * @param {event} jsEvent - the JS event that triggered the selection
+         * @param {Object} selectInfo - the selectInfo containing start, end and jsEvent
          */
-        _selectDate: function(start, end, jsEvent) {
+        _selectDate: function(selectInfo) {
 
-            var self = this;
+            let self = this;
 
             $(this.element).qtip({
                 content: {
                     'text': function(jsEvent, api) {
+                        let start = moment(selectInfo.start),
+                            end = moment(selectInfo.end);
                         return self._selectResource(start, end, jsEvent, api);
                     }
                 },
@@ -657,7 +721,7 @@
                 }
             });
 
-            $(this.element).qtip('show', jsEvent);
+            $(this.element).qtip('show', selectInfo.jsEvent);
         },
 
         /**
@@ -673,7 +737,7 @@
             // Add class to attach styles and cancel auto-unselect
             api.set('style.classes', 's3-organizer-create');
 
-            var opts = this.options,
+            let opts = this.options,
                 resources = opts.resources,
                 ns = this.eventNamespace,
                 widgetID = $(this.element).attr('id'),
@@ -685,13 +749,13 @@
                 if (!resource.insertable) {
                     return;
                 }
-                var createButton = $('<a class="action-btn s3_modal">'),
+                let createButton = $('<a class="action-btn s3_modal">'),
                     label = resource.labelCreate,
                     url = resource.baseURL;
 
                 if (url && label) {
 
-                    var link = createButton.get(0),
+                    let link = createButton.get(0),
                         query = [];
 
                     // Set path to create-dialog
@@ -704,7 +768,7 @@
                     }
 
                     // Add selected date range
-                    var dates = start.toISOString() + '--' + moment(end).subtract(1, 'seconds').toISOString();
+                    let dates = start.toISOString() + '--' + moment(end).subtract(1, 'seconds').toISOString();
                     query.push('organizer=' + encodeURIComponent(dates));
 
                     // Update query part of link URL
@@ -730,43 +794,45 @@
          * Fetch items from server (async)
          *
          * @param {object} resource - the resource configuration
-         * @param {moment} start - start date (inclusive) of the interval
-         * @param {moment} end - end date (exclusive) of the interval
-         * @param {boolean|string} timezone - the timezone setting
+         * @param {Date} start - start date (inclusive) of the interval
+         * @param {Date} end - end date (exclusive) of the interval
          * @param {function} callback - the callback to invoke when the
          *                              data are available, function(items)
          */
-        _fetchItems: function(resource, start, end, timezone, callback) {
+        _fetchItems: function(resource, fetchInfo, callback) {
+
+            let start = fetchInfo.start,
+                end = fetchInfo.end;
 
             // Try to lookup from cache
-            var items = resource._cache.retrieve(start, end);
+            let items = resource._cache.retrieve(start, end);
             if (items) {
                 callback(items);
                 return;
             }
 
-            var opts = this.options;
+            let opts = this.options;
 
             // Show throbber
             this._showThrobber();
 
             // Get current filters
-            var filterForm;
+            let filterForm;
             if (resource.filterForm) {
                 filterForm = $('#' + resource.filterForm);
             } else if (opts.filterForm) {
                 filterForm = $('#' + opts.filterForm);
             }
-            var currentFilters = S3.search.getCurrentFilters(filterForm);
+            let currentFilters = S3.search.getCurrentFilters(filterForm);
 
             // Remove filters for start/end
-            var filters = currentFilters.filter(function(query) {
-                var selector = query[0].split('__')[0];
+            let filters = currentFilters.filter(function(query) {
+                let selector = query[0].split('__')[0];
                 return selector !== resource.start && selector !== resource.end;
             });
 
             // Update ajax URL
-            var ajaxURL = resource.ajaxURL;
+            let ajaxURL = resource.ajaxURL;
             if (!ajaxURL) {
                 return;
             } else {
@@ -774,7 +840,7 @@
             }
 
             // Add interval
-            var interval = encodeURIComponent(start.toISOString() + '--' + end.toISOString());
+            let interval = encodeURIComponent(start.toISOString() + '--' + end.toISOString());
             if (ajaxURL.indexOf('?') != -1) {
                 ajaxURL += '&$interval=' + interval;
             } else {
@@ -782,7 +848,7 @@
             }
 
             // SearchS3 or AjaxS3?
-            var timeout = resource.timeout,
+            let timeout = resource.timeout,
                 ajaxMethod = $.ajaxS3;
             if (timeout === undefined) {
                 timeout = opts.timeout;
@@ -791,7 +857,7 @@
                 ajaxMethod = $.searchS3;
             }
 
-            var openRequest = resource.openRequest;
+            let openRequest = resource.openRequest;
             if (openRequest) {
                 // Abort previously open request
                 openRequest.onreadystatechange = null;
@@ -799,7 +865,7 @@
             }
 
             // Request updates for resource from server
-            var self = this;
+            let self = this;
             resource.openRequest = ajaxMethod({
                 'timeout': timeout,
                 'url': ajaxURL,
@@ -816,7 +882,7 @@
                 'error': function(jqXHR, textStatus, errorThrown) {
 
                     self._hideThrobber();
-                    var msg;
+                    let msg;
                     if (errorThrown == 'UNAUTHORIZED') {
                         msg = i18n.gis_requires_login;
                     } else {
@@ -837,7 +903,7 @@
          */
         _decodeServerData: function(resource, data) {
 
-            var columns = data.c,
+            let columns = data.c,
                 records = data.r,
                 items = [],
                 translateCols = 0,
@@ -849,19 +915,19 @@
 
             records.forEach(function(record) {
 
-                var description = {},
+                let description = {},
                     values = record.d;
 
                 if (translateCols && values && values.constructor === Array) {
-                    var len = values.length;
+                    let len = values.length;
                     if (len <= translateCols) {
-                        for (var i = 0; i < len; i++) {
+                        for (let i = 0; i < len; i++) {
                             description[columns[i]] = values[i];
                         }
                     }
                 }
 
-                var end = record.e;
+                let end = record.e;
                 if (end) {
                     // End date in item is exclusive
                     if (resource.useTime) {
@@ -873,14 +939,16 @@
                     }
                 }
 
-                var title = record.t,
+                let title = record.t,
                     item = {
                     'id': record.id,
                     title: $('<div>').html(title).text(),
-                    popupTitle: title,
                     start: record.s,
                     end: end,
-                    description: description,
+                    extendedProps: {
+                        popupTitle: title,
+                        description: description,
+                    }
                 };
 
                 // Permission overrides (skip if true to let resource-default apply)
@@ -888,12 +956,12 @@
                     item.editable = false;
                 }
                 if (!record.pd) {
-                    item.deletable = false;
+                    item.extendedProps.deletable = false;
                 }
 
                 // Item color
                 if (colors && record.c) {
-                    var itemColor = colors[record.c];
+                    let itemColor = colors[record.c];
                     if (itemColor !== undefined) {
                         item.color = itemColor;
                     }
@@ -908,34 +976,40 @@
         /**
          * Update start/end of a calendar item
          *
-         * @param {object} item - the calendar item
-         * @param {function} revertFunc - function to revert the action
-         *                                (in case the Ajax request fails)
+         * @param {object} updateInfo - update info with event data and revert function
          */
-        _updateItem: function(item, revertFunc) {
+        _updateItem: function(updateInfo) {
 
-            var resource = this.resources[item.source.id],
-                self = this;
+            let eventObj = updateInfo.event,
+                revertFunc = updateInfo.revert,
+                resource = this.resources[eventObj.source.id];
 
-            var data = {"id": item.id, "s": item.start.toISOString()};
+            let data = {
+                id: eventObj.id,
+                s: eventObj.start.toISOString() // start date
+            };
+
+            // Add end date?
             if (resource.end) {
                 // End date in item is exclusive
                 if (resource.useTime) {
                     // Record end is one second before item end
-                    data.e = moment(item.end).subtract(1, 'seconds').toISOString();
+                    data.e = moment(eventObj.end).subtract(1, 'seconds').toISOString();
                 } else {
                     // Record end is end of previous day before item end
-                    data.e = moment(item.end).subtract(1, 'days').endOf('day').toISOString();
+                    data.e = moment(eventObj.end).subtract(1, 'days').endOf('day').toISOString();
                 }
             }
 
+            // Update on server, then local
+            let self = this;
             this._sendItems(resource, {u: [data]}, function() {
                 if (resource.reloadOnUpdate) {
                     self.reload();
                 } else {
-                    resource._cache.updateItem(item.id, {
-                        start: item.start,
-                        end: item.end
+                    resource._cache.updateItem(eventObj.id, {
+                        start: eventObj.start,
+                        end: eventObj.end
                     });
                 }
             }, revertFunc);
@@ -944,22 +1018,24 @@
         /**
          * Delete a calendar item
          *
-         * @param {object} item - the item (fullCalendar event object)
+         * @param {object} item - the calendar item
          * @param {function} callback - the callback to invoke upon success
          */
         _deleteItem: function(item, callback) {
 
-            var resource = this.resources[item.source.id],
-                data = {'id': item.id},
-                el = $(this.element);
+            let eventObj = item.event,
+                resource = this.resources[eventObj.source.id],
+                data = {'id': eventObj.id},
+                self = this;
 
             this._sendItems(resource, {d: [data]}, function() {
-                // Remove the item from the calendar
-                el.fullCalendar('removeEvents', function(eventObj) {
-                    return eventObj.source.id == item.source.id && eventObj.id == item.id;
-                });
+                // Remove the event from the calendar
+                eventObj.remove();
+
                 // Remove the item from the cache
-                resource._cache.deleteItem(item.id);
+                resource._cache.deleteItem(eventObj.id);
+
+                // Invoke the callback
                 if (typeof callback === 'function') {
                     callback();
                 }
@@ -976,12 +1052,12 @@
          */
         _sendItems: function(resource, data, callback, revertFunc) {
 
-            var formKey = $('input[name="_formkey"]', this.element).val(),
-                jsonData = JSON.stringify($.extend({k: formKey}, data));
+            let formKey = $('input[name="_formkey"]', this.element).val(),
+                jsonData = JSON.stringify($.extend({k: formKey}, data)),
+                self = this;
 
             this._showThrobber();
 
-            var self = this;
             $.ajaxS3({
                 type: 'POST',
                 url: resource.ajaxURL,
@@ -1012,22 +1088,23 @@
             this.resources.forEach(function(resource) {
                 resource._cache.clear();
             });
-
-            $(this.element).fullCalendar('refetchEvents');
+            this.calendar.refetchEvents();
         },
 
         /**
          * Show the throbber
          */
         _showThrobber: function() {
-            this.reloadButton.prop('disabled', true);
+
             this.throbber.css({visibility: 'visible'});
+            this.reloadButton.prop('disabled', true);
         },
 
         /**
          * Hide the throbber
          */
         _hideThrobber: function() {
+
             this.throbber.css({visibility: 'hidden'});
             this.reloadButton.prop('disabled', false);
         },

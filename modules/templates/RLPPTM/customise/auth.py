@@ -211,11 +211,14 @@ def rlpptm_realm_entity(table, row):
         if site:
             realm_entity = site.realm_entity
 
-    #elif tablename in ("org_verification", "org_representative"):
-    #
-    #    # Verification/Representative records are owned by the subject
-    #    # organisation (default ok)
-    #    realm_entity = 0
+    #elif tablename in ("org_bsnr",
+    #                   "org_commission",
+    #                   "org_representative",
+    #                   "org_verification",
+    #                   ):
+    #   # BSNR/Commission/Representative/Verification
+    #   # are owned by the subject organisation (default ok)
+    #   realm_entity = 0
 
     return realm_entity
 

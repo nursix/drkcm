@@ -106,7 +106,7 @@ UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
                       "appointments_staff_link": True,
                       "appointments_use_organizer": True,
 
-                      "response_types": False,
+                      "response_types": True,
                       "response_activity_autolink": True,
                       "response_use_organizer": True,
                       "response_use_time": True,

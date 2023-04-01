@@ -116,6 +116,7 @@ def pr_person_controller(**attr):
                                               show_postcode = True,
                                               show_map = True,
                                               )
+            s3.scripts.append("/%s/static/themes/RLP/js/geocoderAllStates.js" % r.application)
             s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 
         elif r.component_name == "human_resource":

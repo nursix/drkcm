@@ -1120,7 +1120,8 @@ class S3Config(Storage):
 
     def get_base_public_url(self):
         """
-            The Public URL for the site - for use in email links, etc
+            The public URL for the site
+                - for use in email links, etc
         """
         public_url = self.base.get("public_url")
         if not public_url:
@@ -1129,6 +1130,15 @@ class S3Config(Storage):
             host = env.get("http_host") or "127.0.0.1:8000"
             self.base.public_url = public_url = "%s://%s" % (scheme, host)
         return public_url
+
+    def get_base_app_url(self):
+        """
+            The public URL for the site, including the main application path
+                - for construction of links in emails etc
+        """
+
+        host = self.get_base_public_url().rstrip("/")
+        return "%s/%s" % (host, current.request.application)
 
     def get_base_bigtable(self):
         """
@@ -2691,6 +2701,18 @@ class S3Config(Storage):
         """
         return self.__lazy("ui", "organizer_snap_duration", None)
 
+    def get_ui_organizer_week_numbers(self):
+        """
+            Show week numbers in organizer
+        """
+        return self.ui.get("organizer_week_numbers", True)
+
+    def get_ui_organizer_year_view(self):
+        """
+            Enable year view in organizer
+        """
+        return self.ui.get("organizer_year_view", False)
+
     # =========================================================================
     # Messaging
     #
@@ -3561,6 +3583,15 @@ class S3Config(Storage):
             Enable functionality to allocate shelter capacity
         """
         return self.cr.get("shelter_allocation", False)
+
+    def get_org_site_check_in_qrcode(self):
+        """
+            Use QRInput for site check-in/out
+                - True to enable and use QR contents verbatim
+                - a tuple (pattern, index) for QR contents parsing
+                - False to disable
+        """
+        return self.org.get("site_check_in_qrcode", False)
 
     def get_cr_check_out_is_final(self):
         """

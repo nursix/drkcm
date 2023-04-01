@@ -711,12 +711,13 @@ class approve(CustomController):
                     # Send welcome email
                     settings = current.deployment_settings
                     from .notifications import CMSNotifications
+                    data = {"name": organisation or org.name,
+                            "homepage": settings.get_base_public_url(),
+                            "profile": "%s/default/person" % settings.get_base_app_url(),
+                            }
                     error = CMSNotifications.send(user.email,
                                                   "WelcomeProvider",
-                                                  {"name": organisation or org.name,
-                                                   "homepage": settings.get_base_public_url(),
-                                                   "profile": URL("default", "person", host=True),
-                                                   },
+                                                  data,
                                                   module = "auth",
                                                   resource = "user",
                                                   )
@@ -2287,6 +2288,21 @@ class geocode(CustomController):
 
         current.response.headers["Content-Type"] = "application/json"
         return output
+
+# =============================================================================
+class geocode_all_states(CustomController):
+    """
+        Wrapper custom geocoder:
+            - allow addresses in all federal states
+    """
+
+    def __call__(self):
+
+        # Use alternative class
+        from .rlpgeonames import rlp_GeoNamesAllStates
+        current.deployment_settings.gis.geocode_service = rlp_GeoNamesAllStates
+
+        return geocode()()
 
 # =============================================================================
 class ocert(CustomController):

@@ -94,7 +94,8 @@
             }
 
             // The button
-            this.button = $('<button type="button" class="s3-hierarchy-button ui-multiselect ui-widget ui-state-default ui-corner-all"><span class="ui-icon ui-icon-triangle-1-s"></span></button>');
+            this.button = $('<button type="button" class="s3-hierarchy-button ui-multiselect ui-widget ui-state-default ui-corner-all"></button>');
+            this.buttonIcon = $('<span class="ui-multiselect-open" title="Open"><span class="ui-icon ui-icon-triangle-1-s"></span></span>').appendTo(this.button);
             this.buttonText = $('<span>' + opts.noneSelectedText + '</span>').appendTo(this.button);
 
             // No-options section

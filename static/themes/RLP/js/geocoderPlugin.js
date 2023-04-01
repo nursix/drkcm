@@ -30,11 +30,12 @@ $(function(){
         }
     };
 
-    rlpGeocode= function(self) {
+    rlpGeocode = function(self) {
 
         var fieldname = self.fieldname,
-            data = self.data;
-        var selector = '#' + fieldname;
+            selector = '#' + fieldname,
+            data = self.data,
+            geocodePath = S3.gis.geocodePath || '/default/index/geocode';
 
         // Hide old messages, show throbber
         var failure = $(selector + '_geocode .geocode_fail').hide(),
@@ -44,7 +45,7 @@ $(function(){
         // Submit to Geocoder
         $.ajaxS3({
             //async: false,
-            url: S3.Ap.concat('/default/index/geocode'),
+            url: S3.Ap.concat(geocodePath),
             type: 'POST',
             data: {address: data.address,
                    postcode: data.postcode,
@@ -100,8 +101,10 @@ $(function(){
                             }
                         });
 
-                        // Reset Geocoder-option
-                        self.useGeocoder = true;
+                        // Restore Geocoder-option
+                        $.when(pending).always(function() {
+                            self.useGeocoder = true;
+                        });
                     }
 
                     // Notify results

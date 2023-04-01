@@ -590,7 +590,7 @@ input[disabled='disabled'] {
 
 /* line 174, ../scss/theme/_widgets.scss */
 .ui-multiselect-header span.ui-icon {
-  margin-top: 4px;
+  margin-top: 1px;
 }
 /* line 178, ../scss/theme/_widgets.scss */
 [dir=rtl] .ui-multiselect-header .ui-multiselect-filter {
@@ -2803,7 +2803,7 @@ form.auth_login #submit_record__row {
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
   display: block;
-  min-width: 220px;
+  min-width: 225px;
 }
 
 /* line 62, ../scss/theme/_filters.scss */
@@ -2815,7 +2815,7 @@ form.auth_login #submit_record__row {
 /* line 67, ../scss/theme/_filters.scss */
 .ui-selectmenu-button,
 .ui-multiselect-menu {
-  min-width: 220px;
+  min-width: 225px;
 }
 
 /* Don't display the default widget, only the multiselect generated widget is displayed */
@@ -3513,9 +3513,56 @@ table.dataTable table.import-item-details {
 
 /* Full Calendar */
 /* line 34, ../scss/theme/_organizer.scss */
-.fc table,
-.fc table tr {
+:root {
+  --fc-page-bg-color: #fefefe;
+  --fc-button-text-color: #666;
+  --fc-button-bg-color: #eaeaea;
+  --fc-button-border-color: #eaeaea;
+  --fc-button-hover-bg-color: #dcdcdc;
+  --fc-button-hover-border-color: #ccc;
+  --fc-button-active-bg-color: #cfcfcf;
+  --fc-button-active-border-color: #ccc;
+}
+
+/* line 49, ../scss/theme/_organizer.scss */
+.fc table {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+}
+/* line 53, ../scss/theme/_organizer.scss */
+.fc .fc-timegrid-axis-cushion,
+.fc .fc-daygrid-week-number {
+  font-size: 0.85rem;
+}
+/* line 58, ../scss/theme/_organizer.scss */
+#content .fc h1, #content .fc h2 {
   background: transparent;
+}
+/* line 62, ../scss/theme/_organizer.scss */
+.fc thead {
+  background-color: #f4f4f4;
+}
+/* line 65, ../scss/theme/_organizer.scss */
+.fc tbody, .fc tfoot, .fc tr, .fc th, .fc td {
+  background: transparent;
+}
+/* line 68, ../scss/theme/_organizer.scss */
+.fc .fc-button {
+  font-size: 0.9rem;
+  padding: .2rem .65rem;
+}
+/* line 72, ../scss/theme/_organizer.scss */
+.fc .fc-button:focus,
+.fc .fc-button-primary:focus,
+.fc .fc-button-primary:not(:disabled):active:focus,
+.fc .fc-button-primary:not(:disabled).fc-button-active:focus {
+  box-shadow: none;
+}
+/* line 78, ../scss/theme/_organizer.scss */
+.fc .inline-throbber {
+  display: inline-block;
+  vertical-align: middle;
+  margin-top: 1rem;
 }
 
 /* line 11, ../scss/theme/_profile.scss */

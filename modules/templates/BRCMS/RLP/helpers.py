@@ -920,9 +920,7 @@ def notify_direct_offer(record_id):
     availability_opts = dict(s3db.br_assistance_offer_availability)
     availability = availability_opts.get(offer.availability, "-")
 
-    public_url = current.deployment_settings.get_base_public_url()
-    appname = current.request.application
-    base_url = "%s/%s" % (public_url, appname)
+    app_url = current.deployment_settings.get_base_app_url()
     data = {"provider": s3_str(provider),
             "title": offer.name,
             "details": offer.description,
@@ -934,8 +932,8 @@ def notify_direct_offer(record_id):
             "available_from": aotable.date.represent(offer.date),
             "available_until": aotable.end_date.represent(offer.end_date),
             "availability": s3_str(availability),
-            "offer_url": "%s/br/offers/%s" % (base_url, direct_offer.offer_id),
-            "need_url":  "%s/br/case_activity/%s" % (base_url, direct_offer.case_activity_id),
+            "offer_url": "%s/br/offers/%s" % (app_url, direct_offer.offer_id),
+            "need_url":  "%s/br/case_activity/%s" % (app_url, direct_offer.case_activity_id),
             "subject": case_activity.subject,
             }
     if location.id:

@@ -4,6 +4,9 @@
  * @copyright 2021 (c) Sahana Software Foundation
  * @license MIT
  */
+
+/* jshint esversion: 6 */
+
 (function($, undefined) {
 
     "use strict";
@@ -21,8 +24,10 @@
          */
         options: {
 
-            workerPath: null
+            workerPath: null,
 
+            inputPattern: null, // e.g. '(?<code>\\d+)##.+##.+##.+'
+            inputIndex: null, // e.g. 'code'
         },
 
         /**
@@ -45,9 +50,9 @@
             this.scanButton = $('.qrscan-btn', this.container);
 
             // Set up qr-scanner worker
-            var workerPath = this.options.workerPath;
+            let workerPath = this.options.workerPath;
             if (workerPath) {
-                QrScanner.WORKER_PATH = this.options.workerPath;
+                QrScanner.WORKER_PATH = workerPath;
             }
 
             this.refresh();
@@ -58,7 +63,7 @@
          */
         _destroy: function() {
 
-            var scanner = this.scanner,
+            let scanner = this.scanner,
                 videoInput = this.videoInput;
 
             if (scanner) {
@@ -79,7 +84,7 @@
          */
         refresh: function() {
 
-            var $el = $(this.element),
+            let $el = $(this.element),
                 self = this;
 
             this._unbindEvents();
@@ -88,9 +93,11 @@
 
             if (self.scanButton.length) {
 
+                let postprocess = this.options.postprocess;
+
                 QrScanner.hasCamera().then(function(hasCamera) {
 
-                    var scanButton = self.scanButton;
+                    let scanButton = self.scanButton;
 
                     if (!hasCamera) {
                         scanButton.prop('disabled', true);
@@ -99,7 +106,7 @@
                         scanButton.prop('disabled', false);
                     }
 
-                    var scanner,
+                    let scanner,
                         scanForm = $('<div class="qrinput-scan">'),
                         // TODO make success-message configurable
                         success = $('<div class="qrinput-success">').html('<i class="fa fa-check">').hide().appendTo(scanForm),
@@ -108,11 +115,11 @@
                     // TODO make width/height configurable or auto-adapt to screen size
                     videoInput.css({width: '300', height: '300'});
 
-                    var dialog = scanForm.dialog({
+                    let dialog = scanForm.dialog({
                         title: 'Scan QR Code',
                         autoOpen: false,
                         modal: true,
-                        classes: {"ui-dialog": "qrinput-dialog"},
+                        'classes': {'ui-dialog': 'qrinput-dialog'},
                         close: function() {
                             if (scanner) {
                                 scanner.stop();
@@ -132,6 +139,11 @@
                                 videoInput.hide();
                                 success.show();
                                 window.navigator.vibrate(100);
+                                try {
+                                    result = self._parse(result);
+                                } catch(e) {
+                                    // pass
+                                }
                                 $el.val(result).trigger('change' + self.eventNamespace);
                                 setTimeout(function() {
                                     dialog.dialog('close');
@@ -159,11 +171,42 @@
         },
 
         /**
+         * Parse input
+         *
+         * @param {string} result - the result from the QR scanning
+         */
+        _parse: function(result) {
+
+            let opts = this.options,
+                pattern = opts.inputPattern;
+
+            if (!result || !pattern) {
+                return result;
+            }
+
+            let expr = new RegExp(pattern, 'g'),
+                parsed = expr.exec(result);
+            if (parsed) {
+                let index = opts.inputIndex;
+                if (typeof index == 'string') {
+                    parsed = parsed.groups[index];
+                } else {
+                    parsed = parsed[index];
+                }
+            } else {
+                // Invalid input - do not expose the contents
+                parsed = '';
+            }
+
+            return parsed;
+        },
+
+        /**
          * Bind events to generated elements (after refresh)
          */
         _bindEvents: function() {
 
-            var $el = $(this.element),
+            let $el = $(this.element),
                 ns = this.eventNamespace,
                 self = this;
 
@@ -179,7 +222,7 @@
          */
         _unbindEvents: function() {
 
-            var $el = $(this.element),
+            let $el = $(this.element),
                 ns = this.eventNamespace;
 
             $('.clear-btn', $el.closest('.qrinput')).off(ns);

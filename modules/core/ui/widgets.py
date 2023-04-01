@@ -2843,17 +2843,22 @@ class S3QRInput(FormWidget):
         device camera (if available) to capture the code
     """
 
-    def __init__(self, hidden=False, icon=True, label=False):
+    def __init__(self, hidden=False, icon=True, label=False, pattern=None, index=None):
         """
             Args:
                 hidden: use a hidden input
                 icon: show icon on button
                 label: show label on button
+                pattern: a JS regular expression to parse the QR Code
+                index: group index or name for the regex match
         """
 
         self.hidden = hidden
         self.icon = icon
         self.label = label
+
+        self.pattern = pattern
+        self.index = index
 
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
@@ -2916,7 +2921,9 @@ class S3QRInput(FormWidget):
                      _class = "qrinput",
                      )
 
-        options = {}
+        options = {"inputPattern": self.pattern,
+                   "inputIndex": self.index,
+                   }
         self.inject_script(widget_id, options)
 
         return widget
