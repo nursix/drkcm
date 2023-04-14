@@ -160,21 +160,6 @@ if len(pop_list) > 0:
                              timeout = 300, # seconds
                              repeats = 0    # unlimited
                              )
-        # Tweets every minute
-        #s3task.schedule_task("msg_process_outbox",
-        #                     args = ["TWITTER"],
-        #                     vars = {},
-        #                     period = 120,  # seconds
-        #                     timeout = 120, # seconds
-        #                     repeats = 0    # unlimited
-        #                     )
-
-        if settings.get_msg_notify_check_subscriptions():
-            # Subscription notifications
-            s3task.schedule_task("notify_check_subscriptions",
-                                 period = 300,
-                                 timeout = 300,
-                                 repeats = 0)
 
     # Daily maintenance
     s3task.schedule_task("maintenance",
@@ -202,11 +187,6 @@ if len(pop_list) > 0:
     # Shortcuts
     path_join = os.path.join
     request_folder = request.folder
-
-    if settings.get_auth_opt_in_to_email():
-        table = db.pr_group
-        for team in settings.get_auth_opt_in_team_list():
-            table.insert(name = team, group_type = 5)
 
     # Synchronisation
     db.sync_config.insert() # Defaults are fine

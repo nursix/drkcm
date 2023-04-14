@@ -716,14 +716,6 @@ class OrgOrganisationModel(DataModel):
                        supply_catalog = "organisation_id",
                        # Resources
                        org_resource = "organisation_id",
-                       # Religion
-                       pr_religion = {"link": "pr_religion_organisation",
-                                      "joinby": "organisation_id",
-                                      "key": "religion_id",
-                                      "multiple": False,
-                                      "actuate": "hide",
-                                      },
-                       pr_religion_organisation = "organisation_id",
                        # Sectors
                        org_sector = {"link": "org_sector_organisation",
                                      "joinby": "organisation_id",
@@ -7367,25 +7359,6 @@ def org_site_staff_config(r):
     field.default = r.record.organisation_id
     field.writable = False
     field.comment = None
-
-    # Filter out people which are already staff for this office
-    # - this only works for an IS_ONE_OF dropdown
-    # - @ToDo: Pass a flag to pr_search_ac via S3AddPersonWidget to do the same thing
-    #site_id = record.site_id
-    #try:
-    #    person_id_field = r.target()[2].person_id
-    #except:
-    #    pass
-    #else:
-    #    query = (htable.site_id == site_id) & \
-    #            (htable.deleted == False)
-    #    staff = current.db(query).select(htable.person_id)
-    #    person_ids = [row.person_id for row in staff]
-    #    try:
-    #        person_id_field.requires.set_filter(not_filterby = "id",
-    #                                            not_filter_opts = person_ids)
-    #    except:
-    #        pass
 
 # =============================================================================
 def org_office_controller():

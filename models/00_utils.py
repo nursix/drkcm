@@ -5,29 +5,9 @@
 # -----------------------------------------------------------------------------
 # Special local requests (e.g. from scheduler)
 #
-if request.is_local:
-    # This is a request made from the local server
-
-    f = get_vars.get("format", None)
-    auth_token = get_vars.get("subscription", None)
-    if auth_token and f == "msg":
-        # Subscription lookup request (see S3Notifications.notify())
-        rtable = s3db.pr_subscription_resource
-        stable = s3db.pr_subscription
-        utable = s3db.pr_person_user
-        join = [stable.on(stable.id == rtable.subscription_id),
-                utable.on(utable.pe_id == stable.pe_id)]
-
-        user = db(rtable.auth_token == auth_token).select(utable.user_id,
-                                                          join=join,
-                                                          limitby=(0, 1)) \
-                                                  .first()
-        if user:
-            # Impersonate subscriber
-            auth.s3_impersonate(user.user_id)
-        else:
-            # Anonymous request
-            auth.s3_impersonate(None)
+#if request.is_local:
+#    # This is a request made from the local server
+#    pass
 
 # -----------------------------------------------------------------------------
 # Check Permissions & fail as early as we can

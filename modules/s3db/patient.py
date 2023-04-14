@@ -122,7 +122,6 @@ class PatientModel(DataModel):
             TextFilter(["person_id$first_name",
                         "person_id$middle_name",
                         "person_id$last_name",
-                        "person_id$local_name",
                         ],
                        label = T("Search"),
                        comment=T("To search for a patient, enter any of the first, middle or last names, separated by spaces. You may use % as wildcard. Press 'Search' without input to list all patients."),

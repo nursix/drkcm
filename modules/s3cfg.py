@@ -756,15 +756,6 @@ class S3Config(Storage):
         """
         return self.auth.get("registration_link_user_to_default")
 
-    def get_auth_opt_in_team_list(self):
-        return self.auth.get("opt_in_team_list", [])
-
-    def get_auth_opt_in_to_email(self):
-        return self.get_auth_opt_in_team_list() != []
-
-    def get_auth_opt_in_default(self):
-        return self.auth.get("opt_in_default", False)
-
     def get_auth_registration_requests_home_phone(self):
         return self.auth.get("registration_requests_home_phone", False)
 
@@ -2000,8 +1991,8 @@ class S3Config(Storage):
         """
             e.g. Apellido Paterno in Hispanic names
 
-            Setting this means that auth_user.last_name matches with pr_person.middle_name
-            e.g. RMS
+            Setting this means that auth_user.last_name matches
+            with pr_person.middle_name
         """
         return self.__lazy("L10n", "mandatory_middlename", False)
 
@@ -2797,71 +2788,6 @@ class S3Config(Storage):
             Which template folder to use to load parser.py
         """
         return self.msg.get("parser", "default")
-
-    # -------------------------------------------------------------------------
-    # Notifications
-    def get_msg_notify_check_subscriptions(self):
-        """
-            Whether to Check Subscriptions
-        """
-        return self.msg.get("notify_check_subscriptions", False)
-
-    def get_msg_notify_subject(self):
-        """
-            Template for the subject line in update notifications.
-
-            Available placeholders:
-                $S = System Name (long)
-                $s = System Name (short)
-                $r = Resource Name
-
-            Use {} to separate the placeholder from immediately following
-            identifier characters (like: ${placeholder}text).
-        """
-        return self.msg.get("notify_subject",
-                            "$s %s: $r" % current.T("Update Notification"))
-
-    def get_msg_notify_email_format(self):
-        """
-            The preferred email format for update notifications,
-            "text" or "html".
-        """
-        return self.msg.get("notify_email_format", "text")
-
-    def get_msg_notify_renderer(self):
-        """
-            Custom content renderer function for update notifications,
-            function()
-        """
-        return self.msg.get("notify_renderer")
-
-    def get_msg_notify_attachment(self):
-        """
-            Custom function that returns the list of document_ids to be sent
-            as attachment in email
-
-            The function may be of the form:
-            custom_msg_notify_attachment(resource, data, meta_data), where
-            resource is the CRUDResource, data: the data returned from
-            CRUDResource.select and meta_data: the meta data for the notification
-            (see S3Notifications for the metadata)
-        """
-
-        return self.msg.get("notify_attachment")
-
-    def get_msg_notify_send_data(self):
-        """
-            Custom function that returns additional arguments to pass to
-            S3Msg.send_by_pe_id
-
-            The function should be of the form:
-            custom_msg_notify_send_data(resource, data, meta_data), where
-            resource is the CRUDResource, data: the data returned from
-            CRUDResource.select and meta_data: the meta data for the notification
-            (see S3Notifications for the metadata)
-        """
-
-        return self.msg.get("notify_send_data")
 
     # -------------------------------------------------------------------------
     # SMS

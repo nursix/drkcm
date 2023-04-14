@@ -1408,13 +1408,6 @@ class S3CRUD(CRUDMethod):
                                        list_fields = list_fields,
                                        **attr)
 
-        elif representation == "msg":
-            if r.http == "POST":
-                from ..msg import S3Notifications
-                output = S3Notifications.send(r, resource)
-            else:
-                r.error(405, current.ERROR.BAD_METHOD)
-
         elif representation == "card":
             if not get_config("pdf_card_layout"):
                 # This format is not supported for this resource

@@ -80,10 +80,10 @@
          Permanent L3...................optional.....person permanent address L3
          Permanent L4...................optional.....person permanent address L4
          Photo..........................optional.....pr_image.image (URL to remote server to download)
-         Contact Person Name:XX.........optional.....pr_contact_person.name Type = XX
-         Contact Person Phone:XX........optional.....pr_contact_person.phone Type = XX
-         Contact Person Email:XX........optional.....pr_contact_person.email Type = XX
-        
+         Contact Person Name:XX.........optional.....pr_contact_person.name Role = XX
+         Contact Person Phone:XX........optional.....pr_contact_person.phone Role = XX
+         Contact Person Email:XX........optional.....pr_contact_person.email Role = XX
+
          Column headers looked up in labels.xml:
 
          PersonGender...................optional.....person gender
@@ -657,18 +657,18 @@
 
         <!-- Contact Persons -->
         <xsl:for-each select="col[starts-with(@field, 'Contact Person Name')]">
-            <xsl:variable name="Type" select="normalize-space(substring-after(@field, ':'))"/>
-            <xsl:variable name="phone" select="concat('Contact Person Phone:', $Type)"/>
+            <xsl:variable name="Role" select="normalize-space(substring-after(@field, ':'))"/>
+            <xsl:variable name="phone" select="concat('Contact Person Phone:', $Role)"/>
             <xsl:variable name="Phone">
                 <xsl:value-of select="../col[@field=$phone]"/>
             </xsl:variable>
-            <xsl:variable name="email" select="concat('Contact Person Email:', $Type)"/>
+            <xsl:variable name="email" select="concat('Contact Person Email:', $Role)"/>
             <xsl:variable name="Email">
                 <xsl:value-of select="../col[@field=$email]"/>
             </xsl:variable>
             <xsl:call-template name="ContactPerson">
-                <xsl:with-param name="Type">
-                    <xsl:value-of select="$Type"/>
+                <xsl:with-param name="Role">
+                    <xsl:value-of select="$Role"/>
                 </xsl:with-param>
                 <xsl:with-param name="Phone">
                     <xsl:value-of select="$Phone"/>
@@ -683,7 +683,7 @@
 
     <!-- ****************************************************************** -->
     <xsl:template name="ContactPerson">
-        <xsl:param name="Type"/>
+        <xsl:param name="Role"/>
         <xsl:param name="Phone"/>
         <xsl:param name="Email"/>
         <xsl:variable name="Value" select="text()"/>
@@ -693,8 +693,8 @@
                 <data field="name">
                     <xsl:value-of select="$Value"/>
                 </data>
-                <data field="type">
-                    <xsl:value-of select="$Type"/>
+                <data field="role">
+                    <xsl:value-of select="$Role"/>
                 </data>
                 <data field="phone">
                     <xsl:value-of select="$Phone"/>

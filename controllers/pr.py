@@ -369,12 +369,6 @@ def forum():
     return crud_controller(rheader = s3db.pr_rheader)
 
 # -----------------------------------------------------------------------------
-#def forum_membership():
-#    """ RESTful CRUD controller """
-#
-#    return crud_controller()
-#
-# -----------------------------------------------------------------------------
 def group():
     """ RESTful CRUD controller """
 
@@ -467,46 +461,6 @@ def occupation_type():
     return crud_controller()
 
 # -----------------------------------------------------------------------------
-def religion():
-    """ Religions: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-#def contact():
-#    """ RESTful CRUD controller """
-#
-#    table = s3db.pr_contact
-#
-#    table.pe_id.label = T("Person/Group")
-#    table.pe_id.readable = True
-#    table.pe_id.writable = True
-#
-#    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def presence():
-    """
-        RESTful CRUD controller
-        - needed for Map Popups (no Menu entry for direct access)
-
-        @deprecated - People now use Base Location pr_person.location_id
-    """
-
-    table = s3db.pr_presence
-
-    # Settings suitable for use in Map Popups
-
-    table.pe_id.readable = True
-    table.pe_id.label = "Name"
-    table.pe_id.represent = s3db.pr_person_id().represent
-    table.observer.readable = False
-    table.presence_condition.readable = False
-    # @ToDo: Add Skills
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
 def pentity():
     """
         RESTful CRUD controller
@@ -546,69 +500,13 @@ def time_formula():
 
     return crud_controller()
 
-# -----------------------------------------------------------------------------
-def tooltip():
-    """ Ajax tooltips """
-
-    if "formfield" in request.vars:
-        response.view = "pr/ajaxtips/%s.html" % request.vars.formfield
-    return {}
-
 # =============================================================================
-def filter():
+def filters():
     """
-        REST controller for saved filters
-    """
-
-    # Page length
-    s3.dl_pagelength = 10
-
-    def postp(r, output):
-        if r.interactive and isinstance(output, dict):
-            # Hide side menu
-            menu.options = None
-
-            output["title"] = T("Saved Filters")
-
-            # Script for inline-editing of filter title
-            options = {"cssclass": "jeditable-input",
-                       "tooltip": str(T("Click to edit"))}
-            script = '''$('.jeditable').editable('%s',%s)''' % \
-                     (URL(), json.dumps(options))
-            s3.jquery_ready.append(script)
-        return output
-    s3.postp = postp
-
-    return crud_controller()
-
-# =============================================================================
-def subscription():
-    """
-        REST controller for subscriptions
-        - to allow Admins to control subscriptions for people
+        RESTful CRUD controller for saved filters
     """
 
-    return crud_controller()
-
-# =============================================================================
-def human_resource():
-    """
-        RESTful CRUD controller for options.s3json lookups
-        - needed for templates, like DRMP, where HRM fields are embedded inside
-          pr_person form
-    """
-
-    if auth.permission.format != "s3json":
-        return ""
-
-    # Pre-process
-    def prep(r):
-        if r.method != "options":
-            return False
-        return True
-    s3.prep = prep
-
-    return crud_controller("hrm", "human_resource")
+    return crud_controller("pr", "filter")
 
 # =============================================================================
 # Messaging

@@ -77,11 +77,6 @@
                 <data field="last_name">
                     <xsl:value-of select="normalize-space(./pfif:last_name/text())"/>
                 </data>
-                <xsl:if test="normalize-space(./pfif:full_name/text())!=''">
-                    <data field="local_name">
-                        <xsl:value-of select="normalize-space(./pfif:full_name/text())!=''"/>
-                    </data>
-                </xsl:if>
                 <data field="gender">
                     <xsl:choose>
                         <xsl:when test="./pfif:sex/text()='female'">

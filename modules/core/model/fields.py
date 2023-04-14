@@ -267,7 +267,7 @@ class S3MetaFields:
             are set to None during deletion to derestrict constraints)
         """
 
-        return Field("deleted_fk", #"text",
+        return Field("deleted_fk", #"json",
                      readable = False,
                      writable = False,
                      )
