@@ -846,8 +846,6 @@ def config(settings):
     #    {#"<table name>.<field name>"  : ["<Organisation Name>"],
     #     "pr_person_details.mother_name"             : [],
     #     "pr_person_details.father_name"             : [],
-    #     "pr_person_details.company"                 : [],
-    #     "pr_person_details.affiliations"            : [],
     #     "vol_volunteer.active"                      : [],
     #     "vol_volunteer_cluster.vol_cluster_type_id"      : [],
     #     "vol_volunteer_cluster.vol_cluster_id"          : [],

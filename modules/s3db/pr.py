@@ -915,8 +915,6 @@ class PRPersonModel(DataModel):
                                     "person_details.father_name",
                                     "person_details.grandfather_name",
                                     "person_details.occupation",
-                                    "person_details.company",
-                                    "person_details.affiliations",
                                     "comments",
                                     )
 
