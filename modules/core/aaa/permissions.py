@@ -548,7 +548,7 @@ class S3Permission:
                 record_id = record
             return auth.s3_session_owns(table, record_id)
 
-        owned = False
+        owned = False # default
 
         if owner_user and owner_user == user_id:
             # User owns the record personally
@@ -598,7 +598,6 @@ class S3Permission:
                 # - either owned by everybody (loose) or nobody (strict)
                 owned = not bool(strict)
 
-        # Default
         return owned
 
     # -------------------------------------------------------------------------
