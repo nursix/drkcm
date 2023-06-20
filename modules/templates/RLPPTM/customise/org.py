@@ -177,7 +177,7 @@ def org_organisation_controller(**attr):
     s3 = current.response.s3
     settings = current.deployment_settings
 
-    # Is OrgGroupAdmin?
+    s3db = current.s3db
     auth = current.auth
     is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
@@ -187,13 +187,15 @@ def org_organisation_controller(**attr):
     # Add custom components
     TestProvider.add_components()
 
+    # Add custom onaccept for documents managed in this context
+    from .doc import doc_document_onaccept
+    s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
+
     # Custom prep
     standard_prep = s3.prep
     def prep(r):
         # Call standard prep
         result = standard_prep(r) if callable(standard_prep) else True
-
-        s3db = current.s3db
 
         resource = r.resource
 
@@ -921,7 +923,7 @@ def org_facility_resource(r, tablename):
     field = table.obsolete
     field.label = T("Defunct")
     if r.interactive or r.representation == "aadata":
-        field.represent = lambda v, row=None: ICON("remove") if v else ""
+        field.represent = lambda v, row=None: ICON("remove") if v else "-"
     else:
         from core import s3_yes_no_represent
         field.represent = s3_yes_no_represent
@@ -1046,7 +1048,7 @@ def org_facility_resource(r, tablename):
             filter_widgets.extend([
                 OptionsFilter("approval.public_reason",
                               label = T("Reason for unlisting"),
-                              options = OrderedDict(PUBLIC_REASON.labels),
+                              options = OrderedDict(PUBLIC_REASON.labels()),
                               ),
                 ])
 
@@ -1168,15 +1170,20 @@ def org_facility_controller(**attr):
     s3 = current.response.s3
     settings = current.deployment_settings
 
+    s3db = current.s3db
     auth = current.auth
     is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
     # Load model for default CRUD strings
-    current.s3db.table("org_facility")
+    s3db.table("org_facility")
 
     # Add approval workflow components
     if is_org_group_admin:
         TestStation.add_site_approval()
+
+    # Add custom onaccept for documents managed in this context
+    from .doc import doc_document_onaccept
+    s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
 
     # Custom prep
     standard_prep = s3.prep
@@ -1188,8 +1195,6 @@ def org_facility_controller(**attr):
 
         # Call standard prep
         result = standard_prep(r) if callable(standard_prep) else True
-
-        s3db = current.s3db
 
         resource = r.resource
         table = resource.table
@@ -1273,12 +1278,16 @@ def org_facility_controller(**attr):
                 if fn != "comments":
                     table[fn].writable = False
 
+            # Set default organisation_id for inline documents
+            from .doc import doc_set_default_organisation
+            doc_set_default_organisation(r)
+
             # No side menu except for OrgGroupAdmin
             if not is_org_group_admin:
                 current.menu.options = None
 
             if not is_org_group_admin and \
-                not auth.s3_has_role("ORG_ADMIN", for_pe=record.pe_id):
+               not auth.s3_has_role("ORG_ADMIN", for_pe=record.pe_id):
 
                 s3.hide_last_update = True
 
@@ -1314,7 +1323,7 @@ def org_facility_controller(**attr):
             output = standard_postp(r, output)
 
         if not is_org_group_admin and \
-            r.record and isinstance(output, dict):
+           r.record and isinstance(output, dict):
             # Override list-button to go to summary
             buttons = output.get("buttons")
             if isinstance(buttons, dict) and "list_btn" in buttons:

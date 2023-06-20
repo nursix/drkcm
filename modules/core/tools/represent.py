@@ -770,16 +770,18 @@ class S3PriorityRepresent:
         Color-coded representation of priorities
     """
 
-    def __init__(self, options, classes=None):
+    def __init__(self, options, classes=None, none=None):
         """
             Args:
                 options: the options (as dict or anything that can be
                          converted into a dict)
                 classes: a dict mapping keys to CSS class suffixes
+                none: treat None-values as this value
         """
 
         self.options = dict(options)
         self.classes = classes
+        self.none = none
 
     # -------------------------------------------------------------------------
     def __call__(self, value, row=None):
@@ -792,6 +794,9 @@ class S3PriorityRepresent:
         """
 
         css_class = base_class = "prio"
+
+        if value is None and self.none:
+            value = self.none
 
         classes = self.classes
         if classes:

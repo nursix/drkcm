@@ -1198,12 +1198,6 @@ class S3Config(Storage):
         """
         return self.base.get("session_memcache", False)
 
-    def get_base_solr_url(self):
-        """
-            URL to connect to solr server
-        """
-        return self.base.get("solr_url", False)
-
     def get_xml_formats(self):
         """
             Locations of custom export/import transformation stylesheets

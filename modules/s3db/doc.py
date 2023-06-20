@@ -26,7 +26,7 @@
 """
 
 __all__ = ("DocumentEntityModel",
-           "DocumentLibrary",
+           "DocumentModel",
            "DocumentTagModel",
            "DocumentCKEditorModel",
            "DocumentDataCardModel",
@@ -100,7 +100,10 @@ class DocumentEntityModel(DataModel):
                             )
 
 # =============================================================================
-class DocumentLibrary(DataModel):
+class DocumentModel(DataModel):
+    """
+        Model for uploaded documents and images
+    """
 
     names = ("doc_document",
              "doc_document_id",
@@ -111,23 +114,23 @@ class DocumentLibrary(DataModel):
 
         T = current.T
         db = current.db
+        folder = current.request.folder
         s3 = current.response.s3
-        settings = current.deployment_settings
+        crud_strings = s3.crud_strings
 
-        person_comment = self.pr_person_comment
         person_id = self.pr_person_id
         location_id = self.gis_location_id
         organisation_id = self.org_organisation_id
 
-        NONE = current.messages["NONE"]
-
         # Shortcuts
-        add_components = self.add_components
         configure = self.configure
-        crud_strings = s3.crud_strings
         define_table = self.define_table
-        folder = current.request.folder
         super_link = self.super_link
+
+        # ---------------------------------------------------------------------
+        # Default document status
+        #
+        doc_status = {"NEW": T("New")}
 
         # ---------------------------------------------------------------------
         # Documents
@@ -138,31 +141,53 @@ class DocumentLibrary(DataModel):
                      super_link("source_id", "stats_source"),
                      # Component not instance
                      super_link("doc_id", "doc_entity"),
-                     # @ToDo: Remove since Site Instances are doc entities?
-                     super_link("site_id", "org_site"),
-                     Field("file", "upload",
-                           label = T("File"),
-                           autodelete = True,
-                           length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_file_represent,
-                           # upload folder needs to be visible to the download() function as well as the upload
-                           uploadfolder = os.path.join(folder,
-                                                       "uploads"),
-                           ),
-                     Field("mime_type",
-                           readable = False,
-                           writable = False,
-                           ),
                      Field("name", length=128,
                            # Allow Name to be added onvalidation
                            requires = IS_LENGTH(128),
                            label = T("Name")
                            ),
+                     Field("file", "upload",
+                           label = T("File"),
+                           autodelete = True,
+                           length = current.MAX_FILENAME_LENGTH,
+                           represent = self.doc_file_represent,
+                           # upload folder needs to be visible to the
+                           # download() function as well as the upload
+                           uploadfolder = os.path.join(folder, "uploads"),
+                           ),
+                     Field("mime_type",
+                           readable = False,
+                           writable = False,
+                           ),
                      Field("url",
                            label = T("URL"),
-                           represent = lambda url: \
-                            url and A(url, _href=url) or NONE,
-                           requires = IS_EMPTY_OR(IS_URL()),
+                           represent = s3_url_represent,
+                           requires = IS_EMPTY_OR(IS_URL(allowed_schemes = ["http", "https", None],
+                                                         prepend_scheme = "http",
+                                                         )),
+                           ),
+
+                     s3_date(label = T("Date Published"),
+                             default = "now",
+                             ),
+                     person_id(
+                        # Enable when-required
+                        label = T("Author"),
+                        readable = False,
+                        writable = False,
+                        comment = self.pr_person_comment(T("Author"),
+                                                         T("The Author of this Document (optional)"),
+                                                         ),
+                        ),
+
+                     # Status-field for advanced document management,
+                     # enable+configure in template as/when required
+                     Field("status",
+                           default = "NEW",
+                           #represent = represent_option(doc_status),
+                           requires = IS_IN_SET(doc_status, zero=None),
+                           readable = False,
+                           writable = False,
                            ),
                      # Mailmerge template?
                      Field("is_template", "boolean",
@@ -170,32 +195,21 @@ class DocumentLibrary(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     person_id(
-                        # Enable when-required
-                        label = T("Author"),
-                        readable = False,
-                        writable = False,
-                        comment = person_comment(T("Author"),
-                                                 T("The Author of this Document (optional)"))
-                        ),
-                     organisation_id(# Enable when-required
-                                     readable = False,
+
+                     # Context links, enable+configure in template
+                     # as/when required (TODO should be many-to-many?)
+                     organisation_id(readable = False,
                                      writable = False,
                                      ),
-                     s3_date(label = T("Date Published"),
-                             default = "now",
-                             ),
-                     # @ToDo: Move location to link table
-                     location_id(# Enable when-required
-                                 readable = False,
+                     super_link("site_id", "org_site",
+                                readable = False,
+                                writable = False,
+                                ),
+                     location_id(readable = False,
                                  writable = False,
                                  ),
+
                      s3_comments(),
-                     Field("has_been_indexed", "boolean",
-                           default = False,
-                           readable = False,
-                           writable = False,
-                           ),
                      Field("checksum",
                            readable = False,
                            writable = False,
@@ -213,34 +227,25 @@ class DocumentLibrary(DataModel):
             msg_record_created = T("Document added"),
             msg_record_modified = T("Document updated"),
             msg_record_deleted = T("Document deleted"),
-            msg_list_empty = T("No Documents found")
-        )
+            msg_list_empty = T("No Documents found"),
+            )
 
         # Filter Widgets
         # - define in-template if-required
 
         # Resource Configuration
-        if settings.get_base_solr_url():
-            onaccept = self.document_onaccept
-            ondelete = self.document_ondelete
-        else:
-            onaccept = None
-            ondelete = None
-
         configure(tablename,
                   context = {"organisation": "organisation_id",
                              "person": "person_id",
                              "site": "site_id",
                              },
                   deduplicate = self.document_duplicate,
-                  list_layout = doc_document_list_layout,
-                  onaccept = onaccept,
-                  ondelete = ondelete,
+                  list_layout = doc_document_list_layout, # TODO remove?
                   onvalidation = self.document_onvalidation,
                   super_entity = "stats_source",
                   )
 
-        # Reusable field
+        # Reusable field (e.g. for link tables)
         represent = doc_DocumentRepresent(lookup = tablename,
                                           fields = ("name", "file", "url"),
                                           labels = "%(name)s",
@@ -255,17 +260,13 @@ class DocumentLibrary(DataModel):
                                                            represent),
                                       )
 
-        add_components(tablename,
-                       doc_document_tag = document_id,
-                       msg_attachment = document_id,
-                       )
+        self.add_components(tablename,
+                            doc_document_tag = document_id,
+                            msg_attachment = document_id,
+                            )
 
         # ---------------------------------------------------------------------
         # Images
-        #
-        # @ToDo: Field to determine which is the default image to use for
-        #        e.g. a Map popup (like the profile picture)
-        #        readable/writable=False except in the cases where-needed
         #
         doc_image_type_opts = {1:  T("Photograph"),
                                2:  T("Map"),
@@ -277,8 +278,18 @@ class DocumentLibrary(DataModel):
         define_table(tablename,
                      # Component not instance
                      super_link("doc_id", "doc_entity"),
-                     super_link("pe_id", "pr_pentity"), # @ToDo: Remove & make Persons doc entities instead?
-                     super_link("site_id", "org_site"), # @ToDo: Remove since Site Instances are doc entities?
+                     Field("name", length=128,
+                           label = T("Name"),
+                           # Allow Name to be added onvalidation
+                           requires = IS_LENGTH(128),
+                           ),
+                     Field("type", "integer",
+                           default = 1,
+                           label = T("Image Type"),
+                           represent = represent_option(doc_image_type_opts),
+                           requires = IS_IN_SET(doc_image_type_opts,
+                                                zero=None),
+                           ),
                      Field("file", "upload",
                            autodelete = True,
                            label = T("File"),
@@ -288,40 +299,43 @@ class DocumentLibrary(DataModel):
                                         IS_IMAGE(extensions = (s3.IMAGE_EXTENSIONS)),
                                         # Distinguish from prepop
                                         null = "",
-                                      ),
-                           # upload folder needs to be visible to the download() function as well as the upload
-                           uploadfolder = os.path.join(folder,
-                                                       "uploads",
-                                                       "images"),
+                                        ),
+                           # upload folder needs to be visible to the
+                           # download() function as well as the upload
+                           uploadfolder = os.path.join(folder, "uploads", "images"),
                            widget = S3ImageCropWidget((600, 600)),
                            ),
                      Field("mime_type",
                            readable = False,
                            writable = False,
                            ),
-                     Field("name", length=128,
-                           label = T("Name"),
-                           # Allow Name to be added onvalidation
-                           requires = IS_LENGTH(128),
-                           ),
                      Field("url",
                            label = T("URL"),
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
-                     Field("type", "integer",
-                           default = 1,
-                           label = T("Image Type"),
-                           represent = represent_option(doc_image_type_opts),
-                           requires = IS_IN_SET(doc_image_type_opts,
-                                                zero=None),
-                           ),
-                     person_id(label = T("Author"),
-                               ),
-                     organisation_id(),
+
                      s3_date(label = T("Date Taken"),
                              ),
-                     # @ToDo: Move location to link table
-                     location_id(),
+                     person_id(label = T("Author"),
+                               ),
+
+                     # Context links, enable+configure in template
+                     # as/when required (TODO should be many-to-many?)
+                     organisation_id(readable = False,
+                                     writable = False,
+                                     ),
+                     super_link("site_id", "org_site",
+                                readable = False,
+                                writable = False,
+                                ),
+                     location_id(readable = False,
+                                 writable = False,
+                                 ),
+                     super_link("pe_id", "pr_pentity",
+                                readable = False,
+                                writable = False,
+                                ),
+
                      s3_comments(),
                      Field("checksum",
                            readable = False,
@@ -340,13 +354,14 @@ class DocumentLibrary(DataModel):
             msg_record_created = T("Photo added"),
             msg_record_modified = T("Photo updated"),
             msg_record_deleted = T("Photo deleted"),
-            msg_list_empty = T("No Photos found"))
+            msg_list_empty = T("No Photos found"),
+            )
 
         # Resource Configuration
         configure(tablename,
                   deduplicate = self.document_duplicate,
                   onvalidation = lambda form: \
-                            self.document_onvalidation(form, document=False)
+                                 self.document_onvalidation(form, document=False)
                   )
 
         # ---------------------------------------------------------------------
@@ -417,6 +432,7 @@ class DocumentLibrary(DataModel):
     @staticmethod
     def document_onvalidation(form, document=True):
         """ Form validation for both, documents and images """
+        # TODO separate image/document
 
         form_vars = form.vars
         doc = form_vars.file
@@ -492,47 +508,6 @@ class DocumentLibrary(DataModel):
         #        doc_name = result.name
         #        form.errors["file"] = "%s %s" % \
         #                              (T("This file already exists on the server as"), doc_name)
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def document_onaccept(form):
-        """
-            Build a full-text index
-        """
-
-        form_vars = form.vars
-        doc = form_vars.file
-
-        table = current.db.doc_document
-
-        document = json.dumps({"filename": doc,
-                               "name": table.file.retrieve(doc)[0],
-                               "id": form_vars.id,
-                               })
-
-        current.s3task.run_async("document_create_index",
-                                 args = [document],
-                                 )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def document_ondelete(row):
-        """
-            Remove the full-text index
-        """
-
-        db = current.db
-        table = db.doc_document
-        record = db(table.id == row.id).select(table.file,
-                                               limitby=(0, 1)).first()
-
-        document = json.dumps({"filename": record.file,
-                               "id": row.id,
-                               })
-
-        current.s3task.run_async("document_delete_index",
-                                 args = [document],
-                                 )
 
 # =============================================================================
 class DocumentTagModel(DataModel):
@@ -623,6 +598,8 @@ def doc_document_list_layout(list_id, item_id, resource, rfields, record):
             resource: the CRUDResource to render
             rfields: the S3ResourceFields to render
             record: the record as dict
+
+        TODO remove?
     """
 
     record_id = record["doc_document.id"]

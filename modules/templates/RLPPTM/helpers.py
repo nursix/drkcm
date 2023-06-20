@@ -1196,7 +1196,6 @@ class WorkflowOptions:
         self.none = none
 
         self._colors = None
-        self._labels = None
 
         self._keys = [o[0] for o in theset]
         if selectable:
@@ -1230,7 +1229,7 @@ class WorkflowOptions:
         if current_value and current_value not in selectable:
             selectable = [current_value] + selectable
 
-        return [o for o in self.labels if o[0] in selectable]
+        return [o for o in self.labels() if o[0] in selectable]
 
     # -------------------------------------------------------------------------
     @property
@@ -1253,7 +1252,6 @@ class WorkflowOptions:
         return colors
 
     # -------------------------------------------------------------------------
-    @property
     def labels(self):
         """
             The (localized) option labels, for representation
@@ -1262,11 +1260,9 @@ class WorkflowOptions:
                 a list of tuples [(value, T(label)), ...]
         """
 
-        labels = self._labels
-        if not labels:
-            T = current.T
-            labels = self._labels = [(o[0], T(o[1])) for o in self.theset]
-        return labels
+        T = current.T
+
+        return [(o[0], T(o[1])) for o in self.theset]
 
     # -------------------------------------------------------------------------
     @property
@@ -1299,7 +1295,7 @@ class WorkflowOptions:
         """
 
         none = self.none
-        labels = dict(self.labels)
+
         colors = self.colors
         icons = self.icons
         css_classes = self.css_classes
@@ -1319,7 +1315,8 @@ class WorkflowOptions:
                 css_class = css_classes.get(color)
                 if css_class:
                     label.add_class(css_class)
-            label.append(labels.get(value, "-"))
+
+            label.append(dict(self.labels()).get(value, "-"))
 
             return label
 
@@ -1334,7 +1331,16 @@ class WorkflowOptions:
                 a S3PriorityRepresent instance
         """
 
-        return S3PriorityRepresent(dict(self.labels), self.colors)
+        inst = S3PriorityRepresent({},
+                                   classes = self.colors,
+                                   none = self.none,
+                                   )
+
+        def represent(value, row=None):
+            inst.options = dict(self.labels())
+            return inst(value, row=row)
+
+        return represent
 
 # =============================================================================
 class ServiceListRepresent(S3Represent):

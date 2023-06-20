@@ -13,11 +13,13 @@ ANONYMOUS,Anonymous,Unauthenticated users,,,,org_service_site,READ,,
 ANONYMOUS,Anonymous,Unauthenticated users,,,,org_site_approval,READ,,
 ANONYMOUS,Anonymous,Unauthenticated users,,,,pr_occupation_type,READ,,
 ANONYMOUS,Anonymous,Unauthenticated users,,,,project_project,READ,,
+AUDITOR,Auditor,,,,,doc_document,CREATE|READ|UPDATE|DELETE,,
 AUTHENTICATED,Authenticated,,,gis,location,,CREATE|READ,UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,pr,contact,,CREATE,READ|UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,pr,contact_emergency,,CREATE,READ|UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,,,disease_demographic,READ,,
 AUTHENTICATED,Authenticated,,,,,disease_disease,READ,,
+AUTHENTICATED,Authenticated,,,,,doc_document,CREATE|READ,UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,,,gis_location,CREATE|READ,UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,,,hrm_human_resource,NONE,READ|UPDATE,
 AUTHENTICATED,Authenticated,,,,,inv_warehouse,READ,,
@@ -35,8 +37,8 @@ AUTHENTICATED,Authenticated,,,,,pr_person,NONE,READ|UPDATE|DELETE,
 AUTHENTICATED,Authenticated,,,,,pr_person_details,CREATE,READ|UPDATE,
 AUTHENTICATED,Authenticated,,,,,pr_person_tag,CREATE,READ|UPDATE|DELETE,
 DISEASE_TEST_READER,Disease Test Reader,,,disease,case_diagnostics,,READ,,any
-DISEASE_TEST_READER,Disease Test Reader,,,disease,testing_report,,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,disease,testing_demographic,,READ,,any
+DISEASE_TEST_READER,Disease Test Reader,,,disease,testing_report,,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,disease,,,READ,,
 DISEASE_TEST_READER,Disease Test Reader,,,,,disease_case_diagnostics,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,,,disease_testing_demographic,READ,,any
@@ -44,9 +46,16 @@ DISEASE_TEST_READER,Disease Test Reader,,,,,disease_testing_report,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,,,org_site,READ,,any
 DISEASE_TEST_READER,Disease Test Reader,,,,,project_project,READ,,any
 MAP_ADMIN,,,true,gis,location,,CREATE|READ|UPDATE|DELETE,,
+NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,CREATE|READ|UPDATE|DELETE,,
+NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,READ|DELETE,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,CREATE|READ|UPDATE|DELETE,,
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,NONE,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter_recipient,CREATE|READ|DELETE,,any
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,doc_document,CREATE|READ,UPDATE|DELETE,
+NEWSLETTER_AUTHOR,Newsletter Author,,,,,pr_filter,,READ,
 ORG_ADMIN,Organisation Admin,,,admin,user,,CREATE|READ|UPDATE|DELETE,,
-ORG_ADMIN,Organisation Admin,,,cms,read_newsletter,,READ,,any
 ORG_ADMIN,Organisation Admin,,,cms,newsletter_recipient,,UPDATE,,
+ORG_ADMIN,Organisation Admin,,,cms,read_newsletter,,READ,,any
 ORG_ADMIN,Organisation Admin,,,disease,daycare_testing,,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,hrm,person,,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,hrm,staff,,CREATE|READ|UPDATE|DELETE,,
@@ -65,6 +74,7 @@ ORG_ADMIN,Organisation Admin,,,supply,,,NONE,,
 ORG_ADMIN,Organisation Admin,,,,,cms_newsletter,READ,,any
 ORG_ADMIN,Organisation Admin,,,,,cms_newsletter_recipient,READ,,
 ORG_ADMIN,Organisation Admin,,,,,disease_daycare_testing,CREATE|READ|UPDATE|DELETE,,
+ORG_ADMIN,Organisation Admin,,,,,doc_document,CREATE|READ,UPDATE|DELETE,
 ORG_ADMIN,Organisation Admin,,,,,gis_location,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,hrm_human_resource,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,inv_recv,READ|UPDATE,,
@@ -88,9 +98,9 @@ ORG_ADMIN,Organisation Admin,,,,,pr_person_details,CREATE|READ|UPDATE|DELETE,,
 ORG_ADMIN,Organisation Admin,,,,,req_req,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,disease,daycare_testing,,READ,,any
 ORG_GROUP_ADMIN,Organisation Group Admin,,false,fin,,,READ,,
+ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,compose,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,person,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,staff,,CREATE|READ|UPDATE|DELETE,,
-ORG_GROUP_ADMIN,Organisation Group Admin,,,hrm,compose,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,msg,compose,,CREATE|READ|UPDATE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,org,facility,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,org,organisation,,CREATE|READ|UPDATE|DELETE,,
@@ -98,6 +108,7 @@ ORG_GROUP_ADMIN,Organisation Group Admin,,,org,,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,pr,contact,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,pr,contact_emergency,,CREATE|READ|UPDATE|DELETE,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,disease_daycare_testing,READ,,any
+ORG_GROUP_ADMIN,Organisation Group Admin,,,,,doc_document,CREATE|READ,UPDATE|DELETE,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,fin_voucher,READ,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,fin_voucher_claim,READ,,
 ORG_GROUP_ADMIN,Organisation Group Admin,,,,,fin_voucher_debit,READ,,
@@ -178,12 +189,13 @@ SUPPLY_DISTRIBUTOR,Supply Distributor,,,,,inv_send,READ,,
 SUPPLY_DISTRIBUTOR,Supply Distributor,,,,,org_site,READ,,
 TEST_PROVIDER,Test Provider,,,disease,case_diagnostics,,CREATE|READ|UPDATE|DELETE,,
 TEST_PROVIDER,Test Provider,,,disease,case_diagnostics,,READ,,any
-TEST_PROVIDER,Test Provider,,,disease,,,READ,,
 TEST_PROVIDER,Test Provider,,,disease,testing_report,,CREATE|READ|UPDATE|DELETE,,
+TEST_PROVIDER,Test Provider,,,disease,,,READ,,
 TEST_PROVIDER,Test Provider,,,disease,,,READ,,
 TEST_PROVIDER,Test Provider,,,,,disease_case_diagnostics,CREATE|READ|UPDATE,,
 TEST_PROVIDER,Test Provider,,,,,disease_testing_demographic,CREATE|READ|UPDATE|DELETE,,
 TEST_PROVIDER,Test Provider,,,,,disease_testing_report,CREATE|READ|UPDATE|DELETE,,
+TEST_PROVIDER,Test Provider,,,,,doc_document,CREATE|READ,UPDATE|DELETE,
 TEST_PROVIDER,Test Provider,,,,,org_site,READ,,
 VOUCHER_ISSUER,Voucher Issuer,,,fin,voucher,,READ,,any
 VOUCHER_ISSUER,Voucher Issuer,,,fin,voucher,,CREATE|READ|UPDATE,,
@@ -205,9 +217,3 @@ VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher,READ,,any
 VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher_debit,CREATE|READ|UPDATE,,
 VOUCHER_PROVIDER,Voucher Provider,,,,,fin_voucher_program,READ,,any
 VOUCHER_PROVIDER,Voucher Provider,,,,,project_project,READ,,any
-NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,CREATE|READ|UPDATE|DELETE,,
-NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,READ|DELETE,,any
-NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,CREATE|READ|UPDATE|DELETE,,
-NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter,NONE,,any
-NEWSLETTER_AUTHOR,Newsletter Author,,,,,cms_newsletter_recipient,CREATE|READ|DELETE,,any
-NEWSLETTER_AUTHOR,Newsletter Author,,,,,pr_filter,,READ,

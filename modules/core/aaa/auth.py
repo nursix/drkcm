@@ -3802,6 +3802,27 @@ Please go to %(url)s to approve this user."""
     # -------------------------------------------------------------------------
     # Role Management
     # -------------------------------------------------------------------------
+    def get_role_id(self, uid):
+        """
+            Get the role ID for a role UID
+
+            Args:
+                uid: the role UID
+            Returns:
+                the corresponding auth_group record ID
+        """
+
+        gtable = self.settings.table_group
+        query = (gtable.uuid == uid) & (gtable.deleted == False)
+
+        row = current.db(query).select(gtable.id,
+                                       cache = (current.cache.ram, 600),
+                                       limitby=(0, 1),
+                                       ).first()
+
+        return row.id if row else None
+
+    # -------------------------------------------------------------------------
     def get_system_roles(self):
         """
             Get the IDs of the session roles by their UIDs, and store them
@@ -4341,16 +4362,8 @@ Please go to %(url)s to approve this user."""
             elif role in system_roles:
                 role = system_roles[role]
             else:
-                gtable = self.settings.table_group
-                query = (gtable.uuid == role) & \
-                        (gtable.deleted == False)
-                row = current.db(query).select(gtable.id,
-                                               cache = (current.cache.ram, 600),
-                                               limitby = (0, 1),
-                                               ).first()
-                if row:
-                    role = row.id
-                else:
+                role = self.get_role_id(role)
+                if not role:
                     return False
 
         # Check the realm

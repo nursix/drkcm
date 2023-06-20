@@ -294,7 +294,7 @@ class TestProviderModel(DataModel):
                                         IS_IN_SET(COMMISSION_REASON.selectable(True),
                                                   sort = False,
                                                   )),
-                           represent = represent_option(dict(COMMISSION_REASON.labels)),
+                           represent = represent_option(dict(COMMISSION_REASON.labels())),
                            ),
                      Field("cnote", "upload",
                            label = T("Commissioning Note"),
@@ -801,7 +801,7 @@ class TestStationModel(DataModel):
                                                   sort = False,
                                                   zero = None,
                                                   )),
-                           represent = represent_option(dict(PUBLIC_REASON.labels)),
+                           represent = represent_option(dict(PUBLIC_REASON.labels())),
                            readable = True,
                            writable = False,
                            ),
@@ -861,7 +861,7 @@ class TestStationModel(DataModel):
                            ),
                      Field("public_reason",
                            label = T("Reason for unlisting"),
-                           represent = represent_option(dict(PUBLIC_REASON.labels)),
+                           represent = represent_option(dict(PUBLIC_REASON.labels())),
                            readable = True,
                            writable = False,
                            ),
@@ -1734,7 +1734,7 @@ class TestProvider:
         if not template:
             template = "CommissionStatusChanged"
 
-        reason_labels = dict(COMMISSION_REASON.labels)
+        reason_labels = dict(COMMISSION_REASON.labels())
 
         db = current.db
         s3db = current.s3db
