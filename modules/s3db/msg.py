@@ -143,7 +143,9 @@ class MsgChannelModel(DataModel):
         define_table(tablename,
                      # @ToDo: Make it per-channel
                      #channel_id(),
-                     *S3MetaFields.timestamps())
+                     *S3MetaFields.timestamps(),
+                     meta = False,
+                     )
 
         # ---------------------------------------------------------------------
         # Channel Status
@@ -157,7 +159,7 @@ class MsgChannelModel(DataModel):
                            #represent = s3_yes_no_represent,
                            represent = lambda v: v or current.messages["NONE"],
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -507,7 +509,7 @@ class MsgMessageModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         configure(tablename,
                   list_fields = ["id",
@@ -553,7 +555,7 @@ class MsgMessageAttachmentModel(DataModel):
                           self.msg_message_id(ondelete = "CASCADE"),
                           # document_id not doc_id
                           self.doc_document_id(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -632,7 +634,7 @@ class MsgMessageContactModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        orderby = "msg_contact.date desc",
@@ -687,7 +689,7 @@ class MsgMessageTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("message_id",
@@ -755,7 +757,7 @@ class MsgEmailModel(MsgChannelModel):
                      # Set true to delete messages from the remote
                      # inbox after fetching them.
                      Field("delete_from_server", "boolean"),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.msg_channel_onaccept,
@@ -812,7 +814,7 @@ class MsgEmailModel(MsgChannelModel):
                            represent = lambda direction: \
                                        (direction and [T("In")] or [T("Out")])[0],
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   orderby = "msg_email.date desc",
@@ -891,7 +893,7 @@ class MsgFacebookModel(MsgChannelModel):
                            requires = IS_INT_IN_RANGE(0, +1e16)
                            ),
                      Field("page_access_token"),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.msg_facebook_channel_onaccept,
@@ -937,7 +939,7 @@ class MsgFacebookModel(MsgChannelModel):
                            represent = lambda direction: \
                                        (direction and [T("In")] or [T("Out")])[0],
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   orderby = "msg_facebook.date desc",
@@ -1028,7 +1030,7 @@ class MsgMCommonsModel(MsgChannelModel):
                           Field("timestmp", "datetime",
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        onaccept = self.msg_channel_onaccept,
@@ -1090,7 +1092,7 @@ class MsgGCMModel(MsgChannelModel):
                           Field("api_key",
                                 notnull = True,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        onaccept = self.msg_gcm_channel_onaccept,
@@ -1166,7 +1168,7 @@ class MsgParsingModel(DataModel):
                            label = T("Enabled?"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        onaccept = self.msg_parser_onaccept,
@@ -1206,7 +1208,7 @@ class MsgParsingModel(DataModel):
                                 label = T("Reply"),
                                 ondelete = "CASCADE",
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Login sessions for Message Parsing
@@ -1223,7 +1225,7 @@ class MsgParsingModel(DataModel):
                      Field("is_expired", "boolean",
                            default = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Keywords for Message Parsing
@@ -1235,7 +1237,7 @@ class MsgParsingModel(DataModel):
                            ),
                      # @ToDo: Move this to a link table
                      self.event_incident_type_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Senders for Message Parsing
@@ -1251,7 +1253,7 @@ class MsgParsingModel(DataModel):
                      Field("priority", "integer",
                            label = T("Priority"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         return {"msg_parser_enabled": self.parser_enabled,
@@ -1502,7 +1504,7 @@ class MsgRSSModel(MsgChannelModel):
                                          _title="%s|%s" % (T("Password"),
                                                            T("Optional password for HTTP Basic Authentication."))),
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        list_fields = ["name",
@@ -1563,7 +1565,7 @@ class MsgRSSModel(MsgChannelModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("from_address",),
@@ -1606,7 +1608,7 @@ class MsgRSSModel(MsgChannelModel):
                            ),
                      Field("type",
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("rss_id", "url"),
@@ -1672,7 +1674,7 @@ class MsgSMSModel(DataModel):
                           Field("remote_id",
                                 #label = T("Remote ID"),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        super_entity = "msg_message",
@@ -1738,7 +1740,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("default_country_code", "integer",
                            default = country_code,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # SMS Modem Channel
@@ -1758,7 +1760,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("max_length", "integer",
                            default = 160,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "msg_channel",
@@ -1784,7 +1786,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("max_length", "integer",
                            default = 160,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "msg_channel",
@@ -1847,7 +1849,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("enabled", "boolean",
                            default = True,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "msg_channel",
@@ -1890,7 +1892,7 @@ class MsgTropoModel(DataModel):
                            ),
                      Field("token_messaging"),
                      #Field("token_voice"),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        super_entity = "msg_channel",
@@ -1918,6 +1920,7 @@ class MsgTropoModel(DataModel):
                      Field("recipient"),
                      Field("message"),
                      Field("network"),
+                     meta = False,
                      )
 
         # ---------------------------------------------------------------------
@@ -1972,7 +1975,7 @@ class MsgTwilioModel(MsgChannelModel):
                                        ],
                            widget = S3PasswordWidget(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        onaccept = self.msg_channel_onaccept,
@@ -2000,7 +2003,7 @@ class MsgTwilioModel(MsgChannelModel):
                      # Component not Instance
                      self.msg_message_id(ondelete = "CASCADE"),
                      Field("sid"),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         return None
@@ -2071,7 +2074,7 @@ class MsgTwitterModel(DataModel):
                            readable = False,
                            widget = password_widget,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.twitter_channel_onaccept,
@@ -2126,7 +2129,7 @@ class MsgTwitterModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = ["id",
@@ -2287,7 +2290,7 @@ class MsgTwitterSearchModel(MsgChannelModel):
                            label = T("Searched?"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = ["keywords",
@@ -2355,7 +2358,7 @@ class MsgTwitterSearchModel(MsgChannelModel):
                      #      readable = False,
                      #      writable = False,
                      #      ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = [#"category",
@@ -2428,7 +2431,8 @@ class MsgXFormsModel(DataModel):
                           Field("fileno", "integer"),
                           Field("totalno", "integer"),
                           Field("partno", "integer"),
-                          Field("message", length=160)
+                          Field("message", length=160),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -2483,7 +2487,7 @@ class MsgBaseStationModel(DataModel):
                                  ),
                           self.gis_location_id(),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(

@@ -139,7 +139,7 @@ class SupplyModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_BRAND = T("Create Brand")
@@ -192,7 +192,7 @@ class SupplyModel(DataModel):
                            ),
                      self.org_organisation_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_CATALOG = T("Create Catalog")
@@ -310,7 +310,6 @@ class SupplyModel(DataModel):
                            writable = vehicle,
                            ),
                      s3_comments(),
-                     *s3_meta_fields(),
                      on_define = lambda table: \
                         [table.parent_item_category_id.set_attributes(requires = item_category_requires),
                          ]
@@ -468,7 +467,7 @@ $.filterOptionsS3({
                            ),
                      # These comments do *not* pull through to an Inventory's Items or a Request's Items
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Categories in Progress
         #table.item_category_id_0.label = T("Category")
@@ -622,7 +621,7 @@ $.filterOptionsS3({
                                       ),
                      supply_item_id(script = None), # No Item Pack Filter
                      s3_comments(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -721,7 +720,7 @@ $.filterOptionsS3({
                                  writable = track_pack_values,
                                  ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_ITEM_PACK = T("Create Item Pack")
@@ -806,7 +805,7 @@ $.filterOptionsS3({
                            ),
                      item_pack_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -854,7 +853,7 @@ $.filterOptionsS3({
                                                           ),
                                     ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1317,7 +1316,7 @@ class SupplyDistributionModel(DataModel):
                                                     ),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_ITEM = T("Create Distribution Item")
@@ -1390,7 +1389,7 @@ class SupplyDistributionModel(DataModel):
                      #self.stats_source_id(),
                      Field.Method("year", self.supply_distribution_year),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1623,7 +1622,7 @@ class SupplyDistributionModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1772,7 +1771,7 @@ class SupplyDistributionDVRActivityModel(DataModel):
                           self.supply_distribution_id(empty = False,
                                                       ondelete = "CASCADE",
                                                       ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1808,7 +1807,7 @@ class SupplyPersonModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Status"),
@@ -1855,7 +1854,7 @@ class SupplyPersonModel(DataModel):
                      self.org_organisation_id(ondelete = "SET NULL",
                                               ),
                      s3_comments(comment = None),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Item"),

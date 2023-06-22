@@ -214,7 +214,7 @@ class DocumentModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -341,7 +341,7 @@ class DocumentModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -540,7 +540,7 @@ class DocumentTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("document_id",
@@ -750,7 +750,7 @@ class DocumentCKEditorModel(DataModel):
                                             IS_LENGTH(maxsize=10485760, # 10 Mb
                                                       minsize=0)],
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -872,7 +872,7 @@ class DocumentDataCardModel(DataModel):
                                 represent = lambda v: (T("%(months)s months") % {"months": v}) if v else "-",
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # Table configuration
         self.configure(tablename,

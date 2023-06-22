@@ -165,7 +165,7 @@ class HRModel(DataModel):
                      s3_comments(label = T("Description"),
                                  comment = None,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         label_create = T("Create Department")
         crud_strings[tablename] = Storage(
@@ -277,7 +277,7 @@ class HRModel(DataModel):
                      s3_comments(comment = None,
                                  label = T("Description"),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         if group == "volunteer":
             label = T("Volunteer Role")
@@ -503,7 +503,7 @@ class HRModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # @ToDo: Move this configurability to templates rather than lots of deployment_settings
         if STAFF == T("Contacts"):
@@ -1012,7 +1012,7 @@ class HRModel(DataModel):
                                label = T("End Date"),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure("hrm_job_title_human_resource",
                   onaccept = self.hrm_job_title_human_resource_onaccept,
@@ -1409,7 +1409,7 @@ class HRSiteModel(DataModel):
                                 represent = lambda opt: \
                                             (T("No"), T("Yes"))[opt == True],
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        # Each HR can only be assigned to one site at a time:
@@ -1535,7 +1535,7 @@ class HRSalaryModel(DataModel):
                      Field("name",
                            label = T("Staff Level"),
                      ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",
@@ -1557,7 +1557,7 @@ class HRSalaryModel(DataModel):
                      Field("name",
                            label = T("Salary Grade"),
                      ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",
@@ -1621,7 +1621,7 @@ class HRSalaryModel(DataModel):
                                         ),
                            default = 0.0,
                            ),
-                     *s3_meta_fields())
+                     )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Salary"),
@@ -1793,7 +1793,7 @@ class HRInsuranceModel(DataModel):
                           #      label = T("Beneficiary"),
                           #      ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        #context = {"person": "human_resource_id$person_id",
@@ -1852,7 +1852,7 @@ class HRContractModel(DataModel):
                                 represent = hours_model_represent,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("human_resource_id",)),
@@ -1899,7 +1899,7 @@ class HRJobModel(DataModel):
                             organisation_id(empty = False),
                             site_id,
                             group_id(label = "Team"),
-                            *s3_meta_fields())
+                            )
         table.site_id.readable = table.site_id.writable = True
 
         #crud_strings[tablename] = Storage(
@@ -1975,7 +1975,7 @@ class HRJobModel(DataModel):
                      #                               filter_opts=gis.region_level_keys,
                      #                               orderby="gis_location.name"),
                      #            widget=None),
-                     *s3_meta_fields())
+                     )
 
         # =========================================================================
         # Hours registration
@@ -1986,7 +1986,7 @@ class HRJobModel(DataModel):
                      Field("timestmp_in", "datetime"),
                      Field("timestmp_out", "datetime"),
                      Field("hours", "double"),
-                     *s3_meta_fields())
+                     )
 
         # =========================================================================
         # Vacancy
@@ -2023,7 +2023,7 @@ class HRJobModel(DataModel):
                      Field("app_deadline", "date",
                            #label = T("Application Deadline"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2126,7 +2126,7 @@ class HRSkillModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Skill Type"),
@@ -2187,7 +2187,7 @@ class HRSkillModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Skill"),
@@ -2293,7 +2293,7 @@ class HRSkillModel(DataModel):
                                                            T("Priority from 1 to 9. 1 is most preferred.")))
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Competency Rating"),
@@ -2354,7 +2354,7 @@ class HRSkillModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Skill"),
@@ -2412,7 +2412,7 @@ class HRSkillModel(DataModel):
         #                                                   T("Priority from 1 to 9. 1 is most preferred.")))
         #                   ),
         #             s3_comments(),
-        #             *s3_meta_fields())
+        #             )
 
         #crud_strings[tablename] = Storage(
         #    label_create = T("Add Skill Provision"),
@@ -2523,7 +2523,7 @@ class HRSkillModel(DataModel):
                      s3_comments(label = T("Description"),
                                  comment = None,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Course"),
@@ -2611,7 +2611,7 @@ class HRSkillModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Event Type"),
@@ -2746,7 +2746,7 @@ class HRSkillModel(DataModel):
                            writable = ext_instructor,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_TRAINING_EVENT = T("Create Training Event")
@@ -2906,7 +2906,7 @@ class HRSkillModel(DataModel):
                                                              ),
                                  ),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # Training Event Tags
@@ -2924,7 +2924,7 @@ class HRSkillModel(DataModel):
                            label = T("Value"),
                            ),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("training_event_id",
@@ -2986,7 +2986,7 @@ class HRSkillModel(DataModel):
                            widget = s3_comments_widget,
                            ),
                      s3_comments(label = T("General Comments")),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "doc_entity",
@@ -3010,7 +3010,7 @@ class HRSkillModel(DataModel):
                                ondelete = "CASCADE",
                                ),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # (Training) Participations (Trainees)
@@ -3131,7 +3131,7 @@ class HRSkillModel(DataModel):
                      Field.Method("job_title", hrm_training_job_title),
                      Field.Method("organisation", hrm_training_organisation),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Suitable for use when adding a Training to a Person
         # The ones when adding a Participant to an Event are done in the Controller
@@ -3277,7 +3277,7 @@ class HRSkillModel(DataModel):
                                                         selectedList=3),
 
                            ),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # Certificates
@@ -3312,7 +3312,7 @@ class HRSkillModel(DataModel):
                                         IS_INT_IN_RANGE(1, None)
                                         ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Certificate"),
@@ -3411,7 +3411,7 @@ class HRSkillModel(DataModel):
                                                   )),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   context = {"person": "person_id",
@@ -3503,7 +3503,7 @@ class HRSkillModel(DataModel):
                                #default_interval = 12,
                                #default_explicit = True,
                                ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Credential"),
@@ -3546,7 +3546,7 @@ class HRSkillModel(DataModel):
                               ondelete = "CASCADE",
                               ),
                      competency_id(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Skill Equivalence"),
@@ -3578,7 +3578,7 @@ class HRSkillModel(DataModel):
                      certificate_id(empty = False,
                                     ondelete = "CASCADE",
                                     ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Certificate for Course"),
@@ -3606,7 +3606,7 @@ class HRSkillModel(DataModel):
                      job_title_id(empty = False,
                                   ondelete = "CASCADE",
                                   ),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # Course <> Sectors link table
@@ -3621,7 +3621,7 @@ class HRSkillModel(DataModel):
                      self.org_sector_id(empty = False,
                                         ondelete = "CASCADE",
                                         ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4190,7 +4190,7 @@ class HREventProgrammeModel(DataModel):
                           self.hrm_programme_id(empty = False,
                                                 ondelete = "CASCADE",
                                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4219,7 +4219,7 @@ class HREventProjectModel(DataModel):
                           self.project_project_id(empty = False,
                                                   ondelete = "CASCADE",
                                                   ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4280,7 +4280,7 @@ class HRAppraisalModel(DataModel):
                                widget = S3AddPersonWidget(),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Appraisal"),
@@ -4346,7 +4346,7 @@ class HRAppraisalModel(DataModel):
         define_table(tablename,
                      Field("appraisal_id", "reference hrm_appraisal"),
                      self.doc_document_id(empty=False),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.hrm_appraisal_document_onaccept,
@@ -4541,7 +4541,7 @@ class HRExperienceModel(DataModel):
                                     widget = S3AddPersonWidget(),
                                     ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Professional Experience"),
@@ -4617,7 +4617,7 @@ class HRAwardModel(DataModel):
                      Field("name",
                            label = T("Award Type"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("name",
@@ -4650,7 +4650,7 @@ class HRAwardModel(DataModel):
                                                  label = ADD_AWARD_TYPE,
                                                  ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Award"),
@@ -4694,7 +4694,7 @@ class HRDisciplinaryActionModel(DataModel):
                            label = T("Disciplinary Action Type"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("name",
@@ -4724,7 +4724,7 @@ class HRDisciplinaryActionModel(DataModel):
                                                  ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4758,7 +4758,7 @@ class HRTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("human_resource_id",
@@ -4827,7 +4827,7 @@ class HRProgrammeModel(DataModel):
                      s3_comments(comment = None,
                                  label = T("Description"),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Program"),
@@ -4942,7 +4942,7 @@ class HRProgrammeModel(DataModel):
                            ),
                      Field.Method("month", hrm_programme_hours_month),
                      s3_comments(comment = None),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Hours"),
@@ -5080,7 +5080,7 @@ class HRShiftModel(DataModel):
                              #set_max = "#hrm_shift_template_start_time",
                              ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -5112,7 +5112,7 @@ class HRShiftModel(DataModel):
                                  set_max = "#hrm_shift_start_date",
                                  ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         represent = S3Represent(lookup=tablename, fields=["start_date", "end_date"])
         shift_id = S3ReusableField("shift_id", "reference %s" % tablename,
@@ -5257,7 +5257,7 @@ class HRShiftModel(DataModel):
                      shift_id(),
                      self.hrm_human_resource_id(writable = False),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -5385,7 +5385,7 @@ class HRDelegationModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -5442,7 +5442,7 @@ class HRDelegationModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["date",
@@ -5489,7 +5489,7 @@ class HRDelegationModel(DataModel):
                            label = T("Note"),
                            represent = s3_text_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["date",

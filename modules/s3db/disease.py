@@ -104,7 +104,7 @@ class DiseaseDataModel(DataModel):
                            label = T("Watch Period after Exposure (days)"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         represent = S3Represent(lookup=tablename)
         disease_id = S3ReusableField("disease_id", "reference %s" % tablename,
@@ -155,7 +155,7 @@ class DiseaseDataModel(DataModel):
                      Field("assessment",
                            label = T("Assessment method"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # @todo: refine to include disease name?
         represent = S3Represent(lookup=tablename)
@@ -231,7 +231,7 @@ class DiseaseDataModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         self.configure(tablename,
@@ -408,7 +408,7 @@ class DiseaseMonitoringModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -476,7 +476,7 @@ class DiseaseMonitoringModel(DataModel):
                            writable = not subtotals,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -614,7 +614,7 @@ class DiseaseMonitoringModel(DataModel):
                            requires = IS_INT_IN_RANGE(0),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["report_id$site_id",
@@ -902,7 +902,7 @@ class DiseaseCertificateModel(DataModel):
                           s3_datetime("certified_on",
                                       label = T("Certified on"),
                                       ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        insertable = False,
@@ -1073,7 +1073,7 @@ class DiseaseCaseTrackingModel(DataModel):
                                label = T("Monitoring required until"),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Reusable Field
         represent = disease_CaseRepresent()
@@ -1218,7 +1218,7 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(illness_status),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         add_components(tablename,
@@ -1273,7 +1273,7 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_ONE_OF(db, "disease_case_monitoring.id"),
                            ),
                      self.disease_symptom_id(),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # Case Treatment/Progress Notes
@@ -1297,7 +1297,7 @@ class DiseaseCaseTrackingModel(DataModel):
                                                 ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1405,7 +1405,7 @@ class DiseaseCaseTrackingModel(DataModel):
                                         IS_IN_SET(diagnosis_status)),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1777,7 +1777,7 @@ class DiseaseContactTracingModel(DataModel):
                            represent = represent_option(contact_tracing_status),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # @todo: implement specific S3Represent class
         represent = S3Represent(lookup=tablename, fields=["case_id"])
@@ -1886,7 +1886,7 @@ class DiseaseContactTracingModel(DataModel):
                            requires = IS_IN_SET(exposure_risk, zero=None),
                            ),
                      Field("circumstances", "text"),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["person_id",
@@ -2139,7 +2139,6 @@ class DiseaseStatsModel(DataModel):
                      s3_comments("description",
                                  label = T("Description"),
                                  ),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -2202,7 +2201,6 @@ class DiseaseStatsModel(DataModel):
                      # Link to Source
                      self.stats_source_id(),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -2329,7 +2327,6 @@ class DiseaseStatsModel(DataModel):
                            represent = lambda v: \
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
-                     *s3_meta_fields()
                      )
 
         # ---------------------------------------------------------------------

@@ -94,7 +94,7 @@ class ManagementJournalModel(DataModel):
                                  label = T("Closed on"),
                                  writable = False,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -183,7 +183,7 @@ class ManagementJournalModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            represent = s3_text_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,

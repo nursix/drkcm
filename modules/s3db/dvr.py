@@ -123,7 +123,7 @@ class DVRCaseModel(DataModel):
                                               writable = False,
                                               ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_CASE_TYPE = T("Create Case Type")
@@ -218,7 +218,7 @@ class DVRCaseModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -473,7 +473,7 @@ class DVRCaseModel(DataModel):
 
                      # Standard comments and meta fields
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         if beneficiary:
@@ -596,7 +596,7 @@ class DVRCaseModel(DataModel):
                                                 ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Case Details: extended attributes for DVR cases
@@ -648,7 +648,7 @@ class DVRCaseModel(DataModel):
                          "activity_referral_type_id",
                          label = T("Referred to Group Activities by"),
                          ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1001,7 +1001,7 @@ class DVRCaseFlagModel(DataModel):
                                          ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_FLAG = T("Create Case Flag")
@@ -1051,7 +1051,7 @@ class DVRCaseFlagModel(DataModel):
                      flag_id(empty = False,
                              ondelete = "CASCADE",
                              ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1133,7 +1133,7 @@ class DVRNeedsModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Hierarchy
         if hierarchical_needs:
@@ -1199,7 +1199,7 @@ class DVRNeedsModel(DataModel):
                      need_id(empty = False,
                              ondelete = "CASCADE",
                              ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1253,7 +1253,7 @@ class DVRNotesModel(DataModel):
                            default = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1321,7 +1321,7 @@ class DVRNotesModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1369,7 +1369,7 @@ class DVRReferralModel(DataModel):
                                 requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # Table configuration
         self.configure(tablename,
@@ -1473,7 +1473,7 @@ class DVRResponseModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1555,7 +1555,7 @@ class DVRResponseModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Hierarchy
         if hierarchical_response_types:
@@ -1634,7 +1634,7 @@ class DVRResponseModel(DataModel):
                            widget = S3ColorPickerWidget(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -1752,7 +1752,7 @@ class DVRResponseModel(DataModel):
                                  comment = None,
                                  represent = lambda v: s3_text_represent(v, lines=8),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # List_fields
         list_fields = ["case_activity_id",
@@ -1911,7 +1911,7 @@ class DVRResponseModel(DataModel):
                                  comment = None,
                                  represent = lambda v: s3_text_represent(v, lines=8),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.response_action_theme_onaccept,
@@ -1932,7 +1932,7 @@ class DVRResponseModel(DataModel):
                          empty = False,
                          ondelete = "RESTRICT",
                          ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2434,7 +2434,7 @@ class DVRCaseActivityModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -2484,7 +2484,7 @@ class DVRCaseActivityModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -2542,7 +2542,7 @@ class DVRCaseActivityModel(DataModel):
                            label = T("Closes Activity"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2776,7 +2776,7 @@ class DVRCaseActivityModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -2965,7 +2965,7 @@ class DVRCaseActivityModel(DataModel):
                      self.dvr_need_id(empty = False,
                                       ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -2982,7 +2982,7 @@ class DVRCaseActivityModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -3027,7 +3027,7 @@ class DVRCaseActivityModel(DataModel):
                      update_type_id(),
                      human_resource_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -3266,7 +3266,7 @@ class DVRCaseEffortModel(DataModel):
                                                   ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -3442,7 +3442,7 @@ class DVRCaseAppointmentModel(DataModel):
                         writable = update_case_status,
                         ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3514,7 +3514,7 @@ class DVRCaseAppointmentModel(DataModel):
                            represent = represent_option(appointment_status_opts),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3770,7 +3770,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_HOUSING_TYPE = T("Create Housing Type")
@@ -3801,7 +3801,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_INCOME_SOURCE = T("Create Income Source")
@@ -3881,7 +3881,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            ),
                      s3_currency(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -3947,7 +3947,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            ),
                      income_source_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
 
         # ---------------------------------------------------------------------
@@ -3990,7 +3990,7 @@ class DVRLegalStatusModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -4038,7 +4038,7 @@ class DVRLegalStatusModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -4098,7 +4098,7 @@ class DVRLegalStatusModel(DataModel):
                      #      default = False,
                      #      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -4196,7 +4196,7 @@ class DVRCaseAllowanceModel(DataModel):
                                                            ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -4462,7 +4462,7 @@ class DVRCaseEventModel(DataModel):
                                          ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -4521,7 +4521,7 @@ class DVRCaseEventModel(DataModel):
                                    label = T("Not Combinable With"),
                                    ondelete = "CASCADE",
                                    ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -4575,7 +4575,7 @@ class DVRCaseEventModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -4909,7 +4909,6 @@ class DVRCaseEvaluationModel(DataModel):
                      Field("name",
                            label = T("Question"),
                            ),
-                     *s3_meta_fields()
                      )
 
         crud_strings[tablename] = Storage(
@@ -4940,7 +4939,6 @@ class DVRCaseEvaluationModel(DataModel):
                                       ),
                      #DateField(future=0),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         crud_strings[tablename] = Storage(
@@ -4981,7 +4979,6 @@ class DVRCaseEvaluationModel(DataModel):
                            label = T("Answer"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields()
                      )
 
         # ---------------------------------------------------------------------
@@ -5037,7 +5034,7 @@ class DVRVulnerabilityModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Hierarchy
         if hierarchical_vulnerability_types:
@@ -5106,7 +5103,7 @@ class DVRVulnerabilityModel(DataModel):
                          empty = False,
                          ondelete = "RESTRICT",
                          ),
-                     *s3_meta_fields())
+                     )
 
         tablename = "dvr_diagnosis_case_activity"
         define_table(tablename,
@@ -5118,7 +5115,7 @@ class DVRVulnerabilityModel(DataModel):
                          empty = False,
                          ondelete = "RESTRICT",
                          ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -5155,7 +5152,7 @@ class DVRServiceContactModel(DataModel):
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -5231,7 +5228,7 @@ class DVRServiceContactModel(DataModel):
                            label = T("Email"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -5331,7 +5328,7 @@ class DVRSiteActivityModel(DataModel):
                                                        ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(

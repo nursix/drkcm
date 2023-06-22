@@ -121,7 +121,7 @@ class DVIModel(DataModel):
                            label = T("Task Status"),
                            represent = lambda opt: \
                                        task_status.get(opt, UNKNOWN_OPT)),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -189,7 +189,7 @@ class DVIModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Reusable Field
         morgue_id = S3ReusableField("morgue_id", "reference %s" % tablename,
@@ -255,7 +255,7 @@ class DVIModel(DataModel):
                      self.pr_gender(label=T("Apparent Gender")),
                      self.pr_age_group(label=T("Apparent Age")),
                      location_id(label=T("Place of Recovery")),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -334,7 +334,7 @@ class DVIModel(DataModel):
                                     label = T("DNA Profiling")),
                      checklist_item("dental",
                                     label = T("Dental Examination")),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -362,7 +362,7 @@ class DVIModel(DataModel):
                      Field("footwear", "text"),  # @todo: elaborate
                      Field("watch", "text"),     # @todo: elaborate
                      Field("other", "text"),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_PERSONAL_EFFECTS = T("Create Personal Effects")
@@ -422,7 +422,7 @@ class DVIModel(DataModel):
                            represent = lambda opt: \
                                        dvi_id_methods.get(opt, UNKNOWN_OPT)),
                      Field("comment", "text"),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(

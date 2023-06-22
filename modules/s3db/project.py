@@ -199,7 +199,7 @@ class ProjectModel(DataModel):
                                              _title="%s|%s" % (T("Comments"),
                                                                T("Outcomes, Impact, Challenges"))),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -813,7 +813,7 @@ class ProjectAnnualBudgetModel(DataModel):
                                 requires = IS_FLOAT_AMOUNT(),
                                 ),
                           s3_currency(required=True),
-                          *s3_meta_fields())
+                          )
 
 
         # CRUD Strings
@@ -903,7 +903,7 @@ class ProjectBeneficiaryModel(DataModel):
                                                   instance_types = ("project_beneficiary_type",),
                                                   sort=True)),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_BNF_TYPE = T("Create Beneficiary Type")
@@ -996,7 +996,7 @@ class ProjectBeneficiaryModel(DataModel):
                            label = T("Year"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_BNF = T("Add Beneficiaries")
@@ -1152,7 +1152,7 @@ class ProjectBeneficiaryModel(DataModel):
                                     ondelete = "CASCADE",
                                     ),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("activity_id",
@@ -1173,7 +1173,7 @@ class ProjectBeneficiaryModel(DataModel):
                                     ondelete = "CASCADE",
                                     ),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("activity_type_id",
@@ -1270,7 +1270,7 @@ class ProjectHazardModel(DataModel):
                         represent = lambda v: T(v) if v is not None \
                                                    else NONE,
                         ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1307,7 +1307,6 @@ class ProjectHazardModel(DataModel):
         define_table(tablename,
                      hazard_id(),
                      self.project_project_id(),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -1379,7 +1378,6 @@ class ProjectHRModel(DataModel):
                                        status_opts.get(opt, current.messages.UNKNOWN_OPT),
                                 requires = IS_IN_SET(status_opts),
                                 ),
-                          *s3_meta_fields()
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -1499,7 +1497,7 @@ class ProjectLocationModel(DataModel):
                            writable = mode_3w,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         if community:
@@ -1705,7 +1703,7 @@ class ProjectLocationModel(DataModel):
                                        widget = S3AddPersonWidget(controller="pr"),
                                        empty = False,
                                        ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1864,7 +1862,7 @@ class ProjectMasterKeyModel(DataModel):
         self.define_table("project_project_masterkey",
                           self.project_project_id(empty = False),
                           self.auth_masterkey_id(empty = False),
-                          *s3_meta_fields())
+                          )
 
 
         # ---------------------------------------------------------------------
@@ -1931,7 +1929,7 @@ class ProjectOrganisationModel(DataModel):
                                 label = T("Funds Contributed")),
                           s3_currency(),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -2114,7 +2112,6 @@ class ProjectSectorModel(DataModel):
                           self.project_project_id(empty = False,
                                                   ondelete = "CASCADE",
                                                   ),
-                          *s3_meta_fields()
                           )
 
         # CRUD Strings
@@ -2161,7 +2158,7 @@ class ProjectStatusModel(DataModel):
                                             ],
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         ADD_STATUS = T("Create Status")
@@ -2233,7 +2230,7 @@ class ProjectTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("project_id",
@@ -2287,7 +2284,7 @@ class ProjectThemeModel(DataModel):
                         represent = lambda v: T(v) if v is not None \
                                                    else NONE,
                         ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_THEME = T("Create Theme")
@@ -2363,7 +2360,7 @@ class ProjectThemeModel(DataModel):
                                         empty = False,
                                         ondelete = "CASCADE",
                                         ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Sector"),
@@ -2397,7 +2394,7 @@ class ProjectThemeModel(DataModel):
                            readable = theme_percentages,
                            writable = theme_percentages,
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Theme"),
@@ -2431,7 +2428,7 @@ class ProjectThemeModel(DataModel):
                      self.project_activity_id(empty = False,
                                               ondelete = "CASCADE",
                                               ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("New Theme"),
@@ -2472,7 +2469,7 @@ class ProjectThemeModel(DataModel):
                            readable = theme_percentages,
                            writable = theme_percentages,
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("New Theme"),
@@ -2615,7 +2612,7 @@ class ProjectActivityModel(DataModel):
                      # @ToDo: Move to compute using stats_year
                      Field.Method("year", self.project_activity_year),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ACTIVITY_TOOLTIP = T("If you don't see the activity in the list, you can add a new one by clicking link 'Create Activity'.")
@@ -2884,7 +2881,7 @@ class ProjectActivityModel(DataModel):
                      self.project_activity_type_id(empty = False,
                                                    ondelete = "CASCADE",
                                                    ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Activity Type"),
@@ -3085,7 +3082,7 @@ class ProjectActivityTypeModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_ACTIVITY_TYPE = T("Create Activity Type")
@@ -3158,7 +3155,7 @@ class ProjectActivityTypeModel(DataModel):
                                         empty = False,
                                         ondelete = "CASCADE",
                                         ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Activity Type <> Project Location Link Table
@@ -3171,7 +3168,7 @@ class ProjectActivityTypeModel(DataModel):
                      self.project_location_id(empty = False,
                                               ondelete = "CASCADE",
                                               ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Activity Type <> Project Link Table
@@ -3184,7 +3181,7 @@ class ProjectActivityTypeModel(DataModel):
                      self.project_project_id(empty = False,
                                              ondelete = "CASCADE",
                                              ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Activity Type"),
@@ -3239,7 +3236,7 @@ class ProjectActivityOrganisationModel(DataModel):
                                 represent = lambda opt: \
                                             project_organisation_roles.get(opt,
                                                                            NONE)),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -3320,7 +3317,7 @@ class ProjectActivityDemographicsModel(DataModel):
                                 represent = IS_INT_AMOUNT.represent,
                                 requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("activity_id",
@@ -3357,7 +3354,7 @@ class ProjectActivitySectorModel(DataModel):
                                                    # Default:
                                                    #ondelete = "CASCADE",
                                                    ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("activity_id",
@@ -3393,7 +3390,7 @@ class ProjectActivityTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("activity_id",
@@ -3454,7 +3451,7 @@ class ProjectTaskModel(DataModel):
                            ),
                      DateField(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_MILESTONE = T("Create Milestone")
@@ -3620,7 +3617,6 @@ class ProjectTaskModel(DataModel):
                            ),
                      Field.Method("task_id", self.project_task_task_id),
                      s3_comments(),
-                     *s3_meta_fields(),
                      on_define = lambda table: \
                         [table.created_on.set_attributes(represent = lambda dt: \
                             S3DateTime.date_represent(dt, utc=True)),
@@ -3913,7 +3909,7 @@ class ProjectTaskModel(DataModel):
                            label = T("Comment"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Resource Configuration
         configure(tablename,
@@ -3955,7 +3951,7 @@ class ProjectTaskModel(DataModel):
                      Field.Method("day", project_time_day),
                      Field.Method("week", project_time_week),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -4410,7 +4406,7 @@ class ProjectTaskTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("task_id",

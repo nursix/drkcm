@@ -119,7 +119,7 @@ class VehicleModel(DataModel):
                                        float_represent(v, precision=2),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         type_represent = S3Represent(lookup=tablename,
                                      fields=["code", "name"],
@@ -195,7 +195,7 @@ class VehicleModel(DataModel):
                                label = T("Insurance Renewal Due"),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(

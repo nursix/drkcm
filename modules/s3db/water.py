@@ -64,7 +64,7 @@ class WaterModel(DataModel):
                            label = T("Name"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_ZONE_TYPE = T("Create Zone Type")
@@ -116,7 +116,7 @@ class WaterModel(DataModel):
                                                     ),
                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -147,7 +147,7 @@ class WaterModel(DataModel):
                                                     )
                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_RIVER = T("Create River")
@@ -214,7 +214,7 @@ class WaterModel(DataModel):
                            requires = IS_EMPTY_OR(IS_IN_SET(flowstatus_opts)),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Gauge"),
@@ -239,7 +239,7 @@ class WaterModel(DataModel):
         #                   ),
         #             location_id(),
         #             s3_comments(),
-        #             *s3_meta_fields())
+        #             )
 
         #crud_strings[tablename] = Storage(
         #    label_create = T("Create Debris Basin"),
@@ -264,7 +264,7 @@ class WaterModel(DataModel):
         #                   ),
         #             location_id(),
         #             s3_comments(),
-        #             *s3_meta_fields())
+        #             )
 
         #crud_strings[tablename] = Storage(
         #    label_create = T("Create Reservoir"),

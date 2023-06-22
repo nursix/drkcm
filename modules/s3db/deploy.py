@@ -62,7 +62,7 @@ class DeployOrganisationModel(DataModel):
         self.define_table(tablename,
                           self.org_organisation_id(),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -145,7 +145,7 @@ class DeployModel(DataModel):
                      Field.Method("response_count",
                                   deploy_mission_response_count),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
 
         # Profile
@@ -354,7 +354,7 @@ class DeployModel(DataModel):
                      mission_id(),
                      self.msg_message_id(),
                      self.doc_document_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Application of human resources
@@ -390,7 +390,7 @@ class DeployModel(DataModel):
                                                        UNKNOWN_OPT),
                            requires = IS_IN_SET(status_opts),
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   delete_next = URL(c="deploy", f="human_resource", args="summary"),
@@ -414,7 +414,7 @@ class DeployModel(DataModel):
                                set_max = "#deploy_unavailability_start_date",
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -466,7 +466,7 @@ class DeployModel(DataModel):
                                #start_field = "deploy_assignment_start_date",
                                #default_interval = 12,
                                ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -544,7 +544,7 @@ class DeployModel(DataModel):
         define_table(tablename,
                      assignment_id(empty = False),
                      Field("appraisal_id", self.hrm_appraisal),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   ondelete_cascade = \
@@ -558,7 +558,7 @@ class DeployModel(DataModel):
         define_table(tablename,
                      assignment_id(empty = False),
                      Field("experience_id", self.hrm_experience),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   ondelete_cascade = \
@@ -952,7 +952,7 @@ class DeployAlertModel(DataModel):
                      message_id(readable = False,
                                 writable = False,
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1019,7 +1019,7 @@ class DeployAlertModel(DataModel):
                      human_resource_id(empty = False,
                                        label = T(hr_label),
                                        ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Recipient"),
@@ -1057,7 +1057,7 @@ class DeployAlertModel(DataModel):
                            label = T("Approval Letter"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         insertable = settings.get_deploy_responses_via_web()
 

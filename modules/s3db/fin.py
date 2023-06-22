@@ -70,7 +70,6 @@ class FinExpensesModel(DataModel):
                                 ),
                           s3_currency(),
                           s3_comments(),
-                          *s3_meta_fields(),
                           on_define = lambda table: \
                             [table.created_by.set_attributes(represent = self.auth_UserRepresent(show_email = False,
                                                                                                  show_link = False)),
@@ -292,7 +291,7 @@ class FinVoucherModel(DataModel):
                            widget = s3_comments_widget,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["name",
@@ -404,7 +403,7 @@ class FinVoucherModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -598,7 +597,7 @@ class FinVoucherModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -779,7 +778,7 @@ class FinVoucherModel(DataModel):
                            ),
 
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -860,7 +859,7 @@ class FinVoucherModel(DataModel):
                            widget = S3MultiSelectWidget(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -958,7 +957,7 @@ class FinVoucherModel(DataModel):
                                    label = T("Status"),
                                    ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # TODO Bearer notes?
 
@@ -1065,7 +1064,7 @@ class FinVoucherModel(DataModel):
                                    label = T("Status"),
                                    ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -1150,7 +1149,7 @@ class FinVoucherModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # List Fields
         list_fields = ["program_id",

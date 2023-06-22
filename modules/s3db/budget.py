@@ -170,7 +170,6 @@ class BudgetModel(DataModel):
                            requires = IS_IN_SET(status_opts),
                            ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -245,7 +244,7 @@ class BudgetModel(DataModel):
                            represent = amount_represent,
                            requires = IS_FLOAT_AMOUNT(0, 100),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -279,7 +278,7 @@ class BudgetModel(DataModel):
                            label = T("Hazard Pay"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_LOCATION = T("Create Location")
@@ -362,7 +361,7 @@ class BudgetModel(DataModel):
                      #      default=0.00,
                      #     ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_STAFF_TYPE = T("Create Staff Type")
@@ -425,7 +424,7 @@ class BudgetModel(DataModel):
                            label = T("Months"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Configuration
         configure(tablename,
@@ -610,7 +609,7 @@ class BudgetKitModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_KIT = T("Create Kit")
@@ -735,7 +734,7 @@ class BudgetKitModel(DataModel):
                            label = T("Cost per Megabyte"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_ITEM = T("Create Item")
@@ -794,7 +793,7 @@ class BudgetKitModel(DataModel):
                            label = T("Quantity"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.budget_kit_item_onaccept,
@@ -968,7 +967,7 @@ class BudgetBundleModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_BUNDLE = T("Create Bundle")
@@ -1049,7 +1048,7 @@ class BudgetBundleModel(DataModel):
                            label = T("Megabytes per Month"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1093,7 +1092,7 @@ class BudgetBundleModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            label = T("Megabytes per Month"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1135,7 +1134,7 @@ class BudgetBundleModel(DataModel):
                            label = T("Months"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1382,7 +1381,7 @@ class BudgetAllocationModel(DataModel):
                                 label = T("Daily Cost"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = self.budget_allocation_duplicate,
@@ -1498,7 +1497,7 @@ class BudgetMonitoringModel(DataModel):
                                       ),
                           Field.Method("percentage", self.budget_monitoring_percentage),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         #current.response.s3.crud_strings[tablename] = Storage(

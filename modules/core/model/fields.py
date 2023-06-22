@@ -418,7 +418,7 @@ class S3MetaFields:
             Standard meta fields for all tables
 
             Returns:
-                tuple of Fields
+                list of Fields
         """
 
         return (cls.uuid(),

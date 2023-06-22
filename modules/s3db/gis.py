@@ -117,11 +117,13 @@ class GISLocationModel(DataModel):
 
         if settings.get_gis_spatialdb():
             # Add a spatial field
-            # Should we do a test to confirm this? Ideally that would be done only in eden_update_check
-            meta_spatial_fields = (s3_meta_fields() + (Field("the_geom", "geometry()",
-                                                             readable=False, writable=False),))
+            spatial_fields = [Field("the_geom", "geometry()",
+                                    readable=False,
+                                    writable=False,
+                                    ),
+                              ]
         else:
-            meta_spatial_fields = (s3_meta_fields())
+            spatial_fields = []
 
         if current.auth.permission.format == "plain":
             # Popup Maps from Map Popups is poor UX
@@ -272,7 +274,7 @@ class GISLocationModel(DataModel):
                   readable = False,
                   writable = False,
                   ),
-            *meta_spatial_fields,
+            *spatial_fields,
             on_define = lambda table: \
                 [# Doesn't set parent properly when field is defined inline as the table isn't yet in db
                  table._create_references(),
@@ -420,7 +422,7 @@ class GISLocationModel(DataModel):
                             # writable=False,
                             # readable=False),
                         # s3_comments(),
-                        # *s3_meta_fields())
+                        # )
 
         # Pass names back to global scope (s3.*)
         return {"gis_location_id": location_id,
@@ -1256,7 +1258,7 @@ class GISLocationNameModel(DataModel):
                            label = T("Local Name"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("location_id",
@@ -1284,7 +1286,7 @@ class GISLocationNameModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("location_id",
@@ -1340,7 +1342,7 @@ class GISLocationTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("location_id",
@@ -1408,7 +1410,7 @@ class GISLocationGroupModel(DataModel):
                                  ondelete = "CASCADE",
                                  ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         self.add_components(tablename,
                             gis_location_group_member = "location_group_id",
@@ -1427,7 +1429,7 @@ class GISLocationGroupModel(DataModel):
                                  ondelete = "CASCADE",
                                  ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return None
@@ -1496,7 +1498,7 @@ class GISLocationHierarchyModel(DataModel):
                                 default = True),
                           Field("edit_L5", "boolean",
                                 default = True),
-                          *s3_meta_fields())
+                          )
 
         ADD_HIERARCHY = T("Create Location Hierarchy")
         current.response.s3.crud_strings[tablename] = Storage(
@@ -1685,7 +1687,7 @@ class GISConfigModel(DataModel):
                      Field("width", "integer",
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_MARKER = T("Create Marker")
@@ -1780,7 +1782,7 @@ class GISConfigModel(DataModel):
                            requires = IS_IN_SET(["m", "degrees"],
                                                 zero=None),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_PROJECTION = T("Create Projection")
@@ -1961,7 +1963,7 @@ class GISConfigModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Reusable field - used by Events & Scenarios
         represent = S3Represent(lookup=tablename)
@@ -2036,7 +2038,7 @@ class GISConfigModel(DataModel):
         define_table(tablename,
                      config_id(empty = False),
                      super_link("pe_id", "pr_pentity"),
-                     *s3_meta_fields())
+                     )
 
         # Initially will be populated only when a Personal config is created
         # CRUD Strings
@@ -2599,7 +2601,7 @@ class GISLayerEntityModel(DataModel):
                            label = T("Default Base layer?"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Default to the Layer -> Config view
         # since there are many diff layers
@@ -2725,7 +2727,7 @@ class GISLayerEntityModel(DataModel):
                      # http://docs.geoserver.org/stable/en/user/restconfig/rest-config-api.html#styles
                      # Not currently possible to convert between JSON <> XML automatically without losing details
                      #Field("sld", "text"),
-                     *s3_meta_fields())
+                     )
 
         # Reusable field
         #represent = S3Represent(lookup=tablename)
@@ -2977,7 +2979,7 @@ class GISFeatureLayerModel(DataModel):
                           cluster_attribute()(),
                           s3_role_required(),    # Single Role
                           #s3_roles_permitted(), # Multiple Roles (needs implementing in modules/core/gis)
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -3156,7 +3158,7 @@ class GISMapModel(DataModel):
                            widget = S3ColorPickerWidget(),
                            ),
                      gis_opacity()(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # GPS Waypoints
@@ -3172,7 +3174,7 @@ class GISMapModel(DataModel):
         #                   label = T("Category"),
         #                   ),
         #             location_id(),
-        #             *s3_meta_fields())
+        #             )
 
         # ---------------------------------------------------------------------
         # GPS Tracks (stored as 1 record per point)
@@ -3180,7 +3182,7 @@ class GISMapModel(DataModel):
         #define_table(tablename,
         #             location_id(),
         #             #track_id(),        # link to the uploaded file?
-        #             *s3_meta_fields())
+        #             )
 
         # ---------------------------------------------------------------------
         # ArcGIS REST
@@ -3227,7 +3229,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3250,7 +3252,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3267,7 +3269,7 @@ class GISMapModel(DataModel):
                      desc_field()(),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3284,7 +3286,7 @@ class GISMapModel(DataModel):
                      desc_field()(),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3331,7 +3333,7 @@ class GISMapModel(DataModel):
                      cluster_attribute()(),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   create_next = URL(args=["[id]", "style"]),
@@ -3371,7 +3373,7 @@ class GISMapModel(DataModel):
                      gis_refresh()(),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("url",),
@@ -3399,7 +3401,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3446,7 +3448,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3469,7 +3471,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3524,7 +3526,7 @@ class GISMapModel(DataModel):
                      gis_refresh()(),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("url",),
@@ -3551,7 +3553,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3598,7 +3600,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("url1",),
@@ -3629,7 +3631,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3697,7 +3699,7 @@ class GISMapModel(DataModel):
                      #gis_refresh()(),
                      cluster_attribute()(),
                      s3_role_required(), # Single Role
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   create_onaccept = self.gis_layer_shapefile_onaccept,
@@ -3745,7 +3747,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -3830,7 +3832,7 @@ class GISMapModel(DataModel):
                      #Field("editable", "boolean", default=False, label=T("Editable?")),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("url",
@@ -3968,7 +3970,7 @@ class GISMapModel(DataModel):
                      #      ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -4012,7 +4014,7 @@ class GISMapModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = gis_layer_onaccept,
@@ -4038,7 +4040,7 @@ class GISMapModel(DataModel):
                      Field("source",
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Store downloaded KML feeds on the filesystem
         # @ToDo: Migrate to DB instead (using above gis_cache)
@@ -4059,7 +4061,7 @@ class GISMapModel(DataModel):
                                                        "uploads",
                                                        "gis_cache"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return None
@@ -4464,7 +4466,7 @@ class GISThemeModel(DataModel):
                            ),
                      s3_role_required(),       # Single Role
                      #s3_roles_permitted(),    # Multiple Roles (needs implementing in modules/core/gis)
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        super_entity = "gis_layer_entity",
@@ -4517,7 +4519,7 @@ class GISThemeModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Data to Theme Layer"),
@@ -4620,7 +4622,7 @@ class GISPoIModel(DataModel):
                            ),
                      self.gis_marker_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         represent = S3Represent(lookup=tablename, translate=True)
         poi_type_id = S3ReusableField("poi_type_id", "reference %s" % tablename,
@@ -4678,7 +4680,7 @@ class GISPoIModel(DataModel):
                      self.pr_person_id(readable = False,
                                        writable = False,
                                        ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Point of Interest"),
@@ -4917,7 +4919,7 @@ class GISPoIOrganisationGroupModel(DataModel):
                           self.org_group_id(empty = False,
                                             ondelete = "CASCADE",
                                             ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("poi_id",
@@ -4945,7 +4947,7 @@ class GISPoIFeedModel(DataModel):
                           self.gis_location_id(),
                           Field("tablename"),
                           Field("last_update", "datetime"),
-                          *s3_meta_fields())
+                          )
 
         # Pass names back to global scope (s3.*)
         return None

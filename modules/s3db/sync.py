@@ -74,7 +74,6 @@ class SyncConfigModel(DataModel):
                                                     ),
                                               ),
                                 ),
-                          *s3_meta_fields(),
                           on_define = lambda table: \
                                 [table.uuid.set_attributes(
                                     label = "UUID",
@@ -138,6 +137,7 @@ class SyncStatusModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -344,7 +344,7 @@ class SyncRepositoryModel(DataModel):
                                   self.sync_repository_last_pull_time),
                      Field.Method("last_push_time",
                                   self.sync_repository_last_push_time),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_REPOSITORY = T("Create Repository")
@@ -622,7 +622,7 @@ class SyncDatasetModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -692,7 +692,7 @@ class SyncDatasetModel(DataModel):
                                           writable = False,
                                           ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -889,7 +889,7 @@ class SyncLogModel(DataModel):
                           Field("message", "text",
                                 represent = s3_strip_markup,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1143,7 +1143,7 @@ class SyncTaskModel(DataModel):
                                                 ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1195,7 +1195,7 @@ class SyncTaskModel(DataModel):
                            label = T("Filter"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         onaccept = self.sync_resource_filter_onaccept
         configure(tablename,
@@ -1332,7 +1332,7 @@ class SyncScheduleModel(DataModel):
         self.define_table(tablename,
                           self.sync_repository_id(),
                           s3.scheduler_task_id(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(

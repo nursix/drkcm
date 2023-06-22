@@ -38,7 +38,7 @@ class SuperEntityTests(unittest.TestCase):
         # Define master table
         s3db.define_table("setest_master",
                           s3db.super_link("se_id", "setest_super"),
-                          *s3_meta_fields())
+                          )
 
         # Make instance
         s3db.configure("setest_master",
@@ -48,17 +48,17 @@ class SuperEntityTests(unittest.TestCase):
         s3db.define_table("setest_component_cascade",
                           s3db.super_link("se_id", "setest_super",
                                           ondelete="CASCADE"),
-                          *s3_meta_fields())
+                          )
 
         s3db.define_table("setest_component_setnull",
                           s3db.super_link("se_id", "setest_super",
                                           ondelete="SET NULL"),
-                          *s3_meta_fields())
+                          )
 
         s3db.define_table("setest_component_restrict",
                           s3db.super_link("se_id", "setest_super",
                                           ondelete="RESTRICT"),
-                          *s3_meta_fields())
+                          )
 
         current.db.commit()
 

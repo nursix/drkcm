@@ -158,7 +158,7 @@ class BRCaseModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -277,7 +277,7 @@ class BRCaseModel(DataModel):
 
                      # Standard comments and meta fields
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -526,7 +526,7 @@ class BRCaseActivityModel(DataModel):
                            label = T("Is default closure status"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -680,7 +680,7 @@ class BRCaseActivityModel(DataModel):
                            widget = s3_comments_widget,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -846,7 +846,7 @@ class BRCaseActivityModel(DataModel):
                                          ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -895,7 +895,7 @@ class BRCaseActivityModel(DataModel):
                             widget = None,
                             ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1051,7 +1051,7 @@ class BRAppointmentModel(DataModel):
                                          ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1114,7 +1114,7 @@ class BRAppointmentModel(DataModel):
                            represent = represent_option(appointment_status_opts),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1204,7 +1204,7 @@ class BRNeedsModel(DataModel):
                                 writable = False,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # Hierarchy
         if hierarchical_needs:
@@ -1331,7 +1331,7 @@ class BRAssistanceModel(DataModel):
                                      writable = themes_needs,
                                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1376,7 +1376,7 @@ class BRAssistanceModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1440,7 +1440,7 @@ class BRAssistanceModel(DataModel):
                            widget = S3ColorPickerWidget(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -1542,7 +1542,7 @@ class BRAssistanceModel(DataModel):
                                  comment = None,
                                  represent = lambda v: s3_text_represent(v, lines=8),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1715,7 +1715,7 @@ class BRAssistanceModel(DataModel):
                                  comment = None,
                                  represent = lambda v: s3_text_represent(v, lines=8),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.assistance_measure_theme_onaccept,
@@ -2228,7 +2228,7 @@ class BRAssistanceOfferModel(DataModel):
                            represent = represent_option(dict(offer_status)),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -2327,7 +2327,7 @@ class BRAssistanceOfferModel(DataModel):
                                  readable = False,
                                  writable = False,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["offer_id",
@@ -2532,7 +2532,7 @@ class BRLanguageModel(DataModel):
                                                      ),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        orderby = "language",
@@ -2584,7 +2584,7 @@ class BRServiceContactModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -2665,7 +2665,7 @@ class BRServiceContactModel(DataModel):
                            label = T("Email"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -2736,7 +2736,7 @@ class BRNotesModel(DataModel):
                                          ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -2781,7 +2781,7 @@ class BRNotesModel(DataModel):
                                  represent = lambda v: s3_text_represent(v, lines=8),
                                  comment = None,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["id",

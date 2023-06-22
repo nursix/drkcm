@@ -94,7 +94,7 @@ class MemberModel(DataModel):
                      s3_comments(label = T("Description"),
                                  comment = None,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         ADD_MEMBERSHIP_TYPE = T("Create Membership Type")
         crud_strings[tablename] = Storage(
@@ -225,7 +225,7 @@ class MemberModel(DataModel):
                                            ),
                       Field.Method("paid",
                                    self.member_membership_paid),
-                      *s3_meta_fields())
+                      )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Member"),
@@ -585,7 +585,7 @@ class MemberProgrammeModel(DataModel):
         self.define_table(tablename,
                           self.hrm_programme_id(),
                           self.member_membership_id(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

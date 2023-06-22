@@ -169,7 +169,7 @@ class InvWarehouseModel(DataModel):
                                      writable = is_admin if org_dependent_wh_types else False,
                                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_WAREHOUSE_TYPE = T("Create Warehouse Type")
@@ -297,7 +297,7 @@ class InvWarehouseModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -544,7 +544,7 @@ class InventoryModel(DataModel):
                           Field.Method("pack_quantity",
                                        self.supply_item_pack_quantity(tablename=tablename)),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         INV_ITEM = T("Warehouse Stock")
@@ -1174,7 +1174,7 @@ class InventoryTrackingModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Filter Widgets
         filter_widgets = [
@@ -1441,7 +1441,7 @@ class InventoryTrackingModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         inv_recv_crud_strings()
@@ -1634,7 +1634,7 @@ class InventoryTrackingModel(DataModel):
                                #comment = self.pr_person_comment(child="repacked_id")),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1709,7 +1709,7 @@ class InventoryTrackingModel(DataModel):
                                  writable = False,
                                  ),
                      #s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Resource configuration
         configure(tablename,
@@ -1869,7 +1869,6 @@ $.filterOptionsS3({
                                     self.inv_track_item_total_weight(row, received=True),
                                   ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         # CRUD strings
@@ -3949,7 +3948,7 @@ class InventoryAdjustModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        super_entity = "doc_entity",
@@ -4097,7 +4096,7 @@ class InventoryAdjustModel(DataModel):
                                      ),
                      adj_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Reusable Field
         adj_item_id = S3ReusableField("adj_item_id", "reference %s" % tablename,

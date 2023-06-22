@@ -84,7 +84,7 @@ class CRReceptionCenterModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Representation
         type_represent = S3Represent(lookup=tablename)
@@ -198,7 +198,7 @@ class CRReceptionCenterModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -374,7 +374,7 @@ class CRReceptionCenterModel(DataModel):
                            label = T("Occupancy %"),
                            represent = self.occupancy_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Filter Widgets
         filter_widgets = [TextFilter(["facility_id$name",

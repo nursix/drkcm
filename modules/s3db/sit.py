@@ -141,7 +141,7 @@ class SituationModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

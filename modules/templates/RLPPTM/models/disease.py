@@ -111,7 +111,7 @@ class DiseaseDaycareTestingInquiryModel(DataModel):
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 1000)),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Filter Widgets
         filter_widgets = [TextFilter(["organisation_id$name"],

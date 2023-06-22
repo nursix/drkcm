@@ -162,7 +162,7 @@ class TestProviderRequirementsModel(DataModel):
                                 default = False,
                                 represent = flag_represent,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # Table configuration
         self.configure(tablename,
@@ -251,7 +251,7 @@ class TestProviderModel(DataModel):
                            readable = True,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Commission
@@ -308,7 +308,7 @@ class TestProviderModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -348,7 +348,7 @@ class TestProviderModel(DataModel):
                            label = T("Tax ID"),
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -670,7 +670,7 @@ class TestProviderRepresentativeModel(DataModel):
                               writable = False,
                               comment = None,
                               ),
-                          *s3_meta_fields())
+                          )
 
         # Table configuration
         self.configure(tablename,
@@ -817,7 +817,7 @@ class TestStationModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         configure(tablename,
@@ -871,7 +871,7 @@ class TestStationModel(DataModel):
                            represent = s3_text_represent,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["timestmp",

@@ -146,7 +146,7 @@ class OrgOrganisationModel(DataModel):
                            writable = hierarchical_organisation_types,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         type_represent = S3Represent(lookup=tablename, translate=True)
 
@@ -258,7 +258,7 @@ class OrgOrganisationModel(DataModel):
                                ),
                          # Can add Path, Level, L0, L1 if-useful for performance, widgets, etc
                          s3_comments(),
-                         *s3_meta_fields())
+                         )
 
             region_represent = S3Represent(lookup=tablename, translate=True)
 
@@ -336,7 +336,7 @@ class OrgOrganisationModel(DataModel):
                              region_id(),
                              self.gis_country_id(),
                              s3_comments(),
-                             *s3_meta_fields())
+                             )
 
         else:
             region_represent = None
@@ -440,7 +440,7 @@ class OrgOrganisationModel(DataModel):
                      #document_id(), # Better to have multiple Documents on a Tab
                      #Field("privacy", "integer", default=0),
                      #Field("archived", "boolean", default=False),
-                     *s3_meta_fields())
+                     )
 
         crud_fields = ["name",
                        "acronym",
@@ -859,7 +859,7 @@ class OrgOrganisationModel(DataModel):
                      organisation_type_id(empty = False,
                                           ondelete = "CASCADE",
                                           ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   # Whilst S3SQLInlineLink can resolve duplicates automatically, imports cannot
@@ -884,7 +884,7 @@ class OrgOrganisationModel(DataModel):
                      organisation_id(empty = False,
                                      ondelete = "CASCADE",
                                      ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1142,7 +1142,7 @@ class OrgOrganisationNameModel(DataModel):
                                 label = T("Local Acronym"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("organisation_id",
@@ -1179,7 +1179,7 @@ class OrgOrganisationBranchModel(DataModel):
                                           label = T("Branch"),
                                           ondelete = "CASCADE",
                                           ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -1429,7 +1429,7 @@ class OrgOrganisationGroupModel(DataModel):
                                                      )
                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         label = current.deployment_settings.get_org_groups()
@@ -1520,7 +1520,6 @@ class OrgOrganisationGroupModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         crud_strings[tablename] = Storage(
@@ -1560,7 +1559,6 @@ class OrgOrganisationGroupModel(DataModel):
                                               ondelete = "CASCADE",
                                               ),
                      status_id(),
-                     *s3_meta_fields()
                      )
 
         configure(tablename,
@@ -1651,7 +1649,6 @@ class OrgOrganisationGroupPersonModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         crud_strings[tablename] = Storage(
@@ -1692,7 +1689,7 @@ class OrgOrganisationGroupPersonModel(DataModel):
                                        ondelete = "CASCADE",
                                        ),
                      status_id(),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("org_group_id",
@@ -1729,7 +1726,7 @@ class OrgOrganisationGroupTeamModel(DataModel):
                           self.pr_group_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("org_group_id",
@@ -1800,7 +1797,6 @@ class OrgOrganisationLocationModel(DataModel):
                             widget = S3LocationAutocompleteWidget()
                           ),
                           s3_comments(),
-                          *s3_meta_fields()
                           )
 
         # CRUD Strings
@@ -1857,7 +1853,7 @@ class OrgOrganisationOrganisationModel(DataModel):
                                           ),
                           # Add this later if 2 or more usecases need to share this same table within a single template
                           #role_id(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("organisation_id",
@@ -1931,7 +1927,7 @@ class OrgOrganisationResourceModel(DataModel):
                                 label = T("Resource Type"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         ADD_RESOURCE_TYPE = T("Create Resource Type")
@@ -1996,7 +1992,7 @@ class OrgOrganisationResourceModel(DataModel):
                                 requires = IS_INT_IN_RANGE(0, None),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -2113,7 +2109,7 @@ class OrgOrganisationSectorModel(DataModel):
                         widget = S3LocationAutocompleteWidget(),
                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         if current.deployment_settings.get_ui_label_cluster():
@@ -2218,7 +2214,7 @@ class OrgOrganisationSectorModel(DataModel):
         #                    label = T("Abbreviation"),
         #                    requires = IS_LENGTH(64),
         #                    ),
-        #              *s3_meta_fields())
+        #              )
 
         ##CRUD strings
         # if settings.get_ui_label_cluster():
@@ -2280,7 +2276,6 @@ class OrgOrganisationSectorModel(DataModel):
                                          _title="%s|%s" % (T("Lead Organization?"),
                                                            T("If the organization is a lead for this sector."))),
                            ),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -2448,7 +2443,6 @@ class OrgServiceModel(DataModel):
                            writable = hierarchical_service_types,
                            ),
                      s3_comments(),
-                     *s3_meta_fields(),
                      on_define = lambda table: \
                         [table.parent.set_attributes(
                             represent = service_represent,
@@ -2525,7 +2519,6 @@ class OrgServiceModel(DataModel):
         define_table(tablename,
                      service_id(),
                      organisation_id(),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -2561,7 +2554,7 @@ class OrgServiceModel(DataModel):
                                 writable = True,
                                 represent = self.org_site_represent,
                                 ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("site_id",
@@ -2637,7 +2630,7 @@ class OrgServiceModel(DataModel):
                                                 ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -2753,7 +2746,6 @@ class OrgServiceModel(DataModel):
                      service_location_id(),
                      service_id(),
                      #s3_comments(),
-                     *s3_meta_fields()
                      )
 
         configure(tablename,
@@ -2773,7 +2765,6 @@ class OrgServiceModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         # Table configuration
@@ -2819,7 +2810,6 @@ class OrgServiceModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         # Table configuration
@@ -2989,7 +2979,7 @@ class OrgOrganisationTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("organisation_id",
@@ -3022,7 +3012,7 @@ class OrgOrganisationTeamModel(DataModel):
                           self.pr_group_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("organisation_id",
@@ -3094,7 +3084,7 @@ class OrgOrganisationTypeTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("organisation_type_id",
@@ -3756,7 +3746,7 @@ class OrgSiteDetailsModel(DataModel):
                                     readable = last_contacted,
                                     writable = last_contacted,
                                     ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         site_label = settings.get_org_site_label()
@@ -3796,7 +3786,7 @@ class OrgSiteDetailsModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -3856,7 +3846,7 @@ class OrgSiteEventModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deletable = False,
@@ -3887,7 +3877,7 @@ class OrgSiteGroupModel(DataModel):
                           self.org_group_id(empty = False,
                                             ondelete = "CASCADE",
                                             ),
-                          *s3_meta_fields())
+                          )
 
         # Pass names back to global scope (s3.*)
         return None
@@ -3918,7 +3908,7 @@ class OrgSiteNameModel(DataModel):
                                 label = T("Local Name"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("language",
@@ -3952,7 +3942,7 @@ class OrgSiteShiftModel(DataModel):
                           self.super_link("site_id", "org_site"),
                           self.hrm_shift_id(ondelete = "CASCADE"),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         #site_label = current.deployment_settings.get_org_site_label()
@@ -4008,7 +3998,7 @@ class OrgSiteTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("site_id",
@@ -4057,8 +4047,7 @@ class OrgSiteLocationModel(DataModel):
                             represent = S3Represent(lookup="gis_location"),
                             requires = IS_LOCATION(),
                             widget = S3LocationAutocompleteWidget()
-                          ),
-                          *s3_meta_fields()
+                            ),
                           )
 
         # CRUD Strings
@@ -4139,7 +4128,6 @@ class OrgFacilityModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         type_represent = S3Represent(lookup = tablename,
@@ -4292,7 +4280,7 @@ class OrgFacilityModel(DataModel):
                      Field.Method("assets", org_site_has_assets),
                      Field.Method("reqs", org_site_top_req_priority),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -4537,7 +4525,7 @@ class OrgFacilityModel(DataModel):
                                 writable = True,
                                 ),
                      facility_type_id(),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return {"org_facility_type_id": facility_type_id,
@@ -4780,7 +4768,7 @@ class OrgRoomModel(DataModel):
                                             IS_LENGTH(128),
                                             ],
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         ADD_ROOM = T("Create Room")
@@ -4889,7 +4877,7 @@ class OrgOfficeModel(DataModel):
                                      writable = is_admin,
                                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_OFFICE_TYPE = T("Create Office Type")
@@ -5010,7 +4998,7 @@ class OrgOfficeModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_fields = ["name",
                        "code",
@@ -5196,7 +5184,7 @@ class OrgOfficeTypeTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
 
 

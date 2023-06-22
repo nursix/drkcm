@@ -35,10 +35,12 @@ class FieldSelectorResolutionTests(unittest.TestCase):
         # Create a master and a link table for self-reference
         s3db.define_table("test_master",
                           Field("name"),
+                          meta = False,
                           )
         s3db.define_table("test_link",
                           Field("parent", "reference test_master"),
                           Field("child", "reference test_master"),
+                          meta = False,
                           )
         current.db.commit()
 

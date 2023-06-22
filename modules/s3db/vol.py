@@ -80,7 +80,7 @@ class VolunteerModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -151,7 +151,7 @@ class VolunteerActivityModel(DataModel):
                      s3_comments(label = T("Description"),
                                  comment = None,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Activity Type"),
@@ -223,7 +223,7 @@ class VolunteerActivityModel(DataModel):
                      self.org_sector_id(empty = False,
                                         ondelete = "CASCADE",
                                         ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Volunteer Activities
@@ -242,7 +242,7 @@ class VolunteerActivityModel(DataModel):
                                label = T("End Date"),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Activity"),
@@ -332,7 +332,7 @@ $.filterOptionsS3({
                      activity_id(ondelete = "CASCADE",
                                  ),
                      activity_type_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Volunteer Activities <> People link table
@@ -372,7 +372,7 @@ $.filterOptionsS3({
                      #      ),
                      Field.Method("month", vol_activity_hours_month),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Hours"),
@@ -494,7 +494,7 @@ $.filterOptionsS3({
                      Field("activity_hours_id", "reference vol_activity_hours"),
                      activity_type_id(#script = script,
                                       ),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return None
@@ -628,7 +628,7 @@ class VolunteerAwardModel(DataModel):
                      s3_comments(label = T("Description"),
                                  comment = None,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Award"),
@@ -690,7 +690,7 @@ class VolunteerAwardModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Award"),
@@ -768,7 +768,7 @@ class VolunteerClusterModel(DataModel):
                                        IS_LENGTH(255),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Volunteer Cluster Type"),
@@ -814,7 +814,7 @@ class VolunteerClusterModel(DataModel):
                                        IS_LENGTH(255),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Volunteer Cluster"),
@@ -860,7 +860,7 @@ class VolunteerClusterModel(DataModel):
                                        IS_LENGTH(255),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Volunteer Cluster Position"),
@@ -914,7 +914,7 @@ $.filterOptionsS3({
                                     writable=False),
                      vol_cluster_position_id(readable=False,
                                              writable=False),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return {"vol_cluster_type_id": vol_cluster_type_id,

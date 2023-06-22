@@ -95,7 +95,7 @@ class CRShelterModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -260,7 +260,7 @@ class CRShelterModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -568,7 +568,7 @@ class CRShelterPopulationModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -626,7 +626,7 @@ class CRShelterPopulationModel(DataModel):
                                 label = T("Population (Children)"),
                                 writable = population_by_age_group,
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         self.configure(tablename,
@@ -786,7 +786,7 @@ class CRShelterUnitModel(DataModel):
                                 ),
                      Field.Method("cstatus", self.shelter_unit_status),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1013,7 +1013,7 @@ class CRShelterStatusModel(DataModel):
                                 readable = use_blocked_capacity,
                                 ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   insertable = False,
@@ -1063,7 +1063,7 @@ class CRShelterServiceModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_SHELTER_SERVICE = T("Create Shelter Service")
@@ -1111,7 +1111,7 @@ class CRShelterServiceModel(DataModel):
                      service_id(empty = False,
                                 ondelete = "CASCADE",
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1143,7 +1143,7 @@ class CRShelterEnvironmentModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         environment_represent = S3Represent(lookup=tablename, translate=True)
 
@@ -1162,7 +1162,7 @@ class CRShelterEnvironmentModel(DataModel):
                                                 environment_represent,
                                                 ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # -------------------------------------------------------------------------
         return None
@@ -1244,7 +1244,7 @@ class CRShelterInspectionModel(DataModel):
                                            ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table settings
         configure(tablename,
@@ -1290,7 +1290,7 @@ class CRShelterInspectionModel(DataModel):
                      DateField(default = "now",
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Form
         crud_form = S3SQLCustomForm("shelter_unit_id",
@@ -1360,7 +1360,7 @@ class CRShelterInspectionModel(DataModel):
                            default = False,
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["id",
@@ -1427,7 +1427,7 @@ class CRShelterInspectionModel(DataModel):
                            ),
                      self.project_task_id(ondelete = "RESTRICT",
                                           ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -1715,7 +1715,7 @@ class CRShelterRegistrationModel(DataModel):
                                  label = T("Check-out date"),
                                  ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("person_id",
@@ -1752,7 +1752,7 @@ class CRShelterRegistrationModel(DataModel):
                      reg_status("status",
                                 label = T("New Status"),
                                 ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = ["shelter_id",
@@ -2023,7 +2023,7 @@ class CRShelterAllocationModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.shelter_allocation_onaccept,

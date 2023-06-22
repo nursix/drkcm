@@ -115,7 +115,7 @@ class SecurityZonesModel(DataModel):
                            comment = T("e.g. earthquakes or floods"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -140,7 +140,7 @@ class SecurityZonesModel(DataModel):
                            label = T("Name"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_ZONE_TYPE = T("Create Zone Type")
@@ -191,7 +191,7 @@ class SecurityZonesModel(DataModel):
                                                     ),
                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_ZONE = T("Create Zone")
@@ -218,7 +218,7 @@ class SecurityZonesModel(DataModel):
                      Field("name",
                            label=T("Name")),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         ADD_STAFF = T("Add Staff Type")
@@ -277,7 +277,7 @@ class SecurityZonesModel(DataModel):
                                      writable = True,
                                      ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -371,7 +371,7 @@ class SecuritySeizedItemsModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -417,7 +417,7 @@ class SecuritySeizedItemsModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -510,7 +510,7 @@ class SecuritySeizedItemsModel(DataModel):
                                ),
                      s3_comments(represent = s3_text_represent,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # Filter Widgets
         filter_widgets = [TextFilter(["person_id$pe_label",

@@ -135,7 +135,7 @@ class CMSContentModel(DataModel):
                      s3_roles_permitted(readable = False,
                                         writable = False
                                         ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_SERIES = T("Create Series")
@@ -189,7 +189,7 @@ class CMSContentModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_STATUS = T("Create Status")
@@ -315,7 +315,7 @@ class CMSContentModel(DataModel):
                      s3_roles_permitted(readable = False,
                                         writable = False
                                         ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_POST = T("Create Post")
@@ -556,7 +556,7 @@ class CMSContentModel(DataModel):
                            comment = T("If you specify a record then this will be used for that record's profile page"),
                            label = T("Record"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -583,7 +583,7 @@ class CMSContentModel(DataModel):
                      #s3_roles_permitted(readable = False,
                      #                   writable = False
                      #                   ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -622,7 +622,7 @@ class CMSContentModel(DataModel):
         define_table(tablename,
                      post_id(empty = False),
                      tag_id(empty = False),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -660,7 +660,7 @@ class CMSContentModel(DataModel):
                            label = T("Comment"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Resource Configuration
         configure(tablename,
@@ -1087,7 +1087,7 @@ class CMSContentForumModel(DataModel):
                           self.pr_forum_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1111,7 +1111,7 @@ class CMSContentMapModel(DataModel):
         self.define_table(tablename,
                           self.cms_post_id(empty = False),
                           self.super_link("layer_id", "gis_layer_entity"),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1139,7 +1139,7 @@ class CMSContentOrgModel(DataModel):
                           self.org_organisation_id(empty = False,
                                                    ondelete = "CASCADE",
                                                    ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1163,7 +1163,7 @@ class CMSContentOrgGroupModel(DataModel):
         self.define_table(tablename,
                           self.cms_post_id(empty=False),
                           self.org_group_id(empty=False),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1191,7 +1191,7 @@ class CMSContentTeamModel(DataModel):
                           self.pr_group_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1215,7 +1215,7 @@ class CMSContentUserModel(DataModel):
         self.define_table(tablename,
                           self.cms_post_id(empty = False),
                           Field("user_id", current.auth.settings.table_user),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1254,7 +1254,7 @@ class CMSContentRoleModel(DataModel):
                                                                  multiple = True,
                                                                  )),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1352,7 +1352,7 @@ class CMSNewsletterModel(DataModel):
                            ),
                      Field.Method("read_status", self.newsletter_read_status),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1483,7 +1483,7 @@ class CMSNewsletterModel(DataModel):
                            writable = False,
                            represent = s3_text_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["pe_id", "status", "notified_on"]
@@ -1520,7 +1520,7 @@ class CMSNewsletterModel(DataModel):
         define_table(tablename,
                      Field("newsletter_id", "reference cms_newsletter"),
                      self.pr_filter_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Newsletter read confirmation
@@ -1531,7 +1531,7 @@ class CMSNewsletterModel(DataModel):
                      Field("newsletter_id", "reference cms_newsletter"),
                      Field("user_id", "reference auth_user"),
                      s3_datetime(default="now"),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

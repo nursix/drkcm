@@ -57,7 +57,9 @@ class S3HierarchyModel(DataModel):
                                 default = False,
                                 ),
                           Field("hierarchy", "json"),
-                          *S3MetaFields.timestamps())
+                          *S3MetaFields.timestamps(),
+                          meta = False,
+                          )
 
         # ---------------------------------------------------------------------
         # Return global names to s3.*
@@ -110,7 +112,7 @@ class S3DashboardModel(DataModel):
                           Field("active", "boolean",
                                 default = True,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        onaccept = self.dashboard_onaccept,
@@ -185,6 +187,7 @@ class S3ImportJobModel(DataModel):
                           Field("job_id", length=128, unique=True, notnull=True),
                           Field("tablename"),
                           s3_datetime("timestmp", default="now"),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -201,6 +204,7 @@ class S3ImportJobModel(DataModel):
                           Field("ritems", "list:string"),
                           Field("citems", "list:string"),
                           Field("parent", length=128),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -272,7 +276,6 @@ class S3DynamicTablesModel(DataModel):
                      # Link this table to a certain master key
                      self.auth_masterkey_id(),
                      #s3_comments(),
-                     *s3_meta_fields(),
                      on_define = lambda table: \
                                  [self.s3_table_set_before_write(table)]
                      )
@@ -401,7 +404,7 @@ class S3DynamicTablesModel(DataModel):
                                                                  ),
                                                ),
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # Table configuration
         self.configure(tablename,

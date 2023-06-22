@@ -308,7 +308,7 @@ class TransportModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -381,7 +381,7 @@ class TransportModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -573,7 +573,7 @@ class TransportModel(DataModel):
                            represent = represent_option(obsolete_options),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -629,7 +629,7 @@ class TransportModel(DataModel):
                                                 ),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -720,7 +720,7 @@ class TransportModel(DataModel):
                                         zero=messages.SELECT_LOCATION,
                                         )),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Border Control Points
@@ -742,7 +742,7 @@ class TransportModel(DataModel):
                      organisation_id(),
                      location_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(

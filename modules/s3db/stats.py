@@ -321,7 +321,6 @@ class StatsDemographicModel(DataModel):
                                                   instance_types = ("stats_demographic",),
                                                   sort=True)),
                            ),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -393,7 +392,6 @@ class StatsDemographicModel(DataModel):
                      # Link to Source
                      self.stats_source_id(),
                      s3_comments(),
-                     *s3_meta_fields()
                      )
 
         # CRUD Strings
@@ -566,7 +564,6 @@ class StatsDemographicModel(DataModel):
                      #Field("variance", "double",
                      #      label = T("Variance"),
                      #      ),
-                     *s3_meta_fields()
                      )
 
         # ---------------------------------------------------------------------
@@ -1285,7 +1282,7 @@ class StatsImpactModel(DataModel):
                            label = T("Name"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         ADD_IMPACT_TYPE = T("Add Impact Type")
         crud_strings[tablename] = Storage(
@@ -1343,7 +1340,7 @@ class StatsImpactModel(DataModel):
                            ),
                      self.stats_accuracy(default = 3), # Default: Official Estimate
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create=T("Add Impact"),
@@ -1417,7 +1414,7 @@ class StatsPeopleModel(DataModel):
                            label = T("Name"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         ADD_PEOPLE_TYPE = T("Add Type of People")
         crud_strings[tablename] = Storage(
@@ -1479,7 +1476,7 @@ class StatsPeopleModel(DataModel):
                                        widget = S3AddPersonWidget(controller="pr"),
                                        ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create=T("Add People"),
@@ -1537,7 +1534,7 @@ class StatsPeopleModel(DataModel):
                            represent = represent,
                            ),
                      self.org_group_id(empty=False),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return None

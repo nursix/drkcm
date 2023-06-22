@@ -473,7 +473,7 @@ class RequestModel(DataModel):
                           Field.Method("details", req_req_details),
                           Field.Method("drivers", req_req_drivers),
                           s3_comments(comment = ""),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1705,7 +1705,6 @@ class RequestApproverModel(DataModel):
                                                              ))
                            ),
                      s3_comments(),
-                     *s3_meta_fields(),
                      )
 
         # CRUD strings
@@ -1732,7 +1731,6 @@ class RequestApproverModel(DataModel):
                            ),
                      person_id(),
                      #s3_comments(),
-                     *s3_meta_fields(),
                      )
 
         # ---------------------------------------------------------------------
@@ -1823,7 +1821,6 @@ class RequestItemModel(DataModel):
                                   self.supply_item_pack_quantity(tablename=tablename)
                                   ),
                      s3_comments(),
-                     *s3_meta_fields(),
                      on_define = lambda table: \
                         [table.site_id.set_attributes(label = T("Requested From")),
                          ]
@@ -1938,7 +1935,7 @@ $.filterOptionsS3({
         define_table(tablename,
                      req_id(empty = False),
                      self.supply_item_category_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2215,7 +2212,6 @@ class RequestSkillModel(DataModel):
                                       #              _title="%s|%s" % (T("Task Details"),
                                       #                                T("Include any special requirements such as equipment which they need to bring.")))
                                       ),
-                          *s3_meta_fields(),
                           on_define = lambda table: \
                             [table.site_id.set_attributes(label = T("Requested From")),
                              ]
@@ -2446,7 +2442,7 @@ class RequestRecurringModel(DataModel):
         self.define_table(tablename,
                           self.req_req_id(empty=False),
                           s3.scheduler_task_id(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         s3.crud_strings[tablename] = Storage(
@@ -2535,7 +2531,7 @@ class RequestNeedsModel(DataModel):
                                        label = T("Fulfilment Status"),
                                        ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -2656,7 +2652,7 @@ class RequestNeedsActivityModel(DataModel):
                           self.req_need_id(empty = False),
                           self.project_activity_id(empty = False),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -2695,7 +2691,7 @@ class RequestNeedsContactModel(DataModel):
                                             label = T("Contact"),
                                             ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -2792,7 +2788,7 @@ class RequestNeedsDemographicsModel(DataModel):
                                 writable = False,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -2890,7 +2886,7 @@ $.filterOptionsS3({
                           req_status()("status",
                                        label = T("Fulfilment Status"),
                                        ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -2948,7 +2944,7 @@ class RequestNeedsSkillsModel(DataModel):
                           req_status()("status",
                                        label = T("Fulfilment Status"),
                                        ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -3008,7 +3004,7 @@ class RequestNeedsOrganisationModel(DataModel):
                                           empty = False,
                                           ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -3062,7 +3058,7 @@ class RequestNeedsPersonModel(DataModel):
                                             IS_IN_SET(status_opts)),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -3111,7 +3107,7 @@ class RequestNeedsSectorModel(DataModel):
                           self.req_need_id(empty = False),
                           self.org_sector_id(empty = False),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -3154,7 +3150,7 @@ class RequestNeedsSiteModel(DataModel):
                                           represent = self.org_site_represent,
                                           ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary=("need_id",
@@ -3206,7 +3202,7 @@ class RequestNeedsTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("need_id",
@@ -3249,7 +3245,7 @@ class RequestTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("req_id",
@@ -3308,7 +3304,7 @@ class RequestOrderItemModel(DataModel):
                                 ),
                           self.inv_recv_id(label = T("Received Shipment"),
                                            ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        insertable = False,
@@ -3350,7 +3346,7 @@ class RequestProjectModel(DataModel):
         self.define_table(tablename,
                           self.project_project_id(empty = False),
                           self.req_req_id(empty = False),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("project_id",
@@ -3384,7 +3380,7 @@ class RequestTaskModel(DataModel):
                           self.req_req_id(empty=False),
                           #self.req_req_person_id(),
                           #self.req_req_skill_id(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("task_id",
@@ -3423,7 +3419,7 @@ class RequestRequesterCategoryModel(DataModel):
                               empty = False,
                               ondelete = "CASCADE",
                               ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("item_category_id",
@@ -3543,7 +3539,7 @@ class CommitModel(DataModel):
                                 writable = False,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         filter_widgets = [
             TextFilter(["committer_id$first_name",
@@ -3784,7 +3780,7 @@ class CommitItemModel(DataModel):
                           Field.Method("pack_quantity",
                                        self.supply_item_pack_quantity(tablename=tablename)),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -3911,7 +3907,7 @@ class CommitPersonModel(DataModel):
                           # Using HR to use hrm_Assign method (can mark person as allocated onaccept)
                           self.hrm_human_resource_id(),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4000,7 +3996,7 @@ class CommitSkillModel(DataModel):
                                 label = T("Quantity"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(

@@ -253,7 +253,7 @@ class AssetModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -476,7 +476,7 @@ class AssetModel(DataModel):
                      location_id(readable = False,
                                  writable = False),
                      s3_comments(comment = None),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # Asset Log
@@ -588,7 +588,7 @@ $.filterOptionsS3({
                                comment = self.pr_person_comment(child="by_person_id"),
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -851,7 +851,7 @@ class AssetHRModel(DataModel):
                                                      ondelete = "CASCADE",
                                                      ),
                           #s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -880,7 +880,7 @@ class AssetTeamModel(DataModel):
                                            empty = False,
                                            ),
                           #s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -915,7 +915,7 @@ class AssetTelephoneModel(DataModel):
                           #      label = T("Unit Cost"),
                           #      ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         #--------------------------------------------------------------------------
         # Telephone Usage Costs
@@ -948,7 +948,7 @@ class AssetTelephoneModel(DataModel):
                           #      ),
                           #s3_currency(),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

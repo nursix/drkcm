@@ -2376,7 +2376,7 @@ def layer_shapefile():
                 if settings.get_gis_spatialdb():
                     # Add a spatial field
                     append(Field("the_geom", "geometry()"))
-                s3db.define_table(_tablename, *Fields)
+                s3db.define_table(_tablename, *Fields, meta=False)
                 new_arg = _tablename[4:]
                 extension = test[4:]
                 if extension:

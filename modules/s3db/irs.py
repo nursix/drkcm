@@ -213,7 +213,7 @@ class IRSModel(DataModel):
                                 ),
                            represent = lambda opt: \
                                        irs_incident_type_opts.get(opt, opt)),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = ["code"],
@@ -337,7 +337,7 @@ class IRSModel(DataModel):
                                        T("Yes"))[closed == True]
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -500,7 +500,7 @@ class IRSModel(DataModel):
                      ireport_id(),
                      self.pr_person_id(),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Return model-global names to response.s3
@@ -931,7 +931,7 @@ class IRSResponseModel(DataModel):
                                  writable = msg_enabled,
                                  readable = msg_enabled
                                  ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields=["id",
@@ -980,7 +980,7 @@ class IRSResponseModel(DataModel):
                      Field.Method("minutes",
                                   self.irs_ireport_vehicle_minutes),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename, extra_fields = ["datetime"])
 
@@ -1014,7 +1014,7 @@ class IRSResponseModel(DataModel):
                            # @ToDo: Close all assignments when Incident closed
                            readable=False,
                            writable=False),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Return model-global names to s3db.*

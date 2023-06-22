@@ -256,7 +256,7 @@ class HospitalDataModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_HOSPITAL = T("Create Hospital")
@@ -627,7 +627,7 @@ class HospitalDataModel(DataModel):
                      Field("access_status", "text",
                            label = T("Road Conditions")),
 
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -675,7 +675,7 @@ class HospitalDataModel(DataModel):
                      Field("website",
                            label = T("Website"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -749,7 +749,7 @@ class HospitalDataModel(DataModel):
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Field configuration
         # CRUD Strings
@@ -852,7 +852,7 @@ class HospitalDataModel(DataModel):
                            default = False,
                            label = T("Obstetrics/Gynecology"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -884,7 +884,7 @@ class HospitalDataModel(DataModel):
                      Field("description"),
                      Field("quantity"),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1085,7 +1085,6 @@ class HospitalCTCModel(DataModel):
                            label = T("Current problems, details"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields(),
                      on_define = lambda table: \
                          [table.modified_on.set_attributes(label = T("Last updated on"),
                                                            readable = True
@@ -1181,7 +1180,7 @@ class HospitalActivityReportModel(DataModel):
                           Field("comment", length=128,
                                 requires = IS_LENGTH(128),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(

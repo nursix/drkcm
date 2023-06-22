@@ -40,6 +40,7 @@ from ..tools import IS_ONE_OF
 from ..ui import S3ScriptItem
 
 from .dynamic import DynamicTableModel, DYNAMIC_PREFIX
+from .fields import S3MetaFields
 
 DEFAULT = lambda: None
 MODULE_TYPE = type(sys)
@@ -452,16 +453,21 @@ class DataModel:
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def define_table(tablename, *fields, **args):
+    def define_table(tablename, *fields, meta=True, **args):
         """
-            Same as db.define_table except that it does not repeat
-            a table definition if the table is already defined.
+            Defines a table like db.define_table, but does not repeat
+            a table definition if the table is already defined
+
+            Args:
+                meta: add all standard meta-fields to the table
         """
 
         db = current.db
         if hasattr(db, tablename):
             table = getattr(db, tablename)
         else:
+            if meta:
+                fields = fields + S3MetaFields.all_meta_fields()
             table = db.define_table(tablename, *fields, **args)
         return table
 

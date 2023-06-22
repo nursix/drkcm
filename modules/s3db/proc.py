@@ -102,7 +102,7 @@ class PROCProcurementPlansModel(DataModel):
                            ),
                      # @ToDo: Add estimated shipping costs
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -172,7 +172,7 @@ class PROCProcurementPlansModel(DataModel):
                      #Field.Method("pack_quantity",
                      #             self.supply_item_pack_quantity(tablename=tablename)),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -314,7 +314,7 @@ class PROCPurchaseOrdersModel(DataModel):
                                      ),
                      DateField(default = "now"),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -390,7 +390,7 @@ class PROCPurchaseOrdersModel(DataModel):
                      #Field.Method("pack_quantity",
                      #             self.supply_item_pack_quantity(tablename=tablename)),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -459,7 +459,7 @@ class PROCPurchaseOrdersModel(DataModel):
                            label = T("Value"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("order_id",

@@ -138,7 +138,7 @@ class EventModel(DataModel):
                            writable = hierarchical_event_types,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         type_represent = S3Represent(lookup=tablename, translate=True)
 
@@ -282,7 +282,7 @@ class EventModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         if disaster:
@@ -955,7 +955,7 @@ class EventLocationModel(DataModel):
                             #                      tooltip = AUTOCOMPLETE_HELP,
                             #                      ),
                             ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -994,7 +994,7 @@ class EventNameModel(DataModel):
                                 label = T("Local Name"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -1043,7 +1043,7 @@ class EventTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -1179,7 +1179,7 @@ class EventIncidentModel(DataModel):
                                       widget = s3_richtext_widget,
                                       ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         if ticket:
             label = T("Ticket")
@@ -2111,7 +2111,7 @@ class EventIncidentReportModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Create Incident Report"),
@@ -2235,7 +2235,7 @@ class EventIncidentReportModel(DataModel):
                      self.event_incident_id(empty = False,
                                             ondelete = "CASCADE",
                                             ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("incident_report_id",
@@ -2271,7 +2271,7 @@ class EventActivityModel(DataModel):
                           #self.event_incident_id(ondelete = "CASCADE"),
                           self.project_activity_id(#ondelete = "CASCADE", # default anyway
                                                    ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -2307,7 +2307,7 @@ class EventRequestModel(DataModel):
                           self.event_incident_id(ondelete = "CASCADE"),
                           self.req_req_id(#ondelete = "CASCADE", # default anyway
                                           ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -2413,7 +2413,7 @@ class EventResourceModel(DataModel):
                           # @ToDo: Deprecate once we start using S3Track
                           s3_datetime(default = "now"),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -2527,7 +2527,7 @@ class EventIncidentReportOrganisationGroupModel(DataModel):
                                                      ),
                                 ),
                           self.org_group_id(empty=False),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("incident_report_id",
@@ -2574,7 +2574,6 @@ class EventIncidentLogModel(DataModel):
                                           comment = T("You can send an SMS notification to a Person or Organization On-Duty Number"),
                                           ),
                           s3_comments(),
-                          *s3_meta_fields(),
                           on_define = lambda table: \
                             [table.created_by.set_attributes(represent = self.auth_UserRepresent(show_email = False,
                                                                                                  show_link = False)),
@@ -2678,7 +2677,7 @@ class EventIncidentTypeModel(DataModel):
                                 writable = hierarchical_incident_types,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         type_represent = S3Represent(lookup=tablename, translate=True)
 
@@ -2794,7 +2793,7 @@ class EventIncidentTypeTagModel(DataModel):
                           Field("tag", label=T("Key")),
                           Field("value", label=T("Value")),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("incident_type_id",
@@ -2852,7 +2851,7 @@ class EventAlertModel(DataModel):
                            ),
                      # Link to the Message once sent
                      self.msg_message_id(readable = False),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -2891,7 +2890,7 @@ class EventAlertModel(DataModel):
                      alert_id(),
                      self.pr_person_id(empty = False,
                                        label = T("Recipient")),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3002,8 +3001,7 @@ class EventAssetModel(DataModel):
                                       widget = "date",
                                       ),
                           s3_comments(),
-
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Asset"),
@@ -3159,7 +3157,7 @@ class EventBookmarkModel(DataModel):
                           Field("user_id", auth.settings.table_user,
                                 default = auth.user.id if auth.user else None,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -3217,7 +3215,7 @@ class EventCMSModel(DataModel):
                      post_id(empty = False,
                              ondelete = "CASCADE",
                              ),
-                     *s3_meta_fields())
+                     )
 
         #current.response.s3.crud_strings[tablename] = Storage(
         #    label_create = T("Tag Post"),
@@ -3251,7 +3249,7 @@ class EventCMSModel(DataModel):
                      self.event_incident_type_id(empty = False,
                                                  ondelete = "CASCADE",
                                                  ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("post_id",
@@ -3292,7 +3290,7 @@ class EventCMSTagModel(DataModel):
                           self.cms_tag_id(empty = False,
                                           ondelete = "CASCADE",
                                           ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -3337,7 +3335,7 @@ class EventExpenseModel(DataModel):
                           self.fin_expense_id(empty = False,
                                               ondelete = "CASCADE",
                                               ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        context = {"incident": "incident_id",
@@ -3377,7 +3375,7 @@ class EventForumModel(DataModel):
                           self.pr_forum_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          *s3_meta_fields())
+                          )
 
         #current.response.s3.crud_strings[tablename] = Storage(
         #    label_create = T("Share Incident"), # or Event
@@ -3511,7 +3509,7 @@ class EventHRModel(DataModel):
                                       widget = "date",
                                       ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Assign Human Resource"),
@@ -3691,7 +3689,7 @@ class EventTeamModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         CREATE_STATUS = T("Create Group Status")
@@ -3741,7 +3739,7 @@ class EventTeamModel(DataModel):
                                       widget = None,
                                       ),
                      status_id(),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Assign Team"),
@@ -3801,7 +3799,7 @@ class EventImpactModel(DataModel):
                           self.stats_impact_id(empty = False,
                                                ondelete = "CASCADE",
                                                ),
-                          *s3_meta_fields())
+                          )
 
         # Table configuration
         self.configure(tablename,
@@ -3853,7 +3851,7 @@ class EventMapModel(DataModel):
                           self.gis_config_id(empty = False,
                                              ondelete = "CASCADE",
                                              ),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Create Map Profile"),
@@ -3906,7 +3904,7 @@ class EventNeedModel(DataModel):
                           self.req_need_id(empty = False,
                                            ondelete = "CASCADE",
                                            ),
-                          *s3_meta_fields())
+                          )
 
         # Table configuration
         self.configure(tablename,
@@ -3981,7 +3979,7 @@ class EventOrganisationModel(DataModel):
                                 ),
                           # @ToDo: Role?
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Organization"),
@@ -4031,7 +4029,7 @@ class EventProjectModel(DataModel):
                           #self.event_incident_id(ondelete = "CASCADE"),
                           self.project_project_id(#ondelete = "CASCADE", # default anyway
                                                   ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("event_id",
@@ -4085,7 +4083,7 @@ class EventScenarioModel(DataModel):
                                       widget = s3_richtext_widget,
                                       ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4247,8 +4245,7 @@ class EventScenarioAssetModel(DataModel):
                           #            widget = "date",
                           #            ),
                           s3_comments(),
-
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Add Asset"),
@@ -4347,7 +4344,7 @@ class EventScenarioHRModel(DataModel):
                           #            widget = "date",
                           #            ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Assign Human Resource"),
@@ -4399,7 +4396,7 @@ class EventScenarioOrganisationModel(DataModel):
                                                    empty = False,
                                                    ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Assign Organization"),
@@ -4451,7 +4448,7 @@ class EventScenarioTaskModel(DataModel):
                           self.project_task_id(empty = False,
                                                ondelete = "CASCADE",
                                                ),
-                          *s3_meta_fields())
+                          )
 
         # Not used as we actuate = replace, although the
         # msg_list_empty is used by the ActionPlan
@@ -4542,7 +4539,7 @@ class EventSiteModel(DataModel):
                                        status_opts.get(opt, current.messages.UNKNOWN_OPT),
                                 requires = IS_IN_SET(status_opts),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Assign Facility"),
@@ -4623,7 +4620,6 @@ class EventShelterModel(DataModel):
                           self.cr_shelter_id(empty = False,
                                              ondelete = "CASCADE",
                                              ),
-                          *s3_meta_fields()
                           )
 
         function = current.request.function
@@ -4861,7 +4857,7 @@ class EventSitRepModel(DataModel):
                           s3_comments(#readable = not sitrep_edxl,
                                       #writable = not sitrep_edxl,
                                       ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -5009,7 +5005,7 @@ class EventTaskModel(DataModel):
                           self.project_task_id(empty = False,
                                                ondelete = "CASCADE",
                                                ),
-                          *s3_meta_fields())
+                          )
 
         # Not used as we actuate = replace, although the
         # msg_list_empty is used by the ActionPlan

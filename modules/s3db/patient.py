@@ -92,7 +92,7 @@ class PatientModel(DataModel):
                                     label = T("Expected Return Home"),
                                     ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -168,7 +168,7 @@ class PatientModel(DataModel):
                                     widget = S3AddPersonWidget(),
                                     ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         ADD_RELATIVE = T("New Relative")
@@ -209,7 +209,7 @@ class PatientModel(DataModel):
                                 requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD strings
         crud_strings[tablename] = Storage(

@@ -568,7 +568,7 @@ $.filterOptionsS3({
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -753,7 +753,7 @@ $.filterOptionsS3({
                            requires = IS_NOT_EMPTY(),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1280,7 +1280,7 @@ $.filterOptionsS3({
                      #                                        ),
                      #                    ),
                      #      ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1398,7 +1398,7 @@ $.filterOptionsS3({
                            label = T("Mobile"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -1863,7 +1863,7 @@ class CAPAreaModel(DataModel):
                      #                                     ),
                      #                 ),
                      #   ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1974,7 +1974,7 @@ class CAPAreaModel(DataModel):
                                                     show_postcode = False,
                                                     ),
                         ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2012,7 +2012,7 @@ class CAPAreaModel(DataModel):
                            label = T("Local Name"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2058,7 +2058,7 @@ class CAPAreaModel(DataModel):
                            label = T("Value"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2429,7 +2429,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                                                            ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Form
         crud_form = S3SQLCustomForm("alert_id",
@@ -2685,7 +2685,7 @@ class CAPWarningPriorityModel(DataModel):
                                       readable = False,
                                       writable = False,
                                       ),
-                          *s3_meta_fields())
+                          )
 
         # List Fields
         list_fields = ["event_type_id",
@@ -3030,7 +3030,7 @@ class CAPHistoryModel(DataModel):
                      s3_datetime("approved_on",
                                  readable = False,
                                  ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         add_components(tablename,
@@ -3326,7 +3326,7 @@ class CAPHistoryModel(DataModel):
                      #                                        ),
                      #                    ),
                      #      ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         add_components(tablename,
@@ -3435,7 +3435,7 @@ class CAPHistoryModel(DataModel):
                            label = T("Mobile"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -3477,7 +3477,7 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         add_components(tablename,
@@ -3564,7 +3564,7 @@ class CAPHistoryModel(DataModel):
                                       ),
                      area_history_id(),
                      Field("location_wkt", "text"),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -3598,7 +3598,7 @@ class CAPHistoryModel(DataModel):
                            label = T("Value"),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -3690,7 +3690,7 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Form
         crud_form = S3SQLCustomForm("alert_history_id",
@@ -3796,7 +3796,7 @@ class CAPAlertingAuthorityModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -3881,7 +3881,7 @@ class CAPAlertingAuthorityModel(DataModel):
                            label = T("CAP Feed URL"),
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Forecasts URL for CAP Alerting Authority
@@ -3893,7 +3893,7 @@ class CAPAlertingAuthorityModel(DataModel):
                            label = T("Forecast URL"),
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -3928,7 +3928,7 @@ class CAPMessageModel(DataModel):
                           self.msg_message_id(empty = False,
                                               ondelete = "CASCADE",
                                               ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

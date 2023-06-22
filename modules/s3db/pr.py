@@ -320,7 +320,7 @@ class PRPersonEntityModel(DataModel):
         define_table(tablename,
                      super_link("pe_id", "pr_pentity"),
                      Field("user_id", auth_settings.table_user),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Role (Affiliates Group)
@@ -370,7 +370,7 @@ class PRPersonEntityModel(DataModel):
                             readable = False,
                             writable = False,
                             ),
-                      *s3_meta_fields())
+                      )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -419,7 +419,7 @@ class PRPersonEntityModel(DataModel):
                                 represent = pr_pentity_represent,
                                 empty = False,
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -869,7 +869,7 @@ class PRPersonModel(DataModel):
             Field.Method("age", self.pr_person_age),
             Field.Method("age_group", self.pr_person_age_group),
             s3_comments(),
-            *s3_meta_fields())
+            )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -2168,7 +2168,7 @@ class PRGroupModel(DataModel):
                            requires = IS_LENGTH(64),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         CREATE_STATUS = T("Create Group Status")
@@ -2267,7 +2267,7 @@ class PRGroupModel(DataModel):
                                writable = False,
                                ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -2430,7 +2430,7 @@ class PRGroupModel(DataModel):
                            requires = IS_IN_SET(pr_group_types, zero=None),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         CREATE_ROLE = T("Create Group Member Role")
@@ -2499,7 +2499,7 @@ class PRGroupModel(DataModel):
                                        (group_head and [T("yes")] or [""])[0]
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         function = current.request.function
@@ -2899,7 +2899,7 @@ class PRGroupTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           #s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("group_id", "tag"),
@@ -2962,7 +2962,7 @@ class PRForumModel(DataModel):
                            requires = IS_IN_SET(pr_forum_types, zero=None),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3057,7 +3057,7 @@ class PRForumModel(DataModel):
                      #        ondelete = "SET NULL",
                      #        ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         function = current.request.function
@@ -3330,7 +3330,7 @@ class PRAddressModel(DataModel):
                                 writable = False,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         s3.crud_strings[tablename] = Storage(
@@ -3623,7 +3623,7 @@ class PRContactModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3694,7 +3694,7 @@ class PRContactModel(DataModel):
                            writable = False,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3747,7 +3747,7 @@ class PRContactModel(DataModel):
                            requires = IS_EMPTY_OR(IS_EMAIL()),
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3895,8 +3895,6 @@ class PRImageModel(DataModel):
                                                                         ),
                                                     ),
                                       ),
-                          *s3_meta_fields(),
-
                           # Image-validator needs the Table instance
                           # => set it on-define to allow the table to be lazy
                           on_define = lambda table: [
@@ -4115,7 +4113,7 @@ class PRAvailabilityModel(DataModel):
                                                 sort = False,
                                                 ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
@@ -4150,7 +4148,7 @@ class PRAvailabilityModel(DataModel):
                      Field("end_time", "time",
                            #widget =
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
@@ -4176,7 +4174,7 @@ class PRAvailabilityModel(DataModel):
                            ),
                      date_formula_id(),
                      time_formula_id(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
@@ -4208,7 +4206,7 @@ class PRAvailabilityModel(DataModel):
                                ondelete = "CASCADE",
                                ),
                      slot_id(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("person_id", "slot_id")),
@@ -4288,7 +4286,7 @@ class PRAvailabilityModel(DataModel):
                            writable = options_readable,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   # @todo: adapt deduplicator once we allow multiple
@@ -4315,7 +4313,7 @@ class PRAvailabilityModel(DataModel):
         define_table(tablename,
                      Field("availability_id", "reference pr_person_availability"),
                      slot_id(),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("availability_id", "slot_id")),
@@ -4371,7 +4369,7 @@ class PRAvailabilityModel(DataModel):
                            ),
                      Field("end_time", "time",
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Availability on sites (=link person<>site)
@@ -4380,7 +4378,7 @@ class PRAvailabilityModel(DataModel):
         define_table(tablename,
                      self.pr_person_id(),
                      self.org_site_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4518,7 +4516,7 @@ class PRUnavailabilityModel(DataModel):
                                       set_max = "#pr_unavailability_start_date",
                                       ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        organize = {"start": "start_date",
@@ -4617,7 +4615,7 @@ class PRDescriptionModel(DataModel):
                            writable = False,
                            ),
                      self.gis_location_id(label = T("Last known location")),
-                     *s3_meta_fields())
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -4912,7 +4910,7 @@ class PRDescriptionModel(DataModel):
                            ),
 
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
             #self.configure(tablename,
             #               context = {"person": "pe_id",
@@ -5029,7 +5027,7 @@ class PREducationModel(DataModel):
                                               writable = is_admin,
                                               ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_EDUCATION_LEVEL = T("Add Education Level")
@@ -5126,7 +5124,7 @@ class PREducationModel(DataModel):
                            represent = s3_yes_no_represent,
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -5257,7 +5255,7 @@ class PRIdentityModel(DataModel):
                                                             "uploads"),
                                ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -5339,7 +5337,7 @@ class PRLanguageModel(DataModel):
                                 requires = IS_IN_SET(fluency_opts),
                                 ),
                           #s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -5394,7 +5392,7 @@ class PROccupationModel(DataModel):
                                        ],
                            ),
                      s3_comments(),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -5443,7 +5441,7 @@ class PROccupationModel(DataModel):
                                         ),
                      self.pr_person_id(ondelete = "CASCADE",
                                        ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -5605,7 +5603,7 @@ class PRPersonDetailsModel(DataModel):
                                                      zero=None,
                                                      ),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
@@ -5657,7 +5655,7 @@ class PRPersonTagModel(DataModel):
                                 label = T("Value"),
                                 ),
                           #s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("person_id", "tag"),
@@ -5710,7 +5708,8 @@ class PRImageLibraryModel(DataModel):
                           Field("height", "integer"),
                           # New actual file dimensions
                           Field("actual_width", "integer"),
-                          Field("actual_height", "integer")
+                          Field("actual_height", "integer"),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -5786,7 +5785,7 @@ class PRSavedFilterModel(DataModel):
                                 writable = False,
                                 ),
                           s3_comments(),
-                          *s3_meta_fields())
+                          )
 
         represent = S3Represent(lookup=tablename, fields=["title"])
         filter_id = S3ReusableField("filter_id", "reference %s" % tablename,
