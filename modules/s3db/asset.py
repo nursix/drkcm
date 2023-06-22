@@ -224,9 +224,9 @@ class AssetModel(DataModel):
                                      label = T("Supplier/Donor"),
                                      ondelete = "SET NULL",
                                      ),
-                     s3_date("purchase_date",
-                             label = T("Purchase Date"),
-                             ),
+                     DateField("purchase_date",
+                               label = T("Purchase Date"),
+                               ),
                      Field("purchase_price", "double",
                            #default = 0.00,
                            label = T("Purchase Price"),
@@ -463,9 +463,9 @@ class AssetModel(DataModel):
                                      label = T("Supplier/Donor"),
                                      ondelete = "SET NULL",
                                      ),
-                     s3_date("purchase_date",
-                             label = T("Purchase Date"),
-                             ),
+                     DateField("purchase_date",
+                               label = T("Purchase Date"),
+                               ),
                      Field("purchase_price", "double",
                            #default=0.00,
                            represent=lambda v, row=None: \
@@ -925,13 +925,16 @@ class AssetTelephoneModel(DataModel):
         tablename = "asset_telephone_usage"
         self.define_table(tablename,
                           self.asset_asset_id(empty = False),
-                          s3_date(label = T("Start Date")),
+                          DateField(label = T("Start Date"),
+                                    set_max = "#asset_telephone_usage_end_date",
+                                    ),
                           # @ToDo: Validation to ensure not before Start Date
-                          s3_date("end_date",
-                                  label = T("End Date"),
-                                  start_field = "asset_telephone_usage_date",
-                                  default_interval = 1,
-                                  ),
+                          DateField("end_date",
+                                    label = T("End Date"),
+                                    set_min = "#asset_telephone_usage_date",
+                                    #start_field = "asset_telephone_usage_date",
+                                    #default_interval = 1,
+                                    ),
                           Field("units_used", "double", # 'usage' is a reserved word in MySQL
                                 label = T("Usage"),
                                 ),
@@ -993,7 +996,6 @@ def asset_log_prep(r):
 
     T = current.T
     db = current.db
-    request = current.request
 
     table = db.asset_log
 
@@ -1114,8 +1116,6 @@ def asset_rheader(r):
             s3db = current.s3db
             s3 = current.response.s3
 
-            NONE = current.messages["NONE"]
-
             if record.type == ASSET_TYPE_TELEPHONE:
                 tabs = [(T("Asset Details"), None, {"native": True}),
                         (T("Telephone Details"), "telephone"),
@@ -1231,7 +1231,6 @@ def asset_rheader(r):
 def asset_controller():
     """ RESTful CRUD controller """
 
-    s3db = current.s3db
     s3 = current.response.s3
 
     # Pre-process
@@ -1255,33 +1254,34 @@ def asset_controller():
         current.response.s3.asset_import = True
         return
         # @ToDo: get this working
-        ctable = s3db.pr_contact
-        ptable = s3db.pr_person
-
-        elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
-        persons = {}
-        for element in elements:
-            email = element.text
-            if email in persons:
-                # Replace email with uuid
-                element.text = persons[email]["uuid"]
-                # Don't check again
-                continue
-
-            query = (ctable.value == email) & \
-                    (ctable.pe_id == ptable.pe_id)
-            person = db(query).select(ptable.uuid,
-                                      limitby=(0, 1)
-                                      ).first()
-            if person:
-                # Replace email with uuid
-                uuid = person.uuid
-            else:
-                # Blank it
-                uuid = ""
-            element.text = uuid
-            # Store in case we get called again with same value
-            persons[email] = {"uuid": uuid}
+        #s3db = current.s3db
+        #ctable = s3db.pr_contact
+        #ptable = s3db.pr_person
+        #
+        #elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
+        #persons = {}
+        #for element in elements:
+        #    email = element.text
+        #    if email in persons:
+        #        # Replace email with uuid
+        #        element.text = persons[email]["uuid"]
+        #        # Don't check again
+        #        continue
+        #
+        #    query = (ctable.value == email) & \
+        #            (ctable.pe_id == ptable.pe_id)
+        #    person = db(query).select(ptable.uuid,
+        #                              limitby=(0, 1)
+        #                              ).first()
+        #    if person:
+        #        # Replace email with uuid
+        #        uuid = person.uuid
+        #    else:
+        #        # Blank it
+        #        uuid = ""
+        #    element.text = uuid
+        #    # Store in case we get called again with same value
+        #    persons[email] = {"uuid": uuid}
 
     s3.import_prep = import_prep
 

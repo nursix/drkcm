@@ -85,12 +85,12 @@ class PatientModel(DataModel):
                                 label = T("Injuries"),
                                 widget = s3_comments_widget,
                                 ),
-                          s3_date("treatment_date",
-                                  label = T("Date of Treatment"),
-                                  ),
-                          s3_date("return_date",
-                                  label = T("Expected Return Home"),
-                                  ),
+                          DateField("treatment_date",
+                                    label = T("Date of Treatment"),
+                                    ),
+                          DateField("return_date",
+                                    label = T("Expected Return Home"),
+                                    ),
                           s3_comments(),
                           *s3_meta_fields())
 

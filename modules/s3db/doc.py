@@ -167,9 +167,9 @@ class DocumentModel(DataModel):
                                                          )),
                            ),
 
-                     s3_date(label = T("Date Published"),
-                             default = "now",
-                             ),
+                     DateField(label = T("Date Published"),
+                               default = "now",
+                               ),
                      person_id(
                         # Enable when-required
                         label = T("Author"),
@@ -314,8 +314,8 @@ class DocumentModel(DataModel):
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
 
-                     s3_date(label = T("Date Taken"),
-                             ),
+                     DateField(label = T("Date Taken"),
+                               ),
                      person_id(label = T("Author"),
                                ),
 

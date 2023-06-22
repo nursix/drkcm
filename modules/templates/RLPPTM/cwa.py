@@ -16,8 +16,8 @@ import uuid
 from gluon import current, Field, IS_EMPTY_OR, IS_IN_SET, SQLFORM, URL, \
                   BUTTON, DIV, FORM, H5, INPUT, TABLE, TD, TR
 
-from core import ConsentTracking, IS_ONE_OF, CustomController, CRUDMethod, \
-                 s3_date, s3_mark_required, s3_qrcode_represent, s3_str, \
+from core import ConsentTracking, DateField, IS_ONE_OF, CustomController, CRUDMethod, \
+                 s3_mark_required, s3_qrcode_represent, s3_str, \
                  JSONERRORS
 
 from .dcc import DCC
@@ -146,10 +146,10 @@ class TestResultRegistration(CRUDMethod):
                       Field("first_name",
                             label = T("First Name"),
                             ),
-                      s3_date("date_of_birth",
-                              label = T("Date of Birth"),
-                              month_selector = True,
-                              ),
+                      DateField("date_of_birth",
+                                label = T("Date of Birth"),
+                                month_selector = True,
+                                ),
                       Field("dcc_option", "boolean",
                             default = False,
                             label = T("Provide Digital %(title)s Certificate") % {"title": "COVID-19 Test"},

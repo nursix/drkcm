@@ -85,12 +85,12 @@ class PROCProcurementPlansModel(DataModel):
                                      #                                messages.AUTOCOMPLETE_HELP)),
                                      represent = self.org_site_represent,
                                      ),
-                     s3_date("order_date",
-                             label = T("Order Date")
-                             ),
-                     s3_date("eta",
-                             label = T("Date Expected"),
-                             ),
+                     DateField("order_date",
+                               label = T("Order Date")
+                               ),
+                     DateField("eta",
+                               label = T("Date Expected"),
+                               ),
                      # @ToDo: Do we want more than 1 supplier per Plan?
                      # @ToDo: Filter to orgs of type 'supplier'
                      self.org_organisation_id(label = T("Supplier")),
@@ -312,7 +312,7 @@ class PROCPurchaseOrdersModel(DataModel):
                                      #                                messages.AUTOCOMPLETE_HELP)),
                                      represent = self.org_site_represent,
                                      ),
-                     s3_date(default = "now"),
+                     DateField(default = "now"),
                      s3_comments(),
                      *s3_meta_fields())
 

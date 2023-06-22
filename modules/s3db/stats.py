@@ -169,11 +169,11 @@ class StatsDataModel(DataModel):
                            # IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
                      # @ToDo: This will need to be a datetime for some usecases
-                     s3_date(label = T("Start Date"),
-                             ),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             ),
+                     DateField(label = T("Start Date"),
+                               ),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               ),
                      accuracy(),
                      )
 
@@ -378,7 +378,7 @@ class StatsDemographicModel(DataModel):
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_date(empty = False),
+                     DateField(empty = False),
                      Field("end_date", "date",
                            # Just used for the year() VF
                            readable = False,
@@ -523,12 +523,12 @@ class StatsDemographicModel(DataModel):
                                                 current.messages.UNKNOWN_OPT),
                            requires = IS_IN_SET(aggregate_types),
                            ),
-                     s3_date("date",
-                             label = T("Start Date"),
-                             ),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             ),
+                     DateField("date",
+                               label = T("Start Date"),
+                               ),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               ),
                      # Sum is used by Vulnerability as a fallback if we have no data at this level
                      Field("sum", "double",
                            label = T("Sum"),
@@ -1319,7 +1319,7 @@ class StatsImpactModel(DataModel):
                      # Instance (link to Photos/Reports)
                      super_link("doc_id", "doc_entity"),
                      self.gis_location_id(widget = S3LocationSelector(show_map=False)),
-                     s3_date(),
+                     DateField(),
                      # This is a component, so needs to be a super_link
                      # - can't override field name, ondelete or requires
                      super_link("parameter_id", "stats_parameter",

@@ -461,10 +461,10 @@ class DiseaseMonitoringModel(DataModel):
                                      writable = True,
                                      #ondelete = "CASCADE", # default
                                      ),
-                     s3_date(default="now",
-                             past = 1,
-                             future = 0,
-                             ),
+                     DateField(default="now",
+                               past = 1,
+                               future = 0,
+                               ),
                      Field("tests_total", "integer",
                            label = T("Total Number of Tests"),
                            requires = IS_INT_IN_RANGE(0),
@@ -1011,7 +1011,7 @@ class DiseaseCaseTrackingModel(DataModel):
                                                           ),
                                ),
                      self.disease_disease_id(comment = None),
-                     #s3_date(), # date registered == created_on?
+                     #DateField(), # date registered == created_on?
                      self.gis_location_id(),
                      # @todo: add site ID for registering site?
 
@@ -1022,9 +1022,9 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(illness_status),
                            default = "UNKNOWN",
                            ),
-                     s3_date("symptom_debut",
-                             label = T("Symptom Debut"),
-                             ),
+                     DateField("symptom_debut",
+                               label = T("Symptom Debut"),
+                               ),
                      Field("hospitalized", "boolean",
                            default = False,
                            label = T("Hospitalized"),
@@ -1057,10 +1057,10 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(diagnosis_status),
                            default = "UNKNOWN",
                            ),
-                     s3_date("diagnosis_date",
-                             default = "now",
-                             label = T("Diagnosis Date"),
-                             ),
+                     DateField("diagnosis_date",
+                               default = "now",
+                               label = T("Diagnosis Date"),
+                               ),
 
                      # Current monitoring level and end date
                      Field("monitoring_level",
@@ -1069,9 +1069,9 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(monitoring_levels),
                            default = "NONE",
                            ),
-                     s3_date("monitoring_until",
-                             label = T("Monitoring required until"),
-                             ),
+                     DateField("monitoring_until",
+                               label = T("Monitoring required until"),
+                               ),
                      s3_comments(),
                      *s3_meta_fields())
 
@@ -1396,9 +1396,9 @@ class DiseaseCaseTrackingModel(DataModel):
                      Field("result",
                            label = T("Result"),
                            ),
-                     s3_date("result_date",
-                             label = T("Result Date"),
-                             ),
+                     DateField("result_date",
+                               label = T("Result Date"),
+                               ),
                      Field("conclusion",
                            represent = diagnosis_status_represent,
                            requires = IS_EMPTY_OR(
@@ -2193,7 +2193,7 @@ class DiseaseStatsModel(DataModel):
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_date(empty = False),
+                     DateField(empty = False),
                      #Field("end_date", "date",
                      #      # Just used for the year() VF
                      #      readable = False,
@@ -2321,9 +2321,9 @@ class DiseaseStatsModel(DataModel):
                                                 current.messages.UNKNOWN_OPT),
                            requires = IS_IN_SET(aggregate_types),
                            ),
-                     s3_date("date",
-                             label = T("Start Date"),
-                             ),
+                     DateField("date",
+                               label = T("Start Date"),
+                               ),
                      Field("sum", "double",
                            label = T("Sum"),
                            represent = lambda v: \

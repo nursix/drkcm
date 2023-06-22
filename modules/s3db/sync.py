@@ -677,8 +677,8 @@ class SyncDatasetModel(DataModel):
         tablename = "sync_dataset_archive"
         define_table(tablename,
                      dataset_id(),
-                     s3_date(writable = False,
-                             ),
+                     DateField(writable = False,
+                               ),
                      Field("archive", "upload",
                            autodelete = True,
                            represent = self.archive_file_represent,

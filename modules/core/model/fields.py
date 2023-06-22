@@ -25,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3ReusableField",
+__all__ = ("DateField",
+           "S3ReusableField",
            "S3MetaFields",
            "s3_fieldmethod",
            "s3_meta_fields",
@@ -35,7 +36,6 @@ __all__ = ("S3ReusableField",
            "s3_comments",
            "s3_currency",
            "s3_language",
-           "s3_date",
            "s3_datetime",
            "s3_time",
            )
@@ -46,12 +46,13 @@ from uuid import uuid4
 from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_TIME, TAG, XML
 from gluon.sqlhtml import TimeWidget
 from gluon.storage import Storage
+from gluon.tools import DEFAULT
 
 from s3dal import SQLCustomType
 
 from ..tools import IS_ISO639_2_LANGUAGE_CODE, IS_ONE_OF, IS_UTC_DATE, \
                     IS_UTC_DATETIME, S3DateTime, S3Represent, s3_str
-from ..ui import S3ScriptItem, S3CalendarWidget, S3DateWidget
+from ..ui import S3ScriptItem, S3CalendarWidget
 
 # =============================================================================
 def s3_fieldmethod(name, f, represent=None, search_field=None):
@@ -704,176 +705,98 @@ def s3_language(name="language", **attr):
     return Field(name, length=8, **attr)
 
 # =============================================================================
-def s3_date(name="date", **attr):
+class DateField(Field):
     """
-        Return a standard date-field
-
-        Args:
-            name: the field name
-
-        Keyword Args:
-            default: the field default, can be specified as "now" for
-                     current date, or as Python date
-            past: number of selectable past months
-            future: number of selectable future months
-            widget: the form widget for the field, can be specified
-                    as "date" for S3DateWidget, "calendar" for
-                    S3CalendarWidget, or as a web2py FormWidget,
-                    defaults to "calendar"
-            calendar: the calendar to use for this widget, defaults
-                      to current.calendar
-            start_field: CSS selector for the start field for interval
-                         selection
-            default_interval: the default interval
-            default_explicit: whether the user must click the field
-                              to set the default, or whether it will
-                              automatically be set when the value for
-                              start_field is set
-            set_min: CSS selector for another date/time widget to
-                     dynamically set the minimum selectable date/time to
-                     the value selected in this widget
-            set_max: CSS selector for another date/time widget to
-                     dynamically set the maximum selectable date/time to
-                     the value selected in this widget
-            month_selector: allow direct selection of month
-
-        Notes:
-            - other S3ReusableField keywords are also supported (in addition
-              to the above)
-            - calendar-option requires widget="calendar" (default), otherwise
-              Gregorian calendar is enforced for the field
-            - set_min/set_max only supported for widget="calendar" (default)
-            - interval options currently not supported by S3CalendarWidget,
-              only available with widget="date"
-            - start_field and default_interval should be given together
-            - sets a default field label "Date" => use label-keyword to
-              override if necessary
-            - sets a default validator IS_UTC_DATE => use requires-keyword
-              to override if necessary
-            - sets a default representation S3DateTime.date_represent => use
-              represent-keyword to override if necessary
+        Standard date field with the respective defaults and options
     """
 
-    attributes = dict(attr)
+    def __init__(self,
+                 fieldname = "date",
+                 label = DEFAULT,
+                 default = None,
+                 widget = "calendar",
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 calendar = None,
+                 past = None,
+                 future = None,
+                 empty = True,
+                 **args):
+        """
+            Args:
+                calendar: the calendar to use
+                past: selectable past interval (months)
+                future: selectable future interval (months)
+                empty: empty values allowed
+            Other Args:
+                - see Field
+        """
 
-    # Calendar
-    calendar = attributes.pop("calendar", None)
+        # Default label
+        if label is DEFAULT:
+            label = current.T("Date")
 
-    # Past and future options
-    past = attributes.pop("past", None)
-    future = attributes.pop("future", None)
+        # Default value
+        now = current.request.utcnow.date()
+        if default == "now":
+            default = now
 
-    # Label
-    if "label" not in attributes:
-        attributes["label"] = current.T("Date")
+        # Default widget
+        if widget == "calendar":
 
-    # Widget-specific options (=not intended for S3ReusableField)
-    WIDGET_OPTIONS = ("start_field",
-                      "default_interval",
-                      "default_explicit",
-                      "set_min",
-                      "set_max",
-                      "month_selector",
-                      )
+            widget_options = ("set_min", "set_max", "month_selector")
+            widget_args = {}
 
-    # Widget
-    widget = attributes.get("widget", "calendar")
-    widget_options = {}
-    if widget == "date":
-        # Legacy: S3DateWidget
-        # @todo: deprecate (once S3CalendarWidget supports all legacy options)
+            for option in widget_options:
+                if option in args:
+                    widget_args[option] = args.pop(option)
 
-        # Must use Gregorian calendar
-        calendar = "Gregorian"
+            widget_args["calendar"] = calendar
 
-        # Past/future options
-        if past is not None:
-            widget_options["past"] = past
-        if future is not None:
-            widget_options["future"] = future
-
-        # Supported additional widget options
-        SUPPORTED_OPTIONS = ("start_field",
-                             "default_interval",
-                             "default_explicit",
-                             )
-        for option in WIDGET_OPTIONS:
-            if option in attributes:
-                if option in SUPPORTED_OPTIONS:
-                    widget_options[option] = attributes[option]
-                del attributes[option]
-
-        widget = S3DateWidget(**widget_options)
-
-    elif widget == "calendar":
-
-        # Default: calendar widget
-        widget_options["calendar"] = calendar
-
-        # Past/future options
-        if past is not None:
-            widget_options["past_months"] = past
-        if future is not None:
-            widget_options["future_months"] = future
-
-        # Supported additional widget options
-        SUPPORTED_OPTIONS = ("set_min",
-                             "set_max",
-                             "month_selector",
-                             )
-        for option in WIDGET_OPTIONS:
-            if option in attributes:
-                if option in SUPPORTED_OPTIONS:
-                    widget_options[option] = attributes[option]
-                del attributes[option]
-
-        widget = S3CalendarWidget(**widget_options)
-
-    else:
-        # Drop all widget options
-        for option in WIDGET_OPTIONS:
-            attributes.pop(option, None)
-
-    attributes["widget"] = widget
-
-    # Default value
-    now = current.request.utcnow.date()
-    if attributes.get("default") == "now":
-        attributes["default"] = now
-
-    # Representation
-    if "represent" not in attributes:
-        attributes["represent"] = lambda dt: \
-                                  S3DateTime.date_represent(dt,
-                                                            utc=True,
-                                                            calendar=calendar,
-                                                            )
-
-    # Validator
-    if "requires" not in attributes:
-
-        if past is None and future is None:
-            requires = IS_UTC_DATE(calendar=calendar)
-        else:
-            from dateutil.relativedelta import relativedelta
-            minimum = maximum = None
+            # Past/future options
             if past is not None:
-                minimum = now - relativedelta(months = past)
+                widget_args["past_months"] = past
             if future is not None:
-                maximum = now + relativedelta(months = future)
-            requires = IS_UTC_DATE(calendar=calendar,
-                                   minimum=minimum,
-                                   maximum=maximum,
-                                   )
+                widget_args["future_months"] = future
 
-        empty = attributes.pop("empty", None)
-        if empty is False:
-            attributes["requires"] = requires
-        else:
-            # Default
-            attributes["requires"] = IS_EMPTY_OR(requires)
+            widget = S3CalendarWidget(**widget_args)
 
-    return Field(name, "date", **attributes)
+        # Default representation
+        if represent is DEFAULT:
+            represent = lambda dt: \
+                        S3DateTime.date_represent(dt, utc=True, calendar=calendar)
+
+        # Default validation
+        if requires is DEFAULT:
+            if past is None and future is None:
+                requires = IS_UTC_DATE(calendar=calendar)
+            else:
+                from dateutil.relativedelta import relativedelta
+                minimum = maximum = None
+                if past is not None:
+                    minimum = now - relativedelta(months = past)
+                if future is not None:
+                    maximum = now + relativedelta(months = future)
+                requires = IS_UTC_DATE(calendar=calendar,
+                                       minimum=minimum,
+                                       maximum=maximum,
+                                       )
+
+            if empty:
+                requires = IS_EMPTY_OR(requires)
+
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         type = "date",
+                         label = label,
+                         default = default,
+                         widget = widget,
+                         represent = represent,
+                         requires = requires,
+                         calendar = calendar,
+                         **args)
 
 # =============================================================================
 def s3_datetime(name="date", **attr):

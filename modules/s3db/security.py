@@ -477,9 +477,9 @@ class SecuritySeizedItemsModel(DataModel):
                            requires = IS_INT_IN_RANGE(1, None),
                            ),
                      # Confiscated when and by whom
-                     s3_date(default = "now",
-                             label = T("Confiscated on"),
-                             ),
+                     DateField(default = "now",
+                               label = T("Confiscated on"),
+                               ),
                      person_id("confiscated_by",
                                label = T("Confiscated by"),
                                default = current.auth.s3_logged_in_person(),
@@ -497,11 +497,11 @@ class SecuritySeizedItemsModel(DataModel):
                            label = T("Status Comment"),
                            ),
                      # Returned-date and person responsible
-                     s3_date("returned_on",
-                             label = T("Returned on"),
-                             # Set onaccept when returned=True
-                             writable = False,
-                             ),
+                     DateField("returned_on",
+                               label = T("Returned on"),
+                               # Set onaccept when returned=True
+                               writable = False,
+                               ),
                      person_id("returned_by",
                                label = T("Returned by"),
                                # Set onaccept when returned=True

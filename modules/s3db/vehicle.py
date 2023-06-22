@@ -188,12 +188,12 @@ class VehicleModel(DataModel):
                                           IS_INT_IN_RANGE(0, None)
                                           ),
                            ),
-                     s3_date("service_date",
-                             label = T("Service Due"),
-                             ),
-                     s3_date("insurance_date",
-                             label = T("Insurance Renewal Due"),
-                             ),
+                     DateField("service_date",
+                               label = T("Service Due"),
+                               ),
+                     DateField("insurance_date",
+                               label = T("Insurance Renewal Due"),
+                               ),
                      s3_comments(),
                      *s3_meta_fields())
 

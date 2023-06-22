@@ -486,8 +486,8 @@ class DynamicTableModel:
                 else:
                     attr["default"] = dt.date()
 
-        from .fields import s3_date
-        field = s3_date(fieldname, **attr)
+        from .fields import DateField
+        field = DateField(fieldname, **attr)
 
         return field
 

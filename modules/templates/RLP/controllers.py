@@ -14,11 +14,11 @@ from gluon import Field, SQLFORM, URL, XML, current, redirect, \
 
 from gluon.storage import Storage
 
-from core import ConsentTracking, CustomController, \
+from core import ConsentTracking, CustomController, DateField, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                  S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
                  S3WeeklyHoursWidget, WithAdvice, \
-                 JSONERRORS, S3Represent, s3_comments_widget, s3_date, \
+                 JSONERRORS, S3Represent, s3_comments_widget, \
                  s3_mark_required, s3_str
 
 from .notifications import formatmap
@@ -37,7 +37,6 @@ class index(CustomController):
         output = {}
 
         T = current.T
-        s3 = current.response.s3
 
         auth = current.auth
         settings = current.deployment_settings
@@ -569,11 +568,11 @@ class register(CustomController):
         # Form fields
         formfields = [utable.first_name,
                       utable.last_name,
-                      s3_date("date_of_birth",
-                              label = T("Date of Birth"),
-                              future = -156,
-                              empty = False,
-                              ),
+                      DateField("date_of_birth",
+                                label = T("Date of Birth"),
+                                future = -156,
+                                empty = False,
+                                ),
                       # --------------------------------------------
                       utable.email,
                       utable[passfield],
@@ -650,17 +649,17 @@ class register(CustomController):
                             ),
 
                       # --------------------------------------------
-                      s3_date("start_date",
-                              label = T("Available from"),
-                              default = "now",
-                              past = 0,
-                              set_min = "#auth_user_start_date",
-                              ),
-                      s3_date("end_date",
-                              label = T("Available until"),
-                              past = 0,
-                              set_max = "#auth_user_start_date",
-                              ),
+                      DateField("start_date",
+                                label = T("Available from"),
+                                default = "now",
+                                past = 0,
+                                set_min = "#auth_user_start_date",
+                                ),
+                      DateField("end_date",
+                                label = T("Available until"),
+                                past = 0,
+                                set_max = "#auth_user_start_date",
+                                ),
                       Field("hours_per_week", "integer",
                             label = T("Hours per Week"),
                             requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 60)),

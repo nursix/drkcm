@@ -1330,13 +1330,13 @@ class S3AgeWidget(FormWidget):
         method
 
         Example:
-            s3_date("date_of_birth",
-                    label = T("Age"),
-                    widget = S3AgeWidget.widget,
-                    represent = lambda v: S3AgeWidget.date_as_age(v) \
-                                          if v else current.messages["NONE"],
-                    ...
-                    )
+            DateField("date_of_birth",
+                      label = T("Age"),
+                      widget = S3AgeWidget.widget,
+                      represent = lambda v: S3AgeWidget.date_as_age(v) \
+                                            if v else current.messages["NONE"],
+                      ...
+                      )
     """
 
     @classmethod

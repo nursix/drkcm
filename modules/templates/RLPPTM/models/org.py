@@ -37,10 +37,10 @@ import os
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
-from core import BooleanRepresent, DataModel, S3Duplicate, \
+from core import BooleanRepresent, DataModel, DateField, S3Duplicate, \
                  get_form_record_id, represent_file, represent_option, \
                  s3_comments, s3_comments_widget, \
-                 s3_date, s3_datetime, s3_meta_fields, \
+                 s3_datetime, s3_meta_fields, \
                  s3_str, s3_text_represent
 
 from ..helpers import WorkflowOptions, PersonRepresentDetails
@@ -260,15 +260,16 @@ class TestProviderModel(DataModel):
         tablename = "org_commission"
         define_table(tablename,
                      organisation_id(empty=False),
-                     s3_date(default = "now",
-                             past = 0,
-                             set_min="#org_commission_end_date",
-                             ),
-                     s3_date("end_date",
-                             label = T("Valid until"),
-                             default = None,
-                             set_max="#org_commission_date",
-                             ),
+                     DateField("date",
+                               default = "now",
+                               past = 0,
+                               set_min = "#org_commission_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("Valid until"),
+                               default = None,
+                               set_max="#org_commission_date",
+                               ),
                      Field("status",
                            label = T("Status"),
                            default = "CURRENT",
@@ -284,10 +285,10 @@ class TestProviderModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_date("status_date",
-                             label = T("Status updated on"),
-                             writable = False,
-                             ),
+                     DateField("status_date",
+                               label = T("Status updated on"),
+                               writable = False,
+                               ),
                      Field("status_reason",
                            label = T("Status Reason"),
                            requires = IS_EMPTY_OR(
@@ -583,13 +584,13 @@ class TestProviderRepresentativeModel(DataModel):
                                 represent = BooleanRepresent(icons=True),
                                 writable = False,
                                 ),
-                          s3_date(label = T("Start Date"),
-                                  writable = False,
-                                  ),
-                          s3_date("end_date",
-                                  label = T("End Date"),
-                                  writable = False,
-                                  ),
+                          DateField(label = T("Start Date"),
+                                    writable = False,
+                                    ),
+                          DateField("end_date",
+                                    label = T("End Date"),
+                                    writable = False,
+                                    ),
 
                           # Hidden data hash to detect relevant changes
                           Field("dhash",

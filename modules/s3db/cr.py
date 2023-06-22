@@ -985,10 +985,10 @@ class CRShelterStatusModel(DataModel):
                      self.cr_shelter_id(ondelete = "CASCADE",
                                         writable = False,
                                         ),
-                     s3_date(default = "now",
-                             future = 0,
-                             writable = False
-                             ),
+                     DateField(default = "now",
+                               future = 0,
+                               writable = False
+                               ),
                      Field("status", "integer",
                            label = T("Status"),
                            default = 2, # Open
@@ -1287,8 +1287,8 @@ class CRShelterInspectionModel(DataModel):
                      #                   writable = False,
                      #                   ),
                      self.cr_shelter_unit_id(ondelete = "CASCADE"),
-                     s3_date(default = "now",
-                             ),
+                     DateField(default = "now",
+                               ),
                      s3_comments(),
                      *s3_meta_fields())
 

@@ -243,10 +243,10 @@ class BRCaseModel(DataModel):
                                        ),
 
                      # Basic date fields
-                     s3_date(label = T("Registration Date"),
-                             default = "now",
-                             empty = False,
-                             ),
+                     DateField(label = T("Registration Date"),
+                               default = "now",
+                               empty = False,
+                               ),
 
                      # Case status
                      status_id(),
@@ -662,16 +662,16 @@ class BRCaseActivityModel(DataModel):
                                writable = case_activity_status,
                                ),
                      # Dates
-                     s3_date(label = T("Date"),
-                             default = "now",
-                             set_min = "#br_case_activity_end_date",
-                             ),
-                     s3_date("end_date",
-                             label = T("Ended on"),
-                             readable = case_activity_end_date,
-                             writable = case_activity_end_date == "writable",
-                             set_max = "#br_case_activity_date",
-                             ),
+                     DateField(label = T("Date"),
+                               default = "now",
+                               set_min = "#br_case_activity_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("Ended on"),
+                               readable = case_activity_end_date,
+                               writable = case_activity_end_date == "writable",
+                               set_max = "#br_case_activity_date",
+                               ),
 
                      # Outcome
                      Field("outcome", "text",
@@ -886,8 +886,8 @@ class BRCaseActivityModel(DataModel):
         tablename = "br_case_activity_update"
         define_table(tablename,
                      case_activity_id(),
-                     s3_date(default = "now",
-                             ),
+                     DateField(default = "now",
+                               ),
                      update_type_id(),
                      self.hrm_human_resource_id(
                             comment = None,
@@ -1101,7 +1101,7 @@ class BRAppointmentModel(DataModel):
                                        ),
                      appointment_type_id(empty = False,
                                          ),
-                     s3_date(),
+                     DateField(),
                      # Activate in template as needed:
                      self.hrm_human_resource_id(readable=False,
                                                 writable=False,
@@ -2213,14 +2213,14 @@ class BRAssistanceOfferModel(DataModel):
                            requires = IS_IN_SET(offer_availability, zero=None, sort=False),
                            represent = represent_option(dict(offer_availability)),
                            ),
-                     s3_date(label = T("Available from"),
-                             default = "now",
-                             # TODO setmin
-                             ),
-                     s3_date("end_date",
-                             label = T("Available until"),
-                             # TODO setmax
-                             ),
+                     DateField(label = T("Available from"),
+                               default = "now",
+                               set_min = "#br_assistance_offer_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("Available until"),
+                               set_max = "#br_assistance_offer_date",
+                               ),
                      Field("status",
                            default = "NEW",
                            label = T("Status"),

@@ -60,7 +60,6 @@ class MemberModel(DataModel):
         ADMIN = current.session.s3.system_roles.ADMIN
         is_admin = auth.s3_has_role(ADMIN)
 
-        add_components = self.add_components
         configure = self.configure
         crud_strings = s3.crud_strings
         define_table = self.define_table
@@ -163,29 +162,29 @@ class MemberModel(DataModel):
                       ),
                       membership_type_id(),
                       # History
-                      s3_date("start_date",
-                              label = T("Date Joined"),
-                              set_min = "#member_membership_end_date",
-                              ),
-                      s3_date("end_date",
-                              label = T("Date Resigned"),
-                              set_max = "#member_membership_start_date",
-                              start_field = "member_membership_start_date",
-                              default_interval = 12,
-                              ),
+                      DateField("start_date",
+                                label = T("Date Joined"),
+                                set_min = "#member_membership_end_date",
+                                ),
+                      DateField("end_date",
+                                label = T("Date Resigned"),
+                                set_max = "#member_membership_start_date",
+                                #start_field = "member_membership_start_date",
+                                #default_interval = 12,
+                                ),
                       Field("leaving_reason",
                             label = T("Reason for Leaving"),
                             # Enable in template as-required
                             readable = False,
                             writable = False,
                             ),
-                      s3_date("restart_date",
-                              label = T("Date Rejoined"),
-                              # Enable in template as-required
-                              readable = False,
-                              set_max = "#member_membership_end_date",
-                              writable = False,
-                              ),
+                      DateField("restart_date",
+                                label = T("Date Rejoined"),
+                                set_max = "#member_membership_end_date",
+                                # Enable in template as-required
+                                readable = False,
+                                writable = False,
+                                ),
                       Field("membership_fee", "double",
                             label = T("Membership Fee"),
                             represent = lambda v: \
@@ -194,12 +193,12 @@ class MemberModel(DataModel):
                                         IS_FLOAT_AMOUNT(minimum=0.0)
                                         ),
                             ),
-                      s3_date("membership_paid",
-                              label = T("Membership Paid"),
-                              ),
-                      s3_date("membership_due",
-                              label = T("Membership Fee Due Date"),
-                              ),
+                      DateField("membership_paid",
+                                label = T("Membership Paid"),
+                                ),
+                      DateField("membership_due",
+                                label = T("Membership Fee Due Date"),
+                                ),
                       Field("fee_exemption", "boolean",
                             label = T("Exempted from Membership Fee"),
                             default = False,

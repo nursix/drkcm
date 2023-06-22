@@ -491,9 +491,9 @@ class HospitalDataModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(hms_facility_status_opts)),
                            ),
-                     s3_date("date_reopening",
-                             label = T("Estimated Reopening Date"),
-                             ),
+                     DateField("date_reopening",
+                               label = T("Estimated Reopening Date"),
+                               ),
                      Field("facility_operations", "integer",
                            label = T("Facility Operations"),
                            represent = lambda opt: \
