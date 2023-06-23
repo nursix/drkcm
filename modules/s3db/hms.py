@@ -255,7 +255,7 @@ class HospitalDataModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -748,7 +748,7 @@ class HospitalDataModel(DataModel):
                            represent = IS_INT_AMOUNT.represent,
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Field configuration
@@ -883,7 +883,7 @@ class HospitalDataModel(DataModel):
                      Field("type"),
                      Field("description"),
                      Field("quantity"),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1084,7 +1084,7 @@ class HospitalCTCModel(DataModel):
                      Field("problem_details", "text",
                            label = T("Current problems, details"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      on_define = lambda table: \
                          [table.modified_on.set_attributes(label = T("Last updated on"),
                                                            readable = True

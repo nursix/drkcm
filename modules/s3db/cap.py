@@ -752,7 +752,7 @@ $.filterOptionsS3({
                            label = T("Acknowledged By"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2011,7 +2011,7 @@ class CAPAreaModel(DataModel):
                      Field("name_l10n",
                            label = T("Local Name"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -2057,7 +2057,7 @@ class CAPAreaModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -3597,7 +3597,7 @@ class CAPHistoryModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -3795,7 +3795,7 @@ class CAPAlertingAuthorityModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components

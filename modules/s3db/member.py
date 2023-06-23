@@ -91,9 +91,9 @@ class MemberModel(DataModel):
                                      readable = is_admin,
                                      writable = is_admin,
                                      ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
                      )
 
         ADD_MEMBERSHIP_TYPE = T("Create Membership Type")
@@ -218,7 +218,7 @@ class MemberModel(DataModel):
                             readable = False,
                             writable = False,
                             ),
-                      s3_comments(),
+                      CommentsField(),
                       # Location (from pr_address component)
                       self.gis_location_id(readable = False,
                                            writable = False,

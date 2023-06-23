@@ -65,7 +65,7 @@ class FireModel(DataModel):
                      Field("mapstyle", "text",
                            label=T("Style"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -115,7 +115,7 @@ class FireModel(DataModel):
                                                    polygons = True,
                                                    )
                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -232,7 +232,7 @@ class FireStationModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         self.configure("fire_station",
@@ -412,7 +412,7 @@ class FireStationModel(DataModel):
                      #Field("anti_seismic_construction", "boolean"),
                      #Field("isolated_from_air", "boolean"),
                      #Field("hermetic", "boolean"),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -445,7 +445,7 @@ class FireStationModel(DataModel):
                      # What are the Org & Person for? Contacts?
                      organisation_id(),
                      self.pr_person_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings

@@ -122,7 +122,7 @@ class DVRCaseModel(DataModel):
                      self.org_organisation_id(readable = False,
                                               writable = False,
                                               ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -211,7 +211,7 @@ class DVRCaseModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(
+                     CommentsField(
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Comments"),
                                                              T("Describe the meaning, reasons and potential consequences of this status"),
@@ -472,7 +472,7 @@ class DVRCaseModel(DataModel):
                            ),
 
                      # Standard comments and meta fields
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -595,7 +595,7 @@ class DVRCaseModel(DataModel):
                                                 zero = None,
                                                 ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # ---------------------------------------------------------------------
@@ -1000,7 +1000,7 @@ class DVRCaseFlagModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1132,7 +1132,7 @@ class DVRNeedsModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Hierarchy
@@ -1252,7 +1252,7 @@ class DVRNotesModel(DataModel):
                            label = T("Is Task"),
                            default = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1308,11 +1308,10 @@ class DVRNotesModel(DataModel):
                      note_type_id(empty=False),
                      DateField(default = "now",
                                ),
-                     s3_comments("note",
-                                 label = T("Note"),
-                                 represent = s3_text_represent,
-                                 comment = None,
-                                 ),
+                     CommentsField("note",
+                                   label = T("Note"),
+                                   comment = None,
+                                   ),
                      Field("status",
                            label = T("Status"),
                            default = "CUR",
@@ -1368,7 +1367,7 @@ class DVRReferralModel(DataModel):
                                 label = T("Name"),
                                 requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # Table configuration
@@ -1472,7 +1471,7 @@ class DVRResponseModel(DataModel):
                            label = T("Obsolete"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -1554,7 +1553,7 @@ class DVRResponseModel(DataModel):
                            default = False,
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Hierarchy
@@ -1633,7 +1632,7 @@ class DVRResponseModel(DataModel):
                            requires = IS_HTML_COLOUR(),
                            widget = S3ColorPickerWidget(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -1748,10 +1747,10 @@ class DVRResponseModel(DataModel):
                            widget = S3HoursWidget(precision = 2,
                                                   ),
                            ),
-                     s3_comments(label = T("Details"),
-                                 comment = None,
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 ),
+                     CommentsField(label = T("Details"),
+                                   comment = None,
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   ),
                      )
 
         # List_fields
@@ -1907,10 +1906,10 @@ class DVRResponseModel(DataModel):
                                       readable = False,
                                       writable = False,
                                       ),
-                     s3_comments(label = T("Details"),
-                                 comment = None,
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 ),
+                     CommentsField(label = T("Details"),
+                                   comment = None,
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   ),
                      )
 
         configure(tablename,
@@ -2433,7 +2432,7 @@ class DVRCaseActivityModel(DataModel):
                            label = T("Type"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -2483,7 +2482,7 @@ class DVRCaseActivityModel(DataModel):
                            label = T("Name"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -2541,7 +2540,7 @@ class DVRCaseActivityModel(DataModel):
                            default = False,
                            label = T("Closes Activity"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -2775,7 +2774,7 @@ class DVRCaseActivityModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -2964,7 +2963,7 @@ class DVRCaseActivityModel(DataModel):
                          ),
                      self.dvr_need_id(empty = False,
                                       ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -2981,7 +2980,7 @@ class DVRCaseActivityModel(DataModel):
                            label = T("Name"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -3026,7 +3025,7 @@ class DVRCaseActivityModel(DataModel):
                                ),
                      update_type_id(),
                      human_resource_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -3265,7 +3264,7 @@ class DVRCaseEffortModel(DataModel):
                            widget = S3HoursWidget(precision = 2,
                                                   ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -3441,7 +3440,7 @@ class DVRCaseAppointmentModel(DataModel):
                         readable = update_case_status,
                         writable = update_case_status,
                         ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3513,7 +3512,7 @@ class DVRCaseAppointmentModel(DataModel):
                                                 ),
                            represent = represent_option(appointment_status_opts),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3769,7 +3768,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            label = T("Type"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3800,7 +3799,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                      Field("name",
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3880,7 +3879,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
                      s3_currency(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -3946,7 +3945,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            requires = IS_ONE_OF(db, "dvr_economy.id"),
                            ),
                      income_source_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
 
@@ -3989,7 +3988,7 @@ class DVRLegalStatusModel(DataModel):
                      Field("name",
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -4037,7 +4036,7 @@ class DVRLegalStatusModel(DataModel):
                      Field("name",
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -4097,7 +4096,7 @@ class DVRLegalStatusModel(DataModel):
                      #Field("obsolete", "boolean",
                      #      default = False,
                      #      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -4195,7 +4194,7 @@ class DVRCaseAllowanceModel(DataModel):
                                                            multiple = False,
                                                            ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -4461,7 +4460,7 @@ class DVRCaseEventModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -4574,7 +4573,7 @@ class DVRCaseEventModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -4938,7 +4937,7 @@ class DVRCaseEvaluationModel(DataModel):
                                       ondelete = "CASCADE",
                                       ),
                      #DateField(future=0),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -5033,7 +5032,7 @@ class DVRVulnerabilityModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Hierarchy
@@ -5151,7 +5150,7 @@ class DVRServiceContactModel(DataModel):
                            label = T("Name"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -5227,7 +5226,7 @@ class DVRServiceContactModel(DataModel):
                      Field("email",
                            label = T("Email"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -5327,7 +5326,7 @@ class DVRSiteActivityModel(DataModel):
                                                        "dvr",
                                                        ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings

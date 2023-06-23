@@ -114,7 +114,7 @@ class SecurityZonesModel(DataModel):
                            requires = IS_IN_SET(level_opts),
                            comment = T("e.g. earthquakes or floods"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -139,7 +139,7 @@ class SecurityZonesModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -190,7 +190,7 @@ class SecurityZonesModel(DataModel):
                                                     polygons = True,
                                                     ),
                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -217,7 +217,7 @@ class SecurityZonesModel(DataModel):
         define_table(tablename,
                      Field("name",
                            label=T("Name")),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -276,7 +276,7 @@ class SecurityZonesModel(DataModel):
                                      readable = True,
                                      writable = True,
                                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -370,7 +370,7 @@ class SecuritySeizedItemsModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -416,7 +416,7 @@ class SecuritySeizedItemsModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -508,8 +508,7 @@ class SecuritySeizedItemsModel(DataModel):
                                writable = False,
                                comment = None,
                                ),
-                     s3_comments(represent = s3_text_represent,
-                                 ),
+                     CommentsField(),
                      )
 
         # Filter Widgets

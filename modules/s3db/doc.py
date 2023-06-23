@@ -209,7 +209,7 @@ class DocumentModel(DataModel):
                                  writable = False,
                                  ),
 
-                     s3_comments(),
+                     CommentsField(),
                      Field("checksum",
                            readable = False,
                            writable = False,
@@ -336,7 +336,7 @@ class DocumentModel(DataModel):
                                 writable = False,
                                 ),
 
-                     s3_comments(),
+                     CommentsField(),
                      Field("checksum",
                            readable = False,
                            writable = False,
@@ -539,7 +539,7 @@ class DocumentTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -871,7 +871,7 @@ class DocumentDataCardModel(DataModel):
                                 requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0)),
                                 represent = lambda v: (T("%(months)s months") % {"months": v}) if v else "-",
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # Table configuration

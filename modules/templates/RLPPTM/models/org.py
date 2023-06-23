@@ -39,7 +39,7 @@ from gluon.storage import Storage
 
 from core import BooleanRepresent, DataModel, DateField, S3Duplicate, \
                  get_form_record_id, represent_file, represent_option, \
-                 s3_comments, s3_comments_widget, \
+                 CommentsField, s3_comments_widget, \
                  s3_datetime, s3_meta_fields, \
                  s3_str, s3_text_represent
 
@@ -307,7 +307,7 @@ class TestProviderModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -665,7 +665,7 @@ class TestProviderRepresentativeModel(DataModel):
                                 readable = True,
                                 writable = False,
                                 ),
-                          s3_comments(
+                          CommentsField(
                               label = T("Advice"),
                               writable = False,
                               comment = None,

@@ -868,7 +868,7 @@ class PRPersonModel(DataModel):
                       ),
             Field.Method("age", self.pr_person_age),
             Field.Method("age_group", self.pr_person_age_group),
-            s3_comments(),
+            CommentsField(),
             )
 
         # CRUD Strings
@@ -2167,7 +2167,7 @@ class PRGroupModel(DataModel):
                            # Make mandatory in template if-required
                            requires = IS_LENGTH(64),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2266,7 +2266,7 @@ class PRGroupModel(DataModel):
                      status_id(readable = False,
                                writable = False,
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2429,7 +2429,7 @@ class PRGroupModel(DataModel):
                            represent = represent_option(pr_group_types),
                            requires = IS_IN_SET(pr_group_types, zero=None),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2498,7 +2498,7 @@ class PRGroupModel(DataModel):
                            represent = lambda group_head: \
                                        (group_head and [T("yes")] or [""])[0]
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -2898,7 +2898,7 @@ class PRGroupTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          #s3_comments(),
+                          #CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2961,7 +2961,7 @@ class PRForumModel(DataModel):
                            represent = represent_option(pr_forum_types),
                            requires = IS_IN_SET(pr_forum_types, zero=None),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3056,7 +3056,7 @@ class PRForumModel(DataModel):
                      #        writable = False,
                      #        ondelete = "SET NULL",
                      #        ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -3329,7 +3329,7 @@ class PRAddressModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings
@@ -3622,7 +3622,7 @@ class PRContactModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3693,7 +3693,7 @@ class PRContactModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3746,7 +3746,7 @@ class PRContactModel(DataModel):
                            label = T("Email"),
                            requires = IS_EMPTY_OR(IS_EMAIL()),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3887,14 +3887,14 @@ class PRImageModel(DataModel):
                                                      zero = None,
                                                      ),
                                 ),
-                          s3_comments("description",
-                                      label = T("Description"),
-                                      comment = DIV(_class = "tooltip",
-                                                    _title = "%s|%s" % (T("Description"),
-                                                                        T("Give a brief description of the image, e.g. what can be seen where on the picture (optional)."),
-                                                                        ),
-                                                    ),
-                                      ),
+                          CommentsField("description",
+                                        label = T("Description"),
+                                        comment = DIV(_class = "tooltip",
+                                                      _title = "%s|%s" % (T("Description"),
+                                                                          T("Give a brief description of the image, e.g. what can be seen where on the picture (optional)."),
+                                                                          ),
+                                                      ),
+                                        ),
                           # Image-validator needs the Table instance
                           # => set it on-define to allow the table to be lazy
                           on_define = lambda table: [
@@ -4285,7 +4285,7 @@ class PRAvailabilityModel(DataModel):
                            readable = options_readable,
                            writable = options_readable,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,
@@ -4515,7 +4515,7 @@ class PRUnavailabilityModel(DataModel):
                                       label = T("End Date"),
                                       set_max = "#pr_unavailability_start_date",
                                       ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -4909,7 +4909,7 @@ class PRDescriptionModel(DataModel):
                            label = T("Other Details"),
                            ),
 
-                     s3_comments(),
+                     CommentsField(),
                      )
 
             #self.configure(tablename,
@@ -5026,7 +5026,7 @@ class PREducationModel(DataModel):
                                               readable = is_admin,
                                               writable = is_admin,
                                               ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -5123,7 +5123,7 @@ class PREducationModel(DataModel):
                            label = T("Current?"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -5254,7 +5254,7 @@ class PRIdentityModel(DataModel):
                                 uploadfolder = os.path.join(current.request.folder,
                                                             "uploads"),
                                ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings
@@ -5336,7 +5336,7 @@ class PRLanguageModel(DataModel):
                                 represent = represent_option(fluency_opts),
                                 requires = IS_IN_SET(fluency_opts),
                                 ),
-                          #s3_comments(),
+                          #CommentsField(),
                           )
 
         # CRUD Strings
@@ -5391,7 +5391,7 @@ class PROccupationModel(DataModel):
                                                      ),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -5654,7 +5654,7 @@ class PRPersonTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          #s3_comments(),
+                          #CommentsField(),
                           )
 
         self.configure(tablename,
@@ -5784,7 +5784,7 @@ class PRSavedFilterModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         represent = S3Represent(lookup=tablename, fields=["title"])

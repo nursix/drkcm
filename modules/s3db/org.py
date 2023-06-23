@@ -145,7 +145,7 @@ class OrgOrganisationModel(DataModel):
                            readable = hierarchical_organisation_types,
                            writable = hierarchical_organisation_types,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         type_represent = S3Represent(lookup=tablename, translate=True)
@@ -257,7 +257,7 @@ class OrgOrganisationModel(DataModel):
                                writable = hierarchical_regions,
                                ),
                          # Can add Path, Level, L0, L1 if-useful for performance, widgets, etc
-                         s3_comments(),
+                         CommentsField(),
                          )
 
             region_represent = S3Represent(lookup=tablename, translate=True)
@@ -335,7 +335,7 @@ class OrgOrganisationModel(DataModel):
                 define_table(tablename,
                              region_id(),
                              self.gis_country_id(),
-                             s3_comments(),
+                             CommentsField(),
                              )
 
         else:
@@ -436,7 +436,7 @@ class OrgOrganisationModel(DataModel):
                                                            T("Logo of the organization. This should be a png or jpeg file and it should be no larger than 400x400"))),
                            uploadfolder = os.path.join(current.request.folder, "uploads"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      #document_id(), # Better to have multiple Documents on a Tab
                      #Field("privacy", "integer", default=0),
                      #Field("archived", "boolean", default=False),
@@ -1141,7 +1141,7 @@ class OrgOrganisationNameModel(DataModel):
                           Field("acronym_l10n",
                                 label = T("Local Acronym"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -1428,7 +1428,7 @@ class OrgOrganisationGroupModel(DataModel):
                                                      polygons = True,
                                                      )
                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1519,7 +1519,7 @@ class OrgOrganisationGroupModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -1648,7 +1648,7 @@ class OrgOrganisationGroupPersonModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -1796,7 +1796,7 @@ class OrgOrganisationLocationModel(DataModel):
                             requires = IS_LOCATION(),
                             widget = S3LocationAutocompleteWidget()
                           ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings
@@ -1926,7 +1926,7 @@ class OrgOrganisationResourceModel(DataModel):
                           Field("name",
                                 label = T("Resource Type"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -1991,7 +1991,7 @@ class OrgOrganisationResourceModel(DataModel):
                                 label = T("Quantity"),
                                 requires = IS_INT_IN_RANGE(0, None),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -2108,7 +2108,7 @@ class OrgOrganisationSectorModel(DataModel):
                         requires = IS_EMPTY_OR(IS_LOCATION()),
                         widget = S3LocationAutocompleteWidget(),
                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -2442,7 +2442,7 @@ class OrgServiceModel(DataModel):
                            readable = hierarchical_service_types,
                            writable = hierarchical_service_types,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      on_define = lambda table: \
                         [table.parent.set_attributes(
                             represent = service_represent,
@@ -2629,7 +2629,7 @@ class OrgServiceModel(DataModel):
                                                 zero = None,
                                                 ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -2745,7 +2745,7 @@ class OrgServiceModel(DataModel):
         define_table(tablename,
                      service_location_id(),
                      service_id(),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         configure(tablename,
@@ -2764,7 +2764,7 @@ class OrgServiceModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -2809,7 +2809,7 @@ class OrgServiceModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -2978,7 +2978,7 @@ class OrgOrganisationTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3083,7 +3083,7 @@ class OrgOrganisationTypeTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3840,7 +3840,7 @@ class OrgSiteEventModel(DataModel):
                                 represent = represent_option(site_status_opts),
                                 ),
                           self.pr_person_id(ondelete = "SET NULL"),
-                          s3_comments(),
+                          CommentsField(),
                           Field("archived", "boolean",
                                 default = False,
                                 readable = False,
@@ -3907,7 +3907,7 @@ class OrgSiteNameModel(DataModel):
                           Field("name_l10n",
                                 label = T("Local Name"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3941,7 +3941,7 @@ class OrgSiteShiftModel(DataModel):
                           # Component not instance
                           self.super_link("site_id", "org_site"),
                           self.hrm_shift_id(ondelete = "CASCADE"),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings
@@ -3997,7 +3997,7 @@ class OrgSiteTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -4127,7 +4127,7 @@ class OrgFacilityModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         type_represent = S3Represent(lookup = tablename,
@@ -4279,7 +4279,7 @@ class OrgFacilityModel(DataModel):
                      Field.Method("inv", org_site_has_inv),
                      Field.Method("assets", org_site_has_assets),
                      Field.Method("reqs", org_site_top_req_priority),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -4876,7 +4876,7 @@ class OrgOfficeModel(DataModel):
                                      readable = is_admin,
                                      writable = is_admin,
                                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -4997,7 +4997,7 @@ class OrgOfficeModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_fields = ["name",
@@ -5183,7 +5183,7 @@ class OrgOfficeTypeTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
 

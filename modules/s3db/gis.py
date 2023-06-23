@@ -242,7 +242,7 @@ class GISLocationModel(DataModel):
             DateField("end_date",
                       label = T("End Date"),
                       ),
-            s3_comments(),
+            CommentsField(),
             Field("L5",
                   represent = lambda v: v or NONE,
                   readable = False,
@@ -421,7 +421,7 @@ class GISLocationModel(DataModel):
                         # Field("le", "integer",
                             # writable=False,
                             # readable=False),
-                        # s3_comments(),
+                        # CommentsField(),
                         # )
 
         # Pass names back to global scope (s3.*)
@@ -1257,7 +1257,7 @@ class GISLocationNameModel(DataModel):
                      Field("name_l10n",
                            label = T("Local Name"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,
@@ -1285,7 +1285,7 @@ class GISLocationNameModel(DataModel):
                            label = T("Old?"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,
@@ -1341,7 +1341,7 @@ class GISLocationTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -1409,7 +1409,7 @@ class GISLocationGroupModel(DataModel):
                      location_id(empty = False,
                                  ondelete = "CASCADE",
                                  ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         self.add_components(tablename,
@@ -1428,7 +1428,7 @@ class GISLocationGroupModel(DataModel):
                      location_id(empty = False,
                                  ondelete = "CASCADE",
                                  ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Pass names back to global scope (s3.*)
@@ -4621,7 +4621,7 @@ class GISPoIModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      self.gis_marker_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         represent = S3Represent(lookup=tablename, translate=True)
@@ -4663,9 +4663,9 @@ class GISPoIModel(DataModel):
                            label = T("Title"),
                            #requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(comment = None,
-                                 label = T("Description"),
-                                 ),
+                     CommentsField(comment = None,
+                                   label = T("Description"),
+                                   ),
                      self.gis_location_id(
                          ondelete = "CASCADE",
                          requires = IS_LAT_LON("gis_poi_location_id"),

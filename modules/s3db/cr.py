@@ -94,7 +94,7 @@ class CRShelterModel(DataModel):
                                                      ),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -252,7 +252,7 @@ class CRShelterModel(DataModel):
                            represent = represent_option(status_opts),
                            requires = IS_EMPTY_OR(IS_IN_SET(status_opts)),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      Field("obsolete", "boolean",
                            default = False,
                            label = T("Obsolete"),
@@ -567,7 +567,7 @@ class CRShelterPopulationModel(DataModel):
                            label = T("Obsolete"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -785,7 +785,7 @@ class CRShelterUnitModel(DataModel):
                                 writable = False,
                                 ),
                      Field.Method("cstatus", self.shelter_unit_status),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -1012,7 +1012,7 @@ class CRShelterStatusModel(DataModel):
                                 label = T("Non-assignable places"),
                                 readable = use_blocked_capacity,
                                 ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,
@@ -1062,7 +1062,7 @@ class CRShelterServiceModel(DataModel):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -1142,7 +1142,7 @@ class CRShelterEnvironmentModel(DataModel):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         environment_represent = S3Represent(lookup=tablename, translate=True)
@@ -1243,7 +1243,7 @@ class CRShelterInspectionModel(DataModel):
                                                      ),
                                            ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table settings
@@ -1289,7 +1289,7 @@ class CRShelterInspectionModel(DataModel):
                      self.cr_shelter_unit_id(ondelete = "CASCADE"),
                      DateField(default = "now",
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Form
@@ -1714,7 +1714,7 @@ class CRShelterRegistrationModel(DataModel):
                      s3_datetime("check_out_date",
                                  label = T("Check-out date"),
                                  ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,
@@ -2900,7 +2900,7 @@ class CRShelterInspection(CRUDMethod):
                                         size = None,
                                         ),
                             ),
-                      s3_comments(comment=None),
+                      CommentsField(comment=None),
                       ]
 
         # Buttons

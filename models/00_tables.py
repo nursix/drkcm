@@ -78,6 +78,6 @@ s3db.configure("auth_membership",
 
 # -----------------------------------------------------------------------------
 # Make available for controllers
-from core import S3ReusableField, s3_comments, s3_meta_fields
+from core import S3ReusableField, CommentsField, s3_meta_fields
 
 # END =========================================================================

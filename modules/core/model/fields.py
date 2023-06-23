@@ -25,7 +25,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("DateField",
+__all__ = ("CommentsField",
+           "DateField",
            "S3ReusableField",
            "S3MetaFields",
            "s3_fieldmethod",
@@ -33,7 +34,6 @@ __all__ = ("DateField",
            "s3_all_meta_field_names",
            "s3_role_required",
            "s3_roles_permitted",
-           "s3_comments",
            "s3_currency",
            "s3_language",
            "s3_datetime",
@@ -43,7 +43,7 @@ __all__ = ("DateField",
 import datetime
 from uuid import uuid4
 
-from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_TIME, TAG, XML
+from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_TIME, TAG
 from gluon.sqlhtml import TimeWidget
 from gluon.storage import Storage
 from gluon.tools import DEFAULT
@@ -51,7 +51,8 @@ from gluon.tools import DEFAULT
 from s3dal import SQLCustomType
 
 from ..tools import IS_ISO639_2_LANGUAGE_CODE, IS_ONE_OF, IS_UTC_DATE, \
-                    IS_UTC_DATETIME, S3DateTime, S3Represent, s3_str
+                    IS_UTC_DATETIME, S3DateTime, S3Represent, s3_str, \
+                    s3_text_represent
 from ..ui import S3ScriptItem, S3CalendarWidget
 
 # =============================================================================
@@ -594,33 +595,57 @@ def s3_roles_permitted(name="roles_permitted", **attr):
     return Field(name, "list:reference auth_group", **attr)
 
 # =============================================================================
-def s3_comments(name="comments", **attr):
+class CommentsField(Field):
     """
-        Return a standard Comments field
+        Standard comments field with the respective defaults
     """
 
-    T = current.T
-    if "label" not in attr:
-        attr["label"] = T("Comments")
-    if "represent" not in attr:
-        # Support HTML markup
-        attr["represent"] = lambda comments: \
-            XML(comments) if comments else current.messages["NONE"]
-    if "widget" not in attr:
-        from ..ui import s3_comments_widget
-        _placeholder = attr.pop("_placeholder", None)
-        if _placeholder:
-            attr["widget"] = lambda f, v: \
-                s3_comments_widget(f, v, _placeholder=_placeholder)
-        else:
-            attr["widget"] = s3_comments_widget
-    if "comment" not in attr:
-        attr["comment"] = DIV(_class="tooltip",
-                              _title="%s|%s" % \
-            (T("Comments"),
-             T("Please use this field to record any additional information, including a history of the record if it is updated.")))
+    def __init__(self,
+                 fieldname = "comments",
+                 label = DEFAULT,
+                 widget = DEFAULT,
+                 represent = DEFAULT,
+                 comment = DEFAULT,
+                 placeholder = None,
+                 **args):
+        """
+            Args:
+                placeholder: a placeholder text for the input
 
-    return Field(name, "text", **attr)
+            Other Args:
+                - see Field
+        """
+
+        T = current.T
+
+        if label is DEFAULT:
+            label = T("Comments")
+
+        if comment is DEFAULT:
+            comment = DIV(_class="tooltip",
+                          _title="%s|%s" % (T("Comments"),
+                                            T("Please use this field to record any additional information, including a history of the record if it is updated."),
+                                            ),
+                          )
+
+        if represent is DEFAULT:
+            represent = s3_text_represent
+
+        if widget is DEFAULT:
+            from ..ui import s3_comments_widget
+            if placeholder:
+                widget = lambda f, v: \
+                         s3_comments_widget(f, v, _placeholder=placeholder)
+            else:
+                widget = s3_comments_widget
+
+        super().__init__(fieldname,
+                         type = "text",
+                         label = label,
+                         comment = comment,
+                         widget = widget,
+                         represent = represent,
+                         **args)
 
 # =============================================================================
 def s3_currency(name="currency", **attr):

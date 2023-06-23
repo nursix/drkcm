@@ -168,7 +168,7 @@ class InvWarehouseModel(DataModel):
                                      readable = is_admin if org_dependent_wh_types else False,
                                      writable = is_admin if org_dependent_wh_types else False,
                                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -296,7 +296,7 @@ class InvWarehouseModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -543,7 +543,7 @@ class InventoryModel(DataModel):
                                        self.inv_item_total_value),
                           Field.Method("pack_quantity",
                                        self.supply_item_pack_quantity(tablename=tablename)),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -1173,7 +1173,7 @@ class InventoryTrackingModel(DataModel):
                            readable = document_filing,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Filter Widgets
@@ -1440,7 +1440,7 @@ class InventoryTrackingModel(DataModel):
                            readable = document_filing,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1633,7 +1633,7 @@ class InventoryTrackingModel(DataModel):
                                ondelete = "SET NULL",
                                #comment = self.pr_person_comment(child="repacked_id")),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -1708,7 +1708,7 @@ class InventoryTrackingModel(DataModel):
                                  readable = False,
                                  writable = False,
                                  ),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         # Resource configuration
@@ -1868,7 +1868,7 @@ $.filterOptionsS3({
                                   lambda row: \
                                     self.inv_track_item_total_weight(row, received=True),
                                   ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -3947,7 +3947,7 @@ class InventoryAdjustModel(DataModel):
                            label = T("Type"),
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         self.configure(tablename,
@@ -4095,7 +4095,7 @@ class InventoryAdjustModel(DataModel):
                                      ondelete = "SET NULL",
                                      ),
                      adj_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Reusable Field

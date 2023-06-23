@@ -148,9 +148,9 @@ class VolunteerActivityModel(DataModel):
                      #                         readable = is_admin,
                      #                         writable = is_admin,
                      #                         ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
                      )
 
         crud_strings[tablename] = Storage(
@@ -241,7 +241,7 @@ class VolunteerActivityModel(DataModel):
                      DateField("end_date",
                                label = T("End Date"),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -371,7 +371,7 @@ $.filterOptionsS3({
                      #      writable = False,
                      #      ),
                      Field.Method("month", vol_activity_hours_month),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -625,9 +625,9 @@ class VolunteerAwardModel(DataModel):
                                               readable = is_admin,
                                               writable = is_admin,
                                               ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
                      )
 
         crud_strings[tablename] = Storage(
@@ -689,7 +689,7 @@ class VolunteerAwardModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(

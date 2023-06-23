@@ -91,7 +91,7 @@ class PatientModel(DataModel):
                           DateField("return_date",
                                     label = T("Expected Return Home"),
                                     ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -167,7 +167,7 @@ class PatientModel(DataModel):
                                     label = T("Accompanying Relative"),
                                     widget = S3AddPersonWidget(),
                                     ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -208,7 +208,7 @@ class PatientModel(DataModel):
                                 label = T("Home Phone Number"),
                                 requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings

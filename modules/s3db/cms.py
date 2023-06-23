@@ -130,7 +130,7 @@ class CMSContentModel(DataModel):
                            label = T("Comments permitted?"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      # Multiple Roles (@ToDo: Implement the restriction)
                      s3_roles_permitted(readable = False,
                                         writable = False
@@ -188,7 +188,7 @@ class CMSContentModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -310,7 +310,7 @@ class CMSContentModel(DataModel):
                      #Field("published", "boolean",
                      #      default=True,
                      #      label=T("Published")),
-                     s3_comments(),
+                     CommentsField(),
                      # Multiple Roles (@ToDo: Implement the restriction)
                      s3_roles_permitted(readable = False,
                                         writable = False
@@ -578,7 +578,7 @@ class CMSContentModel(DataModel):
                      Field("name",
                            label = T("Tag"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      # Multiple Roles (@ToDo: Implement the restriction)
                      #s3_roles_permitted(readable = False,
                      #                   writable = False
@@ -1351,7 +1351,7 @@ class CMSNewsletterModel(DataModel):
                            writable = False,
                            ),
                      Field.Method("read_status", self.newsletter_read_status),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components

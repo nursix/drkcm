@@ -336,7 +336,7 @@ class IRSModel(DataModel):
                                        (T("No"),
                                        T("Yes"))[closed == True]
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -499,7 +499,7 @@ class IRSModel(DataModel):
         define_table(tablename,
                      ireport_id(),
                      self.pr_person_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # ---------------------------------------------------------------------
@@ -926,11 +926,11 @@ class IRSResponseModel(DataModel):
                            readable = msg_enabled,
                            represent = response_represent,
                            ),
-                     s3_comments("reply",
-                                 label = T("Reply Message"),
-                                 writable = msg_enabled,
-                                 readable = msg_enabled
-                                 ),
+                     CommentsField("reply",
+                                   label = T("Reply Message"),
+                                   writable = msg_enabled,
+                                   readable = msg_enabled
+                                   ),
                      )
 
         configure(tablename,
@@ -979,7 +979,7 @@ class IRSResponseModel(DataModel):
                            writable=False),
                      Field.Method("minutes",
                                   self.irs_ireport_vehicle_minutes),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename, extra_fields = ["datetime"])

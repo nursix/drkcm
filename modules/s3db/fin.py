@@ -69,7 +69,7 @@ class FinExpensesModel(DataModel):
                                     IS_FLOAT_AMOUNT.represent(v, precision=2),
                                 ),
                           s3_currency(),
-                          s3_comments(),
+                          CommentsField(),
                           on_define = lambda table: \
                             [table.created_by.set_attributes(represent = self.auth_UserRepresent(show_email = False,
                                                                                                  show_link = False)),
@@ -290,7 +290,7 @@ class FinVoucherModel(DataModel):
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # List fields
@@ -402,7 +402,7 @@ class FinVoucherModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -596,7 +596,7 @@ class FinVoucherModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -777,7 +777,7 @@ class FinVoucherModel(DataModel):
                            writable = False,
                            ),
 
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -858,7 +858,7 @@ class FinVoucherModel(DataModel):
                                                   )),
                            widget = S3MultiSelectWidget(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -956,7 +956,7 @@ class FinVoucherModel(DataModel):
                      Field.Virtual("status", self.voucher_status,
                                    label = T("Status"),
                                    ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # TODO Bearer notes?
@@ -1063,7 +1063,7 @@ class FinVoucherModel(DataModel):
                      Field.Virtual("status", self.debit_status,
                                    label = T("Status"),
                                    ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration

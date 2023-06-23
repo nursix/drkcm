@@ -44,7 +44,7 @@ from core import CustomController, CRUDMethod, DataModel, DateField, FS, \
                  S3Report, S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
                  S3Represent, S3ReusableField, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
-                 get_form_record_id, s3_comments, s3_meta_fields, \
+                 get_form_record_id, CommentsField, s3_meta_fields, \
                  s3_str, get_filter_options, \
                  LocationFilter, OptionsFilter, TextFilter
 
@@ -83,7 +83,7 @@ class CRReceptionCenterModel(DataModel):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Representation
@@ -197,7 +197,7 @@ class CRReceptionCenterModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components

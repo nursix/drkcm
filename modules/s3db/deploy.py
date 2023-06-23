@@ -61,7 +61,7 @@ class DeployOrganisationModel(DataModel):
         tablename = "deploy_organisation"
         self.define_table(tablename,
                           self.org_organisation_id(),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # ---------------------------------------------------------------------
@@ -144,7 +144,7 @@ class DeployModel(DataModel):
                                   deploy_mission_hrquantity),
                      Field.Method("response_count",
                                   deploy_mission_response_count),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
 
@@ -413,7 +413,7 @@ class DeployModel(DataModel):
                                label = T("End Date"),
                                set_max = "#deploy_unavailability_start_date",
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -1056,7 +1056,7 @@ class DeployAlertModel(DataModel):
                      Field("approval_letter", "upload",
                            label = T("Approval Letter"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         insertable = settings.get_deploy_responses_via_web()

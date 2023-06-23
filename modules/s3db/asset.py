@@ -252,7 +252,7 @@ class AssetModel(DataModel):
                            #readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -475,7 +475,7 @@ class AssetModel(DataModel):
                      # Base Location, which should always be a Site & set via Log
                      location_id(readable = False,
                                  writable = False),
-                     s3_comments(comment = None),
+                     CommentsField(comment = None),
                      )
 
         # =====================================================================
@@ -587,7 +587,7 @@ $.filterOptionsS3({
                                label = T("Assigned By"),               # or the previous owner if passed on directly (e.g. to successor in their post)
                                comment = self.pr_person_comment(child="by_person_id"),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -850,7 +850,7 @@ class AssetHRModel(DataModel):
                           self.hrm_human_resource_id(empty = False,
                                                      ondelete = "CASCADE",
                                                      ),
-                          #s3_comments(),
+                          #CommentsField(),
                           )
 
         # ---------------------------------------------------------------------
@@ -879,7 +879,7 @@ class AssetTeamModel(DataModel):
                           self.pr_group_id(comment = None,
                                            empty = False,
                                            ),
-                          #s3_comments(),
+                          #CommentsField(),
                           )
 
         # ---------------------------------------------------------------------
@@ -914,7 +914,7 @@ class AssetTelephoneModel(DataModel):
                           #Field("unit_cost", "double",
                           #      label = T("Unit Cost"),
                           #      ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         #--------------------------------------------------------------------------
@@ -947,7 +947,7 @@ class AssetTelephoneModel(DataModel):
                           #      label = T("Cost"),
                           #      ),
                           #s3_currency(),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # ---------------------------------------------------------------------

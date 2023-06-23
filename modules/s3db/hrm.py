@@ -162,9 +162,9 @@ class HRModel(DataModel):
                                      readable = is_admin,
                                      writable = is_admin,
                                      ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
                      )
 
         label_create = T("Create Department")
@@ -274,9 +274,9 @@ class HRModel(DataModel):
                            represent = represent_option(hrm_type_opts),
                            requires = IS_IN_SET(hrm_type_opts),
                            ),
-                     s3_comments(comment = None,
-                                 label = T("Description"),
-                                 ),
+                     CommentsField(comment = None,
+                                   label = T("Description"),
+                                   ),
                      )
 
         if group == "volunteer":
@@ -502,7 +502,7 @@ class HRModel(DataModel):
                            label = T("Facility Contact"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # @ToDo: Move this configurability to templates rather than lots of deployment_settings
@@ -1011,7 +1011,7 @@ class HRModel(DataModel):
                      DateField("end_date",
                                label = T("End Date"),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure("hrm_job_title_human_resource",
@@ -1792,7 +1792,7 @@ class HRInsuranceModel(DataModel):
                           #Field("beneficiary",
                           #      label = T("Beneficiary"),
                           #      ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -1851,7 +1851,7 @@ class HRContractModel(DataModel):
                                 requires = IS_IN_SET(hours_models),
                                 represent = hours_model_represent,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2125,7 +2125,7 @@ class HRSkillModel(DataModel):
                                        IS_LENGTH(64),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -2186,7 +2186,7 @@ class HRSkillModel(DataModel):
                                        IS_LENGTH(64),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -2292,7 +2292,7 @@ class HRSkillModel(DataModel):
                                          _title="%s|%s" % (T("Priority"),
                                                            T("Priority from 1 to 9. 1 is most preferred.")))
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -2353,7 +2353,7 @@ class HRSkillModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -2411,7 +2411,7 @@ class HRSkillModel(DataModel):
         #                                 _title="%s|%s" % (T("Priority"),
         #                                                   T("Priority from 1 to 9. 1 is most preferred.")))
         #                   ),
-        #             s3_comments(),
+        #             CommentsField(),
         #             )
 
         #crud_strings[tablename] = Storage(
@@ -2520,9 +2520,9 @@ class HRSkillModel(DataModel):
                                         ),
                            represent = s3_url_represent,
                            ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
                      )
 
         crud_strings[tablename] = Storage(
@@ -2610,7 +2610,7 @@ class HRSkillModel(DataModel):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -2745,7 +2745,7 @@ class HRSkillModel(DataModel):
                            readable = ext_instructor,
                            writable = ext_instructor,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2905,7 +2905,7 @@ class HRSkillModel(DataModel):
                                  widget = S3LocationSelector(#show_address = False,
                                                              ),
                                  ),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         # =====================================================================
@@ -2923,7 +2923,7 @@ class HRSkillModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         self.configure(tablename,
@@ -2985,7 +2985,7 @@ class HRSkillModel(DataModel):
                            label = T("Additional relevant information"),
                            widget = s3_comments_widget,
                            ),
-                     s3_comments(label = T("General Comments")),
+                     CommentsField(label = T("General Comments")),
                      )
 
         configure(tablename,
@@ -3009,7 +3009,7 @@ class HRSkillModel(DataModel):
                                label = INSTRUCTOR,
                                ondelete = "CASCADE",
                                ),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         # =====================================================================
@@ -3130,7 +3130,7 @@ class HRSkillModel(DataModel):
                            ),
                      Field.Method("job_title", hrm_training_job_title),
                      Field.Method("organisation", hrm_training_organisation),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Suitable for use when adding a Training to a Person
@@ -3410,7 +3410,7 @@ class HRSkillModel(DataModel):
                                         IS_ONE_OF(db, "hrm_training.id",
                                                   )),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,
@@ -4279,7 +4279,7 @@ class HRAppraisalModel(DataModel):
                                label = T("Supervisor"),
                                widget = S3AddPersonWidget(),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4540,7 +4540,7 @@ class HRExperienceModel(DataModel):
                                     label = T("Supervisor"),
                                     widget = S3AddPersonWidget(),
                                     ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4693,7 +4693,7 @@ class HRDisciplinaryActionModel(DataModel):
                      Field("name",
                            label = T("Disciplinary Action Type"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         self.configure(tablename,
@@ -4723,7 +4723,7 @@ class HRDisciplinaryActionModel(DataModel):
                                                  label = T("Add Disciplinary Action Type"),
                                                  ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # ---------------------------------------------------------------------
@@ -4757,7 +4757,7 @@ class HRTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -4824,9 +4824,9 @@ class HRProgrammeModel(DataModel):
                                               readable = is_admin,
                                               writable = is_admin,
                                               ),
-                     s3_comments(comment = None,
-                                 label = T("Description"),
-                                 ),
+                     CommentsField(comment = None,
+                                   label = T("Description"),
+                                   ),
                      )
 
         crud_strings[tablename] = Storage(
@@ -4941,7 +4941,7 @@ class HRProgrammeModel(DataModel):
                            writable = False,
                            ),
                      Field.Method("month", hrm_programme_hours_month),
-                     s3_comments(comment = None),
+                     CommentsField(comment = None),
                      )
 
         crud_strings[tablename] = Storage(
@@ -5079,7 +5079,7 @@ class HRShiftModel(DataModel):
                              # Could be the next day
                              #set_max = "#hrm_shift_template_start_time",
                              ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -5111,7 +5111,7 @@ class HRShiftModel(DataModel):
                                  label = T("End Date"),
                                  set_max = "#hrm_shift_start_date",
                                  ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         represent = S3Represent(lookup=tablename, fields=["start_date", "end_date"])
@@ -5256,7 +5256,7 @@ class HRShiftModel(DataModel):
         define_table(tablename,
                      shift_id(),
                      self.hrm_human_resource_id(writable = False),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         # ---------------------------------------------------------------------
@@ -5384,7 +5384,7 @@ class HRDelegationModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -5441,7 +5441,7 @@ class HRDelegationModel(DataModel):
                            represent = represent_option(message_status),
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # List fields

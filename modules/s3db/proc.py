@@ -101,7 +101,7 @@ class PROCProcurementPlansModel(DataModel):
                            default = 0,
                            ),
                      # @ToDo: Add estimated shipping costs
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -171,7 +171,7 @@ class PROCProcurementPlansModel(DataModel):
                      #      compute = record_pack_quantity), # defined in supply
                      #Field.Method("pack_quantity",
                      #             self.supply_item_pack_quantity(tablename=tablename)),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -313,7 +313,7 @@ class PROCPurchaseOrdersModel(DataModel):
                                      represent = self.org_site_represent,
                                      ),
                      DateField(default = "now"),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -389,7 +389,7 @@ class PROCPurchaseOrdersModel(DataModel):
                      #      compute = record_pack_quantity), # defined in supply
                      #Field.Method("pack_quantity",
                      #             self.supply_item_pack_quantity(tablename=tablename)),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -458,7 +458,7 @@ class PROCPurchaseOrdersModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         configure(tablename,

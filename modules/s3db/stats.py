@@ -308,9 +308,9 @@ class StatsDemographicModel(DataModel):
                            represent = lambda v: T(v) if v is not None \
                                                     else NONE,
                            ),
-                     s3_comments("description",
-                                 label = T("Description"),
-                                 ),
+                     CommentsField("description",
+                                   label = T("Description"),
+                                   ),
                      # Link to the Demographic which is the Total, so that we can calculate percentages
                      Field("total_id", self.stats_parameter,
                            label = T("Total"),
@@ -391,7 +391,7 @@ class StatsDemographicModel(DataModel):
                            ),
                      # Link to Source
                      self.stats_source_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1281,7 +1281,7 @@ class StatsImpactModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         ADD_IMPACT_TYPE = T("Add Impact Type")
@@ -1339,7 +1339,7 @@ class StatsImpactModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      self.stats_accuracy(default = 3), # Default: Official Estimate
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -1413,7 +1413,7 @@ class StatsPeopleModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         ADD_PEOPLE_TYPE = T("Add Type of People")
@@ -1475,7 +1475,7 @@ class StatsPeopleModel(DataModel):
                      self.pr_person_id(label = T("Contact Person"),
                                        widget = S3AddPersonWidget(controller="pr"),
                                        ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(

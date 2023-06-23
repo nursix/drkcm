@@ -195,10 +195,12 @@ class ProjectModel(DataModel):
                                   self.project_total_annual_budget),
                      Field.Method("total_organisation_amount",
                                   self.project_total_organisation_amount),
-                     s3_comments(comment=DIV(_class="tooltip",
-                                             _title="%s|%s" % (T("Comments"),
-                                                               T("Outcomes, Impact, Challenges"))),
-                                 ),
+                     CommentsField(comment=DIV(_class="tooltip",
+                                               _title="%s|%s" % (T("Comments"),
+                                                                 T("Outcomes, Impact, Challenges"),
+                                                                 ),
+                                               ),
+                                   ),
                      )
 
         # CRUD Strings
@@ -890,9 +892,9 @@ class ProjectBeneficiaryModel(DataModel):
                                                     "project_beneficiary_type.name"),
                                        ],
                            ),
-                     s3_comments("description",
-                                 label = T("Description"),
-                                 ),
+                     CommentsField("description",
+                                   label = T("Description"),
+                                   ),
                      # Link to the Beneficiary Type which is the Total, so that we can calculate percentages
                      Field("total_id", self.stats_parameter,
                            label = T("Total"),
@@ -995,7 +997,7 @@ class ProjectBeneficiaryModel(DataModel):
                              self.stats_year(row, "project_beneficiary"),
                            label = T("Year"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1151,7 +1153,7 @@ class ProjectBeneficiaryModel(DataModel):
                      beneficiary_id(empty = False,
                                     ondelete = "CASCADE",
                                     ),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         configure(tablename,
@@ -1172,7 +1174,7 @@ class ProjectBeneficiaryModel(DataModel):
                      beneficiary_id(empty = False,
                                     ondelete = "CASCADE",
                                     ),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         configure(tablename,
@@ -1266,7 +1268,7 @@ class ProjectHazardModel(DataModel):
                                                       else NONE,
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(
+                     CommentsField(
                         represent = lambda v: T(v) if v is not None \
                                                    else NONE,
                         ),
@@ -1496,7 +1498,7 @@ class ProjectLocationModel(DataModel):
                            requires = IS_DECIMAL_IN_RANGE(0, 1),
                            writable = mode_3w,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1928,7 +1930,7 @@ class ProjectOrganisationModel(DataModel):
                                 widget = IS_FLOAT_AMOUNT.widget,
                                 label = T("Funds Contributed")),
                           s3_currency(),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings
@@ -2157,7 +2159,7 @@ class ProjectStatusModel(DataModel):
                                             IS_LENGTH(128),
                                             ],
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings
@@ -2229,7 +2231,7 @@ class ProjectTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2280,7 +2282,7 @@ class ProjectThemeModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(
+                     CommentsField(
                         represent = lambda v: T(v) if v is not None \
                                                    else NONE,
                         ),
@@ -2611,7 +2613,7 @@ class ProjectActivityModel(DataModel):
                            ),
                      # @ToDo: Move to compute using stats_year
                      Field.Method("year", self.project_activity_year),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3081,7 +3083,7 @@ class ProjectActivityTypeModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3389,7 +3391,7 @@ class ProjectActivityTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3450,7 +3452,7 @@ class ProjectTaskModel(DataModel):
                            requires = IS_NOT_EMPTY()
                            ),
                      DateField(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3616,7 +3618,7 @@ class ProjectTaskModel(DataModel):
                            writable = staff,
                            ),
                      Field.Method("task_id", self.project_task_task_id),
-                     s3_comments(),
+                     CommentsField(),
                      on_define = lambda table: \
                         [table.created_on.set_attributes(represent = lambda dt: \
                             S3DateTime.date_represent(dt, utc=True)),
@@ -3950,7 +3952,7 @@ class ProjectTaskModel(DataModel):
                            ),
                      Field.Method("day", project_time_day),
                      Field.Method("week", project_time_week),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -4405,7 +4407,7 @@ class ProjectTaskTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,

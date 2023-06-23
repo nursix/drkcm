@@ -118,7 +118,7 @@ class VehicleModel(DataModel):
                            represent = lambda v: \
                                        float_represent(v, precision=2),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         type_represent = S3Represent(lookup=tablename,
@@ -194,7 +194,7 @@ class VehicleModel(DataModel):
                      DateField("insurance_date",
                                label = T("Insurance Renewal Due"),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings

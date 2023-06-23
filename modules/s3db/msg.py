@@ -688,7 +688,7 @@ class MsgMessageTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2486,7 +2486,7 @@ class MsgBaseStationModel(DataModel):
                                  #widget=S3OrganisationAutocompleteWidget(default_from_profile=True),
                                  ),
                           self.gis_location_id(),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings

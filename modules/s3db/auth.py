@@ -95,7 +95,7 @@ class AuthDomainApproverModel(DataModel):
                                                                 ),
                                             ),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # ---------------------------------------------------------------------
@@ -193,7 +193,7 @@ class AuthConsentModel(DataModel):
                            label = T("Description"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -304,7 +304,7 @@ class AuthConsentModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Read-only hash fields (enabled in controller if permissible)

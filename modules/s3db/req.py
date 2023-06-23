@@ -331,13 +331,13 @@ class RequestModel(DataModel):
                           #Field("location",
                           #      label = T("Neighborhood")),
                           # Donations: What will the Items be used for?; People: Task Details
-                          s3_comments("purpose",
-                                      comment = "",
-                                      label = T("Purpose"),
-                                      # Only-needed for summary mode (unused)
-                                      #represent = self.req_purpose_represent,
-                                      represent = lambda s: s if s else NONE,
-                                      ),
+                          CommentsField("purpose",
+                                        comment = "",
+                                        label = T("Purpose"),
+                                        # Only-needed for summary mode (unused)
+                                        #represent = self.req_purpose_represent,
+                                        represent = lambda s: s if s else NONE,
+                                        ),
                           Field("is_template", "boolean",
                                 default = False,
                                 label = T("Recurring Request?"),
@@ -472,7 +472,7 @@ class RequestModel(DataModel):
                                 ),
                           Field.Method("details", req_req_details),
                           Field.Method("drivers", req_req_drivers),
-                          s3_comments(comment = ""),
+                          CommentsField(comment = ""),
                           )
 
         # CRUD strings
@@ -1704,7 +1704,7 @@ class RequestApproverModel(DataModel):
                                                              T("Is this person the one to match request items to specific warehouses &/or purchase them."),
                                                              ))
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -1730,7 +1730,7 @@ class RequestApproverModel(DataModel):
                            label = T("Position"),
                            ),
                      person_id(),
-                     #s3_comments(),
+                     #CommentsField(),
                      )
 
         # ---------------------------------------------------------------------
@@ -1820,7 +1820,7 @@ class RequestItemModel(DataModel):
                      Field.Method("pack_quantity",
                                   self.supply_item_pack_quantity(tablename=tablename)
                                   ),
-                     s3_comments(),
+                     CommentsField(),
                      on_define = lambda table: \
                         [table.site_id.set_attributes(label = T("Requested From")),
                          ]
@@ -2207,11 +2207,11 @@ class RequestSkillModel(DataModel):
                                 requires = IS_INT_IN_RANGE(0, None),
                                 writable = quantities_writable,
                                 ),
-                          s3_comments(#label = T("Task Details"),
-                                      #comment = DIV(_class="tooltip",
-                                      #              _title="%s|%s" % (T("Task Details"),
-                                      #                                T("Include any special requirements such as equipment which they need to bring.")))
-                                      ),
+                          CommentsField(#label = T("Task Details"),
+                                        #comment = DIV(_class="tooltip",
+                                        #              _title="%s|%s" % (T("Task Details"),
+                                        #                                T("Include any special requirements such as equipment which they need to bring.")))
+                                        ),
                           on_define = lambda table: \
                             [table.site_id.set_attributes(label = T("Requested From")),
                              ]
@@ -2523,14 +2523,14 @@ class RequestNeedsModel(DataModel):
                                             IS_LENGTH(64),
                                             ],
                                 ),
-                          s3_comments("description",
-                                      label = T("Description"),
-                                      comment = None,
-                                      ),
+                          CommentsField("description",
+                                        label = T("Description"),
+                                        comment = None,
+                                        ),
                           req_status()("status",
                                        label = T("Fulfilment Status"),
                                        ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -2651,7 +2651,7 @@ class RequestNeedsActivityModel(DataModel):
         self.define_table(tablename,
                           self.req_need_id(empty = False),
                           self.project_activity_id(empty = False),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2690,7 +2690,7 @@ class RequestNeedsContactModel(DataModel):
                           self.pr_person_id(empty = False,
                                             label = T("Contact"),
                                             ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2787,7 +2787,7 @@ class RequestNeedsDemographicsModel(DataModel):
                                 # Normally set automatically
                                 writable = False,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2882,7 +2882,7 @@ $.filterOptionsS3({
                                 writable = False,
                                 ),
                           req_priority()(),
-                          s3_comments(),
+                          CommentsField(),
                           req_status()("status",
                                        label = T("Fulfilment Status"),
                                        ),
@@ -2940,7 +2940,7 @@ class RequestNeedsSkillsModel(DataModel):
                                             IS_FLOAT_AMOUNT(minimum=1.0)),
                                 ),
                           req_priority()(),
-                          s3_comments(),
+                          CommentsField(),
                           req_status()("status",
                                        label = T("Fulfilment Status"),
                                        ),
@@ -3003,7 +3003,7 @@ class RequestNeedsOrganisationModel(DataModel):
                                                                 ),
                                           empty = False,
                                           ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3057,7 +3057,7 @@ class RequestNeedsPersonModel(DataModel):
                                 requires = IS_EMPTY_OR(
                                             IS_IN_SET(status_opts)),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3106,7 +3106,7 @@ class RequestNeedsSectorModel(DataModel):
         self.define_table(tablename,
                           self.req_need_id(empty = False),
                           self.org_sector_id(empty = False),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3149,7 +3149,7 @@ class RequestNeedsSiteModel(DataModel):
                                           writable = True,
                                           represent = self.org_site_represent,
                                           ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3201,7 +3201,7 @@ class RequestNeedsTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3244,7 +3244,7 @@ class RequestTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3538,7 +3538,7 @@ class CommitModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         filter_widgets = [
@@ -3779,7 +3779,7 @@ class CommitItemModel(DataModel):
                                 ),
                           Field.Method("pack_quantity",
                                        self.supply_item_pack_quantity(tablename=tablename)),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -3906,7 +3906,7 @@ class CommitPersonModel(DataModel):
                           #self.pr_person_id(),
                           # Using HR to use hrm_Assign method (can mark person as allocated onaccept)
                           self.hrm_human_resource_id(),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -3995,7 +3995,7 @@ class CommitSkillModel(DataModel):
                           Field("quantity", "double", notnull=True,
                                 label = T("Quantity"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings

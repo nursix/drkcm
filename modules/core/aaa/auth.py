@@ -45,7 +45,7 @@ from gluon.utils import web2py_uuid
 from s3dal import Row, Rows, Query, Field, original_tablename
 
 from ..controller import CRUDRequest
-from ..model import S3MetaFields, s3_comments
+from ..model import S3MetaFields, CommentsField
 from ..tools import IS_ISO639_2_LANGUAGE_CODE, S3Represent, S3Tracker, \
                     s3_addrow, s3_mark_required, s3_str
 
@@ -300,7 +300,7 @@ Thank you"""
                 Field("timestmp", "datetime",
                       default="",
                       readable=False, writable=False),
-                s3_comments(readable=False, writable=False),
+                CommentsField(readable=False, writable=False),
                 # Additional meta fields required for sync:
                 S3MetaFields.uuid(),
                 #S3MetaFields.mci(),

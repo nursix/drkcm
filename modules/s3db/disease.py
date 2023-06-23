@@ -103,7 +103,7 @@ class DiseaseDataModel(DataModel):
                      Field("watch_period", "integer",
                            label = T("Watch Period after Exposure (days)"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         represent = S3Represent(lookup=tablename)
@@ -230,7 +230,7 @@ class DiseaseDataModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -407,7 +407,7 @@ class DiseaseMonitoringModel(DataModel):
                            label = T("Obsolete"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -475,7 +475,7 @@ class DiseaseMonitoringModel(DataModel):
                            requires = IS_INT_IN_RANGE(0),
                            writable = not subtotals,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -613,7 +613,7 @@ class DiseaseMonitoringModel(DataModel):
                            label = T("Number of Positive Test Results"),
                            requires = IS_INT_IN_RANGE(0),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # List fields
@@ -1072,7 +1072,7 @@ class DiseaseCaseTrackingModel(DataModel):
                      DateField("monitoring_until",
                                label = T("Monitoring required until"),
                                ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Reusable Field
@@ -1217,7 +1217,7 @@ class DiseaseCaseTrackingModel(DataModel):
                            represent = illness_status_represent,
                            requires = IS_IN_SET(illness_status),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -1296,7 +1296,7 @@ class DiseaseCaseTrackingModel(DataModel):
                                                 sort = False,
                                                 ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -1404,7 +1404,7 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(diagnosis_status)),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -1776,7 +1776,7 @@ class DiseaseContactTracingModel(DataModel):
                            requires = IS_IN_SET(contact_tracing_status, zero=None),
                            represent = represent_option(contact_tracing_status),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # @todo: implement specific S3Represent class
@@ -2136,9 +2136,9 @@ class DiseaseStatsModel(DataModel):
                            represent = lambda v: T(v) if v is not None \
                                                     else NONE,
                            ),
-                     s3_comments("description",
-                                 label = T("Description"),
-                                 ),
+                     CommentsField("description",
+                                   label = T("Description"),
+                                   ),
                      )
 
         # CRUD Strings
@@ -2200,7 +2200,7 @@ class DiseaseStatsModel(DataModel):
                      #      ),
                      # Link to Source
                      self.stats_source_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings

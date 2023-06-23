@@ -275,7 +275,7 @@ class S3DynamicTablesModel(DataModel):
                            ),
                      # Link this table to a certain master key
                      self.auth_masterkey_id(),
-                     #s3_comments(),
+                     #CommentsField(),
                      on_define = lambda table: \
                                  [self.s3_table_set_before_write(table)]
                      )
@@ -396,14 +396,14 @@ class S3DynamicTablesModel(DataModel):
                                                            ),
                                          ),
                            ),
-                     s3_comments(label = T("Tooltip"),
-                                 represent = s3_text_represent,
-                                 comment = DIV(_class="tooltip",
-                                               _title="%s|%s" % (T("Tooltip"),
-                                                                 T("Explanation of the field to be displayed in forms"),
-                                                                 ),
-                                               ),
-                                 ),
+                     CommentsField(label = T("Tooltip"),
+                                   represent = s3_text_represent,
+                                   comment = DIV(_class="tooltip",
+                                                 _title="%s|%s" % (T("Tooltip"),
+                                                                   T("Explanation of the field to be displayed in forms"),
+                                                                   ),
+                                                 ),
+                                   ),
                      )
 
         # Table configuration

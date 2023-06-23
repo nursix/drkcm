@@ -137,7 +137,7 @@ class EventModel(DataModel):
                            readable = hierarchical_event_types,
                            writable = hierarchical_event_types,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         type_represent = S3Represent(lookup=tablename, translate=True)
@@ -281,7 +281,7 @@ class EventModel(DataModel):
                            label = T("Closed"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -993,7 +993,7 @@ class EventNameModel(DataModel):
                           Field("name_l10n",
                                 label = T("Local Name"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -1042,7 +1042,7 @@ class EventTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -1173,12 +1173,12 @@ class EventIncidentModel(DataModel):
                                                    ),
                           self.pr_person_id(label = T("Incident Commander"),
                                             ),
-                          s3_comments("action_plan",
-                                      comment = None,
-                                      label = T("Action Plan"),
-                                      widget = s3_richtext_widget,
-                                      ),
-                          s3_comments(),
+                          CommentsField("action_plan",
+                                        comment = None,
+                                        label = T("Action Plan"),
+                                        widget = s3_richtext_widget,
+                                        ),
+                          CommentsField(),
                           )
 
         if ticket:
@@ -2110,7 +2110,7 @@ class EventIncidentReportModel(DataModel):
                            label = T("Closed"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -2412,7 +2412,7 @@ class EventResourceModel(DataModel):
                           #Field.Method("location", lambda row: self.sit_location(row, tablename)),
                           # @ToDo: Deprecate once we start using S3Track
                           s3_datetime(default = "now"),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -2573,7 +2573,7 @@ class EventIncidentLogModel(DataModel):
                                           writable = True,
                                           comment = T("You can send an SMS notification to a Person or Organization On-Duty Number"),
                                           ),
-                          s3_comments(),
+                          CommentsField(),
                           on_define = lambda table: \
                             [table.created_by.set_attributes(represent = self.auth_UserRepresent(show_email = False,
                                                                                                  show_link = False)),
@@ -2676,7 +2676,7 @@ class EventIncidentTypeModel(DataModel):
                                 readable = hierarchical_incident_types,
                                 writable = hierarchical_incident_types,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         type_represent = S3Represent(lookup=tablename, translate=True)
@@ -2792,7 +2792,7 @@ class EventIncidentTypeTagModel(DataModel):
                           # key is a reserved word in MySQL
                           Field("tag", label=T("Key")),
                           Field("value", label=T("Value")),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -3000,7 +3000,7 @@ class EventAssetModel(DataModel):
                                       #default_interval = 12,
                                       widget = "date",
                                       ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -3508,7 +3508,7 @@ class EventHRModel(DataModel):
                                       #default_interval = 12,
                                       widget = "date",
                                       ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -3688,7 +3688,7 @@ class EventTeamModel(DataModel):
                                        IS_LENGTH(64),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -3978,7 +3978,7 @@ class EventOrganisationModel(DataModel):
                                 requires = IS_IN_SET(status_opts),
                                 ),
                           # @ToDo: Role?
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4077,12 +4077,12 @@ class EventScenarioModel(DataModel):
                                             IS_LENGTH(64)
                                             ],
                                 ),
-                          s3_comments("action_plan",
-                                      comment = None,
-                                      label = T("Standard Operating Procedure"),
-                                      widget = s3_richtext_widget,
-                                      ),
-                          s3_comments(),
+                          CommentsField("action_plan",
+                                        comment = None,
+                                        label = T("Standard Operating Procedure"),
+                                        widget = s3_richtext_widget,
+                                        ),
+                          CommentsField(),
                           )
 
         # CRUD strings
@@ -4244,7 +4244,7 @@ class EventScenarioAssetModel(DataModel):
                           #            #default_interval = 12,
                           #            widget = "date",
                           #            ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4343,7 +4343,7 @@ class EventScenarioHRModel(DataModel):
                           #            #default_interval = 12,
                           #            widget = "date",
                           #            ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4395,7 +4395,7 @@ class EventScenarioOrganisationModel(DataModel):
                           self.org_organisation_id(ondelete = "RESTRICT",
                                                    empty = False,
                                                    ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         current.response.s3.crud_strings[tablename] = Storage(
@@ -4847,16 +4847,16 @@ class EventSitRepModel(DataModel):
                           #            readable = sitrep_edxl,
                           #            writable = sitrep_edxl,
                           #            ),
-                          s3_comments("summary",
-                                      comment = None,
-                                      label = T("Summary"),
-                                      #readable = not sitrep_edxl,
-                                      #writable = not sitrep_edxl,
-                                      widget = s3_richtext_widget,
-                                      ),
-                          s3_comments(#readable = not sitrep_edxl,
-                                      #writable = not sitrep_edxl,
-                                      ),
+                          CommentsField("summary",
+                                        comment = None,
+                                        label = T("Summary"),
+                                        #readable = not sitrep_edxl,
+                                        #writable = not sitrep_edxl,
+                                        widget = s3_richtext_widget,
+                                        ),
+                          CommentsField(#readable = not sitrep_edxl,
+                                        #writable = not sitrep_edxl,
+                                        ),
                           )
 
         # CRUD strings

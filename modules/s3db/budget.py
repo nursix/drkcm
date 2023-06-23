@@ -169,7 +169,7 @@ class BudgetModel(DataModel):
                                        status_opts.get(opt, UNKNOWN_OPT),
                            requires = IS_IN_SET(status_opts),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -277,7 +277,7 @@ class BudgetModel(DataModel):
                            default = 0.0,
                            label = T("Hazard Pay"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -360,7 +360,7 @@ class BudgetModel(DataModel):
                      #Field("hazard_pay", "double",
                      #      default=0.00,
                      #     ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -608,7 +608,7 @@ class BudgetKitModel(DataModel):
                            label = T("Total Cost per Megabyte"),
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -733,7 +733,7 @@ class BudgetKitModel(DataModel):
                            default = 0.00,
                            label = T("Cost per Megabyte"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -966,7 +966,7 @@ class BudgetBundleModel(DataModel):
                            label = T("Recurring cost"),
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1380,7 +1380,7 @@ class BudgetAllocationModel(DataModel):
                                 default = 0.00,
                                 label = T("Daily Cost"),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -1496,7 +1496,7 @@ class BudgetMonitoringModel(DataModel):
                                       writable = False,
                                       ),
                           Field.Method("percentage", self.budget_monitoring_percentage),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # CRUD Strings

@@ -63,7 +63,7 @@ class WaterModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -115,7 +115,7 @@ class WaterModel(DataModel):
                                                     polygons = True,
                                                     ),
                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -146,7 +146,7 @@ class WaterModel(DataModel):
                                                     polygons = True,
                                                     )
                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -213,7 +213,7 @@ class WaterModel(DataModel):
                             flowstatus_opts.get(opt, opt),
                            requires = IS_EMPTY_OR(IS_IN_SET(flowstatus_opts)),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -238,7 +238,7 @@ class WaterModel(DataModel):
         #                   label = T("Name"),
         #                   ),
         #             location_id(),
-        #             s3_comments(),
+        #             CommentsField(),
         #             )
 
         #crud_strings[tablename] = Storage(
@@ -263,7 +263,7 @@ class WaterModel(DataModel):
         #                   label = T("Name"),
         #                   ),
         #             location_id(),
-        #             s3_comments(),
+        #             CommentsField(),
         #             )
 
         #crud_strings[tablename] = Storage(

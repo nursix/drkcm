@@ -621,7 +621,7 @@ class SyncDatasetModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -691,7 +691,7 @@ class SyncDatasetModel(DataModel):
                      s3.scheduler_task_id(readable = False,
                                           writable = False,
                                           ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration

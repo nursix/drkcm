@@ -138,7 +138,7 @@ class SupplyModel(DataModel):
                                                      ),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -191,7 +191,7 @@ class SupplyModel(DataModel):
                                        ],
                            ),
                      self.org_organisation_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -309,7 +309,7 @@ class SupplyModel(DataModel):
                            readable = vehicle,
                            writable = vehicle,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      on_define = lambda table: \
                         [table.parent_item_category_id.set_attributes(requires = item_category_requires),
                          ]
@@ -466,7 +466,7 @@ $.filterOptionsS3({
                            writable = False,
                            ),
                      # These comments do *not* pull through to an Inventory's Items or a Request's Items
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Categories in Progress
@@ -620,7 +620,7 @@ $.filterOptionsS3({
                      item_category_id(script = item_category_script,
                                       ),
                      supply_item_id(script = None), # No Item Pack Filter
-                     s3_comments(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
+                     CommentsField(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
                      )
 
         # CRUD strings
@@ -719,7 +719,7 @@ $.filterOptionsS3({
                      s3_currency(readable = track_pack_values,
                                  writable = track_pack_values,
                                  ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -804,7 +804,7 @@ $.filterOptionsS3({
                                        float_represent(v, precision=2),
                            ),
                      item_pack_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -852,7 +852,7 @@ $.filterOptionsS3({
                                                                   },
                                                           ),
                                     ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -1388,7 +1388,7 @@ class SupplyDistributionModel(DataModel):
                                ),
                      #self.stats_source_id(),
                      Field.Method("year", self.supply_distribution_year),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1621,7 +1621,7 @@ class SupplyDistributionModel(DataModel):
                            label = T("Received?"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # ---------------------------------------------------------------------
@@ -1806,7 +1806,7 @@ class SupplyPersonModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         crud_strings[tablename] = Storage(
@@ -1853,7 +1853,7 @@ class SupplyPersonModel(DataModel):
                      # Requested By / Taken By
                      self.org_organisation_id(ondelete = "SET NULL",
                                               ),
-                     s3_comments(comment = None),
+                     CommentsField(comment = None),
                      )
 
         crud_strings[tablename] = Storage(

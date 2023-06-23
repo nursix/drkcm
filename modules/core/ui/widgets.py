@@ -8316,7 +8316,7 @@ class S3PhoneWidget(StringWidget):
 def s3_comments_widget(field, value, **attr):
     """
         A smaller-than-normal textarea
-        to be used by the s3_comments & gis.desc_field Reusable fields
+        to be used by the CommentsField & gis.desc_field Reusable fields
     """
 
     _id = attr.get("_id", "%s_%s" % (field._tablename, field.name))

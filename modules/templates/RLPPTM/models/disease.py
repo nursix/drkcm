@@ -38,7 +38,7 @@ from gluon.storage import Storage
 
 from core import DataModel, OptionsFilter, TextFilter, \
                  get_form_record_id, represent_option, \
-                 s3_comments, s3_meta_fields, s3_yes_no_represent
+                 CommentsField, s3_meta_fields, s3_yes_no_represent
 
 # =============================================================================
 class DiseaseDaycareTestingInquiryModel(DataModel):
@@ -110,7 +110,7 @@ class DiseaseDaycareTestingInquiryModel(DataModel):
                            represent = lambda v, row=None: str(v) if v is not None else "-",
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, 1000)),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Filter Widgets

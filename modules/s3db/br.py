@@ -151,7 +151,7 @@ class BRCaseModel(DataModel):
                                                            ),
                                          ),
                            ),
-                     s3_comments(
+                     CommentsField(
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Comments"),
                                                              T("Describe the meaning, reasons and potential consequences of this status"),
@@ -276,7 +276,7 @@ class BRCaseModel(DataModel):
                            ),
 
                      # Standard comments and meta fields
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -525,7 +525,7 @@ class BRCaseActivityModel(DataModel):
                            default = False,
                            label = T("Is default closure status"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -679,7 +679,7 @@ class BRCaseActivityModel(DataModel):
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -845,7 +845,7 @@ class BRCaseActivityModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -894,7 +894,7 @@ class BRCaseActivityModel(DataModel):
                             represent = hr_represent,
                             widget = None,
                             ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -1050,7 +1050,7 @@ class BRAppointmentModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1113,7 +1113,7 @@ class BRAppointmentModel(DataModel):
                                                 ),
                            represent = represent_option(appointment_status_opts),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -1203,7 +1203,7 @@ class BRNeedsModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         # Hierarchy
@@ -1330,7 +1330,7 @@ class BRAssistanceModel(DataModel):
                      self.br_need_id(readable = themes_needs,
                                      writable = themes_needs,
                                      ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -1375,7 +1375,7 @@ class BRAssistanceModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -1439,7 +1439,7 @@ class BRAssistanceModel(DataModel):
                            requires = IS_HTML_COLOUR(),
                            widget = S3ColorPickerWidget(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table Configuration
@@ -1538,10 +1538,10 @@ class BRAssistanceModel(DataModel):
                            readable = track_effort,
                            writable = track_effort,
                            ),
-                     s3_comments(label = T("Details"),
-                                 comment = None,
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 ),
+                     CommentsField(label = T("Details"),
+                                   comment = None,
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   ),
                      )
 
         # Components
@@ -1711,10 +1711,10 @@ class BRAssistanceModel(DataModel):
                                       readable = False,
                                       writable = False,
                                       ),
-                     s3_comments(label = T("Details"),
-                                 comment = None,
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 ),
+                     CommentsField(label = T("Details"),
+                                   comment = None,
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   ),
                      )
 
         configure(tablename,
@@ -2227,7 +2227,7 @@ class BRAssistanceOfferModel(DataModel):
                            requires = IS_IN_SET(offer_status, zero=None, sort=False),
                            represent = represent_option(dict(offer_status)),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -2531,7 +2531,7 @@ class BRLanguageModel(DataModel):
                                                      zero = None,
                                                      ),
                                 ),
-                          s3_comments(),
+                          CommentsField(),
                           )
 
         self.configure(tablename,
@@ -2583,7 +2583,7 @@ class BRServiceContactModel(DataModel):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Table configuration
@@ -2664,7 +2664,7 @@ class BRServiceContactModel(DataModel):
                      Field("email",
                            label = T("Email"),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2735,7 +2735,7 @@ class BRNotesModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2776,11 +2776,11 @@ class BRNotesModel(DataModel):
                                   ),
                      s3_datetime(default = "now",
                                  ),
-                     s3_comments("note",
-                                 label = T("Note"),
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 comment = None,
-                                 ),
+                     CommentsField("note",
+                                   label = T("Note"),
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   comment = None,
+                                   ),
                      )
 
         # List fields

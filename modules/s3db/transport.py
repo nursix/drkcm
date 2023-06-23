@@ -307,7 +307,7 @@ class TransportModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -380,7 +380,7 @@ class TransportModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -572,7 +572,7 @@ class TransportModel(DataModel):
                            label = T("Obsolete"),
                            represent = represent_option(obsolete_options),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -628,7 +628,7 @@ class TransportModel(DataModel):
                                                 sort = False,
                                                 ),
                            ),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # Components
@@ -741,7 +741,7 @@ class TransportModel(DataModel):
                      border_crossing_id(),
                      organisation_id(),
                      location_id(),
-                     s3_comments(),
+                     CommentsField(),
                      )
 
         # CRUD strings
