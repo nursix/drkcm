@@ -624,11 +624,12 @@ class approve(CustomController):
                                 set_record_owner(ltable, link)
                                 s3db_onaccept(ltable, link, method="create")
 
-                        # Add verification defaults (after establishing type links)
-                        # - see organisation_postprocess
+                        # Add default tags, audit and verification status
                         from .models.org import TestProvider
                         provider = TestProvider(organisation_id)
                         provider.add_default_tags()
+                        provider.add_audit_status()
+                        # Must be done after linking to organisation type:
                         provider.add_verification_defaults()
 
                         # Update user

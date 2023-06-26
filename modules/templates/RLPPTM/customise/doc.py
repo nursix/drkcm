@@ -113,7 +113,7 @@ def doc_document_onaccept(form):
 
         if row.organisation_id:
             from ..models.org import TestProvider
-            TestProvider(row.organisation_id).update_audit()
+            TestProvider(row.organisation_id).update_audit_status()
 
 # -------------------------------------------------------------------------
 def doc_document_ondelete(row):
@@ -124,7 +124,7 @@ def doc_document_ondelete(row):
 
     if row.organisation_id:
         from ..models.org import TestProvider
-        TestProvider(row.organisation_id).update_audit()
+        TestProvider(row.organisation_id).update_audit_status()
 
 # -------------------------------------------------------------------------
 def doc_set_default_organisation(r):

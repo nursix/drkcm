@@ -66,19 +66,23 @@ def organisation_create_onaccept(form):
     """
         Custom onaccept of organisations:
             - add default tags
+            - add audit status
     """
 
     record_id = get_form_record_id(form)
     if not record_id:
         return
 
-    TestProvider(record_id).add_default_tags()
+    provider = TestProvider(record_id)
+    provider.add_default_tags()
+    provider.add_audit_status()
 
 # -------------------------------------------------------------------------
 def organisation_postprocess(form):
     """
         Post-process organisation-form
-            - create or update verification
+            - creates or updates verification
+            - creates audit status if necessary
 
         Notes:
             - this happens in postprocess not onaccept because the relevant

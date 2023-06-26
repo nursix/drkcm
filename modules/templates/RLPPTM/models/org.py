@@ -645,7 +645,7 @@ class TestProviderModel(DataModel):
             record.update_record(**update)
 
         if record.organisation_id:
-            TestProvider(record.organisation_id).update_audit()
+            TestProvider(record.organisation_id).update_audit_status()
 
 # =============================================================================
 class TestProviderRepresentativeModel(DataModel):
@@ -1916,7 +1916,25 @@ class TestProvider:
         return error
 
     # -------------------------------------------------------------------------
-    def update_audit(self):
+    def add_audit_status(self):
+        """
+            Adds the audit status for this provider, if it doesn't exist
+        """
+
+        table = current.s3db.org_audit
+        organisation_id = self.organisation_id
+
+        query = (table.organisation_id == organisation_id)
+        audit = current.db(query).select(table.id, limitby=(0, 1)).first()
+        if not audit and organisation_id:
+            record_id = table.insert(organisation_id = organisation_id)
+            current.auth.s3_set_record_owner(table, record_id)
+        else:
+            record_id = None
+        return record_id
+
+    # -------------------------------------------------------------------------
+    def update_audit_status(self):
         """
             Updates the audit status of the provider:
                 - sets org_audit.docs_available
@@ -1937,7 +1955,10 @@ class TestProvider:
 
         query = (atable.organisation_id == organisation_id) & \
                 (atable.deleted == False)
-        db(query).update(docs_available=bool(new_documents))
+        db(query).update(docs_available = bool(new_documents),
+                         modified_by = atable.modified_by,
+                         modified_on = atable.modified_on,
+                         )
 
     # -------------------------------------------------------------------------
     # Configuration helpers
