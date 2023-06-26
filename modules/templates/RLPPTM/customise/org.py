@@ -253,6 +253,7 @@ def org_organisation_controller(**attr):
                 subheadings = {"name": T("Organization"),
                                "emailcontact": T("Contact Information"),
                                }
+                audit = False
 
                 is_test_station = record and is_org_group(record.id, TESTSTATIONS)
                 if is_test_station:
@@ -298,6 +299,14 @@ def org_organisation_controller(**attr):
                                                     )
                     else:
                         bsnr = None
+
+                    # Show audit status
+                    if auth.s3_has_role("AUDITOR"):
+                        audit = ["audit.evidence_status",
+                                 "audit.evidence_due_date",
+                                 #"audit.evidence_complete_date",
+                                 "audit.docs_available",
+                                 ]
 
                     # Show projects
                     subheadings["project"] = T("Administrative")
@@ -372,6 +381,10 @@ def org_organisation_controller(**attr):
                 if verification:
                     crud_fields.extend(verification)
                     subheadings[verification[0].replace(".", "_")] = T("Documentation / Verification")
+
+                if audit:
+                    crud_fields.extend(audit)
+                    subheadings[audit[0].replace(".", "_")] = T("Audit")
 
                 # Configure post-process to add/update verification
                 crud_form = S3SQLCustomForm(*crud_fields,

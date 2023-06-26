@@ -40,8 +40,7 @@ from gluon.storage import Storage
 from core import BooleanRepresent, DataModel, DateField, S3Duplicate, \
                  get_form_record_id, represent_file, represent_option, \
                  CommentsField, s3_comments_widget, \
-                 s3_datetime, s3_meta_fields, \
-                 s3_str, s3_text_represent
+                 s3_datetime, s3_str, s3_text_represent
 
 from ..helpers import WorkflowOptions, PersonRepresentDetails
 
@@ -116,6 +115,13 @@ PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Provider not currently commissio
                                 selectable = ("OVERRIDE",),
                                 )
 
+# Audit evidence status
+EVIDENCE_STATUS = WorkflowOptions(("N/R", "Not Required", "grey"),
+                                  ("REQUESTED", "Requested##demand", "red"),
+                                  ("COMPLETE", "Complete", "green"),
+                                  represent = "status",
+                                  )
+
 # =============================================================================
 class TestProviderRequirementsModel(DataModel):
     """
@@ -178,6 +184,7 @@ class TestProviderModel(DataModel):
 
     names = ("org_verification",
              "org_commission",
+             "org_audit",
              "org_bsnr",
              )
 
@@ -333,6 +340,45 @@ class TestProviderModel(DataModel):
             msg_record_deleted = T("Commission deleted"),
             msg_list_empty = T("No Commissions currently registered"),
             )
+
+        # ---------------------------------------------------------------------
+        # Audit
+        #
+        tablename = "org_audit"
+        define_table(tablename,
+                     organisation_id(empty=False),
+                     Field("evidence_status",
+                           label = T("Evidence"),
+                           default = "N/R",
+                           requires = IS_IN_SET(EVIDENCE_STATUS.selectable(),
+                                                zero = None,
+                                                sort = False,
+                                                ),
+                           represent = EVIDENCE_STATUS.represent,
+                           ),
+                     DateField("evidence_due_date",
+                               label = T("Evidence requested by"),
+                               ),
+                     DateField("evidence_complete_date",
+                               label = T("Evidence complete since"),
+                               # Set automatically onaccept:
+                               writable = False,
+                               ),
+                     Field("docs_available", "boolean",
+                           default = False,
+                           label = T("New Documents Available"),
+                           writable = False,
+                           represent = BooleanRepresent(icons = True,
+                                                        colors = True,
+                                                        ),
+                           ),
+                     CommentsField(),
+                     )
+
+        configure(tablename,
+                  onvalidation = self.audit_onvalidation,
+                  onaccept = self.audit_onaccept,
+                  )
 
         # ---------------------------------------------------------------------
         # BSNR
@@ -535,6 +581,67 @@ class TestProviderModel(DataModel):
             else:
                 current.response.information = \
                     T("Test station notified")
+
+    #--------------------------------------------------------------------------
+    @staticmethod
+    def audit_onvalidation(form):
+        """
+            Onvalidation of org_audit:
+                - make sure the evidence due date is recorded when evidence
+                  has been requested
+        """
+
+        form_vars = form.vars
+
+        evidence_status = form_vars.get("evidence_status")
+        due_date = "evidence_due_date"
+
+        if evidence_status == "REQUESTED" and \
+           due_date in form_vars and not form_vars[due_date]:
+            form.errors[due_date] = current.T("input required")
+
+    #--------------------------------------------------------------------------
+    @staticmethod
+    def audit_onaccept(form):
+        """
+            Onaccept of org_audit:
+                - set complete-date when evidence is marked as complete
+                - remove complete-date when evidence is not marked as complete
+                - remove due-date when no more evidence is pending
+        """
+
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.org_audit
+        record = db(table.id == record_id).select(table.id,
+                                                  table.evidence_status,
+                                                  table.evidence_due_date,
+                                                  table.evidence_complete_date,
+                                                  limitby = (0, 1),
+                                                  ).first()
+        if not record:
+            return
+
+        update = {}
+        today = current.request.utcnow.date()
+
+        if record.evidence_status == "COMPLETE":
+            if not record.evidence_complete_date:
+                update["evidence_complete_date"] = today
+        elif record.evidence_complete_date:
+            update["evidence_complete_date"] = None
+
+        if record.evidence_status != "REQUESTED" and \
+           record.evidence_due_date:
+            update["evidence_due_date"] = None
+
+        if update:
+            record.update_record(**update)
 
 # =============================================================================
 class TestProviderRepresentativeModel(DataModel):
@@ -1817,6 +1924,9 @@ class TestProvider:
                                     org_verification = {"joinby": "organisation_id",
                                                         "multiple": False,
                                                         },
+                                    org_audit = {"joinby": "organisation_id",
+                                                 "multiple": False,
+                                                 },
                                     org_representative = "organisation_id",
                                     org_commission = "organisation_id",
                                     org_bsnr = "organisation_id",
