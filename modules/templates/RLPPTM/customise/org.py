@@ -170,6 +170,15 @@ def org_organisation_resource(r, tablename):
                              organisation_organisation_type_onaccept,
                              )
 
+    if r.name == "organisation" and not r.component:
+        # Add defaults and custom callbacks for documents managed inline
+        from .doc import doc_set_default_organisation, \
+                         doc_document_onaccept, \
+                         doc_document_ondelete
+        doc_set_default_organisation(r)
+        s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
+        s3db.add_custom_callback("doc_document", "ondelete", doc_document_ondelete)
+
 # -------------------------------------------------------------------------
 def org_organisation_controller(**attr):
 
@@ -186,10 +195,6 @@ def org_organisation_controller(**attr):
 
     # Add custom components
     TestProvider.add_components()
-
-    # Add custom onaccept for documents managed in this context
-    from .doc import doc_document_onaccept
-    s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
 
     # Custom prep
     standard_prep = s3.prep
@@ -874,6 +879,15 @@ def org_facility_resource(r, tablename):
                              method = "create",
                              )
 
+    if r.name == "facility" and not r.component:
+        # Add defaults and custom callbacks for documents managed inline
+        from .doc import doc_set_default_organisation, \
+                         doc_document_onaccept, \
+                         doc_document_ondelete
+        doc_set_default_organisation(r)
+        s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
+        s3db.add_custom_callback("doc_document", "ondelete", doc_document_ondelete)
+
     if not is_org_group_admin and \
        not settings.get_custom(key="test_station_registration"):
         # If test station registration is disabled, no new test
@@ -1194,10 +1208,6 @@ def org_facility_controller(**attr):
     if is_org_group_admin:
         TestStation.add_site_approval()
 
-    # Add custom onaccept for documents managed in this context
-    from .doc import doc_document_onaccept
-    s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
-
     # Custom prep
     standard_prep = s3.prep
     def prep(r):
@@ -1290,10 +1300,6 @@ def org_facility_controller(**attr):
             for fn in table.fields:
                 if fn != "comments":
                     table[fn].writable = False
-
-            # Set default organisation_id for inline documents
-            from .doc import doc_set_default_organisation
-            doc_set_default_organisation(r)
 
             # No side menu except for OrgGroupAdmin
             if not is_org_group_admin:

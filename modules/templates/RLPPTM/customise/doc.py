@@ -46,6 +46,7 @@ def doc_document_resource(r, tablename):
 
     # Add custom onaccept
     s3db.add_custom_callback("doc_document", "onaccept", doc_document_onaccept)
+    s3db.add_custom_callback("doc_document", "ondelete", doc_document_ondelete)
 
     if r.controller == "org" or r.function == "organisation":
 
@@ -79,6 +80,7 @@ def doc_document_onaccept(form):
     """
         Custom onaccept routine for documents:
             - alter ownership according to status
+            - update document availability in the audit status of the org
     """
 
     record_id = get_form_record_id(form)
@@ -88,6 +90,7 @@ def doc_document_onaccept(form):
     table = current.s3db.doc_document
 
     row = current.db(table.id == record_id).select(table.id,
+                                                   table.organisation_id,
                                                    table.status,
                                                    table.created_by,
                                                    table.owned_by_user,
@@ -107,6 +110,21 @@ def doc_document_onaccept(form):
             update["owned_by_group"] = ORG_ADMIN
         if update:
             row.update_record(**update)
+
+        if row.organisation_id:
+            from ..models.org import TestProvider
+            TestProvider(row.organisation_id).update_audit()
+
+# -------------------------------------------------------------------------
+def doc_document_ondelete(row):
+    """
+        Custom ondelete routine for documents:
+            - update document availability in the audit status of the org
+    """
+
+    if row.organisation_id:
+        from ..models.org import TestProvider
+        TestProvider(row.organisation_id).update_audit()
 
 # -------------------------------------------------------------------------
 def doc_set_default_organisation(r):

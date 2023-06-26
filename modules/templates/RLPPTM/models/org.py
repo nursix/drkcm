@@ -619,6 +619,7 @@ class TestProviderModel(DataModel):
 
         table = s3db.org_audit
         record = db(table.id == record_id).select(table.id,
+                                                  table.organisation_id,
                                                   table.evidence_status,
                                                   table.evidence_due_date,
                                                   table.evidence_complete_date,
@@ -642,6 +643,9 @@ class TestProviderModel(DataModel):
 
         if update:
             record.update_record(**update)
+
+        if record.organisation_id:
+            TestProvider(record.organisation_id).update_audit()
 
 # =============================================================================
 class TestProviderRepresentativeModel(DataModel):
@@ -1910,6 +1914,30 @@ class TestProvider:
                                           cc = cc,
                                           )
         return error
+
+    # -------------------------------------------------------------------------
+    def update_audit(self):
+        """
+            Updates the audit status of the provider:
+                - sets org_audit.docs_available
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        dtable = s3db.doc_document
+        atable = s3db.org_audit
+
+        organisation_id = self.organisation_id
+
+        query = (dtable.organisation_id == organisation_id) & \
+                (dtable.status == "NEW") & \
+                (dtable.deleted == False)
+        new_documents = db(query).select(dtable.id, limitby=(0, 1)).first()
+
+        query = (atable.organisation_id == organisation_id) & \
+                (atable.deleted == False)
+        db(query).update(docs_available=bool(new_documents))
 
     # -------------------------------------------------------------------------
     # Configuration helpers
