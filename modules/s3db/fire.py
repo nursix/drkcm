@@ -470,14 +470,14 @@ class FireStationModel(DataModel):
         define_table(tablename,
                      station_id(),
                      Field("name"),
-                     s3_datetime("start_time",
-                                 empty = False,
-                                 default = "now"
-                                 ),
-                     s3_datetime("end_time",
-                                 empty = False,
-                                 default = "now"
-                                 ),
+                     DateTimeField("start_time",
+                                   empty = False,
+                                   default = "now"
+                                   ),
+                     DateTimeField("end_time",
+                                   empty = False,
+                                   default = "now"
+                                   ),
                      )
 
         shift_id = S3ReusableField("shift_id", "reference %s" % tablename,

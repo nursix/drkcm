@@ -329,16 +329,16 @@ class SyncRepositoryModel(DataModel):
                                          ),
                            ),
                      # User-visible field for Admin
-                     s3_datetime("last_connected",
-                                 label = T("Last Connected"),
-                                 writable = False,
-                                 ),
+                     DateTimeField("last_connected",
+                                   label = T("Last Connected"),
+                                   writable = False,
+                                   ),
                      # For data repositories
-                     s3_datetime("last_refresh",
-                                 label = T("Last Refresh"),
-                                 readable = False,
-                                 writable = False,
-                                 ),
+                     DateTimeField("last_refresh",
+                                   label = T("Last Refresh"),
+                                   readable = False,
+                                   writable = False,
+                                   ),
                      # System fields
                      Field.Method("last_pull_time",
                                   self.sync_repository_last_pull_time),
@@ -863,8 +863,8 @@ class SyncLogModel(DataModel):
 
         crud_strings = s3.crud_strings
 
-        s3_datetime_represent = lambda dt: \
-                                S3DateTime.datetime_represent(dt, utc=True)
+        datetime_represent = lambda dt: \
+                             S3DateTime.datetime_represent(dt, utc=True)
 
         # -------------------------------------------------------------------------
         # Sync Log
@@ -873,7 +873,7 @@ class SyncLogModel(DataModel):
         self.define_table(tablename,
                           Field("timestmp", "datetime",
                                 label = T("Date/Time"),
-                                represent = s3_datetime_represent,
+                                represent = datetime_represent,
                                 ),
                           self.sync_repository_id(),
                           Field("resource_name"),
@@ -935,8 +935,8 @@ class SyncTaskModel(DataModel):
 
         configure = self.configure
 
-        s3_datetime_represent = lambda dt: \
-                                S3DateTime.datetime_represent(dt, utc=True)
+        datetime_represent = lambda dt: \
+                             S3DateTime.datetime_represent(dt, utc=True)
 
         # -------------------------------------------------------------------------
         # Task
@@ -1059,13 +1059,13 @@ class SyncTaskModel(DataModel):
                            label = T("Last pull on"),
                            readable = True,
                            writable = False,
-                           represent = s3_datetime_represent,
+                           represent = datetime_represent,
                            ),
                      Field("last_push", "datetime",
                            label = T("Last push on"),
                            readable = True,
                            writable = False,
-                           represent = s3_datetime_represent,
+                           represent = datetime_represent,
                            ),
                      Field("mode", "integer",
                            default = 3,

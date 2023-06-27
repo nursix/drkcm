@@ -266,7 +266,7 @@ class CMSContentModel(DataModel):
                            #requires = IS_NOT_EMPTY(),
                            widget = body_widget,
                            ),
-                     s3_datetime(default = "now"),
+                     DateTimeField(default = "now"),
                      # @ToDo: Move this to link table?
                      self.gis_location_id(),
                      # @ToDo: Move this to link table?
@@ -1330,11 +1330,11 @@ class CMSNewsletterModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            represent = s3_text_represent,
                            ),
-                     s3_datetime("date_sent",
-                                 label = T("Date Sent"),
-                                 readable = False,
-                                 writable = False,
-                                 ),
+                     DateTimeField("date_sent",
+                                   label = T("Date Sent"),
+                                   readable = False,
+                                   writable = False,
+                                   ),
                      Field("status",
                            label = T("Status"),
                            default = "NEW",
@@ -1469,10 +1469,10 @@ class CMSNewsletterModel(DataModel):
                                                 ),
                            ),
                      # Activated in prep when notification-method is configured:
-                     s3_datetime("notified_on",
-                                 label = T("Notified on"),
-                                 writable = False,
-                                 ),
+                     DateTimeField("notified_on",
+                                   label = T("Notified on"),
+                                   writable = False,
+                                   ),
                      Field("status",
                            default = "PENDING",
                            requires = IS_IN_SET(status, zero=None),
@@ -1530,7 +1530,7 @@ class CMSNewsletterModel(DataModel):
         define_table(tablename,
                      Field("newsletter_id", "reference cms_newsletter"),
                      Field("user_id", "reference auth_user"),
-                     s3_datetime(default="now"),
+                     DateTimeField(default="now"),
                      )
 
         # ---------------------------------------------------------------------

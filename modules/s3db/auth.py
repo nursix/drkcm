@@ -413,8 +413,8 @@ class AuthConsentModel(DataModel):
                      Field("consented", "boolean",
                            default = False,
                            ),
-                     s3_datetime(default = "now",
-                                 ),
+                     DateTimeField(default = "now",
+                                   ),
                      Field("vhash", "text"),
                      )
 
@@ -566,7 +566,7 @@ class AuthMasterKeyModel(DataModel):
         tablename = "auth_masterkey_token"
         define_table(tablename,
                      Field("token", length=64, unique=True),
-                     s3_datetime("expires_on"),
+                     DateTimeField("expires_on"),
                      meta = False,
                      )
 

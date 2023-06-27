@@ -38,7 +38,7 @@ from gluon.storage import Storage
 
 from core import DataModel, OptionsFilter, TextFilter, \
                  get_form_record_id, represent_option, \
-                 CommentsField, s3_meta_fields, s3_yes_no_represent
+                 CommentsField, s3_yes_no_represent
 
 # =============================================================================
 class DiseaseDaycareTestingInquiryModel(DataModel):

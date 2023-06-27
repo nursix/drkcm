@@ -44,7 +44,7 @@ from core import CustomController, CRUDMethod, DataModel, DateField, FS, \
                  S3Report, S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
                  S3Represent, S3ReusableField, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
-                 get_form_record_id, CommentsField, s3_meta_fields, \
+                 get_form_record_id, CommentsField, \
                  s3_str, get_filter_options, \
                  LocationFilter, OptionsFilter, TextFilter
 

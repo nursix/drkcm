@@ -31,10 +31,10 @@ __all__ = ("ManagementJournalModel",
 from gluon import current, Field, IS_IN_SET, IS_NOT_EMPTY
 from gluon.storage import Storage
 
-from core import DataModel, \
+from core import DataModel, DateTimeField, \
                  S3SQLCustomForm, S3SQLInlineComponent, \
                  get_form_record_id, s3_comments_widget, \
-                 s3_datetime, s3_meta_fields, s3_text_represent
+                 s3_text_represent
 
 from ..helpers import WorkflowOptions
 
@@ -71,7 +71,7 @@ class ManagementJournalModel(DataModel):
                      self.super_link("doc_id", "doc_entity"),
                      self.org_organisation_id(default=None),
                      self.org_site_id(),
-                     s3_datetime(default="now"),
+                     DateTimeField(default="now"),
                      Field("name",
                            label = T("Subject"),
                            requires = IS_NOT_EMPTY(),
@@ -90,10 +90,10 @@ class ManagementJournalModel(DataModel):
                                                 ),
                            represent = ISSUE_STATUS.represent,
                            ),
-                     s3_datetime("closed_on",
-                                 label = T("Closed on"),
-                                 writable = False,
-                                 ),
+                     DateTimeField("closed_on",
+                                   label = T("Closed on"),
+                                   writable = False,
+                                   ),
                      )
 
         # Components
@@ -175,7 +175,7 @@ class ManagementJournalModel(DataModel):
                      Field("issue_id", "reference jnl_issue",
                            ondelete = "CASCADE",
                            ),
-                     s3_datetime(
+                     DateTimeField(
                             default="now",
                             ),
                      Field("note_text", "text",

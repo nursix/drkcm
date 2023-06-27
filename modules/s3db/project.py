@@ -3579,12 +3579,12 @@ class ProjectTaskModel(DataModel):
                                 filter_opts = ("pr_person", "pr_group", "org_organisation"),
                                 represent = assignee_represent,
                                 ),
-                     s3_datetime("date_due",
-                                 label = T("Date Due"),
-                                 represent = "date",
-                                 readable = staff,
-                                 writable = staff,
-                                 ),
+                     DateTimeField("date_due",
+                                   label = T("Date Due"),
+                                   represent = "date",
+                                   readable = staff,
+                                   writable = staff,
+                                   ),
                      Field("time_estimated", "double",
                            label = "%s (%s)" % (T("Time Estimate"),
                                                 T("hours")),
@@ -3936,10 +3936,10 @@ class ProjectTaskModel(DataModel):
                      self.pr_person_id(default=auth.s3_logged_in_person(),
                                        widget = SQLFORM.widgets.options.widget
                                        ),
-                     s3_datetime(default="now",
-                                 past=8760, # Hours, so 1 year
-                                 future=0
-                                 ),
+                     DateTimeField(default = "now",
+                                   past = 8760, # Hours, so 1 year
+                                   future = 0
+                                   ),
                      Field("hours", "double",
                            label = T("Effort (Hours)"),
                            represent = lambda v: NONE if not v else \

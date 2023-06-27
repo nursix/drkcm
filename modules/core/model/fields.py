@@ -27,6 +27,7 @@
 
 __all__ = ("CommentsField",
            "DateField",
+           "DateTimeField",
            "S3ReusableField",
            "S3MetaFields",
            "s3_fieldmethod",
@@ -36,7 +37,6 @@ __all__ = ("CommentsField",
            "s3_roles_permitted",
            "s3_currency",
            "s3_language",
-           "s3_datetime",
            "s3_time",
            )
 
@@ -739,7 +739,7 @@ class DateField(Field):
                  fieldname = "date",
                  label = DEFAULT,
                  default = None,
-                 widget = "calendar",
+                 widget = None,
                  represent = DEFAULT,
                  requires = DEFAULT,
                  calendar = None,
@@ -749,10 +749,15 @@ class DateField(Field):
                  **args):
         """
             Args:
+                default: the default date, or "now"
                 calendar: the calendar to use
                 past: selectable past interval (months)
                 future: selectable future interval (months)
                 empty: empty values allowed
+            Keyword Args:
+                set_min: set dynamic minimum for this date widget (DOM ID)
+                set_max: set dynamic maximum for this date widget (DOM ID)
+                month_selector: activate month-selector in calendar widget
             Other Args:
                 - see Field
         """
@@ -767,7 +772,7 @@ class DateField(Field):
             default = now
 
         # Default widget
-        if widget == "calendar":
+        if widget is None or widget == "calendar":
 
             widget_options = ("set_min", "set_max", "month_selector")
             widget_args = {}
@@ -802,9 +807,9 @@ class DateField(Field):
                     minimum = now - relativedelta(months = past)
                 if future is not None:
                     maximum = now + relativedelta(months = future)
-                requires = IS_UTC_DATE(calendar=calendar,
-                                       minimum=minimum,
-                                       maximum=maximum,
+                requires = IS_UTC_DATE(calendar = calendar,
+                                       minimum = minimum,
+                                       maximum = maximum,
                                        )
 
             if empty:
@@ -824,156 +829,139 @@ class DateField(Field):
                          **args)
 
 # =============================================================================
-def s3_datetime(name="date", **attr):
+class DateTimeField(Field):
     """
-        Return a standard datetime field
-
-        Args:
-            name: the field name
-
-        Keyword Args:
-            default: the field default, can be specified as "now" for
-                     current date/time, or as Python date
-            past: number of selectable past hours
-            future: number of selectable future hours
-            widget: form widget option, can be specified as "date"
-                    for date-only, or "datetime" for date+time (default),
-                    or as a web2py FormWidget
-            calendar: the calendar to use for this field, defaults
-                      to current.calendar
-            set_min: CSS selector for another date/time widget to
-                     dynamically set the minimum selectable date/time to
-                     the value selected in this widget
-            set_max: CSS selector for another date/time widget to
-                     dynamically set the maximum selectable date/time to
-                     the value selected in this widget
-
-        Notes:
-            - other S3ReusableField keywords are also supported (in addition
-               to the above)
-            - sets a default field label "Date" => use label-keyword to
-              override if necessary
-            - sets a default validator IS_UTC_DATE/IS_UTC_DATETIME => use
-              requires-keyword to override if necessary
-            - sets a default representation S3DateTime.date_represent or
-              S3DateTime.datetime_represent respectively => use the
-              represent-keyword to override if necessary
+        Standard date+time field with the respective defaults and options
     """
 
-    attributes = dict(attr)
+    def __init__(self,
+                 fieldname = "date",
+                 label = DEFAULT,
+                 default = None,
+                 widget = None,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 calendar = None,
+                 past = None,
+                 future = None,
+                 minimum = None,
+                 maximum = None,
+                 empty = True,
+                 **args):
+        """
+            Args:
+                default: the default datetime, or "now"
+                widget: the widget, or one of "date"|"datetime"
+                represent: the representation method, or one of "date"|"datetime"
+                calendar: the calendar to use
+                past: selectable past interval (hours)
+                future: selectable future interval (hours)
+                minimum: the earliest selectable datetime (overrides past)
+                maximum: the latest selectable datetime (overrides future)
+                empty: empty values allowed
+            Keyword Args:
+                set_min: set dynamic minimum for this date/time widget (DOM ID)
+                set_max: set dynamic maximum for this date/time widget (DOM ID)
+                month_selector: activate month-selector in calendar widget
+            Other Args:
+                - see Field
+        """
 
-    # Calendar
-    calendar = attributes.pop("calendar", None)
+        # Default label
+        if label is DEFAULT:
+            label = current.T("Date")
 
-    # Limits
-    limits = {}
-    for keyword in ("past", "future", "min", "max"):
-        if keyword in attributes:
-            limits[keyword] = attributes[keyword]
-            del attributes[keyword]
+        # Default value
+        now = current.request.utcnow
+        if default == "now":
+            default = now
 
-    # Compute earliest/latest
-    widget = attributes.pop("widget", None)
-    now = current.request.utcnow
-    if widget == "date":
-        # Helper function to convert past/future hours into
-        # earliest/latest datetime, retaining day of month and
-        # time of day
-        def limit(delta):
-            current_month = now.month
-            years, hours = divmod(-delta, 8760)
-            months = divmod(hours, 744)[0]
-            if months > current_month:
-                years += 1
-            month = divmod((current_month - months) + 12, 12)[1]
-            year = now.year - years
-            return now.replace(month=month, year=year)
+        date_only = widget == "date"
 
-        earliest = limits.get("min")
-        if not earliest:
-            past = limits.get("past")
-            if past is not None:
-                earliest = limit(-past)
-        latest = limits.get("max")
-        if not latest:
-            future = limits.get("future")
-            if future is not None:
-                latest = limit(future)
-    else:
-        # Compute earliest/latest
-        earliest = limits.get("min")
-        if not earliest:
-            past = limits.get("past")
-            if past is not None:
-                earliest = now - datetime.timedelta(hours=past)
-        latest = limits.get("max")
-        if not latest:
-            future = limits.get("future")
-            if future is not None:
-                latest = now + datetime.timedelta(hours=future)
-
-    # Label
-    if "label" not in attributes:
-        attributes["label"] = current.T("Date")
-
-    # Widget
-    set_min = attributes.pop("set_min", None)
-    set_max = attributes.pop("set_max", None)
-    date_only = False
-    if widget == "date":
-        date_only = True
-        widget = S3CalendarWidget(calendar = calendar,
-                                  timepicker = False,
-                                  minimum = earliest,
-                                  maximum = latest,
-                                  set_min = set_min,
-                                  set_max = set_max,
-                                  )
-    elif widget is None or widget == "datetime":
-        widget = S3CalendarWidget(calendar = calendar,
-                                  timepicker = True,
-                                  minimum = earliest,
-                                  maximum = latest,
-                                  set_min = set_min,
-                                  set_max = set_max,
-                                  )
-    attributes["widget"] = widget
-
-    # Default value
-    if attributes.get("default") == "now":
-        attributes["default"] = now
-
-    # Representation
-    represent = attributes.pop("represent", None)
-    represent_method = None
-    if represent == "date" or represent is None and date_only:
-        represent_method = S3DateTime.date_represent
-    elif represent is None:
-        represent_method = S3DateTime.datetime_represent
-    if represent_method:
-        represent = lambda dt: represent_method(dt,
-                                                utc=True,
-                                                calendar=calendar,
-                                                )
-    attributes["represent"] = represent
-
-    # Validator and empty-option
-    if "requires" not in attributes:
+        # Determine earliest/latest
         if date_only:
-            validator = IS_UTC_DATE
+            if not minimum and past is not None:
+                minimum = self._limit(-past, now=now)
+            if not maximum and future is not None:
+                maximum = self._limit(future, now=now)
         else:
-            validator = IS_UTC_DATETIME
-        requires = validator(calendar=calendar,
-                             minimum=earliest,
-                             maximum=latest,
-                             )
-        empty = attributes.pop("empty", None)
-        if empty is False:
-            attributes["requires"] = requires
-        else:
-            attributes["requires"] = IS_EMPTY_OR(requires)
+            if not minimum and past is not None:
+                minimum = now - datetime.timedelta(hours=past)
+            if not maximum and future is not None:
+                maximum = now + datetime.timedelta(hours=future)
 
-    return Field(name, "datetime", **attributes)
+        # Default widget
+        if widget is None or widget in ("date", "datetime"):
+
+            widget_options = ("set_min", "set_max", "month_selector")
+            widget_args = {}
+            for option in widget_options:
+                if option in args:
+                    widget_args[option] = args.pop(option)
+
+            widget = S3CalendarWidget(calendar = calendar,
+                                      timepicker = not date_only,
+                                      minimum = minimum,
+                                      maximum = maximum,
+                                      **widget_args)
+
+        # Default representation
+        represent_method = None
+        if represent is DEFAULT:
+            represent = "date" if date_only else "datetime"
+        if represent == "date":
+            represent_method = S3DateTime.date_represent
+        elif represent == "datetime":
+            represent_method = S3DateTime.datetime_represent
+        if represent_method:
+            represent = lambda dt: \
+                        represent_method(dt, utc=True, calendar=calendar)
+
+        # Default validator and empty-option
+        if requires is DEFAULT:
+            valid = IS_UTC_DATE if date_only else IS_UTC_DATETIME
+            requires = valid(calendar = calendar,
+                             minimum = minimum,
+                             maximum = maximum,
+                             )
+            if empty:
+                requires = IS_EMPTY_OR(requires)
+
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         type = "datetime",
+                         label = label,
+                         default = default,
+                         widget = widget,
+                         represent = represent,
+                         requires = requires,
+                         calendar = calendar,
+                         **args)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _limit(delta, now=None):
+        """
+            Helper function to convert past/future hours into earliest/latest
+            datetime, retaining day of month and time of day
+        """
+
+        if now is None:
+            now = current.request.utcnow
+
+        current_month = now.month
+        years, hours = divmod(-delta, 8760)
+
+        months = divmod(hours, 744)[0]
+        if months > current_month:
+            years += 1
+
+        month = divmod((current_month - months) + 12, 12)[1]
+        year = now.year - years
+
+        return now.replace(month=month, year=year)
 
 # =============================================================================
 def s3_time(name="time_of_day", **attr):

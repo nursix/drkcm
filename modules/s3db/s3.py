@@ -186,7 +186,7 @@ class S3ImportJobModel(DataModel):
         self.define_table(tablename,
                           Field("job_id", length=128, unique=True, notnull=True),
                           Field("tablename"),
-                          s3_datetime("timestmp", default="now"),
+                          DateTimeField("timestmp", default="now"),
                           meta = False,
                           )
 

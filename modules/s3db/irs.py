@@ -275,16 +275,16 @@ class IRSModel(DataModel):
                            readable = False,
                            writable = False,
                            label = T("Contact Details")),
-                     s3_datetime("datetime",
-                                 label = T("Date/Time of Alert"),
-                                 empty=False,
-                                 default="now",
-                                 future=0,
-                                 ),
-                     s3_datetime("expiry",
-                                 label = T("Expiry Date/Time"),
-                                 past=0,
-                                 ),
+                     DateTimeField("datetime",
+                                   label = T("Date/Time of Alert"),
+                                   empty = False,
+                                   default = "now",
+                                   future = 0,
+                                   ),
+                     DateTimeField("expiry",
+                                   label = T("Expiry Date/Time"),
+                                   past = 0,
+                                   ),
                      self.gis_location_id(),
                      # Very basic Impact Assessment
                      # @ToDo: Use Stats_Impact component instead
@@ -317,14 +317,14 @@ class IRSModel(DataModel):
                            ),
                      # @ToDo: Move this to Events?
                      # Then add component to list_fields
-                     s3_datetime("dispatch",
-                                 label = T("Date/Time of Dispatch"),
-                                 future=0,
-                                 # We don't want these visible in Create forms
-                                 # (we override in Update forms in controller)
-                                 readable = False,
-                                 writable = False,
-                                 ),
+                     DateTimeField("dispatch",
+                                   label = T("Date/Time of Dispatch"),
+                                   future = 0,
+                                   # We don't want these visible in Create forms
+                                   # (we override in Update forms in controller)
+                                   readable = False,
+                                   writable = False,
+                                   ),
                      Field("closed", "boolean",
                            # We don't want these visible in Create forms
                            # (we override in Update forms in controller)
@@ -960,11 +960,11 @@ class IRSResponseModel(DataModel):
                                                     tooltip = T("If you don't see the vehicle in the list, you can add a new one by clicking link 'Add Vehicle'."),
                                                     ),
                               ),
-                     s3_datetime("datetime",
-                                 default = "now",
-                                 future = 0,
-                                 label = T("Dispatch Time"),
-                                 ),
+                     DateTimeField("datetime",
+                                   default = "now",
+                                   future = 0,
+                                   label = T("Dispatch Time"),
+                                   ),
                      self.super_link("site_id", "org_site",
                                      label = T("Fire Station"),
                                      readable = True,

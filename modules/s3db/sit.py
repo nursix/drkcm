@@ -119,9 +119,9 @@ class SituationModel(DataModel):
         tablename = "sit_presence"
         self.define_table(tablename,
                           self.super_link("track_id", "sit_trackable"),
-                          s3_datetime("timestmp",
-                                      label = T("Date/Time"),
-                                      ),
+                          DateTimeField("timestmp",
+                                        label = T("Date/Time"),
+                                        ),
                           location_id(
                             widget = S3LocationSelector(show_address = False,
                                                         show_postcode = False,

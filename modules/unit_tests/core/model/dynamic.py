@@ -577,7 +577,7 @@ class DynamicTableModelTests(unittest.TestCase):
         assertTrue(isinstance(requires, IS_UTC_DATETIME))
 
         # => verify range limits
-        # NB s3_datetime computes range limits against current.request.utcnow,
+        # NB DateTimeField computes range limits against current.request.utcnow,
         #    which is slightly offset against datetime.datetime.utcnow due to
         #    processing time
         # NB current.request.utcnow is tz-unaware, and so should be the range

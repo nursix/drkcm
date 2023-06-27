@@ -3828,7 +3828,7 @@ class OrgSiteEventModel(DataModel):
         self.define_table(tablename,
                           # Component not instance
                           self.super_link("site_id", "org_site"),
-                          s3_datetime(default = "now"),
+                          DateTimeField(default = "now"),
                           Field("event", "integer",
                                 label = T("Event"),
                                 requires = IS_IN_SET(event_opts),

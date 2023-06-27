@@ -39,8 +39,8 @@ from gluon.storage import Storage
 
 from core import BooleanRepresent, DataModel, DateField, S3Duplicate, \
                  get_form_record_id, represent_file, represent_option, \
-                 CommentsField, s3_comments_widget, \
-                 s3_datetime, s3_str, s3_text_represent
+                 DateTimeField, CommentsField, s3_comments_widget, \
+                 s3_str, s3_text_represent
 
 from ..helpers import WorkflowOptions, PersonRepresentDetails
 
@@ -943,7 +943,7 @@ class TestStationModel(DataModel):
         tablename = "org_site_approval_status"
         define_table(tablename,
                      site_id(),
-                     s3_datetime("timestmp", writable=False),
+                     DateTimeField("timestmp", writable=False),
                      Field("status",
                            label = T("Processing Status"),
                            represent = APPROVAL_STATUS.represent,

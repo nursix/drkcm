@@ -529,8 +529,8 @@ class DynamicTableModel:
                 else:
                     attr["default"] = dt
 
-        from .fields import s3_datetime
-        field = s3_datetime(fieldname, **attr)
+        from .fields import DateTimeField
+        field = DateTimeField(fieldname, **attr)
 
         return field
 

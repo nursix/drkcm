@@ -1121,7 +1121,7 @@ class FinVoucherModel(DataModel):
         tablename = "fin_voucher_transaction"
         define_table(tablename,
                      program_id(empty = False),
-                     s3_datetime(default="now"),
+                     DateTimeField(default="now"),
                      Field("type",
                            label = T("Type"),
                            represent = represent_option(transaction_types),

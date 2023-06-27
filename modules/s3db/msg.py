@@ -402,7 +402,7 @@ class MsgMessageModel(DataModel):
                           # came in on allows correlation to Outbound
                           # messages (campaign_message, deployment_alert, etc)
                           self.msg_channel_id(),
-                          s3_datetime(default="now"),
+                          DateTimeField(default="now"),
                           Field("body", "text",
                                 label = T("Message"),
                                 ),
@@ -593,7 +593,7 @@ class MsgMessageContactModel(DataModel):
                           # Instance
                           self.super_link("message_id", "msg_message"),
                           self.msg_channel_id(), # Unused
-                          s3_datetime(default = "now"),
+                          DateTimeField(default = "now"),
                           Field("subject", length=78,    # RFC 2822
                                 label = T("Subject"),
                                 requires = IS_LENGTH(78),
@@ -786,7 +786,7 @@ class MsgEmailModel(MsgChannelModel):
                      # Instance
                      super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default = "now"),
+                     DateTimeField(default = "now"),
                      Field("subject", length=78,    # RFC 2822
                            label = T("Subject"),
                            requires = IS_LENGTH(78),
@@ -921,7 +921,7 @@ class MsgFacebookModel(MsgChannelModel):
                      # Instance
                      super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default = "now"),
+                     DateTimeField(default = "now"),
                      Field("body", "text",
                            label = T("Message"),
                            ),
@@ -1477,9 +1477,9 @@ class MsgRSSModel(MsgChannelModel):
                            # Some feeds have text/html set which feedparser refuses to parse
                            comment = T("Force content-type to application/xml"),
                            ),
-                     s3_datetime(label = T("Last Polled"),
-                                 writable = False,
-                                 ),
+                     DateTimeField(label = T("Last Polled"),
+                                   writable = False,
+                                   ),
                      Field("etag",
                            label = T("ETag"),
                            writable = False
@@ -1538,9 +1538,9 @@ class MsgRSSModel(MsgChannelModel):
                      # Instance
                      super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default="now",
-                                 label = T("Published on"),
-                                 ),
+                     DateTimeField(default="now",
+                                   label = T("Published on"),
+                                   ),
                      Field("title",
                            label = T("Title"),
                            ),
@@ -1651,7 +1651,7 @@ class MsgSMSModel(DataModel):
                           self.super_link("message_id", "msg_message"),
                           self.msg_channel_id(),
                           self.org_organisation_id(default = default),
-                          s3_datetime(default="now"),
+                          DateTimeField(default="now"),
                           Field("body", "text",
                                 # Allow multi-part SMS
                                 #length = 160,
@@ -2102,9 +2102,9 @@ class MsgTwitterModel(DataModel):
                      # Instance
                      self.super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default = "now",
-                                 label = T("Posted on"),
-                                 ),
+                     DateTimeField(default = "now",
+                                   label = T("Posted on"),
+                                   ),
                      Field("body", length=140,
                            label = T("Message"),
                            requires = IS_LENGTH(140),
@@ -2331,9 +2331,9 @@ class MsgTwitterSearchModel(MsgChannelModel):
                      # Just present for Super Entity
                      #self.msg_channel_id(),
                      search_id(),
-                     s3_datetime(default="now",
-                                 label = T("Tweeted on"),
-                                 ),
+                     DateTimeField(default="now",
+                                   label = T("Tweeted on"),
+                                   ),
                      Field("tweet_id",
                            label = T("Tweet ID")),
                      Field("lang",
