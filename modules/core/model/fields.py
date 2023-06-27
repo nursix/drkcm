@@ -1,7 +1,7 @@
 """
-    Reusable fields
+    Field Types and Standards
 
-    Copyright: 2009-2022 (c) Sahana Software Foundation
+    Copyright: 2009-2023 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -28,6 +28,7 @@
 __all__ = ("CommentsField",
            "DateField",
            "DateTimeField",
+           "TimeField",
            "S3ReusableField",
            "S3MetaFields",
            "s3_fieldmethod",
@@ -37,7 +38,6 @@ __all__ = ("CommentsField",
            "s3_roles_permitted",
            "s3_currency",
            "s3_language",
-           "s3_time",
            )
 
 import datetime
@@ -732,7 +732,7 @@ def s3_language(name="language", **attr):
 # =============================================================================
 class DateField(Field):
     """
-        Standard date field with the respective defaults and options
+        Standard date field with useful defaults and options
     """
 
     def __init__(self,
@@ -760,6 +760,9 @@ class DateField(Field):
                 month_selector: activate month-selector in calendar widget
             Other Args:
                 - see Field
+
+            Notes:
+                - timezone-aware by default (stored as UTC)
         """
 
         # Default label
@@ -831,7 +834,10 @@ class DateField(Field):
 # =============================================================================
 class DateTimeField(Field):
     """
-        Standard date+time field with the respective defaults and options
+        Standard date+time field with useful defaults and options
+
+        Notes:
+            - timezone-aware by default (stored as UTC)
     """
 
     def __init__(self,
@@ -964,30 +970,61 @@ class DateTimeField(Field):
         return now.replace(month=month, year=year)
 
 # =============================================================================
-def s3_time(name="time_of_day", **attr):
+class TimeField(Field):
     """
-        Return a standard time field
+        Standard time field with useful defaults
 
-        Args:
-            name: the field name
-
-        TODO Support minTime/maxTime options for fgtimepicker
+        Notes:
+            - not timezone-aware, default "now" is local time
     """
 
-    attributes = dict(attr)
+    def __init__(self,
+                 fieldname = "time_of_day",
+                 label = DEFAULT,
+                 default = None,
+                 widget = None,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 empty = True,
+                 **args):
+        """
+            Args:
+                default: the default time, or "now"
+                empty: empty values allowed
 
-    if "widget" not in attributes:
-        # adds .time class which launches fgtimepicker from s3.datepicker.js
-        attributes["widget"] = TimeWidget.widget
+            Other Args:
+                - see Field
+        """
 
-    if "requires" not in attributes:
-        requires = IS_TIME()
-        empty = attributes.pop("empty", None)
-        if empty is False:
-            attributes["requires"] = requires
-        else:
-            attributes["requires"] = IS_EMPTY_OR(requires)
+        if label is DEFAULT:
+            label = current.T("Time of Day")
 
-    return Field(name, "time", **attributes)
+        now = S3DateTime.to_local(current.request.utcnow).time().replace(microsecond=0)
+        if default == "now":
+            default = now
+
+        if widget is None:
+            # adds .time class which launches fgtimepicker from s3.datepicker.js
+            widget = TimeWidget.widget
+
+        if requires is DEFAULT:
+            requires = IS_TIME()
+            if empty:
+                requires = IS_EMPTY_OR(requires)
+
+        if represent is DEFAULT:
+            represent = S3DateTime.time_represent
+
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         type = "time",
+                         label = label,
+                         default = default,
+                         widget = widget,
+                         represent = represent,
+                         requires = requires,
+                         **args)
 
 # END =========================================================================

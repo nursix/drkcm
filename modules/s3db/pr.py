@@ -4141,13 +4141,8 @@ class PRAvailabilityModel(DataModel):
                            default = False,
                            represent = s3_yes_no_represent,
                            ),
-                     Field("start_time", "time",
-                           # @ToDo: s3_time reusablefield?
-                           #widget =
-                           ),
-                     Field("end_time", "time",
-                           #widget =
-                           ),
+                     TimeField("start_time"),
+                     TimeField("end_time"),
                      )
 
         configure(tablename,
@@ -4365,10 +4360,12 @@ class PRAvailabilityModel(DataModel):
                            ),
                      DateField(),
                      DateField("end_date"),
-                     Field("start_time", "time",
-                           ),
-                     Field("end_time", "time",
-                           ),
+                     TimeField("start_time",
+                               label = T("Start Time"),
+                               ),
+                     TimeField("end_time",
+                               label = T("End Time"),
+                               ),
                      )
 
         # ---------------------------------------------------------------------
