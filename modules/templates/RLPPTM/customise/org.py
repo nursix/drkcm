@@ -13,7 +13,7 @@ from core import FS, ICON, IS_ONE_OF, S3CRUD, S3Represent, \
                  get_filter_options, get_form_record_id
 
 from ..models.org import TestProvider, TestStation, \
-                         VERIFICATION_STATUS, PUBLIC_REASON
+                         VERIFICATION_STATUS, EVIDENCE_STATUS, PUBLIC_REASON
 
 # -------------------------------------------------------------------------
 def add_org_tags():
@@ -184,6 +184,137 @@ def org_organisation_resource(r, tablename):
         s3db.add_custom_callback("doc_document", "ondelete", doc_document_ondelete)
 
 # -------------------------------------------------------------------------
+def org_organisation_set_view_filters(r):
+    """
+        Configure mandatory view filters for organisations
+
+        Args:
+            r: the CRUDRequest
+    """
+
+    resource = r.resource
+
+    query = None
+
+    if r.controller == "audit":
+        # Filter to test providers where audit evidence is/was required
+        from ..config import TESTSTATIONS
+        query = (FS("group.name") == TESTSTATIONS) & \
+                (FS("audit.evidence_status") != "N/R")
+    else:
+        get_vars = r.get_vars
+        mine = get_vars.get("mine")
+        org_group_id = get_vars.get("g")
+
+        if mine == "1":
+            # Filter to managed orgs
+            managed_orgs = current.auth.get_managed_orgs()
+            if managed_orgs is True:
+                query = None
+            elif managed_orgs is None:
+                query = FS("id") == None
+            else:
+                query = FS("pe_id").belongs(managed_orgs)
+
+        elif org_group_id:
+            # Filter by org_group_membership
+            if isinstance(org_group_id, list):
+                query = FS("group.id").belongs(org_group_id)
+            else:
+                query = FS("group.id") == org_group_id
+
+    if query is not None:
+        resource.add_filter(query)
+
+# -------------------------------------------------------------------------
+def org_organisation_filter_widgets(is_org_group_admin=False, audit=False):
+    """
+        Determine filter widgets for organisations view
+
+        Args:
+            is_org_group_admin: user is ORG_GROUP_ADMIN
+            audit: in audit/organisation controller
+
+        Returns:
+            list of filter widgets
+    """
+
+    from core import OptionsFilter, TextFilter, DateFilter
+
+    T = current.T
+
+    text_fields = ["name", "acronym", "website", "phone"]
+    if is_org_group_admin:
+        text_fields.extend(["email.value", "orgid.value"])
+
+    filter_widgets = [TextFilter(text_fields,
+                                 label = T("Search"),
+                                 ),
+                      ]
+    if audit:
+        evidence_filter_opts = ["REQUESTED", "COMPLETE"]
+
+        # Due date filter with single range limit
+        due_date_filter = DateFilter(
+                "audit.evidence_due_date",
+                label = T("Evidence requested by"),
+                hidden = True,
+                )
+        due_date_filter.operator = ["le"]
+        due_date_filter.input_labels = {"le": "at the latest"}
+
+        filter_widgets.extend([
+            OptionsFilter(
+                "audit.evidence_status",
+                label = T("Evidence"),
+                options = OrderedDict(EVIDENCE_STATUS.selectable(values=evidence_filter_opts)),
+                #default = "REQUESTED",
+                ),
+            OptionsFilter(
+                "audit.docs_available",
+                label = T("New Documents Available"),
+                options = {True: T("Yes"),
+                            False: T("No"),
+                            },
+                cols = 2,
+                ),
+            due_date_filter,
+            ])
+
+    if is_org_group_admin:
+        verification_filter_opts = ("REVISE", "REVIEW", "COMPLETE")
+        if not audit:
+            filter_widgets.append(OptionsFilter(
+                "group__link.group_id",
+                label = T("Group"),
+                options = lambda: get_filter_options("org_group"),
+                ))
+        filter_widgets.extend([
+            OptionsFilter(
+                "organisation_type__link.organisation_type_id",
+                label = T("Type"),
+                options = lambda: get_filter_options("org_organisation_type"),
+                hidden = audit,
+                ),
+            TextFilter(
+                ["bsnr.bsnr",],
+                label = T("BSNR"),
+                match_any = True,
+                hidden = True,
+                ),
+            ])
+        if not audit:
+            filter_widgets.append(OptionsFilter(
+                "verification.status",
+                label = T("Documentation / Verification"),
+                options = OrderedDict(VERIFICATION_STATUS.selectable(values=verification_filter_opts)),
+                sort = False,
+                hidden = True,
+                ))
+
+    return filter_widgets
+
+# -------------------------------------------------------------------------
 def org_organisation_controller(**attr):
 
     T = current.T
@@ -218,28 +349,11 @@ def org_organisation_controller(**attr):
                         action = InviteUserOrg,
                         )
 
-        get_vars = r.get_vars
-        mine = get_vars.get("mine")
-        if mine == "1":
-            # Filter to managed orgs
-            managed_orgs = auth.get_managed_orgs()
-            if managed_orgs is True:
-                query = None
-            elif managed_orgs is None:
-                query = FS("id") == None
-            else:
-                query = FS("pe_id").belongs(managed_orgs)
-            if query:
-                resource.add_filter(query)
-        else:
-            # Filter by org_group_membership
-            org_group_id = get_vars.get("g")
-            if org_group_id:
-                if isinstance(org_group_id, list):
-                    query = FS("group.id").belongs(org_group_id)
-                else:
-                    query = FS("group.id") == org_group_id
-                resource.add_filter(query)
+        # Set view filters
+        org_organisation_set_view_filters(r)
+
+        # In audit-controller?
+        audit = r.controller == "audit"
 
         record = r.record
         component_name = r.component_name
@@ -252,19 +366,19 @@ def org_organisation_controller(**attr):
 
                 from core import S3SQLCustomForm, \
                                  S3SQLInlineComponent, \
-                                 S3SQLInlineLink, \
-                                 OptionsFilter, \
-                                 TextFilter
+                                 S3SQLInlineLink
                 from ..config import TESTSTATIONS
                 from ..helpers import is_org_group
 
-                # Custom form
+                # Custom CRUD form
                 subheadings = {"name": T("Organization"),
                                "emailcontact": T("Contact Information"),
                                }
-                audit = False
 
-                is_test_station = record and is_org_group(record.id, TESTSTATIONS)
+                audit_fields = None
+
+                is_test_station = record and \
+                                  (audit or is_org_group(record.id, TESTSTATIONS))
                 if is_test_station:
                     acronym = logo = None # irrelevant for test stations
                 else:
@@ -292,6 +406,7 @@ def org_organisation_controller(**attr):
                             groups_readonly = realm is not None and record.pe_id not in realm
                     else:
                         groups_readonly = False
+
                     groups = S3SQLInlineLink("group",
                                              field = "group_id",
                                              label = T("Organization Group"),
@@ -311,11 +426,11 @@ def org_organisation_controller(**attr):
 
                     # Show audit status
                     if auth.s3_has_role("AUDITOR"):
-                        audit = ["audit.evidence_status",
-                                 "audit.evidence_due_date",
-                                 #"audit.evidence_complete_date",
-                                 "audit.docs_available",
-                                 ]
+                        audit_fields = ["audit.evidence_status",
+                                        "audit.evidence_due_date",
+                                        #"audit.evidence_complete_date",
+                                        "audit.docs_available",
+                                        ]
 
                     # Show projects
                     subheadings["project"] = T("Administrative")
@@ -391,50 +506,20 @@ def org_organisation_controller(**attr):
                     crud_fields.extend(verification)
                     subheadings[verification[0].replace(".", "_")] = T("Documentation / Verification")
 
-                if audit:
-                    crud_fields.extend(audit)
-                    subheadings[audit[0].replace(".", "_")] = T("Audit")
+                if audit_fields:
+                    crud_fields.extend(audit_fields)
+                    subheadings[audit_fields[0].replace(".", "_")] = T("Audit")
 
-                # Configure post-process to add/update verification
+                # Add post-process to add/update verification
                 crud_form = S3SQLCustomForm(*crud_fields,
                                             postprocess = organisation_postprocess,
                                             )
 
-                # Filters
-                text_fields = ["name", "acronym", "website", "phone"]
-                if is_org_group_admin:
-                    text_fields.extend(["email.value", "orgid.value"])
-                filter_widgets = [TextFilter(text_fields,
-                                             label = T("Search"),
-                                             ),
-                                  ]
-                if is_org_group_admin:
-                    verification_filter_opts = ("REVISE", "REVIEW", "COMPLETE")
-                    filter_widgets.extend([
-                        OptionsFilter(
-                            "group__link.group_id",
-                            label = T("Group"),
-                            options = lambda: get_filter_options("org_group"),
-                            ),
-                        OptionsFilter(
-                            "organisation_type__link.organisation_type_id",
-                            label = T("Type"),
-                            options = lambda: get_filter_options("org_organisation_type"),
-                            ),
-                        TextFilter(
-                            ["bsnr.bsnr",],
-                            label = T("BSNR"),
-                            match_any = True,
-                            hidden = True,
-                            ),
-                        OptionsFilter(
-                            "verification.status",
-                            label = T("Documentation / Verification"),
-                            options = OrderedDict(VERIFICATION_STATUS.selectable(values=verification_filter_opts)),
-                            sort = False,
-                            hidden = True,
-                            ),
-                        ])
+                # Configure filter widgets
+                filter_widgets = org_organisation_filter_widgets(
+                                        is_org_group_admin = is_org_group_admin,
+                                        audit = audit,
+                                        )
 
                 resource.configure(crud_form = crud_form,
                                    filter_widgets = filter_widgets,
@@ -442,23 +527,35 @@ def org_organisation_controller(**attr):
                                    )
 
             # Custom list fields
-            list_fields = [#"group__link.group_id",
-                           "name",
-                           "acronym",
-                           #"organisation_type__link.organisation_type_id",
-                           "website",
-                           "phone",
-                           #"email.value"
-                           ]
-            if is_org_group_admin:
-                list_fields.insert(2, (T("Type"), "organisation_type__link.organisation_type_id"))
-                list_fields.insert(0, (T("Organization Group"), "group__link.group_id"))
-                list_fields.append((T("Email"), "email.value"))
-                if r.representation in ("xlsx", "xls"):
-                    list_fields.insert(1, (T("Organization ID"), "orgid.value"))
-                    list_fields.append("comments")
-            r.resource.configure(list_fields = list_fields,
-                                 )
+            if audit:
+                list_fields = ["name",
+                               (T("Type"), "organisation_type__link.organisation_type_id"),
+                               "phone",
+                               (T("Email"), "email.value"),
+                               "audit.evidence_status",
+                               "audit.docs_available",
+                               ]
+            elif is_org_group_admin:
+                list_fields = [(T("Organization Group"), "group__link.group_id"),
+                               "name",
+                               "acronym",
+                               (T("Type"), "organisation_type__link.organisation_type_id"),
+                               "website",
+                               "phone",
+                               (T("Email"), "email.value"),
+                               ]
+            else:
+                list_fields = ["name",
+                               "acronym",
+                               "website",
+                               "phone",
+                               ]
+
+            if (audit or is_org_group_admin) and r.representation in ("xlsx", "xls"):
+                list_fields.insert(1, (T("Organization ID"), "orgid.value"))
+                list_fields.append("comments")
+
+            r.resource.configure(list_fields = list_fields)
 
         elif component_name == "facility":
 

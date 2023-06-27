@@ -261,6 +261,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def audit(cls):
+
+        return cls.org()
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def cms(cls):
 
         if not current.auth.s3_has_role("ADMIN"):
@@ -410,8 +416,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
         else:
             cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
 
-        return M(c=("org", "hrm", "cms"))(
+        return M(c=("org", "hrm", "cms", "audit"))(
                     org_menu,
+                    M("Audit", c="audit", link=False, restrict="AUDITOR")(
+                        M("Overview", f="organisation"),
+                        ),
                     M("Test Stations", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
                         M("Test Stations to review", vars = {"$$review": "1"}),
                         M("Unapproved##actionable", vars = {"$$pending": "1"}),

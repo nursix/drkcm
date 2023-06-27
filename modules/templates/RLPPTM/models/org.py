@@ -117,7 +117,8 @@ PUBLIC_REASON = WorkflowOptions(("COMMISSION", "Provider not currently commissio
 
 # Audit evidence status
 EVIDENCE_STATUS = WorkflowOptions(("N/R", "Not Required", "grey"),
-                                  ("REQUESTED", "Requested##demand", "red"),
+                                  ("REQUIRED", "Required", "lightblue"),
+                                  ("REQUESTED", "Requested##demand", "amber"),
                                   ("COMPLETE", "Complete", "green"),
                                   represent = "status",
                                   )

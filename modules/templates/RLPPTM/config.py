@@ -39,6 +39,7 @@ def config(settings):
     # Custom models/controllers
     settings.base.models = "templates.RLPPTM.models"
     settings.base.rest_controllers = {("disease", "daycare_testing"): ("disease", "daycare_testing"),
+                                      ("audit", "organisation"): ("org", "organisation"),
                                       }
 
     # Custom Logo
@@ -70,6 +71,7 @@ def config(settings):
                                       "VOUCHER_PROVIDER": "VOUCHER_PROVIDER",
                                       "TEST_PROVIDER": "TEST_PROVIDER",
                                       "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
+                                      "AUDITOR": "ADMIN",
                                       }
 
     settings.auth.password_min_length = 8
@@ -436,6 +438,11 @@ def config(settings):
         ("org", Storage(
             name_nice = T("Organizations"),
             #description = 'Lists "who is doing what & where". Allows relief agencies to coordinate their activities',
+            restricted = True,
+            module_type = 1,
+        )),
+        ("audit", Storage(
+            name_nice = T("Organizations"),
             restricted = True,
             module_type = 1,
         )),

@@ -2300,6 +2300,7 @@
 'Event updated': 'Ereignis aktualisiert',
 'Event': 'Ereignis',
 'Events': 'Ereignisse',
+'Evidence complete since': 'Nachweise vollständig seit',
 'Evidence requested by': 'Nachweise angefordert bis',
 'Evidence': 'Nachweise',
 'Example': 'Beispiel',
@@ -5027,6 +5028,7 @@
 'Requests': 'Anfragen',
 'Required Skills': 'Benötigte Fähigkeiten',
 'Required consent not given': 'Erforderliche Einwilligung nicht gegeben',
+'Required': 'Erforderlich',
 'Requires Login!': 'Anmeldung erforderlich!',
 'Rescue and recovery': 'Rettung und Bergung (SAR)',
 'Reset Password': 'Passwort zurücksetzen',
@@ -6676,6 +6678,8 @@
 'anonymous': 'anonym',
 'approved': 'freigegeben',
 'assigned': 'zugewiesen',
+'at the earliest': 'frühestens',
+'at the latest': 'spätestens',
 'available': 'verfügbar',
 'average': 'Durchschnitt',
 'black': 'schwarz',
@@ -6908,6 +6912,5 @@
 'xlwt module not available within the running Python - this needs installing for XLS output!': 'xlwt Modul nicht verfügbar im Rahmen der laufenden Python Umgebung - das muss installiert werden für XLS Ausgabe!',
 'yes': 'ja',
 'Åland Islands': 'Ålandinseln',
-'Evidence complete since': 'Nachweise vollständig seit',
 }
 
