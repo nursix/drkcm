@@ -174,8 +174,8 @@ def org_organisation_resource(r, tablename):
                              organisation_organisation_type_onaccept,
                              )
 
-    if r.name == "organisation" and not r.component:
-        # Add defaults and custom callbacks for documents managed inline
+    # Add defaults and custom callbacks for documents managed inline
+    if r.component_name != "document":
         from .doc import doc_set_default_organisation, \
                          doc_document_onaccept, \
                          doc_document_ondelete
@@ -883,7 +883,7 @@ def org_facility_resource(r, tablename):
                              method = "create",
                              )
 
-    if r.name == "facility" and not r.component:
+    if r.component_name != "document":
         # Add defaults and custom callbacks for documents managed inline
         from .doc import doc_set_default_organisation, \
                          doc_document_onaccept, \

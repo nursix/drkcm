@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current, IS_IN_SET
+from gluon import current, IS_EMPTY_OR, IS_IN_SET
 
 from core import get_form_record_id
 
@@ -25,6 +25,7 @@ def doc_document_resource(r, tablename):
 
     T = current.T
 
+    db = current.db
     s3db = current.s3db
     table = s3db.doc_document
 
@@ -64,10 +65,39 @@ def doc_document_resource(r, tablename):
             field.readable = field.writable = False
             status = None
 
+        # Configure site_id-field
+        if r.name == "organisation" and r.record and r.component_name == "document":
+
+            if r.component_id:
+                query = (table.id == r.component_id) & \
+                        (table.deleted == False)
+                row = db(query).select(table.doc_id, limitby=(0, 1)).first()
+            else:
+                row = None
+
+            if row and row.doc_id:
+                selectable = None
+            else:
+                ftable = s3db.org_facility
+                query = (ftable.organisation_id == r.id) & \
+                        (ftable.deleted == False)
+                sites = db(query).select(ftable.site_id, ftable.name)
+                selectable = {site.site_id: site.name for site in sites}
+
+            field = table.site_id
+            if selectable:
+                field.readable = field.writable = True
+                field.label = T("Facility")
+                field.represent = s3db.org_SiteRepresent(show_type=False)
+                field.requires = IS_EMPTY_OR(IS_IN_SET(selectable))
+            else:
+                field.readable = field.writable = False
+
         # List fields
         list_fields = ["name",
                        "file",
                        "date",
+                       "site_id",
                        status,
                        "comments",
                        ]
@@ -87,17 +117,24 @@ def doc_document_onaccept(form):
     if not record_id:
         return
 
-    table = current.s3db.doc_document
+    db = current.db
+    s3db = current.s3db
 
-    row = current.db(table.id == record_id).select(table.id,
-                                                   table.organisation_id,
-                                                   table.status,
-                                                   table.created_by,
-                                                   table.owned_by_user,
-                                                   limitby = (0, 1),
-                                                   ).first()
+    table = s3db.doc_document
+
+    row = db(table.id == record_id).select(table.id,
+                                           table.doc_id,
+                                           table.organisation_id,
+                                           table.site_id,
+                                           table.status,
+                                           table.created_by,
+                                           table.owned_by_user,
+                                           limitby = (0, 1),
+                                           ).first()
     if row:
         update = {}
+
+        # Alter ownership according to evidence status
         if row.status == "EVIDENCE":
             AUDITOR = current.auth.get_role_id("AUDITOR")
             update = {"owned_by_user": None,
@@ -108,9 +145,23 @@ def doc_document_onaccept(form):
             if not row.owned_by_user:
                 update["owned_by_user"] = table.created_by
             update["owned_by_group"] = ORG_ADMIN
+
+        # If the document is super-linked to a facility,
+        # use that facility for site_id (unconditionally)
+        if row.doc_id:
+            ftable = s3db.org_facility
+            query = (ftable.doc_id == row.doc_id) & \
+                    (ftable.deleted == False)
+            facility = db(query).select(ftable.site_id,
+                                        limitby = (0, 1),
+                                        ).first()
+            if facility:
+                update["site_id"] = facility.site_id
+
         if update:
             row.update_record(**update)
 
+        # Update the audit status of the organisation
         if row.organisation_id:
             from ..models.org import TestProvider
             TestProvider(row.organisation_id).update_audit_status()
@@ -139,14 +190,12 @@ def doc_set_default_organisation(r):
     table = current.s3db.doc_document
 
     organisation_id = None
-
     if r.controller == "org":
-
         record = r.record
         if record:
-            if r.function == "organisation":
+            if r.tablename == "org_organisation":
                 organisation_id = record.id
-            elif r.function == "facility":
+            elif r.tablename == "org_facility":
                 organisation_id = record.organisation_id
 
     if organisation_id:
