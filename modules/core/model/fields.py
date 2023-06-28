@@ -28,6 +28,7 @@
 __all__ = ("CommentsField",
            "DateField",
            "DateTimeField",
+           "LanguageField",
            "TimeField",
            "S3ReusableField",
            "S3MetaFields",
@@ -37,7 +38,6 @@ __all__ = ("CommentsField",
            "s3_role_required",
            "s3_roles_permitted",
            "s3_currency",
-           "s3_language",
            )
 
 import datetime
@@ -597,7 +597,7 @@ def s3_roles_permitted(name="roles_permitted", **attr):
 # =============================================================================
 class CommentsField(Field):
     """
-        Standard comments field with the respective defaults
+        Standard comments field with suitable defaults
     """
 
     def __init__(self,
@@ -671,68 +671,86 @@ def s3_currency(name="currency", **attr):
     return Field(name, length=3, **attr)
 
 # =============================================================================
-def s3_language(name="language", **attr):
+class LanguageField(Field):
     """
-        Return a standard Language field
-
-        Args:
-            name: the Field name
-            attr: Field parameters, as well as keywords:
-
-        Keyword Args:
-            empty: allow the field to remain empty:
-                    - None: accept empty, don't show empty-option (default)
-                    - True: accept empty, show empty-option
-                    - False: reject empty, don't show empty-option
-                    (keyword ignored if a "requires" is passed)
-            translate: translate the language names into current UI language
-                       (not recommended for selector to choose that UI language)
-            select: which languages to show in the selector:
-                    - a dict of {lang_code: lang_name}
-                    - None to expose all languages
-                    - False (or omit) to use L10n_languages setting (default)
+        Standard language selection field with suitable defaults
     """
 
-    if "label" not in attr:
-        attr["label"] = current.T("Language")
-    if "default" not in attr:
-        attr["default"] = current.deployment_settings.get_L10n_default_language()
+    def __init__(self,
+                 fieldname = "language",
+                 label = DEFAULT,
+                 default = DEFAULT,
+                 requires = DEFAULT,
+                 represent = DEFAULT,
+                 length = 8,
+                 select = DEFAULT,
+                 empty = None,
+                 translate = True,
+                 **args):
+        """
 
-    empty = attr.pop("empty", None)
-    zero = "" if empty else None
+            Args:
+                select: language selection as dict {code:name}, or None
+                        to allow all available languages; if omitted, the
+                        L10n_languages deployment setting will be used
+                empty: allow the field to remain empty:
+                       - None: accept empty, don't show empty-option (default)
+                       - True: accept empty, show empty-option
+                       - False: reject empty, don't show empty-option
+                       (keyword ignored if a "requires" is passed)
+                translate: translate the language names into the
+                           current UI language
 
-    translate = attr.pop("translate", True)
+            Other Args:
+                - see Field
+        """
 
-    if "select" in attr:
-        # If select is present => pass as-is
-        requires = IS_ISO639_2_LANGUAGE_CODE(select = attr.pop("select"),
-                                             sort = True,
-                                             translate = translate,
-                                             zero = zero,
-                                             )
-    else:
-        # Use L10n_languages deployment setting
-        requires = IS_ISO639_2_LANGUAGE_CODE(sort = True,
-                                             translate = translate,
-                                             zero = zero,
-                                             )
+        if label is DEFAULT:
+            label = current.T("Language")
 
-    if "requires" not in attr:
-        # Value required only if empty is explicitly False
-        if empty is False:
-            attr["requires"] = requires
+        if default is DEFAULT:
+            default = current.deployment_settings.get_L10n_default_language()
+
+        if requires is DEFAULT:
+            zero = "" if empty else None
+            if select is DEFAULT:
+                # Use L10n_languages deployment setting
+                validator = IS_ISO639_2_LANGUAGE_CODE(sort = True,
+                                                      translate = translate,
+                                                      zero = zero,
+                                                      )
+            else:
+                # Use language selection as specified
+                # - can be None to denote "all available languages"
+                validator = IS_ISO639_2_LANGUAGE_CODE(select = select,
+                                                      sort = True,
+                                                      translate = translate,
+                                                      zero = zero,
+                                                      )
+            requires = validator if empty is False else IS_EMPTY_OR(validator)
         else:
-            attr["requires"] = IS_EMPTY_OR(requires)
+            validator = None
 
-    if "represent" not in attr:
-        attr["represent"] = requires.represent
+        if represent is DEFAULT:
+            if not validator:
+                validator = IS_ISO639_2_LANGUAGE_CODE(translate=translate)
+            represent = validator.represent
 
-    return Field(name, length=8, **attr)
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         #type = "string",
+                         label = label,
+                         default = default,
+                         represent = represent,
+                         requires = requires,
+                         **args)
 
 # =============================================================================
 class DateField(Field):
     """
-        Standard date field with useful defaults and options
+        Standard date field with suitable defaults and options
     """
 
     def __init__(self,
@@ -745,7 +763,7 @@ class DateField(Field):
                  calendar = None,
                  past = None,
                  future = None,
-                 empty = True,
+                 empty = None,
                  **args):
         """
             Args:
@@ -815,7 +833,7 @@ class DateField(Field):
                                        maximum = maximum,
                                        )
 
-            if empty:
+            if empty is not False:
                 requires = IS_EMPTY_OR(requires)
 
         # Remove any conflicting type argument
@@ -834,7 +852,7 @@ class DateField(Field):
 # =============================================================================
 class DateTimeField(Field):
     """
-        Standard date+time field with useful defaults and options
+        Standard date+time field with suitable defaults and options
 
         Notes:
             - timezone-aware by default (stored as UTC)
@@ -852,7 +870,7 @@ class DateTimeField(Field):
                  future = None,
                  minimum = None,
                  maximum = None,
-                 empty = True,
+                 empty = None,
                  **args):
         """
             Args:
@@ -930,7 +948,7 @@ class DateTimeField(Field):
                              minimum = minimum,
                              maximum = maximum,
                              )
-            if empty:
+            if empty is not False:
                 requires = IS_EMPTY_OR(requires)
 
         # Remove any conflicting type argument
@@ -972,7 +990,7 @@ class DateTimeField(Field):
 # =============================================================================
 class TimeField(Field):
     """
-        Standard time field with useful defaults
+        Standard time field with suitable defaults
 
         Notes:
             - not timezone-aware, default "now" is local time
@@ -985,7 +1003,7 @@ class TimeField(Field):
                  widget = None,
                  represent = DEFAULT,
                  requires = DEFAULT,
-                 empty = True,
+                 empty = None,
                  **args):
         """
             Args:
@@ -1009,7 +1027,7 @@ class TimeField(Field):
 
         if requires is DEFAULT:
             requires = IS_TIME()
-            if empty:
+            if empty is not False:
                 requires = IS_EMPTY_OR(requires)
 
         if represent is DEFAULT:

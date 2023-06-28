@@ -1253,7 +1253,7 @@ class GISLocationNameModel(DataModel):
                      location_id(empty = False,
                                  ondelete = "CASCADE",
                                  ),
-                     s3_language(empty = False),
+                     LanguageField(empty = False),
                      Field("name_l10n",
                            label = T("Local Name"),
                            ),

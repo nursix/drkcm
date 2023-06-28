@@ -1039,7 +1039,7 @@ class CAPInfoModel(DataModel):
         alert_id = self.cap_alert_id
 
         # TODO do not modify a deployment setting in the model,
-        #      pass as mandatory options s3_language instead
+        #      pass as mandatory options to LanguageField instead
         settings.L10n.extra_codes = [("en-US", "English"),
                                      ("en-CA", "Canadian English"),
                                      ("fr-CA", "Canadian French"),
@@ -1070,9 +1070,9 @@ class CAPInfoModel(DataModel):
                      Field("template_settings", "text",
                            readable = False,
                            ),
-                     s3_language(default = "en-US",
-                                 empty = False,
-                                 ),
+                     LanguageField(default = "en-US",
+                                   empty = False,
+                                   ),
                      Field("category", "list:string", # 1 or more allowed
                            label = T("Category"),
                            represent = S3Represent(options = cap_options["categories"],
@@ -2005,9 +2005,9 @@ class CAPAreaModel(DataModel):
                      area_id(empty = False,
                              ondelete = "CASCADE",
                              ),
-                     s3_language(empty = False,
-                                 select = current.deployment_settings.get_cap_languages(),
-                                 ),
+                     LanguageField(empty = False,
+                                   select = current.deployment_settings.get_cap_languages(),
+                                   ),
                      Field("name_l10n",
                            label = T("Local Name"),
                            ),
@@ -3132,7 +3132,7 @@ class CAPHistoryModel(DataModel):
         #
 
         # TODO: avoid changing settings in model, pass directly to
-        #       validator via s3_language
+        #       validator via LanguageField
         settings.L10n.extra_codes = [("en-US", "English"),
                                      ]
 
@@ -3141,13 +3141,13 @@ class CAPHistoryModel(DataModel):
                      alert_history_id(readable = False,
                                       writable = False,
                                       ),
-                     s3_language(empty = False,
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("Denotes the language of the information"),
-                                                                   T("Code Values: Natural language identifier per [RFC 3066]. If not present, an implicit default value of 'en-US' will be assumed. Edit settings.cap.languages in 000_config.py to add more languages. See <a href=\"%s\">here</a> for a full list.") % "http://www.i18nguy.com/unicode/language-identifiers.html",
-                                                                   ),
-                                               ),
-                                 ),
+                     LanguageField(empty = False,
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("Denotes the language of the information"),
+                                                                     T("Code Values: Natural language identifier per [RFC 3066]. If not present, an implicit default value of 'en-US' will be assumed. Edit settings.cap.languages in 000_config.py to add more languages. See <a href=\"%s\">here</a> for a full list.") % "http://www.i18nguy.com/unicode/language-identifiers.html",
+                                                                     ),
+                                                 ),
+                                   ),
                      Field("category", "list:string",
                            label = T("Category"),
                            represent = S3Represent(options = categories,

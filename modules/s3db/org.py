@@ -1134,7 +1134,7 @@ class OrgOrganisationNameModel(DataModel):
                           self.org_organisation_id(empty = False,
                                                    ondelete = "CASCADE",
                                                    ),
-                          s3_language(empty = False),
+                          LanguageField(empty = False),
                           Field("name_l10n",
                                 label = T("Local Name"),
                                 ),
@@ -3903,7 +3903,7 @@ class OrgSiteNameModel(DataModel):
         self.define_table(tablename,
                           # Component not instance
                           self.super_link("site_id", "org_site"),
-                          s3_language(empty = False),
+                          LanguageField(empty = False),
                           Field("name_l10n",
                                 label = T("Local Name"),
                                 ),

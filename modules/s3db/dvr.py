@@ -585,7 +585,7 @@ class DVRCaseModel(DataModel):
                      person_id(empty = False,
                                ondelete = "CASCADE",
                                ),
-                     s3_language(select = None),
+                     LanguageField(select=None),
                      Field("quality",
                            default = "N",
                            label = T("Quality/Mode"),
