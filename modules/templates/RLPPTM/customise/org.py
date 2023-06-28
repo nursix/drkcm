@@ -252,7 +252,7 @@ def org_organisation_filter_widgets(is_org_group_admin=False, audit=False):
                                  ),
                       ]
     if audit:
-        evidence_filter_opts = ["REQUESTED", "COMPLETE"]
+        evidence_filter_opts = ["REQUIRED", "REQUESTED", "COMPLETE"]
 
         # Due date filter with single range limit
         due_date_filter = DateFilter(
@@ -269,14 +269,14 @@ def org_organisation_filter_widgets(is_org_group_admin=False, audit=False):
                 label = T("Evidence"),
                 options = OrderedDict(EVIDENCE_STATUS.selectable(values=evidence_filter_opts)),
                 #default = "REQUESTED",
+                sort = False,
                 ),
             OptionsFilter(
                 "audit.docs_available",
                 label = T("New Documents Available"),
-                options = {True: T("Yes"),
-                            False: T("No"),
-                            },
+                options = OrderedDict([(True, T("Yes")), (False, T("No"))]),
                 cols = 2,
+                sort = False,
                 ),
             due_date_filter,
             ])
