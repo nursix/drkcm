@@ -158,9 +158,9 @@ class PROCProcurementPlansModel(DataModel):
                            ),
                      # @ToDo: Move this into a Currency Widget
                      #        for the pack_value field
-                     s3_currency(readable=False,
-                                 writable=False
-                                 ),
+                     CurrencyField(readable=False,
+                                   writable=False
+                                   ),
                      Field("pack_value", "double",
                            label = T("Value per Pack"),
                            readable = False,
@@ -376,9 +376,9 @@ class PROCPurchaseOrdersModel(DataModel):
                            ),
                      # @ToDo: Move this into a Currency Widget
                      #        for the pack_value field
-                     s3_currency(readable=False,
-                                 writable=False
-                                ),
+                     CurrencyField(readable=False,
+                                   writable=False
+                                   ),
                      Field("pack_value", "double",
                            label = T("Value per Pack"),
                            readable = False,

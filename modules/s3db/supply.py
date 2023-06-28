@@ -409,9 +409,9 @@ $.filterOptionsS3({
                            writable = track_pack_values,
                            ),
                      # @ToDo: Move this into a Currency Widget for the pack_value field
-                     s3_currency(readable = track_pack_values,
-                                 writable = track_pack_values,
-                                 ),
+                     CurrencyField(readable = track_pack_values,
+                                   writable = track_pack_values,
+                                   ),
                      brand_id(),
                      Field("kit", "boolean",
                            default = False,
@@ -716,9 +716,9 @@ $.filterOptionsS3({
                            writable = track_pack_values,
                            ),
                      # @ToDo: Move this into a Currency Widget for the pack_value field
-                     s3_currency(readable = track_pack_values,
-                                 writable = track_pack_values,
-                                 ),
+                     CurrencyField(readable = track_pack_values,
+                                   writable = track_pack_values,
+                                   ),
                      CommentsField(),
                      )
 

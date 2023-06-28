@@ -155,7 +155,7 @@ class BudgetModel(DataModel):
                            represent = amount_represent,
                            requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
-                     s3_currency(required = True),
+                     CurrencyField(required = True),
                      Field("monitoring_frequency", "integer",
                            default = 1,
                            label = T("Monitoring Frequency"),
@@ -343,7 +343,7 @@ class BudgetModel(DataModel):
                                         IS_INT_IN_RANGE(0, None),
                                         ],
                            ),
-                     s3_currency(),
+                     CurrencyField(),
                      Field("travel", "integer",
                            default = 0,
                            label = T("Travel Cost"),
@@ -1490,10 +1490,10 @@ class BudgetMonitoringModel(DataModel):
                                     IS_FLOAT_AMOUNT.represent(v, precision=2),
                                 requires = IS_FLOAT_AMOUNT(),
                                 ),
-                          s3_currency(required = True,
-                                      # Normally set at Budget level
-                                      writable = False,
-                                      ),
+                          CurrencyField(required = True,
+                                        # Normally set at Budget level
+                                        writable = False,
+                                        ),
                           Field.Method("percentage", self.budget_monitoring_percentage),
                           CommentsField(),
                           )

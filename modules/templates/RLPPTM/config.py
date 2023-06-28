@@ -130,6 +130,7 @@ def config(settings):
     #    "USD" : "United States Dollars",
     }
     settings.fin.currency_default = "EUR"
+    settings.fin.currency_writable = False
 
     # Do not require international phone number format
     settings.msg.require_international_phone_numbers = False

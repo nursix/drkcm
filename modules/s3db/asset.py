@@ -233,7 +233,7 @@ class AssetModel(DataModel):
                            represent = lambda v, row=None: \
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
-                     s3_currency("purchase_currency"),
+                     CurrencyField("purchase_currency"),
                      # Base Location, which should always be a Site & set via Log
                      location_id(readable = False,
                                  writable = False,
@@ -471,7 +471,7 @@ class AssetModel(DataModel):
                            represent=lambda v, row=None: \
                                      IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
-                     s3_currency("purchase_currency"),
+                     CurrencyField("purchase_currency"),
                      # Base Location, which should always be a Site & set via Log
                      location_id(readable = False,
                                  writable = False),
@@ -946,7 +946,7 @@ class AssetTelephoneModel(DataModel):
                           #Field("cost", "double",
                           #      label = T("Cost"),
                           #      ),
-                          #s3_currency(),
+                          #CurrencyField(),
                           CommentsField(),
                           )
 

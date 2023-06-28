@@ -68,7 +68,7 @@ class FinExpensesModel(DataModel):
                                 represent = lambda v: \
                                     IS_FLOAT_AMOUNT.represent(v, precision=2),
                                 ),
-                          s3_currency(),
+                          CurrencyField(),
                           CommentsField(),
                           on_define = lambda table: \
                             [table.created_by.set_attributes(represent = self.auth_UserRepresent(show_email = False,
@@ -260,7 +260,7 @@ class FinVoucherModel(DataModel):
                            requires = IS_FLOAT_AMOUNT(0),
                            represent = price_represent,
                            ),
-                     s3_currency(),
+                     CurrencyField(),
                      Field("credit", "integer",
                            default = 0,
                            label = T("Credit Balance"),
@@ -545,7 +545,7 @@ class FinVoucherModel(DataModel):
                            represent = price_represent,
                            writable = False,
                            ),
-                     s3_currency(writable = False),
+                     CurrencyField(writable = False),
 
                      # Bank account details
                      Field("account_holder",
@@ -732,7 +732,7 @@ class FinVoucherModel(DataModel):
                            represent = price_represent,
                            writable = False,
                            ),
-                     s3_currency(writable=False),
+                     CurrencyField(writable=False),
 
                      # Bank account details
                      Field("account_holder",

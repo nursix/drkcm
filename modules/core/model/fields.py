@@ -26,6 +26,7 @@
 """
 
 __all__ = ("CommentsField",
+           "CurrencyField",
            "DateField",
            "DateTimeField",
            "LanguageField",
@@ -37,7 +38,6 @@ __all__ = ("CommentsField",
            "s3_all_meta_field_names",
            "s3_role_required",
            "s3_roles_permitted",
-           "s3_currency",
            )
 
 import datetime
@@ -603,9 +603,9 @@ class CommentsField(Field):
     def __init__(self,
                  fieldname = "comments",
                  label = DEFAULT,
-                 widget = DEFAULT,
-                 represent = DEFAULT,
                  comment = DEFAULT,
+                 represent = DEFAULT,
+                 widget = DEFAULT,
                  placeholder = None,
                  **args):
         """
@@ -643,32 +643,52 @@ class CommentsField(Field):
                          type = "text",
                          label = label,
                          comment = comment,
-                         widget = widget,
                          represent = represent,
+                         widget = widget,
                          **args)
 
 # =============================================================================
-def s3_currency(name="currency", **attr):
+class CurrencyField(Field):
     """
-        Return a standard Currency field
-
-        @ToDo: Move to a Finance module?
+        Standard currency field with suitable defaults
     """
 
-    settings = current.deployment_settings
+    def __init__(self,
+                 fieldname = "language",
+                 length = 3,
+                 default = DEFAULT,
+                 label = DEFAULT,
+                 requires = DEFAULT,
+                 writable = DEFAULT,
+                 **args):
+        """
+            Args:
+                - see Field
+        """
 
-    if "label" not in attr:
-        attr["label"] = current.T("Currency")
-    if "default" not in attr:
-        attr["default"] = settings.get_fin_currency_default()
-    if "requires" not in attr:
-        currency_opts = settings.get_fin_currencies()
-        attr["requires"] = IS_IN_SET(list(currency_opts.keys()),
-                                     zero=None)
-    if "writable" not in attr:
-        attr["writable"] = settings.get_fin_currency_writable()
+        settings = current.deployment_settings
 
-    return Field(name, length=3, **attr)
+        if label is DEFAULT:
+            label = current.T("Currency")
+
+        if default is DEFAULT:
+            default = settings.get_fin_currency_default()
+
+        if requires is DEFAULT:
+            currency_opts = settings.get_fin_currencies()
+            requires = IS_IN_SET(list(currency_opts.keys()), zero=None)
+
+        if writable is DEFAULT:
+            writable = settings.get_fin_currency_writable()
+
+        super().__init__(fieldname,
+                         #type = "string",
+                         default = default,
+                         label = label,
+                         length = length,
+                         requires = requires,
+                         writable = writable,
+                         **args)
 
 # =============================================================================
 class LanguageField(Field):
@@ -678,26 +698,26 @@ class LanguageField(Field):
 
     def __init__(self,
                  fieldname = "language",
-                 label = DEFAULT,
-                 default = DEFAULT,
-                 requires = DEFAULT,
-                 represent = DEFAULT,
                  length = 8,
-                 select = DEFAULT,
+                 default = DEFAULT,
+                 label = DEFAULT,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
                  empty = None,
+                 select = DEFAULT,
                  translate = True,
                  **args):
         """
 
             Args:
-                select: language selection as dict {code:name}, or None
-                        to allow all available languages; if omitted, the
-                        L10n_languages deployment setting will be used
                 empty: allow the field to remain empty:
                        - None: accept empty, don't show empty-option (default)
                        - True: accept empty, show empty-option
                        - False: reject empty, don't show empty-option
                        (keyword ignored if a "requires" is passed)
+                select: language selection as dict {code:name}, or None
+                        to allow all available languages; if omitted, the
+                        L10n_languages deployment setting will be used
                 translate: translate the language names into the
                            current UI language
 
@@ -755,23 +775,23 @@ class DateField(Field):
 
     def __init__(self,
                  fieldname = "date",
-                 label = DEFAULT,
                  default = None,
-                 widget = None,
+                 label = DEFAULT,
                  represent = DEFAULT,
                  requires = DEFAULT,
+                 widget = None,
                  calendar = None,
-                 past = None,
-                 future = None,
                  empty = None,
+                 future = None,
+                 past = None,
                  **args):
         """
             Args:
                 default: the default date, or "now"
                 calendar: the calendar to use
-                past: selectable past interval (months)
-                future: selectable future interval (months)
                 empty: empty values allowed
+                future: selectable future interval (months)
+                past: selectable past interval (months)
             Keyword Args:
                 set_min: set dynamic minimum for this date widget (DOM ID)
                 set_max: set dynamic maximum for this date widget (DOM ID)
@@ -841,11 +861,11 @@ class DateField(Field):
 
         super().__init__(fieldname,
                          type = "date",
-                         label = label,
                          default = default,
-                         widget = widget,
+                         label = label,
                          represent = represent,
                          requires = requires,
+                         widget = widget,
                          calendar = calendar,
                          **args)
 
@@ -860,11 +880,11 @@ class DateTimeField(Field):
 
     def __init__(self,
                  fieldname = "date",
-                 label = DEFAULT,
                  default = None,
-                 widget = None,
+                 label = DEFAULT,
                  represent = DEFAULT,
                  requires = DEFAULT,
+                 widget = None,
                  calendar = None,
                  past = None,
                  future = None,
@@ -998,11 +1018,11 @@ class TimeField(Field):
 
     def __init__(self,
                  fieldname = "time_of_day",
-                 label = DEFAULT,
                  default = None,
-                 widget = None,
+                 label = DEFAULT,
                  represent = DEFAULT,
                  requires = DEFAULT,
+                 widget = None,
                  empty = None,
                  **args):
         """

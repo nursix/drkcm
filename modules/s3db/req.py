@@ -1785,8 +1785,9 @@ class RequestItemModel(DataModel):
                            writable = track_pack_values,
                            ),
                      # @ToDo: Move this into a Currency Widget for the pack_value field
-                     s3_currency(readable = track_pack_values,
-                                 writable = track_pack_values),
+                     CurrencyField(readable = track_pack_values,
+                                   writable = track_pack_values,
+                                   ),
                      # Requested from:
                      self.org_site_id(),
                      Field("quantity_commit", "double",
@@ -3529,9 +3530,9 @@ class CommitModel(DataModel):
                                 writable = commit_value,
                                 ),
                           # @ToDo: Move this into a Currency Widget for the value field
-                          s3_currency(readable = commit_value,
-                                      writable = commit_value,
-                                      ),
+                          CurrencyField(readable = commit_value,
+                                        writable = commit_value,
+                                        ),
                           Field("cancel", "boolean",
                                 default = False,
                                 label = T("Cancel"),

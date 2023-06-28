@@ -100,6 +100,7 @@ class ProjectModel(DataModel):
         mode_drr = settings.get_project_mode_drr()
         budget_monitoring = settings.get_project_budget_monitoring()
         multi_budgets = settings.get_project_multiple_budgets()
+        use_budget = not multi_budgets and not budget_monitoring
         multi_orgs = settings.get_project_multiple_organisations()
         use_codes = settings.get_project_codes()
 
@@ -113,7 +114,6 @@ class ProjectModel(DataModel):
         # ---------------------------------------------------------------------
         # Projects
         #
-
         LEAD_ROLE = settings.get_project_organisation_lead_role()
         org_label = settings.get_project_organisation_roles()[LEAD_ROLE]
 
@@ -177,12 +177,12 @@ class ProjectModel(DataModel):
                            label = T("Budget"),
                            represent = lambda v: \
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
-                           readable = False if (multi_budgets or budget_monitoring) else True,
-                           writable = False if (multi_budgets or budget_monitoring) else True,
+                           readable = use_budget,
+                           writable = use_budget,
                            ),
-                     s3_currency(readable = False if (multi_budgets or budget_monitoring) else True,
-                                 writable = False if (multi_budgets or budget_monitoring) else True,
-                                 ),
+                     CurrencyField(readable = use_budget,
+                                   writable = use_budget,
+                                   ),
                      Field("objectives", "text",
                            label = T("Objectives"),
                            represent = lambda v: s3_text_represent(v, lines=8),
@@ -814,7 +814,7 @@ class ProjectAnnualBudgetModel(DataModel):
                                 #label = T("Amount Budgeted"),
                                 requires = IS_FLOAT_AMOUNT(),
                                 ),
-                          s3_currency(required=True),
+                          CurrencyField(required=True),
                           )
 
 
@@ -1929,7 +1929,7 @@ class ProjectOrganisationModel(DataModel):
                                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                                 widget = IS_FLOAT_AMOUNT.widget,
                                 label = T("Funds Contributed")),
-                          s3_currency(),
+                          CurrencyField(),
                           CommentsField(),
                           )
 

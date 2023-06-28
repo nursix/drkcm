@@ -3878,7 +3878,7 @@ class DVRCaseEconomyInformationModel(DataModel):
                            represent = float_represent,
                            requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
-                     s3_currency(),
+                     CurrencyField(),
                      CommentsField(),
                      )
 
@@ -4183,7 +4183,7 @@ class DVRCaseAllowanceModel(DataModel):
                            requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            represent = amount_represent,
                            ),
-                     s3_currency(),
+                     CurrencyField(),
                      Field("status", "integer",
                            default = 1, # pending
                            requires = IS_IN_SET(allowance_status_opts,
