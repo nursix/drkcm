@@ -179,14 +179,28 @@ def rlpptm_org_rheader(r, tabs=None):
 
             from .config import TESTSTATIONS
             if group == TESTSTATIONS:
-                # Show verification status
-                rows = resource.select(["verification.status"],
-                                       represent = True,
-                                       ).rows
-                status = rows[0]["org_verification.status"] if rows else "-"
-                rheader_fields[0].append((T("Documentation / Verification"),
-                                          lambda row: status,
-                                          ))
+                if r.controller == "audit":
+                    # Show audit status
+                    if len(rheader_fields) < 2:
+                        rheader_fields.append([(False, None)])
+                    rows = resource.select(["audit.evidence_status",
+                                            "audit.docs_available",
+                                            ],
+                                           represent = True,
+                                           ).rows
+                    estatus = rows[0]["org_audit.evidence_status"] if rows else "-"
+                    dstatus = rows[0]["org_audit.docs_available"] if rows else "-"
+                    rheader_fields[0].append((T("Audit Evidence##plural"), lambda row: estatus))
+                    rheader_fields[1].append((T("New Documents Available"), lambda row: dstatus))
+                else:
+                    # Show verification status
+                    rows = resource.select(["verification.status",
+                                            ],
+                                           represent = True,
+                                           ).rows
+                    vstatus = rows[0]["org_verification.status"] if rows else "-"
+                    rheader_fields[0].append((T("Documentation / Verification"), lambda row: vstatus))
+
             rheader_title = "name"
 
         elif tablename == "org_facility" and is_org_group_admin:

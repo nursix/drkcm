@@ -625,6 +625,7 @@
 'Attachments': 'Anhänge',
 'Attend to information sources as described in <instruction>': 'Sich um Informationsquellen kümmern wie im Abschnitt beschrieben',
 'Attribution': 'Eigenschaften',
+'Audit Evidence##plural': 'Prüfnachweise',
 'Audit Evidence': 'Prüfnachweis',
 'Audit': 'Abrechnungsprüfung',
 'Australia': 'Australien',
@@ -6913,4 +6914,3 @@
 'yes': 'ja',
 'Åland Islands': 'Ålandinseln',
 }
-
